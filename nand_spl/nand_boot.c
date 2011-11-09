@@ -1,4 +1,7 @@
 /*
+ * (C) Copyright 2007-2010
+ * Marcel Ziswiler, Noser Engineering, marcel.ziswiler@noser.com.
+ *
  * (C) Copyright 2006-2008
  * Stefan Roese, DENX Software Engineering, sr@denx.de.
  *
@@ -25,7 +28,9 @@
 #define CONFIG_SYS_NAND_READ_DELAY \
 	{ volatile int dummy; int i; for (i=0; i<10000; i++) dummy = i; }
 
+#if 0
 static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
+#endif
 
 #if (CONFIG_SYS_NAND_PAGE_SIZE <= 512)
 /*
@@ -78,6 +83,9 @@ static int nand_command(struct mtd_info *mtd, int block, int page, int offs, u8 
 	struct nand_chip *this = mtd->priv;
 	int page_addr = page + block * CONFIG_SYS_NAND_PAGE_COUNT;
 
+#if 1
+	this->cmdfunc(mtd, NAND_CMD_READ0, 0, page_addr);
+#else
 	if (this->dev_ready)
 		while (!this->dev_ready(mtd))
 			;
@@ -119,11 +127,12 @@ static int nand_command(struct mtd_info *mtd, int block, int page, int offs, u8 
 			;
 	else
 		CONFIG_SYS_NAND_READ_DELAY;
-
+#endif
 	return 0;
 }
 #endif
 
+#if 0
 static int nand_is_bad_block(struct mtd_info *mtd, int block)
 {
 	struct nand_chip *this = mtd->priv;
@@ -138,6 +147,7 @@ static int nand_is_bad_block(struct mtd_info *mtd, int block)
 
 	return 0;
 }
+#endif
 
 static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 {
@@ -150,14 +160,16 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 	int eccbytes = CONFIG_SYS_NAND_ECCBYTES;
 	int eccsteps = CONFIG_SYS_NAND_ECCSTEPS;
 	uint8_t *p = dst;
+#if 0
 	int stat;
+#endif
 
 	nand_command(mtd, block, page, 0, NAND_CMD_READ0);
 
 	/* No malloc available for now, just use some temporary locations
 	 * in SDRAM
 	 */
-	ecc_calc = (u_char *)(CONFIG_SYS_SDRAM_BASE + 0x10000);
+	ecc_calc = (u_char *)(CONFIG_SYS_DRAM_BASE + 0x10000);
 	ecc_code = ecc_calc + 0x100;
 	oob_data = ecc_calc + 0x200;
 
@@ -166,6 +178,7 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 		this->read_buf(mtd, p, eccsize);
 		this->ecc.calculate(mtd, p, &ecc_calc[i]);
 	}
+#if 0
 	this->read_buf(mtd, oob_data, CONFIG_SYS_NAND_OOBSIZE);
 
 	/* Pick the ECC bytes out of the oob data */
@@ -182,43 +195,42 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 		 */
 		stat = this->ecc.correct(mtd, p, &ecc_code[i], &ecc_calc[i]);
 	}
-
+#endif
 	return 0;
 }
 
-static int nand_load(struct mtd_info *mtd, unsigned int offs,
-		     unsigned int uboot_size, uchar *dst)
+static uchar *nand_load(struct mtd_info *mtd, int offs, int size, uchar *dst)
 {
-	unsigned int block, lastblock;
-	unsigned int page;
+	int block_count, block_index, block_start;
+	int page_count, page_counter, page_index;
 
 	/*
 	 * offs has to be aligned to a page address!
 	 */
-	block = offs / CONFIG_SYS_NAND_BLOCK_SIZE;
-	lastblock = (offs + uboot_size - 1) / CONFIG_SYS_NAND_BLOCK_SIZE;
-	page = (offs % CONFIG_SYS_NAND_BLOCK_SIZE) / CONFIG_SYS_NAND_PAGE_SIZE;
+	block_index = 0;
+	block_start = offs / CONFIG_SYS_NAND_BLOCK_SIZE;
+	page_count = ((size + CONFIG_SYS_NAND_PAGE_SIZE - 1) / CONFIG_SYS_NAND_PAGE_SIZE);
+	page_counter = 0;
+	page_index = (offs - (block_start * CONFIG_SYS_NAND_BLOCK_SIZE)) /
+		     CONFIG_SYS_NAND_PAGE_SIZE;
+	block_count = ((size - (page_index * CONFIG_SYS_NAND_PAGE_SIZE)) /
+		       CONFIG_SYS_NAND_BLOCK_SIZE) + 1;
 
-	while (block <= lastblock) {
-		if (!nand_is_bad_block(mtd, block)) {
-			/*
-			 * Skip bad blocks
-			 */
-			while (page < CONFIG_SYS_NAND_PAGE_COUNT) {
-				nand_read_page(mtd, block, page, dst);
-				dst += CONFIG_SYS_NAND_PAGE_SIZE;
-				page++;
-			}
-
-			page = 0;
-		} else {
-			lastblock++;
+	while (block_index < block_count) {
+		while ((page_index < CONFIG_SYS_NAND_PAGE_COUNT) &&
+		       (page_counter < page_count)) {
+			nand_read_page(mtd, block_start + block_index,
+				       page_index, dst);
+			page_counter++;
+			page_index++;
+			dst += CONFIG_SYS_NAND_PAGE_SIZE;
 		}
 
-		block++;
+		block_index++;
+		page_index = 0;
 	}
 
-	return 0;
+	return dst;
 }
 
 /*
@@ -230,7 +242,7 @@ void nand_boot(void)
 {
 	struct nand_chip nand_chip;
 	nand_info_t nand_info;
-	int ret;
+	uchar *dst;
 	__attribute__((noreturn)) void (*uboot)(void);
 
 	/*
@@ -241,24 +253,33 @@ void nand_boot(void)
 	nand_chip.dev_ready = NULL;	/* preset to NULL */
 	board_nand_init(&nand_chip);
 
+	/*
+	 * Specify NAND configuration (No autodetection used!)
+	 */
+	nand_info.writesize = CONFIG_SYS_NAND_PAGE_SIZE;
+	nand_info.oobsize = CONFIG_SYS_NAND_OOBSIZE;
+
 	if (nand_chip.select_chip)
 		nand_chip.select_chip(&nand_info, 0);
 
 	/*
 	 * Load U-Boot image from NAND into RAM
+	 * In case of colibri board -- it is split into 3 parts
 	 */
-	ret = nand_load(&nand_info, CONFIG_SYS_NAND_U_BOOT_OFFS, CONFIG_SYS_NAND_U_BOOT_SIZE,
-			(uchar *)CONFIG_SYS_NAND_U_BOOT_DST);
+	dst = (uchar *)CONFIG_SYS_NAND_U_BOOT_DST;
+	dst = nand_load(&nand_info, CONFIG_SYS_NAND_U_BOOT_OFFS,
+			CONFIG_SYS_NAND_U_BOOT_SIZE, dst);
 
-#ifdef CONFIG_NAND_ENV_DST
-	nand_load(&nand_info, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE,
-		  (uchar *)CONFIG_NAND_ENV_DST);
+#if defined(CONFIG_SYS_NAND_U_BOOT_OFFS2) && defined(CONFIG_SYS_NAND_U_BOOT_SIZE2)
+	dst = nand_load(&nand_info, CONFIG_SYS_NAND_U_BOOT_OFFS2,
+			CONFIG_SYS_NAND_U_BOOT_SIZE2, dst);
+#endif
 
-#ifdef CONFIG_ENV_OFFSET_REDUND
-	nand_load(&nand_info, CONFIG_ENV_OFFSET_REDUND, CONFIG_ENV_SIZE,
-		  (uchar *)CONFIG_NAND_ENV_DST + CONFIG_ENV_SIZE);
+#if defined(CONFIG_SYS_NAND_U_BOOT_OFFS3) && defined(CONFIG_SYS_NAND_U_BOOT_SIZE3)
+	dst = nand_load(&nand_info, CONFIG_SYS_NAND_U_BOOT_OFFS3,
+			CONFIG_SYS_NAND_U_BOOT_SIZE3, dst);
 #endif
-#endif
+
 
 	if (nand_chip.select_chip)
 		nand_chip.select_chip(&nand_info, -1);

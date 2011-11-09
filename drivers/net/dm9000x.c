@@ -616,6 +616,20 @@ phy_write(int reg, u16 value)
 	DM9000_DBG("phy_write(reg:0x%x, value:0x%x)\n", reg, value);
 }
 
+/* Set MAC address in chip */
+static int dm9000_write_hwaddr(struct eth_device *dev)
+{
+	int i, oft;
+
+	/* Fill device MAC address registers */
+	for (i = 0, oft = DM9000_PAR; i < 6; i++, oft++)
+		DM9000_iow(oft, dev->enetaddr[i]);
+	for (i = 0, oft = 0x16; i < 8; i++, oft++)
+		DM9000_iow(oft, 0xff);
+
+	return 0;
+}
+
 int dm9000_initialize(bd_t *bis)
 {
 	struct eth_device *dev = &(dm9000_info.netdev);
@@ -627,6 +641,7 @@ int dm9000_initialize(bd_t *bis)
 	dev->halt = dm9000_halt;
 	dev->send = dm9000_send;
 	dev->recv = dm9000_rx;
+	dev->write_hwaddr = dm9000_write_hwaddr;
 	sprintf(dev->name, "dm9000");
 
 	eth_register(dev);

@@ -75,6 +75,8 @@ int usb_cpu_stop(void)
 	UHCCOMS |= 1;
 	udelay(10);
 
+#if 0
+//this crashes on Colibris
 #if defined(CONFIG_CPU_MONAHANS)
 	UHCHR |= UHCHR_SSEP0;
 #endif
@@ -83,6 +85,7 @@ int usb_cpu_stop(void)
 #endif
 	UHCHR |= UHCHR_SSEP1;
 	UHCHR |= UHCHR_SSE;
+#endif
 
 	return 0;
 }

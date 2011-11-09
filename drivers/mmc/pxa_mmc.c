@@ -587,7 +587,11 @@ mmc_legacy_init(int verbose)
 			debug("Detected SD card\n");
 			break;
 		}
+#if defined(CONFIG_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+		udelay(100000); /* longer delay need for sd cards */
+#else
 		udelay(200000);
+#endif
 	}
 
 	if (retries <= 0 || !(IF_TYPE_SD == mmc_dev.if_type)) {
@@ -597,7 +601,11 @@ mmc_legacy_init(int verbose)
 
 		retries = 10;
 		while (retries-- && resp && !(resp[0] & 0x80000000)) {
+#if defined(CONFIG_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+			udelay(100000); /* longer delay need for sd cards */
+#else
 			udelay(200000);
+#endif
 			resp =
 			    mmc_cmd(MMC_CMD_SEND_OP_COND, 0x00ff, 0x8000,
 				    MMC_CMDAT_R3);

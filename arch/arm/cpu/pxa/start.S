@@ -1,6 +1,9 @@
 /*
  *  armboot - Startup Code for XScale
  *
+ *  (C) Copyright 2007-2010
+ *  Marcel Ziswiler, Noser Engineering, marcel.ziswiler@noser.com.
+ *
  *  Copyright (C) 1998	Dan Malek <dmalek@jlc.net>
  *  Copyright (C) 1999	Magnus Damm <kieraypc01.p.y.kie.era.ericsson.se>
  *  Copyright (C) 2000	Wolfgang Denk <wd@denx.de>
@@ -133,6 +136,7 @@ reset:
 	bl	cpu_init_crit		/* we do sys-critical inits	    */
 #endif /* !CONFIG_SKIP_LOWLEVEL_INIT */
 
+#ifndef CONFIG_NAND_U_BOOT
 #ifndef CONFIG_SKIP_RELOCATE_UBOOT
 relocate:				/* relocate U-Boot to RAM	    */
 	adr	r0, _start		/* r0 <- current position of code   */
@@ -153,6 +157,7 @@ copy_loop:
 	cmp	r0, r2			/* until source end address [r2]    */
 	ble	copy_loop
 #endif /* !CONFIG_SKIP_RELOCATE_UBOOT */
+#endif /* CONFIG_NAND_U_BOOT */
 
 	/* Set up the stack						    */
 stack_setup:
@@ -186,7 +191,11 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 #ifdef CONFIG_ONENAND_IPL
 _start_armboot: .word start_oneboot
 #else
+#ifdef CONFIG_NAND_SPL
+_start_armboot: .word nand_boot
+#else /* CONFIG_NAND_SPL */
 _start_armboot: .word start_armboot
+#endif /* CONFIG_NAND_SPL */
 #endif
 
 /****************************************************************************/
@@ -266,19 +275,57 @@ cpu_init_crit:
 	mcr	p6, 0, r1, c7, c0, 0	@ ICMR2
 
 	/* turn off all clocks but the ones we will definitly require */
+/* Breaks interrupts (and NAND on PXA310)! */
+#if 0
 	ldr	r1, =CKENA
 	ldr	r2, =(CKENA_22_FFUART | CKENA_10_SRAM | CKENA_9_SMC | CKENA_8_DMC)
 	str	r2, [r1]
 	ldr	r1, =CKENB
+/* CKENB_7_GPIO */
+/* INTC? */
 	ldr	r2, =(CKENB_6_IRQ)
 	str	r2, [r1]
+#endif
 #endif /* !CONFIG_CPU_MONAHANS */
 
 	/* set clock speed */
 #ifdef CONFIG_CPU_MONAHANS
+#if defined(CONFIG_NAND_SPL) || !defined(CONFIG_NAND_U_BOOT)
+	/* Application subsystem clock configuration register (ACCR)
+	   XPDIS 0b0 = Turns off the core PLL when not needed.
+	   SPDIS 0b0 = Enable system PLL
+	   VAUF 0b10 = 208 MHz video accelerator unit frequency (PXA31x only)
+	   D0CS 0b0 = Use the core PLL and system PLLs as the processor clock sources in D0 mode.
+	   SMCFS 0b101 = 208 MHz static memory controller frequency
+	   SFLFS 0b11 = 312 MHz SRAM controller frequency
+	   XSPCLK 0b11 = No clock to core until core PLL is re-locked
+	   HSS 0b10 = 208 MHz HSIO System bus-clock frequency (312 MHz does not seem to work)
+	   DMCFS 0b11 = 260 MHz Dynamic memory controller clock frequency
+	   PCCE 0b0 = Do not use any clock until selected D0 mode clock is locked and stable.
+	   XN 0x2 = 2:1 turbo-mode-to-run-mode ratio */
 	ldr	r0, =ACCR
-	ldr	r1, =(((CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO<<8) & ACCR_XN_MASK) | (CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO & ACCR_XL_MASK))
+/* Seems broken!
+	ldr	r1, =(((CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO<<8) & ACCR_XN_MASK) | (CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO & ACCR_XL_MASK)) */
+#ifdef CONFIG_COLIBRI_PXA300V11
+	ldr	r1, =0x010b7208
+#else /* CONFIG_COLIBRI_PXA300V11 */
+#ifdef CONFIG_COLIBRI_PXA310V12
+	/* XL 0x18 = 24:1 run-mode-to-oscillator ratio */
+	ldr	r1, =0x228fb218
+#else /* CONFIG_COLIBRI_PXA310V12 */
+	/* XL 0x1f = 31:1 run-mode-to-oscillator ratio */
+	ldr	r1, =0x328fb21f
+#endif /* CONFIG_COLIBRI_PXA310V12 */
+#endif /* CONFIG_COLIBRI_PXA300V11 */
 	str	r1, [r0]
+
+	/* Application core clock configuration register (XCLKCFG)
+	   Coprocessor 14 register CR6
+	   F 0b1 = Core frequency change sequence begin when written.
+	   T 0b1 = Core frequency change sequence begin when written. */
+	mov	r0, #3
+	mcr	p14, 0, r0, c6, c0, 0
+#endif /* CONFIG_NAND_SPL || !CONFIG_NAND_U_BOOT */
 #else /* !CONFIG_CPU_MONAHANS */
 #ifdef CONFIG_SYS_CPUSPEED
 	ldr	r0, CC_BASE

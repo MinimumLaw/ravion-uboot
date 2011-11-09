@@ -603,7 +603,8 @@ void udc_connect(void)
 	usbdbg("UDC connect");
 
 	/* Turn on the USB connection by enabling the pullup resistor */
-	set_GPIO_mode(CONFIG_USB_DEV_PULLUP_GPIO | GPIO_OUT);
+//???
+//	set_GPIO_mode(CONFIG_USB_DEV_PULLUP_GPIO | GPIO_OUT);
 	GPSR(CONFIG_USB_DEV_PULLUP_GPIO) = GPIO_bit(CONFIG_USB_DEV_PULLUP_GPIO);
 }
 
@@ -621,7 +622,11 @@ void udc_enable(struct usb_device_instance *device)
 {
 
 	ep0state = EP0_IDLE;
+#if defined(CONFIG_CPU_MONAHANS)
+	CKENA |= CKENA_20_UDC;
+#else
 	CKEN |= CKEN11_USB;
+#endif
 
 	/* enable endpoint 0, A, B's Packet Complete Interrupt. */
 	UDCICR0 = 0x0000003f;
@@ -652,7 +657,11 @@ void udc_disable(void)
 	udc_clear_mask_UDCCR(UDCCR_UDE);
 
 	/* Disable clock for USB device */
+#if defined(CONFIG_CPU_MONAHANS)
+	CKENA &= ~CKENA_20_UDC;
+#else
 	CKEN &= ~CKEN11_USB;
+#endif
 
 	/* Free ep0 URB */
 	if (ep0_urb) {
@@ -693,7 +702,11 @@ int udc_init(void)
 	udc_clear_mask_UDCCR(UDCCR_UDE);
 
 	/* Disable clock for USB device */
+#if defined(CONFIG_CPU_MONAHANS)
+	CKENA &= ~CKENA_20_UDC;
+#else
 	CKEN &= ~CKEN11_USB;
+#endif
 
 	/* Disable IRQs: we don't use them */
 	UDCICR0 = UDCICR1 = 0;

@@ -38,6 +38,10 @@
 #include <common.h>
 #include <asm/proc-armv/ptrace.h>
 
+#ifdef CONFIG_NAND_SPL
+#define printf(fmt, args...)
+#endif /* CONFIG_NAND_SPL */
+
 #ifdef CONFIG_USE_IRQ
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -94,13 +98,16 @@ int disable_interrupts (void)
 
 void bad_mode (void)
 {
+#ifndef CONFIG_NAND_SPL
 	panic ("Resetting CPU ...\n");
+#endif /* CONFIG_NAND_SPL */
 	reset_cpu (0);
 }
 
 void show_regs (struct pt_regs *regs)
 {
 	unsigned long flags;
+#ifndef CONFIG_NAND_SPL
 	const char *processor_modes[] = {
 	"USER_26",	"FIQ_26",	"IRQ_26",	"SVC_26",
 	"UK4_26",	"UK5_26",	"UK6_26",	"UK7_26",
@@ -111,6 +118,7 @@ void show_regs (struct pt_regs *regs)
 	"UK8_32",	"UK9_32",	"UK10_32",	"UND_32",
 	"UK12_32",	"UK13_32",	"UK14_32",	"SYS_32",
 	};
+#endif /* CONFIG_NAND_SPL */
 
 	flags = condition_codes (regs);
 
