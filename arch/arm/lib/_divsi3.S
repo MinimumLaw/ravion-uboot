@@ -137,6 +137,8 @@ __aeabi_idiv:
 Ldiv0:
 
 	str	lr, [sp, #-4]!
+#ifndef CONFIG_NAND_SPL
 	bl	__div0
+#endif /* CONFIG_NAND_SPL */
 	mov	r0, #0			@ About as wrong as it could be.
 	ldr	pc, [sp], #4

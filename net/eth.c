@@ -81,6 +81,8 @@ static int __def_eth_init(bd_t *bis)
 int cpu_eth_init(bd_t *bis) __attribute__((weak, alias("__def_eth_init")));
 int board_eth_init(bd_t *bis) __attribute__((weak, alias("__def_eth_init")));
 
+extern int ax88796b_initialize(bd_t*);
+extern int ax88796c_initialize(bd_t*);
 extern int mv6436x_eth_initialize(bd_t *);
 extern int mv6446x_eth_initialize(bd_t *);
 
@@ -214,6 +216,12 @@ int eth_initialize(bd_t *bis)
 #endif
 #if defined(CONFIG_DB64460) || defined(CONFIG_P3Mx)
 	mv6446x_eth_initialize(bis);
+#endif
+#if defined(CONFIG_DRIVER_AX88796B)
+	ax88796b_initialize(bis);
+#endif
+#if defined(CONFIG_DRIVER_AX88796C)
+	ax88796c_initialize(bis);
 #endif
 	if (!eth_devices) {
 		puts ("No ethernet found.\n");

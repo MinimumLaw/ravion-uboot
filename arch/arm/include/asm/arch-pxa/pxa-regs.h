@@ -596,7 +596,7 @@ typedef void		(*ExcpHndlr) (void) ;
 /*
  * USB Device Controller
  */
-#ifdef CONFIG_PXA27X
+#if defined(CONFIG_PXA27X) || defined(CONFIG_CPU_MONAHANS)
 
 #define UDCCR		__REG(0x40600000)	/* UDC Control Register */
 #define UDCCR_UDE	(1 << 0)		/* UDC enable */
@@ -640,7 +640,7 @@ typedef void		(*ExcpHndlr) (void) ;
 
 #define UDCCS_BI_TFS	(1 << 0)	/* Transmit FIFO service */
 #define UDCCS_BI_TPC	(1 << 1)	/* Transmit packet complete */
-#define UDCCS_BI_FTF	(1 << 8)	/* Flush Tx FIFO */
+#define UDCCS_BI_FTF	(1 << 2)	/* Flush Tx FIFO */
 #define UDCCS_BI_TUR	(1 << 3)	/* Transmit FIFO underrun */
 #define UDCCS_BI_SST	(1 << 4)	/* Sent stall */
 #define UDCCS_BI_FST	(1 << 5)	/* Force stall */
@@ -745,8 +745,8 @@ typedef void		(*ExcpHndlr) (void) ;
 #define USIR0		__REG(0x4060000C)  /* UDC Status Interrupt Register 0 */
 
 #define USIR0_IR0	(1 << 0)	/* Interrup request ep 0 */
-#define USIR0_IR1	(1 << 2)	/* Interrup request ep 1 */
-#define USIR0_IR2	(1 << 4)	/* Interrup request ep 2 */
+#define USIR0_IR1	(1 << 1)	/* Interrup request ep 1 */
+#define USIR0_IR2	(1 << 2)	/* Interrup request ep 2 */
 #define USIR0_IR3	(1 << 3)	/* Interrup request ep 3 */
 #define USIR0_IR4	(1 << 4)	/* Interrup request ep 4 */
 #define USIR0_IR5	(1 << 5)	/* Interrup request ep 5 */
@@ -764,200 +764,14 @@ typedef void		(*ExcpHndlr) (void) ;
 #define USIR1_IR14	(1 << 6)	/* Interrup request ep 14 */
 #define USIR1_IR15	(1 << 7)	/* Interrup request ep 15 */
 
-
-#define UDCICR0         __REG(0x40600004)	/* UDC Interrupt Control Register0 */
-#define UDCICR1         __REG(0x40600008)	/* UDC Interrupt Control Register1 */
-#define UDCICR_FIFOERR	(1 << 1)			/* FIFO Error interrupt for EP */
-#define UDCICR_PKTCOMPL (1 << 0)			/* Packet Complete interrupt for EP */
-
-#define UDCICR_INT(n, intr) (((intr) & 0x03) << (((n) & 0x0F) * 2))
-#define UDCICR1_IECC	(1 << 31)	/* IntEn - Configuration Change */
-#define UDCICR1_IESOF	(1 << 30)	/* IntEn - Start of Frame */
-#define UDCICR1_IERU	(1 << 29)	/* IntEn - Resume */
-#define UDCICR1_IESU	(1 << 28)	/* IntEn - Suspend */
-#define UDCICR1_IERS	(1 << 27)	/* IntEn - Reset */
-
-#define UDCISR0         __REG(0x4060000C) /* UDC Interrupt Status Register 0 */
-#define UDCISR1         __REG(0x40600010) /* UDC Interrupt Status Register 1 */
-#define UDCISR_INT(n, intr) (((intr) & 0x03) << (((n) & 0x0F) * 2))
-#define UDCISR1_IRCC	(1 << 31)	/* IntEn - Configuration Change */
-#define UDCISR1_IRSOF	(1 << 30)	/* IntEn - Start of Frame */
-#define UDCISR1_IRRU	(1 << 29)	/* IntEn - Resume */
-#define UDCISR1_IRSU	(1 << 28)	/* IntEn - Suspend */
-#define UDCISR1_IRRS	(1 << 27)	/* IntEn - Reset */
-
-
-#define UDCFNR			__REG(0x40600014) /* UDC Frame Number Register */
-#define UDCOTGICR		__REG(0x40600018) /* UDC On-The-Go interrupt control */
-#define UDCOTGICR_IESF		(1 << 24)	/* OTG SET_FEATURE command recvd */
-#define UDCOTGICR_IEXR		(1 << 17)	/* Extra Transciever Interrupt Rising Edge Interrupt Enable */
-#define UDCOTGICR_IEXF		(1 << 16)	/* Extra Transciever Interrupt Falling Edge Interrupt Enable */
-#define UDCOTGICR_IEVV40R	(1 << 9)	/* OTG Vbus Valid 4.0V Rising Edge Interrupt Enable */
-#define UDCOTGICR_IEVV40F	(1 << 8)	/* OTG Vbus Valid 4.0V Falling Edge Interrupt Enable */
-#define UDCOTGICR_IEVV44R	(1 << 7)	/* OTG Vbus Valid 4.4V Rising Edge  Interrupt Enable */
-#define UDCOTGICR_IEVV44F	(1 << 6)	/* OTG Vbus Valid 4.4V Falling Edge Interrupt Enable */
-#define UDCOTGICR_IESVR		(1 << 5)	/* OTG Session Valid Rising Edge Interrupt Enable */
-#define UDCOTGICR_IESVF		(1 << 4)	/* OTG Session Valid Falling Edge Interrupt Enable */
-#define UDCOTGICR_IESDR		(1 << 3)	/* OTG A-Device SRP Detect Rising Edge Interrupt Enable */
-#define UDCOTGICR_IESDF		(1 << 2)	/* OTG A-Device SRP Detect Falling  Edge Interrupt Enable */
-#define UDCOTGICR_IEIDR		(1 << 1)	/* OTG ID Change Rising Edge Interrupt Enable */
-#define UDCOTGICR_IEIDF		(1 << 0)	/* OTG ID Change Falling Edge Interrupt Enable */
-
-#define UDCCSN(x)	__REG2(0x40600100, (x) << 2)
-#define UDCCSR0		__REG(0x40600100) /* UDC Control/Status register - Endpoint 0 */
-
-#define UDCCSR0_SA	(1 << 7)	/* Setup Active */
-#define UDCCSR0_RNE	(1 << 6)	/* Receive FIFO Not Empty */
-#define UDCCSR0_FST	(1 << 5)	/* Force Stall */
-#define UDCCSR0_SST	(1 << 4)	/* Sent Stall */
-#define UDCCSR0_DME	(1 << 3)	/* DMA Enable */
-#define UDCCSR0_FTF	(1 << 2)	/* Flush Transmit FIFO */
-#define UDCCSR0_IPR	(1 << 1)	/* IN Packet Ready */
-#define UDCCSR0_OPC	(1 << 0)	/* OUT Packet Complete */
-
-#define UDCCSRA         __REG(0x40600104) /* UDC Control/Status register - Endpoint A */
-#define UDCCSRB         __REG(0x40600108) /* UDC Control/Status register - Endpoint B */
-#define UDCCSRC         __REG(0x4060010C) /* UDC Control/Status register - Endpoint C */
-#define UDCCSRD         __REG(0x40600110) /* UDC Control/Status register - Endpoint D */
-#define UDCCSRE         __REG(0x40600114) /* UDC Control/Status register - Endpoint E */
-#define UDCCSRF         __REG(0x40600118) /* UDC Control/Status register - Endpoint F */
-#define UDCCSRG         __REG(0x4060011C) /* UDC Control/Status register - Endpoint G */
-#define UDCCSRH         __REG(0x40600120) /* UDC Control/Status register - Endpoint H */
-#define UDCCSRI         __REG(0x40600124) /* UDC Control/Status register - Endpoint I */
-#define UDCCSRJ         __REG(0x40600128) /* UDC Control/Status register - Endpoint J */
-#define UDCCSRK         __REG(0x4060012C) /* UDC Control/Status register - Endpoint K */
-#define UDCCSRL         __REG(0x40600130) /* UDC Control/Status register - Endpoint L */
-#define UDCCSRM         __REG(0x40600134) /* UDC Control/Status register - Endpoint M */
-#define UDCCSRN         __REG(0x40600138) /* UDC Control/Status register - Endpoint N */
-#define UDCCSRP         __REG(0x4060013C) /* UDC Control/Status register - Endpoint P */
-#define UDCCSRQ         __REG(0x40600140) /* UDC Control/Status register - Endpoint Q */
-#define UDCCSRR         __REG(0x40600144) /* UDC Control/Status register - Endpoint R */
-#define UDCCSRS         __REG(0x40600148) /* UDC Control/Status register - Endpoint S */
-#define UDCCSRT         __REG(0x4060014C) /* UDC Control/Status register - Endpoint T */
-#define UDCCSRU         __REG(0x40600150) /* UDC Control/Status register - Endpoint U */
-#define UDCCSRV         __REG(0x40600154) /* UDC Control/Status register - Endpoint V */
-#define UDCCSRW         __REG(0x40600158) /* UDC Control/Status register - Endpoint W */
-#define UDCCSRX         __REG(0x4060015C) /* UDC Control/Status register - Endpoint X */
-
-#define UDCCSR_DPE	(1 << 9)	/* Data Packet Error */
-#define UDCCSR_FEF	(1 << 8)	/* Flush Endpoint FIFO */
-#define UDCCSR_SP	(1 << 7)	/* Short Packet Control/Status */
-#define UDCCSR_BNE	(1 << 6)	/* Buffer Not Empty (IN endpoints) */
-#define UDCCSR_BNF	(1 << 6)	/* Buffer Not Full (OUT endpoints) */
-#define UDCCSR_FST	(1 << 5)	/* Force STALL */
-#define UDCCSR_SST	(1 << 4)	/* Sent STALL */
-#define UDCCSR_DME	(1 << 3)	/* DMA Enable */
-#define UDCCSR_TRN	(1 << 2)	/* Tx/Rx NAK */
-#define UDCCSR_PC	(1 << 1)	/* Packet Complete */
-#define UDCCSR_FS	(1 << 0)	/* FIFO needs service */
-
-#define UDCBCN(x)	__REG2(0x40600200, (x)<<2)
-#define UDCBCR0         __REG(0x40600200) /* Byte Count Register - EP0 */
-#define UDCBCRA         __REG(0x40600204) /* Byte Count Register - EPA */
-#define UDCBCRB         __REG(0x40600208) /* Byte Count Register - EPB */
-#define UDCBCRC         __REG(0x4060020C) /* Byte Count Register - EPC */
-#define UDCBCRD         __REG(0x40600210) /* Byte Count Register - EPD */
-#define UDCBCRE         __REG(0x40600214) /* Byte Count Register - EPE */
-#define UDCBCRF         __REG(0x40600218) /* Byte Count Register - EPF */
-#define UDCBCRG         __REG(0x4060021C) /* Byte Count Register - EPG */
-#define UDCBCRH         __REG(0x40600220) /* Byte Count Register - EPH */
-#define UDCBCRI         __REG(0x40600224) /* Byte Count Register - EPI */
-#define UDCBCRJ         __REG(0x40600228) /* Byte Count Register - EPJ */
-#define UDCBCRK         __REG(0x4060022C) /* Byte Count Register - EPK */
-#define UDCBCRL         __REG(0x40600230) /* Byte Count Register - EPL */
-#define UDCBCRM         __REG(0x40600234) /* Byte Count Register - EPM */
-#define UDCBCRN         __REG(0x40600238) /* Byte Count Register - EPN */
-#define UDCBCRP         __REG(0x4060023C) /* Byte Count Register - EPP */
-#define UDCBCRQ         __REG(0x40600240) /* Byte Count Register - EPQ */
-#define UDCBCRR         __REG(0x40600244) /* Byte Count Register - EPR */
-#define UDCBCRS         __REG(0x40600248) /* Byte Count Register - EPS */
-#define UDCBCRT         __REG(0x4060024C) /* Byte Count Register - EPT */
-#define UDCBCRU         __REG(0x40600250) /* Byte Count Register - EPU */
-#define UDCBCRV         __REG(0x40600254) /* Byte Count Register - EPV */
-#define UDCBCRW         __REG(0x40600258) /* Byte Count Register - EPW */
-#define UDCBCRX         __REG(0x4060025C) /* Byte Count Register - EPX */
-
-#define UDCDN(x)	__REG2(0x40600300, (x)<<2)
-#define UDCDR0          __REG(0x40600300) /* Data Register - EP0 */
-#define UDCDRA          __REG(0x40600304) /* Data Register - EPA */
-#define UDCDRB          __REG(0x40600308) /* Data Register - EPB */
-#define UDCDRC          __REG(0x4060030C) /* Data Register - EPC */
-#define UDCDRD          __REG(0x40600310) /* Data Register - EPD */
-#define UDCDRE          __REG(0x40600314) /* Data Register - EPE */
-#define UDCDRF          __REG(0x40600318) /* Data Register - EPF */
-#define UDCDRG          __REG(0x4060031C) /* Data Register - EPG */
-#define UDCDRH          __REG(0x40600320) /* Data Register - EPH */
-#define UDCDRI          __REG(0x40600324) /* Data Register - EPI */
-#define UDCDRJ          __REG(0x40600328) /* Data Register - EPJ */
-#define UDCDRK          __REG(0x4060032C) /* Data Register - EPK */
-#define UDCDRL          __REG(0x40600330) /* Data Register - EPL */
-#define UDCDRM          __REG(0x40600334) /* Data Register - EPM */
-#define UDCDRN          __REG(0x40600338) /* Data Register - EPN */
-#define UDCDRP          __REG(0x4060033C) /* Data Register - EPP */
-#define UDCDRQ          __REG(0x40600340) /* Data Register - EPQ */
-#define UDCDRR          __REG(0x40600344) /* Data Register - EPR */
-#define UDCDRS          __REG(0x40600348) /* Data Register - EPS */
-#define UDCDRT          __REG(0x4060034C) /* Data Register - EPT */
-#define UDCDRU          __REG(0x40600350) /* Data Register - EPU */
-#define UDCDRV          __REG(0x40600354) /* Data Register - EPV */
-#define UDCDRW          __REG(0x40600358) /* Data Register - EPW */
-#define UDCDRX          __REG(0x4060035C) /* Data Register - EPX */
-
-#define UDCCN(x)	__REG2(0x40600400, (x)<<2)
-#define UDCCRA          __REG(0x40600404) /* Configuration register EPA */
-#define UDCCRB          __REG(0x40600408) /* Configuration register EPB */
-#define UDCCRC          __REG(0x4060040C) /* Configuration register EPC */
-#define UDCCRD          __REG(0x40600410) /* Configuration register EPD */
-#define UDCCRE          __REG(0x40600414) /* Configuration register EPE */
-#define UDCCRF          __REG(0x40600418) /* Configuration register EPF */
-#define UDCCRG          __REG(0x4060041C) /* Configuration register EPG */
-#define UDCCRH          __REG(0x40600420) /* Configuration register EPH */
-#define UDCCRI          __REG(0x40600424) /* Configuration register EPI */
-#define UDCCRJ          __REG(0x40600428) /* Configuration register EPJ */
-#define UDCCRK          __REG(0x4060042C) /* Configuration register EPK */
-#define UDCCRL          __REG(0x40600430) /* Configuration register EPL */
-#define UDCCRM          __REG(0x40600434) /* Configuration register EPM */
-#define UDCCRN          __REG(0x40600438) /* Configuration register EPN */
-#define UDCCRP          __REG(0x4060043C) /* Configuration register EPP */
-#define UDCCRQ          __REG(0x40600440) /* Configuration register EPQ */
-#define UDCCRR          __REG(0x40600444) /* Configuration register EPR */
-#define UDCCRS          __REG(0x40600448) /* Configuration register EPS */
-#define UDCCRT          __REG(0x4060044C) /* Configuration register EPT */
-#define UDCCRU          __REG(0x40600450) /* Configuration register EPU */
-#define UDCCRV          __REG(0x40600454) /* Configuration register EPV */
-#define UDCCRW          __REG(0x40600458) /* Configuration register EPW */
-#define UDCCRX          __REG(0x4060045C) /* Configuration register EPX */
-
-#define UDCCONR_CN	(0x03 << 25)	/* Configuration Number */
-#define UDCCONR_CN_S	(25)
-#define UDCCONR_IN	(0x07 << 22)	/* Interface Number */
-#define UDCCONR_IN_S	(22)
-#define UDCCONR_AISN	(0x07 << 19)	/* Alternate Interface Number */
-#define UDCCONR_AISN_S	(19)
-#define UDCCONR_EN	(0x0f << 15)	/* Endpoint Number */
-#define UDCCONR_EN_S	(15)
-#define UDCCONR_ET	(0x03 << 13)	/* Endpoint Type: */
-#define UDCCONR_ET_S	(13)
-#define UDCCONR_ET_INT	(0x03 << 13)	/* Interrupt */
-#define UDCCONR_ET_BULK	(0x02 << 13)	/* Bulk */
-#define UDCCONR_ET_ISO	(0x01 << 13)	/* Isochronous */
-#define UDCCONR_ET_NU	(0x00 << 13)	/* Not used */
-#define UDCCONR_ED	(1 << 12)	/* Endpoint Direction */
-#define UDCCONR_MPS	(0x3ff << 2)	/* Maximum Packet Size */
-#define UDCCONR_MPS_S	(2)
-#define UDCCONR_DE	(1 << 1)	/* Double Buffering Enable */
-#define UDCCONR_EE	(1 << 0)	/* Endpoint Enable */
-
-
-#define UDC_INT_FIFOERROR	(0x2)
-#define UDC_INT_PACKETCMP	(0x1)
-#define UDC_FNR_MASK		(0x7ff)
-#define UDCCSR_WR_MASK		(UDCCSR_DME|UDCCSR_FST)
-#define UDC_BCR_MASK		(0x3ff)
-
-#endif /* CONFIG_PXA27X */
+#endif /* CONFIG_PXA27X || CONFIG_CPU_MONAHANS */
 
 #if defined(CONFIG_PXA27X) || defined(CONFIG_CPU_MONAHANS)
+
+/*
+ * UDC: USB Device (Client) Controller
+ */
+#include <asm/arch/pxa27x-udc.h>
 
 /*
  * USB Host Controller
@@ -1011,25 +825,7 @@ typedef void		(*ExcpHndlr) (void) ;
 #define UHCHIE_HBAIE	(1<<8)
 #define UHCHIE_RWIE	(1<<7)
 
-#if defined(CONFIG_CPU_MONAHANS) || defined(CONFIG_PXA27X)
-#define UP2OCR		__REG(0x40600020)
-#endif
-
-#define UP2OCR_HXOE	(1<<17)
-#define UP2OCR_HXS	(1<<16)
-#define UP2OCR_IDON	(1<<10)
-#define UP2OCR_EXSUS	(1<<9)
-#define UP2OCR_EXSP	(1<<8)
-#define UP2OCR_DMSTATE	(1<<7)
-#define UP2OCR_VPM	(1<<6)
-#define UP2OCR_DPSTATE	(1<<5)
-#define UP2OCR_DPPUE	(1<<4)
-#define UP2OCR_DMPDE	(1<<3)
-#define UP2OCR_DPPDE	(1<<2)
-#define UP2OCR_CPVPE	(1<<1)
-#define UP2OCR_CPVEN	(1<<0)
-
-#endif
+#endif /* CONFIG_PXA27X || CONFIG_CPU_MONAHANS */
 
 /*
  * Fast Infrared Communication Port
@@ -1245,6 +1041,192 @@ typedef void		(*ExcpHndlr) (void) ;
  *    - GPIO
  *    - Data Flash DF_* pins defined.
  */
+#if defined(CONFIG_PXA300) || defined(CONFIG_PXA310)
+/* PXA300 and PXA310 */
+#define GPIO0		__REG(0x40e100b4)
+#define GPIO1		__REG(0x40e100b8)
+#define GPIO2		__REG(0x40e100bc)
+#define nCS1		__REG(0x40e100c0)
+#define nCS0		__REG(0x40e100c4)
+#define DF_INT_RnB	__REG(0x40e100c8)
+#define DF_nWE		__REG(0x40e100cc)
+
+#define DF_nRE		__REG(0x40e10200)
+#define nBE0		__REG(0x40e10204)
+#define nBE1		__REG(0x40e10208)
+#define DF_ALE_nWE	__REG(0x40e1020c)
+#define DF_ADDR0	__REG(0x40e10210)
+#define DF_ADDR1	__REG(0x40e10214)
+#define DF_ADDR2	__REG(0x40e10218)
+#define DF_ADDR3	__REG(0x40e1021c)
+#define DF_IO0		__REG(0x40e10220)
+#define DF_IO8		__REG(0x40e10224)
+#define DF_IO1		__REG(0x40e10228)
+#define DF_IO9		__REG(0x40e1022c)
+#define DF_IO2		__REG(0x40e10230)
+#define DF_IO10		__REG(0x40e10234)
+#define DF_IO3		__REG(0x40e10238)
+#define DF_IO11		__REG(0x40e1023c)
+#define DF_CLE_nOE	__REG(0x40e10240)
+#define nLUA		__REG(0x40e10244)
+#define DF_nCS0		__REG(0x40e10248)
+
+#define DF_SCLK_E	__REG(0x40e10250)
+#define nLLA		__REG(0x40e10254)
+#define DF_IO4		__REG(0x40e10258)
+#define DF_IO12		__REG(0x40e1025c)
+#define DF_IO5		__REG(0x40e10260)
+#define DF_IO13		__REG(0x40e10264)
+#define DF_IO6		__REG(0x40e10268)
+#define DF_IO14		__REG(0x40e1026c)
+#define DF_IO7		__REG(0x40e10270)
+#define DF_IO15		__REG(0x40e10274)
+#define DF_nCS1		__REG(0x40e10278)
+#define GPIO3		__REG(0x40e1027c)
+#define GPIO4		__REG(0x40e10280)
+#define GPIO5		__REG(0x40e10284)
+#define GPIO6		__REG(0x40e10288)
+#define GPIO7		__REG(0x40e1028c)
+#define GPIO8		__REG(0x40e10290)
+#define GPIO9		__REG(0x40e10294)
+#define GPIO10		__REG(0x40e10298)
+#define GPIO11		__REG(0x40e1029c)
+#define GPIO12		__REG(0x40e102a0)
+#define GPIO13		__REG(0x40e102a4)
+#define GPIO14		__REG(0x40e102a8)
+#define GPIO15		__REG(0x40e102ac)
+#define GPIO16		__REG(0x40e102b0)
+#define GPIO17		__REG(0x40e102b4)
+#define GPIO18		__REG(0x40e102b8)
+#define GPIO19		__REG(0x40e102bc)
+#define GPIO20		__REG(0x40e102c0)
+#define GPIO21		__REG(0x40e102c4)
+#define GPIO22		__REG(0x40e102c8)
+#define GPIO23		__REG(0x40e102cc)
+#define GPIO24		__REG(0x40e102d0)
+#define GPIO25		__REG(0x40e102d4)
+#define GPIO26		__REG(0x40e102d8)
+#define GPIO2_2		__REG(0x40e102dc)
+#define GPIO3_2		__REG(0x40e102e0)
+#define GPIO4_2		__REG(0x40e102e4)
+#define GPIO5_2		__REG(0x40e102e8)
+#define GPIO6_2		__REG(0x40e102ec)
+
+#if defined(CONFIG_PXA310)
+/* PXA310 */
+#define ULPI_STP	__REG(0x40e1040c)
+#define ULPI_NXT	__REG(0x40e10410)
+#define ULPI_DIR	__REG(0x40e10414)
+#define GPIO49		__REG(0x40e10464)
+#define GPIO50		__REG(0x40e10468)
+#define GPIO51		__REG(0x40e1046c)
+#define GPIO52		__REG(0x40e10470)
+#define GPIO53		__REG(0x40e10474)
+#define GPIO54		__REG(0x40e10478)
+#define GPIO55		__REG(0x40e1047c)
+#define GPIO56		__REG(0x40e10480)
+#define GPIO57		__REG(0x40e10484)
+#define GPIO58		__REG(0x40e10488)
+#define GPIO59		__REG(0x40e1048c)
+#define GPIO60		__REG(0x40e10490)
+#define GPIO61		__REG(0x40e10494)
+#define GPIO62		__REG(0x40e10498)
+#define GPIO63		__REG(0x40e1049c)
+#define GPIO64		__REG(0x40e104a0)
+#define GPIO65		__REG(0x40e104a4)
+#define GPIO66		__REG(0x40e104a8)
+#define GPIO67		__REG(0x40e104ac)
+#define GPIO68		__REG(0x40e104b0)
+#define GPIO69		__REG(0x40e104b4)
+#define GPIO70		__REG(0x40e104b8)
+#define GPIO71		__REG(0x40e104bc)
+#define GPIO72		__REG(0x40e104c0)
+#define GPIO73		__REG(0x40e104c4)
+#define GPIO74		__REG(0x40e104c8)
+#define GPIO75		__REG(0x40e104cc)
+#define GPIO76		__REG(0x40e104d0)
+#define GPIO77		__REG(0x40e104d4)
+#define GPIO78		__REG(0x40e104d8)
+#define GPIO79		__REG(0x40e104dc)
+#define GPIO80		__REG(0x40e104e0)
+#define GPIO81		__REG(0x40e104e4)
+#define GPIO82		__REG(0x40e104e8)
+#define GPIO83		__REG(0x40e104ec)
+#define GPIO84		__REG(0x40e104f0)
+#define GPIO85		__REG(0x40e104f4)
+#define GPIO86		__REG(0x40e104f8)
+#define GPIO87		__REG(0x40e104fc)
+#define GPIO88		__REG(0x40e10500)
+#define GPIO89		__REG(0x40e10504)
+#define GPIO90		__REG(0x40e10508)
+#define GPIO91		__REG(0x40e1050c)
+#define GPIO92		__REG(0x40e10510)
+#define GPIO93		__REG(0x40e10514)
+#define GPIO94		__REG(0x40e10518)
+#define GPIO95		__REG(0x40e1051c)
+#define GPIO96		__REG(0x40e10520)
+#define GPIO97		__REG(0x40e10524)
+#define GPIO98		__REG(0x40e10528)
+#elif defined(CONFIG_PXA300) /* CONFIG_PXA310 */
+/* PXA300 */
+#define GPIO49		__REG(0x40e10458)
+#define GPIO50		__REG(0x40e1045c)
+#define GPIO51		__REG(0x40e10460)
+#define GPIO52		__REG(0x40e10464)
+#define GPIO53		__REG(0x40e10468)
+#define GPIO54		__REG(0x40e1046c)
+#define GPIO55		__REG(0x40e10470)
+#define GPIO56		__REG(0x40e10474)
+#define GPIO57		__REG(0x40e10478)
+#define GPIO58		__REG(0x40e1047c)
+#define GPIO59		__REG(0x40e10480)
+#define GPIO60		__REG(0x40e10484)
+#define GPIO61		__REG(0x40e10488)
+#define GPIO62		__REG(0x40e1048c)
+#define GPIO63		__REG(0x40e10490)
+#define GPIO64		__REG(0x40e10494)
+#define GPIO65		__REG(0x40e10498)
+#define GPIO66		__REG(0x40e1049c)
+#define GPIO67		__REG(0x40e104a0)
+#define GPIO68		__REG(0x40e104a4)
+#define GPIO69		__REG(0x40e104a8)
+#define GPIO70		__REG(0x40e104ac)
+#define GPIO71		__REG(0x40e104b0)
+#define GPIO72		__REG(0x40e104b4)
+#define GPIO73		__REG(0x40e104b8)
+#define GPIO74		__REG(0x40e104bc)
+#define GPIO75		__REG(0x40e104c0)
+#define GPIO76		__REG(0x40e104c4)
+#define GPIO77		__REG(0x40e104c8)
+#define GPIO78		__REG(0x40e104cc)
+#define GPIO79		__REG(0x40e104d0)
+#define GPIO80		__REG(0x40e104d4)
+#define GPIO81		__REG(0x40e104d8)
+#define GPIO82		__REG(0x40e104dc)
+#define GPIO83		__REG(0x40e104e0)
+#define GPIO84		__REG(0x40e104e4)
+#define GPIO85		__REG(0x40e104e8)
+#define GPIO86		__REG(0x40e104ec)
+#define GPIO87		__REG(0x40e104f0)
+#define GPIO88		__REG(0x40e104f4)
+#define GPIO89		__REG(0x40e104f8)
+#define GPIO90		__REG(0x40e104fc)
+#define GPIO91		__REG(0x40e10500)
+#define GPIO92		__REG(0x40e10504)
+#define GPIO93		__REG(0x40e10508)
+#define GPIO94		__REG(0x40e1050c)
+#define GPIO95		__REG(0x40e10510)
+#define GPIO96		__REG(0x40e10514)
+#define GPIO97		__REG(0x40e10518)
+#define GPIO98		__REG(0x40e1051c)
+#endif /* CONFIG_PXA300) */
+
+#define GPIO7_2		__REG(0x40e1052c)
+#define GPIO8_2		__REG(0x40e10530)
+#define GPIO9_2		__REG(0x40e10534)
+#define GPIO10_2	__REG(0x40e10538)
+#else /* CONFIG_PXA300 || CONFIG_PXA310 */
+/* PXA320 */
 #define GPIO0		__REG(0x40e10124)
 #define GPIO1		__REG(0x40e10128)
 #define GPIO2		__REG(0x40e1012c)
@@ -1252,13 +1234,13 @@ typedef void		(*ExcpHndlr) (void) ;
 #define GPIO4		__REG(0x40e10134)
 #define nXCVREN		__REG(0x40e10138)
 
-#define DF_CLE_NOE	__REG(0x40e10204)
-#define DF_ALE_WE1	__REG(0x40e10208)
+#define DF_CLE_nOE	__REG(0x40e10204)
+#define DF_ALE_nWE1	__REG(0x40e10208)
 
 #define DF_SCLK_E	__REG(0x40e10210)
 #define nBE0		__REG(0x40e10214)
 #define nBE1		__REG(0x40e10218)
-#define DF_ALE_WE2	__REG(0x40e1021c)
+#define DF_ALE_nWE2	__REG(0x40e1021c)
 #define DF_INT_RnB	__REG(0x40e10220)
 #define DF_nCS0		__REG(0x40e10224)
 #define DF_nCS1		__REG(0x40e10228)
@@ -1286,13 +1268,11 @@ typedef void		(*ExcpHndlr) (void) ;
 #define DF_IO14		__REG(0x40e10280)
 #define DF_IO7		__REG(0x40e10284)
 #define DF_IO15		__REG(0x40e10288)
-
 #define GPIO5		__REG(0x40e1028c)
 #define GPIO6		__REG(0x40e10290)
 #define GPIO7		__REG(0x40e10294)
 #define GPIO8		__REG(0x40e10298)
 #define GPIO9		__REG(0x40e1029c)
-
 #define GPIO11		__REG(0x40e102a0)
 #define GPIO12		__REG(0x40e102a4)
 #define GPIO13		__REG(0x40e102a8)
@@ -1309,29 +1289,6 @@ typedef void		(*ExcpHndlr) (void) ;
 #define GPIO24		__REG(0x40e102d4)
 #define GPIO25		__REG(0x40e102d8)
 #define GPIO26		__REG(0x40e102dc)
-
-#define GPIO27		__REG(0x40e10400)
-#define GPIO28		__REG(0x40e10404)
-#define GPIO29		__REG(0x40e10408)
-#define GPIO30		__REG(0x40e1040c)
-#define GPIO31		__REG(0x40e10410)
-#define GPIO32		__REG(0x40e10414)
-#define GPIO33		__REG(0x40e10418)
-#define GPIO34		__REG(0x40e1041c)
-#define GPIO35		__REG(0x40e10420)
-#define GPIO36		__REG(0x40e10424)
-#define GPIO37		__REG(0x40e10428)
-#define GPIO38		__REG(0x40e1042c)
-#define GPIO39		__REG(0x40e10430)
-#define GPIO40		__REG(0x40e10434)
-#define GPIO41		__REG(0x40e10438)
-#define GPIO42		__REG(0x40e1043c)
-#define GPIO43		__REG(0x40e10440)
-#define GPIO44		__REG(0x40e10444)
-#define GPIO45		__REG(0x40e10448)
-#define GPIO46		__REG(0x40e1044c)
-#define GPIO47		__REG(0x40e10450)
-#define GPIO48		__REG(0x40e10454)
 
 #define GPIO10		__REG(0x40e10458)
 
@@ -1402,6 +1359,38 @@ typedef void		(*ExcpHndlr) (void) ;
 #define GPIO97		__REG(0x40e1054c)
 #define GPIO98		__REG(0x40e10550)
 
+#define GPIO2_2		__REG(0x40e1067c)
+#define GPIO3_2		__REG(0x40e10680)
+#define GPIO4_2		__REG(0x40e10684)
+#define GPIO5_2		__REG(0x40e10688)
+#endif /* CONFIG_PXA300 || CONFIG_PXA310 */
+#define GPIO27		__REG(0x40e10400)
+#define GPIO28		__REG(0x40e10404)
+#define GPIO29		__REG(0x40e10408)
+
+#if !defined(CONFIG_PXA310)
+/* PXA300 and PXA320 */
+#define GPIO30		__REG(0x40e1040c)
+#define GPIO31		__REG(0x40e10410)
+#define GPIO32		__REG(0x40e10414)
+#define GPIO33		__REG(0x40e10418)
+#define GPIO34		__REG(0x40e1041c)
+#define GPIO35		__REG(0x40e10420)
+#define GPIO36		__REG(0x40e10424)
+#define GPIO37		__REG(0x40e10428)
+#define GPIO38		__REG(0x40e1042c)
+#define GPIO39		__REG(0x40e10430)
+#define GPIO40		__REG(0x40e10434)
+#define GPIO41		__REG(0x40e10438)
+#define GPIO42		__REG(0x40e1043c)
+#define GPIO43		__REG(0x40e10440)
+#define GPIO44		__REG(0x40e10444)
+#define GPIO45		__REG(0x40e10448)
+#define GPIO46		__REG(0x40e1044c)
+#define GPIO47		__REG(0x40e10450)
+#define GPIO48		__REG(0x40e10454)
+#endif /* !CONFIG_PXA300 */
+
 #define GPIO99		__REG(0x40e10600)
 #define GPIO100		__REG(0x40e10604)
 #define GPIO101		__REG(0x40e10608)
@@ -1416,7 +1405,6 @@ typedef void		(*ExcpHndlr) (void) ;
 #define GPIO110		__REG(0x40e1062c)
 #define GPIO111		__REG(0x40e10630)
 #define GPIO112		__REG(0x40e10634)
-
 #define GPIO113		__REG(0x40e10638)
 #define GPIO114		__REG(0x40e1063c)
 #define GPIO115		__REG(0x40e10640)
@@ -1435,10 +1423,6 @@ typedef void		(*ExcpHndlr) (void) ;
 
 #define GPIO0_2		__REG(0x40e10674)
 #define GPIO1_2		__REG(0x40e10678)
-#define GPIO2_2		__REG(0x40e1067c)
-#define GPIO3_2		__REG(0x40e10680)
-#define GPIO4_2		__REG(0x40e10684)
-#define GPIO5_2		__REG(0x40e10688)
 
 /* MFPR Bit Definitions, see 4-10, Vol. 1 */
 #define PULL_SEL	0x8000
@@ -2294,95 +2278,6 @@ typedef void		(*ExcpHndlr) (void) ;
 #define MDCNFG_DBW_16	0x4		/* SDRAM Data Bus width 16bit */
 #define MDCNFG_DCSE1	0x2		/* SDRAM CS 1 Enable */
 #define MDCNFG_DCSE0	0x1		/* SDRAM CS 0 Enable */
-
-
-/* Data Flash Controller Registers */
-
-#define NDCR		__REG(0x43100000)  /* Data Flash Control register */
-#define NDTR0CS0	__REG(0x43100004)  /* Data Controller Timing Parameter 0 Register for ND_nCS0 */
-/* #define NDTR0CS1	__REG(0x43100008)  /\* Data Controller Timing Parameter 0 Register for ND_nCS1 *\/ */
-#define NDTR1CS0	__REG(0x4310000C)  /* Data Controller Timing Parameter 1 Register for ND_nCS0 */
-/* #define NDTR1CS1	__REG(0x43100010)  /\* Data Controller Timing Parameter 1 Register for ND_nCS1 *\/ */
-#define NDSR		__REG(0x43100014)  /* Data Controller Status Register */
-#define NDPCR		__REG(0x43100018)  /* Data Controller Page Count Register */
-#define NDBDR0		__REG(0x4310001C)  /* Data Controller Bad Block Register 0 */
-#define NDBDR1		__REG(0x43100020)  /* Data Controller Bad Block Register 1 */
-#define NDDB		__REG(0x43100040)  /* Data Controller Data Buffer */
-#define NDCB0		__REG(0x43100048)  /* Data Controller Command Buffer0 */
-#define NDCB1		__REG(0x4310004C)  /* Data Controller Command Buffer1 */
-#define NDCB2		__REG(0x43100050)  /* Data Controller Command Buffer2 */
-
-#define NDCR_SPARE_EN	(0x1<<31)
-#define NDCR_ECC_EN	(0x1<<30)
-#define NDCR_DMA_EN	(0x1<<29)
-#define NDCR_ND_RUN	(0x1<<28)
-#define NDCR_DWIDTH_C	(0x1<<27)
-#define NDCR_DWIDTH_M	(0x1<<26)
-#define NDCR_PAGE_SZ	(0x3<<24)
-#define NDCR_NCSX	(0x1<<23)
-#define NDCR_ND_STOP	(0x1<<22)
-/* reserved:
- * #define NDCR_ND_MODE	(0x3<<21)
- * #define NDCR_NAND_MODE   0x0 */
-#define NDCR_CLR_PG_CNT	(0x1<<20)
-#define NDCR_CLR_ECC	(0x1<<19)
-#define NDCR_RD_ID_CNT	(0x7<<16)
-#define NDCR_RA_START	(0x1<<15)
-#define NDCR_PG_PER_BLK	(0x1<<14)
-#define NDCR_ND_ARB_EN	(0x1<<12)
-#define NDCR_RDYM	(0x1<<11)
-#define NDCR_CS0_PAGEDM	(0x1<<10)
-#define NDCR_CS1_PAGEDM	(0x1<<9)
-#define NDCR_CS0_CMDDM	(0x1<<8)
-#define NDCR_CS1_CMDDM	(0x1<<7)
-#define NDCR_CS0_BBDM	(0x1<<6)
-#define NDCR_CS1_BBDM	(0x1<<5)
-#define NDCR_DBERRM	(0x1<<4)
-#define NDCR_SBERRM	(0x1<<3)
-#define NDCR_WRDREQM	(0x1<<2)
-#define NDCR_RDDREQM	(0x1<<1)
-#define NDCR_WRCMDREQM	(0x1)
-
-#define NDSR_RDY	(0x1<<11)
-#define NDSR_CS0_PAGED	(0x1<<10)
-#define NDSR_CS1_PAGED	(0x1<<9)
-#define NDSR_CS0_CMDD	(0x1<<8)
-#define NDSR_CS1_CMDD	(0x1<<7)
-#define NDSR_CS0_BBD	(0x1<<6)
-#define NDSR_CS1_BBD	(0x1<<5)
-#define NDSR_DBERR	(0x1<<4)
-#define NDSR_SBERR	(0x1<<3)
-#define NDSR_WRDREQ	(0x1<<2)
-#define NDSR_RDDREQ	(0x1<<1)
-#define NDSR_WRCMDREQ	(0x1)
-
-#define NDCB0_AUTO_RS	(0x1<<25)
-#define NDCB0_CSEL	(0x1<<24)
-#define NDCB0_CMD_TYPE	(0x7<<21)
-#define NDCB0_NC	(0x1<<20)
-#define NDCB0_DBC	(0x1<<19)
-#define NDCB0_ADDR_CYC	(0x7<<16)
-#define NDCB0_CMD2	(0xff<<8)
-#define NDCB0_CMD1	(0xff)
-#define MCMEM(s) MCMEM0
-#define MCATT(s) MCATT0
-#define MCIO(s) MCIO0
-#define MECR_CIT	(1 << 1)/* Card Is There: 0 -> no card, 1 -> card inserted */
-
-/* Maximum values for NAND Interface Timing Registers in DFC clock
- * periods */
-#define DFC_MAX_tCH	7
-#define DFC_MAX_tCS	7
-#define DFC_MAX_tWH	7
-#define DFC_MAX_tWP	7
-#define DFC_MAX_tRH	7
-#define DFC_MAX_tRP	15
-#define DFC_MAX_tR	65535
-#define DFC_MAX_tWHR	15
-#define DFC_MAX_tAR	15
-
-#define DFC_CLOCK	104		/* DFC Clock is 104 MHz */
-#define DFC_CLK_PER_US	DFC_CLOCK/1000	/* clock period in ns */
 
 #else /* CONFIG_CPU_MONAHANS */
 

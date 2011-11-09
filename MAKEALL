@@ -709,10 +709,14 @@ LIST_at91="			\
 LIST_pxa="		\
 	cerf250		\
 	colibri_pxa270	\
+	colibri_pxa300	\
+	colibri_pxa310	\
+	colibri_pxa320	\
 	cradle		\
 	csb226		\
 	delta		\
 	innokom		\
+	limestone	\
 	lubbock		\
 	pleb2		\
 	polaris		\

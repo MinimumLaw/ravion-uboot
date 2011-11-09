@@ -24,7 +24,7 @@
 VERSION = 2010
 PATCHLEVEL = 09
 SUBLEVEL =
-EXTRAVERSION =
+EXTRAVERSION = -toradex
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 else
@@ -2185,6 +2185,70 @@ versatilepb_config :	unconfig
 #########################################################################
 ## XScale Systems
 #########################################################################
+
+colibri_pxa300_config: unconfig
+	@mkdir -p $(obj)include
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >$(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a colibri_pxa300 arm pxa colibri_pxa300 toradex
+
+colibri_pxa300_nand_config : unconfig
+	@mkdir -p $(obj)include $(obj)board/toradex/colibri_pxa300
+	@mkdir -p $(obj)nand_spl/board/toradex/colibri_pxa300
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >> $(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a colibri_pxa300 arm pxa colibri_pxa300 toradex
+	@echo "TEXT_BASE = 0x01000000" > $(obj)board/toradex/colibri_pxa300/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+colibri_pxa310_config: unconfig
+	@mkdir -p $(obj)include
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >$(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a colibri_pxa310 arm pxa colibri_pxa310 toradex
+
+colibri_pxa310_nand_config : unconfig
+	@mkdir -p $(obj)include $(obj)board/toradex/colibri_pxa310
+	@mkdir -p $(obj)nand_spl/board/toradex/colibri_pxa310
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >> $(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a colibri_pxa310 arm pxa colibri_pxa310 toradex
+	@echo "TEXT_BASE = 0x01000000" > $(obj)board/toradex/colibri_pxa310/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+colibri_pxa320_config: unconfig
+	@mkdir -p $(obj)include
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >$(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a colibri_pxa320 arm pxa colibri_pxa320 toradex
+
+colibri_pxa320_nand_config : unconfig
+	@mkdir -p $(obj)include $(obj)board/toradex/colibri_pxa320
+	@mkdir -p $(obj)nand_spl/board/toradex/colibri_pxa320
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >> $(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a colibri_pxa320 arm pxa colibri_pxa320 toradex
+	@echo "TEXT_BASE = 0x01000000" > $(obj)board/toradex/colibri_pxa320/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+limestone_config: unconfig
+	@mkdir -p $(obj)include
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >$(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a limestone arm pxa limestone toradex
+
+limestone_nand_config : unconfig
+	@mkdir -p $(obj)include $(obj)board/toradex/limestone
+	@mkdir -p $(obj)nand_spl/board/toradex/limestone
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >> $(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a limestone arm pxa limestone toradex
+	@echo "TEXT_BASE = 0x01000000" > $(obj)board/toradex/limestone/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
 pdnb3_config \
 scpu_config:	unconfig

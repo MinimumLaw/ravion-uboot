@@ -26,7 +26,6 @@
  * High Level Board Configuration Options
  */
 #define	CONFIG_PXA27X		1	/* Marvell PXA270 CPU */
-#define	CONFIG_VPAC270		1	/* Toradex Colibri PXA270 board */
 
 #undef	BOARD_LATE_INIT
 #undef	CONFIG_SKIP_RELOCATE_UBOOT
@@ -140,7 +139,7 @@
  * Clock Configuration
  */
 #undef	CONFIG_SYS_CLKS_IN_HZ
-#define	CONFIG_SYS_HZ			3250000		/* Timer @ 3250000 Hz */
+#define	CONFIG_SYS_HZ			1000		/* required for correct NET timeouts */
 #define CONFIG_SYS_CPUSPEED		0x290		/* 520 MHz */
 
 /*
@@ -198,10 +197,9 @@
 #define	CONFIG_SYS_MONITOR_BASE		0x000000
 #define	CONFIG_SYS_MONITOR_LEN		0x40000
 
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_LEN)
+/* Skip factory config block */
+#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_LEN + 0x40000)
 #define CONFIG_ENV_SECT_SIZE	0x40000
-#define CONFIG_ENV_ADDR_REDUND	(CONFIG_ENV_ADDR + CONFIG_ENV_SECT_SIZE)
-#define CONFIG_ENV_SIZE_REDUND	(CONFIG_ENV_SIZE)
 
 
 /*

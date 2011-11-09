@@ -31,7 +31,7 @@ struct nand_flash_dev nand_flash_ids[] = {
 	{"NAND 1MiB 3,3V 8-bit",	0xe8, 256, 1, 0x1000, 0},
 	{"NAND 1MiB 3,3V 8-bit",	0xec, 256, 1, 0x1000, 0},
 	{"NAND 2MiB 3,3V 8-bit",	0xea, 256, 2, 0x1000, 0},
-	{"NAND 4MiB 3,3V 8-bit", 	0xd5, 512, 4, 0x2000, 0},
+	{"NAND 4MiB 3,3V 8-bit",	0xd5, 512, 4, 0x2000, 0},
 	{"NAND 4MiB 3,3V 8-bit",	0xe3, 512, 4, 0x2000, 0},
 	{"NAND 4MiB 3,3V 8-bit",	0xe5, 512, 4, 0x2000, 0},
 	{"NAND 8MiB 3,3V 8-bit",	0xd6, 512, 8, 0x2000, 0},
@@ -53,6 +53,8 @@ struct nand_flash_dev nand_flash_ids[] = {
 	{"NAND 32MiB 3,3V 16-bit",	0x55, 512, 32, 0x4000, NAND_BUSWIDTH_16},
 
 	{"NAND 64MiB 1,8V 8-bit",	0x36, 512, 64, 0x4000, 0},
+	/* Samsung K9F1208U0B on Toradex Colibri XScale PXA290 V1.0a, V1.0c and
+	   V1.0d */
 	{"NAND 64MiB 3,3V 8-bit",	0x76, 512, 64, 0x4000, 0},
 	{"NAND 64MiB 1,8V 16-bit",	0x46, 512, 64, 0x4000, NAND_BUSWIDTH_16},
 	{"NAND 64MiB 3,3V 16-bit",	0x56, 512, 64, 0x4000, NAND_BUSWIDTH_16},
@@ -82,6 +84,8 @@ struct nand_flash_dev nand_flash_ids[] = {
 
 	/* 1 Gigabit */
 	{"NAND 128MiB 1,8V 8-bit",	0xA1, 0, 128, 0, LP_OPTIONS},
+	/* Samsung K9F1G08U0A on Toradex Colibri XScale PXA300 V1.1a and
+	   V1.1b */
 	{"NAND 128MiB 3,3V 8-bit",	0xF1, 0, 128, 0, LP_OPTIONS},
 	{"NAND 128MiB 3,3V 8-bit",	0xD1, 0, 128, 0, LP_OPTIONS},
 	{"NAND 128MiB 1,8V 16-bit",	0xB1, 0, 128, 0, LP_OPTIONS16},
@@ -95,13 +99,25 @@ struct nand_flash_dev nand_flash_ids[] = {
 
 	/* 4 Gigabit */
 	{"NAND 512MiB 1,8V 8-bit",	0xAC, 0, 512, 0, LP_OPTIONS},
+	/* Samsung K9F4G08U0A on Toradex Colibri XScale PXA310 V1.2a and
+	   V1.3a */
+#ifndef CONFIG_COLIBRI_PXA320V12C
 	{"NAND 512MiB 3,3V 8-bit",	0xDC, 0, 512, 0, LP_OPTIONS},
+#endif
 	{"NAND 512MiB 1,8V 16-bit",	0xBC, 0, 512, 0, LP_OPTIONS16},
 	{"NAND 512MiB 3,3V 16-bit",	0xCC, 0, 512, 0, LP_OPTIONS16},
 
 	/* 8 Gigabit */
 	{"NAND 1GiB 1,8V 8-bit",	0xA3, 0, 1024, 0, LP_OPTIONS},
+	/* Samsung K9K8G08U0A and K9K8G08U0B on Toradex Colibri XScale PXA320
+	   V1.2d, V1.2e, Colibri XScale PXA320 IT V1.2b, Limestone PDA V1.2b and
+	   V2.0c */
 	{"NAND 1GiB 3,3V 8-bit",	0xD3, 0, 1024, 0, LP_OPTIONS},
+	/* Hynix HY27UG088G5M on Toradex Colibri XScale PXA320 V1.2b and
+	   V1.2c */
+#ifdef CONFIG_COLIBRI_PXA320V12C
+	{"NAND 1GiB 3,3V 8-bit", 	0xDC, 0, 1024, 0, LP_OPTIONS},
+#endif
 	{"NAND 1GiB 1,8V 16-bit",	0xB3, 0, 1024, 0, LP_OPTIONS16},
 	{"NAND 1GiB 3,3V 16-bit",	0xC3, 0, 1024, 0, LP_OPTIONS16},
 

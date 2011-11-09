@@ -66,6 +66,28 @@ static void cache_flush (void)
 	asm ("mcr p15, 0, %0, c7, c5, 0": :"r" (i));
 }
 
+#ifdef CONFIG_BOOTCOUNT_LIMIT
+
+void bootcount_store (ulong a)
+{
+	volatile ulong *save_addr = (volatile ulong *)(CONFIG_SYS_BOOTCOUNT_ADDR);
+
+	save_addr[0] = a;
+	save_addr[1] = BOOTCOUNT_MAGIC;
+}
+
+ulong bootcount_load (void)
+{
+	volatile ulong *save_addr = (volatile ulong *)(CONFIG_SYS_BOOTCOUNT_ADDR);
+
+	if (save_addr[1] != BOOTCOUNT_MAGIC)
+		return 0;
+	else
+		return save_addr[0];
+}
+
+#endif /* CONFIG_BOOTCOUNT_LIMIT */
+
 #ifndef CONFIG_CPU_MONAHANS
 void set_GPIO_mode(int gpio_mode)
 {

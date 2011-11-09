@@ -67,7 +67,9 @@ Lgot_result:
 	mov	pc, lr
 Ldiv0:
 	str	lr, [sp, #-4]!
+#ifndef CONFIG_NAND_SPL
 	bl	 __div0       (PLT)
+#endif /* CONFIG_NAND_SPL */
 	mov	r0, #0			@ about as wrong as it could be
 	ldmia	sp!, {pc}
 	.size  __udivsi3       , . -  __udivsi3
