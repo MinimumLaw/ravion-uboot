@@ -545,6 +545,10 @@ void bitmap_plot (int x, int y)
 			lut_entry = ((colreg & 0x000F) << 11) |
 				    ((colreg & 0x00F0) <<  2) |
 				    ((colreg & 0x0F00) >>  7);
+#elif CONFIG_ATMEL_LCD_BGR565
+			lut_entry = ((colreg & 0x000F) << 11) |
+				    ((colreg & 0x00F0) <<  3) |
+				    ((colreg & 0x0F00) >>  7);
 #else /* CONFIG_ATMEL_LCD_RGB565 */
 			lut_entry = ((colreg & 0x000F) << 1) |
 				    ((colreg & 0x00F0) << 3) |

@@ -51,6 +51,7 @@
 #define AT91SAM9G45_ID_VDEC	30	/* Video Decoder */
 #define AT91SAM9G45_ID_IRQ0	31	/* Advanced Interrupt Controller */
 
+#define AT91_SPI0_BASE		0xfffa4000
 #define AT91_EMAC_BASE		0xfffbc000
 #define AT91_SMC_BASE		0xffffe800
 #define AT91_MATRIX_BASE	0xffffea00

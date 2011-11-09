@@ -44,6 +44,7 @@
 #include <net.h>
 #endif
 #include <netdev.h>
+#include <ds2401.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -51,6 +52,30 @@ DECLARE_GLOBAL_DATA_PTR;
 /*
  * Miscelaneous platform dependent initialisations
  */
+
+#ifdef CONFIG_DS2401
+
+static void ds2401_hw_init(void)
+{
+	at91_set_pio_output(CONFIG_DS2401_PIN, 1); /* output */
+	at91_set_pio_multi_drive(CONFIG_DS2401_PIN, 1); /* open drain */
+}
+
+static void ds2401_set(int value)
+{
+	at91_set_pio_value(CONFIG_DS2401_PIN, value);
+}
+
+static int ds2401_get(void)
+{
+	return at91_get_pio_value(CONFIG_DS2401_PIN);
+}
+
+DS2401_FUNCS DS2401_funcs = {
+	.set = ds2401_set,
+	.get = ds2401_get
+};
+#endif
 
 #ifdef CONFIG_CMD_NAND
 static void pm9261_nand_hw_init(void)
@@ -260,6 +285,10 @@ int board_init(void)
 #ifdef CONFIG_CMD_NAND
 	pm9261_nand_hw_init();
 #endif
+#ifdef CONFIG_DS2401
+	ds2401_hw_init();
+	ds2401_init(&DS2401_funcs);
+#endif
 #ifdef CONFIG_HAS_DATAFLASH
 	at91_spi0_hw_init(1 << 0);
 #endif
@@ -290,6 +319,13 @@ int dram_init(void)
 void reset_phy(void)
 {
 #ifdef CONFIG_DRIVER_DM9000
+	/*
+	 * Setup the MAC address. If you want to setup the MAC address
+	 * using the 'onewire' console command comment out the following
+	 * line
+	 */
+	do_ds2401(NULL, 0, 0, NULL);
+
 	/*
 	 * Initialize ethernet HW addr prior to starting Linux,
 	 * needed for nfsroot

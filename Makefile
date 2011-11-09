@@ -2016,8 +2016,23 @@ at91sam9g45ekes_config	:	unconfig
 	fi;
 	@$(MKCONFIG) -n $@ -a at91sam9m10g45ek arm arm926ejs at91sam9m10g45ek atmel at91
 
+pm9g45_bb9263_config \
+pm9g45_bb9g45_config \
+pm9g45_bb9g45_android_config \
+pm9g45_android_config \
 pm9g45_config	:	unconfig
 	@mkdir -p $(obj)include
+	@if [ "$(findstring bb9263,$@)" ] ; then \
+		echo "#define CONFIG_BB9263"	>>$(obj)include/config.h ; \
+		echo "Defining CONFIG_BB9263"; \
+	else \
+		echo "#define CONFIG_BB9G45"	>>$(obj)include/config.h ; \
+		echo "Defining CONFIG_BB9G45"; \
+	fi;
+	@if [ "$(findstring android,$@)" ] ; then \
+		echo "#define CONFIG_ANDROID" >>$(obj)include/config.h ; \
+		echo "Defining CONFIG_ANDROID"; \
+	fi;
 	@$(MKCONFIG) -a pm9g45 arm arm926ejs pm9g45 ronetix at91
 
 SBC35_A9G20_NANDFLASH_config \

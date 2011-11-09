@@ -56,6 +56,12 @@
 #define CONFIG_ATMEL_USART	1
 #define CONFIG_USART3		1	/* USART 3 is DBGU */
 
+/*
+ * 1-wire
+ */
+#define CONFIG_DS2401
+#define CONFIG_DS2401_PIN	AT91_PIO_PORTA, 31
+
 #define CONFIG_SYS_USE_NANDFLASH	1
 
 /* LED */
@@ -96,10 +102,29 @@
 #define CONFIG_NR_DRAM_BANKS		1
 #define PHYS_SDRAM			0x70000000
 #define PHYS_SDRAM_SIZE			0x08000000	/* 128 megs */
+#define CONFIG_MAC_OUI	"02:00:00" /* Organizationally Unique Identifier*/
 
 /* NOR flash, not available */
 #define CONFIG_SYS_NO_FLASH		1
 #undef CONFIG_CMD_FLASH
+
+/* DataFlash */
+#define CONFIG_ATMEL_SPI
+#define CONFIG_ATMEL_DATAFLASH_SPI
+#define CONFIG_HAS_DATAFLASH
+#define CONFIG_SYS_SPI_WRITE_TOUT		(5 * CONFIG_SYS_HZ)
+#define CONFIG_SYS_DATAFLASH_LOGIC_ADDR_CS0	0xC0000000	/* CS0 */
+#define AT91_SPI_CLK				15000000
+#define DATAFLASH_TCSS				(0x1a << 16)
+#define DATAFLASH_TCHS				(0x1 << 24)
+
+/* SPI Flash */
+#define CONFIG_ATMEL_SPI
+#define CONFIG_CMD_SF
+#define CONFIG_CMD_SPI
+#define CONFIG_SPI_FLASH		1
+#define CONFIG_SPI_FLASH_ATMEL		1
+#define CONFIG_SYS_MAX_DATAFLASH_BANKS	1
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
@@ -122,7 +147,11 @@
 #define CONFIG_RMII			1
 #define CONFIG_NET_MULTI		1
 #define CONFIG_NET_RETRY_COUNT		20
-#define CONFIG_RESET_PHY_R		1
+#if defined(CONFIG_BB9263)
+#define CONFIG_RESET_PHY_R
+#endif
+#define CONFIG_MACB_SEARCH_PHY
+#define CONFIG_CMD_MII
 
 /* USB */
 #define CONFIG_USB_ATMEL
@@ -134,6 +163,27 @@
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
 #define CONFIG_USB_STORAGE		1
 
+/* LCD */
+#define CONFIG_LCD			1
+#define LCD_BPP				LCD_COLOR8
+#undef LCD_TEST_PATTERN
+#define CONFIG_SYS_WHITE_ON_BLACK	1
+#define CONFIG_ATMEL_LCD		1
+#if defined(CONFIG_BB9G45_v1_0)
+#define CONFIG_ATMEL_LCD_BGR565		1
+#else
+#define CONFIG_ATMEL_LCD_RGB565		1
+#endif
+#if defined(CONFIG_ANDROID)
+#undef CONFIG_LCD_LOGO
+#undef CONFIG_LCD_INFO
+#else
+#define CONFIG_LCD_INFO
+#define CONFIG_LCD_LOGO
+#define CONFIG_LCD_INFO_BELOW_LOGO
+#endif /* end else CONDFIG_ANDOIRD*/
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
+
 /* board specific(not enough SRAM) */
 #define CONFIG_AT91SAM9G45_LCD_BASE	PHYS_SDRAM + 0xE00000
 
@@ -143,19 +193,35 @@
 #define CONFIG_SYS_MEMTEST_END		CONFIG_AT91SAM9G45_LCD_BASE
 
 /* bootstrap + u-boot + env + linux in nandflash */
+#define CONFIG_OVERWRITE_ETHADDR_ONCE
+	/* Organizationally Unique Identifier + 3 octets "random" numbers */
+#define CONFIG_ETHADDR		"02:00:00:de:ad:01"
 #define CONFIG_ENV_IS_IN_NAND		1
 #define CONFIG_ENV_OFFSET		0x60000
 #define CONFIG_ENV_OFFSET_REDUND	0x80000
 #define CONFIG_ENV_SIZE			0x20000		/* 1 sector = 128 kB */
 #define CONFIG_BOOTCOMMAND	"nand read 0x72000000 0x200000 0x200000; bootm"
-#define CONFIG_BOOTARGS		"fbcon=rotate:3 console=tty0 " \
-				"console=ttyS0,115200 " \
-				"root=/dev/mtdblock4 " \
+#if defined(CONFIG_BB9G45) && !defined(CONFIG_ANDROID)
+#define BOOTARGS_CONSOLE	"fbcon=rotate:0 console=tty0 " \
+				"console=ttyS0,115200 "
+#elif defined(CONFIG_BB9263)
+#define BOOTARGS_CONSOLE	"fbcon=rotate:3 console=tty0 " \
+				"console=ttyS0,115200 "
+#endif
+#if defined(CONFIG_ANDROID)
+#define BOOTARGS_CONSOLE	"console=ttyS0,115200 "
+#define BOOTARGS_NAND		"root=/dev/mtdblock1 " \
+				"mtdparts=atmel_nand:5m(Bootstrap)ro,95m" \
+				"(ramdisk),64m(userdata),60m(cache),-(test) " \
+				"rw rootfstype=jffs2 init=/init"
+#else
+#define BOOTARGS_NAND		"root=/dev/mtdblock4 " \
 				"mtdparts=atmel_nand:128k(bootstrap)ro," \
 				"256k(uboot)ro,1664k(env)," \
 				"2M(linux)ro,-(root) rw " \
 				"rootfstype=jffs2"
-
+#endif
+#define CONFIG_BOOTARGS		BOOTARGS_CONSOLE BOOTARGS_NAND
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{115200 , 19200, 38400, 57600, 9600 }
 

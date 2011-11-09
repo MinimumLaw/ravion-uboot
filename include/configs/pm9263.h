@@ -174,6 +174,12 @@
 #undef CONFIG_USART2
 #define CONFIG_USART3		1	/* USART 3 is DBGU */
 
+/*
+ * 1-wire
+ */
+#define CONFIG_DS2401
+#define CONFIG_DS2401_PIN	AT91_PIO_PORTB, 31
+
 /* LCD */
 #define CONFIG_LCD			1
 #define LCD_BPP				LCD_COLOR8
@@ -279,6 +285,7 @@
 #define CONFIG_NET_MULTI		1
 #define CONFIG_NET_RETRY_COUNT		20
 #define CONFIG_RESET_PHY_R		1
+#define CONFIG_MAC_OUI	"02:00:00" /* Organizationally Unique Identifier*/
 
 /* USB */
 #define CONFIG_USB_ATMEL
