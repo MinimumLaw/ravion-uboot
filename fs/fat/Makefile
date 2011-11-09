@@ -21,10 +21,14 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)libfat.a
+LIB	= $(obj)libfat.o
 
 AOBJS	=
-COBJS-$(CONFIG_CMD_FAT)	:= fat.o file.o
+COBJS-$(CONFIG_CMD_FAT)	:= fat.o
+
+ifndef CONFIG_SPL_BUILD
+COBJS-$(CONFIG_CMD_FAT)	+= file.o
+endif
 
 SRCS	:= $(AOBJS:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(AOBJS) $(COBJS-y))
@@ -32,7 +36,7 @@ OBJS	:= $(addprefix $(obj),$(AOBJS) $(COBJS-y))
 all:	$(LIB) $(AOBJS)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 
 #########################################################################

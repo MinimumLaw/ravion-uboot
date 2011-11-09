@@ -209,7 +209,7 @@ static __u32 get_fatent (fsdata *mydata, __u32 entry)
 
 	/* Read a new block of FAT entries into the cache. */
 	if (bufnum != mydata->fatbufnum) {
-		int getsize = FATBUFSIZE / FS_BLOCK_SIZE;
+		__u32 getsize = FATBUFSIZE / FS_BLOCK_SIZE;
 		__u8 *bufptr = mydata->fatbuf;
 		__u32 fatlength = mydata->fatlength;
 		__u32 startblock = bufnum * FATBUFBLOCKS;
@@ -279,7 +279,7 @@ static int
 get_cluster (fsdata *mydata, __u32 clustnum, __u8 *buffer,
 	     unsigned long size)
 {
-	int idx = 0;
+	__u32 idx = 0;
 	__u32 startsect;
 
 	if (clustnum > 0) {
@@ -439,11 +439,19 @@ get_vfatname (fsdata *mydata, int curclust, __u8 *cluster,
 {
 	dir_entry *realdent;
 	dir_slot *slotptr = (dir_slot *)retdent;
-	__u8 *nextclust = cluster + mydata->clust_size * SECTOR_SIZE;
+	__u8 *buflimit = cluster + ((curclust == 0) ?
+					LINEAR_PREFETCH_SIZE :
+					(mydata->clust_size * SECTOR_SIZE)
+				   );
 	__u8 counter = (slotptr->id & ~LAST_LONG_ENTRY_MASK) & 0xff;
 	int idx = 0;
 
-	while ((__u8 *)slotptr < nextclust) {
+	if (counter > VFAT_MAXSEQ) {
+		debug("Error: VFAT name is too long\n");
+		return -1;
+	}
+
+	while ((__u8 *)slotptr < buflimit) {
 		if (counter == 0)
 			break;
 		if (((slotptr->id & ~LAST_LONG_ENTRY_MASK) & 0xff) != counter)
@@ -452,10 +460,11 @@ get_vfatname (fsdata *mydata, int curclust, __u8 *cluster,
 		counter--;
 	}
 
-	if ((__u8 *)slotptr >= nextclust) {
+	if ((__u8 *)slotptr >= buflimit) {
 		dir_slot *slotptr2;
 
-		slotptr--;
+		if (curclust == 0)
+			return -1;
 		curclust = get_fatent(mydata, curclust);
 		if (CHECK_CLUST(curclust, mydata->fatsize)) {
 			debug("curclust: 0x%x\n", curclust);
@@ -470,14 +479,19 @@ get_vfatname (fsdata *mydata, int curclust, __u8 *cluster,
 		}
 
 		slotptr2 = (dir_slot *)get_vfatname_block;
-		while (slotptr2->id > 0x01)
+		while (counter > 0) {
+			if (((slotptr2->id & ~LAST_LONG_ENTRY_MASK)
+			    & 0xff) != counter)
+				return -1;
 			slotptr2++;
+			counter--;
+		}
 
 		/* Save the real directory entry */
-		realdent = (dir_entry *)slotptr2 + 1;
-		while ((__u8 *)slotptr2 >= get_vfatname_block) {
-			slot2str(slotptr2, l_name, &idx);
+		realdent = (dir_entry *)slotptr2;
+		while ((__u8 *)slotptr2 > get_vfatname_block) {
 			slotptr2--;
+			slot2str(slotptr2, l_name, &idx);
 		}
 	} else {
 		/* Save the real directory entry */
@@ -549,7 +563,7 @@ static dir_entry *get_dentfromdir (fsdata *mydata, int startsect,
 		dentptr = (dir_entry *)get_dentfromdir_block;
 
 		for (i = 0; i < DIRENTSPERCLUST; i++) {
-			char s_name[14], l_name[256];
+			char s_name[14], l_name[VFAT_MAXLEN_BYTES];
 
 			l_name[0] = '\0';
 			if (dentptr->name[0] == DELETED_FLAG) {
@@ -753,12 +767,13 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 	dir_entry *dentptr;
 	__u16 prevcksum = 0xffff;
 	char *subname = "";
-	int cursect;
+	__u32 cursect;
 	int idx, isdir = 0;
 	int files = 0, dirs = 0;
 	long ret = 0;
 	int firsttime;
-	int root_cluster;
+	__u32 root_cluster;
+	int rootdir_size = 0;
 	int j;
 
 	if (read_bootsectandvi(&bs, &volinfo, &mydata->fatsize)) {
@@ -784,8 +799,6 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 		mydata->data_begin = mydata->rootdir_sect -
 					(mydata->clust_size * 2);
 	} else {
-		int rootdir_size;
-
 		rootdir_size = ((bs.dir_entries[1]  * (int)256 +
 				 bs.dir_entries[0]) *
 				 sizeof(dir_entry)) /
@@ -841,7 +854,11 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 		debug("FAT read sect=%d, clust_size=%d, DIRENTSPERBLOCK=%d\n",
 			cursect, mydata->clust_size, DIRENTSPERBLOCK);
 
-		if (disk_read(cursect, mydata->clust_size, do_fat_read_block) < 0) {
+		if (disk_read(cursect,
+				(mydata->fatsize == 32) ?
+				(mydata->clust_size) :
+				LINEAR_PREFETCH_SIZE / SECTOR_SIZE,
+				do_fat_read_block) < 0) {
 			debug("Error: reading rootdir block\n");
 			return -1;
 		}
@@ -849,9 +866,13 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 		dentptr = (dir_entry *) do_fat_read_block;
 
 		for (i = 0; i < DIRENTSPERBLOCK; i++) {
-			char s_name[14], l_name[256];
+			char s_name[14], l_name[VFAT_MAXLEN_BYTES];
 
 			l_name[0] = '\0';
+			if (dentptr->name[0] == DELETED_FLAG) {
+				dentptr++;
+				continue;
+			}
 			if ((dentptr->attr & ATTR_VOLUME)) {
 #ifdef CONFIG_SUPPORT_VFAT
 				if ((dentptr->attr & ATTR_VFAT) &&
@@ -859,7 +880,10 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 					prevcksum =
 						((dir_slot *)dentptr)->alias_checksum;
 
-					get_vfatname(mydata, 0,
+					get_vfatname(mydata,
+						     (mydata->fatsize == 32) ?
+						     root_cluster :
+						     0,
 						     do_fat_read_block,
 						     dentptr, l_name);
 
@@ -981,19 +1005,17 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 		 * root directory clusters when a cluster has been
 		 * completely processed.
 		 */
-		if ((mydata->fatsize == 32) && (++j == mydata->clust_size)) {
-			int nxtsect;
-			int nxt_clust;
+		++j;
+		int fat32_end = 0;
+		if ((mydata->fatsize == 32) && (j == mydata->clust_size)) {
+			int nxtsect = 0;
+			int nxt_clust = 0;
 
 			nxt_clust = get_fatent(mydata, root_cluster);
+			fat32_end = CHECK_CLUST(nxt_clust, 32);
 
 			nxtsect = mydata->data_begin +
 				(nxt_clust * mydata->clust_size);
-
-			debug("END LOOP: sect=%d, root_clust=%d, "
-			      "n_sect=%d, n_clust=%d\n",
-			      cursect, root_cluster,
-			      nxtsect, nxt_clust);
 
 			root_cluster = nxt_clust;
 
@@ -1001,6 +1023,18 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 			j = 0;
 		} else {
 			cursect++;
+		}
+
+		/* If end of rootdir reached */
+		if ((mydata->fatsize == 32 && fat32_end) ||
+		    (mydata->fatsize != 32 && j == rootdir_size)) {
+			if (dols == LS_ROOT) {
+				printf("\n%d file(s), %d dir(s)\n\n",
+				       files, dirs);
+				return 0;
+			} else {
+				return -1;
+			}
 		}
 	}
 rootdir_done:

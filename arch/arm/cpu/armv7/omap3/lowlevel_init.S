@@ -33,7 +33,39 @@
 #include <asm/arch/clocks_omap3.h>
 
 _TEXT_BASE:
-	.word	TEXT_BASE	/* sdram load addr from config.mk */
+	.word	CONFIG_SYS_TEXT_BASE	/* sdram load addr from config.mk */
+
+.global omap3_gp_romcode_call
+omap3_gp_romcode_call:
+	PUSH {r4-r12, lr} @ Save all registers from ROM code!
+	MOV r12, r0	@ Copy the Service ID in R12
+	MOV r0, r1	@ Copy parameter to R0
+	mcr     p15, 0, r0, c7, c10, 4	@ DSB
+	mcr     p15, 0, r0, c7, c10, 5	@ DMB
+	.word	0xe1600070	@ SMC #0 to enter monitor - hand assembled
+				@ because we use -march=armv5
+	POP {r4-r12, pc}
+
+/*
+ * Funtion for making PPA HAL API calls in secure devices
+ * Input:
+ *	R0 - Service ID
+ *	R1 - paramer list
+ */
+.global do_omap3_emu_romcode_call
+do_omap3_emu_romcode_call:
+	PUSH {r4-r12, lr} @ Save all registers from ROM code!
+	MOV r12, r0	@ Copy the Secure Service ID in R12
+	MOV r3, r1	@ Copy the pointer to va_list in R3
+	MOV r1, #0	@ Process ID - 0
+	MOV r2, #OMAP3_EMU_HAL_START_HAL_CRITICAL	@ Copy the pointer
+							@ to va_list in R3
+	MOV r6, #0xFF	@ Indicate new Task call
+	mcr     p15, 0, r0, c7, c10, 4	@ DSB
+	mcr     p15, 0, r0, c7, c10, 5	@ DMB
+	.word	0xe1600071	@ SMC #1 to call PPA service - hand assembled
+				@ because we use -march=armv5
+	POP {r4-r12, pc}
 
 #if !defined(CONFIG_SYS_NAND_BOOT) && !defined(CONFIG_SYS_NAND_BOOT)
 /**************************************************************************
@@ -358,6 +390,28 @@ per_dpll_param:
 .globl get_per_dpll_param
 get_per_dpll_param:
 	adr	r0, per_dpll_param
+	mov	pc, lr
+
+/* PER2 DPLL values */
+per2_dpll_param:
+/* 12MHz */
+.word PER2_M_12, PER2_N_12, PER2_FSEL_12, PER2_M2_12
+
+/* 13MHz */
+.word PER2_M_13, PER2_N_13, PER2_FSEL_13, PER2_M2_13
+
+/* 19.2MHz */
+.word PER2_M_19P2, PER2_N_19P2, PER2_FSEL_19P2, PER2_M2_19P2
+
+/* 26MHz */
+.word PER2_M_26, PER2_N_26, PER2_FSEL_26, PER2_M2_26
+
+/* 38.4MHz */
+.word PER2_M_38P4, PER2_N_38P4, PER2_FSEL_38P4, PER2_M2_38P4
+
+.globl get_per2_dpll_param
+get_per2_dpll_param:
+	adr	r0, per2_dpll_param
 	mov	pc, lr
 
 /*

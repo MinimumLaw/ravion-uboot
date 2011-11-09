@@ -278,6 +278,25 @@ static void dpll4_init_34xx(u32 sil_index, u32 clk_index)
 	wait_on_value(ST_PERIPH_CLK, 2, &prcm_base->idlest_ckgen, LDELAY);
 }
 
+static void dpll5_init_34xx(u32 sil_index, u32 clk_index)
+{
+	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
+	dpll_param *ptr = (dpll_param *) get_per2_dpll_param();
+
+	/* Moving it to the right sysclk base */
+	ptr = ptr + clk_index;
+
+	/* PER2 DPLL (DPLL5) */
+	sr32(&prcm_base->clken2_pll, 0, 3, PLL_STOP);
+	wait_on_value(1, 0, &prcm_base->idlest2_ckgen, LDELAY);
+	sr32(&prcm_base->clksel5_pll, 0, 5, ptr->m2); /* set M2 (usbtll_fck) */
+	sr32(&prcm_base->clksel4_pll, 8, 11, ptr->m); /* set m (11-bit multiplier) */
+	sr32(&prcm_base->clksel4_pll, 0, 7, ptr->n); /* set n (7-bit divider)*/
+	sr32(&prcm_base->clken_pll, 4, 4, ptr->fsel);   /* FREQSEL */
+	sr32(&prcm_base->clken2_pll, 0, 3, PLL_LOCK);   /* lock mode */
+	wait_on_value(1, 1, &prcm_base->idlest2_ckgen, LDELAY);
+}
+
 static void mpu_init_34xx(u32 sil_index, u32 clk_index)
 {
 	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
@@ -380,7 +399,7 @@ static void dpll3_init_36xx(u32 sil_index, u32 clk_index)
 		/* L3 */
 		sr32(&prcm_base->clksel_core, 0, 2, CORE_L3_DIV);
 		/* GFX */
-		sr32(&prcm_base->clksel_gfx,  0, 3, GFX_DIV);
+		sr32(&prcm_base->clksel_gfx,  0, 3, GFX_DIV_36X);
 		/* RESET MGR */
 		sr32(&prcm_base->clksel_wkup, 1, 2, WKUP_RSM);
 		/* FREQSEL (CORE_DPLL_FREQSEL): CM_CLKEN_PLL[4:7] */
@@ -560,6 +579,7 @@ void prcm_init(void)
 
 		dpll3_init_36xx(0, clk_index);
 		dpll4_init_36xx(0, clk_index);
+		dpll5_init_34xx(0, clk_index);
 		iva_init_36xx(0, clk_index);
 		mpu_init_36xx(0, clk_index);
 
@@ -587,7 +607,10 @@ void prcm_init(void)
 
 		dpll3_init_34xx(sil_index, clk_index);
 		dpll4_init_34xx(sil_index, clk_index);
-		iva_init_34xx(sil_index, clk_index);
+		dpll5_init_34xx(sil_index, clk_index);
+		if (get_cpu_family() != CPU_AM35XX)
+			iva_init_34xx(sil_index, clk_index);
+
 		mpu_init_34xx(sil_index, clk_index);
 
 		/* Lock MPU DPLL to set frequency */
@@ -654,7 +677,9 @@ void per_clocks_enable(void)
 	/* Enable the ICLK for 32K Sync Timer as its used in udelay */
 	sr32(&prcm_base->iclken_wkup, 2, 1, 0x1);
 
-	sr32(&prcm_base->fclken_iva2, 0, 32, FCK_IVA2_ON);
+	if (get_cpu_family() != CPU_AM35XX)
+		sr32(&prcm_base->fclken_iva2, 0, 32, FCK_IVA2_ON);
+
 	sr32(&prcm_base->fclken1_core, 0, 32, FCK_CORE1_ON);
 	sr32(&prcm_base->iclken1_core, 0, 32, ICK_CORE1_ON);
 	sr32(&prcm_base->iclken2_core, 0, 32, ICK_CORE2_ON);
@@ -662,8 +687,10 @@ void per_clocks_enable(void)
 	sr32(&prcm_base->iclken_wkup, 0, 32, ICK_WKUP_ON);
 	sr32(&prcm_base->fclken_dss, 0, 32, FCK_DSS_ON);
 	sr32(&prcm_base->iclken_dss, 0, 32, ICK_DSS_ON);
-	sr32(&prcm_base->fclken_cam, 0, 32, FCK_CAM_ON);
-	sr32(&prcm_base->iclken_cam, 0, 32, ICK_CAM_ON);
+	if (get_cpu_family() != CPU_AM35XX) {
+		sr32(&prcm_base->fclken_cam, 0, 32, FCK_CAM_ON);
+		sr32(&prcm_base->iclken_cam, 0, 32, ICK_CAM_ON);
+	}
 	sr32(&prcm_base->fclken_per, 0, 32, FCK_PER_ON);
 	sr32(&prcm_base->iclken_per, 0, 32, ICK_PER_ON);
 

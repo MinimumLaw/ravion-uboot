@@ -26,8 +26,9 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
 #include <asm/arch/pxa-regs.h>
+#include <asm/io.h>
+#include <common.h>
 #include <div64.h>
 
 #ifdef CONFIG_USE_IRQ
@@ -58,14 +59,9 @@ static inline unsigned long long us_to_tick(unsigned long long us)
 
 int timer_init (void)
 {
-	reset_timer();
+	writel(0, OSCR);
 
 	return 0;
-}
-
-void reset_timer (void)
-{
-	reset_timer_masked ();
 }
 
 ulong get_timer (ulong base)
@@ -73,20 +69,9 @@ ulong get_timer (ulong base)
 	return get_timer_masked () - base;
 }
 
-void set_timer (ulong t)
-{
-	/* nop */
-}
-
 void __udelay (unsigned long usec)
 {
 	udelay_masked (usec);
-}
-
-
-void reset_timer_masked (void)
-{
-	OSCR = 0;
 }
 
 ulong get_timer_masked (void)
@@ -113,7 +98,7 @@ void udelay_masked (unsigned long usec)
  */
 unsigned long long get_ticks(void)
 {
-	return OSCR;
+	return readl(OSCR);
 }
 
 /*

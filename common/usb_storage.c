@@ -70,7 +70,7 @@
 /* direction table -- this indicates the direction of the data
  * transfer for each command code -- a 1 indicates input
  */
-unsigned char us_direction[256/8] = {
+static const unsigned char us_direction[256/8] = {
 	0x28, 0x81, 0x14, 0x14, 0x20, 0x01, 0x90, 0x77,
 	0x0C, 0x20, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01,
@@ -173,11 +173,12 @@ unsigned long usb_stor_write(int device, unsigned long blknr,
 struct usb_device * usb_get_dev_index(int index);
 void uhci_show_temp_int_td(void);
 
+#ifdef CONFIG_PARTITIONS
 block_dev_desc_t *usb_stor_get_dev(int index)
 {
 	return (index < usb_max_devs) ? &usb_dev_desc[index] : NULL;
 }
-
+#endif
 
 void usb_show_progress(void)
 {
@@ -202,6 +203,22 @@ int usb_stor_info(void)
 
 	printf("No storage devices, perhaps not 'usb start'ed..?\n");
 	return 1;
+}
+
+static unsigned int usb_get_max_lun(struct us_data *us)
+{
+	int len;
+	unsigned char result;
+	len = usb_control_msg(us->pusb_dev,
+			      usb_rcvctrlpipe(us->pusb_dev, 0),
+			      US_BBB_GET_MAX_LUN,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			      0, us->ifnum,
+			      &result, sizeof(result),
+			      USB_CNTL_TIMEOUT * 5);
+	USB_STOR_PRINTF("Get Max LUN -> len = %i, result = %i\n",
+			len, (int) result);
+	return (len > 0) ? result : 0;
 }
 
 /*******************************************************************************
@@ -238,15 +255,24 @@ int usb_stor_scan(int mode)
 		dev = usb_get_dev_index(i); /* get device */
 		USB_STOR_PRINTF("i=%d\n", i);
 		if (dev == NULL)
-			break; /* no more devices avaiable */
+			break; /* no more devices available */
 
 		if (usb_storage_probe(dev, 0, &usb_stor[usb_max_devs])) {
-			/* ok, it is a storage devices
-			 * get info and fill it in
+			/* OK, it's a storage device.  Iterate over its LUNs
+			 * and populate `usb_dev_desc'.
 			 */
-			if (usb_stor_get_info(dev, &usb_stor[usb_max_devs],
-						&usb_dev_desc[usb_max_devs]) == 1)
+			int lun, max_lun, start = usb_max_devs;
+
+			max_lun = usb_get_max_lun(&usb_stor[usb_max_devs]);
+			for (lun = 0;
+			     lun <= max_lun && usb_max_devs < USB_MAX_STOR_DEV;
+			     lun++) {
+				usb_dev_desc[usb_max_devs].lun = lun;
+				if (usb_stor_get_info(dev, &usb_stor[start],
+						      &usb_dev_desc[usb_max_devs]) == 1) {
 				usb_max_devs++;
+		}
+			}
 		}
 		/* if storage device */
 		if (usb_max_devs == USB_MAX_STOR_DEV) {
@@ -882,6 +908,7 @@ static int usb_inquiry(ccb *srb, struct us_data *ss)
 	do {
 		memset(&srb->cmd[0], 0, 12);
 		srb->cmd[0] = SCSI_INQUIRY;
+		srb->cmd[1] = srb->lun << 5;
 		srb->cmd[4] = 36;
 		srb->datalen = 36;
 		srb->cmdlen = 12;
@@ -905,6 +932,7 @@ static int usb_request_sense(ccb *srb, struct us_data *ss)
 	ptr = (char *)srb->pdata;
 	memset(&srb->cmd[0], 0, 12);
 	srb->cmd[0] = SCSI_REQ_SENSE;
+	srb->cmd[1] = srb->lun << 5;
 	srb->cmd[4] = 18;
 	srb->datalen = 18;
 	srb->pdata = &srb->sense_buf[0];
@@ -924,6 +952,7 @@ static int usb_test_unit_ready(ccb *srb, struct us_data *ss)
 	do {
 		memset(&srb->cmd[0], 0, 12);
 		srb->cmd[0] = SCSI_TST_U_RDY;
+		srb->cmd[1] = srb->lun << 5;
 		srb->datalen = 0;
 		srb->cmdlen = 12;
 		if (ss->transport(srb, ss) == USB_STOR_TRANSPORT_GOOD)
@@ -943,6 +972,7 @@ static int usb_read_capacity(ccb *srb, struct us_data *ss)
 	do {
 		memset(&srb->cmd[0], 0, 12);
 		srb->cmd[0] = SCSI_RD_CAPAC;
+		srb->cmd[1] = srb->lun << 5;
 		srb->datalen = 8;
 		srb->cmdlen = 12;
 		if (ss->transport(srb, ss) == USB_STOR_TRANSPORT_GOOD)
@@ -957,6 +987,7 @@ static int usb_read_10(ccb *srb, struct us_data *ss, unsigned long start,
 {
 	memset(&srb->cmd[0], 0, 12);
 	srb->cmd[0] = SCSI_READ10;
+	srb->cmd[1] = srb->lun << 5;
 	srb->cmd[2] = ((unsigned char) (start >> 24)) & 0xff;
 	srb->cmd[3] = ((unsigned char) (start >> 16)) & 0xff;
 	srb->cmd[4] = ((unsigned char) (start >> 8)) & 0xff;
@@ -973,6 +1004,7 @@ static int usb_write_10(ccb *srb, struct us_data *ss, unsigned long start,
 {
 	memset(&srb->cmd[0], 0, 12);
 	srb->cmd[0] = SCSI_WRITE10;
+	srb->cmd[1] = srb->lun << 5;
 	srb->cmd[2] = ((unsigned char) (start >> 24)) & 0xff;
 	srb->cmd[3] = ((unsigned char) (start >> 16)) & 0xff;
 	srb->cmd[4] = ((unsigned char) (start >> 8)) & 0xff;
@@ -1314,31 +1346,6 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 	unsigned long cap[2];
 	unsigned long *capacity, *blksz;
 	ccb *pccb = &usb_ccb;
-
-	/* for some reasons a couple of devices would not survive this reset */
-	if (
-	    /* Sony USM256E */
-	    (dev->descriptor.idVendor == 0x054c &&
-	     dev->descriptor.idProduct == 0x019e)
-	    ||
-	    /* USB007 Mini-USB2 Flash Drive */
-	    (dev->descriptor.idVendor == 0x066f &&
-	     dev->descriptor.idProduct == 0x2010)
-	    ||
-	    /* SanDisk Corporation Cruzer Micro 20044318410546613953 */
-	    (dev->descriptor.idVendor == 0x0781 &&
-	     dev->descriptor.idProduct == 0x5151)
-	    ||
-	    /*
-	     * SanDisk Corporation U3 Cruzer Micro 1/4GB
-	     * Flash Drive 000016244373FFB4
-	     */
-	    (dev->descriptor.idVendor == 0x0781 &&
-	     dev->descriptor.idProduct == 0x5406)
-	    )
-		USB_STOR_PRINTF("usb_stor_get_info: skipping RESET..\n");
-	else
-		ss->transport_reset(ss);
 
 	pccb->pdata = usb_stor_buf;
 

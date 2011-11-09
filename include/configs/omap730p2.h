@@ -59,7 +59,6 @@
  */
 
 #define CONFIG_SYS_MALLOC_LEN		   (CONFIG_ENV_SIZE + 128*1024)
-#define CONFIG_SYS_GBL_DATA_SIZE	   128	     /* size in bytes reserved for initial data */
 
 /*
  * Hardware drivers
@@ -181,6 +180,8 @@
 #error Unknown Boot Chip-Select number
 #endif
 
+#define PHYS_SRAM		0x20000000
+
 #define CONFIG_SYS_FLASH_BASE		   PHYS_FLASH_1
 
 /*-----------------------------------------------------------------------
@@ -200,5 +201,8 @@
 #define CONFIG_ENV_IS_IN_FLASH	   1
 #define CONFIG_ENV_SIZE		   0x20000	  /* Total Size of Environment Sector */
 #define CONFIG_ENV_OFFSET		   0x20000	  /* environment starts here  */
+
+#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
+#define CONFIG_SYS_INIT_SP_ADDR 	PHYS_SRAM
 
 #endif	  /* ! __CONFIG_H */

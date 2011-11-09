@@ -160,7 +160,7 @@ static uchar ide_wait  (int dev, ulong t);
 #define IDE_SPIN_UP_TIME_OUT 5000 /* 5 sec spin-up timeout */
 
 static void input_data(int dev, ulong *sect_buf, int words);
-static void output_data(int dev, ulong *sect_buf, int words);
+static void output_data(int dev, const ulong *sect_buf, int words);
 static void ident_cpy (unsigned char *dest, unsigned char *src, unsigned int len);
 
 #ifndef CONFIG_SYS_ATA_PORT_ADDR
@@ -356,7 +356,6 @@ int do_diskboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	ulong addr, cnt;
 	disk_partition_t info;
 	image_header_t *hdr;
-	int rcode = 0;
 #if defined(CONFIG_FIT)
 	const void *fit_hdr = NULL;
 #endif
@@ -495,20 +494,7 @@ int do_diskboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	load_addr = addr;
 
-	/* Check if we should attempt an auto-start */
-	if (((ep = getenv("autostart")) != NULL) && (strcmp(ep,"yes") == 0)) {
-		char *local_args[2];
-		extern int do_bootm (cmd_tbl_t *, int, int, char *[]);
-
-		local_args[0] = argv[0];
-		local_args[1] = NULL;
-
-		printf ("Automatic boot of image at addr 0x%08lX ...\n", addr);
-
-		do_bootm (cmdtp, 0, 1, local_args);
-		rcode = 1;
-	}
-	return rcode;
+	return bootm_maybe_autostart(cmdtp, argv[0]);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -518,8 +504,20 @@ __ide_outb(int dev, int port, unsigned char val)
 {
 	debug ("ide_outb (dev= %d, port= 0x%x, val= 0x%02x) : @ 0x%08lx\n",
 		dev, port, val, (ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)));
+
+#if defined(CONFIG_IDE_AHB)
+	if (port) {
+		/* write command */
+		ide_write_register(dev, port, val);
+	} else {
+		/* write data */
+		outb(val, (ATA_CURR_BASE(dev)));
+	}
+#else
 	outb(val, (ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)));
+#endif
 }
+
 void ide_outb (int dev, int port, unsigned char val)
 		__attribute__((weak, alias("__ide_outb")));
 
@@ -527,7 +525,13 @@ unsigned char inline
 __ide_inb(int dev, int port)
 {
 	uchar val;
+
+#if defined(CONFIG_IDE_AHB)
+	val = ide_read_register(dev, port);
+#else
 	val = inb((ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)));
+#endif
+
 	debug ("ide_inb (dev= %d, port= 0x%x) : @ 0x%08lx -> 0x%02x\n",
 		dev, port, (ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)), val);
 	return val;
@@ -696,6 +700,7 @@ void ide_init (void)
 		ide_dev_desc[i].blksz=0;
 		ide_dev_desc[i].lba=0;
 		ide_dev_desc[i].block_read=ide_read;
+		ide_dev_desc[i].block_write = ide_write;
 		if (!ide_bus_ok[IDE_BUS(i)])
 			continue;
 		ide_led (led, 1);		/* LED on	*/
@@ -714,10 +719,12 @@ void ide_init (void)
 
 /* ------------------------------------------------------------------------- */
 
+#ifdef CONFIG_PARTITIONS
 block_dev_desc_t * ide_get_dev(int dev)
 {
 	return (dev < CONFIG_SYS_IDE_MAXDEVICE) ? &ide_dev_desc[dev] : NULL;
 }
+#endif
 
 
 #ifdef CONFIG_IDE_8xx_DIRECT
@@ -812,13 +819,14 @@ set_pcmcia_timing (int pmode)
 
 /* We only need to swap data if we are running on a big endian cpu. */
 /* But Au1x00 cpu:s already swaps data in big endian mode! */
-#if defined(__LITTLE_ENDIAN) || ( defined(CONFIG_AU1X00) && !defined(CONFIG_GTH2) )
+#if defined(__LITTLE_ENDIAN) || \
+   (defined(CONFIG_SOC_AU1X00) && !defined(CONFIG_GTH2))
 #define input_swap_data(x,y,z) input_data(x,y,z)
 #else
 static void
 input_swap_data(int dev, ulong *sect_buf, int words)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar i;
 	volatile uchar *pbuf_even = (uchar *)(ATA_CURR_BASE(dev)+ATA_DATA_EVEN);
 	volatile uchar *pbuf_odd  = (uchar *)(ATA_CURR_BASE(dev)+ATA_DATA_ODD);
@@ -856,9 +864,9 @@ input_swap_data(int dev, ulong *sect_buf, int words)
 
 #if defined(CONFIG_IDE_SWAP_IO)
 static void
-output_data(int dev, ulong *sect_buf, int words)
+output_data(int dev, const ulong *sect_buf, int words)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -900,9 +908,13 @@ output_data(int dev, ulong *sect_buf, int words)
 }
 #else	/* ! CONFIG_IDE_SWAP_IO */
 static void
-output_data(int dev, ulong *sect_buf, int words)
+output_data(int dev, const ulong *sect_buf, int words)
 {
-	outsw(ATA_CURR_BASE(dev)+ATA_DATA_REG, sect_buf, words<<1);
+#if defined(CONFIG_IDE_AHB)
+	ide_write_data(dev, sect_buf, words);
+#else
+	outsw(ATA_CURR_BASE(dev)+ATA_DATA_REG, sect_buf, words << 1);
+#endif
 }
 #endif	/* CONFIG_IDE_SWAP_IO */
 
@@ -910,7 +922,7 @@ output_data(int dev, ulong *sect_buf, int words)
 static void
 input_data(int dev, ulong *sect_buf, int words)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -960,7 +972,11 @@ input_data(int dev, ulong *sect_buf, int words)
 static void
 input_data(int dev, ulong *sect_buf, int words)
 {
+#if defined(CONFIG_IDE_AHB)
+	ide_read_data(dev, sect_buf, words);
+#else
 	insw(ATA_CURR_BASE(dev)+ATA_DATA_REG, sect_buf, words << 1);
+#endif
 }
 
 #endif	/* CONFIG_IDE_SWAP_IO */
@@ -1321,7 +1337,7 @@ IDE_READ_E:
 /* ------------------------------------------------------------------------- */
 
 
-ulong ide_write (int device, lbaint_t blknr, ulong blkcnt, void *buffer)
+ulong ide_write (int device, lbaint_t blknr, ulong blkcnt, const void *buffer)
 {
 	ulong n = 0;
 	unsigned char c;
@@ -1544,7 +1560,6 @@ static void ide_reset (void)
 
 #if defined(CONFIG_IDE_LED)	&& \
    !defined(CONFIG_CPC45)	&& \
-   !defined(CONFIG_HMI10)	&& \
    !defined(CONFIG_KUP4K)	&& \
    !defined(CONFIG_KUP4X)
 
@@ -1586,7 +1601,7 @@ int ide_device_present(int dev)
 static void
 output_data_shorts(int dev, ushort *sect_buf, int shorts)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -1618,7 +1633,7 @@ output_data_shorts(int dev, ushort *sect_buf, int shorts)
 static void
 input_data_shorts(int dev, ushort *sect_buf, int shorts)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;

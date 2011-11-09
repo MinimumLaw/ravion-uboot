@@ -33,6 +33,7 @@
 #include <bzlib.h>
 #include <environment.h>
 #include <asm/byteorder.h>
+#include <asm/mp.h>
 
 #if defined(CONFIG_OF_LIBFDT)
 #include <fdt.h>
@@ -47,7 +48,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 extern ulong get_effective_memsize(void);
 static ulong get_sp (void);
 static void set_clocks_in_mhz (bd_t *kbd);
@@ -87,7 +87,7 @@ static void boot_jump_linux(bootm_headers_t *images)
 		 *   r8: 0
 		 *   r9: 0
 		 */
-#if defined(CONFIG_85xx) || defined(CONFIG_440)
+#if defined(CONFIG_MPC85xx) || defined(CONFIG_440)
  #define EPAPR_MAGIC	(0x45504150)
 #else
  #define EPAPR_MAGIC	(0x65504150)
@@ -96,7 +96,7 @@ static void boot_jump_linux(bootm_headers_t *images)
 		debug ("   Booting using OF flat tree...\n");
 		WATCHDOG_RESET ();
 		(*kernel) ((bd_t *)of_flat_tree, 0, 0, EPAPR_MAGIC,
-			   CONFIG_SYS_BOOTMAPSZ, 0, 0);
+			   getenv_bootm_mapsize(), 0, 0);
 		/* does not return */
 	} else
 #endif
@@ -167,22 +167,15 @@ void arch_lmb_reserve(struct lmb *lmb)
 	sp -= 4096;
 	lmb_reserve(lmb, sp, (CONFIG_SYS_SDRAM_BASE + get_effective_memsize() - sp));
 
-	return ;
-}
-
-static void boot_prep_linux(void)
-{
 #ifdef CONFIG_MP
-	/* if we are MP make sure to flush the dcache() to any changes are made
-	 * visibile to all other cores */
-	flush_dcache();
+	cpu_mp_lmb_reserve(lmb);
 #endif
+
 	return ;
 }
 
 static int boot_cmdline_linux(bootm_headers_t *images)
 {
-	ulong bootmap_base = getenv_bootm_low();
 	ulong of_size = images->ft_len;
 	struct lmb *lmb = &images->lmb;
 	ulong *cmd_start = &images->cmdline_start;
@@ -192,7 +185,7 @@ static int boot_cmdline_linux(bootm_headers_t *images)
 
 	if (!of_size) {
 		/* allocate space and init command line */
-		ret = boot_get_cmdline (lmb, cmd_start, cmd_end, bootmap_base);
+		ret = boot_get_cmdline (lmb, cmd_start, cmd_end);
 		if (ret) {
 			puts("ERROR with allocation of cmdline\n");
 			return ret;
@@ -204,7 +197,6 @@ static int boot_cmdline_linux(bootm_headers_t *images)
 
 static int boot_bd_t_linux(bootm_headers_t *images)
 {
-	ulong bootmap_base = getenv_bootm_low();
 	ulong of_size = images->ft_len;
 	struct lmb *lmb = &images->lmb;
 	bd_t **kbd = &images->kbd;
@@ -213,7 +205,7 @@ static int boot_bd_t_linux(bootm_headers_t *images)
 
 	if (!of_size) {
 		/* allocate space for kernel copy of board info */
-		ret = boot_get_kbd (lmb, kbd, bootmap_base);
+		ret = boot_get_kbd (lmb, kbd);
 		if (ret) {
 			puts("ERROR with allocation of kernel bd\n");
 			return ret;
@@ -224,6 +216,24 @@ static int boot_bd_t_linux(bootm_headers_t *images)
 	return ret;
 }
 
+/*
+ * Verify the device tree.
+ *
+ * This function is called after all device tree fix-ups have been enacted,
+ * so that the final device tree can be verified.  The definition of "verified"
+ * is up to the specific implementation.  However, it generally means that the
+ * addresses of some of the devices in the device tree are compared with the
+ * actual addresses at which U-Boot has placed them.
+ *
+ * Returns 1 on success, 0 on failure.  If 0 is returned, U-boot will halt the
+ * boot process.
+ */
+static int __ft_verify_fdt(void *fdt)
+{
+	return 1;
+}
+__attribute__((weak, alias("__ft_verify_fdt"))) int ft_verify_fdt(void *fdt);
+
 static int boot_body_linux(bootm_headers_t *images)
 {
 	ulong rd_len;
@@ -231,12 +241,15 @@ static int boot_body_linux(bootm_headers_t *images)
 	ulong *initrd_start = &images->initrd_start;
 	ulong *initrd_end = &images->initrd_end;
 #if defined(CONFIG_OF_LIBFDT)
-	ulong bootmap_base = getenv_bootm_low();
 	ulong of_size = images->ft_len;
 	char **of_flat_tree = &images->ft_addr;
 #endif
 
 	int ret;
+
+#if defined(CONFIG_OF_LIBFDT)
+	boot_fdt_add_mem_rsv_regions(lmb, *of_flat_tree);
+#endif
 
 	/* allocate space and init command line */
 	ret = boot_cmdline_linux(images);
@@ -253,8 +266,8 @@ static int boot_body_linux(bootm_headers_t *images)
 	if (ret)
 		return ret;
 
-#if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_SYS_BOOTMAPSZ)
-	ret = boot_relocate_fdt(lmb, bootmap_base, of_flat_tree, &of_size);
+#if defined(CONFIG_OF_LIBFDT)
+	ret = boot_relocate_fdt(lmb, of_flat_tree, &of_size);
 	if (ret)
 		return ret;
 
@@ -283,16 +296,21 @@ static int boot_body_linux(bootm_headers_t *images)
 			return ret;
 		of_size = ret;
 
-		if (*initrd_start && *initrd_end)
+		if (*initrd_start && *initrd_end) {
 			of_size += FDT_RAMDISK_OVERHEAD;
+			fdt_set_totalsize(*of_flat_tree, of_size);
+		}
 		/* Create a new LMB reservation */
 		lmb_reserve(lmb, (ulong)*of_flat_tree, of_size);
 
 		/* fixup the initrd now that we know where it should be */
 		if (*initrd_start && *initrd_end)
 			fdt_initrd(*of_flat_tree, *initrd_start, *initrd_end, 1);
+
+		if (!ft_verify_fdt(*of_flat_tree))
+			return -1;
 	}
-#endif	/* CONFIG_OF_LIBFDT && CONFIG_SYS_BOOTMAPSZ */
+#endif	/* CONFIG_OF_LIBFDT */
 	return 0;
 }
 
@@ -311,17 +329,19 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 		return 0;
 	}
 
-	if (flag & BOOTM_STATE_OS_PREP) {
-		boot_prep_linux();
+	/*
+	 * We do nothing & report success to retain compatiablity with older
+	 * versions of u-boot in which this use to flush the dcache on MP
+	 * systems
+	 */
+	if (flag & BOOTM_STATE_OS_PREP)
 		return 0;
-	}
 
 	if (flag & BOOTM_STATE_OS_GO) {
 		boot_jump_linux(images);
 		return 0;
 	}
 
-	boot_prep_linux();
 	ret = boot_body_linux(images);
 	if (ret)
 		return ret;

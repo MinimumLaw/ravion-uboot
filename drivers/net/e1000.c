@@ -40,6 +40,8 @@ tested on both gig copper and gig fiber boards
  *  Copyright (C) Linux Networx.
  *  Massive upgrade to work with the new intel gigabit NICs.
  *  <ebiederman at lnxi dot com>
+ *
+ *  Copyright 2011 Freescale Semiconductor, Inc.
  */
 
 #include "e1000.h"
@@ -100,6 +102,7 @@ static struct pci_device_id supported[] = {
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82573E},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82573E_IAMT},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82573L},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82574L},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82546GB_QUAD_COPPER_KSP3},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_80003ES2LAN_COPPER_DPT},
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_80003ES2LAN_SERDES_DPT},
@@ -331,7 +334,7 @@ static boolean_t e1000_is_onboard_nvm_eeprom(struct e1000_hw *hw)
 	if (hw->mac_type == e1000_ich8lan)
 		return FALSE;
 
-	if (hw->mac_type == e1000_82573) {
+	if (hw->mac_type == e1000_82573 || hw->mac_type == e1000_82574) {
 		eecd = E1000_READ_REG(hw, EECD);
 
 		/* Isolate bits 15 & 16 */
@@ -364,7 +367,7 @@ e1000_acquire_eeprom(struct e1000_hw *hw)
 		return -E1000_ERR_SWFW_SYNC;
 	eecd = E1000_READ_REG(hw, EECD);
 
-	if (hw->mac_type != e1000_82573) {
+	if (hw->mac_type != e1000_82573 || hw->mac_type != e1000_82574) {
 		/* Request EEPROM Access */
 		if (hw->mac_type > e1000_82544) {
 			eecd |= E1000_EECD_REQ;
@@ -498,6 +501,7 @@ static int32_t e1000_init_eeprom_params(struct e1000_hw *hw)
 		eeprom->use_eewr = FALSE;
 		break;
 	case e1000_82573:
+	case e1000_82574:
 		eeprom->type = e1000_eeprom_spi;
 		eeprom->opcode_bits = 8;
 		eeprom->delay_usec = 1;
@@ -1317,6 +1321,9 @@ e1000_set_mac_type(struct e1000_hw *hw)
 	case E1000_DEV_ID_82573L:
 		hw->mac_type = e1000_82573;
 		break;
+	case E1000_DEV_ID_82574L:
+		hw->mac_type = e1000_82574;
+		break;
 	case E1000_DEV_ID_80003ES2LAN_COPPER_SPT:
 	case E1000_DEV_ID_80003ES2LAN_SERDES_SPT:
 	case E1000_DEV_ID_80003ES2LAN_COPPER_DPT:
@@ -1487,6 +1494,7 @@ e1000_initialize_hardware_bits(struct e1000_hw *hw)
 			E1000_WRITE_REG(hw, TARC1, reg_tarc1);
 			break;
 		case e1000_82573:
+		case e1000_82574:
 			reg_ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
 			reg_ctrl_ext &= ~(1 << 23);
 			reg_ctrl_ext |= (1 << 22);
@@ -1728,12 +1736,11 @@ e1000_init_hw(struct eth_device *nic)
 			| E1000_TXDCTL_FULL_TX_DESC_WB;
 		E1000_WRITE_REG(hw, TXDCTL1, ctrl);
 		break;
-	}
-
-	if (hw->mac_type == e1000_82573) {
-		uint32_t gcr = E1000_READ_REG(hw, GCR);
-		gcr |= E1000_GCR_L1_ACT_WITHOUT_L0S_RX;
-		E1000_WRITE_REG(hw, GCR, gcr);
+	case e1000_82573:
+	case e1000_82574:
+		reg_data = E1000_READ_REG(hw, GCR);
+		reg_data |= E1000_GCR_L1_ACT_WITHOUT_L0S_RX;
+		E1000_WRITE_REG(hw, GCR, reg_data);
 	}
 
 #if 0
@@ -1812,6 +1819,7 @@ e1000_setup_link(struct eth_device *nic)
 		switch (hw->mac_type) {
 		case e1000_ich8lan:
 		case e1000_82573:
+		case e1000_82574:
 			hw->fc = e1000_fc_full;
 			break;
 		default:
@@ -4560,6 +4568,9 @@ static int e1000_set_phy_type (struct e1000_hw *hw)
 			hw->phy_type = e1000_phy_gg82563;
 			break;
 		}
+	case BME1000_E_PHY_ID:
+		hw->phy_type = e1000_phy_bm;
+		break;
 		/* Fall Through */
 	default:
 		/* Should never have loaded on this device */
@@ -4646,6 +4657,10 @@ e1000_detect_gig_phy(struct e1000_hw *hw)
 		if (hw->phy_id == M88E1111_I_PHY_ID)
 			match = TRUE;
 		break;
+	case e1000_82574:
+		if (hw->phy_id == BME1000_E_PHY_ID)
+			match = TRUE;
+		break;
 	case e1000_80003es2lan:
 		if (hw->phy_id == GG82563_E_PHY_ID)
 			match = TRUE;
@@ -4710,6 +4725,7 @@ e1000_set_media_type(struct e1000_hw *hw)
 			break;
 		case e1000_ich8lan:
 		case e1000_82573:
+		case e1000_82574:
 			/* The STATUS_TBIMODE bit is reserved or reused
 			 * for the this device.
 			 */
@@ -5018,6 +5034,7 @@ TRANSMIT - Transmit a frame
 static int
 e1000_transmit(struct eth_device *nic, volatile void *packet, int length)
 {
+	void * nv_packet = (void *)packet;
 	struct e1000_hw *hw = nic->priv;
 	struct e1000_tx_desc *txp;
 	int i = 0;
@@ -5025,7 +5042,7 @@ e1000_transmit(struct eth_device *nic, volatile void *packet, int length)
 	txp = tx_base + tx_tail;
 	tx_tail = (tx_tail + 1) % 8;
 
-	txp->buffer_addr = cpu_to_le64(virt_to_bus(hw->pdev, packet));
+	txp->buffer_addr = cpu_to_le64(virt_to_bus(hw->pdev, nv_packet));
 	txp->lower.data = cpu_to_le32(hw->txd_cmd | length);
 	txp->upper.data = 0;
 	E1000_WRITE_REG(hw, TDT, tx_tail);
@@ -5124,6 +5141,7 @@ void e1000_get_bus_type(struct e1000_hw *hw)
 	case e1000_82571:
 	case e1000_82572:
 	case e1000_82573:
+	case e1000_82574:
 	case e1000_80003es2lan:
 		hw->bus_type = e1000_bus_type_pci_express;
 		break;
@@ -5177,7 +5195,21 @@ e1000_initialize(bd_t * bis)
 		}
 
 		nic = (struct eth_device *) malloc(sizeof (*nic));
+		if (!nic) {
+			printf("Error: e1000 - Can not alloc memory\n");
+			return 0;
+		}
+
 		hw = (struct e1000_hw *) malloc(sizeof (*hw));
+		if (!hw) {
+			free(nic);
+			printf("Error: e1000 - Can not alloc memory\n");
+			return 0;
+		}
+
+		memset(nic, 0, sizeof(*nic));
+		memset(hw, 0, sizeof(*hw));
+
 		hw->pdev = devno;
 		nic->priv = hw;
 

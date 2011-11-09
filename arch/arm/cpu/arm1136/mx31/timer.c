@@ -22,8 +22,10 @@
  */
 
 #include <common.h>
-#include <asm/arch/mx31-regs.h>
+#include <asm/arch/imx-regs.h>
 #include <div64.h>
+#include <watchdog.h>
+#include <asm/io.h>
 
 #define TIMER_BASE 0x53f90000 /* General purpose timer 1 */
 
@@ -39,8 +41,7 @@
 #define GPTCR_CLKSOURCE_32	(4 << 6)	/* Clock source		*/
 #define GPTCR_TEN		1		/* Timer enable		*/
 
-static ulong timestamp;
-static ulong lastinc;
+DECLARE_GLOBAL_DATA_PTR;
 
 /* "time" is measured in 1 / CONFIG_SYS_HZ seconds, "tick" is internal timer period */
 #ifdef CONFIG_MX31_TIMER_HIGH_PRECISION
@@ -105,29 +106,17 @@ int timer_init (void)
 	return 0;
 }
 
-void reset_timer_masked (void)
-{
-	/* reset time */
-	lastinc = GPTCNT; /* capture current incrementer value time */
-	timestamp = 0; /* start "advancing" time stamp from 0 */
-}
-
-void reset_timer(void)
-{
-	reset_timer_masked();
-}
-
 unsigned long long get_ticks (void)
 {
 	ulong now = GPTCNT; /* current tick value */
 
-	if (now >= lastinc)	/* normal mode (non roll) */
+	if (now >= gd->lastinc)	/* normal mode (non roll) */
 		/* move stamp forward with absolut diff ticks */
-		timestamp += (now - lastinc);
+		gd->tbl += (now - gd->lastinc);
 	else			/* we have rollover of incrementer */
-		timestamp += (0xFFFFFFFF - lastinc) + now;
-	lastinc = now;
-	return timestamp;
+		gd->tbl += (0xFFFFFFFF - gd->lastinc) + now;
+	gd->lastinc = now;
+	return gd->tbl;
 }
 
 ulong get_timer_masked (void)
@@ -146,11 +135,6 @@ ulong get_timer (ulong base)
 	return get_timer_masked () - base;
 }
 
-void set_timer (ulong t)
-{
-	timestamp = time_to_tick(t);
-}
-
 /* delay x useconds AND preserve advance timestamp value */
 void __udelay (unsigned long usec)
 {
@@ -166,5 +150,39 @@ void __udelay (unsigned long usec)
 
 void reset_cpu (ulong addr)
 {
-	__REG16(WDOG_BASE) = 4;
+	struct wdog_regs *wdog = (struct wdog_regs *)WDOG_BASE;
+	wdog->wcr = WDOG_ENABLE;
+	while (1)
+		;
 }
+
+#ifdef CONFIG_HW_WATCHDOG
+void mxc_hw_watchdog_enable(void)
+{
+	struct wdog_regs *wdog = (struct wdog_regs *)WDOG_BASE;
+	u16 secs;
+
+	/*
+	 * The timer watchdog can be set between
+	 * 0.5 and 128 Seconds. If not defined
+	 * in configuration file, sets 64 Seconds
+	 */
+#ifdef CONFIG_SYS_WD_TIMER_SECS
+	secs = (CONFIG_SYS_WD_TIMER_SECS << 1) & 0xFF;
+	if (!secs) secs = 1;
+#else
+	secs = 64;
+#endif
+	writew(readw(&wdog->wcr) | (secs << WDOG_WT_SHIFT) | WDOG_ENABLE,
+		&wdog->wcr);
+}
+
+
+void mxc_hw_watchdog_reset(void)
+{
+	struct wdog_regs *wdog = (struct wdog_regs *)WDOG_BASE;
+
+	writew(0x5555, &wdog->wsr);
+	writew(0xAAAA, &wdog->wsr);
+}
+#endif

@@ -299,7 +299,7 @@ OUTL(struct eth_device *dev, int command, u_long addr)
  * Description: Retrieves the MAC address of the card, and sets up some
  *  globals required by other routines, and initializes the NIC, making it
  *  ready to send and receive packets.
- * Side effects: initializes ns8382xs, ready to recieve packets.
+ * Side effects: initializes ns8382xs, ready to receive packets.
  * Returns:   int:          number of cards found
  */
 
@@ -340,6 +340,11 @@ ns8382x_initialize(bd_t * bis)
 		}
 
 		dev = (struct eth_device *) malloc(sizeof *dev);
+		if (!dev) {
+			printf("ns8382x: Can not allocate memory\n");
+			break;
+		}
+		memset(dev, 0, sizeof(*dev));
 
 		sprintf(dev->name, "dp8382x#%d", card_number);
 		dev->iobase = bus_to_phys(iobase);

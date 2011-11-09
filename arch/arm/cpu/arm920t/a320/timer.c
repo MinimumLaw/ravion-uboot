@@ -19,21 +19,19 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/ftpmu010.h>
-#include <asm/arch/fttmr010.h>
+#include <faraday/ftpmu010.h>
+#include <faraday/fttmr010.h>
 
 static ulong timestamp;
 static ulong lastdec;
 
 static struct fttmr010 *tmr = (struct fttmr010 *)CONFIG_FTTMR010_BASE;
-static struct ftpmu010 *pmu = (struct ftpmu010 *)CONFIG_FTPMU010_BASE;
 
 #define TIMER_CLOCK	32768
 #define TIMER_LOAD_VAL	0xffffffff
 
 int timer_init(void)
 {
-	unsigned int oscc;
 	unsigned int cr;
 
 	debug("%s()\n", __func__);
@@ -41,23 +39,8 @@ int timer_init(void)
 	/* disable timers */
 	writel(0, &tmr->cr);
 
-	/*
-	 * use 32768Hz oscillator for RTC, WDT, TIMER
-	 */
-
-	/* enable the 32768Hz oscillator */
-	oscc = readl(&pmu->OSCC);
-	oscc &= ~(FTPMU010_OSCC_OSCL_OFF | FTPMU010_OSCC_OSCL_TRI);
-	writel(oscc, &pmu->OSCC);
-
-	/* wait until ready */
-	while (!(readl(&pmu->OSCC) & FTPMU010_OSCC_OSCL_STABLE))
-		;
-
-	/* select 32768Hz oscillator */
-	oscc = readl(&pmu->OSCC);
-	oscc |= FTPMU010_OSCC_OSCL_RTCLSEL;
-	writel(oscc, &pmu->OSCC);
+	/* use 32768Hz oscillator for RTC, WDT, TIMER */
+	ftpmu010_32768osc_enable();
 
 	/* setup timer */
 	writel(TIMER_LOAD_VAL, &tmr->timer3_load);
@@ -96,12 +79,6 @@ void reset_timer_masked(void)
 	timestamp = 0;		/* start "advancing" time stamp from 0 */
 
 	debug("%s(): lastdec = %lx\n", __func__, lastdec);
-}
-
-void reset_timer(void)
-{
-	debug("%s()\n", __func__);
-	reset_timer_masked();
 }
 
 /*
@@ -147,12 +124,6 @@ ulong get_timer(ulong base)
 {
 	debug("%s(%lx)\n", __func__, base);
 	return get_timer_masked() - base;
-}
-
-void set_timer(ulong t)
-{
-	debug("%s(%lx)\n", __func__, t);
-	timestamp = t;
 }
 
 /* delay x useconds AND preserve advance timestamp value */

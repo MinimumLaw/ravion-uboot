@@ -34,9 +34,6 @@
 #endif
 #include <watchdog.h>
 
-#include <u-boot/md5.h>
-#include <sha1.h>
-
 #ifdef	CMD_MEM_DEBUG
 #define	PRINTF(fmt,args...)	printf (fmt ,##args)
 #else
@@ -48,9 +45,9 @@ static int mod_mem(cmd_tbl_t *, int, int, int, char * const []);
 /* Display values from last command.
  * Memory modify remembered values are different from display memory.
  */
-uint	dp_last_addr, dp_last_size;
-uint	dp_last_length = 0x40;
-uint	mm_last_addr, mm_last_size;
+static uint	dp_last_addr, dp_last_size;
+static uint	dp_last_length = 0x40;
+static uint	mm_last_addr, mm_last_size;
 
 static	ulong	base_address = 0;
 
@@ -337,6 +334,10 @@ int do_mem_cmp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		ngood++;
 		addr1 += size;
 		addr2 += size;
+
+		/* reset watchdog from time to time */
+		if ((count % (64 << 10)) == 0)
+			WATCHDOG_RESET();
 	}
 
 	printf("Total of %ld %s%s were the same\n",
@@ -447,6 +448,10 @@ int do_mem_cp ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			*((u_char *)dest) = *((u_char *)addr);
 		addr += size;
 		dest += size;
+
+		/* reset watchdog from time to time */
+		if ((count % (64 << 10)) == 0)
+			WATCHDOG_RESET();
 	}
 	return 0;
 }
@@ -1069,6 +1074,8 @@ mod_mem(cmd_tbl_t *cmdtp, int incrflag, int flag, int argc, char * const argv[])
 	return 0;
 }
 
+#ifdef CONFIG_CMD_CRC32
+
 #ifndef CONFIG_CRC32_VERIFY
 
 int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -1085,7 +1092,7 @@ int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	length = simple_strtoul (argv[2], NULL, 16);
 
-	crc = crc32 (0, (const uchar *) addr, length);
+	crc = crc32_wd (0, (const uchar *) addr, length, CHUNKSZ_CRC32);
 
 	printf ("CRC32 for %08lx ... %08lx ==> %08lx\n",
 			addr, addr + length - 1, crc);
@@ -1130,7 +1137,7 @@ usage:
 	addr += base_address;
 	length = simple_strtoul(*av++, NULL, 16);
 
-	crc = crc32(0, (const uchar *) addr, length);
+	crc = crc32_wd (0, (const uchar *) addr, length, CHUNKSZ_CRC32);
 
 	if (!verify) {
 		printf ("CRC32 for %08lx ... %08lx ==> %08lx\n",
@@ -1153,74 +1160,7 @@ usage:
 }
 #endif	/* CONFIG_CRC32_VERIFY */
 
-#ifdef CONFIG_CMD_MD5SUM
-int do_md5sum(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	unsigned long addr, len;
-	unsigned int i;
-	u8 output[16];
-
-	if (argc < 3)
-		return cmd_usage(cmdtp);
-
-	addr = simple_strtoul(argv[1], NULL, 16);
-	len = simple_strtoul(argv[2], NULL, 16);
-
-	md5((unsigned char *) addr, len, output);
-	printf("md5 for %08lx ... %08lx ==> ", addr, addr + len - 1);
-	for (i = 0; i < 16; i++)
-		printf("%02x", output[i]);
-	printf("\n");
-
-	return 0;
-}
 #endif
-
-#ifdef CONFIG_CMD_SHA1
-int do_sha1sum(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	unsigned long addr, len;
-	unsigned int i;
-	u8 output[20];
-
-	if (argc < 3)
-		return cmd_usage(cmdtp);
-
-	addr = simple_strtoul(argv[1], NULL, 16);
-	len = simple_strtoul(argv[2], NULL, 16);
-
-	sha1_csum((unsigned char *) addr, len, output);
-	printf("SHA1 for %08lx ... %08lx ==> ", addr, addr + len - 1);
-	for (i = 0; i < 20; i++)
-		printf("%02x", output[i]);
-	printf("\n");
-
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_CMD_UNZIP
-int do_unzip ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	unsigned long src, dst;
-	unsigned long src_len = ~0UL, dst_len = ~0UL;
-
-	switch (argc) {
-		case 4:
-			dst_len = simple_strtoul(argv[3], NULL, 16);
-			/* fall through */
-		case 3:
-			src = simple_strtoul(argv[1], NULL, 16);
-			dst = simple_strtoul(argv[2], NULL, 16);
-			break;
-		default:
-			return cmd_usage(cmdtp);
-	}
-
-	return !!gunzip((void *) dst, dst_len, (void *) src, &src_len);
-}
-#endif /* CONFIG_CMD_UNZIP */
-
 
 /**************************************************/
 U_BOOT_CMD(
@@ -1261,6 +1201,8 @@ U_BOOT_CMD(
 	"[.b, .w, .l] addr1 addr2 count"
 );
 
+#ifdef CONFIG_CMD_CRC32
+
 #ifndef CONFIG_CRC32_VERIFY
 
 U_BOOT_CMD(
@@ -1279,6 +1221,8 @@ U_BOOT_CMD(
 );
 
 #endif	/* CONFIG_CRC32_VERIFY */
+
+#endif
 
 U_BOOT_CMD(
 	base,	2,	1,	do_mem_base,
@@ -1320,27 +1264,3 @@ U_BOOT_CMD(
 	"[.b, .w, .l] address value delay(ms)"
 );
 #endif /* CONFIG_MX_CYCLIC */
-
-#ifdef CONFIG_CMD_MD5SUM
-U_BOOT_CMD(
-	md5sum,	3,	1,	do_md5sum,
-	"compute MD5 message digest",
-	"address count"
-);
-#endif
-
-#ifdef CONFIG_CMD_SHA1SUM
-U_BOOT_CMD(
-	sha1sum,	3,	1,	do_sha1sum,
-	"compute SHA1 message digest",
-	"address count"
-);
-#endif /* CONFIG_CMD_SHA1 */
-
-#ifdef CONFIG_CMD_UNZIP
-U_BOOT_CMD(
-	unzip,	4,	1,	do_unzip,
-	"unzip a memory region",
-	"srcaddr dstaddr [dstsize]"
-);
-#endif /* CONFIG_CMD_UNZIP */

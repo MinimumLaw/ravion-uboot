@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Freescale Semiconductor, Inc.
+ * Copyright 2010-2011 Freescale Semiconductor, Inc.
  * Authors: Srikanth Srinivasan <srikanth.srinivasan@freescale.com>
  *          Timur Tabi <timur@freescale.com>
  *
@@ -22,11 +22,12 @@
 #include <asm/io.h>
 #include <libfdt.h>
 #include <fdt_support.h>
+#include <fsl_mdio.h>
 #include <tsec.h>
 #include <asm/fsl_law.h>
-#include <asm/mp.h>
 #include <netdev.h>
 #include <i2c.h>
+#include <hwconfig.h>
 
 #include "../common/ngpixis.h"
 
@@ -45,6 +46,9 @@ int board_early_init_f(void)
 	/* Set the pin muxing to enable ETSEC2. */
 	clrbits_be32(&gur->pmuxcr2, 0x001F8000);
 
+	/* Enable the SPI */
+	clrsetbits_8(&pixis->brdcfg0, PIXIS_ELBC_SPI_MASK, PIXIS_SPI);
+
 	return 0;
 }
 
@@ -53,6 +57,9 @@ int checkboard(void)
 	u8 sw;
 
 	puts("Board: P1022DS ");
+#ifdef CONFIG_PHYS_64BIT
+	puts("(36-bit addrmap) ");
+#endif
 
 	printf("Sys ID: 0x%02x, Sys Ver: 0x%02x, FPGA Ver: 0x%02x, ",
 		in_8(&pixis->id), in_8(&pixis->arch), in_8(&pixis->scver));
@@ -75,48 +82,93 @@ int checkboard(void)
 	return 0;
 }
 
-phys_size_t initdram(int board_type)
-{
-	phys_size_t dram_size = 0;
-
-	puts("Initializing....\n");
-
-	dram_size = fsl_ddr_sdram();
-	dram_size = setup_ddr_tlbs(dram_size / 0x100000) * 0x100000;
-
-	puts("    DDR: ");
-	return dram_size;
-}
-
 #define CONFIG_TFP410_I2C_ADDR	0x38
+
+/* Masks for the SSI_TDM and AUDCLK bits of the ngPIXIS BRDCFG1 register. */
+#define CONFIG_PIXIS_BRDCFG1_SSI_TDM_MASK	0x0c
+#define CONFIG_PIXIS_BRDCFG1_AUDCLK_MASK	0x03
+
+/* Route the I2C1 pins to the SSI port instead. */
+#define CONFIG_PIXIS_BRDCFG1_SSI_TDM_SSI	0x08
+
+/* Choose the 12.288Mhz codec reference clock */
+#define CONFIG_PIXIS_BRDCFG1_AUDCLK_12		0x02
+
+/* Choose the 11.2896Mhz codec reference clock */
+#define CONFIG_PIXIS_BRDCFG1_AUDCLK_11		0x01
+
+/* Connect to USB2 */
+#define CONFIG_PIXIS_BRDCFG0_USB2		0x10
+/* Connect to TFM bus */
+#define CONFIG_PIXIS_BRDCFG1_TDM		0x0c
+/* Connect to SPI */
+#define CONFIG_PIXIS_BRDCFG0_SPI		0x80
 
 int misc_init_r(void)
 {
 	u8 temp;
+	const char *audclk;
+	size_t arglen;
+	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 
-	/*  Enable the TFP410 Encoder */
+	/* For DVI, enable the TFP410 Encoder. */
 
 	temp = 0xBF;
 	if (i2c_write(CONFIG_TFP410_I2C_ADDR, 0x08, 1, &temp, sizeof(temp)) < 0)
 		return -1;
-
-	/* Verify if enabled */
-	temp = 0;
 	if (i2c_read(CONFIG_TFP410_I2C_ADDR, 0x08, 1, &temp, sizeof(temp)) < 0)
 		return -1;
-
 	debug("DVI Encoder Read: 0x%02x\n", temp);
 
 	temp = 0x10;
 	if (i2c_write(CONFIG_TFP410_I2C_ADDR, 0x0A, 1, &temp, sizeof(temp)) < 0)
 		return -1;
-
-	/* Verify if enabled */
-	temp = 0;
 	if (i2c_read(CONFIG_TFP410_I2C_ADDR, 0x0A, 1, &temp, sizeof(temp)) < 0)
 		return -1;
-
 	debug("DVI Encoder Read: 0x%02x\n",temp);
+
+	/* Enable the USB2 in PMUXCR2 and FGPA */
+	if (hwconfig("usb2")) {
+		clrsetbits_be32(&gur->pmuxcr2, MPC85xx_PMUXCR2_ETSECUSB_MASK,
+			MPC85xx_PMUXCR2_USB);
+		setbits_8(&pixis->brdcfg0, CONFIG_PIXIS_BRDCFG0_USB2);
+	}
+
+	/* tdm and audio can not enable simultaneous*/
+	if (hwconfig("tdm") && hwconfig("audclk")){
+		printf("WARNING: TDM and AUDIO can not be enabled simultaneous !\n");
+		return -1;
+	}
+
+	/* Enable the TDM in PMUXCR and FGPA */
+	if (hwconfig("tdm")) {
+		clrsetbits_be32(&gur->pmuxcr, MPC85xx_PMUXCR_TDM_MASK,
+			MPC85xx_PMUXCR_TDM);
+		setbits_8(&pixis->brdcfg1, CONFIG_PIXIS_BRDCFG1_TDM);
+		/* TDM need some configration option by SPI */
+		clrsetbits_be32(&gur->pmuxcr, MPC85xx_PMUXCR_SPI_MASK,
+			MPC85xx_PMUXCR_SPI);
+		setbits_8(&pixis->brdcfg0, CONFIG_PIXIS_BRDCFG0_SPI);
+	}
+
+	/*
+	 * Enable the reference clock for the WM8776 codec, and route the MUX
+	 * pins for SSI. The default is the 12.288 MHz clock
+	 */
+
+	if (hwconfig("audclk")) {
+		temp = in_8(&pixis->brdcfg1) & ~(CONFIG_PIXIS_BRDCFG1_SSI_TDM_MASK |
+			CONFIG_PIXIS_BRDCFG1_AUDCLK_MASK);
+		temp |= CONFIG_PIXIS_BRDCFG1_SSI_TDM_SSI;
+
+		audclk = hwconfig_arg("audclk", &arglen);
+		/* Check the first two chars only */
+		if (audclk && (strncmp(audclk, "11", 2) == 0))
+			temp |= CONFIG_PIXIS_BRDCFG1_AUDCLK_11;
+		else
+			temp |= CONFIG_PIXIS_BRDCFG1_AUDCLK_12;
+		setbits_8(&pixis->brdcfg1, temp);
+	}
 
 	return 0;
 }
@@ -175,7 +227,7 @@ static u8 serdes_dev_slot[][SATA2 + 1] = {
  * Returns the name of the slot to which the PCIe or SATA controller is
  * connected
  */
-const char *serdes_slot_name(enum srds_prtcl device)
+const char *board_serdes_name(enum srds_prtcl device)
 {
 	ccsr_gur_t *gur = (void *)CONFIG_SYS_MPC85xx_GUTS_ADDR;
 	u32 pordevsr = in_be32(&gur->pordevsr);
@@ -190,73 +242,10 @@ const char *serdes_slot_name(enum srds_prtcl device)
 		return "Nothing";
 }
 
-static void configure_pcie(struct fsl_pci_info *info,
-			   struct pci_controller *hose,
-			   const char *connected)
-{
-	static int bus_number = 0;
-	int is_endpoint;
-
-	set_next_law(info->mem_phys, law_size_bits(info->mem_size), info->law);
-	set_next_law(info->io_phys, law_size_bits(info->io_size), info->law);
-	is_endpoint = fsl_setup_hose(hose, info->regs);
-	printf("    PCIE%u connected to %s as %s (base addr %lx)\n",
-	       info->pci_num, connected,
-	       is_endpoint ? "Endpoint" : "Root Complex", info->regs);
-	bus_number = fsl_pci_init_port(info, hose, bus_number);
-}
-
-#ifdef CONFIG_PCIE1
-static struct pci_controller pcie1_hose;
-#endif
-
-#ifdef CONFIG_PCIE2
-static struct pci_controller pcie2_hose;
-#endif
-
-#ifdef CONFIG_PCIE3
-static struct pci_controller pcie3_hose;
-#endif
-
 #ifdef CONFIG_PCI
 void pci_init_board(void)
 {
-	ccsr_gur_t *gur = (void *)CONFIG_SYS_MPC85xx_GUTS_ADDR;
-	struct fsl_pci_info pci_info;
-	u32 devdisr = in_be32(&gur->devdisr);
-
-#ifdef CONFIG_PCIE1
-	if (is_serdes_configured(PCIE1) && !(devdisr & MPC85xx_DEVDISR_PCIE)) {
-		SET_STD_PCIE_INFO(pci_info, 1);
-		configure_pcie(&pci_info, &pcie1_hose, serdes_slot_name(PCIE1));
-	} else {
-		printf("    PCIE1: disabled\n");
-	}
-#else
-	setbits_be32(&gur->devdisr, MPC85xx_DEVDISR_PCIE); /* disable */
-#endif
-
-#ifdef CONFIG_PCIE2
-	if (is_serdes_configured(PCIE2) && !(devdisr & MPC85xx_DEVDISR_PCIE2)) {
-		SET_STD_PCIE_INFO(pci_info, 2);
-		configure_pcie(&pci_info, &pcie2_hose, serdes_slot_name(PCIE2));
-	} else {
-		printf("    PCIE2: disabled\n");
-	}
-#else
-	setbits_be32(&gur->devdisr, MPC85xx_DEVDISR_PCIE2); /* disable */
-#endif
-
-#ifdef CONFIG_PCIE3
-	if (is_serdes_configured(PCIE3) && !(devdisr & MPC85xx_DEVDISR_PCIE3)) {
-		SET_STD_PCIE_INFO(pci_info, 3);
-		configure_pcie(&pci_info, &pcie3_hose, serdes_slot_name(PCIE3));
-	} else {
-		printf("    PCIE3: disabled\n");
-	}
-#else
-	setbits_be32(&gur->devdisr, MPC85xx_DEVDISR_PCIE3); /* disable */
-#endif
+	fsl_pcie_init_board(0);
 }
 #endif
 
@@ -294,6 +283,7 @@ int board_early_init_r(void)
  */
 int board_eth_init(bd_t *bis)
 {
+	struct fsl_pq_mdio_info mdio_info;
 	struct tsec_info_struct tsec_info[2];
 	unsigned int num = 0;
 
@@ -306,10 +296,39 @@ int board_eth_init(bd_t *bis)
 	num++;
 #endif
 
+	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
+	mdio_info.name = DEFAULT_MII_NAME;
+	fsl_pq_mdio_init(bis, &mdio_info);
+
 	return tsec_eth_init(bis, tsec_info, num) + pci_eth_init(bis);
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
+/**
+ * ft_codec_setup - fix up the clock-frequency property of the codec node
+ *
+ * Update the clock-frequency property based on the value of the 'audclk'
+ * hwconfig option.  If audclk is not specified, then don't write anything
+ * to the device tree, because it means that the codec clock is disabled.
+ */
+static void ft_codec_setup(void *blob, const char *compatible)
+{
+	const char *audclk;
+	size_t arglen;
+	u32 freq;
+
+	audclk = hwconfig_arg("audclk", &arglen);
+	if (audclk) {
+		if (strncmp(audclk, "11", 2) == 0)
+			freq = 11289600;
+		else
+			freq = 12288000;
+
+		do_fixup_by_compat_u32(blob, compatible, "clock-frequency",
+				       freq, 1);
+	}
+}
+
 void ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
@@ -327,12 +346,8 @@ void ft_board_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_FSL_SGMII_RISER
 	fsl_sgmii_riser_fdt_fixup(blob);
 #endif
-}
-#endif
 
-#ifdef CONFIG_MP
-void board_lmb_reserve(struct lmb *lmb)
-{
-	cpu_mp_lmb_reserve(lmb);
+	/* Update the WM8776 node's clock frequency property */
+	ft_codec_setup(blob, "wlf,wm8776");
 }
 #endif

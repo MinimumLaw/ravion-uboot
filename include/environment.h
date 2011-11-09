@@ -107,7 +107,8 @@ extern unsigned long nand_env_oob_offset;
 #ifdef CONFIG_ENV_IS_EMBEDDED
 # if !defined(CONFIG_ENV_IS_IN_FLASH) && \
      !defined(CONFIG_ENV_IS_IN_NAND) && \
-     !defined(CONFIG_ENV_IS_IN_ONENAND)
+     !defined(CONFIG_ENV_IS_IN_ONENAND) && \
+     !defined(CONFIG_ENV_IS_IN_SPI_FLASH)
 #  error "CONFIG_ENV_IS_EMBEDDED not supported for your flash type"
 # endif
 #endif
@@ -123,7 +124,9 @@ extern unsigned long nand_env_oob_offset;
 /* The build system likes to know if the env is embedded */
 #ifdef DO_DEPS_ONLY
 # ifdef ENV_IS_EMBEDDED
-#  define CONFIG_ENV_IS_EMBEDDED
+#  ifndef CONFIG_ENV_IS_EMBEDDED
+#   define CONFIG_ENV_IS_EMBEDDED
+#  endif
 # endif
 #endif
 
@@ -149,17 +152,28 @@ typedef	struct environment_s {
 	unsigned char	data[ENV_SIZE]; /* Environment data		*/
 } env_t;
 
+#ifndef DO_DEPS_ONLY
+
+#include <search.h>
+
+extern struct hsearch_data env_htab;
+
 /* Function that returns a character from the environment */
 unsigned char env_get_char (int);
 
 /* Function that returns a pointer to a value from the environment */
-unsigned char *env_get_addr(int);
+const unsigned char *env_get_addr(int);
 unsigned char env_get_char_memory (int index);
 
 /* Function that updates CRC of the enironment */
 void env_crc_update (void);
 
 /* [re]set to the default environment */
-void set_default_env(void);
+void set_default_env(const char *s);
+
+/* Import from binary representation into hash table */
+int env_import(const char *buf, int check);
+
+#endif
 
 #endif	/* _ENVIRONMENT_H_ */

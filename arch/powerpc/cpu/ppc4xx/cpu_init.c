@@ -23,10 +23,10 @@
 
 #include <common.h>
 #include <watchdog.h>
-#include <ppc4xx_enet.h>
+#include <asm/ppc4xx-emac.h>
 #include <asm/processor.h>
-#include <asm/gpio.h>
-#include <ppc4xx.h>
+#include <asm/ppc4xx-gpio.h>
+#include <asm/ppc4xx.h>
 
 #if defined(CONFIG_405GP)  || defined(CONFIG_405EP)
 DECLARE_GLOBAL_DATA_PTR;
@@ -221,6 +221,66 @@ void reconfigure_pll(u32 new_cpu_freq)
 #endif
 }
 
+#ifdef CONFIG_SYS_4xx_CHIP_21_ERRATA
+void
+chip_21_errata(void)
+{
+	/*
+	 * See rev 1.09 of the 405EX/405EXr errata.  CHIP_21 says that
+	 * sometimes reading the PVR and/or SDR0_ECID results in incorrect
+	 * values.  Since the rev-D chip uses the SDR0_ECID bits to control
+	 * internal features, that means the second PCIe or ethernet of an EX
+	 * variant could fail to work.  Also, security features of both EX and
+	 * EXr might be incorrectly disabled.
+	 *
+	 * The suggested workaround is as follows (covering rev-C and rev-D):
+	 *
+	 * 1.Read the PVR and SDR0_ECID3.
+	 *
+	 * 2.If the PVR matches an expected Revision C PVR value AND if
+	 * SDR0_ECID3[12:15] is different from PVR[28:31], then processor is
+	 * Revision C: continue executing the initialization code (no reset
+	 * required).  else go to step 3.
+	 *
+	 * 3.If the PVR matches an expected Revision D PVR value AND if
+	 * SDR0_ECID3[10:11] matches its expected value, then continue
+	 * executing initialization code, no reset required.  else write
+	 * DBCR0[RST] = 0b11 to generate a SysReset.
+	 */
+
+	u32 pvr;
+	u32 pvr_28_31;
+	u32 ecid3;
+	u32 ecid3_10_11;
+	u32 ecid3_12_15;
+
+	/* Step 1: */
+	pvr = get_pvr();
+	mfsdr(SDR0_ECID3, ecid3);
+
+	/* Step 2: */
+	pvr_28_31 = pvr & 0xf;
+	ecid3_10_11 = (ecid3 >> 20) & 0x3;
+	ecid3_12_15 = (ecid3 >> 16) & 0xf;
+	if ((pvr == CONFIG_405EX_CHIP21_PVR_REV_C) &&
+			(pvr_28_31 != ecid3_12_15)) {
+		/* No reset required. */
+		return;
+	}
+
+	/* Step 3: */
+	if ((pvr == CONFIG_405EX_CHIP21_PVR_REV_D) &&
+			(ecid3_10_11 == CONFIG_405EX_CHIP21_ECID3_REV_D)) {
+		/* No reset required. */
+		return;
+	}
+
+	/* Reset required. */
+	__asm__ __volatile__ ("sync; isync");
+	mtspr(SPRN_DBCR0, 0x30000000);
+}
+#endif
+
 /*
  * Breath some life into the CPU...
  *
@@ -235,9 +295,14 @@ cpu_init_f (void)
 	u32 val;
 #endif
 
+#ifdef CONFIG_SYS_4xx_CHIP_21_ERRATA
+	chip_21_errata();
+#endif
+
 	reconfigure_pll(CONFIG_SYS_PLL_RECONFIG);
 
-#if (defined(CONFIG_405EP) || defined (CONFIG_405EX)) && !defined(CONFIG_SYS_4xx_GPIO_TABLE)
+#if (defined(CONFIG_405EP) || defined (CONFIG_405EX)) && \
+    !defined(CONFIG_APM821XX) &&!defined(CONFIG_SYS_4xx_GPIO_TABLE)
 	/*
 	 * GPIO0 setup (select GPIO or alternate function)
 	 */
@@ -266,7 +331,7 @@ cpu_init_f (void)
 	/*
 	 * Set EMAC noise filter bits
 	 */
-	mtdcr(CPC0_EPCTL, CPC0_EPRCSR_E0NFE | CPC0_EPRCSR_E1NFE);
+	mtdcr(CPC0_EPCTL, CPC0_EPCTL_E0NFE | CPC0_EPCTL_E1NFE);
 #endif /* CONFIG_405EP */
 
 #if defined(CONFIG_SYS_4xx_GPIO_TABLE)
@@ -341,7 +406,7 @@ cpu_init_f (void)
 #endif
 
 #if defined(CONFIG_WATCHDOG)
-	val = mfspr(tcr);
+	val = mfspr(SPRN_TCR);
 #if defined(CONFIG_440EP) || defined(CONFIG_440GR)
 	val |= 0xb8000000;      /* generate system reset after 1.34 seconds */
 #elif defined(CONFIG_440EPX)
@@ -353,11 +418,11 @@ cpu_init_f (void)
 	val &= ~0x30000000;			/* clear WRC bits */
 	val |= CONFIG_SYS_4xx_RESET_TYPE << 28;	/* set board specific WRC type */
 #endif
-	mtspr(tcr, val);
+	mtspr(SPRN_TCR, val);
 
-	val = mfspr(tsr);
+	val = mfspr(SPRN_TSR);
 	val |= 0x80000000;      /* enable watchdog timer */
-	mtspr(tsr, val);
+	mtspr(SPRN_TSR, val);
 
 	reset_4xx_watchdog();
 #endif /* CONFIG_WATCHDOG */
@@ -393,14 +458,14 @@ cpu_init_f (void)
 #if defined(CONFIG_405EX) || \
     defined(CONFIG_440SP) || defined(CONFIG_440SPE) || \
     defined(CONFIG_460EX) || defined(CONFIG_460GT)  || \
-    defined(CONFIG_460SX)
+    defined(CONFIG_460SX) || defined(CONFIG_APM821XX)
 	/*
 	 * Set PLB4 arbiter (Segment 0 and 1) to 4 deep pipeline read
 	 */
-	mtdcr(PLB0_ACR, (mfdcr(PLB0_ACR) & ~PLB0_ACR_RDP_MASK) |
-	      PLB0_ACR_RDP_4DEEP);
-	mtdcr(PLB1_ACR, (mfdcr(PLB1_ACR) & ~PLB1_ACR_RDP_MASK) |
-	      PLB1_ACR_RDP_4DEEP);
+	mtdcr(PLB4A0_ACR, (mfdcr(PLB4A0_ACR) & ~PLB4Ax_ACR_RDP_MASK) |
+	      PLB4Ax_ACR_RDP_4DEEP);
+	mtdcr(PLB4A1_ACR, (mfdcr(PLB4A1_ACR) & ~PLB4Ax_ACR_RDP_MASK) |
+	      PLB4Ax_ACR_RDP_4DEEP);
 #endif /* CONFIG_440SP/SPE || CONFIG_460EX/GT || CONFIG_405EX */
 }
 

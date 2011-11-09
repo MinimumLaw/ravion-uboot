@@ -23,13 +23,11 @@
 
 CROSS_COMPILE ?= arm-linux-
 
-ifeq ($(BOARD),omap2420h4)
-STANDALONE_LOAD_ADDR = 0x80300000
-else
+ifndef CONFIG_STANDALONE_LOAD_ADDR
 ifeq ($(SOC),omap3)
-STANDALONE_LOAD_ADDR = 0x80300000
+CONFIG_STANDALONE_LOAD_ADDR = 0x80300000
 else
-STANDALONE_LOAD_ADDR = 0xc100000
+CONFIG_STANDALONE_LOAD_ADDR = 0xc100000
 endif
 endif
 
@@ -58,9 +56,27 @@ PLATFORM_CPPFLAGS += $(call cc-option,\
 
 # For EABI, make sure to provide raise()
 ifneq (,$(findstring -mabi=aapcs-linux,$(PLATFORM_CPPFLAGS)))
-# This file is parsed several times; make sure to add only once.
-ifeq (,$(findstring arch/arm/lib/eabi_compat.o,$(PLATFORM_LIBS)))
-PLATFORM_LIBS += $(OBJTREE)/arch/arm/lib/eabi_compat.o
+# This file is parsed many times, so the string may get added multiple
+# times. Also, the prefix needs to be different based on whether
+# CONFIG_SPL_BUILD is defined or not. 'filter-out' the existing entry
+# before adding the correct one.
+ifdef CONFIG_SPL_BUILD
+PLATFORM_LIBS := $(SPLTREE)/arch/arm/lib/eabi_compat.o \
+	$(filter-out %/arch/arm/lib/eabi_compat.o, $(PLATFORM_LIBS))
+else
+PLATFORM_LIBS := $(OBJTREE)/arch/arm/lib/eabi_compat.o \
+	$(filter-out %/arch/arm/lib/eabi_compat.o, $(PLATFORM_LIBS))
 endif
 endif
+
+ifdef CONFIG_SYS_LDSCRIPT
+# need to strip off double quotes
+LDSCRIPT := $(subst ",,$(CONFIG_SYS_LDSCRIPT))
+else
 LDSCRIPT := $(SRCTREE)/$(CPUDIR)/u-boot.lds
+endif
+
+# needed for relocation
+ifndef CONFIG_NAND_SPL
+LDFLAGS_u-boot += -pie
+endif

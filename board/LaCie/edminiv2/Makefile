@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010 Albert ARIBAUD <albert.aribaud@free.fr>
+# Copyright (C) 2010 Albert ARIBAUD <albert.u.boot@aribaud.net>
 #
 # Based on original Kirkwood support which is
 # (C) Copyright 2009
@@ -27,7 +27,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
 COBJS	:= edminiv2.o
 
@@ -35,7 +35,7 @@ SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(OBJS)

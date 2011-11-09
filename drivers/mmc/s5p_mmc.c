@@ -22,6 +22,7 @@
 #include <mmc.h>
 #include <asm/io.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/clk.h>
 
 /* support 4 mmc hosts */
 struct mmc mmc_dev[4];
@@ -51,7 +52,7 @@ static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
 	writeb(ctrl, &host->reg->hostctl);
 
 	/* We do not handle DMA boundaries, so set it to max (512 KiB) */
-	writew((7 << 12) | (512 << 0), &host->reg->blksize);
+	writew((7 << 12) | (data->blocksize & 0xFFF), &host->reg->blksize);
 	writew(data->blocks, &host->reg->blkcnt);
 }
 
@@ -231,9 +232,15 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 						__func__, mask);
 				return -1;
 			} else if (mask & (1 << 3)) {
-				/* DMA Interrupt */
+				/*
+				 * DMA Interrupt, restart the transfer where
+				 * it was interrupted.
+				 */
+				unsigned int address = readl(&host->reg->sysad);
+
 				debug("DMA end\n");
-				break;
+				writel((1 << 3), &host->reg->norintsts);
+				writel(address, &host->reg->sysad);
 			} else if (mask & (1 << 1)) {
 				/* Transfer Complete */
 				debug("r/w is done\n");
@@ -290,6 +297,8 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 	 */
 	clk = (div << 8) | (1 << 0);
 	writew(clk, &host->reg->clkcon);
+
+	set_mmc_clk(host->dev_index, div);
 
 	/* Wait max 10 ms */
 	timeout = 10;
@@ -352,11 +361,16 @@ static void mmc_set_ios(struct mmc *mmc)
 	ctrl = readb(&host->reg->hostctl);
 
 	/*
+	 * WIDE8[5]
+	 * 0 = Depend on WIDE4
+	 * 1 = 8-bit mode
 	 * WIDE4[1]
 	 * 1 = 4-bit mode
 	 * 0 = 1-bit mode
 	 */
-	if (mmc->bus_width == 4)
+	if (mmc->bus_width == 8)
+		ctrl |= (1 << 5);
+	else if (mmc->bus_width == 4)
 		ctrl |= (1 << 1);
 	else
 		ctrl &= ~(1 << 1);
@@ -417,12 +431,13 @@ static int mmc_core_init(struct mmc *mmc)
 	 * NORMAL Interrupt Status Enable Register init
 	 * [5] ENSTABUFRDRDY : Buffer Read Ready Status Enable
 	 * [4] ENSTABUFWTRDY : Buffer write Ready Status Enable
+	 * [3] ENSTADMAINT : DMA Interrupt Status Enable
 	 * [1] ENSTASTANSCMPLT : Transfre Complete Status Enable
 	 * [0] ENSTACMDCMPLT : Command Complete Status Enable
-	*/
+	 */
 	mask = readl(&host->reg->norintstsen);
 	mask &= ~(0xffff);
-	mask |= (1 << 5) | (1 << 4) | (1 << 1) | (1 << 0);
+	mask |= (1 << 5) | (1 << 4) | (1 << 3) | (1 << 1) | (1 << 0);
 	writel(mask, &host->reg->norintstsen);
 
 	/*
@@ -437,7 +452,7 @@ static int mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5p_mmc_initialize(int dev_index)
+static int s5p_mmc_initialize(int dev_index, int bus_width)
 {
 	struct mmc *mmc;
 
@@ -450,19 +465,25 @@ static int s5p_mmc_initialize(int dev_index)
 	mmc->init = mmc_core_init;
 
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
-	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS;
+	if (bus_width == 8)
+		mmc->host_caps = MMC_MODE_8BIT;
+	else
+		mmc->host_caps = MMC_MODE_4BIT;
+	mmc->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
 
 	mmc->f_min = 400000;
 	mmc->f_max = 52000000;
 
+	mmc_host[dev_index].dev_index = dev_index;
 	mmc_host[dev_index].clock = 0;
 	mmc_host[dev_index].reg = s5p_get_base_mmc(dev_index);
+	mmc->b_max = 0;
 	mmc_register(mmc);
 
 	return 0;
 }
 
-int s5p_mmc_init(int dev_index)
+int s5p_mmc_init(int dev_index, int bus_width)
 {
-	return s5p_mmc_initialize(dev_index);
+	return s5p_mmc_initialize(dev_index, bus_width);
 }

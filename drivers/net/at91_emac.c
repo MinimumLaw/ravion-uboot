@@ -93,7 +93,7 @@
 #define RBF_MULTICAST (1<<30)
 #define RBF_UNICAST   (1<<29)
 #define RBF_EXTERNAL  (1<<28)
-#define RBF_UNKOWN    (1<<27)
+#define RBF_UNKNOWN   (1<<27)
 #define RBF_SIZE      0x07ff
 #define RBF_LOCAL4    (1<<26)
 #define RBF_LOCAL3    (1<<25)
@@ -127,13 +127,19 @@ void at91emac_DisableMDIO(at91_emac_t *at91mac)
 int  at91emac_read(at91_emac_t *at91mac, unsigned char addr,
 		unsigned char reg, unsigned short *value)
 {
+	unsigned long netstat;
 	at91emac_EnableMDIO(at91mac);
 
 	writel(AT91_EMAC_MAN_HIGH | AT91_EMAC_MAN_RW_R |
 		AT91_EMAC_MAN_REGA(reg) | AT91_EMAC_MAN_CODE_802_3 |
 		AT91_EMAC_MAN_PHYA(addr),
 		&at91mac->man);
-	udelay(10000);
+
+	do {
+		netstat = readl(&at91mac->sr);
+		DEBUG_AT91PHY("poll SR %08lx\n", netstat);
+	} while (!(netstat & AT91_EMAC_SR_IDLE));
+
 	*value = readl(&at91mac->man) & AT91_EMAC_MAN_DATA_MASK;
 
 	at91emac_DisableMDIO(at91mac);
@@ -146,6 +152,7 @@ int  at91emac_read(at91_emac_t *at91mac, unsigned char addr,
 int  at91emac_write(at91_emac_t *at91mac, unsigned char addr,
 		unsigned char reg, unsigned short value)
 {
+	unsigned long netstat;
 	DEBUG_AT91PHY("AT91PHY write %x REG(%d)=%x\n", at91mac, reg, &value)
 
 	at91emac_EnableMDIO(at91mac);
@@ -154,9 +161,14 @@ int  at91emac_write(at91_emac_t *at91mac, unsigned char addr,
 		AT91_EMAC_MAN_REGA(reg) | AT91_EMAC_MAN_CODE_802_3 |
 		AT91_EMAC_MAN_PHYA(addr) | (value & AT91_EMAC_MAN_DATA_MASK),
 		&at91mac->man);
-	udelay(10000);
+
+	do {
+		netstat = readl(&at91mac->sr);
+		DEBUG_AT91PHY("poll SR %08lx\n", netstat);
+	} while (!(netstat & AT91_EMAC_SR_IDLE));
 
 	at91emac_DisableMDIO(at91mac);
+
 	return 0;
 }
 
@@ -208,7 +220,7 @@ static int at91emac_phy_reset(struct eth_device *netdev)
 	at91emac_write(emac, CONFIG_DRIVER_AT91EMAC_PHYADDR, MII_BMCR,
 		(BMCR_ANENABLE | BMCR_ANRESTART));
 
-	for (i = 0; i < 100000 / 100; i++) {
+	for (i = 0; i < 30000; i++) {
 		at91emac_read(emac, CONFIG_DRIVER_AT91EMAC_PHYADDR,
 			MII_BMSR, &status);
 		if (status & BMSR_ANEGCOMPLETE)
@@ -221,7 +233,7 @@ static int at91emac_phy_reset(struct eth_device *netdev)
 	} else {
 		printf("%s: Autonegotiation timed out (status=0x%04x)\n",
 		       netdev->name, status);
-		return 1;
+		return -1;
 	}
 	return 0;
 }
@@ -240,7 +252,7 @@ static int at91emac_phy_init(struct eth_device *netdev)
 		MII_PHYSID1, &phy_id);
 	if (phy_id == 0xffff) {
 		printf("%s: No PHY present\n", netdev->name);
-		return 1;
+		return -1;
 	}
 
 	at91emac_read(emac, CONFIG_DRIVER_AT91EMAC_PHYADDR,
@@ -249,7 +261,7 @@ static int at91emac_phy_init(struct eth_device *netdev)
 	if (!(status & BMSR_LSTATUS)) {
 		/* Try to re-negotiate if we don't have link already. */
 		if (at91emac_phy_reset(netdev))
-			return 2;
+			return -2;
 
 		for (i = 0; i < 100000 / 100; i++) {
 			at91emac_read(emac, CONFIG_DRIVER_AT91EMAC_PHYADDR,
@@ -261,7 +273,7 @@ static int at91emac_phy_init(struct eth_device *netdev)
 	}
 	if (!(status & BMSR_LSTATUS)) {
 		VERBOSEP("%s: link down\n", netdev->name);
-		return 3;
+		return -3;
 	} else {
 		at91emac_read(emac, CONFIG_DRIVER_AT91EMAC_PHYADDR,
 			MII_ADVERTISE, &adv);
@@ -286,7 +298,7 @@ int at91emac_UpdateLinkSpeed(at91_emac_t *emac)
 	at91emac_read(emac, CONFIG_DRIVER_AT91EMAC_PHYADDR, MII_BMSR, &stat1);
 
 	if (!(stat1 & BMSR_LSTATUS))	/* link status up? */
-		return 1;
+		return -1;
 
 	if (stat1 & BMSR_100FULL) {
 		/*set Emac for 100BaseTX and Full Duplex  */
@@ -321,7 +333,7 @@ int at91emac_UpdateLinkSpeed(at91_emac_t *emac)
 			&emac->cfg);
 		return 0;
 	}
-	return 1;
+	return 0;
 }
 
 static int at91emac_init(struct eth_device *netdev, bd_t *bd)
@@ -330,34 +342,34 @@ static int at91emac_init(struct eth_device *netdev, bd_t *bd)
 	u32 value;
 	emac_device *dev;
 	at91_emac_t *emac;
-	at91_pio_t *pio = (at91_pio_t *) AT91_PIO_BASE;
-	at91_pmc_t *pmc = (at91_pmc_t *) AT91_PMC_BASE;
+	at91_pio_t *pio = (at91_pio_t *) ATMEL_BASE_PIO;
+	at91_pmc_t *pmc = (at91_pmc_t *) ATMEL_BASE_PMC;
 
 	emac = (at91_emac_t *) netdev->iobase;
 	dev = (emac_device *) netdev->priv;
 
 	/* PIO Disable Register */
-	value =	AT91_PMX_AA_EMDIO |	AT91_PMX_AA_EMDC |
-		AT91_PMX_AA_ERXER |	AT91_PMX_AA_ERX1 |
-		AT91_PMX_AA_ERX0 |	AT91_PMX_AA_ECRS |
-		AT91_PMX_AA_ETX1 |	AT91_PMX_AA_ETX0 |
-		AT91_PMX_AA_ETXEN |	AT91_PMX_AA_EREFCK;
+	value =	ATMEL_PMX_AA_EMDIO |	ATMEL_PMX_AA_EMDC |
+		ATMEL_PMX_AA_ERXER |	ATMEL_PMX_AA_ERX1 |
+		ATMEL_PMX_AA_ERX0 |	ATMEL_PMX_AA_ECRS |
+		ATMEL_PMX_AA_ETX1 |	ATMEL_PMX_AA_ETX0 |
+		ATMEL_PMX_AA_ETXEN |	ATMEL_PMX_AA_EREFCK;
 
 	writel(value, &pio->pioa.pdr);
 	writel(value, &pio->pioa.asr);
 
 #ifdef CONFIG_RMII
-	value = AT91_PMX_BA_ERXCK;
+	value = ATMEL_PMX_BA_ERXCK;
 #else
-	value = AT91_PMX_BA_ERXCK |	AT91_PMX_BA_ECOL |
-		AT91_PMX_BA_ERXDV |	AT91_PMX_BA_ERX3 |
-		AT91_PMX_BA_ERX2 |	AT91_PMX_BA_ETXER |
-		AT91_PMX_BA_ETX3 |	AT91_PMX_BA_ETX2;
+	value = ATMEL_PMX_BA_ERXCK |	ATMEL_PMX_BA_ECOL |
+		ATMEL_PMX_BA_ERXDV |	ATMEL_PMX_BA_ERX3 |
+		ATMEL_PMX_BA_ERX2 |	ATMEL_PMX_BA_ETXER |
+		ATMEL_PMX_BA_ETX3 |	ATMEL_PMX_BA_ETX2;
 #endif
 	writel(value, &pio->piob.pdr);
 	writel(value, &pio->piob.bsr);
 
-	writel(1 << AT91_ID_EMAC, &pmc->pcer);
+	writel(1 << ATMEL_ID_EMAC, &pmc->pcer);
 	writel(readl(&emac->ctl) | AT91_EMAC_CTL_CSR, &emac->ctl);
 
 	/* Init Ethernet buffers */
@@ -387,7 +399,7 @@ static int at91emac_init(struct eth_device *netdev, bd_t *bd)
 		at91emac_UpdateLinkSpeed(emac);
 		return 0;
 	}
-	return 1;
+	return -1;
 }
 
 static void at91emac_halt(struct eth_device *netdev)
@@ -464,16 +476,18 @@ static int at91emac_write_hwaddr(struct eth_device *netdev)
 {
 	emac_device *dev;
 	at91_emac_t *emac;
-	at91_pmc_t *pmc = (at91_pmc_t *) AT91_PMC_BASE;
+	at91_pmc_t *pmc = (at91_pmc_t *) ATMEL_BASE_PMC;
 	emac = (at91_emac_t *) netdev->iobase;
 	dev = (emac_device *) netdev->priv;
 
-	writel(1 << AT91_ID_EMAC, &pmc->pcer);
-	DEBUG_AT91EMAC("init MAC-ADDR %x%x \n",
-		cpu_to_le16(*((u16 *)(netdev->enetaddr + 4))),
-		cpu_to_le32(*((u32 *)netdev->enetaddr)));
-	writel(cpu_to_le32(*((u32 *)netdev->enetaddr)), &emac->sa2l);
-	writel(cpu_to_le16(*((u16 *)(netdev->enetaddr + 4))), &emac->sa2h);
+	writel(1 << ATMEL_ID_EMAC, &pmc->pcer);
+	DEBUG_AT91EMAC("init MAC-ADDR %02x:%02x:%02x:%02x:%02x:%02x\n",
+		netdev->enetaddr[5], netdev->enetaddr[4], netdev->enetaddr[3],
+		netdev->enetaddr[2], netdev->enetaddr[1], netdev->enetaddr[0]);
+	writel( (netdev->enetaddr[0] | netdev->enetaddr[1] << 8 |
+			netdev->enetaddr[2] << 16 | netdev->enetaddr[3] << 24),
+			&emac->sa2l);
+	writel((netdev->enetaddr[4] | netdev->enetaddr[5] << 8), &emac->sa2h);
 	DEBUG_AT91EMAC("init MAC-ADDR %x%x \n",
 		readl(&emac->sa2h), readl(&emac->sa2l));
 	return 0;
@@ -486,25 +500,21 @@ int at91emac_register(bd_t *bis, unsigned long iobase)
 	struct eth_device *dev;
 
 	if (iobase == 0)
-		iobase = AT91_EMAC_BASE;
+		iobase = ATMEL_BASE_EMAC;
 	emac = malloc(sizeof(*emac)+512);
 	if (emac == NULL)
-		return 1;
+		return -1;
 	dev = malloc(sizeof(*dev));
 	if (dev == NULL) {
 		free(emac);
-		return 1;
+		return -1;
 	}
 	/* alignment as per Errata (64 bytes) is insufficient! */
 	emacfix = (emac_device *) (((unsigned long) emac + 0x1ff) & 0xFFFFFE00);
 	memset(emacfix, 0, sizeof(emac_device));
 
 	memset(dev, 0, sizeof(*dev));
-#ifndef CONFIG_RMII
-	sprintf(dev->name, "AT91 EMAC");
-#else
-	sprintf(dev->name, "AT91 EMAC RMII");
-#endif
+	sprintf(dev->name, "emac");
 	dev->iobase = iobase;
 	dev->priv = emacfix;
 	dev->init = at91emac_init;

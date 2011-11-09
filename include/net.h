@@ -72,12 +72,17 @@
 typedef ulong		IPaddr_t;
 
 
-/*
- * The current receive packet handler.  Called with a pointer to the
- * application packet, and a protocol type (PORT_BOOTPC or PORT_TFTP).
- * All other packets are dealt with without calling the handler.
+/**
+ * An incoming packet handler.
+ * @param pkt    pointer to the application packet
+ * @param dport  destination UDP port
+ * @param sip    source IP address
+ * @param sport  source UDP port
+ * @param len    packet length
  */
-typedef void	rxhand_f(uchar *, unsigned, unsigned, unsigned);
+typedef void rxhand_f(uchar *pkt, unsigned dport,
+		      IPaddr_t sip, unsigned sport,
+		      unsigned len);
 
 /*
  *	A timeout handler.  Called after time interval has expired.
@@ -123,16 +128,41 @@ extern int eth_get_dev_index (void);		/* get the device index */
 extern void eth_parse_enetaddr(const char *addr, uchar *enetaddr);
 extern int eth_getenv_enetaddr(char *name, uchar *enetaddr);
 extern int eth_setenv_enetaddr(char *name, const uchar *enetaddr);
-extern int eth_getenv_enetaddr_by_index(int index, uchar *enetaddr);
 
+/*
+ * Get the hardware address for an ethernet interface .
+ * Args:
+ *	base_name - base name for device (normally "eth")
+ *	index - device index number (0 for first)
+ *	enetaddr - returns 6 byte hardware address
+ * Returns:
+ *	Return true if the address is valid.
+ */
+extern int eth_getenv_enetaddr_by_index(const char *base_name, int index,
+					uchar *enetaddr);
+
+extern int usb_eth_initialize(bd_t *bi);
 extern int eth_init(bd_t *bis);			/* Initialize the device */
 extern int eth_send(volatile void *packet, int length);	   /* Send a packet */
+
 #ifdef CONFIG_API
 extern int eth_receive(volatile void *packet, int length); /* Receive a packet*/
 #endif
 extern int eth_rx(void);			/* Check for received packets */
 extern void eth_halt(void);			/* stop SCC */
 extern char *eth_get_name(void);		/* get name of current device */
+
+/*
+ * Set the hardware address for an ethernet interface based on 'eth%daddr'
+ * environment variable (or just 'ethaddr' if eth_number is 0).
+ * Args:
+ *	base_name - base name for device (normally "eth")
+ *	eth_number - value of %d (0 for first device of this type)
+ * Returns:
+ *	0 is success, non-zero is error status from driver.
+ */
+int eth_write_hwaddr(struct eth_device *dev, const char *base_name,
+		     int eth_number);
 
 #ifdef CONFIG_MCAST_TFTP
 int eth_mcast_join( IPaddr_t mcast_addr, u8 join);
@@ -357,7 +387,8 @@ extern int		NetState;		/* Network loop state		*/
 extern int		NetRestartWrap;		/* Tried all network devices	*/
 #endif
 
-typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP } proto_t;
+typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP,
+	       TFTPSRV } proto_t;
 
 /* from net/net.c */
 extern char	BootFile[128];			/* Boot File name		*/
@@ -481,7 +512,18 @@ static inline int is_multicast_ether_addr(const u8 *addr)
 	return (0x01 & addr[0]);
 }
 
-/**
+/*
+ * is_broadcast_ether_addr - Determine if the Ethernet address is broadcast
+ * @addr: Pointer to a six-byte array containing the Ethernet address
+ *
+ * Return true if the address is the broadcast address.
+ */
+static inline int is_broadcast_ether_addr(const u8 *addr)
+{
+	return (addr[0] & addr[1] & addr[2] & addr[3] & addr[4] & addr[5]) == 0xff;
+}
+
+/*
  * is_valid_ether_addr - Determine if the given Ethernet address is valid
  * @addr: Pointer to a six-byte array containing the Ethernet address
  *
@@ -490,7 +532,7 @@ static inline int is_multicast_ether_addr(const u8 *addr)
  *
  * Return true if the address is valid.
  */
-static inline int is_valid_ether_addr(const u8 * addr)
+static inline int is_valid_ether_addr(const u8 *addr)
 {
 	/* FF:FF:FF:FF:FF:FF is a multicast address so we don't need to
 	 * explicitly check for it here. */
@@ -501,19 +543,19 @@ static inline int is_valid_ether_addr(const u8 * addr)
 extern void	ip_to_string (IPaddr_t x, char *s);
 
 /* Convert a string to ip address */
-extern IPaddr_t string_to_ip(char *s);
+extern IPaddr_t string_to_ip(const char *s);
 
 /* Convert a VLAN id to a string */
 extern void	VLAN_to_string (ushort x, char *s);
 
 /* Convert a string to a vlan id */
-extern ushort string_to_VLAN(char *s);
+extern ushort string_to_VLAN(const char *s);
 
 /* read a VLAN id from an environment variable */
 extern ushort getenv_VLAN(char *);
 
 /* copy a filename (allow for "..." notation, limit length) */
-extern void	copy_filename (char *dst, char *src, int size);
+extern void	copy_filename (char *dst, const char *src, int size);
 
 /* get a random source port */
 extern unsigned int random_port(void);

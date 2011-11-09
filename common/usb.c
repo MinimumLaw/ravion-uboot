@@ -55,7 +55,10 @@
 #include <asm/4xx_pci.h>
 #endif
 
-#undef USB_DEBUG
+#ifdef DEBUG
+#define USB_DEBUG
+#define USB_HUB_DEBUG
+#endif
 
 #ifdef	USB_DEBUG
 #define	USB_PRINTF(fmt, args...)	printf(fmt , ##args)
@@ -142,10 +145,14 @@ int usb_stop(void)
 /*
  * disables the asynch behaviour of the control message. This is used for data
  * transfers that uses the exclusiv access to the control and bulk messages.
+ * Returns the old value so it can be restored later.
  */
-void usb_disable_asynch(int disable)
+int usb_disable_asynch(int disable)
 {
+	int old_value = asynch_allowed;
+
 	asynch_allowed = !disable;
+	return old_value;
 }
 
 
@@ -950,8 +957,8 @@ void usb_scan_devices(void)
 	/* insert "driver" if possible */
 #ifdef CONFIG_USB_KEYBOARD
 	drv_usb_kbd_init();
-	USB_PRINTF("scan end\n");
 #endif
+	USB_PRINTF("scan end\n");
 }
 
 
@@ -959,8 +966,6 @@ void usb_scan_devices(void)
  * HUB "Driver"
  * Probes device for being a hub and configurate it
  */
-
-#undef	USB_HUB_DEBUG
 
 #ifdef	USB_HUB_DEBUG
 #define	USB_HUB_PRINTF(fmt, args...)	printf(fmt , ##args)
@@ -1161,6 +1166,7 @@ void usb_hub_port_connect_change(struct usb_device *dev, int port)
 
 	dev->children[port] = usb;
 	usb->parent = dev;
+	usb->portnr = port + 1;
 	/* Run it through the hoops (find a driver, etc) */
 	if (usb_new_device(usb)) {
 		/* Woops, disable the port */
@@ -1220,7 +1226,7 @@ int usb_hub_configure(struct usb_device *dev)
 		hub->desc.DeviceRemovable[i] = descriptor->DeviceRemovable[i];
 
 	for (i = 0; i < ((hub->desc.bNbrPorts + 1 + 7)/8); i++)
-		hub->desc.DeviceRemovable[i] = descriptor->PortPowerCtrlMask[i];
+		hub->desc.PortPowerCtrlMask[i] = descriptor->PortPowerCtrlMask[i];
 
 	dev->maxchild = descriptor->bNbrPorts;
 	USB_HUB_PRINTF("%d ports detected\n", dev->maxchild);

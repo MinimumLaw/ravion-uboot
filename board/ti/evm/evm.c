@@ -33,19 +33,31 @@
 #include <asm/arch/mem.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/mmc_host_def.h>
+#include <asm/gpio.h>
 #include <i2c.h>
 #include <asm/mach-types.h>
 #include "evm.h"
 
-static u8 omap3_evm_version;
+#define OMAP3EVM_GPIO_ETH_RST_GEN1		64
+#define OMAP3EVM_GPIO_ETH_RST_GEN2		7
 
-u8 get_omap3_evm_rev(void)
+DECLARE_GLOBAL_DATA_PTR;
+
+static u32 omap3_evm_version;
+
+u32 get_omap3_evm_rev(void)
 {
 	return omap3_evm_version;
 }
 
 static void omap3_evm_get_revision(void)
 {
+#if defined(CONFIG_CMD_NET)
+	/*
+	 * Board revision can be ascertained only by identifying
+	 * the Ethernet chipset.
+	 */
 	unsigned int smsc_id;
 
 	/* Ethernet PHY ID is stored at ID_REV register */
@@ -62,8 +74,22 @@ static void omap3_evm_get_revision(void)
 	default:
 		omap3_evm_version = OMAP3EVM_BOARD_GEN_2;
        }
+#else
+#if defined(CONFIG_STATIC_BOARD_REV)
+	/*
+	 * Look for static defintion of the board revision
+	 */
+	omap3_evm_version = CONFIG_STATIC_BOARD_REV;
+#else
+	/*
+	 * Fallback to the default above.
+	 */
+	omap3_evm_version = OMAP3EVM_BOARD_GEN_2;
+#endif
+#endif	/* CONFIG_CMD_NET */
 }
 
+#ifdef CONFIG_USB_OMAP3
 /*
  * MUSB port on OMAP3EVM Rev >= E requires extvbus programming.
  */
@@ -76,6 +102,7 @@ u8 omap3_evm_need_extvbus(void)
 
 	return retval;
 }
+#endif
 
 /*
  * Routine: board_init
@@ -83,8 +110,6 @@ u8 omap3_evm_need_extvbus(void)
  */
 int board_init(void)
 {
-	DECLARE_GLOBAL_DATA_PTR;
-
 	gpmc_init(); /* in SRAM or SDRAM, finish GPMC */
 	/* board id for Linux */
 	gd->bd->bi_arch_number = MACH_TYPE_OMAP3EVM;
@@ -108,7 +133,11 @@ int misc_init_r(void)
 #if defined(CONFIG_CMD_NET)
 	setup_net_chip();
 #endif
+	omap3_evm_get_revision();
 
+#if defined(CONFIG_CMD_NET)
+	reset_net_chip();
+#endif
 	dieid_num_r();
 
 	return 0;
@@ -125,6 +154,7 @@ void set_muxconf_regs(void)
 	MUX_EVM();
 }
 
+#ifdef CONFIG_CMD_NET
 /*
  * Routine: setup_net_chip
  * Description: Setting up the configuration GPMC registers specific to the
@@ -132,7 +162,6 @@ void set_muxconf_regs(void)
  */
 static void setup_net_chip(void)
 {
-	struct gpio *gpio3_base = (struct gpio *)OMAP34XX_GPIO3_BASE;
 	struct ctrl *ctrl_base = (struct ctrl *)OMAP34XX_CTRL_BASE;
 
 	/* Configure GPMC registers */
@@ -151,19 +180,37 @@ static void setup_net_chip(void)
 	/* Enable off mode for ALE in PADCONF_GPMC_NADV_ALE register */
 	writew(readw(&ctrl_base->gpmc_nadv_ale) | 0x0E00,
 		&ctrl_base->gpmc_nadv_ale);
+}
 
-	/* Make GPIO 64 as output pin */
-	writel(readl(&gpio3_base->oe) & ~(GPIO0), &gpio3_base->oe);
+/**
+ * Reset the ethernet chip.
+ */
+static void reset_net_chip(void)
+{
+	int ret;
+	int rst_gpio;
 
-	/* Now send a pulse on the GPIO pin */
-	writel(GPIO0, &gpio3_base->setdataout);
+	if (get_omap3_evm_rev() == OMAP3EVM_BOARD_GEN_1) {
+		rst_gpio = OMAP3EVM_GPIO_ETH_RST_GEN1;
+	} else {
+		rst_gpio = OMAP3EVM_GPIO_ETH_RST_GEN2;
+	}
+
+	ret = gpio_request(rst_gpio, "");
+	if (ret < 0) {
+		printf("Unable to get GPIO %d\n", rst_gpio);
+		return ;
+	}
+
+	/* Configure as output */
+	gpio_direction_output(rst_gpio, 0);
+
+	/* Send a pulse on the GPIO pin */
+	gpio_set_value(rst_gpio, 1);
 	udelay(1);
-	writel(GPIO0, &gpio3_base->cleardataout);
+	gpio_set_value(rst_gpio, 0);
 	udelay(1);
-	writel(GPIO0, &gpio3_base->setdataout);
-
-	/* determine omap3evm revision */
-	omap3_evm_get_revision();
+	gpio_set_value(rst_gpio, 1);
 }
 
 int board_eth_init(bd_t *bis)
@@ -174,3 +221,12 @@ int board_eth_init(bd_t *bis)
 #endif
 	return rc;
 }
+#endif /* CONFIG_CMD_NET */
+
+#ifdef CONFIG_GENERIC_MMC
+int board_mmc_init(bd_t *bis)
+{
+	omap_mmc_init(0);
+	return 0;
+}
+#endif

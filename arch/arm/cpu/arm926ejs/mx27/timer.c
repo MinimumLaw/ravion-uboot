@@ -43,8 +43,10 @@
 #define GPTCR_CLKSOURCE_32	(4 << 1)	/* Clock source		*/
 #define GPTCR_TEN		1		/* Timer enable		*/
 
-static ulong timestamp;
-static ulong lastinc;
+DECLARE_GLOBAL_DATA_PTR;
+
+#define timestamp gd->tbl
+#define lastinc gd->lastinc
 
 /*
  * "time" is measured in 1 / CONFIG_SYS_HZ seconds,
@@ -122,20 +124,6 @@ int timer_init(void)
 	return 0;
 }
 
-void reset_timer_masked(void)
-{
-	struct gpt_regs *regs = (struct gpt_regs *)IMX_TIM1_BASE;
-	/* reset time */
-	/* capture current incrementer value time */
-	lastinc = readl(&regs->gpt_tcn);
-	timestamp = 0; /* start "advancing" time stamp from 0 */
-}
-
-void reset_timer(void)
-{
-	reset_timer_masked();
-}
-
 unsigned long long get_ticks (void)
 {
 	struct gpt_regs *regs = (struct gpt_regs *)IMX_TIM1_BASE;
@@ -169,11 +157,6 @@ ulong get_timer_masked (void)
 ulong get_timer (ulong base)
 {
 	return get_timer_masked () - base;
-}
-
-void set_timer (ulong t)
-{
-	timestamp = time_to_tick(t);
 }
 
 /* delay x useconds AND preserve advance timstamp value */

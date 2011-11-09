@@ -29,7 +29,7 @@
 #include <asm/io.h>
 #include <spi.h>
 #include <netdev.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 
 extern int lcd_init(void);
 
@@ -65,13 +65,14 @@ int board_early_init_f(void)
  */
 int checkboard(void)
 {
-	char *s = getenv("serial#");
+	char buf[64];
+	int i = getenv_f("serial#", buf, sizeof(buf));
 
 	puts("Board: Taihu - AMCC PPC405EP Evaluation Board");
 
-	if (s != NULL) {
+	if (i > 0) {
 		puts(", serial# ");
-		puts(s);
+		puts(buf);
 	}
 	putc('\n');
 
