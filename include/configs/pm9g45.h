@@ -249,4 +249,46 @@
 #error CONFIG_USE_IRQ not supported
 #endif
 
+#define CONFIG_EXTRA_ENV_SETTINGS       \
+        "__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2011\0" \
+        "__produced=by NTC of Schemotecnics NTK PIT\0" \
+        "__requsted=by OAO Radioavionica, Saint-Petersburg, Russia\0" \
+        "serial#=1234567\0" \
+        "mtdids=nand0=atmel_nand\0" \
+        "mtdparts="MTDPARTS_DEFAULT"\0" \
+        "IPADDR=192.168.5.101\0" \
+        "NETMSK=255.255.255.0\0" \
+        "SERVER=192.168.5.222\0" \
+        "GATEWAY=192.168.5.254\0" \
+        "HOSTNAME=ronetix\0" \
+        "NFS_PATH=/ronetix\0" \
+        "KRN_RAM=uImage\0" \
+        "RAM_LD_ADDR=0x72000000\0" \
+        "add_basic_args=setenv bootargs\0" \
+        "add_ser_cons=setenv bootargs ${bootargs} console=ttyS0,115200\0" \
+        "add_ip_conf=setenv bootargs ${bootargs} ip=${IPADDR}:${SERVER}:${GATEWAY}:${NETMASK}:${HOSTNAME}:eth0:off\0" \
+        "add_mtd_dev=setenv bootargs ${bootargs} " CONFIG_UBI_MTD " ${mtdparts}\0" \
+        "add_mtd_root=setenv bootargs ${bootargs} root=" CONFIG_ROOT_DEVICE " ro rootfstype=" CONFIG_ROOT_FSTYPE"\0" \
+        "add_sd_root=setenv bootargs ${bootargs} root=/dev/mmcblk0p1 ro rootdelay=2\0" \
+        "add_cf_root=setenv bootargs ${bootargs} root=/dev/sda1 ro rootdelay=2\0" \
+        "add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=2\0" \
+        "add_nfs_root=run add_ip_conf; setenv bootargs ${bootargs} root=/dev/nfs rw nfsroot=${SERVER}:${NFS_PATH}\0" \
+        "boot_from_nand=ubi part ubi; ubifsmount boot; ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
+        "ldr_net=setenv ipaddr ${IPADDR}; setenv serverip ${SERVER}; setenv gatewayip ${GATEWAY}; " \
+                "setenv hostname ${HOSTNAME}; setenv netmask ${NETMASK}\0" \
+        "make_mtd_args=run add_basic_args; run add_mtd_dev; run add_mtd_root\0" \
+        "make_nfs_args=run add_basic_args; run add_mtd_dev; run add_nfs_root\0" \
+        "make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
+        "make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
+        "make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
+        "make_ubi_parts=nand erase ubi; ubi part ubi;" \
+            "ubi create boot 1000000; ubi create firmware 800000;" \
+            "ubi create modules 4000000; ubi create rootfs\0" \
+        "nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
+        "nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
+        "mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
+        "resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
+        "spo=run make_cf_args; run boot_from_nand\0" \
+        "tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" 
+
 #endif
