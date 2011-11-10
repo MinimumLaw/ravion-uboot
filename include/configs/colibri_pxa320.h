@@ -195,19 +195,6 @@
 #define CONFIG_BOOTCOMMAND	DEFAULT_BOOTCOMMAND
 #define CONFIG_NFSBOOTCOMMAND	NFS_BOOTCMD
 #define CONFIG_RAMBOOTCOMMAND	RAM_BOOTCMD
-#define CONFIG_EXTRA_ENV_SETTINGS \
-	"altbootcmd=" CONFIG_SYS_ALT_BOOTCOMMAND "\0" \
-	"bootlimit=" CONFIG_SYS_BOOTLIMIT "\0" \
-	"defargs=console=ttyS0,115200n8 mem=128M\0"   \
-	"flashboot=console=ttyS0,115200n8 ip=off mem=128M root=/dev/mtdblock5 rw rootfstype=yaffs2\0" \
-	"mmcboot=" MMC_BOOTCMD "\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"nfsargs=ip=:::::eth0: root=/dev/nfs\0" \
-	"ramargs=initrd=0xA1800000,32M ramdisk_size=32768 root=/dev/ram0 rw\0" \
-	"ubiargs=ubi.mtd=6 root=ubi0:rootfs rootfstype=ubifs\0" \
-	"ubiboot=" UBI_BOOTCMD "\0" \
-	"usbboot=" USB_BOOTCMD "\0" \
-	""
 #define CONFIG_CMDLINE_TAG	1	/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS 1
 #define CONFIG_REVISION_TAG	1
@@ -299,19 +286,6 @@
 #define CONFIG_CMD_MTDPARTS   /* Enable 'mtdparts' command line support */
 #define CONFIG_MTD_PARTITIONS /* ??? */
 #define CONFIG_MTD_DEVICE     /* needed for mtdparts commands */
-#define MTDIDS_DEFAULT		"nand0=pxa3xx-nand"
-#define MTDPARTS_DEFAULT	"mtdparts=pxa3xx-nand:"		\
-				"128k(u-boot-1-part)ro,"		\
-				/* "126k(u-boot-1-part)ro," */		\
-				/* "2k@126k(bad-block-table)ro," */	\
-				"128k(u-boot-2-part)ro,"		\
-				"128k@256k(configuration-block)ro,"	\
-				"128k(u-boot-3-part)ro,"		\
-				"512k(u-boot-env)ro,"			\
-				"3m(kernel-ubi),"			\
-				"124m(rootfs-ubi),"			\
-				"864m(mass-storage),"			\
-				"-(replacement-blocks)ro"
 
 /*
  * NAND Flash
@@ -432,6 +406,16 @@
 #endif /* CONFIG_COLIBRI_PXA320V10 */
 
 #define CONFIG_SYS_64BIT_VSPRINTF	/* needed for nand_util.c */
+
+#define MTDPARTS_DEFAULT	"mtdparts=pxa3xx-nand:" \
+                                "128K(ipl)ro,"\
+                                "256K(u-boot-cfg)," \
+                                "384K(u-boot)ro,"\
+                                "-(ubi)"
+#define CONFIG_UBI_MTD          "ubi.mtd=3"
+#define CONFIG_ROOT_DEVICE      "ubi0:rootfs"
+#define CONFIG_ROOT_FSTYPE      "ubifs"
+
 
 #define CONFIG_EXTRA_ENV_SETTINGS       \
         "__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2011\0" \

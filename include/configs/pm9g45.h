@@ -249,6 +249,23 @@
 #error CONFIG_USE_IRQ not supported
 #endif
 
+#define CONFIG_SYS_USE_UBI
+#define CONFIG_MTD_DEVICE
+
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_PARTITIONS /* ??? */
+
+#define CONFIG_RBTREE
+#define CONFIG_CMD_UBI
+#define MTDPARTS_DEFAULT        "atmel_nand:128k(bootstrap)ro," \
+				"384k(uboot)ro," \
+                                "256K(u-boot-cfg)," \
+                                "-(ubi)"
+                                
+#define CONFIG_UBI_MTD          "ubi.mtd=3"
+#define CONFIG_ROOT_DEVICE      "ubi0:rootfs"
+#define CONFIG_ROOT_FSTYPE      "ubifs"
+
 #define CONFIG_EXTRA_ENV_SETTINGS       \
         "__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2011\0" \
         "__produced=by NTC of Schemotecnics NTK PIT\0" \
