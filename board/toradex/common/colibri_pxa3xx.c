@@ -374,91 +374,6 @@ int dram_init(void)
 	return 0;
 }
 
-#ifndef CONFIG_NAND_SPL
-u32 get_board_rev(void)
-{
-	u_char *config_block;
-	int i;
-	u16 major = 0, minor = 0, release = 0;
-	u32 offset = 0x40000; /* config block offset */
-	size_t size = 4096;
-
-	/* allocate RAM are for config block */
-	config_block = malloc(size);
-
-	/* read production parameter config block */
-#ifdef CONFIG_NAND_PXA3xx
-	nand_read(&nand_info[0], offset, &size, (u_char *) config_block);
-#endif
-
-	/* config block existence check */
-	if (config_block[0] != 0x00 || config_block[1] != 0x40 ||
-			config_block[2] != 0x01 || config_block[3] != 0xcf ||
-			config_block[4] != 0x02 || config_block[5] != 0x40) {
-		printf("Missing Colibri config block\n");
-		return 0;
-	}
-
-	/* parse revision information in config block */
-	for (i = 0; i < (size - 8); i++) {
-		if (config_block[i] == 0x02 && config_block[i+1] == 0x40 &&
-				config_block[i+2] == 0x08) {
-			break;
-		}
-	}
-
-	major = (config_block[i+3] << 8) | config_block[i+4];
-	minor = (config_block[i+5] << 8) | config_block[i+6];
-	release = (config_block[i+7] << 8) | config_block[i+8];
-
-//format check
-
-	return ((major & 0xff) << 8) | ((minor & 0xf) << 4) | ((release & 0xf) + 0xa);
-}
-
-void get_board_serial(struct tag_serialnr *serialnr)
-{
-	char *addr_str, *end;
-	int array[8];
-	unsigned char bi_enetaddr[6]; /* Ethernet address */
-	int i;
-	int serial = 0;
-
-	/* Get MAC address from environment */
-	if ((addr_str = getenv("ethaddr")) != NULL) {
-		for (i = 0; i < 6; i++) {
-			bi_enetaddr[i] = addr_str ? simple_strtoul(addr_str, &end, 16) : 0;
-			if (addr_str) {
-				addr_str = (*end) ? end + 1 : end;
-			}
-		}
-	}
-
-	/* clear serial number */
-	memset(serialnr, 0, sizeof(struct tag_serialnr));
-
-	memcpy(&serial, (bi_enetaddr) + 3, 3);
-	serial = ntohl(serial);
-	serial >>= 8;
-
-	/* convert to Linux serial number format (hexadecimal coded decimal) */
-	i = 7;
-	while (serial) {
-		array[i--] = serial % 10;
-		serial /= 10;
-	}
-	serial = 0;
-	for (i = 0; i < 8; i++) {
-		serial += array[i];
-		serial *= 16;
-	}
-	serial /= 16;
-
-	/* copy serial number */
-	memcpy(serialnr, &serial, sizeof(serial));
-}
-#endif /* !CONFIG_NAND_SPL */
-
 #ifdef CONFIG_USB_OHCI_NEW
 #ifndef CONFIG_NAND_SPL
 int usb_board_init(void)
@@ -525,3 +440,55 @@ int usb_board_stop(void)
 }
 #endif /* !CONFIG_NAND_SPL */
 #endif /* CONFIG_USB_OHCI_NEW */
+
+#ifndef CONFIG_NAND_SPL
+
+#ifdef CONFIG_SERIAL_TAG
+/*****************************************************************************
+Board serial number used to calculate ethernet MAC addres and used directly
+in Linux Kernel. MAC seen like:
+ 00:14:2D:XX:YY;ZZ
+ \______/ \______/
+    \        \_______ Serial number from board label in HEX format
+     \_______________ Toradex MAC series
+And stored in Serial boot tag like:
+serialnr->high = 0x0000ZZYY
+serialnr->low  = 0xXX2D1400
+If no serial# enverooment variable present, use only Toradex part of MAC.
+*****************************************************************************/
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+        char *serial = getenv("serial#");
+        if (serial) {
+            unsigned long tmp;
+
+            tmp = simple_strtoul(serial,NULL,10);
+
+            serialnr->low  = 0x002D1400 | ( ( tmp & 0xFF0000) << 8 );
+            serialnr->high = ( ( tmp & 0xFF ) << 8 ) | ( ( tmp & 0xFF00 ) >> 8 );
+        } else {
+            serialnr->high = 0x00000000;
+            serialnr->low  = 0x002D1400;
+        }
+}
+#endif /* CONFIG_SERIAL_TAG */
+
+#ifdef CONFIG_REVISION_TAG
+/*****************************************************************************
+Board revision number used by Toradex kernel patch
+If no rev# enverooment variable present, use revision 0.0
+*****************************************************************************/
+unsigned int get_board_rev(void)
+{
+        char *revision = getenv("rev#");
+        if (revision) {
+            unsigned int tmp;
+
+            tmp = (unsigned int)simple_strtoul(revision,NULL,16);
+            return tmp;
+        } else
+            return 0;
+}
+#endif /* CONFIG_REVISION_TAG */
+
+#endif /* !CONFIG_NAND_SPL */

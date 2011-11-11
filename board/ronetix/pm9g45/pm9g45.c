@@ -473,3 +473,51 @@ void spi_cs_deactivate(struct spi_slave *slave)
 	}
 }
 #endif /* CONFIG_ATMEL_SPI */
+
+#ifdef CONFIG_SERIAL_TAG
+/*****************************************************************************
+Board serial number used to calculate ethernet MAC addres and used directly
+in Linux Kernel. MAC seen like:
+ 00:14:2D:XX:YY;ZZ
+ \______/ \______/
+    \        \_______ Serial number from board label in HEX format
+     \_______________ Toradex MAC series
+And stored in Serial boot tag like:
+serialnr->high = 0x0000ZZYY
+serialnr->low  = 0xXX2D1400
+If no serial# enverooment variable present, use only Toradex part of MAC.
+*****************************************************************************/
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+        char *serial = getenv("serial#");
+        if (serial) {
+            unsigned long tmp;
+
+            tmp = simple_strtoul(serial,NULL,10);
+
+            serialnr->low  = 0x002D1400 | ( ( tmp & 0xFF0000) << 8 );
+            serialnr->high = ( ( tmp & 0xFF ) << 8 ) | ( ( tmp & 0xFF00 ) >> 8 );
+        } else {
+            serialnr->high = 0x00000000;
+            serialnr->low  = 0x002D1400;
+        }
+}
+#endif /* CONFIG_SERIAL_TAG */
+
+#ifdef CONFIG_REVISION_TAG
+/*****************************************************************************
+Board revision number used by Toradex kernel patch
+If no rev# enverooment variable present, use revision 0.0
+*****************************************************************************/
+unsigned int get_board_rev(void)
+{
+        char *revision = getenv("rev#");
+        if (revision) {
+            unsigned int tmp;
+
+            tmp = (unsigned int)simple_strtoul(revision,NULL,16);
+            return tmp;
+        } else
+            return 0;
+}
+#endif /* CONFIG_REVISION_TAG */

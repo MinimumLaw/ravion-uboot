@@ -255,6 +255,9 @@
 #error CONFIG_USE_IRQ not supported
 #endif
 
+#define CONFIG_SERIAL_TAG
+#define CONFIG_REVISION_TAG
+
 #define CONFIG_SYS_USE_UBI
 #define CONFIG_MTD_DEVICE
 
