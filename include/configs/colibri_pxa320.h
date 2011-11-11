@@ -152,11 +152,17 @@
 #define CONFIG_SYS_USB_OHCI_SLOT_NAME	"colibri_pxa320"
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS 2
 
-#define CONFIG_BOOTDELAY	5
-#define CONFIG_ETHADDR		00:00:00:00:00:00
+#define CONFIG_BOOTDELAY		3
+#define CONFIG_AUTOBOOT_KEYED           1
+#define CONFIG_AUTOBOOT_PROMPT  \
+        "Type boot password to abort autoboot in %d seconds\n", bootdelay
+#undef CONFIG_AUTOBOOT_DELAY_STR
+#define CONFIG_AUTOBOOT_STOP_STR "ravion"
+
+#define CONFIG_ETHADDR		01:23:45:67:89:ab
 #define CONFIG_NETMASK		255.255.255.0
-#define CONFIG_IPADDR		192.168.10.2
-#define CONFIG_SERVERIP		192.168.10.1
+#define CONFIG_IPADDR		192.168.5.101
+#define CONFIG_SERVERIP		192.168.5.222
 
 #define DEFAULT_BOOTCOMMAND					\
 	"run ubiboot; run nfsboot"

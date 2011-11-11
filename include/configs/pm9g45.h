@@ -70,6 +70,12 @@
 #define	CONFIG_GREEN_LED	AT91_PIO_PORTD, 0 /* this is the user2 led */
 
 #define CONFIG_BOOTDELAY	3
+#define CONFIG_AUTOBOOT_KEYED           1
+#define CONFIG_AUTOBOOT_PROMPT  \
+        "Type boot password to abort autoboot in %d seconds\n", bootdelay
+#undef CONFIG_AUTOBOOT_DELAY_STR
+#define CONFIG_AUTOBOOT_STOP_STR "ravion"
+
 
 /*
  * BOOTP options
