@@ -91,7 +91,7 @@ void dtimer_interrupt(void *not_used)
 	}
 }
 
-int timer_init(void)
+void timer_init(void)
 {
 	volatile dtmr_t *timerp = (dtmr_t *) (CONFIG_SYS_TMR_BASE);
 
@@ -114,8 +114,11 @@ int timer_init(void)
 	/* set a period of 1us, set timer mode to restart and enable timer and interrupt */
 	timerp->tmr = CONFIG_SYS_TIMER_PRESCALER | DTIM_DTMR_CLK_DIV1 |
 	    DTIM_DTMR_FRR | DTIM_DTMR_ORRI | DTIM_DTMR_RST_EN;
+}
 
-	return 0;
+void reset_timer(void)
+{
+	timestamp = 0;
 }
 
 ulong get_timer(ulong base)
@@ -123,6 +126,10 @@ ulong get_timer(ulong base)
 	return (timestamp - base);
 }
 
+void set_timer(ulong t)
+{
+	timestamp = t;
+}
 #endif				/* CONFIG_MCFTMR */
 
 #if defined(CONFIG_MCFPIT)
@@ -164,8 +171,14 @@ void timer_init(void)
 	timerp->pcsr = PIT_PCSR_OVW;
 	timerp->pmr = lastinc = 0;
 	timerp->pcsr |= PIT_PCSR_PRE(CONFIG_SYS_PIT_PRESCALE) | PIT_PCSR_EN;
+}
 
-	return 0;
+void set_timer(ulong t)
+{
+	volatile pit_t *timerp = (pit_t *) (CONFIG_SYS_PIT_BASE);
+
+	timestamp = 0;
+	timerp->pmr = lastinc = 0;
 }
 
 ulong get_timer(ulong base)
@@ -183,8 +196,8 @@ ulong get_timer(ulong base)
 
 void wait_ticks(unsigned long ticks)
 {
-	u32 start = get_timer(0);
-	while (get_timer(start) < ticks) ;
+	set_timer(0);
+	while (get_timer(0) < ticks) ;
 }
 #endif				/* CONFIG_MCFPIT */
 

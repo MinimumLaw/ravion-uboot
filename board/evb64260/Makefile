@@ -26,7 +26,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
 SOBJS	= misc.o
 COBJS	= $(BOARD).o flash.o serial.o memory.o pci.o \
@@ -38,7 +38,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS) $(SOBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
 #########################################################################
 

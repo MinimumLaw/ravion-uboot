@@ -34,7 +34,8 @@
  * High Level Configuration Options
  * (easy to change)
  */
-#define CONFIG_CPU_MONAHANS	1	/* Intel Monahan CPU    */
+#define CONFIG_CPU_MONAHANS	1	/* Marvell Monahans CPU */
+#define CONFIG_CPU_PXA320	1	/* Marvell Monahans P */
 #define CONFIG_ZYLONITE		1	/* Zylonite board       */
 
 /* #define CONFIG_LCD		1 */

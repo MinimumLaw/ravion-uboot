@@ -321,8 +321,7 @@ static int set_phyreg (struct eth_device *dev, unsigned char addr,
 /* Check if given phyaddr is valid, i.e. there is a PHY connected.
  * Do this by checking model value field from ID2 register.
  */
-static struct eth_device* verify_phyaddr (const char *devname,
-						unsigned char addr)
+static struct eth_device* verify_phyaddr (char *devname, unsigned char addr)
 {
 	struct eth_device *dev;
 	unsigned short value;
@@ -335,7 +334,7 @@ static struct eth_device* verify_phyaddr (const char *devname,
 	}
 
 	/* read id2 register */
-	if (get_phyreg(dev, addr, MII_PHYSID2, &value) != 0) {
+	if (get_phyreg(dev, addr, PHY_PHYIDR2, &value) != 0) {
 		printf("%s: mii read timeout!\n", devname);
 		return NULL;
 	}
@@ -351,7 +350,7 @@ static struct eth_device* verify_phyaddr (const char *devname,
 	return dev;
 }
 
-static int eepro100_miiphy_read(const char *devname, unsigned char addr,
+static int eepro100_miiphy_read (char *devname, unsigned char addr,
 		unsigned char reg, unsigned short *value)
 {
 	struct eth_device *dev;
@@ -368,7 +367,7 @@ static int eepro100_miiphy_read(const char *devname, unsigned char addr,
 	return 0;
 }
 
-static int eepro100_miiphy_write(const char *devname, unsigned char addr,
+static int eepro100_miiphy_write (char *devname, unsigned char addr,
 		unsigned char reg, unsigned short value)
 {
 	struct eth_device *dev;
@@ -450,11 +449,6 @@ int eepro100_initialize (bd_t * bis)
 		}
 
 		dev = (struct eth_device *) malloc (sizeof *dev);
-		if (!dev) {
-			printf("eepro100: Can not allocate memory\n");
-			break;
-		}
-		memset(dev, 0, sizeof(*dev));
 
 		sprintf (dev->name, "i82559#%d", card_number);
 		dev->priv = (void *) devno; /* this have to come before bus_to_phys() */

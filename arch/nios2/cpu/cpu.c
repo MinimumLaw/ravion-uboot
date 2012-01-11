@@ -40,10 +40,11 @@ int checkcpu (void)
 	return (0);
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+
+int do_reset (void)
 {
-	disable_interrupts();
-	/* indirect call to go beyond 256MB limitation of toolchain */
-	nios2_callr(CONFIG_SYS_RESET_ADDR);
-	return 0;
+	void (*rst)(void) = (void(*)(void))CONFIG_SYS_RESET_ADDR;
+	disable_interrupts ();
+	rst();
+	return(0);
 }

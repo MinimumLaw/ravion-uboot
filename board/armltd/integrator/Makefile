@@ -27,7 +27,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
 SOBJS-y	:= lowlevel_init.o
 
@@ -40,7 +40,7 @@ COBJS	:= $(addprefix $(obj),$(COBJS-y))
 SOBJS	:= $(addprefix $(obj),$(SOBJS-y))
 
 $(LIB):	$(obj).depend $(COBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(COBJS) $(SOBJS))
+	$(AR) $(ARFLAGS) $@ $(COBJS) $(SOBJS)
 
 clean:
 	rm -f $(SOBJS) $(COBJS)

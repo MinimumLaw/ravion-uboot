@@ -39,6 +39,8 @@
  *	Bank 6 - not used
  *	Bank 7 - PLD Register
  *-----------------------------------------------------------------------------*/
+#include <ppc4xx.h>
+
 #define _LINUX_CONFIG_H 1	/* avoid reading Linux autoconf.h file	*/
 
 #include <configs/MIP405.h>
@@ -47,7 +49,6 @@
 
 #include <asm/cache.h>
 #include <asm/mmu.h>
-#include <asm/ppc4xx.h>
 #include "mip405.h"
 
 

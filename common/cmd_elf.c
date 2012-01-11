@@ -25,8 +25,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #endif
 
 int valid_elf_image (unsigned long addr);
-static unsigned long load_elf_image_phdr(unsigned long addr);
-static unsigned long load_elf_image_shdr(unsigned long addr);
+unsigned long load_elf_image (unsigned long addr);
 
 /* Allow ports to override the default behavior */
 __attribute__((weak))
@@ -62,34 +61,19 @@ int do_bootelf (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long addr;		/* Address of the ELF image     */
 	unsigned long rc;		/* Return value from user code  */
-	char *sload, *saddr;
 
 	/* -------------------------------------------------- */
 	int rcode = 0;
 
-	sload = saddr = NULL;
-	if (argc == 3) {
-		sload = argv[1];
-		saddr = argv[2];
-	} else if (argc == 2) {
-		if (argv[1][0] == '-')
-			sload = argv[1];
-		else
-			saddr = argv[1];
-	}
-
-	if (saddr)
-		addr = simple_strtoul(saddr, NULL, 16);
-	else
+	if (argc < 2)
 		addr = load_addr;
+	else
+		addr = simple_strtoul (argv[1], NULL, 16);
 
 	if (!valid_elf_image (addr))
 		return 1;
 
-	if (sload && sload[1] == 'p')
-		addr = load_elf_image_phdr(addr);
-	else
-		addr = load_elf_image_shdr(addr);
+	addr = load_elf_image (addr);
 
 	printf ("## Starting application at 0x%08lx ...\n", addr);
 
@@ -220,7 +204,7 @@ int do_bootvx (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	 */
 
 	if (valid_elf_image (addr)) {
-		addr = load_elf_image_shdr (addr);
+		addr = load_elf_image (addr);
 	} else {
 		puts ("## Not an ELF image, assuming binary\n");
 		/* leave addr as load_addr */
@@ -274,33 +258,7 @@ int valid_elf_image (unsigned long addr)
  * A very simple elf loader, assumes the image is valid, returns the
  * entry point address.
  * ====================================================================== */
-static unsigned long load_elf_image_phdr(unsigned long addr)
-{
-	Elf32_Ehdr *ehdr;		/* Elf header structure pointer     */
-	Elf32_Phdr *phdr;		/* Program header structure pointer */
-	int i;
-
-	ehdr = (Elf32_Ehdr *) addr;
-	phdr = (Elf32_Phdr *) (addr + ehdr->e_phoff);
-
-	/* Load each program header */
-	for (i = 0; i < ehdr->e_phnum; ++i) {
-		void *dst = (void *) phdr->p_paddr;
-		void *src = (void *) addr + phdr->p_offset;
-		debug("Loading phdr %i to 0x%p (%i bytes)\n",
-			i, dst, phdr->p_filesz);
-		if (phdr->p_filesz)
-			memcpy(dst, src, phdr->p_filesz);
-		if (phdr->p_filesz != phdr->p_memsz)
-			memset(dst + phdr->p_filesz, 0x00, phdr->p_memsz - phdr->p_filesz);
-		flush_cache((unsigned long)dst, phdr->p_filesz);
-		++phdr;
-	}
-
-	return ehdr->e_entry;
-}
-
-static unsigned long load_elf_image_shdr(unsigned long addr)
+unsigned long load_elf_image (unsigned long addr)
 {
 	Elf32_Ehdr *ehdr;		/* Elf header structure pointer     */
 	Elf32_Shdr *shdr;		/* Section header structure pointer */
@@ -354,11 +312,9 @@ static unsigned long load_elf_image_shdr(unsigned long addr)
 
 /* ====================================================================== */
 U_BOOT_CMD(
-	bootelf,      3,      0,      do_bootelf,
+	bootelf,      2,      0,      do_bootelf,
 	"Boot from an ELF image in memory",
-	"[-p|-s] [address]\n"
-	"\t- load ELF image at [address] via program headers (-p)\n"
-	"\t  or via section headers (-s)"
+	" [address] - load address of ELF image."
 );
 
 U_BOOT_CMD(

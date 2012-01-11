@@ -22,7 +22,7 @@
  */
 #include <common.h>
 
-char *strmhz (char *buf, unsigned long hz)
+char *strmhz (char *buf, long hz)
 {
 	long l, n;
 	long m;

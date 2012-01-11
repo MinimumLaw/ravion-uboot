@@ -38,7 +38,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef	CONFIG_M5208
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t *cmdtp, bd_t *bd, int flag, int argc, char * const argv[])
 {
 	volatile rcm_t *rcm = (rcm_t *)(MMAP_RCM);
 
@@ -74,7 +74,8 @@ int watchdog_disable(void)
 {
 	volatile wdog_t *wdt = (volatile wdog_t *)(MMAP_WDOG);
 
-	wdt->sr = 0x5555; /* reset watchdog counter */
+	wdt->sr = 0x5555; /* reset watchdog counteDECLARE_GLOBAL_DATA_PTR;
+r */
 	wdt->sr = 0xAAAA;
 	wdt->cr = 0;	/* disable watchdog timer */
 
@@ -141,7 +142,7 @@ int checkcpu(void)
 	return 0;
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t * cmdtp, bd_t * bd, int flag, int argc, char * const argv[])
 {
 	/* Call the board specific reset actions first. */
 	if(board_reset) {
@@ -176,7 +177,7 @@ int watchdog_init(void)
 #endif
 
 #ifdef	CONFIG_M5272
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t * cmdtp, bd_t * bd, int flag, int argc, char * const argv[])
 {
 	volatile wdog_t *wdp = (wdog_t *) (MMAP_WDOG);
 
@@ -256,7 +257,7 @@ int watchdog_init(void)
 #endif				/* #ifdef CONFIG_M5272 */
 
 #ifdef	CONFIG_M5275
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t *cmdtp, bd_t *bd, int flag, int argc, char * const argv[])
 {
 	volatile rcm_t *rcm = (rcm_t *)(MMAP_RCM);
 
@@ -336,7 +337,7 @@ int checkcpu(void)
 	return 0;
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t * cmdtp, bd_t * bd, int flag, int argc, char * const argv[])
 {
 	MCFRESET_RCR = MCFRESET_RCR_SOFTRST;
 	return 0;
@@ -353,7 +354,7 @@ int checkcpu(void)
 	return 0;
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t * cmdtp, bd_t * bd, int flag, int argc, char * const argv[])
 {
 	/* enable watchdog, set timeout to 0 and wait */
 	mbar_writeByte(MCFSIM_SYPCR, 0xc0);
@@ -383,7 +384,7 @@ int checkcpu(void)
 	return 0;
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(cmd_tbl_t * cmdtp, bd_t * bd, int flag, int argc, char * const argv[])
 {
 	/* enable watchdog, set timeout to 0 and wait */
 	mbar_writeByte(SIM_SYPCR, 0xc0);

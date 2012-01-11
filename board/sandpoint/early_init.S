@@ -25,7 +25,6 @@
 #define __ASSEMBLY__	1
 #endif
 
-#include <asm-offsets.h>
 #include <config.h>
 #include <asm/processor.h>
 #include <mpc824x.h>

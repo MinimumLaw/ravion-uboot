@@ -26,12 +26,34 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   . = + SIZEOF_HEADERS;
+  .interp : { *(.interp) }
+  .hash          : { *(.hash)		}
+  .dynsym        : { *(.dynsym)		}
+  .dynstr        : { *(.dynstr)		}
+  .rel.text      : { *(.rel.text)		}
+  .rela.text     : { *(.rela.text)	}
+  .rel.data      : { *(.rel.data)		}
+  .rela.data     : { *(.rela.data)	}
+  .rel.rodata    : { *(.rel.rodata)	}
+  .rela.rodata   : { *(.rela.rodata)	}
+  .rel.got       : { *(.rel.got)		}
+  .rela.got      : { *(.rela.got)		}
+  .rel.ctors     : { *(.rel.ctors)	}
+  .rela.ctors    : { *(.rela.ctors)	}
+  .rel.dtors     : { *(.rel.dtors)	}
+  .rela.dtors    : { *(.rela.dtors)	}
+  .rel.bss       : { *(.rel.bss)		}
+  .rela.bss      : { *(.rela.bss)		}
+  .rel.plt       : { *(.rel.plt)		}
+  .rela.plt      : { *(.rela.plt)		}
+  .init          : { *(.init)	}
+  .plt : { *(.plt) }
   .text      :
   {
-    arch/powerpc/cpu/ppc4xx/start.o	(.text*)
-    board/amcc/sequoia/init.o		(.text*)
+    arch/powerpc/cpu/ppc4xx/start.o	(.text)
 
-    *(.text*)
+    *(.text)
+    *(.got1)
   }
   _etext = .;
   PROVIDE (etext = .);
@@ -39,6 +61,9 @@ SECTIONS
   {
     *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
   }
+  .fini      : { *(.fini)    } =0
+  .ctors     : { *(.ctors)   }
+  .dtors     : { *(.dtors)   }
 
   /* Read-write section, merged into data segment: */
   . = (. + 0x00FF) & 0xFFFFFF00;
@@ -46,19 +71,23 @@ SECTIONS
   PROVIDE (erotext = .);
   .reloc   :
   {
-    KEEP(*(.got))
+    *(.got)
     _GOT2_TABLE_ = .;
-    KEEP(*(.got2))
+    *(.got2)
     _FIXUP_TABLE_ = .;
-    KEEP(*(.fixup))
+    *(.fixup)
   }
   __got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >>2;
   __fixup_entries = (. - _FIXUP_TABLE_)>>2;
 
   .data    :
   {
-    *(.data*)
-    *(.sdata*)
+    *(.data)
+    *(.data1)
+    *(.sdata)
+    *(.sdata2)
+    *(.dynamic)
+    CONSTRUCTORS
   }
   _edata  =  .;
   PROVIDE (edata = .);
@@ -84,12 +113,13 @@ SECTIONS
   __bss_start = .;
   .bss (NOLOAD)       :
   {
-   *(.bss*)
-   *(.sbss*)
+   *(.sbss) *(.scommon)
+   *(.dynbss)
+   *(.bss)
    *(COMMON)
    . = ALIGN(4);
   }
 
-  __bss_end__ = . ;
+  _end = . ;
   PROVIDE (end = .);
 }

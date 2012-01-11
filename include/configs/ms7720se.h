@@ -52,7 +52,6 @@
 #define MS7720SE_FLASH_BASE_1		0xA0000000
 #define MS7720SE_FLASH_BANK_SIZE	(8 * 1024 * 1024)
 
-#define CONFIG_SYS_TEXT_BASE	0x8FFC0000
 #define CONFIG_SYS_LONGHELP		/* undef to save memory	*/
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Buffer size for input from the Console */
@@ -77,6 +76,7 @@
 #define CONFIG_SYS_MONITOR_BASE	MS7720SE_FLASH_BASE_1
 #define CONFIG_SYS_MONITOR_LEN		(128 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(256 * 1024)
+#define CONFIG_SYS_GBL_DATA_SIZE	256
 #define CONFIG_SYS_BOOTMAPSZ		(8 * 1024 * 1024)
 
 
@@ -122,6 +122,5 @@
 #define CONFIG_SYS_ATA_DATA_OFFSET	0		/* data reg offset */
 #define CONFIG_SYS_ATA_REG_OFFSET	0		/* reg offset */
 #define CONFIG_SYS_ATA_ALT_OFFSET	0x200		/* alternate register offset */
-#define CONFIG_IDE_SWAP_IO
 
 #endif	/* __MS7720SE_H */

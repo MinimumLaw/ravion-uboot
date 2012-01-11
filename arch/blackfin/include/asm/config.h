@@ -9,9 +9,6 @@
 #ifndef __ASM_BLACKFIN_CONFIG_POST_H__
 #define __ASM_BLACKFIN_CONFIG_POST_H__
 
-/* Some of our defines use this (like CONFIG_SYS_GBL_DATA_ADDR) */
-#include <asm-offsets.h>
-
 /* Sanity check CONFIG_BFIN_CPU */
 #ifndef CONFIG_BFIN_CPU
 # error CONFIG_BFIN_CPU: your board config needs to define this
@@ -20,6 +17,9 @@
 #ifndef CONFIG_BFIN_SCRATCH_REG
 # define CONFIG_BFIN_SCRATCH_REG retn
 #endif
+
+/* Relocation to SDRAM works on all Blackfin boards */
+#define CONFIG_RELOC_FIXUP_WORKS
 
 /* Make sure the structure is properly aligned */
 #if ((CONFIG_SYS_GBL_DATA_ADDR & -4) != CONFIG_SYS_GBL_DATA_ADDR)
@@ -106,23 +106,20 @@
 #ifndef CONFIG_SYS_MALLOC_BASE
 # define CONFIG_SYS_MALLOC_BASE (CONFIG_SYS_MONITOR_BASE - CONFIG_SYS_MALLOC_LEN)
 #endif
-#ifndef CONFIG_SYS_GBL_DATA_ADDR
-# define CONFIG_SYS_GBL_DATA_ADDR (CONFIG_SYS_MALLOC_BASE - GENERATED_GBL_DATA_SIZE)
+#ifndef CONFIG_SYS_GBL_DATA_SIZE
+# define CONFIG_SYS_GBL_DATA_SIZE (128)
 #endif
-#ifndef CONFIG_SYS_BD_INFO_ADDR
-# define CONFIG_SYS_BD_INFO_ADDR (CONFIG_SYS_GBL_DATA_ADDR - GENERATED_BD_INFO_SIZE)
+#ifndef CONFIG_SYS_GBL_DATA_ADDR
+# define CONFIG_SYS_GBL_DATA_ADDR (CONFIG_SYS_MALLOC_BASE - CONFIG_SYS_GBL_DATA_SIZE)
 #endif
 #ifndef CONFIG_STACKBASE
-# define CONFIG_STACKBASE (CONFIG_SYS_BD_INFO_ADDR - 4)
+# define CONFIG_STACKBASE (CONFIG_SYS_GBL_DATA_ADDR - 4)
 #endif
 #ifndef CONFIG_SYS_MEMTEST_START
 # define CONFIG_SYS_MEMTEST_START 0
 #endif
 #ifndef CONFIG_SYS_MEMTEST_END
 # define CONFIG_SYS_MEMTEST_END (CONFIG_STACKBASE - 8192 + 4)
-#endif
-#ifndef CONFIG_SYS_POST_WORD_ADDR
-# define CONFIG_SYS_POST_WORD_ADDR (L1_DATA_B_SRAM + L1_DATA_B_SRAM_SIZE - 4)
 #endif
 
 /* Check to make sure everything fits in external RAM */

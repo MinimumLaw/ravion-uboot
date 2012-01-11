@@ -23,12 +23,14 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(CPU).o
+LIB	= $(obj)lib$(CPU).a
 
 START	= start.o
 
 COBJS	+= cpu.o
+COBJS	+= i2c.o
 COBJS	+= pxafb.o
+COBJS	+= sysinfo.o
 COBJS	+= timer.o
 COBJS	+= usb.o
 
@@ -39,7 +41,7 @@ START	:= $(addprefix $(obj),$(START))
 all:	$(obj).depend $(START) $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

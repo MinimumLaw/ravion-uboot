@@ -96,6 +96,11 @@ int zunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp,
 
 	s.zalloc = zalloc;
 	s.zfree = zfree;
+#if defined(CONFIG_HW_WATCHDOG) || defined(CONFIG_WATCHDOG)
+	s.outcb = (cb_func)WATCHDOG_RESET;
+#else
+	s.outcb = Z_NULL;
+#endif	/* CONFIG_HW_WATCHDOG */
 
 	r = inflateInit2(&s, -MAX_WBITS);
 	if (r != Z_OK) {
@@ -106,16 +111,12 @@ int zunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp,
 	s.avail_in = *lenp - offset;
 	s.next_out = dst;
 	s.avail_out = dstlen;
-	do {
-		r = inflate(&s, Z_FINISH);
-		if (r != Z_STREAM_END && r != Z_BUF_ERROR && stoponerr == 1) {
-			printf("Error: inflate() returned %d\n", r);
-			inflateEnd(&s);
-			return -1;
-		}
-		s.avail_in = *lenp - offset - (int)(s.next_out - (unsigned char*)dst);
-		s.avail_out = dstlen;
-	} while (r == Z_BUF_ERROR);
+	r = inflate(&s, Z_FINISH);
+	if ((r != Z_STREAM_END) && (stoponerr==1)) {
+		printf ("Error: inflate() returned %d\n", r);
+		inflateEnd(&s);
+		return (-1);
+	}
 	*lenp = s.next_out - (unsigned char *) dst;
 	inflateEnd(&s);
 

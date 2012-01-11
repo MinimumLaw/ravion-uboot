@@ -22,7 +22,7 @@
 #
 include $(OBJTREE)/include/autoconf.mk
 
-LIB	= libpostppc4xx.o
+LIB	= libpostppc4xx.a
 
 AOBJS-$(CONFIG_HAS_POST)	+= cache_4xx.o
 COBJS-$(CONFIG_HAS_POST)	+= cache.o

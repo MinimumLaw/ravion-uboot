@@ -61,7 +61,8 @@ static struct cpu_post_andi_s
 	0x80000000
     },
 };
-static unsigned int cpu_post_andi_size = ARRAY_SIZE(cpu_post_andi_table);
+static unsigned int cpu_post_andi_size =
+    sizeof (cpu_post_andi_table) / sizeof (struct cpu_post_andi_s);
 
 int cpu_post_test_andi (void)
 {

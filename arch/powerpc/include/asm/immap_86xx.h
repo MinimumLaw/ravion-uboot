@@ -1,7 +1,7 @@
 /*
  * MPC86xx Internal Memory Map
  *
- * Copyright 2004, 2011 Freescale Semiconductor
+ * Copyright 2004 Freescale Semiconductor
  * Jeff Brown (Jeffrey@freescale.com)
  * Srikanth Srinivasan (srikanth.srinivasan@freescale.com)
  *
@@ -1205,8 +1205,6 @@ typedef struct ccsr_gur {
 #define MPC86xx_DEVDISR_PCI1	0x80000000
 #define MPC86xx_DEVDISR_PCIE1	0x40000000
 #define MPC86xx_DEVDISR_PCIE2	0x20000000
-#define MPC86xx_DEVDISR_SRIO	0x00080000
-#define MPC86xx_DEVDISR_RMSG	0x00040000
 #define MPC86xx_DEVDISR_CPU0	0x00008000
 #define MPC86xx_DEVDISR_CPU1	0x00004000
 #define MPC86xx_RSTCR_HRST_REQ	0x00000002
@@ -1252,15 +1250,12 @@ typedef struct immap {
 
 extern immap_t  *immr;
 
-#define CONFIG_SYS_MPC86xx_DDR_OFFSET	0x2000
+#define CONFIG_SYS_MPC86xx_DDR_OFFSET	(0x2000)
 #define CONFIG_SYS_MPC86xx_DDR_ADDR	(CONFIG_SYS_IMMR + CONFIG_SYS_MPC86xx_DDR_OFFSET)
-#define CONFIG_SYS_MPC86xx_DDR2_OFFSET	0x6000
+#define CONFIG_SYS_MPC86xx_DDR2_OFFSET	(0x6000)
 #define CONFIG_SYS_MPC86xx_DDR2_ADDR	(CONFIG_SYS_IMMR + CONFIG_SYS_MPC86xx_DDR2_OFFSET)
-#define CONFIG_SYS_MPC86xx_DMA_OFFSET	0x21000
+#define CONFIG_SYS_MPC86xx_DMA_OFFSET	(0x21000)
 #define CONFIG_SYS_MPC86xx_DMA_ADDR	(CONFIG_SYS_IMMR + CONFIG_SYS_MPC86xx_DMA_OFFSET)
-#define CONFIG_SYS_MPC86xx_PIC_OFFSET	0x40000
-#define CONFIG_SYS_MPC8xxx_PIC_ADDR	(CONFIG_SYS_IMMR + CONFIG_SYS_MPC86xx_PIC_OFFSET)
-
 
 #define CONFIG_SYS_MPC86xx_PCI1_OFFSET		0x8000
 #ifdef CONFIG_MPC8610

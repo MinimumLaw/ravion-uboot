@@ -22,7 +22,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
-#include <asm/gpio.h>
+#include <asm/arch/gpio.h>
 
 #define DEBUG_BOARD_CONNECTED		1
 #define DEBUG_BOARD_NOT_CONNECTED	0
@@ -33,14 +33,14 @@ static void zoom2_debug_board_detect (void)
 {
 	int val = 0;
 
-	if (!gpio_request(158, "")) {
+	if (!omap_request_gpio(158)) {
 		/*
 		 * GPIO to query for debug board
 		 * 158 db board query
 		 */
-		gpio_direction_input(158);
-		val = gpio_get_value(158);
-		gpio_free(158);
+		omap_set_gpio_direction(158, 1);
+		val = omap_get_gpio_datain(158);
+		omap_free_gpio(158);
 	}
 
 	if (!val)

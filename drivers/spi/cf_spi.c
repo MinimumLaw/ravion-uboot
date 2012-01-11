@@ -49,14 +49,6 @@ extern void cfspi_release_bus(uint bus, uint cs);
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifndef CONFIG_SPI_IDLE_VAL
-#if defined(CONFIG_SPI_MMC)
-#define CONFIG_SPI_IDLE_VAL	0xFFFF
-#else
-#define CONFIG_SPI_IDLE_VAL	0x0
-#endif
-#endif
-
 #if defined(CONFIG_CF_DSPI)
 /* DSPI specific mode */
 #define SPI_MODE_MOD	0x00200000
@@ -153,7 +145,7 @@ int cfspi_xfer(struct spi_slave *slave, uint bitlen, const void *dout,
 			}
 
 			if (din != NULL) {
-				cfspi_tx(ctrl, CONFIG_SPI_IDLE_VAL);
+				cfspi_tx(ctrl, 0);
 				if (cfslave->charbit == 16)
 					*spi_rd16++ = cfspi_rx();
 				else
@@ -177,7 +169,7 @@ int cfspi_xfer(struct spi_slave *slave, uint bitlen, const void *dout,
 		}
 
 		if (din != NULL) {
-			cfspi_tx(ctrl, CONFIG_SPI_IDLE_VAL);
+			cfspi_tx(ctrl, 0);
 			if (cfslave->charbit == 16)
 				*spi_rd16 = cfspi_rx();
 			else
@@ -185,7 +177,7 @@ int cfspi_xfer(struct spi_slave *slave, uint bitlen, const void *dout,
 		}
 	} else {
 		/* dummy read */
-		cfspi_tx(ctrl, CONFIG_SPI_IDLE_VAL);
+		cfspi_tx(ctrl, 0);
 		cfspi_rx();
 	}
 

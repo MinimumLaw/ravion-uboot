@@ -41,8 +41,8 @@
 #include <asm/io.h>
 #include <ppc_asm.tmpl>
 #include <commproc.h>
-#include <asm/ppc4xx-emac.h>
-#include <asm/ppc4xx-mal.h>
+#include <ppc4xx_enet.h>
+#include <405_mal.h>
 #include <miiphy.h>
 
 #if !defined(CONFIG_PHY_CLK_FREQ)
@@ -89,60 +89,60 @@ int phy_setup_aneg (char *devname, unsigned char addr)
 	u16 exsr = 0x0000;
 #endif
 
-	miiphy_read (devname, addr, MII_BMSR, &bmsr);
+	miiphy_read (devname, addr, PHY_BMSR, &bmsr);
 
 #if defined(CONFIG_PHY_GIGE)
-	if (bmsr & BMSR_ESTATEN)
-		miiphy_read (devname, addr, MII_ESTATUS, &exsr);
+	if (bmsr & PHY_BMSR_EXT_STAT)
+		miiphy_read (devname, addr, PHY_EXSR, &exsr);
 
-	if (exsr & (ESTATUS_1000XF | ESTATUS_1000XH)) {
+	if (exsr & (PHY_EXSR_1000XF | PHY_EXSR_1000XH)) {
 		/* 1000BASE-X */
 		u16 anar = 0x0000;
 
-		if (exsr & ESTATUS_1000XF)
-			anar |= ADVERTISE_1000XFULL;
+		if (exsr & PHY_EXSR_1000XF)
+			anar |= PHY_X_ANLPAR_FD;
 
-		if (exsr & ESTATUS_1000XH)
-			anar |= ADVERTISE_1000XHALF;
+		if (exsr & PHY_EXSR_1000XH)
+			anar |= PHY_X_ANLPAR_HD;
 
-		miiphy_write (devname, addr, MII_ADVERTISE, anar);
+		miiphy_write (devname, addr, PHY_ANAR, anar);
 	} else
 #endif
 	{
 		u16 anar, btcr;
 
-		miiphy_read (devname, addr, MII_ADVERTISE, &anar);
-		anar &= ~(0x5000 | LPA_100BASE4 | LPA_100FULL |
-			  LPA_100HALF | LPA_10FULL | LPA_10HALF);
+		miiphy_read (devname, addr, PHY_ANAR, &anar);
+		anar &= ~(0x5000 | PHY_ANLPAR_T4 | PHY_ANLPAR_TXFD |
+			  PHY_ANLPAR_TX | PHY_ANLPAR_10FD | PHY_ANLPAR_10);
 
-		miiphy_read (devname, addr, MII_CTRL1000, &btcr);
+		miiphy_read (devname, addr, PHY_1000BTCR, &btcr);
 		btcr &= ~(0x00FF | PHY_1000BTCR_1000FD | PHY_1000BTCR_1000HD);
 
-		if (bmsr & BMSR_100BASE4)
-			anar |= LPA_100BASE4;
+		if (bmsr & PHY_BMSR_100T4)
+			anar |= PHY_ANLPAR_T4;
 
-		if (bmsr & BMSR_100FULL)
-			anar |= LPA_100FULL;
+		if (bmsr & PHY_BMSR_100TXF)
+			anar |= PHY_ANLPAR_TXFD;
 
-		if (bmsr & BMSR_100HALF)
-			anar |= LPA_100HALF;
+		if (bmsr & PHY_BMSR_100TXH)
+			anar |= PHY_ANLPAR_TX;
 
-		if (bmsr & BMSR_10FULL)
-			anar |= LPA_10FULL;
+		if (bmsr & PHY_BMSR_10TF)
+			anar |= PHY_ANLPAR_10FD;
 
-		if (bmsr & BMSR_10HALF)
-			anar |= LPA_10HALF;
+		if (bmsr & PHY_BMSR_10TH)
+			anar |= PHY_ANLPAR_10;
 
-		miiphy_write (devname, addr, MII_ADVERTISE, anar);
+		miiphy_write (devname, addr, PHY_ANAR, anar);
 
 #if defined(CONFIG_PHY_GIGE)
-		if (exsr & ESTATUS_1000_TFULL)
+		if (exsr & PHY_EXSR_1000TF)
 			btcr |= PHY_1000BTCR_1000FD;
 
-		if (exsr & ESTATUS_1000_THALF)
+		if (exsr & PHY_EXSR_1000TH)
 			btcr |= PHY_1000BTCR_1000HD;
 
-		miiphy_write (devname, addr, MII_CTRL1000, btcr);
+		miiphy_write (devname, addr, PHY_1000BTCR, btcr);
 #endif
 	}
 
@@ -152,21 +152,21 @@ int phy_setup_aneg (char *devname, unsigned char addr)
 	 */
 	u16 adv;
 
-	miiphy_read (devname, addr, MII_ADVERTISE, &adv);
-	adv |= (LPA_LPACK  | LPA_100FULL | LPA_100HALF |
-		LPA_10FULL | LPA_10HALF);
-	miiphy_write (devname, addr, MII_ADVERTISE, adv);
+	miiphy_read (devname, addr, PHY_ANAR, &adv);
+	adv |= (PHY_ANLPAR_ACK  | PHY_ANLPAR_TXFD | PHY_ANLPAR_TX |
+		PHY_ANLPAR_10FD | PHY_ANLPAR_10);
+	miiphy_write (devname, addr, PHY_ANAR, adv);
 
-	miiphy_read (devname, addr, MII_CTRL1000, &adv);
+	miiphy_read (devname, addr, PHY_1000BTCR, &adv);
 	adv |= (0x0300);
-	miiphy_write (devname, addr, MII_CTRL1000, adv);
+	miiphy_write (devname, addr, PHY_1000BTCR, adv);
 
 #endif /* defined(CONFIG_PHY_DYNAMIC_ANEG) */
 
 	/* Start/Restart aneg */
-	miiphy_read (devname, addr, MII_BMCR, &bmcr);
-	bmcr |= (BMCR_ANENABLE | BMCR_ANRESTART);
-	miiphy_write (devname, addr, MII_BMCR, bmcr);
+	miiphy_read (devname, addr, PHY_BMCR, &bmcr);
+	bmcr |= (PHY_BMCR_AUTON | PHY_BMCR_RST_NEG);
+	miiphy_write (devname, addr, PHY_BMCR, bmcr);
 
 	return 0;
 }
@@ -338,7 +338,7 @@ static int emac_miiphy_command(u8 addr, u8 reg, int cmd, u16 value)
 	return 0;
 }
 
-int emac4xx_miiphy_read (const char *devname, unsigned char addr, unsigned char reg,
+int emac4xx_miiphy_read (char *devname, unsigned char addr, unsigned char reg,
 			 unsigned short *value)
 {
 	unsigned long sta_reg;
@@ -359,7 +359,7 @@ int emac4xx_miiphy_read (const char *devname, unsigned char addr, unsigned char 
 /* write a phy reg and return the value with a rc	    */
 /***********************************************************/
 
-int emac4xx_miiphy_write (const char *devname, unsigned char addr, unsigned char reg,
+int emac4xx_miiphy_write (char *devname, unsigned char addr, unsigned char reg,
 			  unsigned short value)
 {
 	return emac_miiphy_command(addr, reg, EMAC_STACR_WRITE, value);

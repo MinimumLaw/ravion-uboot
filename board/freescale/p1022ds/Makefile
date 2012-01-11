@@ -9,21 +9,19 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
 COBJS-y	+= $(BOARD).o
 COBJS-y	+= ddr.o
 COBJS-y	+= law.o
 COBJS-y	+= tlb.o
 
-COBJS-$(CONFIG_FSL_DIU_FB) += diu.o
-
 SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(SOBJS)

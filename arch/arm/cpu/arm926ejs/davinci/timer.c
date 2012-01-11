@@ -40,8 +40,6 @@
 #include <common.h>
 #include <asm/io.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 struct davinci_timer {
 	u_int32_t	pid12;
 	u_int32_t	emumgt;
@@ -59,9 +57,11 @@ struct davinci_timer {
 static struct davinci_timer * const timer =
 	(struct davinci_timer *)CONFIG_SYS_TIMERBASE;
 
-#define TIMER_LOAD_VAL	0xffffffff
-
+#define TIMER_LOAD_VAL	(CONFIG_SYS_HZ_CLOCK / CONFIG_SYS_HZ)
 #define TIM_CLK_DIV	16
+
+static ulong timestamp;
+static ulong lastinc;
 
 int timer_init(void)
 {
@@ -71,46 +71,72 @@ int timer_init(void)
 	writel(0x06 | ((TIM_CLK_DIV - 1) << 8), &timer->tgcr);
 	writel(0x0, &timer->tim34);
 	writel(TIMER_LOAD_VAL, &timer->prd34);
+	lastinc = 0;
+	timestamp = 0;
 	writel(2 << 22, &timer->tcr);
-	gd->timer_rate_hz = CONFIG_SYS_HZ_CLOCK / TIM_CLK_DIV;
-	gd->timer_reset_value = 0;
 
 	return(0);
 }
 
-/*
- * Get the current 64 bit timer tick count
- */
-unsigned long long get_ticks(void)
+void reset_timer(void)
 {
-	unsigned long now = readl(&timer->tim34);
+	writel(0x0, &timer->tcr);
+	writel(0x0, &timer->tim34);
+	lastinc = 0;
+	timestamp = 0;
+	writel(2 << 22, &timer->tcr);
+}
 
-	/* increment tbu if tbl has rolled over */
-	if (now < gd->tbl)
-		gd->tbu++;
-	gd->tbl = now;
+static ulong get_timer_raw(void)
+{
+	ulong now = readl(&timer->tim34);
 
-	return (((unsigned long long)gd->tbu) << 32) | gd->tbl;
+	if (now >= lastinc) {
+		/* normal mode */
+		timestamp += now - lastinc;
+	} else {
+		/* overflow ... */
+		timestamp += now + TIMER_LOAD_VAL - lastinc;
+	}
+	lastinc = now;
+	return timestamp;
 }
 
 ulong get_timer(ulong base)
 {
-	unsigned long long timer_diff;
+	return((get_timer_raw() / (TIMER_LOAD_VAL / TIM_CLK_DIV)) - base);
+}
 
-	timer_diff = get_ticks() - gd->timer_reset_value;
-
-	return (timer_diff / (gd->timer_rate_hz / CONFIG_SYS_HZ)) - base;
+void set_timer(ulong t)
+{
+	timestamp = t;
 }
 
 void __udelay(unsigned long usec)
 {
-	unsigned long long endtime;
+	ulong tmo;
+	ulong endtime;
+	signed long diff;
 
-	endtime = ((unsigned long long)usec * gd->timer_rate_hz) / 1000000UL;
-	endtime += get_ticks();
+	tmo = CONFIG_SYS_HZ_CLOCK / 1000;
+	tmo *= usec;
+	tmo /= (1000 * TIM_CLK_DIV);
 
-	while (get_ticks() < endtime)
-		;
+	endtime = get_timer_raw() + tmo;
+
+	do {
+		ulong now = get_timer_raw();
+		diff = endtime - now;
+	} while (diff >= 0);
+}
+
+/*
+ * This function is derived from PowerPC code (read timebase as long long).
+ * On ARM it just returns the timer value.
+ */
+unsigned long long get_ticks(void)
+{
+	return(get_timer(0));
 }
 
 /*

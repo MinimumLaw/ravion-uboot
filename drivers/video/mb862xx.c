@@ -189,22 +189,13 @@ static void de_init (void)
 }
 
 #if defined(CONFIG_VIDEO_CORALP)
-/* use CCF and MMR parameters for Coral-P Eval. Board as default */
-#ifndef CONFIG_SYS_MB862xx_CCF
-#define CONFIG_SYS_MB862xx_CCF	0x00090000
-#endif
-#ifndef CONFIG_SYS_MB862xx_MMR
-#define CONFIG_SYS_MB862xx_MMR	0x11d7fa13
-#endif
-
 unsigned int pci_video_init (void)
 {
 	GraphicDevice *dev = &mb862xx;
 	pci_dev_t devbusfn;
-	u16 device;
 
 	if ((devbusfn = pci_find_devices (supported, 0)) < 0) {
-		puts("controller not present\n");
+		puts ("PCI video controller not found!\n");
 		return 0;
 	}
 
@@ -221,25 +212,10 @@ unsigned int pci_video_init (void)
 
 	dev->pciBase = dev->frameAdrs;
 
-	puts("Coral-");
-
-	pci_read_config_word(devbusfn, PCI_DEVICE_ID, &device);
-	switch (device) {
-	case PCI_DEVICE_ID_CORAL_P:
-		puts("P\n");
-		break;
-	case PCI_DEVICE_ID_CORAL_PA:
-		puts("PA\n");
-		break;
-	default:
-		puts("Unknown\n");
-		return 0;
-	}
-
-	/* Setup clocks and memory mode for Coral-P(A) */
-	HOST_WR_REG(GC_CCF, CONFIG_SYS_MB862xx_CCF);
+	/* Setup clocks and memory mode for Coral-P Eval. Board */
+	HOST_WR_REG (GC_CCF, 0x00090000);
 	udelay (200);
-	HOST_WR_REG(GC_MMR, CONFIG_SYS_MB862xx_MMR);
+	HOST_WR_REG (GC_MMR, 0x11d7fa13);
 	udelay (100);
 	return dev->frameAdrs;
 }
@@ -258,6 +234,8 @@ unsigned int card_init (void)
 
 	if (!pci_video_init ())
 		return 0;
+
+	puts ("CoralP\n");
 
 	tmp = 0;
 	videomode = 0x310;

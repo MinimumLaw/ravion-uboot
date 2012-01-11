@@ -26,10 +26,9 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(CPU).o
+LIB	= $(obj)lib$(CPU).a
 
-SSTART	= start.o
-CSTART	= traps.o
+START	= start.o
 
 SOBJS-y += cache.o
 SOBJS-$(CONFIG_MP) += release.o
@@ -42,18 +41,17 @@ COBJS-$(CONFIG_MPC8641) += ddr-8641.o
 COBJS-$(CONFIG_OF_LIBFDT) += fdt.o
 COBJS-y	+= interrupts.o
 COBJS-$(CONFIG_MP) += mp.o
-COBJS-$(CONFIG_MPC8610) += mpc8610_serdes.o
-COBJS-$(CONFIG_MPC8641) += mpc8641_serdes.o
 COBJS-y	+= speed.o
+COBJS-y	+= traps.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
-START	:= $(addprefix $(obj),$(SSTART) $(CSTART))
+START	:= $(addprefix $(obj),$(START))
 
 all:	$(obj).depend $(START) $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(ASOBJS) $(OBJS)
 
 #########################################################################
 

@@ -59,7 +59,8 @@ static ulong cpu_post_cr_table1[] =
     0xaaaaaaaa,
     0x55555555,
 };
-static unsigned int cpu_post_cr_size1 = ARRAY_SIZE(cpu_post_cr_table1);
+static unsigned int cpu_post_cr_size1 =
+    sizeof (cpu_post_cr_table1) / sizeof (ulong);
 
 static struct cpu_post_cr_s2 {
     ulong xer;
@@ -75,7 +76,8 @@ static struct cpu_post_cr_s2 {
 	5
     },
 };
-static unsigned int cpu_post_cr_size2 = ARRAY_SIZE(cpu_post_cr_table2);
+static unsigned int cpu_post_cr_size2 =
+    sizeof (cpu_post_cr_table2) / sizeof (struct cpu_post_cr_s2);
 
 static struct cpu_post_cr_s3 {
     ulong cr;
@@ -97,7 +99,8 @@ static struct cpu_post_cr_s3 {
 	0x71234567
     },
 };
-static unsigned int cpu_post_cr_size3 = ARRAY_SIZE(cpu_post_cr_table3);
+static unsigned int cpu_post_cr_size3 =
+    sizeof (cpu_post_cr_table3) / sizeof (struct cpu_post_cr_s3);
 
 static struct cpu_post_cr_s4 {
     ulong cmd;
@@ -237,7 +240,8 @@ static struct cpu_post_cr_s4 {
 	0x0000ffff
     },
 };
-static unsigned int cpu_post_cr_size4 = ARRAY_SIZE(cpu_post_cr_table4);
+static unsigned int cpu_post_cr_size4 =
+    sizeof (cpu_post_cr_table4) / sizeof (struct cpu_post_cr_s4);
 
 int cpu_post_test_cr (void)
 {

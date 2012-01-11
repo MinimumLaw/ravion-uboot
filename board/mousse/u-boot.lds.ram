@@ -99,6 +99,6 @@ SECTIONS
     common/env_embedded.o (.ppcenv)
   } > ram
 
-  __bss_end__ = . ;
+  _end = . ;
   PROVIDE (end = .);
 }

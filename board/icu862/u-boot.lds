@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2001-2010
+ * (C) Copyright 2001
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -22,24 +22,65 @@
  */
 
 OUTPUT_ARCH(powerpc)
-
+/* Do we need any of these for elf?
+   __DYNAMIC = 0;    */
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   . = + SIZEOF_HEADERS;
+  .interp : { *(.interp) }
+  .hash          : { *(.hash)		}
+  .dynsym        : { *(.dynsym)		}
+  .dynstr        : { *(.dynstr)		}
+  .rel.text      : { *(.rel.text)		}
+  .rela.text     : { *(.rela.text)	}
+  .rel.data      : { *(.rel.data)		}
+  .rela.data     : { *(.rela.data)	}
+  .rel.rodata    : { *(.rel.rodata)	}
+  .rela.rodata   : { *(.rela.rodata)	}
+  .rel.got       : { *(.rel.got)		}
+  .rela.got      : { *(.rela.got)		}
+  .rel.ctors     : { *(.rel.ctors)	}
+  .rela.ctors    : { *(.rela.ctors)	}
+  .rel.dtors     : { *(.rel.dtors)	}
+  .rela.dtors    : { *(.rela.dtors)	}
+  .rel.bss       : { *(.rel.bss)		}
+  .rela.bss      : { *(.rela.bss)		}
+  .rel.plt       : { *(.rel.plt)		}
+  .rela.plt      : { *(.rela.plt)		}
+  .init          : { *(.init)	}
+  .plt : { *(.plt) }
   .text      :
   {
-    arch/powerpc/cpu/mpc8xx/start.o	(.text*)
-    arch/powerpc/cpu/mpc8xx/traps.o	(.text*)
+    /* WARNING - the following is hand-optimized to fit within	*/
+    /* the sector layout of our flash chips!	XXX FIXME XXX	*/
 
-    *(.text*)
+    arch/powerpc/cpu/mpc8xx/start.o	(.text)
+/*
+    arch/powerpc/cpu/mpc8xx/start.o	(.text)
+    common/dlmalloc.o	(.text)
+    arch/powerpc/lib/ppcstring.o	(.text)
+    lib/vsprintf.o	(.text)
+    lib/crc32.o		(.text)
+    lib/zlib.o		(.text)
+
+    . = env_offset;
+    common/env_embedded.o(.text)
+*/
+
+    *(.text)
+    *(.got1)
   }
   _etext = .;
   PROVIDE (etext = .);
   .rodata    :
   {
+    *(.eh_frame)
     *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
   }
+  .fini      : { *(.fini)    } =0
+  .ctors     : { *(.ctors)   }
+  .dtors     : { *(.dtors)   }
 
   /* Read-write section, merged into data segment: */
   . = (. + 0x0FFF) & 0xFFFFF000;
@@ -47,20 +88,23 @@ SECTIONS
   PROVIDE (erotext = .);
   .reloc   :
   {
+    *(.got)
     _GOT2_TABLE_ = .;
-    KEEP(*(.got2))
-    KEEP(*(.got))
-    PROVIDE(_GLOBAL_OFFSET_TABLE_ = . + 4);
+    *(.got2)
     _FIXUP_TABLE_ = .;
-    KEEP(*(.fixup))
+    *(.fixup)
   }
-  __got2_entries = ((_GLOBAL_OFFSET_TABLE_ - _GOT2_TABLE_) >> 2) - 1;
+  __got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >>2;
   __fixup_entries = (. - _FIXUP_TABLE_)>>2;
 
   .data    :
   {
-    *(.data*)
-    *(.sdata*)
+    *(.data)
+    *(.data1)
+    *(.sdata)
+    *(.sdata2)
+    *(.dynamic)
+    CONSTRUCTORS
   }
   _edata  =  .;
   PROVIDE (edata = .);
@@ -86,11 +130,12 @@ SECTIONS
   __bss_start = .;
   .bss (NOLOAD)       :
   {
-   *(.bss*)
-   *(.sbss*)
+   *(.sbss) *(.scommon)
+   *(.dynbss)
+   *(.bss)
    *(COMMON)
    . = ALIGN(4);
   }
-  __bss_end__ = . ;
+  _end = . ;
   PROVIDE (end = .);
 }

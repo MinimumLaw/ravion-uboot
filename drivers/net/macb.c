@@ -167,7 +167,7 @@ static u16 macb_mdio_read(struct macb_device *macb, u8 reg)
 
 #if defined(CONFIG_CMD_MII)
 
-int macb_miiphy_read(const char *devname, u8 phy_adr, u8 reg, u16 *value)
+int macb_miiphy_read(char *devname, u8 phy_adr, u8 reg, u16 *value)
 {
 	struct eth_device *dev = eth_get_dev_by_name(devname);
 	struct macb_device *macb = to_macb(dev);
@@ -180,7 +180,7 @@ int macb_miiphy_read(const char *devname, u8 phy_adr, u8 reg, u16 *value)
 	return 0;
 }
 
-int macb_miiphy_write(const char *devname, u8 phy_adr, u8 reg, u16 value)
+int macb_miiphy_write(char *devname, u8 phy_adr, u8 reg, u16 value)
 {
 	struct eth_device *dev = eth_get_dev_by_name(devname);
 	struct macb_device *macb = to_macb(dev);
@@ -469,19 +469,17 @@ static int macb_init(struct eth_device *netdev, bd_t *bd)
 
 	/* choose RMII or MII mode. This depends on the board */
 #ifdef CONFIG_RMII
-#if	defined(CONFIG_AT91CAP9) || defined(CONFIG_AT91SAM9260) || \
-	defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91SAM9G20) || \
-	defined(CONFIG_AT91SAM9G45) || defined(CONFIG_AT91SAM9M10G45) || \
-	defined(CONFIG_AT91SAM9XE)
+#if defined(CONFIG_AT91CAP9) || defined(CONFIG_AT91SAM9260) || \
+    defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91SAM9G20) || \
+	defined(CONFIG_AT91SAM9G45) || defined(CONFIG_AT91SAM9M10G45)
 	macb_writel(macb, USRIO, MACB_BIT(RMII) | MACB_BIT(CLKEN));
 #else
 	macb_writel(macb, USRIO, 0);
 #endif
 #else
-#if	defined(CONFIG_AT91CAP9) || defined(CONFIG_AT91SAM9260) || \
-	defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91SAM9G20) || \
-	defined(CONFIG_AT91SAM9G45) || defined(CONFIG_AT91SAM9M10G45) || \
-	defined(CONFIG_AT91SAM9XE)
+#if defined(CONFIG_AT91CAP9) || defined(CONFIG_AT91SAM9260) || \
+    defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91SAM9G20) || \
+	defined(CONFIG_AT91SAM9G45) || defined(CONFIG_AT91SAM9M10G45)
 	macb_writel(macb, USRIO, MACB_BIT(CLKEN));
 #else
 	macb_writel(macb, USRIO, MACB_BIT(MII));
@@ -522,10 +520,9 @@ static int macb_write_hwaddr(struct eth_device *dev)
 	u16 hwaddr_top;
 
 	/* set hardware address */
-	hwaddr_bottom = dev->enetaddr[0] | dev->enetaddr[1] << 8 |
-			dev->enetaddr[2] << 16 | dev->enetaddr[3] << 24;
+	hwaddr_bottom = cpu_to_le32(*((u32 *)dev->enetaddr));
 	macb_writel(macb, SA1B, hwaddr_bottom);
-	hwaddr_top = dev->enetaddr[4] | dev->enetaddr[5] << 8;
+	hwaddr_top = cpu_to_le16(*((u16 *)(dev->enetaddr + 4)));
 	macb_writel(macb, SA1T, hwaddr_top);
 	return 0;
 }

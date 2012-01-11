@@ -21,6 +21,8 @@
 #endif
 #endif
 
+#define assert( condition ) if( (condition) ) _exit(0)
+
 #endif /* _BEDBUG_H */
 
 

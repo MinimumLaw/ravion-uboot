@@ -19,7 +19,8 @@
 
 
 /* Function prototypes */
-extern void _start(void);
+extern void unlock_ram_in_cache( void );
+extern void _start_warm(void);
 
 
 /*
@@ -88,7 +89,7 @@ int misc_init_r( void )
  *
  * Shell command to reset the board.
  */
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+void do_reset( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[] )
 {
 	printf( "Resetting...\n" );
 
@@ -96,14 +97,11 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	icache_disable();
 	dcache_disable();
 
-	/* Jump to cold reset point (in RAM) */
-	_start();
+	/* Jump to warm start (in RAM) */
+	_start_warm();
 
 	/* Should never get here */
-	while(1)
-		;
-
-	return 1;
+	while(1);
 }
 
 int board_eth_init(bd_t *bis)

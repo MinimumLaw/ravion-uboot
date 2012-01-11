@@ -666,6 +666,23 @@ void uboot_push_tx_done(int key, int val) {
 	pkey = key;
 }
 
+int validate_mac(u8 dev_addr[6])
+{
+	int i;
+	for (i = 0; i < 6; i++) {
+		if (dev_addr[i] != 0x00)
+			goto ff_test;
+	}
+	return 1;	/* all 0x00 */
+
+ff_test:
+	for (i = 0; i < 6; i++) {
+		if (dev_addr[i] != 0xff)
+			return 0;	/* valid MAC */
+	}
+	return 1;	/* all 0xff */
+}
+
 int eth_init(bd_t *bd) {
 	int r;
 	u8 dev_addr[6];
@@ -696,6 +713,19 @@ int eth_init(bd_t *bd) {
 	r = get_prom(dev_addr, nic.base);
 	if (!r)
 		return -1;
+
+	/* Yikes, no EEPROM ? */
+	if (validate_mac(dev_addr)) {
+		char *user_addr = getenv("ethaddr");
+		if (!user_addr) {
+			PRINTK("No EEPROM found and no \"ethaddr\""
+				" variable set!\n");
+			return -1;
+		}
+		for (r = 0; r < 6; r++)
+			dev_addr[r] = simple_strtol(user_addr + (r * 3),
+							NULL, 16);
+	}
 
 	sprintf (ethaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
 		 dev_addr[0], dev_addr[1],

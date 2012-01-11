@@ -24,10 +24,7 @@
 #include <common.h>
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <asm/ppc4xx-gpio.h>
-
-/* Only compile this file for boards with GPIO support */
-#if defined(GPIO0_BASE)
+#include <asm/gpio.h>
 
 #if defined(CONFIG_SYS_4xx_GPIO_TABLE)
 gpio_param_s const gpio_tab[GPIO_GROUP_MAX][GPIO_MAX] = CONFIG_SYS_4xx_GPIO_TABLE;
@@ -255,6 +252,4 @@ void gpio_set_chip_configuration(void)
 		}
 	}
 }
-
-#endif /* GPIO0_BASE */
 #endif /* CONFIG_SYS_4xx_GPIO_TABLE */

@@ -318,19 +318,19 @@ static int find_phy(struct eth_device *dev)
 	u16 ctrl, oldctrl;
 
 	do {
-		eth_mdio_read(dev, phy_addr, MII_BMCR, &ctrl);
-		oldctrl = ctrl & BMCR_ANENABLE;
+		eth_mdio_read(dev, phy_addr, PHY_BMCR, &ctrl);
+		oldctrl = ctrl & PHY_BMCR_AUTON;
 
-		ctrl ^= BMCR_ANENABLE;
-		eth_mdio_write(dev, phy_addr, MII_BMCR, ctrl);
-		eth_mdio_read(dev, phy_addr, MII_BMCR, &ctrl);
-		ctrl &= BMCR_ANENABLE;
+		ctrl ^= PHY_BMCR_AUTON;
+		eth_mdio_write(dev, phy_addr, PHY_BMCR, ctrl);
+		eth_mdio_read(dev, phy_addr, PHY_BMCR, &ctrl);
+		ctrl &= PHY_BMCR_AUTON;
 
 		if (ctrl == oldctrl) {
 			phy_addr++;
 		} else {
-			ctrl ^= BMCR_ANENABLE;
-			eth_mdio_write(dev, phy_addr, MII_BMCR, ctrl);
+			ctrl ^= PHY_BMCR_AUTON;
+			eth_mdio_write(dev, phy_addr, PHY_BMCR, ctrl);
 
 			return phy_addr;
 		}
@@ -347,10 +347,10 @@ static int dw_reset_phy(struct eth_device *dev)
 	int timeout = CONFIG_PHYRESET_TIMEOUT;
 	u32 phy_addr = priv->address;
 
-	eth_mdio_write(dev, phy_addr, MII_BMCR, BMCR_RESET);
+	eth_mdio_write(dev, phy_addr, PHY_BMCR, PHY_BMCR_RESET);
 	do {
-		eth_mdio_read(dev, phy_addr, MII_BMCR, &ctrl);
-		if (!(ctrl & BMCR_RESET))
+		eth_mdio_read(dev, phy_addr, PHY_BMCR, &ctrl);
+		if (!(ctrl & PHY_BMCR_RESET))
 			break;
 		udelay(1000);
 	} while (timeout--);
@@ -368,13 +368,11 @@ static int configure_phy(struct eth_device *dev)
 {
 	struct dw_eth_dev *priv = dev->priv;
 	int phy_addr;
-	u16 bmcr;
+	u16 bmcr, ctrl;
 #if defined(CONFIG_DW_AUTONEG)
 	u16 bmsr;
 	u32 timeout;
 	u16 anlpar, btsr;
-#else
-	u16 ctrl;
 #endif
 
 #if defined(CONFIG_DW_SEARCH_PHY)
@@ -383,40 +381,38 @@ static int configure_phy(struct eth_device *dev)
 		priv->address = phy_addr;
 	else
 		return -1;
-#else
-	phy_addr = priv->address;
 #endif
 	if (dw_reset_phy(dev) < 0)
 		return -1;
 
 #if defined(CONFIG_DW_AUTONEG)
-	bmcr = BMCR_ANENABLE | BMCR_ANRESTART | BMCR_SPEED100 | \
-	       BMCR_FULLDPLX | BMCR_SPEED1000;
+	bmcr = PHY_BMCR_AUTON | PHY_BMCR_RST_NEG | PHY_BMCR_100MB | \
+	       PHY_BMCR_DPLX | PHY_BMCR_1000_MBPS;
 #else
-	bmcr = BMCR_SPEED100 | BMCR_FULLDPLX;
+	bmcr = PHY_BMCR_100MB | PHY_BMCR_DPLX;
 
 #if defined(CONFIG_DW_SPEED10M)
-	bmcr &= ~BMCR_SPEED100;
+	bmcr &= ~PHY_BMCR_100MB;
 #endif
 #if defined(CONFIG_DW_DUPLEXHALF)
-	bmcr &= ~BMCR_FULLDPLX;
+	bmcr &= ~PHY_BMCR_DPLX;
 #endif
 #endif
-	if (eth_mdio_write(dev, phy_addr, MII_BMCR, bmcr) < 0)
+	if (eth_mdio_write(dev, phy_addr, PHY_BMCR, bmcr) < 0)
 		return -1;
 
 	/* Read the phy status register and populate priv structure */
 #if defined(CONFIG_DW_AUTONEG)
 	timeout = CONFIG_AUTONEG_TIMEOUT;
 	do {
-		eth_mdio_read(dev, phy_addr, MII_BMSR, &bmsr);
-		if (bmsr & BMSR_ANEGCOMPLETE)
+		eth_mdio_read(dev, phy_addr, PHY_BMSR, &bmsr);
+		if (bmsr & PHY_BMSR_AUTN_COMP)
 			break;
 		udelay(1000);
 	} while (timeout--);
 
-	eth_mdio_read(dev, phy_addr, MII_LPA, &anlpar);
-	eth_mdio_read(dev, phy_addr, MII_STAT1000, &btsr);
+	eth_mdio_read(dev, phy_addr, PHY_ANLPAR, &anlpar);
+	eth_mdio_read(dev, phy_addr, PHY_1000BTSR, &btsr);
 
 	if (btsr & (PHY_1000BTSR_1000FD | PHY_1000BTSR_1000HD)) {
 		priv->speed = SPEED_1000M;
@@ -425,28 +421,28 @@ static int configure_phy(struct eth_device *dev)
 		else
 			priv->duplex = HALF_DUPLEX;
 	} else {
-		if (anlpar & LPA_100)
+		if (anlpar & PHY_ANLPAR_100)
 			priv->speed = SPEED_100M;
 		else
 			priv->speed = SPEED_10M;
 
-		if (anlpar & (LPA_10FULL | LPA_100FULL))
+		if (anlpar & (PHY_ANLPAR_10FD | PHY_ANLPAR_TXFD))
 			priv->duplex = FULL_DUPLEX;
 		else
 			priv->duplex = HALF_DUPLEX;
 	}
 #else
-	if (eth_mdio_read(dev, phy_addr, MII_BMCR, &ctrl) < 0)
+	if (eth_mdio_read(dev, phy_addr, PHY_BMCR, &ctrl) < 0)
 		return -1;
 
-	if (ctrl & BMCR_FULLDPLX)
+	if (ctrl & PHY_BMCR_DPLX)
 		priv->duplex = FULL_DUPLEX;
 	else
 		priv->duplex = HALF_DUPLEX;
 
-	if (ctrl & BMCR_SPEED1000)
+	if (ctrl & PHY_BMCR_1000_MBPS)
 		priv->speed = SPEED_1000M;
-	else if (ctrl & BMCR_SPEED100)
+	else if (ctrl & PHY_BMCR_100_MBPS)
 		priv->speed = SPEED_100M;
 	else
 		priv->speed = SPEED_10M;
@@ -455,7 +451,7 @@ static int configure_phy(struct eth_device *dev)
 }
 
 #if defined(CONFIG_MII)
-static int dw_mii_read(const char *devname, u8 addr, u8 reg, u16 *val)
+static int dw_mii_read(char *devname, u8 addr, u8 reg, u16 *val)
 {
 	struct eth_device *dev;
 
@@ -466,7 +462,7 @@ static int dw_mii_read(const char *devname, u8 addr, u8 reg, u16 *val)
 	return 0;
 }
 
-static int dw_mii_write(const char *devname, u8 addr, u8 reg, u16 val)
+static int dw_mii_write(char *devname, u8 addr, u8 reg, u16 val)
 {
 	struct eth_device *dev;
 
@@ -504,7 +500,7 @@ int designware_initialize(u32 id, ulong base_addr, u32 phy_addr)
 	dev->iobase = (int)base_addr;
 	dev->priv = priv;
 
-	eth_getenv_enetaddr_by_index("eth", id, &dev->enetaddr[0]);
+	eth_getenv_enetaddr_by_index(id, &dev->enetaddr[0]);
 
 	priv->dev = dev;
 	priv->mac_regs_p = (struct eth_mac_regs *)base_addr;

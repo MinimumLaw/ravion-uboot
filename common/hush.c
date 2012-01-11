@@ -93,6 +93,8 @@
 #include <common.h>        /* readline */
 #include <hush.h>
 #include <command.h>        /* find_cmd */
+/*cmd_boot.c*/
+extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);      /* do_bootd */
 #endif
 #ifndef __U_BOOT__
 #include <ctype.h>     /* isalpha, isdigit */
@@ -497,6 +499,7 @@ static void remove_bg_job(struct pipe *pi);
 /*     local variable support */
 static char **make_list_in(char **inp, char *name);
 static char *insert_var_value(char *inp);
+static char *get_local_var(const char *var);
 
 #ifndef __U_BOOT__
 /* Table of built-in functions.  They can be forked or not, depending on
@@ -1020,7 +1023,9 @@ static void get_user_input(struct in_str *i)
 	static char the_command[CONFIG_SYS_CBSIZE];
 
 #ifdef CONFIG_BOOT_RETRY_TIME
-#  ifndef CONFIG_RESET_TO_RETRY
+#  ifdef CONFIG_RESET_TO_RETRY
+	extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+#  else
 #	error "This currently only works with CONFIG_RESET_TO_RETRY enabled"
 #  endif
 	reset_cmd_timeout();
@@ -1676,6 +1681,8 @@ static int run_pipe_real(struct pipe *pi)
 			} else {
 				int rcode;
 #if defined(CONFIG_CMD_BOOTD)
+	    extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+
 				/* avoid "bootd" recursion */
 				if (cmdtp->cmd == do_bootd) {
 					if (flag & CMD_FLAG_BOOTD) {
@@ -2168,7 +2175,7 @@ static char *get_dollar_var(char ch);
 #endif
 
 /* This is used to get/check local shell variables */
-char *get_local_var(const char *s)
+static char *get_local_var(const char *s)
 {
 	struct variables *cur;
 
@@ -3261,7 +3268,7 @@ int parse_file_outer(void)
 }
 
 #ifdef __U_BOOT__
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
+#ifndef CONFIG_RELOC_FIXUP_WORKS
 static void u_boot_hush_reloc(void)
 {
 	unsigned long addr;
@@ -3283,7 +3290,7 @@ int u_boot_hush_start(void)
 		top_vars->next = 0;
 		top_vars->flg_export = 0;
 		top_vars->flg_read_only = 1;
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
+#ifndef CONFIG_RELOC_FIXUP_WORKS
 		u_boot_hush_reloc();
 #endif
 	}

@@ -97,19 +97,19 @@ void post_init_uart(int sclk)
 	for (divisor = 0; sclk > 0; divisor++)
 		sclk -= 57600 * 16;
 
-	bfin_write_PORTF_FER(0x000F);
-	bfin_write_PORTH_FER(0xFFFF);
+	*pPORTF_FER = 0x000F;
+	*pPORTH_FER = 0xFFFF;
 
-	bfin_write_UART_GCTL(0x00);
-	bfin_write_UART_LCR(0x83);
+	*pUART_GCTL = 0x00;
+	*pUART_LCR = 0x83;
 	SSYNC();
-	bfin_write_UART_DLL(divisor & 0xFF);
+	*pUART_DLL = (divisor & 0xFF);
 	SSYNC();
-	bfin_write_UART_DLH((divisor >> 8) & 0xFF);
+	*pUART_DLH = ((divisor >> 8) & 0xFF);
 	SSYNC();
-	bfin_write_UART_LCR(0x03);
+	*pUART_LCR = 0x03;
 	SSYNC();
-	bfin_write_UART_GCTL(0x01);
+	*pUART_GCTL = 0x01;
 	SSYNC();
 }
 
@@ -121,8 +121,8 @@ void post_out_buff(char *buff)
 		;
 	i = 0;
 	while ((buff[i] != '\0') && (i != 100)) {
-		while (!(bfin_read_pUART_LSR() & 0x20)) ;
-		bfin_write_UART_THR(buff[i]);
+		while (!(*pUART_LSR & 0x20)) ;
+		*pUART_THR = buff[i];
 		SSYNC();
 		i++;
 	}
@@ -138,15 +138,15 @@ int post_key_pressed(void)
 	int i, n;
 	unsigned short value;
 
-	bfin_write_PORTF_FER(bfin_read_PORTF_FER() & ~PF5);
-	bfin_write_PORTFIO_DIR(bfin_read_PORTFIO_DIR() & ~PF5);
-	bfin_write_PORTFIO_INEN(bfin_read_PORTFIO_INEN() | PF5);
+	*pPORTF_FER &= ~PF5;
+	*pPORTFIO_DIR &= ~PF5;
+	*pPORTFIO_INEN |= PF5;
 	SSYNC();
 
 	post_out_buff("########Press SW10 to enter Memory POST########: 3\0");
 	for (i = 0; i < KEY_LOOP; i++) {
-		value = bfin_read_PORTFIO() & PF5;
-		if (bfin_read_UART0_RBR() == 0x0D) {
+		value = *pPORTFIO & PF5;
+		if (*pUART0_RBR == 0x0D) {
 			value = 0;
 			goto key_pressed;
 		}
@@ -158,8 +158,8 @@ int post_key_pressed(void)
 	post_out_buff("\b2\0");
 
 	for (i = 0; i < KEY_LOOP; i++) {
-		value = bfin_read_PORTFIO() & PF5;
-		if (bfin_read_UART0_RBR() == 0x0D) {
+		value = *pPORTFIO & PF5;
+		if (*pUART0_RBR == 0x0D) {
 			value = 0;
 			goto key_pressed;
 		}
@@ -171,8 +171,8 @@ int post_key_pressed(void)
 	post_out_buff("\b1\0");
 
 	for (i = 0; i < KEY_LOOP; i++) {
-		value = bfin_read_PORTFIO() & PF5;
-		if (bfin_read_UART0_RBR() == 0x0D) {
+		value = *pPORTFIO & PF5;
+		if (*pUART0_RBR == 0x0D) {
 			value = 0;
 			goto key_pressed;
 		}
@@ -193,13 +193,13 @@ int post_key_pressed(void)
 void post_init_pll(int mult, int div)
 {
 
-	bfin_write_SIC_IWR(0x01);
-	bfin_write_PLL_CTL((mult << 9));
-	bfin_write_PLL_DIV(div);
+	*pSIC_IWR = 0x01;
+	*pPLL_CTL = (mult << 9);
+	*pPLL_DIV = div;
 	asm("CLI R2;");
 	asm("IDLE;");
 	asm("STI R2;");
-	while (!(bfin_read_PLL_STAT() & 0x20)) ;
+	while (!(*pPLL_STAT & 0x20)) ;
 }
 
 int post_init_sdram(int sclk)
@@ -302,15 +302,15 @@ int post_init_sdram(int sclk)
 
 	SSYNC();
 
-	bfin_write_EBIU_SDGCTL(bfin_write_EBIU_SDGCTL() | 0x1000000);
+	*pEBIU_SDGCTL |= 0x1000000;
 	/* Set the SDRAM Refresh Rate control register based on SSCLK value */
-	bfin_write_EBIU_SDRRC(mem_SDRRC);
+	*pEBIU_SDRRC = mem_SDRRC;
 
 	/* SDRAM Memory Bank Control Register */
-	bfin_write_EBIU_SDBCTL(mem_SDBCTL);
+	*pEBIU_SDBCTL = mem_SDBCTL;
 
 	/* SDRAM Memory Global Control Register */
-	bfin_write_EBIU_SDGCTL(mem_SDGCTL);
+	*pEBIU_SDGCTL = mem_SDGCTL;
 	SSYNC();
 	return mem_SDRRC;
 }

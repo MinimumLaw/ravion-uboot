@@ -22,48 +22,11 @@
 
 #include <config.h>
 #include <common.h>
+#include <spi.h>
 #include <asm/errno.h>
 #include <linux/types.h>
 #include <fsl_pmic.h>
 
-static int check_param(u32 reg, u32 write)
-{
-	if (reg > 63 || write > 1) {
-		printf("<reg num> = %d is invalid. Should be less then 63\n",
-			reg);
-		return -1;
-	}
-
-	return 0;
-}
-
-#ifdef CONFIG_FSL_PMIC_I2C
-#include <i2c.h>
-
-u32 pmic_reg(u32 reg, u32 val, u32 write)
-{
-	unsigned char buf[4] = { 0 };
-	u32 ret_val = 0;
-
-	if (check_param(reg, write))
-		return -1;
-
-	if (write) {
-		buf[0] = (val >> 16) & 0xff;
-		buf[1] = (val >> 8) & 0xff;
-		buf[2] = (val) & 0xff;
-		if (i2c_write(CONFIG_SYS_FSL_PMIC_I2C_ADDR, reg, 1, buf, 3))
-			return -1;
-	} else {
-		if (i2c_read(CONFIG_SYS_FSL_PMIC_I2C_ADDR, reg, 1, buf, 3))
-			return -1;
-		ret_val = buf[0] << 16 | buf[1] << 8 | buf[2];
-	}
-
-	return ret_val;
-}
-#else /* SPI interface */
-#include <spi.h>
 static struct spi_slave *slave;
 
 struct spi_slave *pmic_spi_probe(void)
@@ -83,7 +46,6 @@ void pmic_spi_free(struct spi_slave *slave)
 u32 pmic_reg(u32 reg, u32 val, u32 write)
 {
 	u32 pmic_tx, pmic_rx;
-	u32 tmp;
 
 	if (!slave) {
 		slave = pmic_spi_probe();
@@ -92,17 +54,18 @@ u32 pmic_reg(u32 reg, u32 val, u32 write)
 			return -1;
 	}
 
-	if (check_param(reg, write))
+	if (reg > 63 || write > 1) {
+		printf("<reg num> = %d is invalid. Should be less then 63\n",
+			reg);
 		return -1;
+	}
 
 	if (spi_claim_bus(slave))
 		return -1;
 
 	pmic_tx = (write << 31) | (reg << 25) | (val & 0x00FFFFFF);
 
-	tmp = cpu_to_be32(pmic_tx);
-
-	if (spi_xfer(slave, 4 << 3, &tmp, &pmic_rx,
+	if (spi_xfer(slave, 4 << 3, &pmic_tx, &pmic_rx,
 			SPI_XFER_BEGIN | SPI_XFER_END)) {
 		spi_release_bus(slave);
 		return -1;
@@ -110,8 +73,7 @@ u32 pmic_reg(u32 reg, u32 val, u32 write)
 
 	if (write) {
 		pmic_tx &= ~(1 << 31);
-		tmp = cpu_to_be32(pmic_tx);
-		if (spi_xfer(slave, 4 << 3, &tmp, &pmic_rx,
+		if (spi_xfer(slave, 4 << 3, &pmic_tx, &pmic_rx,
 			SPI_XFER_BEGIN | SPI_XFER_END)) {
 			spi_release_bus(slave);
 			return -1;
@@ -119,9 +81,8 @@ u32 pmic_reg(u32 reg, u32 val, u32 write)
 	}
 
 	spi_release_bus(slave);
-	return cpu_to_be32(pmic_rx);
+	return pmic_rx;
 }
-#endif
 
 void pmic_reg_write(u32 reg, u32 value)
 {

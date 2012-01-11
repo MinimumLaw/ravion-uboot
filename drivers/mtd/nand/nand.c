@@ -43,7 +43,7 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 			   ulong base_addr)
 {
 	int maxchips = CONFIG_SYS_NAND_MAX_CHIPS;
-	static int __attribute__((unused)) i = 0;
+	int __attribute__((unused)) i = 0;
 
 	if (maxchips < 1)
 		maxchips = 1;
@@ -54,7 +54,7 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 		if (nand_scan(mtd, maxchips) == 0) {
 			if (!mtd->name)
 				mtd->name = (char *)default_nand_name;
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
+#ifndef CONFIG_RELOC_FIXUP_WORKS
 			else
 				mtd->name += gd->reloc_off;
 #endif

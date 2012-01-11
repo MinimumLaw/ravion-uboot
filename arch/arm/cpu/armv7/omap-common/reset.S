@@ -27,12 +27,10 @@
 reset_cpu:
 	ldr	r1, rstctl			@ get addr for global reset
 						@ reg
-	ldr	r3, rstbit			@ sw reset bit
+	mov	r3, #0x2			@ full reset pll + mpu
 	str	r3, [r1]			@ force reset
 	mov	r0, r0
 _loop_forever:
 	b	_loop_forever
 rstctl:
 	.word	PRM_RSTCTRL
-rstbit:
-	.word	PRM_RSTCTRL_RESET

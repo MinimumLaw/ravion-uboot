@@ -29,7 +29,7 @@
     defined(CONFIG_440EPX)
 
 #include <asm/processor.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 
 
 int fpu_status(void)

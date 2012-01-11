@@ -41,7 +41,7 @@
 
 #include <common.h>
 #include <command.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/processor.h>
@@ -49,6 +49,8 @@
 #include <asm/cache.h>
 
 #include "ecc.h"
+
+#if defined(CONFIG_SDRAM_PPC4xx_IBM_DDR2)
 
 #define PPC4xx_IBM_DDR2_DUMP_REGISTER(mnemonic)				\
 	do {								\
@@ -416,6 +418,7 @@ static void	test(void);
 static void	DQS_calibration_process(void);
 #endif
 #endif
+int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 static unsigned char spd_read(uchar chip, uint addr)
 {
@@ -466,7 +469,7 @@ phys_size_t initdram(int board_type)
 	/*------------------------------------------------------------------
 	 * Reset the DDR-SDRAM controller.
 	 *-----------------------------------------------------------------*/
-	mtsdr(SDR0_SRST, SDR0_SRST0_DMC);
+	mtsdr(SDR0_SRST, (0x80000000 >> 10));
 	mtsdr(SDR0_SRST, 0x00000000);
 
 	/*
@@ -655,13 +658,6 @@ phys_size_t initdram(int board_type)
 	 *-----------------------------------------------------------------*/
 	program_ecc(dimm_populated, iic0_dimm_addr, num_dimm_banks, 0);
 #endif
-
-	/*
-	 * Flush the dcache before removing the TLB with caches
-	 * enabled. Otherwise this might lead to problems later on,
-	 * e.g. while booting Linux (as seen on ICON-440SPe).
-	 */
-	flush_dcache();
 
 	/*
 	 * Now after initialization (auto-calibration and ECC generation)
@@ -3198,3 +3194,5 @@ inline void ppc4xx_ibm_ddr2_register_dump(void)
 	PPC4xx_IBM_DDR2_DUMP_REGISTER(RTSR);
 #endif /* defined(DEBUG) */
 }
+
+#endif /* CONFIG_SDRAM_PPC4xx_IBM_DDR2 */

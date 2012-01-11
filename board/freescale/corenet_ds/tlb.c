@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Freescale Semiconductor, Inc.
+ * Copyright 2008-2010 Freescale Semiconductor, Inc.
  *
  * (C) Copyright 2000
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
@@ -51,19 +51,9 @@ struct fsl_e_tlb_entry tlb_table[] = {
 
 	/* TLB 1 */
 	/* *I*** - Covers boot page */
-#if defined(CONFIG_SYS_RAMBOOT) && defined(CONFIG_SYS_INIT_L3_ADDR)
-	/*
-	 * *I*G - L3SRAM. When L3 is used as 1M SRAM, the address of the
-	 * SRAM is at 0xfff00000, it covered the 0xfffff000.
-	 */
-	SET_TLB_ENTRY(1, CONFIG_SYS_INIT_L3_ADDR, CONFIG_SYS_INIT_L3_ADDR,
-			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
-			0, 0, BOOKE_PAGESZ_1M, 1),
-#else
 	SET_TLB_ENTRY(1, 0xfffff000, 0xfffff000,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 0, BOOKE_PAGESZ_4K, 1),
-#endif
 
 	/* *I*G* - CCSRBAR */
 	SET_TLB_ENTRY(1, CONFIG_SYS_CCSRBAR, CONFIG_SYS_CCSRBAR_PHYS,
@@ -98,7 +88,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 		      0, 6, BOOKE_PAGESZ_256K, 1),
 
 	/* Bman/Qman */
-#ifdef CONFIG_SYS_BMAN_MEM_PHYS
 	SET_TLB_ENTRY(1, CONFIG_SYS_BMAN_MEM_BASE, CONFIG_SYS_BMAN_MEM_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, 0,
 		      0, 9, BOOKE_PAGESZ_1M, 1),
@@ -106,8 +95,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 		      CONFIG_SYS_BMAN_MEM_PHYS + 0x00100000,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 10, BOOKE_PAGESZ_1M, 1),
-#endif
-#ifdef CONFIG_SYS_QMAN_MEM_PHYS
 	SET_TLB_ENTRY(1, CONFIG_SYS_QMAN_MEM_BASE, CONFIG_SYS_QMAN_MEM_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, 0,
 		      0, 11, BOOKE_PAGESZ_1M, 1),
@@ -115,21 +102,10 @@ struct fsl_e_tlb_entry tlb_table[] = {
 		      CONFIG_SYS_QMAN_MEM_PHYS + 0x00100000,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 12, BOOKE_PAGESZ_1M, 1),
-#endif
 #ifdef CONFIG_SYS_DCSRBAR_PHYS
 	SET_TLB_ENTRY(1, CONFIG_SYS_DCSRBAR, CONFIG_SYS_DCSRBAR_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 13, BOOKE_PAGESZ_4M, 1),
-#endif
-#ifdef CONFIG_SYS_NAND_BASE
-	/*
-	 * *I*G - NAND
-	 * entry 14 and 15 has been used hard coded, they will be disabled
-	 * in cpu_init_f, so we use entry 16 for nand.
-	 */
-	SET_TLB_ENTRY(1, CONFIG_SYS_NAND_BASE, CONFIG_SYS_NAND_BASE_PHYS,
-			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
-			0, 16, BOOKE_PAGESZ_1M, 1),
 #endif
 };
 

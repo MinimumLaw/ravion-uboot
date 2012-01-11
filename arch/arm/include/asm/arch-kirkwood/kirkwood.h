@@ -50,7 +50,6 @@
 #define KW_MPP_BASE			(KW_REGISTER(0x10000))
 #define KW_GPIO0_BASE			(KW_REGISTER(0x10100))
 #define KW_GPIO1_BASE			(KW_REGISTER(0x10140))
-#define KW_RTC_BASE			(KW_REGISTER(0x10300))
 #define KW_NANDF_BASE			(KW_REGISTER(0x10418))
 #define KW_SPI_BASE			(KW_REGISTER(0x10600))
 #define KW_CPU_WIN_BASE			(KW_REGISTER(0x20000))
@@ -60,11 +59,6 @@
 #define KW_USB20_BASE			(KW_REGISTER(0x50000))
 #define KW_EGIGA0_BASE			(KW_REGISTER(0x72000))
 #define KW_EGIGA1_BASE			(KW_REGISTER(0x76000))
-#define KW_SATA_BASE			(KW_REGISTER(0x80000))
-
-/* Kirkwood Sata controller has two ports */
-#define KW_SATA_PORT0_OFFSET		0x2000
-#define KW_SATA_PORT1_OFFSET		0x4000
 
 /* Kirkwood GbE controller has two ports */
 #define MAX_MVGBE_DEVS	2

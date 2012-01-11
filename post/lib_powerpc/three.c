@@ -155,7 +155,8 @@ static struct cpu_post_three_s
 	0x40
     },
 };
-static unsigned int cpu_post_three_size = ARRAY_SIZE(cpu_post_three_table);
+static unsigned int cpu_post_three_size =
+    sizeof (cpu_post_three_table) / sizeof (struct cpu_post_three_s);
 
 int cpu_post_test_three (void)
 {

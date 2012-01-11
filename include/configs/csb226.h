@@ -44,8 +44,8 @@
 					/* for timer/console/ethernet       */
 
 /* we will never enable dcache, because we have to setup MMU first */
-#define CONFIG_SYS_DCACHE_OFF
-#define	CONFIG_SYS_TEXT_BASE	0x0
+#define CONFIG_SYS_NO_DCACHE
+
 /*
  * Hardware drivers
  */
@@ -117,6 +117,7 @@
  *
  */
 #define CONFIG_SYS_MALLOC_LEN		(128*1024)
+#define CONFIG_SYS_GBL_DATA_SIZE	128		/* size in bytes reserved for initial data */
 
 #define CONFIG_SYS_LONGHELP				/* undef to save memory         */
 #define CONFIG_SYS_PROMPT		"uboot> "	/* Monitor Command Prompt       */
@@ -141,7 +142,7 @@
 						/*    ^^      Run Mode Speed = 2x Mem Speed  */
 						/* ^^         Turbo Mode Sp. = 1x Run M. Sp. */
 
-#define CONFIG_SYS_MONITOR_LEN		0x1c000		/* 112 KiB */
+#define CONFIG_SYS_MONITOR_LEN		0x20000		/* 128 KiB */
 
 						/* valid baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE      { 9600, 19200, 38400, 57600, 115200 }
@@ -179,9 +180,6 @@
 #define CONFIG_SYS_DRAM_SIZE		0x02000000
 
 #define CONFIG_SYS_FLASH_BASE          PHYS_FLASH_1
-
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define	CONFIG_SYS_INIT_SP_ADDR		(GENERATED_GBL_DATA_SIZE + PHYS_SDRAM_1)
 
 # if 0
 /* FIXME: switch to _documented_ registers */
@@ -457,9 +455,6 @@
 
 #define CONFIG_SYS_PSSR_VAL        0x20
 
-#define	CONFIG_SYS_CCCR			CCCR_L27|CCCR_M2|CCCR_N10
-#define	CONFIG_SYS_CKEN			0x0
-
 /*
  * Memory settings
  */
@@ -470,8 +465,6 @@
 #define CONFIG_SYS_MDCNFG_VAL          0x09a909a9
 #define CONFIG_SYS_MDREFR_VAL          0x038ff030
 #define CONFIG_SYS_MDMRS_VAL           0x00220022
-#define	CONFIG_SYS_FLYCNFG_VAL		0x00000000
-#define	CONFIG_SYS_SXCNFG_VAL		0x00000000
 
 /*
  * PCMCIA and CF Interfaces

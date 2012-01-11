@@ -157,7 +157,6 @@ int amd_flash_erase_sector(flash_info_t * info, int sector)
 {
 	int state;
 	ulong result;
-	ulong start;
 
 	volatile u16 *addr =
 				(volatile u16 *) (info->start[sector]);
@@ -172,13 +171,13 @@ int amd_flash_erase_sector(flash_info_t * info, int sector)
 
 	/* wait until flash is ready */
 	state = 0;
-	start = get_timer(0);
+	set_timer (0);
 
 	do {
 		result = *addr;
 
 		/* check timeout */
-		if (get_timer(start) > CONFIG_SYS_FLASH_ERASE_TOUT) {
+		if (get_timer (0) > CONFIG_SYS_FLASH_ERASE_TOUT) {
 			MEM_FLASH_ADDR1 = CMD_READ_ARRAY;
 			state = ERR_TIMOUT;
 		}
@@ -268,7 +267,6 @@ volatile static int amd_write_word (flash_info_t * info, ulong dest, u16 data)
 	ulong result;
 	int cflag, iflag;
 	int state;
-	ulong start;
 
 	/*
 	 * Check if Flash is (sufficiently) erased
@@ -297,7 +295,7 @@ volatile static int amd_write_word (flash_info_t * info, ulong dest, u16 data)
 	*addr = data;
 
 	/* arm simple, non interrupt dependent timer */
-	start = get_timer(0);
+	set_timer (0);
 
 	/* wait until flash is ready */
 	state = 0;
@@ -305,7 +303,7 @@ volatile static int amd_write_word (flash_info_t * info, ulong dest, u16 data)
 		result = *addr;
 
 		/* check timeout */
-		if (get_timer(start) > CONFIG_SYS_FLASH_ERASE_TOUT) {
+		if (get_timer (0) > CONFIG_SYS_FLASH_ERASE_TOUT) {
 				state = ERR_TIMOUT;
 		}
 		if (!state && ((result & BIT_RDY_MASK) == (data & BIT_RDY_MASK)))

@@ -23,7 +23,6 @@
 
 #include "mkimage.h"
 #include <image.h>
-#include <version.h>
 
 static void copy_file(int, const char *, int);
 static void usage(void);
@@ -156,12 +155,8 @@ main (int argc, char **argv)
 	init_imx_image_type ();
 	/* Init FIT image generation/list support */
 	init_fit_image_type ();
-	/* Init TI OMAP Boot image generation/list support */
-	init_omap_image_type();
 	/* Init Default image generation/list support */
 	init_default_image_type ();
-	/* Init Davinci UBL support */
-	init_ubl_image_type();
 
 	params.cmdname = *argv;
 	params.addr = params.ep = 0;
@@ -251,9 +246,6 @@ main (int argc, char **argv)
 			case 'v':
 				params.vflag++;
 				break;
-			case 'V':
-				printf("mkimage version %s\n", PLAIN_VERSION);
-				exit(EXIT_SUCCESS);
 			case 'x':
 				params.xflag++;
 				break;
@@ -597,8 +589,6 @@ usage ()
 			 "          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
 	fprintf (stderr, "       %s [-D dtc_options] -f fit-image.its fit-image\n",
-		params.cmdname);
-	fprintf (stderr, "       %s -V ==> print version information and exit\n",
 		params.cmdname);
 
 	exit (EXIT_FAILURE);

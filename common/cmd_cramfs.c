@@ -43,13 +43,7 @@
 #endif
 
 #ifdef CONFIG_CRAMFS_CMDLINE
-#include <flash.h>
-
-#ifdef CONFIG_SYS_NO_FLASH
-# define OFFSET_ADJUSTMENT	0
-#else
-# define OFFSET_ADJUSTMENT	(flash_info[id.num].start[0])
-#endif
+flash_info_t flash_info[1];
 
 #ifndef CONFIG_CMD_JFFS2
 #include <linux/stat.h>
@@ -125,7 +119,7 @@ int do_cramfs_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	dev.id = &id;
 	part.dev = &dev;
 	/* fake the address offset */
-	part.offset = addr - OFFSET_ADJUSTMENT;
+	part.offset = addr - flash_info[id.num].start[0];
 
 	/* pre-set Boot file name */
 	if ((filename = getenv("bootfile")) == NULL) {
@@ -188,7 +182,7 @@ int do_cramfs_ls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	dev.id = &id;
 	part.dev = &dev;
 	/* fake the address offset */
-	part.offset = addr - OFFSET_ADJUSTMENT;
+	part.offset = addr - flash_info[id.num].start[0];
 
 	if (argc == 2)
 		filename = argv[1];
@@ -205,14 +199,14 @@ int do_cramfs_ls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 /***************************************************/
 U_BOOT_CMD(
 	cramfsload,	3,	0,	do_cramfs_load,
-	"load binary file from a filesystem image",
+	"cramfsload\t- load binary file from a filesystem image",
 	"[ off ] [ filename ]\n"
 	"    - load binary file from address 'cramfsaddr'\n"
 	"      with offset 'off'\n"
 );
 U_BOOT_CMD(
 	cramfsls,	2,	1,	do_cramfs_ls,
-	"list files in a directory (default /)",
+	"cramfsls\t- list files in a directory (default /)",
 	"[ directory ]\n"
 	"    - list files in a directory.\n"
 );

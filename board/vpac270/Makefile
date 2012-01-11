@@ -21,18 +21,20 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
 COBJS	:= vpac270.o
+SOBJS	:= lowlevel_init.o
 
-SRCS	:= $(COBJS:.o=.c)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
-$(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(SOBJS) $(OBJS)
 
 distclean:	clean
 	rm -f $(LIB) core *.bak $(obj).depend

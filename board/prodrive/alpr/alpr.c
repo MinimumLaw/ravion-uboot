@@ -26,7 +26,7 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 #include <spd_sdram.h>
-#include <asm/ppc4xx-emac.h>
+#include <ppc4xx_enet.h>
 #include <miiphy.h>
 #include <asm/processor.h>
 #include <asm/4xx_pci.h>
@@ -133,13 +133,12 @@ static int board_rev(void)
 
 int checkboard (void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv ("serial#");
 
 	printf ("Board: ALPR");
-	if (i > 0) {
-		puts(", serial# ");
-		puts(buf);
+	if (s != NULL) {
+		puts (", serial# ");
+		puts (s);
 	}
 	printf(" (Rev. %d)\n", board_rev());
 

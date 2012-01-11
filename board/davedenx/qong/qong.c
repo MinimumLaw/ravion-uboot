@@ -23,122 +23,30 @@
 
 #include <common.h>
 #include <netdev.h>
-#include <asm/arch/clock.h>
-#include <asm/arch/imx-regs.h>
-#include <asm/io.h>
+#include <asm/arch/mx31.h>
+#include <asm/arch/mx31-regs.h>
 #include <nand.h>
 #include <fsl_pmic.h>
-#include <asm/gpio.h>
 #include "qong_fpga.h"
-#include <watchdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifdef CONFIG_HW_WATCHDOG
-void hw_watchdog_reset(void)
-{
-	mxc_hw_watchdog_reset();
-}
-#endif
-
 int dram_init (void)
 {
-	/* dram_init must store complete ramsize in gd->ram_size */
-	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
-				PHYS_SDRAM_1_SIZE);
+	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+	gd->bd->bi_dram[0].size = get_ram_size((volatile void *)PHYS_SDRAM_1,
+			PHYS_SDRAM_1_SIZE);
+
 	return 0;
 }
 
 static void qong_fpga_reset(void)
 {
-	gpio_set_value(QONG_FPGA_RST_PIN, 0);
+	mx31_gpio_set(QONG_FPGA_RST_PIN, 0);
 	udelay(30);
-	gpio_set_value(QONG_FPGA_RST_PIN, 1);
+	mx31_gpio_set(QONG_FPGA_RST_PIN, 1);
 
 	udelay(300);
-}
-
-int board_early_init_f (void)
-{
-#ifdef CONFIG_QONG_FPGA
-	/* CS1: FPGA/Network Controller/GPIO */
-	/* 16-bit, no DTACK */
-	__REG(CSCR_U(1)) = 0x00000A01;
-	__REG(CSCR_L(1)) = 0x20040501;
-	__REG(CSCR_A(1)) = 0x04020C00;
-
-	/* setup pins for FPGA */
-	mx31_gpio_mux(IOMUX_MODE(0x76, MUX_CTL_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(0x7e, MUX_CTL_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(0x91, MUX_CTL_OUT_FUNC | MUX_CTL_IN_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(0x92, MUX_CTL_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(0x93, MUX_CTL_GPIO));
-
-	/* FPGA reset  Pin */
-	/* rstn = 0 */
-	gpio_direction_output(QONG_FPGA_RST_PIN, 0);
-
-	/* set interrupt pin as input */
-	gpio_direction_input(QONG_FPGA_IRQ_PIN);
-
-	/* FPGA JTAG Interface */
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SFS6, MUX_CTL_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SCK6, MUX_CTL_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_CAPTURE, MUX_CTL_GPIO));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_COMPARE, MUX_CTL_GPIO));
-	gpio_direction_output(QONG_FPGA_TCK_PIN, 0);
-	gpio_direction_output(QONG_FPGA_TMS_PIN, 0);
-	gpio_direction_output(QONG_FPGA_TDI_PIN, 0);
-	gpio_direction_input(QONG_FPGA_TDO_PIN);
-#endif
-
-	/* setup pins for UART1 */
-	mx31_gpio_mux(MUX_RXD1__UART1_RXD_MUX);
-	mx31_gpio_mux(MUX_TXD1__UART1_TXD_MUX);
-	mx31_gpio_mux(MUX_RTS1__UART1_RTS_B);
-	mx31_gpio_mux(MUX_CTS1__UART1_CTS_B);
-
-	/* setup pins for SPI (pmic) */
-	mx31_gpio_mux(MUX_CSPI2_SS0__CSPI2_SS0_B);
-	mx31_gpio_mux(MUX_CSPI2_MOSI__CSPI2_MOSI);
-	mx31_gpio_mux(MUX_CSPI2_MISO__CSPI2_MISO);
-	mx31_gpio_mux(MUX_CSPI2_SCLK__CSPI2_CLK);
-	mx31_gpio_mux(MUX_CSPI2_SPI_RDY__CSPI2_DATAREADY_B);
-
-	/* Setup pins for USB2 Host */
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_USBH2_CLK, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_USBH2_DIR, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_USBH2_NXT, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_USBH2_STP, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_USBH2_DATA0, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_USBH2_DATA1, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_STXD3, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SRXD3, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SCK3, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SFS3, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_STXD6, MUX_CTL_FUNC));
-	mx31_gpio_mux(IOMUX_MODE(MUX_CTL_SRXD6, MUX_CTL_FUNC));
-
-#define H2_PAD_CFG (PAD_CTL_DRV_MAX | PAD_CTL_SRE_FAST | PAD_CTL_HYS_CMOS | \
-			PAD_CTL_ODE_CMOS | PAD_CTL_100K_PU)
-
-	mx31_set_pad(MX31_PIN_USBH2_CLK, H2_PAD_CFG);
-	mx31_set_pad(MX31_PIN_USBH2_DIR, H2_PAD_CFG);
-	mx31_set_pad(MX31_PIN_USBH2_NXT, H2_PAD_CFG);
-	mx31_set_pad(MX31_PIN_USBH2_STP, H2_PAD_CFG);
-	mx31_set_pad(MX31_PIN_USBH2_DATA0, H2_PAD_CFG); /* USBH2_DATA0 */
-	mx31_set_pad(MX31_PIN_USBH2_DATA1, H2_PAD_CFG); /* USBH2_DATA1 */
-	mx31_set_pad(MX31_PIN_SRXD6, H2_PAD_CFG);	/* USBH2_DATA2 */
-	mx31_set_pad(MX31_PIN_STXD6, H2_PAD_CFG);	/* USBH2_DATA3 */
-	mx31_set_pad(MX31_PIN_SFS3, H2_PAD_CFG);	/* USBH2_DATA4 */
-	mx31_set_pad(MX31_PIN_SCK3, H2_PAD_CFG);	/* USBH2_DATA5 */
-	mx31_set_pad(MX31_PIN_SRXD3, H2_PAD_CFG);	/* USBH2_DATA6 */
-	mx31_set_pad(MX31_PIN_STXD3, H2_PAD_CFG);	/* USBH2_DATA7 */
-
-	writel(readl((IOMUXC_BASE + 0x8)) | (1 << 11), IOMUXC_BASE + 0x8);
-
-	return 0;
-
 }
 
 int board_init (void)
@@ -191,11 +99,46 @@ int board_init (void)
 						(0 << 0)	  /* FCE */
 					   );
 
+#ifdef CONFIG_QONG_FPGA
+	/* CS1: FPGA/Network Controller/GPIO */
+	/* 16-bit, no DTACK */
+	__REG(CSCR_U(1)) = 0x00000A01;
+	__REG(CSCR_L(1)) = 0x20040501;
+	__REG(CSCR_A(1)) = 0x04020C00;
+
+	/* setup pins for FPGA */
+	mx31_gpio_mux(IOMUX_MODE(0x76, MUX_CTL_GPIO));
+	mx31_gpio_mux(IOMUX_MODE(0x7e, MUX_CTL_GPIO));
+	mx31_gpio_mux(IOMUX_MODE(0x91, MUX_CTL_OUT_FUNC | MUX_CTL_IN_GPIO));
+	mx31_gpio_mux(IOMUX_MODE(0x92, MUX_CTL_GPIO));
+	mx31_gpio_mux(IOMUX_MODE(0x93, MUX_CTL_GPIO));
+
+	/* FPGA reset  Pin */
+	/* rstn = 0 */
+	mx31_gpio_set(QONG_FPGA_RST_PIN, 0);
+	mx31_gpio_direction(QONG_FPGA_RST_PIN, MX31_GPIO_DIRECTION_OUT);
+
+	/* set interrupt pin as input */
+	mx31_gpio_direction(QONG_FPGA_IRQ_PIN, MX31_GPIO_DIRECTION_IN);
+
+#endif
+
+	/* setup pins for UART1 */
+	mx31_gpio_mux(MUX_RXD1__UART1_RXD_MUX);
+	mx31_gpio_mux(MUX_TXD1__UART1_TXD_MUX);
+	mx31_gpio_mux(MUX_RTS1__UART1_RTS_B);
+	mx31_gpio_mux(MUX_CTS1__UART1_CTS_B);
+
+	/* setup pins for SPI (pmic) */
+	mx31_gpio_mux(MUX_CSPI2_SS0__CSPI2_SS0_B);
+	mx31_gpio_mux(MUX_CSPI2_MOSI__CSPI2_MOSI);
+	mx31_gpio_mux(MUX_CSPI2_MISO__CSPI2_MISO);
+	mx31_gpio_mux(MUX_CSPI2_SCLK__CSPI2_CLK);
+	mx31_gpio_mux(MUX_CSPI2_SPI_RDY__CSPI2_DATAREADY_B);
+
 	/* board id for linux */
 	gd->bd->bi_arch_number = MACH_TYPE_QONG;
 	gd->bd->bi_boot_params = (0x80000100);	/* adress of boot parameters */
-
-	qong_fpga_init();
 
 	return 0;
 }
@@ -208,10 +151,6 @@ int board_late_init(void)
 	val = pmic_reg_read(REG_POWER_CTL0);
 	pmic_reg_write(REG_POWER_CTL0, val | COINCHEN);
 	pmic_reg_write(REG_INT_STATUS1, RTCRSTI);
-
-#ifdef CONFIG_HW_WATCHDOG
-	mxc_hw_watchdog_enable();
-#endif
 
 	return 0;
 }
@@ -262,26 +201,27 @@ static void board_nand_setup(void)
 	qong_fpga_reset();
 
 	/* Enable NAND flash */
-	gpio_set_value(15, 1);
-	gpio_set_value(14, 1);
-	gpio_direction_output(15, 0);
-	gpio_direction_input(16);
-	gpio_direction_input(14);
+	mx31_gpio_set(15, 1);
+	mx31_gpio_set(14, 1);
+	mx31_gpio_direction(15, MX31_GPIO_DIRECTION_OUT);
+	mx31_gpio_direction(16, MX31_GPIO_DIRECTION_IN);
+	mx31_gpio_direction(14, MX31_GPIO_DIRECTION_IN);
+	mx31_gpio_set(15, 0);
 
 }
 
 int qong_nand_rdy(void *chip)
 {
 	udelay(1);
-	return gpio_get_value(16);
+	return mx31_gpio_get(16);
 }
 
 void qong_nand_select_chip(struct mtd_info *mtd, int chip)
 {
 	if (chip >= 0)
-		gpio_set_value(15, 0);
+		mx31_gpio_set(15, 0);
 	else
-		gpio_set_value(15, 1);
+		mx31_gpio_set(15, 1);
 
 }
 

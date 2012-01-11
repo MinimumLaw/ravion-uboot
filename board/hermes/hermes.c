@@ -107,19 +107,21 @@ const uint sdram_table[] = {
 
 int checkboard (void)
 {
-	char buf[64];
-	int i;
-	int l = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv ("serial#");
+	char *e;
 
 	puts ("Board: ");
 
-	if (l < 0 || strncmp(buf, "HERMES", 6)) {
+	if (!s || strncmp (s, "HERMES", 6)) {
 		puts ("### No HW ID - assuming HERMES-PRO");
 	} else {
-		for (i = 0; i < l; i++) {
-			if (buf[i] == ' ')
+		for (e = s; *e; ++e) {
+			if (*e == ' ')
 				break;
-			putc (buf[i]);
+		}
+
+		for (; s < e; ++s) {
+			putc (*s);
 		}
 	}
 

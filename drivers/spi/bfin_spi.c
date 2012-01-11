@@ -1,7 +1,7 @@
 /*
  * Driver for Blackfin On-Chip SPI device
  *
- * Copyright (c) 2005-2010 Analog Devices Inc.
+ * Copyright (c) 2005-2008 Analog Devices Inc.
  *
  * Licensed under the GPL-2 or later.
  */
@@ -13,7 +13,6 @@
 #include <spi.h>
 
 #include <asm/blackfin.h>
-#include <asm/dma.h>
 #include <asm/gpio.h>
 #include <asm/portmux.h>
 #include <asm/mach-common/bits/spi.h>
@@ -35,6 +34,8 @@ MAKE_SPI_FUNC(SPI_RDBR, 0x10)
 MAKE_SPI_FUNC(SPI_BAUD, 0x14)
 
 #define to_bfin_spi_slave(s) container_of(s, struct bfin_spi_slave, slave)
+
+#define MAX_CTRL_CS 7
 
 #define gpio_cs(cs) ((cs) - MAX_CTRL_CS)
 #ifdef CONFIG_BFIN_SPI_GPIO_CS
@@ -138,29 +139,13 @@ static const unsigned short cs_pins[][7] = {
 #endif
 };
 
-void spi_set_speed(struct spi_slave *slave, uint hz)
-{
-	struct bfin_spi_slave *bss = to_bfin_spi_slave(slave);
-	ulong sclk;
-	u32 baud;
-
-	sclk = get_sclk();
-	baud = sclk / (2 * hz);
-	/* baud should be rounded up */
-	if (sclk % (2 * hz))
-		baud += 1;
-	if (baud < 2)
-		baud = 2;
-	else if (baud > (u16)-1)
-		baud = -1;
-	bss->baud = baud;
-}
-
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int mode)
 {
 	struct bfin_spi_slave *bss;
+	ulong sclk;
 	u32 mmr_base;
+	u32 baud;
 
 	if (!spi_cs_is_valid(bus, cs))
 		return NULL;
@@ -182,6 +167,16 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		default: return NULL;
 	}
 
+	sclk = get_sclk();
+	baud = sclk / (2 * max_hz);
+	/* baud should be rounded up */
+	if (sclk % (2 * max_hz))
+		baud += 1;
+	if (baud < 2)
+		baud = 2;
+	else if (baud > (u16)-1)
+		baud = -1;
+
 	bss = malloc(sizeof(*bss));
 	if (!bss)
 		return NULL;
@@ -193,8 +188,8 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (mode & SPI_CPHA) bss->ctl |= CPHA;
 	if (mode & SPI_CPOL) bss->ctl |= CPOL;
 	if (mode & SPI_LSB_FIRST) bss->ctl |= LSBF;
+	bss->baud = baud;
 	bss->flg = mode & SPI_CS_HIGH ? 1 : 0;
-	spi_set_speed(&bss->slave, max_hz);
 
 	debug("%s: bus:%i cs:%i mmr:%x ctl:%x baud:%i flg:%i\n", __func__,
 		bus, cs, mmr_base, bss->ctl, baud, bss->flg);
@@ -244,132 +239,9 @@ void spi_release_bus(struct spi_slave *slave)
 	SSYNC();
 }
 
-#ifdef __ADSPBF54x__
-# define SPI_DMA_BASE DMA4_NEXT_DESC_PTR
-#elif defined(__ADSPBF533__) || defined(__ADSPBF532__) || defined(__ADSPBF531__) || \
-      defined(__ADSPBF538__) || defined(__ADSPBF539__)
-# define SPI_DMA_BASE DMA5_NEXT_DESC_PTR
-#elif defined(__ADSPBF561__)
-# define SPI_DMA_BASE DMA2_4_NEXT_DESC_PTR
-#elif defined(__ADSPBF537__) || defined(__ADSPBF536__) || defined(__ADSPBF534__) || \
-      defined(__ADSPBF52x__) || defined(__ADSPBF51x__)
-# define SPI_DMA_BASE DMA7_NEXT_DESC_PTR
-# elif defined(__ADSPBF50x__)
-# define SPI_DMA_BASE DMA6_NEXT_DESC_PTR
-#else
-# error "Please provide SPI DMA channel defines"
-#endif
-static volatile struct dma_register *dma = (void *)SPI_DMA_BASE;
-
 #ifndef CONFIG_BFIN_SPI_IDLE_VAL
 # define CONFIG_BFIN_SPI_IDLE_VAL 0xff
 #endif
-
-#ifdef CONFIG_BFIN_SPI_NO_DMA
-# define SPI_DMA 0
-#else
-# define SPI_DMA 1
-#endif
-
-static int spi_dma_xfer(struct bfin_spi_slave *bss, const u8 *tx, u8 *rx,
-			uint bytes)
-{
-	int ret = -1;
-	u16 ndsize, spi_config, dma_config;
-	struct dmasg dmasg[2];
-	const u8 *buf;
-
-	if (tx) {
-		debug("%s: doing half duplex TX\n", __func__);
-		buf = tx;
-		spi_config = TDBR_DMA;
-		dma_config = 0;
-	} else {
-		debug("%s: doing half duplex RX\n", __func__);
-		buf = rx;
-		spi_config = RDBR_DMA;
-		dma_config = WNR;
-	}
-
-	dmasg[0].start_addr = (unsigned long)buf;
-	dmasg[0].x_modify = 1;
-	dma_config |= WDSIZE_8 | DMAEN;
-	if (bytes <= 65536) {
-		blackfin_dcache_flush_invalidate_range(buf, buf + bytes);
-		ndsize = NDSIZE_5;
-		dmasg[0].cfg = NDSIZE_0 | dma_config | FLOW_STOP | DI_EN;
-		dmasg[0].x_count = bytes;
-	} else {
-		blackfin_dcache_flush_invalidate_range(buf, buf + 65536 - 1);
-		ndsize = NDSIZE_7;
-		dmasg[0].cfg = NDSIZE_5 | dma_config | FLOW_ARRAY | DMA2D;
-		dmasg[0].x_count = 0;	/* 2^16 */
-		dmasg[0].y_count = bytes >> 16;	/* count / 2^16 */
-		dmasg[0].y_modify = 1;
-		dmasg[1].start_addr = (unsigned long)(buf + (bytes & ~0xFFFF));
-		dmasg[1].cfg = NDSIZE_0 | dma_config | FLOW_STOP | DI_EN;
-		dmasg[1].x_count = bytes & 0xFFFF; /* count % 2^16 */
-		dmasg[1].x_modify = 1;
-	}
-
-	dma->cfg = 0;
-	dma->irq_status = DMA_DONE | DMA_ERR;
-	dma->curr_desc_ptr = dmasg;
-	write_SPI_CTL(bss, (bss->ctl & ~TDBR_CORE));
-	write_SPI_STAT(bss, -1);
-	SSYNC();
-
-	write_SPI_TDBR(bss, CONFIG_BFIN_SPI_IDLE_VAL);
-	dma->cfg = ndsize | FLOW_ARRAY | DMAEN;
-	write_SPI_CTL(bss, (bss->ctl & ~TDBR_CORE) | spi_config);
-	SSYNC();
-
-	/*
-	 * We already invalidated the first 64k,
-	 * now while we just wait invalidate the remaining part.
-	 * Its not likely that the DMA is going to overtake
-	 */
-	if (bytes > 65536)
-		blackfin_dcache_flush_invalidate_range(buf + 65536, buf + bytes);
-
-	while (!(dma->irq_status & DMA_DONE))
-		if (ctrlc())
-			goto done;
-
-	dma->cfg = 0;
-
-	ret = 0;
- done:
-	write_SPI_CTL(bss, bss->ctl);
-	return ret;
-}
-
-static int spi_pio_xfer(struct bfin_spi_slave *bss, const u8 *tx, u8 *rx,
-			uint bytes)
-{
-	/* todo: take advantage of hardware fifos  */
-	while (bytes--) {
-		u8 value = (tx ? *tx++ : CONFIG_BFIN_SPI_IDLE_VAL);
-		debug("%s: tx:%x ", __func__, value);
-		write_SPI_TDBR(bss, value);
-		SSYNC();
-		while ((read_SPI_STAT(bss) & TXS))
-			if (ctrlc())
-				return -1;
-		while (!(read_SPI_STAT(bss) & SPIF))
-			if (ctrlc())
-				return -1;
-		while (!(read_SPI_STAT(bss) & RXS))
-			if (ctrlc())
-				return -1;
-		value = read_SPI_RDBR(bss);
-		if (rx)
-			*rx++ = value;
-		debug("rx:%x\n", value);
-	}
-
-	return 0;
-}
 
 int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		void *din, unsigned long flags)
@@ -395,11 +267,32 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	if (flags & SPI_XFER_BEGIN)
 		spi_cs_activate(slave);
 
-	/* TX DMA doesn't work quite right */
-	if (SPI_DMA && bytes > 6 && (!tx /*|| !rx*/))
-		ret = spi_dma_xfer(bss, tx, rx, bytes);
-	else
-		ret = spi_pio_xfer(bss, tx, rx, bytes);
+	/* todo: take advantage of hardware fifos and setup RX dma */
+	while (bytes--) {
+		u8 value = (tx ? *tx++ : CONFIG_BFIN_SPI_IDLE_VAL);
+		debug("%s: tx:%x ", __func__, value);
+		write_SPI_TDBR(bss, value);
+		SSYNC();
+		while ((read_SPI_STAT(bss) & TXS))
+			if (ctrlc()) {
+				ret = -1;
+				goto done;
+			}
+		while (!(read_SPI_STAT(bss) & SPIF))
+			if (ctrlc()) {
+				ret = -1;
+				goto done;
+			}
+		while (!(read_SPI_STAT(bss) & RXS))
+			if (ctrlc()) {
+				ret = -1;
+				goto done;
+			}
+		value = read_SPI_RDBR(bss);
+		if (rx)
+			*rx++ = value;
+		debug("rx:%x\n", value);
+	}
 
  done:
 	if (flags & SPI_XFER_END)

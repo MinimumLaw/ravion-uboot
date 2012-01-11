@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Albert ARIBAUD <albert.u.boot@aribaud.net>
+ * Copyright (C) 2010 Albert ARIBAUD <albert.aribaud@free.fr>
  *
  * Based on original Kirkwood support which is
  * (C) Copyright 2009
@@ -42,7 +42,6 @@
 #define ORION5X_REGISTER(x)			(ORION5X_REGS_PHY_BASE + x)
 
 /* Documented registers */
-#define ORION5X_DRAM_BASE			(ORION5X_REGISTER(0x01500))
 #define ORION5X_TWSI_BASE			(ORION5X_REGISTER(0x11000))
 #define ORION5X_UART0_BASE			(ORION5X_REGISTER(0x12000))
 #define ORION5X_UART1_BASE			(ORION5X_REGISTER(0x12100))
@@ -56,9 +55,6 @@
 #define ORION5X_USB20_PORT0_BASE		(ORION5X_REGISTER(0x50000))
 #define ORION5X_USB20_PORT1_BASE		(ORION5X_REGISTER(0xA0000))
 #define ORION5X_EGIGA_BASE			(ORION5X_REGISTER(0x72000))
-#define ORION5X_SATA_BASE			(ORION5X_REGISTER(0x80000))
-#define ORION5X_SATA_PORT0_OFFSET		0x2000
-#define ORION5X_SATA_PORT1_OFFSET		0x4000
 
 /* Orion5x GbE controller has a single port */
 #define MAX_MVGBE_DEVS	1

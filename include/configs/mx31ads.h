@@ -22,7 +22,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include <asm/arch/imx-regs.h>
+#include <asm/arch/mx31-regs.h>
 
  /* High Level Configuration Options */
 #define CONFIG_ARM1136		1		/* This is an arm1136 CPU core */
@@ -32,8 +32,6 @@
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
-
-#define CONFIG_SYS_TEXT_BASE		0xA0000000
 
 /*
  * Disabled for now due to build problems under Debian and a significant increase
@@ -53,6 +51,7 @@
  * Size of malloc() pool
  */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 128 * 1024)
+#define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes reserved for initial data */
 
 /*
  * Hardware drivers
@@ -64,14 +63,13 @@
 #define CONFIG_HARD_SPI		1
 #define CONFIG_MXC_SPI		1
 #define CONFIG_DEFAULT_SPI_BUS	1
-#define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
-#define CONFIG_MXC_GPIO
+#define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_2 | SPI_CS_HIGH)
 
 #define CONFIG_FSL_PMIC
 #define CONFIG_FSL_PMIC_BUS	1
 #define CONFIG_FSL_PMIC_CS	0
 #define CONFIG_FSL_PMIC_CLK	1000000
-#define CONFIG_FSL_PMIC_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
+#define CONFIG_FSL_PMIC_MODE	(SPI_MODE_2 | SPI_CS_HIGH)
 #define CONFIG_RTC_MC13783	1
 
 /* allow to overwrite serial and ethaddr */
@@ -163,15 +161,6 @@
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_BASE
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
-#define CONFIG_BOARD_EARLY_INIT_F
-
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
-#define CONFIG_SYS_INIT_RAM_SIZE	IRAM_SIZE
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
-						GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_INIT_RAM_ADDR + \
-						CONFIG_SYS_GBL_DATA_OFFSET)
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
@@ -183,14 +172,18 @@
 #define CONFIG_SYS_MONITOR_LEN		(256 * 1024)	/* Reserve 256KiB */
 
 #define	CONFIG_ENV_IS_IN_FLASH	1
-#define CONFIG_ENV_SECT_SIZE	(128 * 1024)
+#define CONFIG_ENV_SECT_SIZE	(32 * 1024)
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + CONFIG_SYS_MONITOR_LEN)
 
 /* Address and size of Redundant Environment Sector	*/
-#define CONFIG_ENV_ADDR_REDUND	(CONFIG_ENV_ADDR + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
 #define CONFIG_ENV_SIZE_REDUND	CONFIG_ENV_SIZE
 
+/* S29WS256N NOR flash has 4 32KiB small sectors at the beginning and at the end.
+ * The rest of 32MiB is in 128KiB big sectors. U-Boot occupies the low 4 sectors,
+ * if we put environment next to it, we will have to occupy 128KiB for it.
+ * Putting it at the top of flash we use only 32KiB. */
+#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + CONFIG_ENV_SECT_SIZE)
 
 /*-----------------------------------------------------------------------
  * CFI FLASH driver setup

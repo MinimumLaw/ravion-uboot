@@ -55,7 +55,5 @@ SECTIONS
 	. = ALIGN(4);
 	__bss_start = .;
 	.bss : { *(.bss) }
-	__bss_end__ = .;
-
 	_end = .;
 }

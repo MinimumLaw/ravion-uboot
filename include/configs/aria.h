@@ -49,8 +49,7 @@
 #define CONFIG_E300		1	/* E300 Family */
 #define CONFIG_MPC512X		1	/* MPC512X family */
 #define CONFIG_FSL_DIU_FB	1	/* FSL DIU */
-
-#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+#define CONFIG_FSL_DIU_LOGO_BMP	1	/* Don't include FSL DIU binary bmp */
 
 /* video */
 #undef CONFIG_VIDEO
@@ -299,13 +298,14 @@
 
 /* Use SRAM for initial stack */
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_SRAM_BASE
-#define CONFIG_SYS_INIT_RAM_SIZE		CONFIG_SYS_SRAM_SIZE
+#define CONFIG_SYS_INIT_RAM_END		CONFIG_SYS_SRAM_SIZE
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
-					 GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_SIZE	0x100
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
+					 CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(384 * 1024)
 
 #ifdef	CONFIG_FSL_DIU_FB
@@ -321,6 +321,7 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX		1
+#undef CONFIG_SERIAL_SOFTWARE_FIFO
 
 /*
  * Serial console configuration
@@ -506,10 +507,10 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 256 MB of memory, since this is
+ * have to be in the first 8 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(256 << 20)
+#define CONFIG_SYS_BOOTMAPSZ	(8 << 20)
 
 /* Cache Configuration */
 #define CONFIG_SYS_DCACHE_SIZE		32768
@@ -524,6 +525,14 @@
 #define CONFIG_SYS_HID2	HID2_HBE
 
 #define CONFIG_HIGH_BATS		1	/* High BATs supported */
+
+/*
+ * Internal Definitions
+ *
+ * Boot Flags
+ */
+#define BOOTFLAG_COLD			0x01
+#define BOOTFLAG_WARM			0x02
 
 #ifdef CONFIG_CMD_KGDB
 #define CONFIG_KGDB_BAUDRATE		230400	/* speed of kgdb serial port */

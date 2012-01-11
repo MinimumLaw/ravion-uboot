@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2006-2008 Nokia Corporation.
  *
- * (C) Copyright 2008-2010
+ * (C) Copyright 2008-2009
  * Stefan Roese, DENX Software Engineering, sr@denx.de.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ static int __init compr_init(struct ubifs_compressor *compr)
 {
 	ubifs_compressors[compr->compr_type] = compr;
 
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
+#ifndef CONFIG_RELOC_FIXUP_WORKS
 	ubifs_compressors[compr->compr_type]->name += gd->reloc_off;
 	ubifs_compressors[compr->compr_type]->capi_name += gd->reloc_off;
 	ubifs_compressors[compr->compr_type]->decompress += gd->reloc_off;
@@ -360,8 +360,6 @@ out:
 		return err;
 	}
 
-	if (file->private_data)
-		kfree(file->private_data);
 	if (file)
 		free(file);
 	if (dentry)
@@ -369,6 +367,10 @@ out:
 	if (dir)
 		free(dir);
 
+	if (file->private_data)
+		kfree(file->private_data);
+	file->private_data = NULL;
+	file->f_pos = 2;
 	return 0;
 }
 
@@ -382,7 +384,6 @@ static unsigned long ubifs_findfile(struct super_block *sb, char *filename)
 	unsigned long root_inum = 1;
 	unsigned long inum;
 	int symlink_count = 0; /* Don't allow symlink recursion */
-	char link_name[64];
 
 	strcpy(fpath, filename);
 
@@ -419,6 +420,7 @@ static unsigned long ubifs_findfile(struct super_block *sb, char *filename)
 		ui = ubifs_inode(inode);
 
 		if ((inode->i_mode & S_IFMT) == S_IFLNK) {
+			char link_name[64];
 			char buf[128];
 
 			/* We have some sort of symlink recursion, bail out */
@@ -565,8 +567,7 @@ dump:
 	return -EINVAL;
 }
 
-static int do_readpage(struct ubifs_info *c, struct inode *inode,
-		       struct page *page, int last_block_size)
+static int do_readpage(struct ubifs_info *c, struct inode *inode, struct page *page)
 {
 	void *addr;
 	int err = 0, i;
@@ -600,54 +601,17 @@ static int do_readpage(struct ubifs_info *c, struct inode *inode,
 			err = -ENOENT;
 			memset(addr, 0, UBIFS_BLOCK_SIZE);
 		} else {
-			/*
-			 * Reading last block? Make sure to not write beyond
-			 * the requested size in the destination buffer.
-			 */
-			if (((block + 1) == beyond) || last_block_size) {
-				void *buff;
-				int dlen;
-
-				/*
-				 * We need to buffer the data locally for the
-				 * last block. This is to not pad the
-				 * destination area to a multiple of
-				 * UBIFS_BLOCK_SIZE.
-				 */
-				buff = malloc(UBIFS_BLOCK_SIZE);
-				if (!buff) {
-					printf("%s: Error, malloc fails!\n",
-					       __func__);
-					err = -ENOMEM;
+			ret = read_block(inode, addr, block, dn);
+			if (ret) {
+				err = ret;
+				if (err != -ENOENT)
 					break;
-				}
+			} else if (block + 1 == beyond) {
+				int dlen = le32_to_cpu(dn->size);
+				int ilen = i_size & (UBIFS_BLOCK_SIZE - 1);
 
-				/* Read block-size into temp buffer */
-				ret = read_block(inode, buff, block, dn);
-				if (ret) {
-					err = ret;
-					if (err != -ENOENT) {
-						free(buff);
-						break;
-					}
-				}
-
-				if (last_block_size)
-					dlen = last_block_size;
-				else
-					dlen = le32_to_cpu(dn->size);
-
-				/* Now copy required size back to dest */
-				memcpy(addr, buff, dlen);
-
-				free(buff);
-			} else {
-				ret = read_block(inode, addr, block, dn);
-				if (ret) {
-					err = ret;
-					if (err != -ENOENT)
-						break;
-				}
+				if (ilen && ilen < dlen)
+					memset(addr + ilen, 0, dlen - ilen);
 			}
 		}
 		if (++i >= UBIFS_BLOCKS_PER_PAGE)
@@ -685,8 +649,6 @@ int ubifs_load(char *filename, u32 addr, u32 size)
 	int err = 0;
 	int i;
 	int count;
-	int last_block_size = 0;
-	char buf [10];
 
 	c->ubi = ubi_open_volume(c->vi.ubi_num, c->vi.vol_id, UBI_READONLY);
 	/* ubifs_findfile will resolve symlinks, so we know that we get
@@ -722,13 +684,7 @@ int ubifs_load(char *filename, u32 addr, u32 size)
 	page.index = 0;
 	page.inode = inode;
 	for (i = 0; i < count; i++) {
-		/*
-		 * Make sure to not read beyond the requested size
-		 */
-		if (((i + 1) == count) && (size < inode->i_size))
-			last_block_size = size - (i * PAGE_SIZE);
-
-		err = do_readpage(c, inode, &page, last_block_size);
+		err = do_readpage(c, inode, &page);
 		if (err)
 			break;
 
@@ -738,11 +694,8 @@ int ubifs_load(char *filename, u32 addr, u32 size)
 
 	if (err)
 		printf("Error reading file '%s'\n", filename);
-	else {
-	        sprintf(buf, "%X", size);
-		setenv("filesize", buf);
+	else
 		printf("Done\n");
-	}
 
 	ubifs_iput(inode);
 

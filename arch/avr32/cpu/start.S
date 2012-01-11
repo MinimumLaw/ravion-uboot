@@ -19,7 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#include <asm-offsets.h>
 #include <config.h>
 #include <asm/ptrace.h>
 #include <asm/sysreg.h>
@@ -83,19 +82,12 @@ _evba:
 	.org	0x44
 	rjmp	unknown_exception	/* DTLB Modified */
 
-	.org	0x50			/* ITLB Miss */
-	pushm   r8-r12,lr
-	rjmp	1f
-	.org	0x60			/* DTLB Miss (read) */
-	pushm   r8-r12,lr
-	rjmp	1f
-	.org	0x70			/* DTLB Miss (write) */
-	pushm   r8-r12,lr
-1:	mov	r12, sp
-	rcall	mmu_handle_tlb_miss
-	popm	r8-r12,lr
-	brne	unknown_exception
-	rete
+	.org	0x50
+	rjmp	unknown_exception	/* ITLB Miss */
+	.org	0x60
+	rjmp	unknown_exception	/* DTLB Miss (read) */
+	.org	0x70
+	rjmp	unknown_exception	/* DTLB Miss (write) */
 
 	.size	_evba, . - _evba
 
@@ -244,7 +236,7 @@ relocate_code:
 	/* zero out .bss */
 	mov	r0, 0
 	mov	r1, 0
-	lda.w	r9, __bss_end__
+	lda.w	r9, _end
 	sub	r9, r8
 1:	st.d	r10++, r0
 	sub	r9, 8

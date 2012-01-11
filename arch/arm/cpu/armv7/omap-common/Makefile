@@ -23,17 +23,10 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)libomap-common.o
+LIB	= $(obj)libomap-common.a
 
 SOBJS	:= reset.o
-
 COBJS	:= timer.o
-COBJS	+= utils.o
-COBJS	+= gpio.o
-
-ifdef CONFIG_SPL_BUILD
-COBJS	+= spl.o
-endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
@@ -41,7 +34,7 @@ OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 all:	$(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

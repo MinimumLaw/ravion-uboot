@@ -41,7 +41,7 @@ SECTIONS
 
 	.text :
 	{
-		KEEP(arch/sh/cpu/sh4/start.o		(.text))
+		arch/sh/cpu/sh4/start.o		(.text)
 		. = ALIGN(8192);
 		common/env_embedded.o	(.ppcenv)
 		. = ALIGN(8192);
@@ -95,5 +95,5 @@ SECTIONS
 	}
 	PROVIDE (bss_end = .);
 
-	PROVIDE (__bss_end__ = .);
+	PROVIDE (_end = .);
 }

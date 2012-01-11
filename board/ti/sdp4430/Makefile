@@ -23,17 +23,15 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
-ifndef CONFIG_SPL_BUILD
-COBJS	:= sdp.o cmd_bat.o
-endif
+COBJS	:= sdp.o
 
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 clean:
 	rm -f $(OBJS)

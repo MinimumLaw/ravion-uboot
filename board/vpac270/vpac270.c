@@ -21,21 +21,15 @@
 
 #include <common.h>
 #include <asm/arch/hardware.h>
-#include <netdev.h>
 #include <serial.h>
-#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * Miscelaneous platform dependent initialisations
  */
-int board_init(void)
+int board_init (void)
 {
-	/* We have RAM, disable cache */
-	dcache_disable();
-	icache_disable();
-
 	/* memory and cpu-speed are setup before relocation */
 	/* so we do _nothing_ here */
 
@@ -48,58 +42,48 @@ int board_init(void)
 	return 0;
 }
 
-struct serial_device *default_serial_console(void)
+struct serial_device *default_serial_console (void)
 {
 	return &serial_ffuart_device;
 }
 
-extern void pxa_dram_init(void);
-int dram_init(void)
-{
-	pxa_dram_init();
-	gd->ram_size = PHYS_SDRAM_1_SIZE;
-	return 0;
-}
-
-void dram_init_banksize(void)
+int dram_init (void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 
-#ifdef	CONFIG_RAM_256M
+#ifdef	CONFIG_256M_U_BOOT
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
 	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
 #endif
+	return 0;
 }
 
 #ifdef	CONFIG_CMD_USB
 int usb_board_init(void)
 {
-	writel((UHCHR | UHCHR_PCPL | UHCHR_PSPL) &
-		~(UHCHR_SSEP0 | UHCHR_SSEP1 | UHCHR_SSEP2 | UHCHR_SSE),
-		UHCHR);
+	UHCHR = (UHCHR | UHCHR_PCPL | UHCHR_PSPL) &
+		~(UHCHR_SSEP0 | UHCHR_SSEP1 | UHCHR_SSEP2 | UHCHR_SSE);
 
-	writel(readl(UHCHR) | UHCHR_FSBIR, UHCHR);
+	UHCHR |= UHCHR_FSBIR;
 
-	while (readl(UHCHR) & UHCHR_FSBIR)
-		;
+	while (UHCHR & UHCHR_FSBIR);
 
-	writel(readl(UHCHR) & ~UHCHR_SSE, UHCHR);
-	writel((UHCHIE_UPRIE | UHCHIE_RWIE), UHCHIE);
+	UHCHR &= ~UHCHR_SSE;
+	UHCHIE = (UHCHIE_UPRIE | UHCHIE_RWIE);
 
 	/* Clear any OTG Pin Hold */
-	if (readl(PSSR) & PSSR_OTGPH)
-		writel(readl(PSSR) | PSSR_OTGPH, PSSR);
+	if (PSSR & PSSR_OTGPH)
+		PSSR |= PSSR_OTGPH;
 
-	writel(readl(UHCRHDA) & ~(0x200), UHCRHDA);
-	writel(readl(UHCRHDA) | 0x100, UHCRHDA);
+	UHCRHDA &= ~(0x200);
+	UHCRHDA |= 0x100;
 
 	/* Set port power control mask bits, only 3 ports. */
-	writel(readl(UHCRHDB) | (0x7<<17), UHCRHDB);
+	UHCRHDB |= (0x7<<17);
 
 	/* enable port 2 */
-	writel(readl(UP2OCR) | UP2OCR_HXOE | UP2OCR_HXS |
-		UP2OCR_DMPDE | UP2OCR_DPPDE, UP2OCR);
+	UP2OCR |= UP2OCR_HXOE | UP2OCR_HXS | UP2OCR_DMPDE | UP2OCR_DPPDE;
 
 	return 0;
 }
@@ -111,14 +95,14 @@ void usb_board_init_fail(void)
 
 void usb_board_stop(void)
 {
-	writel(readl(UHCHR) | UHCHR_FHR, UHCHR);
+	UHCHR |= UHCHR_FHR;
 	udelay(11);
-	writel(readl(UHCHR) & ~UHCHR_FHR, UHCHR);
+	UHCHR &= ~UHCHR_FHR;
 
-	writel(readl(UHCCOMS) | 1, UHCCOMS);
+	UHCCOMS |= 1;
 	udelay(10);
 
-	writel(readl(CKEN) & ~CKEN10_USBHOST, CKEN);
+	CKEN &= ~CKEN10_USBHOST;
 
 	return;
 }

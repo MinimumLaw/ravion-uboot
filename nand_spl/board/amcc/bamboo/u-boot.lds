@@ -26,7 +26,7 @@ SECTIONS
 {
   .resetvec 0x00800FFC :
   {
-    KEEP(*(.resetvec))
+    *(.resetvec)
   } = 0xffff
 
   .text      :
@@ -62,5 +62,5 @@ SECTIONS
    . = ALIGN(4);
   }
 
-  __bss_end__ = . ;
+  _end = . ;
 }

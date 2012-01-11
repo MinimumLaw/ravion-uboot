@@ -22,7 +22,7 @@
  */
 
 #include <common.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <malloc.h>
 #include <command.h>
 #include <crc.h>
@@ -509,13 +509,12 @@ int misc_init_r (void)
 
 int checkboard(void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 
 	printf("Board: PCS440EP");
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

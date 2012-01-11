@@ -91,6 +91,17 @@ unsigned long get_timer(unsigned long base)
 	return get_timer_masked() - base;
 }
 
+void reset_timer_masked(void)
+{
+	read_timer();
+	timer.ticks = 0;
+}
+
+void reset_timer(void)
+{
+	reset_timer_masked();
+}
+
 void __udelay(unsigned long usec)
 {
 	unsigned long long target;
@@ -117,9 +128,7 @@ int timer_init(void)
 	writel(TIMER_ENABLE | TIMER_CLKSEL,
 		&timer_regs->timer3.control);
 
-	/* Reset the timer */
-	read_timer();
-	timer.ticks = 0;
+	reset_timer_masked();
 
 	return 0;
 }

@@ -25,7 +25,6 @@
 #include <command.h>
 #include <net.h>
 #include <miiphy.h>
-#include <phy.h>
 
 void eth_parse_enetaddr(const char *addr, uchar *enetaddr)
 {
@@ -54,11 +53,10 @@ int eth_setenv_enetaddr(char *name, const uchar *enetaddr)
 	return setenv(name, buf);
 }
 
-int eth_getenv_enetaddr_by_index(const char *base_name, int index,
-				 uchar *enetaddr)
+int eth_getenv_enetaddr_by_index(int index, uchar *enetaddr)
 {
 	char enetvar[32];
-	sprintf(enetvar, index ? "%s%daddr" : "%saddr", base_name, index);
+	sprintf(enetvar, index ? "eth%daddr" : "ethaddr", index);
 	return eth_getenv_enetaddr(enetvar, enetaddr);
 }
 
@@ -104,11 +102,9 @@ struct eth_device *eth_get_dev(void)
 	return eth_current;
 }
 
-struct eth_device *eth_get_dev_by_name(const char *devname)
+struct eth_device *eth_get_dev_by_name(char *devname)
 {
 	struct eth_device *dev, *target_dev;
-
-	BUG_ON(devname == NULL);
 
 	if (!eth_devices)
 		return NULL;
@@ -170,68 +166,20 @@ int eth_get_dev_index (void)
 	return (0);
 }
 
-static void eth_current_changed(void)
-{
-#ifdef CONFIG_NET_MULTI
-	{
-		char *act = getenv("ethact");
-		/* update current ethernet name */
-		if (eth_current)
-		{
-			if (act == NULL || strcmp(act, eth_current->name) != 0)
-				setenv("ethact", eth_current->name);
-		}
-		/*
-		 * remove the variable completely if there is no active
-		 * interface
-		 */
-		else if (act != NULL)
-			setenv("ethact", NULL);
-	}
-#endif
-}
-
-int eth_write_hwaddr(struct eth_device *dev, const char *base_name,
-		   int eth_number)
-{
-	unsigned char env_enetaddr[6];
-	int ret = 0;
-
-	if (!eth_getenv_enetaddr_by_index(base_name, eth_number, env_enetaddr))
-		return -1;
-
-	if (memcmp(env_enetaddr, "\0\0\0\0\0\0", 6)) {
-		if (memcmp(dev->enetaddr, "\0\0\0\0\0\0", 6) &&
-			memcmp(dev->enetaddr, env_enetaddr, 6)) {
-			printf("\nWarning: %s MAC addresses don't match:\n",
-				dev->name);
-			printf("Address in SROM is         %pM\n",
-				dev->enetaddr);
-			printf("Address in environment is  %pM\n",
-				env_enetaddr);
-		}
-
-		memcpy(dev->enetaddr, env_enetaddr, 6);
-	}
-
-	if (dev->write_hwaddr &&
-		!eth_mac_skip(eth_number) &&
-		is_valid_ether_addr(dev->enetaddr)) {
-		ret = dev->write_hwaddr(dev);
-	}
-
-	return ret;
-}
-
-int eth_register(struct eth_device *dev)
+int eth_register(struct eth_device* dev)
 {
 	struct eth_device *d;
 
-	assert(strlen(dev->name) < NAMESIZE);
-
 	if (!eth_devices) {
 		eth_current = eth_devices = dev;
-		eth_current_changed();
+#ifdef CONFIG_NET_MULTI
+		/* update current ethernet name */
+		{
+			char *act = getenv("ethact");
+			if (act == NULL || strcmp(act, eth_current->name) != 0)
+				setenv("ethact", eth_current->name);
+		}
+#endif
 	} else {
 		for (d=eth_devices; d->next!=eth_devices; d=d->next)
 			;
@@ -246,6 +194,7 @@ int eth_register(struct eth_device *dev)
 
 int eth_initialize(bd_t *bis)
 {
+	unsigned char env_enetaddr[6];
 	int eth_number = 0;
 
 	eth_devices = NULL;
@@ -255,23 +204,10 @@ int eth_initialize(bd_t *bis)
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
 	miiphy_init();
 #endif
-
-#ifdef CONFIG_PHYLIB
-	phy_init();
-#endif
-
-	/*
-	 * If board-specific initialization exists, call it.
-	 * If not, call a CPU-specific one
-	 */
-	if (board_eth_init != __def_eth_init) {
-		if (board_eth_init(bis) < 0)
-			printf("Board Net Initialization Failed\n");
-	} else if (cpu_eth_init != __def_eth_init) {
-		if (cpu_eth_init(bis) < 0)
-			printf("CPU Net Initialization Failed\n");
-	} else
-		printf("Net Initialization Skipped\n");
+	/* Try board-specific initialization first.  If it fails or isn't
+	 * present, try the cpu-specific initialization */
+	if (board_eth_init(bis) < 0)
+		cpu_eth_init(bis);
 
 #if defined(CONFIG_DB64360) || defined(CONFIG_CPCI750)
 	mv6436x_eth_initialize(bis);
@@ -301,14 +237,42 @@ int eth_initialize(bd_t *bis)
 			if (strchr(dev->name, ' '))
 				puts("\nWarning: eth device name has a space!\n");
 
-			if (eth_write_hwaddr(dev, "eth", eth_number))
-				puts("Warning: failed to set MAC address\n");
+			eth_getenv_enetaddr_by_index(eth_number, env_enetaddr);
+
+			if (memcmp(env_enetaddr, "\0\0\0\0\0\0", 6)) {
+				if (memcmp(dev->enetaddr, "\0\0\0\0\0\0", 6) &&
+				    memcmp(dev->enetaddr, env_enetaddr, 6))
+				{
+					printf ("\nWarning: %s MAC addresses don't match:\n",
+						dev->name);
+					printf ("Address in SROM is         %pM\n",
+						dev->enetaddr);
+					printf ("Address in environment is  %pM\n",
+						env_enetaddr);
+				}
+
+				memcpy(dev->enetaddr, env_enetaddr, 6);
+			}
+			if (dev->write_hwaddr &&
+				!eth_mac_skip(eth_number) &&
+				is_valid_ether_addr(dev->enetaddr)) {
+				dev->write_hwaddr(dev);
+			}
 
 			eth_number++;
 			dev = dev->next;
 		} while(dev != eth_devices);
 
-		eth_current_changed();
+#ifdef CONFIG_NET_MULTI
+		/* update current ethernet name */
+		if (eth_current) {
+			char *act = getenv("ethact");
+			if (act == NULL || strcmp(act, eth_current->name) != 0)
+				setenv("ethact", eth_current->name);
+		} else
+			setenv("ethact", NULL);
+#endif
+
 		putc ('\n');
 	}
 
@@ -377,8 +341,7 @@ int eth_init(bd_t *bis)
 	do {
 		uchar env_enetaddr[6];
 
-		if (eth_getenv_enetaddr_by_index("eth", eth_number,
-						 env_enetaddr))
+		if (eth_getenv_enetaddr_by_index(eth_number, env_enetaddr))
 			memcpy(dev->enetaddr, env_enetaddr, 6);
 
 		++eth_number;
@@ -497,13 +460,21 @@ void eth_try_another(int first_restart)
 
 	eth_current = eth_current->next;
 
-	eth_current_changed();
+#ifdef CONFIG_NET_MULTI
+	/* update current ethernet name */
+	{
+		char *act = getenv("ethact");
+		if (act == NULL || strcmp(act, eth_current->name) != 0)
+			setenv("ethact", eth_current->name);
+	}
+#endif
 
 	if (first_failed == eth_current) {
 		NetRestartWrap = 1;
 	}
 }
 
+#ifdef CONFIG_NET_MULTI
 void eth_set_current(void)
 {
 	static char *act = NULL;
@@ -528,8 +499,9 @@ void eth_set_current(void)
 		} while (old_current != eth_current);
 	}
 
-	eth_current_changed();
+	setenv("ethact", eth_current->name);
 }
+#endif
 
 char *eth_get_name (void)
 {
@@ -540,6 +512,7 @@ char *eth_get_name (void)
 
 #warning Ethernet driver is deprecated.  Please update to use CONFIG_NET_MULTI
 
+extern int at91rm9200_miiphy_initialize(bd_t *bis);
 extern int mcf52x2_miiphy_initialize(bd_t *bis);
 extern int ns7520_miiphy_initialize(bd_t *bis);
 
@@ -550,6 +523,9 @@ int eth_initialize(bd_t *bis)
 	miiphy_init();
 #endif
 
+#if defined(CONFIG_AT91RM9200)
+	at91rm9200_miiphy_initialize(bis);
+#endif
 #if defined(CONFIG_MCF52x2)
 	mcf52x2_miiphy_initialize(bis);
 #endif

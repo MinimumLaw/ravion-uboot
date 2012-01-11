@@ -36,10 +36,8 @@ static struct gpt_regs *const gpt_regs_p =
 static struct misc_regs *const misc_regs_p =
     (struct misc_regs *)CONFIG_SPEAR_MISCBASE;
 
-DECLARE_GLOBAL_DATA_PTR;
-
-#define timestamp gd->tbl
-#define lastdec gd->lastinc
+static ulong timestamp;
+static ulong lastdec;
 
 int timer_init(void)
 {
@@ -68,9 +66,7 @@ int timer_init(void)
 	/* auto reload, start timer */
 	writel(readl(&gpt_regs_p->control) | GPT_ENABLE, &gpt_regs_p->control);
 
-	/* Reset the timer */
-	lastdec = READ_TIMER();
-	timestamp = 0;
+	reset_timer_masked();
 
 	return 0;
 }
@@ -78,9 +74,20 @@ int timer_init(void)
 /*
  * timer without interrupts
  */
+
+void reset_timer(void)
+{
+	reset_timer_masked();
+}
+
 ulong get_timer(ulong base)
 {
 	return (get_timer_masked() / GPT_RESOLUTION) - base;
+}
+
+void set_timer(ulong t)
+{
+	timestamp = t;
 }
 
 void __udelay(unsigned long usec)
@@ -97,6 +104,13 @@ void __udelay(unsigned long usec)
 
 	while ((ulong) (get_timer_masked() - start) < tmo)
 		;
+}
+
+void reset_timer_masked(void)
+{
+	/* reset time */
+	lastdec = READ_TIMER();
+	timestamp = 0;
 }
 
 ulong get_timer_masked(void)

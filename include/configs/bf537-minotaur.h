@@ -156,7 +156,6 @@
 # define CONFIG_CMD_PING
 #else
 # undef CONFIG_CMD_NET
-# undef CONFIG_CMD_NFS
 #endif
 
 #define CONFIG_CMD_BOOTLDR

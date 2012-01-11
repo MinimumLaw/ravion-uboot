@@ -67,8 +67,7 @@ int board_early_init_f(void)
  */
 int checkboard(void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 	uint pvr = get_pvr();
 
 	if (pvr == PVR_405GPR_RB) {
@@ -77,9 +76,9 @@ int checkboard(void)
 		puts("Board: Walnut - AMCC PPC405GP Evaluation Board");
 	}
 
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

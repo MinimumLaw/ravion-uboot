@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Freescale Semiconductor, Inc.
+ * Copyright 2007-2010 Freescale Semiconductor, Inc.
  *
  * (C) Copyright 2003 Motorola Inc.
  * Modified by Xianghua Xiao, X.Xiao@motorola.com
@@ -37,14 +37,8 @@
 #include <asm/fsl_law.h>
 #include <asm/fsl_serdes.h>
 #include "mp.h"
-#ifdef CONFIG_SYS_QE_FW_IN_NAND
-#include <nand.h>
-#include <errno.h>
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
-
-extern void srio_init(void);
 
 #ifdef CONFIG_QE
 extern qe_iop_conf_t qe_iop_conf_tab[];
@@ -145,29 +139,6 @@ static void enable_cpc(void)
 	for (i = 0; i < CONFIG_SYS_NUM_CPC; i++, cpc++) {
 		u32 cpccfg0 = in_be32(&cpc->cpccfg0);
 		size += CPC_CFG0_SZ_K(cpccfg0);
-#ifdef CONFIG_RAMBOOT_PBL
-		if (in_be32(&cpc->cpcsrcr0) & CPC_SRCR0_SRAMEN) {
-			/* find and disable LAW of SRAM */
-			struct law_entry law = find_law(CONFIG_SYS_INIT_L3_ADDR);
-
-			if (law.index == -1) {
-				printf("\nFatal error happened\n");
-				return;
-			}
-			disable_law(law.index);
-
-			clrbits_be32(&cpc->cpchdbcr0, CPC_HDBCR0_CDQ_SPEC_DIS);
-			out_be32(&cpc->cpccsr0, 0);
-			out_be32(&cpc->cpcsrcr0, 0);
-		}
-#endif
-
-#ifdef CONFIG_SYS_FSL_ERRATUM_CPC_A002
-		setbits_be32(&cpc->cpchdbcr0, CPC_HDBCR0_TAG_ECC_SCRUB_DIS);
-#endif
-#ifdef CONFIG_SYS_FSL_ERRATUM_CPC_A003
-		setbits_be32(&cpc->cpchdbcr0, CPC_HDBCR0_DATA_ECC_SCRUB_DIS);
-#endif
 
 		out_be32(&cpc->cpccsr0, CPC_CSR0_CE | CPC_CSR0_PE);
 		/* Read back to sync write */
@@ -184,9 +155,6 @@ void invalidate_cpc(void)
 	cpc_corenet_t *cpc = (cpc_corenet_t *)CONFIG_SYS_FSL_CPC_ADDR;
 
 	for (i = 0; i < CONFIG_SYS_NUM_CPC; i++, cpc++) {
-		/* skip CPC when it used as all SRAM */
-		if (in_be32(&cpc->cpcsrcr0) & CPC_SRCR0_SRAMEN)
-			continue;
 		/* Flash invalidate the CPC and clear all the locks */
 		out_be32(&cpc->cpccsr0, CPC_CSR0_FI | CPC_CSR0_LFC);
 		while (in_be32(&cpc->cpccsr0) & (CPC_CSR0_FI | CPC_CSR0_LFC))
@@ -211,7 +179,7 @@ static void corenet_tb_init(void)
 	volatile ccsr_rcpm_t *rcpm =
 		(void *)(CONFIG_SYS_FSL_CORENET_RCPM_ADDR);
 	volatile ccsr_pic_t *pic =
-		(void *)(CONFIG_SYS_MPC8xxx_PIC_ADDR);
+		(void *)(CONFIG_SYS_MPC85xx_PIC_ADDR);
 	u32 whoami = in_be32(&pic->whoami);
 
 	/* Enable the timebase register for this core */
@@ -222,10 +190,6 @@ static void corenet_tb_init(void)
 void cpu_init_f (void)
 {
 	extern void m8560_cpm_reset (void);
-#ifdef CONFIG_SYS_DCSRBAR_PHYS
-	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
-#endif
-
 #ifdef CONFIG_MPC8548
 	ccsr_local_ecm_t *ecm = (void *)(CONFIG_SYS_MPC85xx_ECM_ADDR);
 	uint svr = get_svr();
@@ -266,21 +230,8 @@ void cpu_init_f (void)
 
 	/* Invalidate the CPC before DDR gets enabled */
 	invalidate_cpc();
-
- #ifdef CONFIG_SYS_DCSRBAR_PHYS
-	/* set DCSRCR so that DCSR space is 1G */
-	setbits_be32(&gur->dcsrcr, FSL_CORENET_DCSR_SZ_1G);
-	in_be32(&gur->dcsrcr);
-#endif
-
 }
 
-/* Implement a dummy function for those platforms w/o SERDES */
-static void __fsl_serdes__init(void)
-{
-	return ;
-}
-__attribute__((weak, alias("__fsl_serdes__init"))) void fsl_serdes_init(void);
 
 /*
  * Initialize L2 as cache.
@@ -376,7 +327,7 @@ int cpu_init_r(void)
 	if (l2cache->l2ctl & MPC85xx_L2CTL_L2E) {
 		puts("already enabled");
 		l2srbar = l2cache->l2srbar0;
-#if defined(CONFIG_SYS_INIT_L2_ADDR) && defined(CONFIG_SYS_FLASH_BASE)
+#ifdef CONFIG_SYS_INIT_L2_ADDR
 		if (l2cache->l2ctl & MPC85xx_L2CTL_L2SRAM_ENTIRE
 				&& l2srbar >= CONFIG_SYS_FLASH_BASE) {
 			l2srbar = CONFIG_SYS_INIT_L2_ADDR;
@@ -392,12 +343,6 @@ int cpu_init_r(void)
 		puts("enabled\n");
 	}
 #elif defined(CONFIG_BACKSIDE_L2_CACHE)
-	if ((SVR_SOC_VER(get_svr()) == SVR_P2040) ||
-	    (SVR_SOC_VER(get_svr()) == SVR_P2040_E)) {
-		puts("N/A\n");
-		goto skip_l2;
-	}
-
 	u32 l2cfg0 = mfspr(SPRN_L2CFG0);
 
 	/* invalidate the L2 cache */
@@ -418,31 +363,25 @@ int cpu_init_r(void)
 			;
 		printf("%d KB enabled\n", (l2cfg0 & 0x3fff) * 64);
 	}
-
-skip_l2:
 #else
 	puts("disabled\n");
 #endif
 
 	enable_cpc();
 
+#ifdef CONFIG_QE
+	uint qe_base = CONFIG_SYS_IMMR + 0x00080000; /* QE immr base */
+	qe_init(qe_base);
+	qe_reset();
+#endif
+
+#if defined(CONFIG_SYS_HAS_SERDES)
 	/* needs to be in ram since code uses global static vars */
 	fsl_serdes_init();
-
-#ifdef CONFIG_SYS_SRIO
-	srio_init();
 #endif
 
 #if defined(CONFIG_MP)
 	setup_mp();
-#endif
-
-#ifdef CONFIG_SYS_FSL_ERRATUM_ESDHC136
-	{
-		void *p;
-		p = (void *)CONFIG_SYS_DCSRBAR + 0x20520;
-		setbits_be32(p, 1 << (31 - 14));
-	}
 #endif
 
 #ifdef CONFIG_SYS_LBC_LCRR
@@ -453,23 +392,6 @@ skip_l2:
 	clrsetbits_be32(&lbc->lcrr, LCRR_CLKDIV, CONFIG_SYS_LBC_LCRR);
 	__raw_readl(&lbc->lcrr);
 	isync();
-#endif
-
-#ifdef CONFIG_SYS_FSL_USB1_PHY_ENABLE
-	{
-		ccsr_usb_phy_t *usb_phy1 =
-			(void *)CONFIG_SYS_MPC85xx_USB1_PHY_ADDR;
-		out_be32(&usb_phy1->usb_enable_override,
-				CONFIG_SYS_FSL_USB_ENABLE_OVERRIDE);
-	}
-#endif
-#ifdef CONFIG_SYS_FSL_USB2_PHY_ENABLE
-	{
-		ccsr_usb_phy_t *usb_phy2 =
-			(void *)CONFIG_SYS_MPC85xx_USB2_PHY_ADDR;
-		out_be32(&usb_phy2->usb_enable_override,
-				CONFIG_SYS_FSL_USB_ENABLE_OVERRIDE);
-	}
 #endif
 
 	return 0;
@@ -502,25 +424,3 @@ int sata_initialize(void)
 	return 1;
 }
 #endif
-
-void cpu_secondary_init_r(void)
-{
-#ifdef CONFIG_QE
-	uint qe_base = CONFIG_SYS_IMMR + 0x00080000; /* QE immr base */
-#ifdef CONFIG_SYS_QE_FW_IN_NAND
-	int ret;
-	size_t fw_length = CONFIG_SYS_QE_FW_LENGTH;
-
-	/* load QE firmware from NAND flash to DDR first */
-	ret = nand_read(&nand_info[0], (loff_t)CONFIG_SYS_QE_FW_IN_NAND,
-			&fw_length, (u_char *)CONFIG_SYS_QE_FW_ADDR);
-
-	if (ret && ret == -EUCLEAN) {
-		printf ("NAND read for QE firmware at offset %x failed %d\n",
-				CONFIG_SYS_QE_FW_IN_NAND, ret);
-	}
-#endif
-	qe_init(qe_base);
-	qe_reset();
-#endif
-}

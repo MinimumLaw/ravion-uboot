@@ -24,7 +24,6 @@
 #include <ppc_asm.tmpl>
 #include <asm/mmu.h>
 #include <config.h>
-#include <asm/ppc4xx.h>
 
 /**************************************************************************
  * TLB TABLE

@@ -21,7 +21,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= lib$(BOARD).o
+LIB	= lib$(BOARD).a
 
 OBJS	:= rsk7203.o
 SOBJS	:= lowlevel_init.o
@@ -31,7 +31,7 @@ OBJS	:= $(addprefix $(obj),$(OBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS) $(SOBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
 clean:
 	rm -f $(SOBJS) $(OBJS)

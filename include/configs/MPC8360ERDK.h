@@ -26,20 +26,18 @@
 #define CONFIG_MPC8360		1 /* MPC8360 CPU specific */
 #define CONFIG_MPC8360ERDK	1 /* MPC8360ERDK board specific */
 
-#define	CONFIG_SYS_TEXT_BASE	0xFF800000
-
 /*
  * System Clock Setup
  */
 #ifdef CONFIG_CLKIN_33MHZ
 #define CONFIG_83XX_CLKIN		33333333
 #define CONFIG_SYS_CLK_FREQ		33333333
-#define CONFIG_PCI_33M				1
+#define PCI_33M				1
 #define HRCWL_CSB_TO_CLKIN_MPC8360ERDK	HRCWL_CSB_TO_CLKIN_10X1
 #else
 #define CONFIG_83XX_CLKIN		66000000
 #define CONFIG_SYS_CLK_FREQ		66000000
-#define CONFIG_PCI_66M				1
+#define PCI_66M				1
 #define HRCWL_CSB_TO_CLKIN_MPC8360ERDK	HRCWL_CSB_TO_CLKIN_5X1
 #endif /* CONFIG_CLKIN_33MHZ */
 
@@ -72,6 +70,7 @@
 #define CONFIG_SYS_SICRH		0x00000000
 #define CONFIG_SYS_SICRL		0x40000000
 
+#define CONFIG_BOARD_EARLY_INIT_F /* call board_pre_init */
 #define CONFIG_BOARD_EARLY_INIT_R
 
 /*
@@ -154,7 +153,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
 #define CONFIG_SYS_FLASH_BASE		0xFF800000 /* FLASH base address */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
@@ -171,8 +170,9 @@
  */
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000 /* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_SIZE	0x1000 /* Size of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_END	0x1000 /* End of used area in RAM */
+#define CONFIG_SYS_GBL_DATA_SIZE	0x100 /* num bytes initial data */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 
 /*
  * Local Bus Configuration & Clock Setup
@@ -237,6 +237,7 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
+#undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -308,7 +309,7 @@
  * QE UEC ethernet configuration
  */
 #define CONFIG_UEC_ETH
-#define CONFIG_ETHPRIME		"UEC0"
+#define CONFIG_ETHPRIME		"FSL UEC0"
 
 #define CONFIG_UEC_ETH1		/* GETH1 */
 
@@ -318,7 +319,7 @@
 #define CONFIG_SYS_UEC1_TX_CLK		QE_CLK9
 #define CONFIG_SYS_UEC1_ETH_TYPE	GIGA_ETH
 #define CONFIG_SYS_UEC1_PHY_ADDR	2
-#define CONFIG_SYS_UEC1_INTERFACE_TYPE PHY_INTERFACE_MODE_RGMII_RXID
+#define CONFIG_SYS_UEC1_INTERFACE_TYPE RGMII_RXID
 #define CONFIG_SYS_UEC1_INTERFACE_SPEED 1000
 #endif
 
@@ -330,7 +331,7 @@
 #define CONFIG_SYS_UEC2_TX_CLK		QE_CLK4
 #define CONFIG_SYS_UEC2_ETH_TYPE	GIGA_ETH
 #define CONFIG_SYS_UEC2_PHY_ADDR	4
-#define CONFIG_SYS_UEC2_INTERFACE_TYPE PHY_INTERFACE_MODE_RGMII_RXID
+#define CONFIG_SYS_UEC2_INTERFACE_TYPE RGMII_RXID
 #define CONFIG_SYS_UEC2_INTERFACE_SPEED 1000
 #endif
 
@@ -403,10 +404,10 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 256 MB of memory, since this is
+ * have to be in the first 8 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ		(256 << 20) /* Initial Memory map for Linux */
+#define CONFIG_SYS_BOOTMAPSZ		(8 << 20) /* Initial Memory map for Linux */
 
 /*
  * Core HID Setup
@@ -483,6 +484,14 @@
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 #endif /* CONFIG_PCI */
+
+/*
+ * Internal Definitions
+ *
+ * Boot Flags
+ */
+#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
+#define BOOTFLAG_WARM	0x02 /* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */

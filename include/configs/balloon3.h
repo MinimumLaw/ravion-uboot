@@ -33,19 +33,19 @@
  */
 #define	CONFIG_ENV_OVERWRITE
 #define	CONFIG_SYS_MALLOC_LEN		(128*1024)
-#define	CONFIG_ARCH_CPU_INIT
+#define	CONFIG_SYS_GBL_DATA_SIZE	128
+
 #define	CONFIG_BOOTCOMMAND						\
-	"fpga load 0x0 0x50000 0x62638; "				\
 	"if usb reset && fatload usb 0 0xa4000000 uImage; then "	\
 		"bootm 0xa4000000; "					\
 	"fi; "								\
-	"bootm 0xd0000;"
+	"bootm 0x40000;"
 #define	CONFIG_BOOTARGS			"console=tty0 console=ttyS2,115200"
 #define	CONFIG_TIMESTAMP
 #define	CONFIG_BOOTDELAY		2	/* Autoboot delay */
 #define	CONFIG_CMDLINE_TAG
 #define	CONFIG_SETUP_MEMORY_TAGS
-#define	CONFIG_SYS_TEXT_BASE		0x0
+
 #define	CONFIG_LZMA			/* LZMA compression support */
 
 /*
@@ -62,7 +62,6 @@
 #include <config_cmd_default.h>
 
 #undef	CONFIG_CMD_NET
-#undef	CONFIG_CMD_NFS
 #undef	CONFIG_CMD_ENV
 #undef	CONFIG_CMD_IMLS
 #define	CONFIG_CMD_USB
@@ -73,8 +72,8 @@
  * KGDB
  */
 #ifdef	CONFIG_CMD_KGDB
-#define	CONFIG_KGDB_BAUDRATE		230400	/* kgdb serial port speed */
-#define	CONFIG_KGDB_SER_INDEX		2	/* which serial port to use */
+#define	CONFIG_KGDB_BAUDRATE		230400		/* speed to run kgdb serial port */
+#define	CONFIG_KGDB_SER_INDEX		2		/* which serial port to use */
 #endif
 
 /*
@@ -83,17 +82,16 @@
 #define	CONFIG_SYS_HUSH_PARSER		1
 #define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
-#define	CONFIG_SYS_LONGHELP
+#define	CONFIG_SYS_LONGHELP				/* undef to save memory	*/
 #ifdef	CONFIG_SYS_HUSH_PARSER
-#define	CONFIG_SYS_PROMPT		"$ "
+#define	CONFIG_SYS_PROMPT		"$ "		/* Monitor Command Prompt */
 #else
-#define	CONFIG_SYS_PROMPT		"=> "
+#define	CONFIG_SYS_PROMPT		"=> "		/* Monitor Command Prompt */
 #endif
-#define	CONFIG_SYS_CBSIZE		256
-#define	CONFIG_SYS_PBSIZE		\
-	(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
-#define	CONFIG_SYS_MAXARGS		16
-#define	CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+#define	CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size */
+#define	CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)	/* Print Buffer Size */
+#define	CONFIG_SYS_MAXARGS		16		/* max number of command args */
+#define	CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 #define	CONFIG_SYS_DEVICE_NULLDEV	1
 
 /*
@@ -101,10 +99,12 @@
  */
 #undef	CONFIG_SYS_CLKS_IN_HZ
 #define	CONFIG_SYS_HZ			3250000		/* Timer @ 3250000 Hz */
-#define	CONFIG_SYS_CPUSPEED		0x290		/* 520MHz */
+#define	CONFIG_SYS_CPUSPEED		0x290		/* standard setting for 312MHz; L=16, N=1.5, A=0, SDCLK!=SystemBus */
 
 /*
  * Stack sizes
+ *
+ * The stack sizes are set up in start.S using the settings below
  */
 #define	CONFIG_STACKSIZE		(128*1024)	/* regular stack */
 #ifdef	CONFIG_USE_IRQ
@@ -115,7 +115,7 @@
 /*
  * DRAM Map
  */
-#define	CONFIG_NR_DRAM_BANKS		3		/* 2 banks of DRAM */
+#define	CONFIG_NR_DRAM_BANKS		3		/* We have 2 banks of DRAM */
 #define	PHYS_SDRAM_1			0xa0000000	/* SDRAM Bank #1 */
 #define	PHYS_SDRAM_1_SIZE		0x08000000	/* 128 MB */
 #define	PHYS_SDRAM_2			0xb0000000	/* SDRAM Bank #2 */
@@ -130,10 +130,6 @@
 #define	CONFIG_SYS_MEMTEST_END		0xa0800000	/* 4 ... 8 MB in DRAM */
 
 #define	CONFIG_SYS_LOAD_ADDR		0xa1000000
-
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define	CONFIG_SYS_INIT_SP_ADDR		\
-	(PHYS_SDRAM_1 + GENERATED_GBL_DATA_SIZE + 2048)
 
 /*
  * NOR FLASH

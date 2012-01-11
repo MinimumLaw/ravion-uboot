@@ -169,10 +169,9 @@ int board_early_init_f (void)
 
 int checkboard (void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv ("serial#");
 
-	if ((i < 0) || strncmp(buf, "ELPT860", 7))
+	if (!s || strncmp (s, "ELPT860", 7))
 		printf ("### No HW ID - assuming ELPT860\n");
 
 	return (0);		/* success */

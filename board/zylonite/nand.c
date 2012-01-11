@@ -379,8 +379,8 @@ static void dfc_gpio_init(void)
 	/* no idea what is done here, see zylonite.c */
 	GPIO4 = 0x1;
 
-	DF_ALE_WE1 = 0x00000001;
-	DF_ALE_WE2 = 0x00000001;
+	DF_ALE_nWE1 = 0x00000001;
+	DF_ALE_nWE2 = 0x00000001;
 	DF_nCS0 = 0x00000001;
 	DF_nCS1 = 0x00000001;
 	DF_nWE = 0x00000001;
@@ -404,8 +404,8 @@ static void dfc_gpio_init(void)
 
 	DF_nWE = 0x1901;
 	DF_nRE = 0x1901;
-	DF_CLE_NOE = 0x1900;
-	DF_ALE_WE1 = 0x1901;
+	DF_CLE_nOE = 0x1900;
+	DF_ALE_nWE1 = 0x1901;
 	DF_INT_RnB = 0x1900;
 }
 

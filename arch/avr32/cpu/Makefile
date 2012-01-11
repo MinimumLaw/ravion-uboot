@@ -25,7 +25,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)lib$(CPU).o
+LIB	:= $(obj)lib$(CPU).a
 
 START-y			+= start.o
 
@@ -44,7 +44,7 @@ START	:= $(addprefix $(obj),$(START-y))
 all: $(obj).depend $(START) $(LIB)
 
 $(LIB): $(OBJS)
-	$(call cmd_link_o_target, $^)
+	$(AR) $(ARFLAGS) $@ $^
 
 #########################################################################
 

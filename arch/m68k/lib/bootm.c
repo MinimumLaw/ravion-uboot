@@ -71,6 +71,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 	int ret;
 
 	ulong cmd_start, cmd_end;
+	ulong bootmap_base;
 	bd_t  *kbd;
 	void  (*kernel) (bd_t *, ulong, ulong, ulong, ulong);
 	struct lmb *lmb = &images->lmb;
@@ -78,15 +79,17 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 	if ((flag != 0) && (flag != BOOTM_STATE_OS_GO))
 		return 1;
 
+	bootmap_base = getenv_bootm_low();
+
 	/* allocate space and init command line */
-	ret = boot_get_cmdline (lmb, &cmd_start, &cmd_end);
+	ret = boot_get_cmdline (lmb, &cmd_start, &cmd_end, bootmap_base);
 	if (ret) {
 		puts("ERROR with allocation of cmdline\n");
 		goto error;
 	}
 
 	/* allocate space for kernel copy of board info */
-	ret = boot_get_kbd (lmb, &kbd);
+	ret = boot_get_kbd (lmb, &kbd, bootmap_base);
 	if (ret) {
 		puts("ERROR with allocation of kernel bd\n");
 		goto error;

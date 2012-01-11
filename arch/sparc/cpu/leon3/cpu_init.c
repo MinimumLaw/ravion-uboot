@@ -57,9 +57,9 @@ struct {
  * initialize a bunch of registers.
  *
  * Run from FLASH/PROM:
- *  - until memory controller is set up, only registers available
+ *  - until memory controller is set up, only registers avaiable
  *  - no global variables available for writing
- *  - constants available
+ *  - constants avaiable
  */
 
 void cpu_init_f(void)

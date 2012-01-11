@@ -21,7 +21,7 @@
  * MA 02111-1307 USA
  */
 
-#include <asm/arch/imx-regs.h>
+#include <asm/arch/mx31-regs.h>
 
 .macro REG reg, val
 	ldr r2, =\reg

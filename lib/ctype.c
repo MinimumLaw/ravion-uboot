@@ -29,7 +29,7 @@
 
 #include <linux/ctype.h>
 
-const unsigned char _ctype[] = {
+unsigned char _ctype[] = {
 _C,_C,_C,_C,_C,_C,_C,_C,			/* 0-7 */
 _C,_C|_S,_C|_S,_C|_S,_C|_S,_C|_S,_C,_C,		/* 8-15 */
 _C,_C,_C,_C,_C,_C,_C,_C,			/* 16-23 */

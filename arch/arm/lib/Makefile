@@ -23,10 +23,9 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(ARCH).o
-LIBGCC	= $(obj)libgcc.o
+LIB	= $(obj)lib$(ARCH).a
+LIBGCC	= $(obj)libgcc.a
 
-ifndef CONFIG_SPL_BUILD
 GLSOBJS	+= _ashldi3.o
 GLSOBJS	+= _ashrdi3.o
 GLSOBJS	+= _divsi3.o
@@ -40,13 +39,11 @@ GLCOBJS	+= div0.o
 COBJS-y	+= board.o
 COBJS-y	+= bootm.o
 COBJS-y	+= cache.o
+ifndef CONFIG_SYS_NO_CP15_CACHE
 COBJS-y	+= cache-cp15.o
-COBJS-$(CONFIG_SYS_L2_PL310) += cache-pl310.o
+endif
 COBJS-y	+= interrupts.o
 COBJS-y	+= reset.o
-SOBJS-$(CONFIG_USE_ARCH_MEMSET) += memset.o
-SOBJS-$(CONFIG_USE_ARCH_MEMCPY) += memcpy.o
-endif
 
 SRCS	:= $(GLSOBJS:.o=.S) $(GLCOBJS:.o=.c) \
 	   $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
@@ -54,7 +51,7 @@ OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
 LGOBJS	:= $(addprefix $(obj),$(GLSOBJS)) \
 	   $(addprefix $(obj),$(GLCOBJS))
 
-# Always build libarm.o
+# Always build libarm.a
 TARGETS	:= $(LIB)
 
 # Build private libgcc only when asked for
@@ -70,10 +67,10 @@ endif
 all:	$(TARGETS)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 $(LIBGCC): $(obj).depend $(LGOBJS)
-	$(call cmd_link_o_target, $(LGOBJS))
+	$(AR) $(ARFLAGS) $@ $(LGOBJS)
 
 #########################################################################
 

@@ -23,7 +23,7 @@
 
 #include <common.h>
 #ifdef __PPC__
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #endif
 #include <asm/processor.h>
 

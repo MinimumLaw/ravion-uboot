@@ -30,7 +30,6 @@
 #include <common.h>
 #include <watchdog.h>
 #include <command.h>
-#include <version.h>
 #ifdef CONFIG_MODEM_SUPPORT
 #include <malloc.h>		/* for free() prototype */
 #endif
@@ -51,19 +50,29 @@ DECLARE_GLOBAL_DATA_PTR;
 void inline __show_boot_progress (int val) {}
 void show_boot_progress (int val) __attribute__((weak, alias("__show_boot_progress")));
 
+#if defined(CONFIG_BOOT_RETRY_TIME) && defined(CONFIG_RESET_TO_RETRY)
+extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);		/* for do_reset() prototype */
+#endif
+
+extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+
 #if defined(CONFIG_UPDATE_TFTP)
-int update_tftp (ulong addr);
+void update_tftp (void);
 #endif /* CONFIG_UPDATE_TFTP */
 
 #define MAX_DELAY_STOP_STR 32
+
+#if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
+static int abortboot(int);
+#endif
 
 #undef DEBUG_PARSER
 
 char        console_buffer[CONFIG_SYS_CBSIZE + 1];	/* console I/O buffer	*/
 
 static char * delete_char (char *buffer, char *p, int *colp, int *np, int plen);
-static const char erase_seq[] = "\b \b";		/* erase sequence	*/
-static const char   tab_seq[] = "        ";		/* used to expand TABs	*/
+static char erase_seq[] = "\b \b";		/* erase sequence	*/
+static char   tab_seq[] = "        ";		/* used to expand TABs	*/
 
 #ifdef CONFIG_BOOT_RETRY_TIME
 static uint64_t endtime = 0;  /* must be set, default is instant timeout */
@@ -88,7 +97,7 @@ extern void mdm_init(void); /* defined in board.c */
  */
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
 # if defined(CONFIG_AUTOBOOT_KEYED)
-static inline int abortboot(int bootdelay)
+static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
 	uint64_t etime = endtick(bootdelay);
@@ -202,7 +211,7 @@ static inline int abortboot(int bootdelay)
 static int menukey = 0;
 #endif
 
-static inline int abortboot(int bootdelay)
+static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
 
@@ -285,6 +294,17 @@ void main_loop (void)
 	char bcs_set[16];
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 
+#if defined(CONFIG_VFD) && defined(VFD_TEST_LOGO)
+	ulong bmp = 0;		/* default bitmap */
+	extern int trab_vfd (ulong bitmap);
+
+#ifdef CONFIG_MODEM_SUPPORT
+	if (do_mdm_init)
+		bmp = 1;	/* alternate bitmap */
+#endif
+	trab_vfd (bmp);
+#endif	/* CONFIG_VFD && VFD_TEST_LOGO */
+
 #ifdef CONFIG_BOOTCOUNT_LIMIT
 	bootcount = bootcount_load();
 	bootcount++;
@@ -308,6 +328,8 @@ void main_loop (void)
 
 #ifdef CONFIG_VERSION_VARIABLE
 	{
+		extern char version_string[];
+
 		setenv ("ver", version_string);  /* set version variable */
 	}
 #endif /* CONFIG_VERSION_VARIABLE */
@@ -318,6 +340,10 @@ void main_loop (void)
 
 #if defined(CONFIG_HUSH_INIT_VAR)
 	hush_init_var ();
+#endif
+
+#ifdef CONFIG_AUTO_COMPLETE
+	install_auto_complete();
 #endif
 
 #ifdef CONFIG_PREBOOT
@@ -340,7 +366,7 @@ void main_loop (void)
 #endif /* CONFIG_PREBOOT */
 
 #if defined(CONFIG_UPDATE_TFTP)
-	update_tftp (0UL);
+	update_tftp ();
 #endif /* CONFIG_UPDATE_TFTP */
 
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
@@ -390,15 +416,15 @@ void main_loop (void)
 
 # ifdef CONFIG_MENUKEY
 	if (menukey == CONFIG_MENUKEY) {
-		s = getenv("menucmd");
-		if (s) {
+	    s = getenv("menucmd");
+	    if (s) {
 # ifndef CONFIG_SYS_HUSH_PARSER
-			run_command(s, 0);
+		run_command (s, 0);
 # else
-			parse_string_outer(s, FLAG_PARSE_SEMICOLON |
-						FLAG_EXIT_FROM_LOOP);
+		parse_string_outer(s, FLAG_PARSE_SEMICOLON |
+				    FLAG_EXIT_FROM_LOOP);
 # endif
-		}
+	    }
 	}
 #endif /* CONFIG_MENUKEY */
 #endif /* CONFIG_BOOTDELAY */
@@ -492,6 +518,9 @@ void reset_cmd_timeout(void)
 	} while (0)
 
 #define CTL_CH(c)		((c) - 'a' + 1)
+
+#define MAX_CMDBUF_SIZE		CONFIG_SYS_CBSIZE
+
 #define CTL_BACKSPACE		('\b')
 #define DEL			((char)255)
 #define DEL7			((char)127)
@@ -502,7 +531,7 @@ void reset_cmd_timeout(void)
 #define getcmd_cbeep()		getcmd_putch('\a')
 
 #define HIST_MAX		20
-#define HIST_SIZE		CONFIG_SYS_CBSIZE
+#define HIST_SIZE		MAX_CMDBUF_SIZE
 
 static int hist_max = 0;
 static int hist_add_idx = 0;
@@ -614,10 +643,12 @@ static void cread_print_hist_list(void)
 
 #define ERASE_TO_EOL() {				\
 	if (num < eol_num) {				\
-		printf("%*s", (int)(eol_num - num), ""); \
-		do {					\
+		int tmp;				\
+		for (tmp = num; tmp < eol_num; tmp++)	\
+			getcmd_putch(' ');		\
+		while (tmp-- > num)			\
 			getcmd_putch(CTL_BACKSPACE);	\
-		} while (--eol_num > num);		\
+		eol_num = num;				\
 	}						\
 }
 
@@ -918,7 +949,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 {
 	char *p = buffer;
 #ifdef CONFIG_CMDLINE_EDITING
-	unsigned int len = CONFIG_SYS_CBSIZE;
+	unsigned int len=MAX_CMDBUF_SIZE;
 	int rc;
 	static int initted = 0;
 

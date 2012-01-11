@@ -40,8 +40,6 @@
  *----------------------------------------------------------------------*/
 #define CONFIG_P3Mx			/* used for both board versions	*/
 
-#define	CONFIG_SYS_TEXT_BASE	0xfff00000
-
 #if defined (CONFIG_P3M750)
 #define CONFIG_750FX			/* 750GL/GX/FX			*/
 #define CONFIG_HIGH_BATS		/* High BATs supported		*/
@@ -98,8 +96,9 @@
 */
 #undef	CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0x42000000
-#define CONFIG_SYS_INIT_RAM_SIZE	0x1000
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_END	0x1000
+#define CONFIG_SYS_GBL_DATA_SIZE	128  /* size in bytes reserved for init data */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 
 
 /*-----------------------------------------------------------------------
@@ -447,5 +446,13 @@
 #endif
 
 #define L2_ENABLE	(L2_INIT | L2CR_L2E)
+
+/*
+ * Internal Definitions
+ *
+ * Boot Flags
+ */
+#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
+#define BOOTFLAG_WARM	0x02		/* Software reboot		    */
 
 #endif	/* __CONFIG_H */

@@ -25,9 +25,9 @@
 /*
  *  U-Boot - Startup Code for MPC8220 CPUs
  */
-#include <asm-offsets.h>
 #include <config.h>
 #include <mpc8220.h>
+#include <timestamp.h>
 #include <version.h>
 
 #define _LINUX_CONFIG_H 1   /* avoid reading Linux autoconf.h file  */
@@ -37,7 +37,10 @@
 
 #include <asm/cache.h>
 #include <asm/mmu.h>
-#include <asm/u-boot.h>
+
+#ifndef	 CONFIG_IDENT_STRING
+#define	 CONFIG_IDENT_STRING ""
+#endif
 
 /* We don't want the  MMU yet.
 */
@@ -64,7 +67,7 @@
 	GOT_ENTRY(transfer_to_handler)
 
 	GOT_ENTRY(__init_end)
-	GOT_ENTRY(__bss_end__)
+	GOT_ENTRY(_end)
 	GOT_ENTRY(__bss_start)
 	END_GOT
 
@@ -74,7 +77,9 @@
 	.data
 	.globl	version_string
 version_string:
-	.ascii U_BOOT_VERSION_STRING, "\0"
+	.ascii U_BOOT_VERSION
+	.ascii " (", U_BOOT_DATE, " - ", U_BOOT_TIME, ")"
+	.ascii CONFIG_IDENT_STRING, "\0"
 
 /*
  * Exception vectors
@@ -83,6 +88,19 @@ version_string:
 	. = EXC_OFF_SYS_RESET
 	.globl	_start
 _start:
+	li	r21, BOOTFLAG_COLD  /* Normal Power-On	    */
+	nop
+	b	boot_cold
+
+	. = EXC_OFF_SYS_RESET + 0x10
+
+	.globl	_start_warm
+_start_warm:
+	li	r21, BOOTFLAG_WARM  /* Software reboot	    */
+	b	boot_warm
+
+boot_cold:
+boot_warm:
 	mfmsr	r5		    /* save msr contents    */
 
 	/* replace default MBAR base address from 0x80000000
@@ -126,9 +144,9 @@ _start:
 	/* r3: IMMR */
 	bl	cpu_init_f	/* run low-level CPU init code (in Flash)*/
 
+	mr	r3, r21
+	/* r3: BOOTFLAG */
 	bl	board_init_f	/* run 1st part of board init code (in Flash)*/
-
-	/* NOTREACHED - board_init_f() does not return */
 
 /*
  * Vector Table
@@ -635,19 +653,17 @@ in_ram:
 	beq	4f
 3:	lwzu	r4,4(r3)
 	lwzux	r0,r4,r11
-	cmpwi	r0,0
 	add	r0,r0,r11
-	stw	r4,0(r3)
-	beq-	5f
+	stw	r10,0(r3)
 	stw	r0,0(r4)
-5:	bdnz	3b
+	bdnz	3b
 4:
 clear_bss:
 	/*
 	 * Now clear BSS segment
 	 */
 	lwz	r3,GOT(__bss_start)
-	lwz	r4,GOT(__bss_end__)
+	lwz	r4,GOT(_end)
 
 	cmplw	0, r3, r4
 	beq	6f

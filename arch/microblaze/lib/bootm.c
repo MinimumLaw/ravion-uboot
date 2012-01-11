@@ -46,9 +46,12 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 
 	char	*of_flat_tree = NULL;
 #if defined(CONFIG_OF_LIBFDT)
-	/* did generic code already find a device tree? */
-	if (images->ft_len)
-		of_flat_tree = images->ft_addr;
+	ulong	of_size = 0;
+
+	/* find flattened device tree */
+	ret = boot_get_fdt (flag, argc, argv, images, &of_flat_tree, &of_size);
+	if (ret)
+		return 1;
 #endif
 
 	theKernel = (void (*)(char *, ulong, ulong))images->ep;
@@ -61,8 +64,9 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 
 	show_boot_progress (15);
 
-	if (!of_flat_tree && argc > 3)
-		of_flat_tree = (char *)simple_strtoul(argv[3], NULL, 16);
+	if (!(ulong) of_flat_tree)
+		of_flat_tree = (char *)simple_strtoul (argv[3], NULL, 16);
+
 #ifdef DEBUG
 	printf ("## Transferring control to Linux (at address 0x%08lx) " \
 				"ramdisk 0x%08lx, FDT 0x%08lx...\n",

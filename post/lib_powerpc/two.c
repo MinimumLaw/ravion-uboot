@@ -81,7 +81,8 @@ static struct cpu_post_two_s
 	~5
     },
 };
-static unsigned int cpu_post_two_size = ARRAY_SIZE(cpu_post_two_table);
+static unsigned int cpu_post_two_size =
+    sizeof (cpu_post_two_table) / sizeof (struct cpu_post_two_s);
 
 int cpu_post_test_two (void)
 {

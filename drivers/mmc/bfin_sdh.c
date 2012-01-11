@@ -19,7 +19,7 @@
 #include <asm/mach-common/bits/sdh.h>
 #include <asm/mach-common/bits/dma.h>
 
-#if defined(__ADSPBF50x__) || defined(__ADSPBF51x__)
+#if defined(__ADSPBF51x__)
 # define bfin_read_SDH_PWR_CTL		bfin_read_RSI_PWR_CONTROL
 # define bfin_write_SDH_PWR_CTL		bfin_write_RSI_PWR_CONTROL
 # define bfin_read_SDH_CLK_CTL		bfin_read_RSI_CLK_CONTROL
@@ -58,29 +58,27 @@
 static int
 sdh_send_cmd(struct mmc *mmc, struct mmc_cmd *mmc_cmd)
 {
-	unsigned int status, timeout;
+	unsigned int sdh_cmd;
+	unsigned int status;
 	int cmd = mmc_cmd->cmdidx;
 	int flags = mmc_cmd->resp_type;
 	int arg = mmc_cmd->cmdarg;
-	int ret;
-	u16 sdh_cmd;
+	int ret = 0;
+	sdh_cmd = 0;
 
-	sdh_cmd = cmd | CMD_E;
+	sdh_cmd |= cmd;
+
 	if (flags & MMC_RSP_PRESENT)
 		sdh_cmd |= CMD_RSP;
+
 	if (flags & MMC_RSP_136)
 		sdh_cmd |= CMD_L_RSP;
 
 	bfin_write_SDH_ARGUMENT(arg);
-	bfin_write_SDH_COMMAND(sdh_cmd);
+	bfin_write_SDH_COMMAND(sdh_cmd | CMD_E);
 
 	/* wait for a while */
-	timeout = 0;
 	do {
-		if (++timeout > 1000000) {
-			status = CMD_TIME_OUT;
-			break;
-		}
 		udelay(1);
 		status = bfin_read_SDH_STATUS();
 	} while (!(status & (CMD_SENT | CMD_RESP_END | CMD_TIME_OUT |
@@ -96,15 +94,12 @@ sdh_send_cmd(struct mmc *mmc, struct mmc_cmd *mmc_cmd)
 	}
 
 	if (status & CMD_TIME_OUT)
-		ret = TIMEOUT;
+		ret |= TIMEOUT;
 	else if (status & CMD_CRC_FAIL && flags & MMC_RSP_CRC)
-		ret = COMM_ERR;
-	else
-		ret = 0;
+		ret |= COMM_ERR;
 
 	bfin_write_SDH_STATUS_CLR(CMD_SENT_STAT | CMD_RESP_END_STAT |
 				CMD_TIMEOUT_STAT | CMD_CRC_FAIL_STAT);
-
 	return ret;
 }
 
@@ -114,26 +109,25 @@ static int sdh_setup_data(struct mmc *mmc, struct mmc_data *data)
 	u16 data_ctl = 0;
 	u16 dma_cfg = 0;
 	int ret = 0;
-	unsigned long data_size = data->blocksize * data->blocks;
 
 	/* Don't support write yet. */
 	if (data->flags & MMC_DATA_WRITE)
 		return UNUSABLE_ERR;
-	data_ctl |= ((ffs(data_size) - 1) << 4);
+	data_ctl |= ((ffs(data->blocksize) - 1) << 4);
 	data_ctl |= DTX_DIR;
 	bfin_write_SDH_DATA_CTL(data_ctl);
 	dma_cfg = WDSIZE_32 | RESTART | WNR | DMAEN;
 
-	bfin_write_SDH_DATA_TIMER(-1);
+	bfin_write_SDH_DATA_TIMER(0xFFFF);
 
 	blackfin_dcache_flush_invalidate_range(data->dest,
-			data->dest + data_size);
+			data->dest + data->blocksize);
 	/* configure DMA */
 	bfin_write_DMA_START_ADDR(data->dest);
-	bfin_write_DMA_X_COUNT(data_size / 4);
+	bfin_write_DMA_X_COUNT(data->blocksize / 4);
 	bfin_write_DMA_X_MODIFY(4);
 	bfin_write_DMA_CONFIG(dma_cfg);
-	bfin_write_SDH_DATA_LGTH(data_size);
+	bfin_write_SDH_DATA_LGTH(data->blocksize);
 	/* kick off transfer */
 	bfin_write_SDH_DATA_CTL(bfin_read_SDH_DATA_CTL() | DTX_DMA_E | DTX_E);
 
@@ -256,8 +250,6 @@ int bfin_mmc_init(bd_t *bis)
 	mmc->f_max = get_sclk();
 	mmc->f_min = mmc->f_max >> 9;
 	mmc->block_dev.part_type = PART_TYPE_DOS;
-
-	mmc->b_max = 0;
 
 	mmc_register(mmc);
 

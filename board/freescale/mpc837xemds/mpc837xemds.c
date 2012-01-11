@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007,2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007 Freescale Semiconductor, Inc.
  * Dave Liu <daveliu@freescale.com>
  *
  * CREDITS: Kim Phillips contribute to LIBFDT code
@@ -15,14 +15,11 @@
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/fsl_mpc83xx_serdes.h>
-#include <asm/fsl_enet.h>
 #include <spd_sdram.h>
 #include <tsec.h>
 #include <libfdt.h>
 #include <fdt_support.h>
 #include <fsl_esdhc.h>
-#include <fsl_mdio.h>
-#include <phy.h>
 #include "pci.h"
 #include "../common/pq-mds-pib.h"
 
@@ -88,7 +85,6 @@ int board_mmc_init(bd_t *bd)
 #if defined(CONFIG_TSEC1) || defined(CONFIG_TSEC2)
 int board_eth_init(bd_t *bd)
 {
-	struct fsl_pq_mdio_info mdio_info;
 	struct tsec_info_struct tsec_info[2];
 	struct immap __iomem *im = (struct immap __iomem *)CONFIG_SYS_IMMR;
 	u32 rcwh = in_be32(&im->reset.rcwh);
@@ -134,17 +130,13 @@ int board_eth_init(bd_t *bd)
 	}
 	num++;
 #endif
-
-	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
-	mdio_info.name = DEFAULT_MII_NAME;
-	fsl_pq_mdio_init(bd, &mdio_info);
-
 	return tsec_eth_init(bd, tsec_info, num);
 }
 
 static void __ft_tsec_fixup(void *blob, bd_t *bd, const char *alias,
 			    int phy_addr)
 {
+	const char *phy_type = "sgmii";
 	const u32 *ph;
 	int off;
 	int err;
@@ -156,8 +148,8 @@ static void __ft_tsec_fixup(void *blob, bd_t *bd, const char *alias,
 		return;
 	}
 
-	err = fdt_fixup_phy_connection(blob, off, PHY_INTERFACE_MODE_SGMII);
-
+	err = fdt_setprop(blob, off, "phy-connection-type", phy_type,
+			  strlen(phy_type) + 1);
 	if (err) {
 		printf("WARNING: could not set phy-connection-type for %s: "
 			"%s.\n", alias, fdt_strerror(err));

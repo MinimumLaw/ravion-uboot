@@ -22,7 +22,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(SOC).o
+LIB	= $(obj)lib$(SOC).a
 
 COBJS	= generic.o reset.o timer.o
 
@@ -32,7 +32,7 @@ OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 all:	$(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

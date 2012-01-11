@@ -81,10 +81,9 @@ void __udelay(unsigned long usec)
 	ub_udelay(usec);
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+void do_reset (void)
 {
 	ub_reset();
-	return 0;
 }
 
 void *malloc (size_t len)

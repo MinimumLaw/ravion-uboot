@@ -62,7 +62,8 @@ static struct cpu_post_rlwimi_s
 	0xffaaffff
     },
 };
-static unsigned int cpu_post_rlwimi_size = ARRAY_SIZE(cpu_post_rlwimi_table);
+static unsigned int cpu_post_rlwimi_size =
+    sizeof (cpu_post_rlwimi_table) / sizeof (struct cpu_post_rlwimi_s);
 
 int cpu_post_test_rlwimi (void)
 {

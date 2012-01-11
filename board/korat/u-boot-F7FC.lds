@@ -135,6 +135,6 @@ SECTIONS
    . = ALIGN(4);
   }
 
-  __bss_end__ = . ;
+  _end = . ;
   PROVIDE (end = .);
 }

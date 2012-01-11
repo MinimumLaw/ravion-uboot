@@ -35,7 +35,7 @@
 #include <watchdog.h>
 #include <command.h>
 #include <asm/cache.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <netdev.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -98,8 +98,8 @@ int pci_arbiter_enabled(void)
 #if defined(CONFIG_440GX) || defined(CONFIG_440SP) || defined(CONFIG_440SPE)
 	unsigned long val;
 
-	mfsdr(SDR0_XCR0, val);
-	return (val & SDR0_XCR0_PAE_MASK);
+	mfsdr(SDR0_XCR, val);
+	return (val & 0x80000000);
 #endif
 #if defined(CONFIG_440EP) || defined(CONFIG_440GR) || \
     defined(CONFIG_440EPX) || defined(CONFIG_440GRX) || \
@@ -107,7 +107,7 @@ int pci_arbiter_enabled(void)
 	unsigned long val;
 
 	mfsdr(SDR0_PCI0, val);
-	return (val & SDR0_PCI0_PAE_MASK);
+	return (val & 0x80000000);
 #endif
 }
 #endif
@@ -250,20 +250,6 @@ static char *bootstrap_str[] = {
 };
 static char bootstrap_char[] = { 'A', 'B', 'C', 'D', 'E', 'G', 'F', 'H' };
 #endif
-#if defined(CONFIG_APM821XX)
-#define SDR0_PINSTP_SHIFT       29
-static char *bootstrap_str[] = {
-	"RESERVED",
-	"RESERVED",
-	"RESERVED",
-	"NAND (8 bits)",
-	"NOR  (8 bits)",
-	"NOR  (8 bits) w/PLL Bypassed",
-	"I2C (Addr 0x54)",
-	"I2C (Addr 0x52)",
-};
-static char bootstrap_char[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
-#endif
 
 #if defined(SDR0_PINSTP_SHIFT)
 static int bootstrap_option(void)
@@ -276,7 +262,7 @@ static int bootstrap_option(void)
 #endif /* SDR0_PINSTP_SHIFT */
 
 
-#if defined(CONFIG_440GP)
+#if defined(CONFIG_440)
 static int do_chip_reset (unsigned long sys0, unsigned long sys1)
 {
 	/* Changes to CPC0_SYS0 and CPC0_SYS1 require chip
@@ -290,7 +276,7 @@ static int do_chip_reset (unsigned long sys0, unsigned long sys1)
 
 	return 1;
 }
-#endif /* CONFIG_440GP */
+#endif
 
 
 int checkcpu (void)
@@ -317,113 +303,122 @@ int checkcpu (void)
 	get_sys_info(&sys_info);
 
 #if defined(CONFIG_XILINX_440)
-	puts("IBM PowerPC ");
+	puts("IBM PowerPC 4");
 #else
-	puts("AMCC PowerPC ");
+	puts("AMCC PowerPC 4");
+#endif
+
+#if defined(CONFIG_405GP) || defined(CONFIG_405CR) || \
+    defined(CONFIG_405EP) || defined(CONFIG_405EZ) || \
+    defined(CONFIG_405EX)
+	puts("05");
+#endif
+#if defined(CONFIG_440)
+#if defined(CONFIG_460EX) || defined(CONFIG_460GT)
+	puts("60");
+#else
+	puts("40");
+#endif
 #endif
 
 	switch (pvr) {
-
-#if !defined(CONFIG_440)
 	case PVR_405GP_RB:
-		puts("405GP Rev. B");
+		puts("GP Rev. B");
 		break;
 
 	case PVR_405GP_RC:
-		puts("405GP Rev. C");
+		puts("GP Rev. C");
 		break;
 
 	case PVR_405GP_RD:
-		puts("405GP Rev. D");
+		puts("GP Rev. D");
 		break;
 
 #ifdef CONFIG_405GP
 	case PVR_405GP_RE: /* 405GP rev E and 405CR rev C have same PVR */
-		puts("405GP Rev. E");
+		puts("GP Rev. E");
 		break;
 #endif
 
 	case PVR_405CR_RA:
-		puts("405CR Rev. A");
+		puts("CR Rev. A");
 		break;
 
 	case PVR_405CR_RB:
-		puts("405CR Rev. B");
+		puts("CR Rev. B");
 		break;
 
 #ifdef CONFIG_405CR
 	case PVR_405CR_RC: /* 405GP rev E and 405CR rev C have same PVR */
-		puts("405CR Rev. C");
+		puts("CR Rev. C");
 		break;
 #endif
 
 	case PVR_405GPR_RB:
-		puts("405GPr Rev. B");
+		puts("GPr Rev. B");
 		break;
 
 	case PVR_405EP_RB:
-		puts("405EP Rev. B");
+		puts("EP Rev. B");
 		break;
 
 	case PVR_405EZ_RA:
-		puts("405EZ Rev. A");
+		puts("EZ Rev. A");
 		break;
 
 	case PVR_405EX1_RA:
-		puts("405EX Rev. A");
+		puts("EX Rev. A");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_405EXR2_RA:
-		puts("405EXr Rev. A");
+		puts("EXr Rev. A");
 		strcpy(addstr, "No Security support");
 		break;
 
 	case PVR_405EX1_RC:
-		puts("405EX Rev. C");
+		puts("EX Rev. C");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_405EX2_RC:
-		puts("405EX Rev. C");
+		puts("EX Rev. C");
 		strcpy(addstr, "No Security support");
 		break;
 
 	case PVR_405EXR1_RC:
-		puts("405EXr Rev. C");
+		puts("EXr Rev. C");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_405EXR2_RC:
-		puts("405EXr Rev. C");
+		puts("EXr Rev. C");
 		strcpy(addstr, "No Security support");
 		break;
 
 	case PVR_405EX1_RD:
-		puts("405EX Rev. D");
+		puts("EX Rev. D");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_405EX2_RD:
-		puts("405EX Rev. D");
+		puts("EX Rev. D");
 		strcpy(addstr, "No Security support");
 		break;
 
 	case PVR_405EXR1_RD:
-		puts("405EXr Rev. D");
+		puts("EXr Rev. D");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_405EXR2_RD:
-		puts("405EXr Rev. D");
+		puts("EXr Rev. D");
 		strcpy(addstr, "No Security support");
 		break;
 
-#else /* CONFIG_440 */
-
-#if defined(CONFIG_440GP)
+#if defined(CONFIG_440)
 	case PVR_440GP_RB:
-		puts("440GP Rev. B");
+		puts("GP Rev. B");
 		/* See errata 1.12: CHIP_4 */
 		if ((mfdcr(CPC0_SYS0) != mfdcr(CPC0_STRP0)) ||
 		    (mfdcr(CPC0_SYS1) != mfdcr(CPC0_STRP1)) ){
@@ -436,127 +431,127 @@ int checkcpu (void)
 		break;
 
 	case PVR_440GP_RC:
-		puts("440GP Rev. C");
+		puts("GP Rev. C");
 		break;
-#endif /* CONFIG_440GP */
 
 	case PVR_440GX_RA:
-		puts("440GX Rev. A");
+		puts("GX Rev. A");
 		break;
 
 	case PVR_440GX_RB:
-		puts("440GX Rev. B");
+		puts("GX Rev. B");
 		break;
 
 	case PVR_440GX_RC:
-		puts("440GX Rev. C");
+		puts("GX Rev. C");
 		break;
 
 	case PVR_440GX_RF:
-		puts("440GX Rev. F");
+		puts("GX Rev. F");
 		break;
 
 	case PVR_440EP_RA:
-		puts("440EP Rev. A");
+		puts("EP Rev. A");
 		break;
 
 #ifdef CONFIG_440EP
 	case PVR_440EP_RB: /* 440EP rev B and 440GR rev A have same PVR */
-		puts("440EP Rev. B");
+		puts("EP Rev. B");
 		break;
 
 	case PVR_440EP_RC: /* 440EP rev C and 440GR rev B have same PVR */
-		puts("440EP Rev. C");
+		puts("EP Rev. C");
 		break;
 #endif /*  CONFIG_440EP */
 
 #ifdef CONFIG_440GR
 	case PVR_440GR_RA: /* 440EP rev B and 440GR rev A have same PVR */
-		puts("440GR Rev. A");
+		puts("GR Rev. A");
 		break;
 
 	case PVR_440GR_RB: /* 440EP rev C and 440GR rev B have same PVR */
-		puts("440GR Rev. B");
+		puts("GR Rev. B");
 		break;
 #endif /* CONFIG_440GR */
+#endif /* CONFIG_440 */
 
 #ifdef CONFIG_440EPX
 	case PVR_440EPX1_RA: /* 440EPx rev A and 440GRx rev A have same PVR */
-		puts("440EPx Rev. A");
+		puts("EPx Rev. A");
 		strcpy(addstr, "Security/Kasumi support");
 		break;
 
 	case PVR_440EPX2_RA: /* 440EPx rev A and 440GRx rev A have same PVR */
-		puts("440EPx Rev. A");
+		puts("EPx Rev. A");
 		strcpy(addstr, "No Security/Kasumi support");
 		break;
 #endif /* CONFIG_440EPX */
 
 #ifdef CONFIG_440GRX
 	case PVR_440GRX1_RA: /* 440EPx rev A and 440GRx rev A have same PVR */
-		puts("440GRx Rev. A");
+		puts("GRx Rev. A");
 		strcpy(addstr, "Security/Kasumi support");
 		break;
 
 	case PVR_440GRX2_RA: /* 440EPx rev A and 440GRx rev A have same PVR */
-		puts("440GRx Rev. A");
+		puts("GRx Rev. A");
 		strcpy(addstr, "No Security/Kasumi support");
 		break;
 #endif /* CONFIG_440GRX */
 
 	case PVR_440SP_6_RAB:
-		puts("440SP Rev. A/B");
+		puts("SP Rev. A/B");
 		strcpy(addstr, "RAID 6 support");
 		break;
 
 	case PVR_440SP_RAB:
-		puts("440SP Rev. A/B");
+		puts("SP Rev. A/B");
 		strcpy(addstr, "No RAID 6 support");
 		break;
 
 	case PVR_440SP_6_RC:
-		puts("440SP Rev. C");
+		puts("SP Rev. C");
 		strcpy(addstr, "RAID 6 support");
 		break;
 
 	case PVR_440SP_RC:
-		puts("440SP Rev. C");
+		puts("SP Rev. C");
 		strcpy(addstr, "No RAID 6 support");
 		break;
 
 	case PVR_440SPe_6_RA:
-		puts("440SPe Rev. A");
+		puts("SPe Rev. A");
 		strcpy(addstr, "RAID 6 support");
 		break;
 
 	case PVR_440SPe_RA:
-		puts("440SPe Rev. A");
+		puts("SPe Rev. A");
 		strcpy(addstr, "No RAID 6 support");
 		break;
 
 	case PVR_440SPe_6_RB:
-		puts("440SPe Rev. B");
+		puts("SPe Rev. B");
 		strcpy(addstr, "RAID 6 support");
 		break;
 
 	case PVR_440SPe_RB:
-		puts("440SPe Rev. B");
+		puts("SPe Rev. B");
 		strcpy(addstr, "No RAID 6 support");
 		break;
 
 #if defined(CONFIG_460EX) || defined(CONFIG_460GT)
 	case PVR_460EX_RA:
-		puts("460EX Rev. A");
+		puts("EX Rev. A");
 		strcpy(addstr, "No Security/Kasumi support");
 		break;
 
 	case PVR_460EX_SE_RA:
-		puts("460EX Rev. A");
+		puts("EX Rev. A");
 		strcpy(addstr, "Security/Kasumi support");
 		break;
 
 	case PVR_460EX_RB:
-		puts("460EX Rev. B");
+		puts("EX Rev. B");
 		mfsdr(SDR0_ECID3, reg);
 		if (reg & 0x00100000)
 			strcpy(addstr, "No Security/Kasumi support");
@@ -565,17 +560,17 @@ int checkcpu (void)
 		break;
 
 	case PVR_460GT_RA:
-		puts("460GT Rev. A");
+		puts("GT Rev. A");
 		strcpy(addstr, "No Security/Kasumi support");
 		break;
 
 	case PVR_460GT_SE_RA:
-		puts("460GT Rev. A");
+		puts("GT Rev. A");
 		strcpy(addstr, "Security/Kasumi support");
 		break;
 
 	case PVR_460GT_RB:
-		puts("460GT Rev. B");
+		puts("GT Rev. B");
 		mfsdr(SDR0_ECID3, reg);
 		if (reg & 0x00100000)
 			strcpy(addstr, "No Security/Kasumi support");
@@ -585,34 +580,28 @@ int checkcpu (void)
 #endif
 
 	case PVR_460SX_RA:
-		puts("460SX Rev. A");
+		puts("SX Rev. A");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_460SX_RA_V1:
-		puts("460SX Rev. A");
+		puts("SX Rev. A");
 		strcpy(addstr, "No Security support");
 		break;
 
 	case PVR_460GX_RA:
-		puts("460GX Rev. A");
+		puts("GX Rev. A");
 		strcpy(addstr, "Security support");
 		break;
 
 	case PVR_460GX_RA_V1:
-		puts("460GX Rev. A");
+		puts("GX Rev. A");
 		strcpy(addstr, "No Security support");
 		break;
 
-	case PVR_APM821XX_RA:
-		puts("APM821XX Rev. A");
-		strcpy(addstr, "Security support");
-		break;
-
 	case PVR_VIRTEX5:
-		puts("440x5 VIRTEX5");
+		puts("x5 VIRTEX5");
 		break;
-#endif /* CONFIG_440 */
 
 	default:
 		printf (" UNKNOWN (PVR=%08x)", pvr);

@@ -24,13 +24,10 @@ CONFIG_NAND_SPL	= y
 include $(TOPDIR)/config.mk
 include $(TOPDIR)/nand_spl/board/$(BOARDDIR)/config.mk
 
-nandobj	:= $(OBJTREE)/nand_spl/
-
 LDSCRIPT= $(TOPDIR)/nand_spl/board/$(BOARDDIR)/u-boot.lds
-LDFLAGS := -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(LDFLAGS) \
-	   $(LDFLAGS_FINAL)
-AFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
-CFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
+LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
+AFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
+CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
 
 SOBJS	= start.o lowlevel_init.o
 COBJS	= nand_boot_fsl_nfc.o
@@ -40,7 +37,9 @@ SRCS	+= $(SRCTREE)/arch/arm/cpu/arm926ejs/start.S
 SRCS	+= $(SRCTREE)/board/karo/tx25/lowlevel_init.S
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 __OBJS	:= $(SOBJS) $(COBJS)
-LNDIR	:= $(nandobj)board/$(BOARDDIR)
+LNDIR	:= $(OBJTREE)/nand_spl/board/$(BOARDDIR)
+
+nandobj	:= $(OBJTREE)/nand_spl/
 
 ALL	= $(nandobj)u-boot-spl $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin
 

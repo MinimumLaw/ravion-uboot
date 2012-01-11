@@ -214,13 +214,13 @@ const iop_conf_t iop_conf_tab[4][32] = {
 /*********************************************************************/
 int checkboard (void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *str;
 
 	puts ("Board: Advent Networks gw8260\n");
 
-	if (i > 0) {
-		printf("SN:    %s\n", buf);
+	str = getenv ("serial#");
+	if (str != NULL) {
+		printf ("SN:    %s\n", str);
 	}
 	return 0;
 }

@@ -58,6 +58,19 @@
 
 #include <asm/errno.h>
 
+/* XXX U-BOOT XXX */
+#if 0
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/nand.h>
+#include <linux/mtd/nand_ecc.h>
+#include <linux/mtd/compatmac.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/vmalloc.h>
+#endif
+
 /**
  * check_pattern - [GENERIC] check if a pattern is in the buffer
  * @buf:	the buffer to search
@@ -1218,3 +1231,9 @@ int nand_isbad_bbt(struct mtd_info *mtd, loff_t offs, int allowbbt)
 	}
 	return 1;
 }
+
+/* XXX U-BOOT XXX */
+#if 0
+EXPORT_SYMBOL(nand_scan_bbt);
+EXPORT_SYMBOL(nand_default_bbt);
+#endif

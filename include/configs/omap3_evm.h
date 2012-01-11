@@ -36,6 +36,7 @@
 /*
  * High Level Configuration Options
  */
+#define CONFIG_ARMV7		1	/* This is an ARM V7 CPU core */
 #define CONFIG_OMAP		1	/* in a TI OMAP core */
 #define CONFIG_OMAP34XX		1	/* which is a 34XX */
 #define CONFIG_OMAP3430		1	/* which is in a 3430 */
@@ -70,6 +71,8 @@
 #define CONFIG_ENV_SIZE			(128 << 10)	/* 128 KiB */
 						/* Sector */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (128 << 10))
+#define CONFIG_SYS_GBL_DATA_SIZE	128	/* bytes reserved for */
+						/* initial data */
 /*
  * Hardware drivers
  */
@@ -97,8 +100,7 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600,\
 					115200}
 #define CONFIG_MMC			1
-#define CONFIG_GENERIC_MMC		1
-#define CONFIG_OMAP_HSMMC		1
+#define CONFIG_OMAP3_MMC		1
 #define CONFIG_DOS_PARTITION		1
 
 /* DDR - I use Micron DDR */
@@ -199,7 +201,6 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \
 	"usbtty=cdc_acm\0" \
-	"mmcdev=0\0" \
 	"console=ttyS2,115200n8\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"root=/dev/mmcblk0p2 rw " \
@@ -207,10 +208,10 @@
 	"nandargs=setenv bootargs console=${console} " \
 		"root=/dev/mtdblock4 rw " \
 		"rootfstype=jffs2\0" \
-	"loadbootscript=fatload mmc ${mmcdev} ${loadaddr} boot.scr\0" \
+	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source ${loadaddr}\0" \
-	"loaduimage=fatload mmc ${mmcdev} ${loadaddr} uImage\0" \
+	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
 		"bootm ${loadaddr}\0" \
@@ -220,7 +221,7 @@
 		"bootm ${loadaddr}\0" \
 
 #define CONFIG_BOOTCOMMAND \
-	"if mmc rescan ${mmcdev}; then " \
+	"if mmc init; then " \
 		"if run loadbootscript; then " \
 			"run bootscript; " \
 		"else " \
@@ -239,7 +240,7 @@
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"OMAP3_EVM # "
-#define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
@@ -296,48 +297,53 @@
 #define PISMO1_NAND_SIZE		GPMC_SIZE_128M
 #define PISMO1_ONEN_SIZE		GPMC_SIZE_128M
 
+#define CONFIG_SYS_MAX_FLASH_SECT	520	/* max number of sectors */
+						/* on one chip */
+#define CONFIG_SYS_MAX_FLASH_BANKS	2	/* max number of flash banks */
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 2 sectors */
 
-#if defined(CONFIG_CMD_NAND)
-#define CONFIG_SYS_FLASH_BASE		PISMO1_NAND_BASE
-#elif defined(CONFIG_CMD_ONENAND)
-#define CONFIG_SYS_FLASH_BASE		PISMO1_ONEN_BASE
-#endif
+#define CONFIG_SYS_FLASH_BASE		boot_flash_base
 
 /* Monitor at start of flash */
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
-#define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
-
 #if defined(CONFIG_CMD_NAND)
 #define CONFIG_NAND_OMAP_GPMC
 #define GPMC_NAND_ECC_LP_x16_LAYOUT	1
 #define CONFIG_ENV_IS_IN_NAND
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
 #elif defined(CONFIG_CMD_ONENAND)
 #define CONFIG_ENV_IS_IN_ONENAND	1
-#define CONFIG_ENV_OFFSET		ONENAND_ENV_OFFSET
 #endif
+#define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
+#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
-#define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_ADDR			CONFIG_ENV_OFFSET
+#define CONFIG_SYS_ENV_SECT_SIZE	boot_flash_sec
+#define CONFIG_ENV_OFFSET		boot_flash_off
+#define CONFIG_ENV_ADDR			boot_flash_env_addr
 
-/*
- * Support for relocation
+/*-----------------------------------------------------------------------
+ * CFI FLASH driver setup
  */
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define CONFIG_SYS_INIT_RAM_ADDR	0x4020f800
-#define CONFIG_SYS_INIT_RAM_SIZE	0x800
-#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
-					 CONFIG_SYS_INIT_RAM_SIZE - \
-					 GENERATED_GBL_DATA_SIZE)
+/* timeout values are in ticks */
+#define CONFIG_SYS_FLASH_ERASE_TOUT	(100 * CONFIG_SYS_HZ)
+#define CONFIG_SYS_FLASH_WRITE_TOUT	(100 * CONFIG_SYS_HZ)
 
-/*
- * Define the board revision statically
- */
-/* #define CONFIG_STATIC_BOARD_REV	OMAP3EVM_BOARD_GEN_2 */
+/* Flash banks JFFS2 should use */
+#define CONFIG_SYS_MAX_MTD_BANKS	(CONFIG_SYS_MAX_FLASH_BANKS + \
+					CONFIG_SYS_MAX_NAND_DEVICE)
+#define CONFIG_SYS_JFFS2_MEM_NAND
+/* use flash_info[2] */
+#define CONFIG_SYS_JFFS2_FIRST_BANK	CONFIG_SYS_MAX_FLASH_BANKS
+#define CONFIG_SYS_JFFS2_NUM_BANKS	1
+
+#ifndef __ASSEMBLY__
+extern unsigned int boot_flash_base;
+extern volatile unsigned int boot_flash_env_addr;
+extern unsigned int boot_flash_off;
+extern unsigned int boot_flash_sec;
+extern unsigned int boot_flash_type;
+#endif
 
 /*----------------------------------------------------------------------------
  * SMSC9115 Ethernet from SMSC9118 family

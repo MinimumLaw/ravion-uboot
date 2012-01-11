@@ -234,7 +234,8 @@ soft_restart(unsigned long addr)
     !defined(CONFIG_ELPPC)   && \
     !defined(CONFIG_PPMC7XX)
 /* no generic way to do board reset. simply call soft_reset. */
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+void
+do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 	/* flush and disable I/D cache */
@@ -262,12 +263,7 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	addr = CONFIG_SYS_MONITOR_BASE - sizeof (ulong);
 #endif
 	soft_restart(addr);
-
-	/* not reached */
-	while(1)
-		;
-
-	return 1;
+	while(1);	/* not reached */
 }
 #endif
 

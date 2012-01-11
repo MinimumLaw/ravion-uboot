@@ -81,7 +81,8 @@ static struct cpu_post_twox_s
 	12
     },
 };
-static unsigned int cpu_post_twox_size = ARRAY_SIZE(cpu_post_twox_table);
+static unsigned int cpu_post_twox_size =
+    sizeof (cpu_post_twox_table) / sizeof (struct cpu_post_twox_s);
 
 int cpu_post_test_twox (void)
 {

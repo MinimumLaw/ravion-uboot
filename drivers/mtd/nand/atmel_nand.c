@@ -249,10 +249,8 @@ static void at91_nand_hwcontrol(struct mtd_info *mtd,
 		if (ctrl & NAND_ALE)
 			IO_ADDR_W |= CONFIG_SYS_NAND_MASK_ALE;
 
-#ifdef CONFIG_SYS_NAND_ENABLE_PIN
 		at91_set_gpio_value(CONFIG_SYS_NAND_ENABLE_PIN,
 				    !(ctrl & NAND_NCE));
-#endif
 		this->IO_ADDR_W = (void *) IO_ADDR_W;
 	}
 
@@ -298,7 +296,7 @@ int board_nand_init(struct nand_chip *nand)
 	mtd->priv = nand;
 
 	/* Detect NAND chips */
-	if (nand_scan_ident(mtd, 1, NULL)) {
+	if (nand_scan_ident(mtd, 1)) {
 		printk(KERN_WARNING "NAND Flash not found !\n");
 		return -ENXIO;
 	}

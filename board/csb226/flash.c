@@ -141,7 +141,6 @@ int flash_erase(flash_info_t *info, int s_first, int s_last)
 {
 	int flag, prot, sect;
 	int rc = ERR_OK;
-	ulong start;
 
 	if (info->flash_id == FLASH_UNKNOWN)
 		return ERR_UNKNOWN_FLASH_TYPE;
@@ -176,7 +175,7 @@ int flash_erase(flash_info_t *info, int s_first, int s_last)
 		printf("Erasing sector %2d ... ", sect);
 
 		/* arm simple, non interrupt dependent timer */
-		start = get_timer(0);
+		reset_timer_masked();
 
 		if (info->protect[sect] == 0) { /* not protected */
 			u32 * volatile addr = (u32 * volatile)(info->start[sect]);
@@ -190,7 +189,7 @@ int flash_erase(flash_info_t *info, int s_first, int s_last)
 			*addr = 0x00D000D0;	/* erase confirm */
 
 			while ((*addr & 0x00800080) != 0x00800080) {
-				if (get_timer(start) > CONFIG_SYS_FLASH_ERASE_TOUT) {
+				if (get_timer_masked() > CONFIG_SYS_FLASH_ERASE_TOUT) {
 					*addr = 0x00B000B0; /* suspend erase*/
 					*addr = 0x00FF00FF; /* read mode    */
 					rc = ERR_TIMOUT;
@@ -222,7 +221,6 @@ static int write_long (flash_info_t *info, ulong dest, ulong data)
 	u32 * volatile addr = (u32 * volatile)dest, val;
 	int rc = ERR_OK;
 	int flag;
-	ulong start;
 
 	/* read array command - just for the case... */
 	*addr = 0x00FF00FF;
@@ -249,11 +247,11 @@ static int write_long (flash_info_t *info, ulong dest, ulong data)
 	*addr = data;
 
 	/* arm simple, non interrupt dependent timer */
-	start = get_timer(0);
+	reset_timer_masked();
 
 	/* wait while polling the status register */
 	while(((val = *addr) & 0x00800080) != 0x00800080) {
-		if (get_timer(start) > CONFIG_SYS_FLASH_WRITE_TOUT) {
+		if (get_timer_masked() > CONFIG_SYS_FLASH_WRITE_TOUT) {
 			rc = ERR_TIMOUT;
 			/* suspend program command */
 			*addr = 0x00B000B0;

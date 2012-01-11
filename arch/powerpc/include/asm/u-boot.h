@@ -62,7 +62,7 @@ typedef struct bd_info {
 	unsigned long   bi_flbfreq;     /* Flexbus Freq, in MHz */
 	unsigned long   bi_vcofreq;     /* VCO Freq, in MHz */
 #endif
-	unsigned long	bi_bootflags;	/* boot / reboot flag (Unused) */
+	unsigned long	bi_bootflags;	/* boot / reboot flag (for LynxOS) */
 	unsigned long	bi_ip_addr;	/* IP Address */
 	unsigned char	bi_enetaddr[6];	/* OLD: see README.enetaddr */
 	unsigned short	bi_ethspeed;	/* Ethernet speed in Mbps */
@@ -132,7 +132,7 @@ typedef struct bd_info {
     defined(CONFIG_460EX) || defined(CONFIG_460GT)
 	int		bi_phynum[4];           /* Determines phy mapping */
 	int		bi_phymode[4];          /* Determines phy mode */
-#elif defined(CONFIG_405EP) || defined(CONFIG_405EX) || defined(CONFIG_440)
+#elif defined(CONFIG_405EP) || defined(CONFIG_440)
 	int		bi_phynum[2];           /* Determines phy mapping */
 	int		bi_phymode[2];          /* Determines phy mode */
 #else

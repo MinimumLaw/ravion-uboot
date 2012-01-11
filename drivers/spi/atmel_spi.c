@@ -26,7 +26,7 @@
 #include <asm/io.h>
 
 #include <asm/arch/clk.h>
-#include <asm/arch/hardware.h>
+#include <asm/arch/memory-map.h>
 
 #include "atmel_spi.h"
 
@@ -43,26 +43,26 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	u32			csrx;
 	void			*regs;
 
-	if (!spi_cs_is_valid(bus, cs))
+	if (cs > 3 || !spi_cs_is_valid(bus, cs))
 		return NULL;
 
 	switch (bus) {
 	case 0:
-		regs = (void *)ATMEL_BASE_SPI0;
+		regs = (void *)SPI0_BASE;
 		break;
-#ifdef ATMEL_BASE_SPI1
+#ifdef SPI1_BASE
 	case 1:
-		regs = (void *)ATMEL_BASE_SPI1;
+		regs = (void *)SPI1_BASE;
 		break;
 #endif
-#ifdef ATMEL_BASE_SPI2
+#ifdef SPI2_BASE
 	case 2:
-		regs = (void *)ATMEL_BASE_SPI2;
+		regs = (void *)SPI2_BASE;
 		break;
 #endif
-#ifdef ATMEL_BASE_SPI3
+#ifdef SPI3_BASE
 	case 3:
-		regs = (void *)ATMEL_BASE_SPI3;
+		regs = (void *)SPI3_BASE;
 		break;
 #endif
 	default:
@@ -168,17 +168,8 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 	 * somewhat quirky, and it doesn't really buy us much anyway
 	 * in the context of U-Boot.
 	 */
-	if (flags & SPI_XFER_BEGIN) {
+	if (flags & SPI_XFER_BEGIN)
 		spi_cs_activate(slave);
-		/*
-		 * sometimes the RDR is not empty when we get here,
-		 * in theory that should not happen, but it DOES happen.
-		 * Read it here to be on the safe side.
-		 * That also clears the OVRES flag. Required if the
-		 * following loop exits due to OVRES!
-		 */
-		spi_readl(as, RDR);
-	}
 
 	for (len_tx = 0, len_rx = 0; len_rx < len; ) {
 		status = spi_readl(as, SR);

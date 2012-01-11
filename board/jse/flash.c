@@ -29,7 +29,7 @@
  */
 
 #include <common.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <asm/processor.h>
 
 #if CONFIG_SYS_MAX_FLASH_BANKS != 1

@@ -33,7 +33,7 @@
  */
 #define	CONFIG_ENV_OVERWRITE
 #define	CONFIG_SYS_MALLOC_LEN		(128*1024)
-#define	CONFIG_SYS_TEXT_BASE	0x0
+#define	CONFIG_SYS_GBL_DATA_SIZE	128
 
 #define	CONFIG_BOOTCOMMAND						\
 	"if mmcinfo && fatload mmc 0 0xa0000000 uboot.script ; then "	\
@@ -63,7 +63,6 @@
 #include <config_cmd_default.h>
 
 #undef	CONFIG_CMD_NET
-#undef	CONFIG_CMD_NFS
 #define	CONFIG_CMD_ENV
 #undef	CONFIG_CMD_IMLS
 #define	CONFIG_CMD_MMC
@@ -101,8 +100,8 @@
  * KGDB
  */
 #ifdef	CONFIG_CMD_KGDB
-#define	CONFIG_KGDB_BAUDRATE		230400	/* kgdb serial port speed */
-#define	CONFIG_KGDB_SER_INDEX		2	/* which serial port to use */
+#define	CONFIG_KGDB_BAUDRATE		230400		/* speed to run kgdb serial port */
+#define	CONFIG_KGDB_SER_INDEX		2		/* which serial port to use */
 #endif
 
 /*
@@ -111,17 +110,16 @@
 #define	CONFIG_SYS_HUSH_PARSER		1
 #define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
-#define	CONFIG_SYS_LONGHELP
+#define	CONFIG_SYS_LONGHELP				/* undef to save memory	*/
 #ifdef	CONFIG_SYS_HUSH_PARSER
-#define	CONFIG_SYS_PROMPT		"$ "
+#define	CONFIG_SYS_PROMPT		"$ "		/* Monitor Command Prompt */
 #else
-#define	CONFIG_SYS_PROMPT		"=> "
+#define	CONFIG_SYS_PROMPT		"=> "		/* Monitor Command Prompt */
 #endif
-#define	CONFIG_SYS_CBSIZE		256
-#define	CONFIG_SYS_PBSIZE		\
-	(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
-#define	CONFIG_SYS_MAXARGS		16
-#define	CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+#define	CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size */
+#define	CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)	/* Print Buffer Size */
+#define	CONFIG_SYS_MAXARGS		16		/* max number of command args */
+#define	CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 #define	CONFIG_SYS_DEVICE_NULLDEV	1
 
 /*
@@ -129,7 +127,7 @@
  */
 #undef	CONFIG_SYS_CLKS_IN_HZ
 #define	CONFIG_SYS_HZ			3250000		/* Timer @ 3250000 Hz */
-#define	CONFIG_SYS_CPUSPEED		0x210		/* 416MHz ; N=2,L=16 */
+#define	CONFIG_SYS_CPUSPEED		0x210		/* standard setting for 312MHz; L=16, N=1.5, A=0, SDCLK!=SystemBus */
 
 /*
  * Stack sizes
@@ -143,7 +141,7 @@
 /*
  * DRAM Map
  */
-#define	CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
+#define	CONFIG_NR_DRAM_BANKS		1		/* We have 1 bank of DRAM */
 #define	PHYS_SDRAM_1			0xa0000000	/* SDRAM Bank #1 */
 #define	PHYS_SDRAM_1_SIZE		0x02000000	/* 32 MB */
 
@@ -154,9 +152,6 @@
 #define	CONFIG_SYS_MEMTEST_END		0xa0800000	/* 4 ... 8 MB in DRAM */
 
 #define	CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_DRAM_BASE
-
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define	CONFIG_SYS_INIT_SP_ADDR		(GENERATED_GBL_DATA_SIZE + PHYS_SDRAM_1)
 
 /*
  * NOR FLASH

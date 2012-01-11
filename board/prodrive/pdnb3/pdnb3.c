@@ -28,6 +28,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* Prototypes */
+int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+
 /* predefine these here for FPGA programming (before including fpga.c) */
 #define SET_FPGA(data)	*IXP425_GPIO_GPOUTR = (data)
 #define FPGA_DONE_STATE (*IXP425_GPIO_GPINR & CONFIG_SYS_FPGA_DONE)
@@ -101,14 +104,13 @@ int board_init(void)
  */
 int checkboard(void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 
 	puts("Board: PDNB3");
 
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

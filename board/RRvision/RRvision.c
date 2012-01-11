@@ -93,16 +93,14 @@ const uint sdram_table[] =
 
 int checkboard (void)
 {
-	char buf[64];
-	int i;
-	int l = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv ("serial#");
 
 	puts ("Board: RRvision ");
 
-	for (i=0; i < l; ++i) {
-		if (buf[i] == ' ')
+	for (; s && *s; ++s) {
+		if (*s == ' ')
 			break;
-		putc (buf[i]);
+		putc (*s);
 	}
 
 	putc ('\n');

@@ -77,7 +77,6 @@ static int image_info (unsigned long addr);
 
 #if defined(CONFIG_CMD_IMLS)
 #include <flash.h>
-#include <mtd/cfi_flash.h>
 extern flash_info_t flash_info[]; /* info for FLASH chips */
 static int do_imls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 #endif
@@ -93,6 +92,7 @@ static int fit_check_kernel (const void *fit, int os_noffset, int verify);
 
 static void *boot_get_kernel (cmd_tbl_t *cmdtp, int flag,int argc, char * const argv[],
 		bootm_headers_t *images, ulong *os_data, ulong *os_len);
+extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 /*
  *  Continue booting an OS image; caller already has:
@@ -118,9 +118,6 @@ extern void lynxkdi_boot (image_header_t *);
 #ifdef CONFIG_BOOTM_RTEMS
 static boot_os_fn do_bootm_rtems;
 #endif
-#if defined(CONFIG_BOOTM_OSE)
-static boot_os_fn do_bootm_ose;
-#endif
 #if defined(CONFIG_CMD_ELF)
 static boot_os_fn do_bootm_vxworks;
 static boot_os_fn do_bootm_qnxelf;
@@ -144,9 +141,6 @@ static boot_os_fn *boot_os[] = {
 #ifdef CONFIG_BOOTM_RTEMS
 	[IH_OS_RTEMS] = do_bootm_rtems,
 #endif
-#if defined(CONFIG_BOOTM_OSE)
-	[IH_OS_OSE] = do_bootm_ose,
-#endif
 #if defined(CONFIG_CMD_ELF)
 	[IH_OS_VXWORKS] = do_bootm_vxworks,
 	[IH_OS_QNX] = do_bootm_qnxelf,
@@ -156,6 +150,7 @@ static boot_os_fn *boot_os[] = {
 #endif
 };
 
+ulong load_addr = CONFIG_SYS_LOAD_ADDR;	/* Default Load Address */
 static bootm_headers_t images;		/* pointers to os/initrd/fdt images */
 
 /* Allow for arch specific config before we boot */
@@ -306,6 +301,7 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 		}
 
 #if defined(CONFIG_OF_LIBFDT)
+#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC)
 		/* find flattened device tree */
 		ret = boot_get_fdt (flag, argc, argv, &images,
 				    &images.ft_addr, &images.ft_len);
@@ -315,6 +311,7 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 		}
 
 		set_working_fdt_addr(images.ft_addr);
+#endif
 #endif
 	}
 
@@ -336,15 +333,12 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 	ulong image_start = os.image_start;
 	ulong image_len = os.image_len;
 	uint unc_len = CONFIG_SYS_BOOTM_LEN;
-#if defined(CONFIG_LZMA) || defined(CONFIG_LZO)
-	int ret;
-#endif /* defined(CONFIG_LZMA) || defined(CONFIG_LZO) */
 
 	const char *type_name = genimg_get_type_name (os.type);
 
 	switch (comp) {
 	case IH_COMP_NONE:
-		if (load == blob_start || load == image_start) {
+		if (load == blob_start) {
 			printf ("   XIP %s ... ", type_name);
 		} else {
 			printf ("   Loading %s ... ", type_name);
@@ -396,7 +390,7 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 		SizeT lzma_len = unc_len;
 		printf ("   Uncompressing %s ... ", type_name);
 
-		ret = lzmaBuffToBuffDecompress(
+		int ret = lzmaBuffToBuffDecompress(
 			(unsigned char *)load, &lzma_len,
 			(unsigned char *)image_start, image_len);
 		unc_len = lzma_len;
@@ -414,7 +408,7 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 	case IH_COMP_LZO:
 		printf ("   Uncompressing %s ... ", type_name);
 
-		ret = lzop_decompress((const unsigned char *)image_start,
+		int ret = lzop_decompress((const unsigned char *)image_start,
 					  image_len, (unsigned char *)load,
 					  &unc_len);
 		if (ret != LZO_E_OK) {
@@ -432,9 +426,6 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 		printf ("Unimplemented compression type %d\n", comp);
 		return BOOTM_ERR_UNIMPLEMENTED;
 	}
-
-	flush_cache(load, (*load_end - load) * sizeof(ulong));
-
 	puts ("OK\n");
 	debug ("   kernel loaded at 0x%08lx, end = 0x%08lx\n", load, *load_end);
 	if (boot_progress)
@@ -473,7 +464,7 @@ static int bootm_start_standalone(ulong iflag, int argc, char * const argv[])
 static cmd_tbl_t cmd_bootm_sub[] = {
 	U_BOOT_CMD_MKENT(start, 0, 1, (void *)BOOTM_STATE_START, "", ""),
 	U_BOOT_CMD_MKENT(loados, 0, 1, (void *)BOOTM_STATE_LOADOS, "", ""),
-#ifdef CONFIG_SYS_BOOT_RAMDISK_HIGH
+#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC)
 	U_BOOT_CMD_MKENT(ramdisk, 0, 1, (void *)BOOTM_STATE_RAMDISK, "", ""),
 #endif
 #ifdef CONFIG_OF_LIBFDT
@@ -529,7 +520,7 @@ int do_bootm_subcommand (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 			lmb_reserve(&images.lmb, images.os.load,
 					(load_end - images.os.load));
 			break;
-#ifdef CONFIG_SYS_BOOT_RAMDISK_HIGH
+#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC)
 		case BOOTM_STATE_RAMDISK:
 		{
 			ulong rd_len = images.rd_end - images.rd_start;
@@ -547,12 +538,11 @@ int do_bootm_subcommand (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 		}
 			break;
 #endif
-#if defined(CONFIG_OF_LIBFDT)
+#if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_SYS_BOOTMAPSZ)
 		case BOOTM_STATE_FDT:
 		{
-			boot_fdt_add_mem_rsv_regions(&images.lmb,
-						     images.ft_addr);
-			ret = boot_relocate_fdt(&images.lmb,
+			ulong bootmap_base = getenv_bootm_low();
+			ret = boot_relocate_fdt(&images.lmb, bootmap_base,
 				&images.ft_addr, &images.ft_len);
 			break;
 		}
@@ -592,7 +582,7 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	ulong		load_end = 0;
 	int		ret;
 	boot_os_fn	*boot_fn;
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
+#ifndef CONFIG_RELOC_FIXUP_WORKS
 	static int relocated = 0;
 
 	/* relocate boot function table */
@@ -709,21 +699,6 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	do_reset (cmdtp, flag, argc, argv);
 
 	return 1;
-}
-
-int bootm_maybe_autostart(cmd_tbl_t *cmdtp, const char *cmd)
-{
-	const char *ep = getenv("autostart");
-
-	if (ep && !strcmp(ep, "yes")) {
-		char *local_args[2];
-		local_args[0] = (char *)cmd;
-		local_args[1] = NULL;
-		printf("Automatic boot of image at addr 0x%08lX ...\n", load_addr);
-		return do_bootm(cmdtp, 0, 1, local_args);
-	}
-
-	return 0;
 }
 
 /**
@@ -1403,39 +1378,6 @@ static int do_bootm_rtems (int flag, int argc, char * const argv[],
 	return 1;
 }
 #endif /* CONFIG_BOOTM_RTEMS */
-
-#if defined(CONFIG_BOOTM_OSE)
-static int do_bootm_ose (int flag, int argc, char * const argv[],
-			   bootm_headers_t *images)
-{
-	void (*entry_point)(void);
-
-	if ((flag != 0) && (flag != BOOTM_STATE_OS_GO))
-		return 1;
-
-#if defined(CONFIG_FIT)
-	if (!images->legacy_hdr_valid) {
-		fit_unsupported_reset ("OSE");
-		return 1;
-	}
-#endif
-
-	entry_point = (void (*)(void))images->ep;
-
-	printf ("## Transferring control to OSE (at address %08lx) ...\n",
-		(ulong)entry_point);
-
-	show_boot_progress (15);
-
-	/*
-	 * OSE Parameters:
-	 *   None
-	 */
-	(*entry_point)();
-
-	return 1;
-}
-#endif /* CONFIG_BOOTM_OSE */
 
 #if defined(CONFIG_CMD_ELF)
 static int do_bootm_vxworks (int flag, int argc, char * const argv[],

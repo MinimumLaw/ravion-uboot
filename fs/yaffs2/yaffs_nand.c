@@ -101,7 +101,7 @@ int yaffs_MarkBlockBad(yaffs_Device * dev, int blockNo)
 int yaffs_QueryInitialBlockState(yaffs_Device * dev,
 						 int blockNo,
 						 yaffs_BlockState * state,
-						 int *sequenceNumber)
+						 unsigned *sequenceNumber)
 {
 	blockNo -= dev->blockOffset;
 

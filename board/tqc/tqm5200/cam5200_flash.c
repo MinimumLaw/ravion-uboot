@@ -440,9 +440,7 @@ static int write_word(flash_info_t * info, ulong dest, ulong data)
 {
 	volatile CONFIG_SYS_FLASH_WORD_SIZE *addr2 = (CONFIG_SYS_FLASH_WORD_SIZE *) (info->start[0]);
 	volatile CONFIG_SYS_FLASH_WORD_SIZE *dest2 = (CONFIG_SYS_FLASH_WORD_SIZE *) dest;
-	ulong *datap = &data;
-	volatile CONFIG_SYS_FLASH_WORD_SIZE *data2 =
-			(volatile CONFIG_SYS_FLASH_WORD_SIZE *)datap;
+	volatile CONFIG_SYS_FLASH_WORD_SIZE *data2 = (CONFIG_SYS_FLASH_WORD_SIZE *) & data;
 	ulong start;
 	int i, flag;
 
@@ -683,9 +681,7 @@ static int write_word_16(flash_info_t * info, ulong dest, ulong data)
 {
 	volatile CONFIG_SYS_FLASH_WORD_SIZE *addr2 = (CONFIG_SYS_FLASH_WORD_SIZE *) (info->start[0]);
 	volatile CONFIG_SYS_FLASH_WORD_SIZE *dest2 = (CONFIG_SYS_FLASH_WORD_SIZE *) dest;
-	ulong *datap = &data;
-	volatile CONFIG_SYS_FLASH_WORD_SIZE *data2 =
-			(volatile CONFIG_SYS_FLASH_WORD_SIZE *)datap;
+	volatile CONFIG_SYS_FLASH_WORD_SIZE *data2 = (CONFIG_SYS_FLASH_WORD_SIZE *) & data;
 	ulong start;
 	int i;
 

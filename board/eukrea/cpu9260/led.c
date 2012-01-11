@@ -28,74 +28,72 @@
 #include <asm/arch/at91sam9260.h>
 #include <asm/arch/at91_pmc.h>
 #include <asm/arch/gpio.h>
-#include <asm/io.h>
+#include <asm/arch/io.h>
 
 static unsigned int saved_state[4] = {STATUS_LED_OFF, STATUS_LED_OFF,
 		STATUS_LED_OFF, STATUS_LED_OFF};
 
 void coloured_LED_init(void)
 {
-	at91_pmc_t *pmc = (at91_pmc_t *) ATMEL_BASE_PMC;
-
 	/* Enable clock */
-	writel(1 << ATMEL_ID_PIOC, &pmc->pcer);
+	at91_sys_write(AT91_PMC_PCER, 1 << AT91SAM9260_ID_PIOC);
 
-	at91_set_pio_output(CONFIG_RED_LED, 1);
-	at91_set_pio_output(CONFIG_GREEN_LED, 1);
-	at91_set_pio_output(CONFIG_YELLOW_LED, 1);
-	at91_set_pio_output(CONFIG_BLUE_LED, 1);
+	at91_set_gpio_output(CONFIG_RED_LED, 1);
+	at91_set_gpio_output(CONFIG_GREEN_LED, 1);
+	at91_set_gpio_output(CONFIG_YELLOW_LED, 1);
+	at91_set_gpio_output(CONFIG_BLUE_LED, 1);
 
-	at91_set_pio_value(CONFIG_RED_LED, 1);
-	at91_set_pio_value(CONFIG_GREEN_LED, 1);
-	at91_set_pio_value(CONFIG_YELLOW_LED, 1);
-	at91_set_pio_value(CONFIG_BLUE_LED, 1);
+	at91_set_gpio_value(CONFIG_RED_LED, 1);
+	at91_set_gpio_value(CONFIG_GREEN_LED, 1);
+	at91_set_gpio_value(CONFIG_YELLOW_LED, 1);
+	at91_set_gpio_value(CONFIG_BLUE_LED, 1);
 }
 
-void red_led_off(void)
+void red_LED_off(void)
 {
-	at91_set_pio_value(CONFIG_RED_LED, 1);
+	at91_set_gpio_value(CONFIG_RED_LED, 1);
 	saved_state[STATUS_LED_RED] = STATUS_LED_OFF;
 }
 
-void green_led_off(void)
+void green_LED_off(void)
 {
-	at91_set_pio_value(CONFIG_GREEN_LED, 1);
+	at91_set_gpio_value(CONFIG_GREEN_LED, 1);
 	saved_state[STATUS_LED_GREEN] = STATUS_LED_OFF;
 }
 
-void yellow_led_off(void)
+void yellow_LED_off(void)
 {
-	at91_set_pio_value(CONFIG_YELLOW_LED, 1);
+	at91_set_gpio_value(CONFIG_YELLOW_LED, 1);
 	saved_state[STATUS_LED_YELLOW] = STATUS_LED_OFF;
 }
 
-void blue_led_off(void)
+void blue_LED_off(void)
 {
-	at91_set_pio_value(CONFIG_BLUE_LED, 1);
+	at91_set_gpio_value(CONFIG_BLUE_LED, 1);
 	saved_state[STATUS_LED_BLUE] = STATUS_LED_OFF;
 }
 
-void red_led_on(void)
+void red_LED_on(void)
 {
-	at91_set_pio_value(CONFIG_RED_LED, 0);
+	at91_set_gpio_value(CONFIG_RED_LED, 0);
 	saved_state[STATUS_LED_RED] = STATUS_LED_ON;
 }
 
-void green_led_on(void)
+void green_LED_on(void)
 {
-	at91_set_pio_value(CONFIG_GREEN_LED, 0);
+	at91_set_gpio_value(CONFIG_GREEN_LED, 0);
 	saved_state[STATUS_LED_GREEN] = STATUS_LED_ON;
 }
 
-void yellow_led_on(void)
+void yellow_LED_on(void)
 {
-	at91_set_pio_value(CONFIG_YELLOW_LED, 0);
+	at91_set_gpio_value(CONFIG_YELLOW_LED, 0);
 	saved_state[STATUS_LED_YELLOW] = STATUS_LED_ON;
 }
 
-void blue_led_on(void)
+void blue_LED_on(void)
 {
-	at91_set_pio_value(CONFIG_BLUE_LED, 0);
+	at91_set_gpio_value(CONFIG_BLUE_LED, 0);
 	saved_state[STATUS_LED_BLUE] = STATUS_LED_ON;
 }
 
@@ -108,24 +106,24 @@ void __led_toggle(led_id_t mask)
 {
 	if (STATUS_LED_BLUE == mask) {
 		if (STATUS_LED_ON == saved_state[STATUS_LED_BLUE])
-			blue_led_off();
+			blue_LED_off();
 		else
-			blue_led_on();
+			blue_LED_on();
 	} else if (STATUS_LED_RED == mask) {
 		if (STATUS_LED_ON == saved_state[STATUS_LED_RED])
-			red_led_off();
+			red_LED_off();
 		else
-			red_led_on();
+			red_LED_on();
 	} else if (STATUS_LED_GREEN == mask) {
 		if (STATUS_LED_ON == saved_state[STATUS_LED_GREEN])
-			green_led_off();
+			green_LED_off();
 		else
-			green_led_on();
+			green_LED_on();
 	} else if (STATUS_LED_YELLOW == mask) {
 		if (STATUS_LED_ON == saved_state[STATUS_LED_YELLOW])
-			yellow_led_off();
+			yellow_LED_off();
 		else
-			yellow_led_on();
+			yellow_LED_on();
 	}
 }
 
@@ -133,23 +131,23 @@ void __led_set(led_id_t mask, int state)
 {
 	if (STATUS_LED_BLUE == mask) {
 		if (STATUS_LED_ON == state)
-			blue_led_on();
+			blue_LED_on();
 		else
-			blue_led_off();
+			blue_LED_off();
 	} else if (STATUS_LED_RED == mask) {
 		if (STATUS_LED_ON == state)
-			red_led_on();
+			red_LED_on();
 		else
-			red_led_off();
+			red_LED_off();
 	} else if (STATUS_LED_GREEN == mask) {
 		if (STATUS_LED_ON == state)
-			green_led_on();
+			green_LED_on();
 		else
-			green_led_off();
+			green_LED_off();
 	} else if (STATUS_LED_YELLOW == mask) {
 		if (STATUS_LED_ON == state)
-			yellow_led_on();
+			yellow_LED_on();
 		else
-			yellow_led_off();
+			yellow_LED_off();
 	}
 }

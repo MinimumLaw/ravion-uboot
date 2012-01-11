@@ -331,16 +331,16 @@ int board_early_init_f (void)
 	}
 
 	/* Code decompression disabled */
-	mtdcr (DCP0_CFGADDR, KCONF);
-	mtdcr (DCP0_CFGDATA, 0x2B);
+	mtdcr (KIAR, KCONF);
+	mtdcr (KIDR, 0x2B);
 
 	/* CPC0_ER: enable sleep mode of (currently) unused components */
 	/* CPC0_FR: force unused components into sleep mode */
-	mtdcr (CPC0_ER, 0x3F800000);
-	mtdcr (CPC0_FR, 0x14000000);
+	mtdcr (CPMER, 0x3F800000);
+	mtdcr (CPMFR, 0x14000000);
 
 	/* set PLB priority */
-	mtdcr (PLB0_ACR, 0x08000000);
+	mtdcr (0x87, 0x08000000);
 
 	/* --------------- DMA stuff ------------------------------------- */
 	mtdcr (0x126, 0x49200000);

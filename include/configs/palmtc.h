@@ -35,16 +35,16 @@
  */
 #define	CONFIG_ENV_OVERWRITE
 #define	CONFIG_SYS_MALLOC_LEN		(128*1024)
-#define	CONFIG_SYS_TEXT_BASE	0x0
+#define	CONFIG_SYS_GBL_DATA_SIZE	128
 
 #define	CONFIG_BOOTCOMMAND						\
-	"if mmc init && fatload mmc 0 0xa0000000 uboot.script ; then "	\
+	"if mmcinfo && fatload mmc 0 0xa0000000 uboot.script ; then "	\
 		"source 0xa0000000; "					\
 	"else "								\
 		"bootm 0x80000; "					\
 	"fi; "
 #define	CONFIG_BOOTARGS							\
-	"console=tty0 console=ttyS0,115200"
+	"console=tty0 console=ttyS0,57600"
 #define	CONFIG_TIMESTAMP
 #define	CONFIG_BOOTDELAY		2	/* Autoboot delay */
 #define	CONFIG_CMDLINE_TAG
@@ -67,7 +67,6 @@
 #include <config_cmd_default.h>
 
 #undef	CONFIG_CMD_NET
-#undef	CONFIG_CMD_NFS
 #define	CONFIG_CMD_ENV
 #define	CONFIG_CMD_MMC
 #define	CONFIG_LCD
@@ -77,7 +76,8 @@
  */
 #ifdef	CONFIG_CMD_MMC
 #define	CONFIG_MMC
-#define	CONFIG_PXA_MMC
+#define	CONFIG_GENERIC_MMC
+#define	CONFIG_PXA_MMC_GENERIC
 #define	CONFIG_SYS_MMC_BASE		0xF0000000
 #define	CONFIG_CMD_FAT
 #define	CONFIG_CMD_EXT2
@@ -102,8 +102,8 @@
  * KGDB
  */
 #ifdef	CONFIG_CMD_KGDB
-#define	CONFIG_KGDB_BAUDRATE		230400	/* kgdb serial port speed */
-#define	CONFIG_KGDB_SER_INDEX		2	/* which serial port to use */
+#define	CONFIG_KGDB_BAUDRATE		230400		/* speed to run kgdb serial port */
+#define	CONFIG_KGDB_SER_INDEX		2		/* which serial port to use */
 #endif
 
 /*
@@ -112,17 +112,16 @@
 #define	CONFIG_SYS_HUSH_PARSER		1
 #define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
-#define	CONFIG_SYS_LONGHELP
+#define	CONFIG_SYS_LONGHELP				/* undef to save memory	*/
 #ifdef	CONFIG_SYS_HUSH_PARSER
-#define	CONFIG_SYS_PROMPT		"$ "
+#define	CONFIG_SYS_PROMPT		"$ "		/* Monitor Command Prompt */
 #else
-#define	CONFIG_SYS_PROMPT		"=> "
+#define	CONFIG_SYS_PROMPT		"=> "		/* Monitor Command Prompt */
 #endif
-#define	CONFIG_SYS_CBSIZE		256
-#define	CONFIG_SYS_PBSIZE		\
-	(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
-#define	CONFIG_SYS_MAXARGS		16
-#define	CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+#define	CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size */
+#define	CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)	/* Print Buffer Size */
+#define	CONFIG_SYS_MAXARGS		16		/* max number of command args */
+#define	CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 #define	CONFIG_SYS_DEVICE_NULLDEV	1
 
 /*
@@ -130,7 +129,7 @@
  */
 #undef	CONFIG_SYS_CLKS_IN_HZ
 #define	CONFIG_SYS_HZ			3686400		/* Timer @ 3686400 Hz */
-#define	CONFIG_SYS_CPUSPEED		0x161		/* 400MHz;L=1 M=3 T=1 */
+#define	CONFIG_SYS_CPUSPEED		0x161		/* standard setting for 312MHz; L=16, N=1.5, A=0, SDCLK!=SystemBus */
 
 /*
  * Stack sizes
@@ -144,7 +143,7 @@
 /*
  * DRAM Map
  */
-#define	CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
+#define	CONFIG_NR_DRAM_BANKS		1		/* We have 1 bank of DRAM */
 #define	PHYS_SDRAM_1			0xa0000000	/* SDRAM Bank #1 */
 #define	PHYS_SDRAM_1_SIZE		0x04000000	/* 64 MB */
 
@@ -155,9 +154,6 @@
 #define	CONFIG_SYS_MEMTEST_END		0xa0800000	/* 4 ... 8 MB in DRAM */
 
 #define	CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_DRAM_BASE
-
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define	CONFIG_SYS_INIT_SP_ADDR		(GENERATED_GBL_DATA_SIZE + PHYS_SDRAM_1)
 
 /*
  * NOR FLASH
@@ -183,7 +179,6 @@
 #define	CONFIG_SYS_FLASH_PROTECTION
 
 #define	CONFIG_ENV_IS_IN_FLASH		1
-#define	CONFIG_ENV_SECT_SIZE		0x40000
 #else
 #define	CONFIG_SYS_NO_FLASH
 #define	CONFIG_ENV_IS_NOWHERE
@@ -217,8 +212,10 @@
 #define	CONFIG_SYS_PSSR_VAL	PSSR_RDH
 
 /* Clock setup:
- * CKEN[1] - PWM1 ; CKEN[6] - FFUART
- * CKEN[12] - MMC ; CKEN[16] - LCD
+ * 	CKEN[1]		- PWM1
+ * 	CKEN[6]		- FFUART
+ * 	CKEN[12]	- MMC
+ * 	CKEN[16]	- LCD
  */
 #define	CONFIG_SYS_CKEN		0x00011042
 #define	CONFIG_SYS_CCCR		0x00000161

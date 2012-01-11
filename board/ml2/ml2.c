@@ -30,19 +30,23 @@ int board_early_init_f (void)
 
 int checkboard (void)
 {
-	char buf[64];
-	int i;
-	int l = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv ("serial#");
+	char *e;
 
-	if (l < 0 || strncmp(buf, "ML2", 9)) {
+	if (!s || strncmp (s, "ML2", 9)) {
 		printf ("### No HW ID - assuming ML2");
 	} else {
-		for (i = 0; i < l; i++) {
-			if (buf[i] == ' ')
+		for (e = s; *e; ++e) {
+			if (*e == ' ')
 				break;
-			putc(buf[i]);
+		}
+
+		for (; s < e; ++s) {
+			putc (*s);
 		}
 	}
+
+
 	putc ('\n');
 
 	return (0);

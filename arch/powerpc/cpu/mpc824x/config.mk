@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2000-2010
+# (C) Copyright 2000
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -21,6 +21,9 @@
 # MA 02111-1307 USA
 #
 
-PLATFORM_RELFLAGS += -meabi
+PLATFORM_RELFLAGS += -fPIC -meabi
 
 PLATFORM_CPPFLAGS += -DCONFIG_MPC824X -ffixed-r2 -mstring -mcpu=603e -msoft-float
+
+# Use default linker script.  Board port can override in board/*/config.mk
+LDSCRIPT := $(SRCTREE)/arch/powerpc/cpu/mpc824x/u-boot.lds

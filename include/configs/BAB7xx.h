@@ -35,8 +35,6 @@
  * (easy to change)
  */
 
-#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
-
 /* these hardware addresses are pretty bogus, please change them to
    suit your needs */
 
@@ -199,8 +197,9 @@
  * Definitions for initial stack pointer and data area
  */
 #define CONFIG_SYS_INIT_RAM_ADDR       0x00fd0000  /* above the memtest region */
-#define CONFIG_SYS_INIT_RAM_SIZE        0x4000
-#define CONFIG_SYS_GBL_DATA_OFFSET     (CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_END        0x4000
+#define CONFIG_SYS_GBL_DATA_SIZE       64          /* size in bytes reserved for init data */
+#define CONFIG_SYS_GBL_DATA_OFFSET     (CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET      CONFIG_SYS_GBL_DATA_OFFSET
 
 /*
@@ -270,7 +269,6 @@
  * PCI stuff
  */
 #define CONFIG_PCI                                /* include pci support */
-#define CONFIG_SYS_EARLY_PCI_INIT
 #define CONFIG_PCI_PNP                            /* pci plug-and-play */
 #define CONFIG_PCI_HOST         PCI_HOST_AUTO
 #undef  CONFIG_PCI_SCAN_SHOW
@@ -466,6 +464,15 @@ extern  unsigned long           bab7xx_get_gclk_freq (void);
 #define L2_ENABLE   (L2_INIT | L2CR_L2E)
 
 #define CONFIG_SYS_L2_BAB7xx
+
+/*
+ * Internal Definitions
+ *
+ * Boot Flags
+ */
+#define BOOTFLAG_COLD           0x01    /* Normal Power-On: Boot from FLASH */
+#define BOOTFLAG_WARM           0x02    /* Software reboot */
+
 
 #define CONFIG_NET_MULTI                /* Multi ethernet cards support */
 #define CONFIG_TULIP

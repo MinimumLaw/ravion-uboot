@@ -26,16 +26,16 @@
 #
 
 ifeq ($(TBASE),0)
-CONFIG_SYS_TEXT_BASE = 0
+TEXT_BASE = 0
 else
 ifeq ($(TBASE),1)
-CONFIG_SYS_TEXT_BASE = 0xbfc10070
+TEXT_BASE = 0xbfc10070
 else
 ifeq ($(TBASE),2)
-CONFIG_SYS_TEXT_BASE = 0xbfc30070
+TEXT_BASE = 0xbfc30070
 else
 ## Only to make ordinary make work
-CONFIG_SYS_TEXT_BASE = 0x90000000
+TEXT_BASE = 0x90000000
 endif
 endif
 endif

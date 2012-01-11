@@ -23,10 +23,11 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(SOC).o
+LIB	= $(obj)lib$(SOC).a
 
 SOBJS	+= reset.o
 COBJS	+= timer.o
+COBJS	+= ftsmc020.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
@@ -34,7 +35,7 @@ OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 all:	$(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

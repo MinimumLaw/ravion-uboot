@@ -27,7 +27,8 @@
  * High Level Configuration Options
  * (easy to change)
  */
-#define CONFIG_CPU_MONAHANS	1	/* Intel Monahan CPU    */
+#define CONFIG_CPU_MONAHANS	1	/* Marvell Monahans CPU */
+#define CONFIG_CPU_PXA320	1	/* Narvell Monahans P */
 #define CONFIG_DELTA		1	/* Delta board       */
 
 /* #define CONFIG_LCD		1 */

@@ -26,7 +26,7 @@ ifneq ($(OBJTREE),$(SRCTREE))
 $(shell mkdir -p $(obj)../common)
 endif
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
 COBJS	= $(BOARD).o flash.o ../common/misc.o cmd_pci405.o
 SOBJS	= writeibm.o
@@ -36,8 +36,8 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(OBJS) $(SOBJS)
-#	$(call cmd_link_o_target, $(OBJS))
-	$(call cmd_link_o_target, $(OBJS) $(SOBJS))
+#	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
 clean:
 	rm -f $(SOBJS) $(OBJS)

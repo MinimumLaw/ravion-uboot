@@ -30,7 +30,9 @@
 #include <ioports.h>
 #include <asm/io.h>
 #endif
-#if defined(CONFIG_AT91FAMILY)
+#if defined(CONFIG_AT91RM9200) || \
+	defined(CONFIG_AT91SAM9260) ||  defined(CONFIG_AT91SAM9261) || \
+	defined(CONFIG_AT91SAM9263)
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/at91_pio.h>
@@ -286,7 +288,6 @@ int i2c_set_bus_num(unsigned int bus)
 		int	ret;
 
 		ret = i2x_mux_select_mux(bus);
-		i2c_init_board();
 		if (ret == 0)
 			i2c_bus_num = bus;
 		else

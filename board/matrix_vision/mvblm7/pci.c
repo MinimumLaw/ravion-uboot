@@ -60,6 +60,7 @@ static struct pci_region pci_regions[] = {
 void pci_init_board(void)
 {
 	int i;
+	int warmboot;
 	volatile immap_t *immr;
 	volatile pcictrl83xx_t *pci_ctrl;
 	volatile gpio83xx_t *gpio;
@@ -101,5 +102,7 @@ void pci_init_board(void)
 	pci_law[1].bar = CONFIG_SYS_PCI1_IO_PHYS & LAWBAR_BAR;
 	pci_law[1].ar = LBLAWAR_EN | LBLAWAR_1MB;
 
-	mpc83xx_pci_init(1, reg);
+	warmboot = gd->bd->bi_bootflags & BOOTFLAG_WARM;
+
+	mpc83xx_pci_init(1, reg, warmboot);
 }

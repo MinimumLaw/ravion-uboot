@@ -62,7 +62,7 @@ struct fec_priv gfec = {
 /*
  * MII-interface related functions
  */
-static int fec_miiphy_read(const char *dev, uint8_t phyAddr, uint8_t regAddr,
+static int fec_miiphy_read(char *dev, uint8_t phyAddr, uint8_t regAddr,
 		uint16_t *retVal)
 {
 	struct eth_device *edev = eth_get_dev_by_name(dev);
@@ -86,7 +86,7 @@ static int fec_miiphy_read(const char *dev, uint8_t phyAddr, uint8_t regAddr,
 	/*
 	 * wait for the related interrupt
 	 */
-	start = get_timer(0);
+	start = get_timer_masked();
 	while (!(readl(&fec->eth->ievent) & FEC_IEVENT_MII)) {
 		if (get_timer(start) > (CONFIG_SYS_HZ / 1000)) {
 			printf("Read MDIO failed...\n");
@@ -119,7 +119,7 @@ static void fec_mii_setspeed(struct fec_priv *fec)
 	debug("fec_init: mii_speed %#lx\n",
 			fec->eth->mii_speed);
 }
-static int fec_miiphy_write(const char *dev, uint8_t phyAddr, uint8_t regAddr,
+static int fec_miiphy_write(char *dev, uint8_t phyAddr, uint8_t regAddr,
 		uint16_t data)
 {
 	struct eth_device *edev = eth_get_dev_by_name(dev);
@@ -138,7 +138,7 @@ static int fec_miiphy_write(const char *dev, uint8_t phyAddr, uint8_t regAddr,
 	/*
 	 * wait for the MII interrupt
 	 */
-	start = get_timer(0);
+	start = get_timer_masked();
 	while (!(readl(&fec->eth->ievent) & FEC_IEVENT_MII)) {
 		if (get_timer(start) > (CONFIG_SYS_HZ / 1000)) {
 			printf("Write MDIO failed...\n");
@@ -163,20 +163,20 @@ static int miiphy_restart_aneg(struct eth_device *dev)
 	 * Reset PHY, then delay 300ns
 	 */
 #ifdef CONFIG_MX27
-	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, MII_DCOUNTER, 0x00FF);
+	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, PHY_MIPGSR, 0x00FF);
 #endif
-	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, MII_BMCR,
-			BMCR_RESET);
+	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, PHY_BMCR,
+			PHY_BMCR_RESET);
 	udelay(1000);
 
 	/*
 	 * Set the auto-negotiation advertisement register bits
 	 */
-	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, MII_ADVERTISE,
-			LPA_100FULL | LPA_100HALF | LPA_10FULL |
-			LPA_10HALF | PHY_ANLPAR_PSB_802_3);
-	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, MII_BMCR,
-			BMCR_ANENABLE | BMCR_ANRESTART);
+	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, PHY_ANAR,
+			PHY_ANLPAR_TXFD | PHY_ANLPAR_TX | PHY_ANLPAR_10FD |
+			PHY_ANLPAR_10 | PHY_ANLPAR_PSB_802_3);
+	miiphy_write(dev->name, CONFIG_FEC_MXC_PHYADDR, PHY_BMCR,
+			PHY_BMCR_AUTON | PHY_BMCR_RST_NEG);
 
 	return 0;
 }
@@ -189,7 +189,7 @@ static int miiphy_wait_aneg(struct eth_device *dev)
 	/*
 	 * Wait for AN completion
 	 */
-	start = get_timer(0);
+	start = get_timer_masked();
 	do {
 		if (get_timer(start) > (CONFIG_SYS_HZ * 5)) {
 			printf("%s: Autonegotiation timeout\n", dev->name);
@@ -197,12 +197,12 @@ static int miiphy_wait_aneg(struct eth_device *dev)
 		}
 
 		if (miiphy_read(dev->name, CONFIG_FEC_MXC_PHYADDR,
-					MII_BMSR, &status)) {
+					PHY_BMSR, &status)) {
 			printf("%s: Autonegotiation failed. status: 0x%04x\n",
 					dev->name, status);
 			return -1;
 		}
-	} while (!(status & BMSR_LSTATUS));
+	} while (!(status & PHY_BMSR_LS));
 
 	return 0;
 }
@@ -312,8 +312,21 @@ static void fec_rbd_clean(int last, struct fec_bd *pRbd)
 
 static int fec_get_hwaddr(struct eth_device *dev, unsigned char *mac)
 {
-	imx_get_mac_from_fuse(mac);
+/*
+ * The MX27 can store the mac address in internal eeprom
+ * This mechanism is not supported now by MX51 or MX25
+ */
+#if defined(CONFIG_MX51) || defined(CONFIG_MX25)
+	return -1;
+#else
+	struct iim_regs *iim = (struct iim_regs *)IMX_IIM_BASE;
+	int i;
+
+	for (i = 0; i < 6; i++)
+		mac[6-1-i] = readl(&iim->iim_bank_area0[IIM0_MAC + i]);
+
 	return !is_valid_ether_addr(mac);
+#endif
 }
 
 static int fec_set_hwaddr(struct eth_device *dev)
@@ -354,7 +367,7 @@ static int fec_open(struct eth_device *edev)
 	 */
 	writel(readl(&fec->eth->ecntrl) | FEC_ECNTRL_ETHER_EN,
 		&fec->eth->ecntrl);
-#if defined(CONFIG_MX25) || defined(CONFIG_MX53)
+#ifdef CONFIG_MX25
 	udelay(100);
 	/*
 	 * setup the MII gasket for RMII mode
@@ -400,9 +413,6 @@ static int fec_init(struct eth_device *dev, bd_t* bd)
 {
 	uint32_t base;
 	struct fec_priv *fec = (struct fec_priv *)dev->priv;
-
-	/* Initialize MAC address */
-	fec_set_hwaddr(dev);
 
 	/*
 	 * reserve memory for both buffer descriptor chains at once
@@ -697,7 +707,6 @@ static int fec_probe(bd_t *bd)
 		puts("fec_mxc: not enough malloc memory\n");
 		return -ENOMEM;
 	}
-	memset(edev, 0, sizeof(*edev));
 	edev->priv = fec;
 	edev->init = fec_init;
 	edev->send = fec_send;
@@ -734,14 +743,14 @@ static int fec_probe(bd_t *bd)
 	writel(0x05ee0024, &fec->eth->r_cntrl);	/* FIXME 0x05ee0004 */
 	fec_mii_setspeed(fec);
 
-	sprintf(edev->name, "FEC");
+	sprintf(edev->name, "FEC_MXC");
 
 	miiphy_register(edev->name, fec_miiphy_read, fec_miiphy_write);
 
 	eth_register(edev);
 
 	if (fec_get_hwaddr(edev, ethaddr) == 0) {
-		printf("got MAC address from fuse: %pM\n", ethaddr);
+		printf("got MAC address from EEPROM: %pM\n", ethaddr);
 		memcpy(edev->enetaddr, ethaddr, 6);
 	}
 

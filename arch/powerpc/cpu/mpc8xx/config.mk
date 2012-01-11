@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2000-2010
+# (C) Copyright 2000
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -21,6 +21,6 @@
 # MA 02111-1307 USA
 #
 
-PLATFORM_RELFLAGS += -meabi
+PLATFORM_RELFLAGS += -fPIC -meabi
 
 PLATFORM_CPPFLAGS += -DCONFIG_8xx -ffixed-r2 -mstring -mcpu=860 -msoft-float

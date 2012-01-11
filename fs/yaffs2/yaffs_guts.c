@@ -391,17 +391,17 @@ static int yaffs_CountChunkBits(yaffs_Device * dev, int blk)
  * Verification code
  */
 
-static Y_INLINE int yaffs_SkipVerification(yaffs_Device *dev)
+static int yaffs_SkipVerification(yaffs_Device *dev)
 {
 	return !(yaffs_traceMask & (YAFFS_TRACE_VERIFY | YAFFS_TRACE_VERIFY_FULL));
 }
 
-static Y_INLINE int yaffs_SkipFullVerification(yaffs_Device *dev)
+static int yaffs_SkipFullVerification(yaffs_Device *dev)
 {
 	return !(yaffs_traceMask & (YAFFS_TRACE_VERIFY_FULL));
 }
 
-static Y_INLINE int yaffs_SkipNANDVerification(yaffs_Device *dev)
+static int yaffs_SkipNANDVerification(yaffs_Device *dev)
 {
 	return !(yaffs_traceMask & (YAFFS_TRACE_VERIFY_NAND));
 }
@@ -2140,7 +2140,7 @@ yaffs_Object *yaffs_CreateNewObject(yaffs_Device * dev, int number,
 {
 
 	yaffs_Object *theObject;
-	yaffs_Tnode *tn = NULL;
+	yaffs_Tnode *tn;
 
 	if (number < 0) {
 		number = yaffs_CreateNewObjectNumber(dev);
@@ -2255,7 +2255,7 @@ static yaffs_Object *yaffs_MknodObject(yaffs_ObjectType type,
 				       const YCHAR * aliasString, __u32 rdev)
 {
 	yaffs_Object *in;
-	YCHAR *str = NULL;
+	YCHAR *str;
 
 	yaffs_Device *dev = parent->myDev;
 
@@ -4605,8 +4605,8 @@ int yaffs_ReadDataFromFile(yaffs_Object * in, __u8 * buffer, loff_t offset,
 			   int nBytes)
 {
 
-	__u32 chunk;
-	__u32 start;
+	int chunk;
+	int start;
 	int nToCopy;
 	int n = nBytes;
 	int nDone = 0;
@@ -4725,8 +4725,8 @@ int yaffs_WriteDataToFile(yaffs_Object * in, const __u8 * buffer, loff_t offset,
 			  int nBytes, int writeThrough)
 {
 
-	__u32 chunk;
-	__u32 start;
+	int chunk;
+	int start;
 	int nToCopy;
 	int n = nBytes;
 	int nDone = 0;
@@ -4960,8 +4960,8 @@ int yaffs_ResizeFile(yaffs_Object * in, loff_t newSize)
 {
 
 	int oldFileSize = in->variant.fileVariant.fileSize;
-	__u32 newSizeOfPartialChunk;
-	__u32 newFullChunks;
+	int newSizeOfPartialChunk;
+	int newFullChunks;
 
 	yaffs_Device *dev = in->myDev;
 
@@ -7232,8 +7232,7 @@ int yaffs_GutsInitialise(yaffs_Device * dev)
 			dev->nShortOpCaches = YAFFS_MAX_SHORT_OP_CACHES;
 		}
 
-		dev->srCache = YMALLOC(srCacheBytes);
-		buf = (__u8 *)dev->srCache;
+		buf = dev->srCache =  YMALLOC(srCacheBytes);
 
 		if(dev->srCache)
 			memset(dev->srCache,0,srCacheBytes);

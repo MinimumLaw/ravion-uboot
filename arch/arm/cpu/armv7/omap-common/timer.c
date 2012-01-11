@@ -35,17 +35,20 @@
 #include <common.h>
 #include <asm/io.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
+static ulong timestamp;
+static ulong lastinc;
 static struct gptimer *timer_base = (struct gptimer *)CONFIG_SYS_TIMERBASE;
 
 /*
  * Nothing really to do with interrupts, just starts up a counter.
+ * We run the counter with 13MHz, divided by 8, resulting in timer
+ * frequency of 1.625MHz. With 32bit counter register, counter
+ * overflows in ~44min
  */
 
-#define TIMER_CLOCK		(V_SCLK / (2 << CONFIG_SYS_PTV))
-#define TIMER_OVERFLOW_VAL	0xffffffff
-#define TIMER_LOAD_VAL		0
+/* 13MHz / 8 = 1.625MHz */
+#define TIMER_CLOCK	(V_SCLK / (2 << CONFIG_SYS_PTV))
+#define TIMER_LOAD_VAL	0xffffffff
 
 int timer_init(void)
 {
@@ -55,9 +58,7 @@ int timer_init(void)
 	writel((CONFIG_SYS_PTV << 2) | TCLR_PRE | TCLR_AR | TCLR_ST,
 		&timer_base->tclr);
 
-	/* reset time, capture current incrementer value time */
-	gd->lastinc = readl(&timer_base->tcrr) / (TIMER_CLOCK / CONFIG_SYS_HZ);
-	gd->tbl = 0;		/* start "advancing" time stamp from 0 */
+	reset_timer_masked();	/* init the timestamp and lastinc value */
 
 	return 0;
 }
@@ -65,25 +66,47 @@ int timer_init(void)
 /*
  * timer without interrupts
  */
+void reset_timer(void)
+{
+	reset_timer_masked();
+}
+
 ulong get_timer(ulong base)
 {
 	return get_timer_masked() - base;
 }
 
+void set_timer(ulong t)
+{
+	timestamp = t;
+}
+
 /* delay x useconds */
 void __udelay(unsigned long usec)
 {
+#if defined(CONFIG_OMAP44XX)
+	/* TODO temporary hack until OMAP4 clock setup routines are present */
+	if (usec > 1000)
+		usec = usec/1000;
+#endif
 	long tmo = usec * (TIMER_CLOCK / 1000) / 1000;
 	unsigned long now, last = readl(&timer_base->tcrr);
 
 	while (tmo > 0) {
 		now = readl(&timer_base->tcrr);
 		if (last > now) /* count up timer overflow */
-			tmo -= TIMER_OVERFLOW_VAL - last + now + 1;
+			tmo -= TIMER_LOAD_VAL - last + now;
 		else
 			tmo -= now - last;
 		last = now;
 	}
+}
+
+void reset_timer_masked(void)
+{
+	/* reset time, capture current incrementer value time */
+	lastinc = readl(&timer_base->tcrr) / (TIMER_CLOCK / CONFIG_SYS_HZ);
+	timestamp = 0;		/* start "advancing" time stamp from 0 */
 }
 
 ulong get_timer_masked(void)
@@ -91,14 +114,14 @@ ulong get_timer_masked(void)
 	/* current tick value */
 	ulong now = readl(&timer_base->tcrr) / (TIMER_CLOCK / CONFIG_SYS_HZ);
 
-	if (now >= gd->lastinc)	/* normal mode (non roll) */
+	if (now >= lastinc)	/* normal mode (non roll) */
 		/* move stamp fordward with absoulte diff ticks */
-		gd->tbl += (now - gd->lastinc);
+		timestamp += (now - lastinc);
 	else	/* we have rollover of incrementer */
-		gd->tbl += ((TIMER_LOAD_VAL / (TIMER_CLOCK / CONFIG_SYS_HZ))
-			     - gd->lastinc) + now;
-	gd->lastinc = now;
-	return gd->tbl;
+		timestamp += ((TIMER_LOAD_VAL / (TIMER_CLOCK / CONFIG_SYS_HZ))
+				- lastinc) + now;
+	lastinc = now;
+	return timestamp;
 }
 
 /*

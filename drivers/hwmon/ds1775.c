@@ -98,7 +98,7 @@ int dtt_write(int sensor, int reg, int val)
 }
 
 
-int dtt_init_one(int sensor)
+static int _dtt_init(int sensor)
 {
 	int val;
 
@@ -132,6 +132,23 @@ int dtt_init_one(int sensor)
 
 	return 0;
 }
+
+
+int dtt_init (void)
+{
+	int i;
+	unsigned char sensors[] = CONFIG_DTT_SENSORS;
+
+	for (i = 0; i < sizeof(sensors); i++) {
+		if (_dtt_init(sensors[i]) != 0)
+			printf("DTT%d:  FAILED\n", i+1);
+		else
+			printf("DTT%d:  %i C\n", i+1, dtt_get_temp(sensors[i]));
+	}
+
+	return (0);
+}
+
 
 int dtt_get_temp(int sensor)
 {

@@ -20,8 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#ifndef _OMAP2PLUS_I2C_H_
-#define _OMAP2PLUS_I2C_H_
+#ifndef _OMAP24XX_I2C_H_
+#define _OMAP24XX_I2C_H_
 
 /* I2C masks */
 
@@ -84,10 +84,6 @@
 #define I2C_SYSTEST_SCL_O	(1 << 2)  /* SCL line drive output value */
 #define I2C_SYSTEST_SDA_I	(1 << 1)  /* SDA line sense input value */
 #define I2C_SYSTEST_SDA_O	(1 << 0)  /* SDA line drive output value */
-
-/* I2C System Status Register (I2C_SYSS): */
-
-#define I2C_SYSS_RDONE          (1 << 0)  /* Internel reset monitoring */
 
 #define I2C_SCLL_SCLL		0
 #define I2C_SCLL_SCLL_M		0xFF

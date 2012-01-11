@@ -17,8 +17,6 @@
 #define CONFIG_MPC83xx		1	/* MPC83xx family */
 #define CONFIG_MPC832x		1	/* MPC832x CPU specific */
 
-#define	CONFIG_SYS_TEXT_BASE	0xFE000000
-
 #define CONFIG_PCI		1
 
 /*
@@ -58,6 +56,8 @@
  * System IO Config
  */
 #define CONFIG_SYS_SICRL		0x00000000
+
+#define CONFIG_BOARD_EARLY_INIT_F	/* call board_pre_init */
 
 /*
  * IMMR new address
@@ -146,7 +146,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT
@@ -163,8 +163,9 @@
  */
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000	/* Initial RAM address */
-#define CONFIG_SYS_INIT_RAM_SIZE	0x1000		/* Size of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_RAM_END	0x1000		/* End of used area in RAM */
+#define CONFIG_SYS_GBL_DATA_SIZE	0x100		/* num bytes initial data */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 
 /*
  * Local Bus Configuration & Clock Setup
@@ -261,6 +262,7 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
+#undef CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -336,7 +338,7 @@
  * QE UEC ethernet configuration
  */
 #define CONFIG_UEC_ETH
-#define CONFIG_ETHPRIME		"UEC0"
+#define CONFIG_ETHPRIME		"FSL UEC0"
 
 #define CONFIG_UEC_ETH1		/* ETH3 */
 
@@ -346,7 +348,7 @@
 #define CONFIG_SYS_UEC1_TX_CLK		QE_CLK10
 #define CONFIG_SYS_UEC1_ETH_TYPE	FAST_ETH
 #define CONFIG_SYS_UEC1_PHY_ADDR	4
-#define CONFIG_SYS_UEC1_INTERFACE_TYPE	PHY_INTERFACE_MODE_MII
+#define CONFIG_SYS_UEC1_INTERFACE_TYPE	MII
 #define CONFIG_SYS_UEC1_INTERFACE_SPEED	100
 #endif
 
@@ -358,7 +360,7 @@
 #define CONFIG_SYS_UEC2_TX_CLK		QE_CLK3
 #define CONFIG_SYS_UEC2_ETH_TYPE	FAST_ETH
 #define CONFIG_SYS_UEC2_PHY_ADDR	0
-#define CONFIG_SYS_UEC2_INTERFACE_TYPE	PHY_INTERFACE_MODE_MII
+#define CONFIG_SYS_UEC2_INTERFACE_TYPE	MII
 #define CONFIG_SYS_UEC2_INTERFACE_SPEED	100
 #endif
 
@@ -428,10 +430,10 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 256 MB of memory, since this is
+ * have to be in the first 8 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ		(256 << 20)	/* Initial Memory map for Linux */
+#define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux */
 
 /*
  * Core HID Setup
@@ -506,6 +508,14 @@
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 
+/*
+ * Internal Definitions
+ *
+ * Boot Flags
+ */
+#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH */
+#define BOOTFLAG_WARM	0x02	/* Software reboot */
+
 #if (CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */
 #define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
@@ -542,11 +552,11 @@
 	"netdev=" MK_STR(CONFIG_NETDEV) "\0"				\
 	"uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
 	"tftpflash=tftp $loadaddr $uboot;"				\
-		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
-		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
-		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
-		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
-		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
+		"protect off " MK_STR(TEXT_BASE) " +$filesize; "	\
+		"erase " MK_STR(TEXT_BASE) " +$filesize; "		\
+		"cp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize; "	\
+		"protect on " MK_STR(TEXT_BASE) " +$filesize; "		\
+		"cmp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize\0"	\
 	"fdtaddr=780000\0"						\
 	"fdtfile=" MK_STR(CONFIG_FDTFILE) "\0"				\
 	"ramdiskaddr=1000000\0"						\

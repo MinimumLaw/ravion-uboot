@@ -22,11 +22,11 @@
  */
 
 #include <common.h>
-#include <asm/ppc4xx.h>
-#include <asm/ppc405.h>
+#include <ppc4xx.h>
+#include <ppc405.h>
 #include <libfdt.h>
 #include <asm/processor.h>
-#include <asm/ppc4xx-gpio.h>
+#include <asm/gpio.h>
 #include <asm/io.h>
 #include <fdt_support.h>
 #include <asm/errno.h>
@@ -224,14 +224,13 @@ int misc_init_r(void)
 
 int checkboard (void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 
 	printf("Board: Makalu - AMCC PPC405EX Evaluation Board");
 
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

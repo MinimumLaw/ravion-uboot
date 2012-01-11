@@ -7,9 +7,33 @@
  */
 
 #include <common.h>
+#include <i2c.h>
 
 #include <asm/fsl_ddr_sdram.h>
 #include <asm/fsl_ddr_dimm_params.h>
+
+static void get_spd(generic_spd_eeprom_t *spd, unsigned char i2c_address)
+{
+	i2c_read(i2c_address, 0, 1, (uchar *)spd, sizeof(ddr3_spd_eeprom_t));
+}
+
+unsigned int fsl_ddr_get_mem_data_rate(void)
+{
+	return get_ddr_freq(0);
+}
+
+void fsl_ddr_get_spd(generic_spd_eeprom_t *ctrl_dimms_spd,
+		      unsigned int ctrl_num)
+{
+	unsigned int i;
+	unsigned int i2c_address = 0;
+
+	for (i = 0; i < CONFIG_DIMM_SLOTS_PER_CTLR; i++) {
+		if (ctrl_num == 0 && i == 0)
+			i2c_address = SPD_EEPROM_ADDRESS1;
+		get_spd(&(ctrl_dimms_spd[i]), i2c_address);
+	}
+}
 
 typedef struct {
 	u32 datarate_mhz_low;
@@ -44,7 +68,7 @@ const board_specific_parameters_t board_specific_parameters[][20] = {
 		{550, 680,    1,    4,   0x1f,    3,  0},
 		{681, 850,    1,    4,   0x1f,    4,  0}
 #else
-		{  0, 850,    2,    6,   0x1f,    4,  0},
+		{  0, 850,    2,    4,   0x1f,    4,  0},
 		{  0, 850,    1,    4,   0x1f,    4,  0}
 #endif
 	},
@@ -83,14 +107,8 @@ void fsl_ddr_board_options(memctl_options_t *popts,
 			popts->cpo_override = pbsp->cpo;
 			popts->write_data_delay = pbsp->write_data_delay;
 			popts->twoT_en = pbsp->force_2T;
-			break;
 		}
 		pbsp++;
-	}
-
-	if (i == num_params) {
-		printf("Warning: board specific timing not found "
-			"for data rate %lu MT/s!\n", ddr_freq);
 	}
 
 	/*
@@ -102,7 +120,7 @@ void fsl_ddr_board_options(memctl_options_t *popts,
 	/* Write leveling override */
 	popts->wrlvl_override = 1;
 	popts->wrlvl_sample = 0xa;
-	popts->wrlvl_start = 0x8;
+	popts->wrlvl_start = 0x7;
 	/* Rtt and Rtt_WR override */
 	popts->rtt_override = 1;
 	popts->rtt_override_value = DDR3_RTT_120_OHM;

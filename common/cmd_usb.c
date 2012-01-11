@@ -34,9 +34,6 @@
 #ifdef CONFIG_USB_STORAGE
 static int usb_stor_curr_dev = -1; /* current device */
 #endif
-#ifdef CONFIG_USB_HOST_ETHER
-static int usb_ether_curr_dev = -1; /* current ethernet device */
-#endif
 
 /* some display routines (info command) */
 char *usb_get_class_desc(unsigned char dclass)
@@ -356,7 +353,7 @@ int do_usbboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *boot_device = NULL;
 	char *ep;
-	int dev, part = 1;
+	int dev, part = 1, rcode;
 	ulong addr, cnt;
 	disk_partition_t info;
 	image_header_t *hdr;
@@ -490,7 +487,17 @@ int do_usbboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	flush_cache(addr, (cnt+1)*info.blksz);
 
-	return bootm_maybe_autostart(cmdtp, argv[0]);
+	/* Check if we should attempt an auto-start */
+	if (((ep = getenv("autostart")) != NULL) && (strcmp(ep, "yes") == 0)) {
+		char *local_args[2];
+		extern int do_bootm(cmd_tbl_t *, int, int, char *[]);
+		local_args[0] = argv[0];
+		local_args[1] = NULL;
+		printf("Automatic boot of image at addr 0x%08lX ...\n", addr);
+		rcode = do_bootm(cmdtp, 0, 1, local_args);
+		return rcode;
+	}
+	return 0;
 }
 #endif /* CONFIG_USB_STORAGE */
 
@@ -516,16 +523,11 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		usb_stop();
 		printf("(Re)start USB...\n");
 		i = usb_init();
-		if (i >= 0) {
 #ifdef CONFIG_USB_STORAGE
-			/* try to recognize storage devices immediately */
+		/* try to recognize storage devices immediately */
+		if (i >= 0)
 			usb_stor_curr_dev = usb_stor_scan(1);
 #endif
-#ifdef CONFIG_USB_HOST_ETHER
-			/* try to recognize ethernet devices immediately */
-			usb_ether_curr_dev = usb_host_eth_scan(1);
-#endif
-		}
 		return 0;
 	}
 	if (strncmp(argv[1], "stop", 4) == 0) {
@@ -579,7 +581,7 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 					break;
 			}
 			if (dev == NULL) {
-				printf("*** No device available ***\n");
+				printf("*** NO Device avaiable ***\n");
 				return 0;
 			} else {
 				usb_display_desc(dev);
@@ -710,7 +712,7 @@ U_BOOT_CMD(
 	"usb part [dev] - print partition table of one or all USB storage"
 	" devices\n"
 	"usb read addr blk# cnt - read `cnt' blocks starting at block `blk#'\n"
-	"    to memory address `addr'\n"
+	"    to memory address `addr'"
 	"usb write addr blk# cnt - write `cnt' blocks starting at block `blk#'\n"
 	"    from memory address `addr'"
 );

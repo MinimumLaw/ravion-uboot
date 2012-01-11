@@ -22,7 +22,7 @@
  */
 
 #include <common.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <spd_sdram.h>
@@ -188,8 +188,7 @@ int misc_init_r (void)
 
 int checkboard(void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 	u8 rev;
 	u32 clock = get_async_pci_freq();
 
@@ -202,9 +201,9 @@ int checkboard(void)
 	rev = in_8((void *)(CONFIG_SYS_BCSR_BASE + 0));
 	printf(", Rev. %X, PCI-Async=%d MHz", rev, clock / 1000000);
 
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

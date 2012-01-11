@@ -23,114 +23,123 @@
  */
 
 #include <common.h>
-#include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/at91_pit.h>
 #include <asm/arch/at91_pmc.h>
 #include <asm/arch/clk.h>
+#include <asm/arch/io.h>
 #include <div64.h>
-
-#if !defined(CONFIG_AT91FAMILY)
-# error You need to define CONFIG_AT91FAMILY in your board config!
-#endif
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * We're using the AT91CAP9/SAM9 PITC in 32 bit mode, by
  * setting the 20 bit counter period to its maximum (0xfffff).
- * (See the relevant data sheets to understand that this really works)
- *
- * We do also mimic the typical powerpc way of incrementing
- * two 32 bit registers called tbl and tbu.
- *
- * Those registers increment at 1/16 the main clock rate.
  */
-
 #define TIMER_LOAD_VAL	0xfffff
+
+static ulong timestamp;
+static ulong lastinc;
+static ulong timer_freq;
 
 static inline unsigned long long tick_to_time(unsigned long long tick)
 {
 	tick *= CONFIG_SYS_HZ;
-	do_div(tick, gd->timer_rate_hz);
+	do_div(tick, timer_freq);
 
 	return tick;
 }
 
 static inline unsigned long long usec_to_tick(unsigned long long usec)
 {
-	usec *= gd->timer_rate_hz;
+	usec *= timer_freq;
 	do_div(usec, 1000000);
 
 	return usec;
 }
 
-/*
- * Use the PITC in full 32 bit incrementing mode
- */
+/* nothing really to do with interrupts, just starts up a counter. */
 int timer_init(void)
 {
-	at91_pmc_t *pmc = (at91_pmc_t *) ATMEL_BASE_PMC;
-	at91_pit_t *pit = (at91_pit_t *) ATMEL_BASE_PIT;
-
-	/* Enable PITC Clock */
-	writel(1 << ATMEL_ID_SYS, &pmc->pcer);
+	at91_pmc_t *pmc = (at91_pmc_t *) AT91_PMC_BASE;
+	at91_pit_t *pit = (at91_pit_t *) AT91_PIT_BASE;
+	/*
+	 * Enable PITC Clock
+	 * The clock is already enabled for system controller in boot
+	 */
+	writel(1 << AT91_ID_SYS, &pmc->pcer);
 
 	/* Enable PITC */
 	writel(TIMER_LOAD_VAL | AT91_PIT_MR_EN , &pit->mr);
 
-	gd->timer_rate_hz = gd->mck_rate_hz / 16;
-	gd->tbu = gd->tbl = 0;
+	reset_timer_masked();
+
+	timer_freq = get_mck_clk_rate() >> 4;
 
 	return 0;
 }
 
 /*
- * Get the current 64 bit timer tick count
+ * timer without interrupts
  */
 unsigned long long get_ticks(void)
 {
-	at91_pit_t *pit = (at91_pit_t *) ATMEL_BASE_PIT;
+	at91_pit_t *pit = (at91_pit_t *) AT91_PIT_BASE;
 
 	ulong now = readl(&pit->piir);
 
-	/* increment tbu if tbl has rolled over */
-	if (now < gd->tbl)
-		gd->tbu++;
-	gd->tbl = now;
-	return (((unsigned long long)gd->tbu) << 32) | gd->tbl;
+	if (now >= lastinc)	/* normal mode (non roll) */
+		/* move stamp forward with absolut diff ticks */
+		timestamp += (now - lastinc);
+	else			/* we have rollover of incrementer */
+		timestamp += (0xFFFFFFFF - lastinc) + now;
+	lastinc = now;
+	return timestamp;
+}
+
+void reset_timer_masked(void)
+{
+	/* reset time */
+	at91_pit_t *pit = (at91_pit_t *) AT91_PIT_BASE;
+
+	/* capture current incrementer value time */
+	lastinc = readl(&pit->piir);
+	timestamp = 0; /* start "advancing" time stamp from 0 */
+}
+
+ulong get_timer_masked(void)
+{
+	return tick_to_time(get_ticks());
 }
 
 void __udelay(unsigned long usec)
 {
-	unsigned long long start;
+	unsigned long long tmp;
 	ulong tmo;
 
-	start = get_ticks();		/* get current timestamp */
-	tmo = usec_to_tick(usec);	/* convert usecs to ticks */
-	while ((get_ticks() - start) < tmo)
-		;			/* loop till time has passed */
+	tmo = usec_to_tick(usec);
+	tmp = get_ticks() + tmo;	/* get current timestamp */
+
+	while (get_ticks() < tmp)	/* loop till event */
+		 /*NOP*/;
 }
 
-/*
- * get_timer(base) can be used to check for timeouts or
- * to measure elasped time relative to an event:
- *
- * ulong start_time = get_timer(0) sets start_time to the current
- * time value.
- * get_timer(start_time) returns the time elapsed since then.
- *
- * The time is used in CONFIG_SYS_HZ units!
- */
+void reset_timer(void)
+{
+	reset_timer_masked();
+}
+
 ulong get_timer(ulong base)
 {
-	return tick_to_time(get_ticks()) - base;
+	return get_timer_masked () - base;
 }
 
 /*
- * Return the number of timer ticks per second.
+ * This function is derived from PowerPC code (timebase clock frequency).
+ * On ARM it returns the number of timer ticks per second.
  */
 ulong get_tbclk(void)
 {
-	return gd->timer_rate_hz;
+	ulong tbclk;
+
+	tbclk = CONFIG_SYS_HZ;
+	return tbclk;
 }

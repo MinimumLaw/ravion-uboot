@@ -23,15 +23,12 @@
 #include "config.h"	/* CONFIG_BOARDDIR */
 
 #ifndef RESET_VECTOR_ADDRESS
-#ifdef CONFIG_RESET_VECTOR_ADDRESS
-#define RESET_VECTOR_ADDRESS	CONFIG_RESET_VECTOR_ADDRESS
-#else
 #define RESET_VECTOR_ADDRESS	0xfffffffc
-#endif
 #endif
 
 OUTPUT_ARCH(powerpc)
-
+/* Do we need any of these for elf?
+   __DYNAMIC = 0;    */
 PHDRS
 {
   text PT_LOAD;
@@ -42,16 +39,43 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   . = + SIZEOF_HEADERS;
+  .interp : { *(.interp) }
+  .hash          : { *(.hash)		}
+  .dynsym        : { *(.dynsym)		}
+  .dynstr        : { *(.dynstr)		}
+  .rel.text      : { *(.rel.text)		}
+  .rela.text     : { *(.rela.text)	}
+  .rel.data      : { *(.rel.data)		}
+  .rela.data     : { *(.rela.data)	}
+  .rel.rodata    : { *(.rel.rodata)	}
+  .rela.rodata   : { *(.rela.rodata)	}
+  .rel.got       : { *(.rel.got)		}
+  .rela.got      : { *(.rela.got)		}
+  .rel.ctors     : { *(.rel.ctors)	}
+  .rela.ctors    : { *(.rela.ctors)	}
+  .rel.dtors     : { *(.rel.dtors)	}
+  .rela.dtors    : { *(.rela.dtors)	}
+  .rel.bss       : { *(.rel.bss)		}
+  .rela.bss      : { *(.rela.bss)		}
+  .rel.plt       : { *(.rel.plt)		}
+  .rela.plt      : { *(.rela.plt)		}
+  .init          : { *(.init)	}
+  .plt : { *(.plt) }
   .text      :
   {
-    *(.text*)
+    *(.text)
+    *(.got1)
    } :text
     _etext = .;
     PROVIDE (etext = .);
     .rodata    :
    {
+    *(.eh_frame)
     *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
   } :text
+  .fini      : { *(.fini)    } =0
+  .ctors     : { *(.ctors)   }
+  .dtors     : { *(.dtors)   }
 
   /* Read-write section, merged into data segment: */
   . = (. + 0x00FF) & 0xFFFFFF00;
@@ -59,20 +83,23 @@ SECTIONS
   PROVIDE (erotext = .);
   .reloc   :
   {
+    *(.got)
     _GOT2_TABLE_ = .;
-    KEEP(*(.got2))
-    KEEP(*(.got))
-    PROVIDE(_GLOBAL_OFFSET_TABLE_ = . + 4);
+    *(.got2)
     _FIXUP_TABLE_ = .;
-    KEEP(*(.fixup))
+    *(.fixup)
   }
-  __got2_entries = ((_GLOBAL_OFFSET_TABLE_ - _GOT2_TABLE_) >> 2) - 1;
+  __got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >> 2;
   __fixup_entries = (. - _FIXUP_TABLE_) >> 2;
 
   .data    :
   {
-    *(.data*)
-    *(.sdata*)
+    *(.data)
+    *(.data1)
+    *(.sdata)
+    *(.sdata2)
+    *(.dynamic)
+    CONSTRUCTORS
   }
   _edata  =  .;
   PROVIDE (edata = .);
@@ -105,17 +132,13 @@ SECTIONS
      * start.o, since the first shadow TLB only covers 4k
      * of address space.
      */
-#ifdef CONFIG_INIT_TLB
-    CONFIG_INIT_TLB (.bootpg)
-#else
     CONFIG_BOARDDIR/init.o	(.bootpg)
-#endif
   } :text = 0xffff
 #endif
 
   .resetvec RESET_VECTOR_ADDRESS :
   {
-    KEEP(*(.resetvec))
+    *(.resetvec)
   } :text = 0xffff
 
   . = RESET_VECTOR_ADDRESS + 0x4;
@@ -134,12 +157,13 @@ SECTIONS
   __bss_start = .;
   .bss (NOLOAD)       :
   {
-   *(.bss*)
-   *(.sbss*)
+   *(.sbss) *(.scommon)
+   *(.dynbss)
+   *(.bss)
    *(COMMON)
   } :bss
 
   . = ALIGN(4);
-  __bss_end__ = . ;
+  _end = . ;
   PROVIDE (end = .);
 }

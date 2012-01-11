@@ -23,9 +23,6 @@
  */
 #include <common.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/arch/mmc_host_def.h>
-
-#include "panda_mux_data.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -40,8 +37,6 @@ const struct omap_sysinfo sysinfo = {
  */
 int board_init(void)
 {
-	gpmc_init();
-
 	gd->bd->bi_arch_number = MACH_TYPE_OMAP4_PANDA;
 	gd->bd->bi_boot_params = (0x80000000 + 0x100); /* boot param addr */
 
@@ -64,22 +59,3 @@ int misc_init_r(void)
 {
 	return 0;
 }
-
-void set_muxconf_regs_non_essential(void)
-{
-	do_set_mux(CONTROL_PADCONF_CORE, core_padconf_array_non_essential,
-		   sizeof(core_padconf_array_non_essential) /
-		   sizeof(struct pad_conf_entry));
-
-	do_set_mux(CONTROL_PADCONF_WKUP, wkup_padconf_array_non_essential,
-		   sizeof(wkup_padconf_array_non_essential) /
-		   sizeof(struct pad_conf_entry));
-}
-
-#ifdef CONFIG_GENERIC_MMC
-int board_mmc_init(bd_t *bis)
-{
-	omap_mmc_init(0);
-	return 0;
-}
-#endif

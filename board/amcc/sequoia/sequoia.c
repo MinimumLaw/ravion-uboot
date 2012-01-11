@@ -25,8 +25,8 @@
 #include <common.h>
 #include <libfdt.h>
 #include <fdt_support.h>
-#include <asm/ppc4xx.h>
-#include <asm/ppc4xx-gpio.h>
+#include <ppc4xx.h>
+#include <asm/gpio.h>
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <asm/bitops.h>
@@ -155,8 +155,7 @@ int misc_init_r(void)
 	gd->bd->bi_flashstart = 0 - gd->bd->bi_flashsize;
 	gd->bd->bi_flashoffset = 0;
 
-#if defined(CONFIG_NAND_U_BOOT) || defined(CONFIG_NAND_SPL) || \
-    defined(CONFIG_SYS_RAMBOOT)
+#if defined(CONFIG_NAND_U_BOOT) || defined(CONFIG_NAND_SPL)
 	mtdcr(EBC0_CFGADDR, PB3CR);
 #else
 	mtdcr(EBC0_CFGADDR, PB0CR);
@@ -164,8 +163,7 @@ int misc_init_r(void)
 	pbcr = mfdcr(EBC0_CFGDATA);
 	size_val = ffs(gd->bd->bi_flashsize) - 21;
 	pbcr = (pbcr & 0x0001ffff) | gd->bd->bi_flashstart | (size_val << 17);
-#if defined(CONFIG_NAND_U_BOOT) || defined(CONFIG_NAND_SPL) || \
-    defined(CONFIG_SYS_RAMBOOT)
+#if defined(CONFIG_NAND_U_BOOT) || defined(CONFIG_NAND_SPL)
 	mtdcr(EBC0_CFGADDR, PB3CR);
 #else
 	mtdcr(EBC0_CFGADDR, PB0CR);
@@ -323,16 +321,15 @@ int misc_init_r(void)
 	 * This fix will make the MAL burst disabling patch for the Linux
 	 * EMAC driver obsolete.
 	 */
-	reg = mfdcr(PLB4A0_ACR) & ~PLB4Ax_ACR_WRP_MASK;
-	mtdcr(PLB4A0_ACR, reg);
+	reg = mfdcr(PLB4_ACR) & ~PLB4_ACR_WRP;
+	mtdcr(PLB4_ACR, reg);
 
 	return 0;
 }
 
 int checkboard(void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 	u8 rev;
 	u32 clock = get_async_pci_freq();
 
@@ -345,9 +342,9 @@ int checkboard(void)
 	rev = in_8((void *)(CONFIG_SYS_BCSR_BASE + 0));
 	printf(", Rev. %X, PCI-Async=%d MHz", rev, clock / 1000000);
 
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

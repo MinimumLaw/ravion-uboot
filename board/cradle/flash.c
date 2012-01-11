@@ -136,7 +136,6 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
 {
 	int flag, prot, sect;
 	int rc = ERR_OK;
-	ulong start;
 
 	if (info->flash_id == FLASH_UNKNOWN)
 		return ERR_UNKNOWN_FLASH_TYPE;
@@ -174,7 +173,7 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
 		printf ("Erasing sector %2d ... ", sect);
 
 		/* arm simple, non interrupt dependent timer */
-		start = get_timer(0);
+		reset_timer_masked ();
 
 		if (info->protect[sect] == 0) {	/* not protected */
 			vu_short *addr = (vu_short *) (info->start[sect]);
@@ -183,7 +182,7 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
 			*addr = 0xD0;	/* erase confirm */
 
 			while ((*addr & 0x80) != 0x80) {
-				if (get_timer(start) >
+				if (get_timer_masked () >
 				    CONFIG_SYS_FLASH_ERASE_TOUT) {
 					*addr = 0xB0;	/* suspend erase */
 					*addr = 0xFF;	/* reset to read mode */
@@ -222,7 +221,6 @@ static int write_word (flash_info_t * info, ulong dest, ushort data)
 	vu_short *addr = (vu_short *) dest, val;
 	int rc = ERR_OK;
 	int flag;
-	ulong start;
 
 	/* Check if Flash is (sufficiently) erased
 	 */
@@ -248,11 +246,11 @@ static int write_word (flash_info_t * info, ulong dest, ushort data)
 	*addr = data;
 
 	/* arm simple, non interrupt dependent timer */
-	start = get_timer(0);
+	reset_timer_masked ();
 
 	/* wait while polling the status register */
 	while (((val = *addr) & 0x80) != 0x80) {
-		if (get_timer(start) > CONFIG_SYS_FLASH_WRITE_TOUT) {
+		if (get_timer_masked () > CONFIG_SYS_FLASH_WRITE_TOUT) {
 			rc = ERR_TIMOUT;
 			/* suspend program command */
 			*addr = 0xB0;

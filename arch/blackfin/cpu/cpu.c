@@ -19,7 +19,6 @@
 
 #include "cpu.h"
 #include "serial.h"
-#include "initcode.h"
 
 ulong bfin_poweron_retx;
 
@@ -45,16 +44,13 @@ void cpu_init_f(ulong bootflag, ulong loaded_from_ldr)
 		extern char _sdata_l1[], _data_l1_lma[], _data_l1_len[];
 		memcpy(&_sdata_l1, &_data_l1_lma, (unsigned long)_data_l1_len);
 	}
-
-	/*
-	 * Make sure our async settings are committed.  Some bootroms
-	 * (like the BF537) will reset some registers on us after it
-	 * has finished loading the LDR.  Or if we're booting over
-	 * JTAG, the initcode never got a chance to run.  Or if we
-	 * aren't booting from parallel flash, the initcode skipped
-	 * this step completely.
+#if defined(__ADSPBF537__) || defined(__ADSPBF536__) || defined(__ADSPBF534__)
+	/* The BF537 bootrom will reset the EBIU_AMGCTL register on us
+	 * after it has finished loading the LDR.  So configure it again.
 	 */
-	program_async_controller(NULL);
+	else
+		bfin_write_EBIU_AMGCTL(CONFIG_EBIU_AMGCTL_VAL);
+#endif
 
 	/* Save RETX so we can pass it while booting Linux */
 	bfin_poweron_retx = bootflag;

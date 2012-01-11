@@ -34,7 +34,6 @@
 #include <common.h>
 #include <asm/arch/pxa-regs.h>
 #include <netdev.h>
-#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -45,7 +44,7 @@ extern struct serial_device serial_ffuart_device;
 extern struct serial_device serial_btuart_device;
 extern struct serial_device serial_stuart_device;
 
-#if CONFIG_MK_POLARIS
+#if CONFIG_POLARIS
 #define BOOT_CONSOLE	"serial_stuart"
 #else
 #define BOOT_CONSOLE	"serial_ffuart"
@@ -58,27 +57,25 @@ extern struct serial_device serial_stuart_device;
 
 int usb_board_init(void)
 {
-	writel((readl(UHCHR) | UHCHR_PCPL | UHCHR_PSPL) &
-		~(UHCHR_SSEP0 | UHCHR_SSEP1 | UHCHR_SSEP2 | UHCHR_SSE),
-		UHCHR);
+	UHCHR = (UHCHR | UHCHR_PCPL | UHCHR_PSPL) &
+		~(UHCHR_SSEP0 | UHCHR_SSEP1 | UHCHR_SSEP2 | UHCHR_SSE);
 
-	writel(readl(UHCHR) | UHCHR_FSBIR, UHCHR);
+	UHCHR |= UHCHR_FSBIR;
 
-	while (readl(UHCHR) & UHCHR_FSBIR)
-		;
+	while (UHCHR & UHCHR_FSBIR);
 
-	writel(readl(UHCHR) & ~UHCHR_SSE, UHCHR);
-	writel((UHCHIE_UPRIE | UHCHIE_RWIE), UHCHIE);
+	UHCHR &= ~UHCHR_SSE;
+	UHCHIE = (UHCHIE_UPRIE | UHCHIE_RWIE);
 
 	/* Clear any OTG Pin Hold */
-	if (readl(PSSR) & PSSR_OTGPH)
-		writel(readl(PSSR) | PSSR_OTGPH, PSSR);
+	if (PSSR & PSSR_OTGPH)
+		PSSR |= PSSR_OTGPH;
 
-	writel(readl(UHCRHDA) & ~(RH_A_NPS), UHCRHDA);
-	writel(readl(UHCRHDA) | RH_A_PSM, UHCRHDA);
+	UHCRHDA &= ~(RH_A_NPS);
+	UHCRHDA |= RH_A_PSM;
 
 	/* Set port power control mask bits, only 3 ports. */
-	writel(readl(UHCRHDB) | (0x7<<17), UHCRHDB);
+	UHCRHDB |= (0x7<<17);
 
 	return 0;
 }
@@ -90,23 +87,22 @@ void usb_board_init_fail(void)
 
 void usb_board_stop(void)
 {
-	writel(readl(UHCHR) | UHCHR_FHR, UHCHR);
+	UHCHR |= UHCHR_FHR;
 	udelay(11);
-	writel(readl(UHCHR) & ~UHCHR_FHR, UHCHR);
+	UHCHR &= ~UHCHR_FHR;
 
-	writel(readl(UHCCOMS) | 1, UHCCOMS);
+	UHCCOMS |= 1;
 	udelay(10);
 
-	writel(readl(CKEN) & ~CKEN10_USBHOST, CKEN);
+	CKEN &= ~CKEN10_USBHOST;
 
 	return;
 }
 
 int board_init (void)
 {
-	/* We have RAM, disable cache */
-	dcache_disable();
-	icache_disable();
+	/* memory and cpu-speed are setup before relocation */
+	/* so we do _nothing_ here */
 
 	/* arch number of ConXS Board */
 	gd->bd->bi_arch_number = 776;
@@ -139,18 +135,18 @@ struct serial_device *default_serial_console (void)
 	return &serial_ffuart_device;
 }
 
-extern void pxa_dram_init(void);
-int dram_init(void)
-{
-	pxa_dram_init();
-	gd->ram_size = PHYS_SDRAM_1_SIZE;
-	return 0;
-}
-
-void dram_init_banksize(void)
+int dram_init (void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
+	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+	gd->bd->bi_dram[2].start = PHYS_SDRAM_3;
+	gd->bd->bi_dram[2].size = PHYS_SDRAM_3_SIZE;
+	gd->bd->bi_dram[3].start = PHYS_SDRAM_4;
+	gd->bd->bi_dram[3].size = PHYS_SDRAM_4_SIZE;
+
+	return 0;
 }
 
 #ifdef CONFIG_DRIVER_DM9000

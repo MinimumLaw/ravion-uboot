@@ -26,26 +26,17 @@
  */
 #include <common.h>
 #include <command.h>
-#include <linux/compiler.h>
 
-static int parse_argv(const char *);
-
-void __weak flush_icache(void)
-{
-	/* please define arch specific flush_icache */
-	puts("No arch specific flush_icache available!\n");
-}
+static int on_off (const char *);
 
 int do_icache ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:			/* on / off	*/
-		switch (parse_argv(argv[1])) {
+		switch (on_off(argv[1])) {
 		case 0:	icache_disable();
 			break;
 		case 1:	icache_enable ();
-			break;
-		case 2: flush_icache();
 			break;
 		}
 		/* FALL TROUGH */
@@ -59,22 +50,14 @@ int do_icache ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-void __weak flush_dcache(void)
-{
-	puts("No arch specific flush_dcache available!\n");
-	/* please define arch specific flush_dcache */
-}
-
 int do_dcache ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:			/* on / off	*/
-		switch (parse_argv(argv[1])) {
+		switch (on_off(argv[1])) {
 		case 0:	dcache_disable();
 			break;
 		case 1:	dcache_enable ();
-			break;
-		case 2: flush_dcache();
 			break;
 		}
 		/* FALL TROUGH */
@@ -89,11 +72,9 @@ int do_dcache ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 }
 
-static int parse_argv(const char *s)
+static int on_off (const char *s)
 {
-	if (strcmp(s, "flush") == 0) {
-		return (2);
-	} else if (strcmp(s, "on") == 0) {
+	if (strcmp(s, "on") == 0) {
 		return (1);
 	} else if (strcmp(s, "off") == 0) {
 		return (0);
@@ -105,13 +86,13 @@ static int parse_argv(const char *s)
 U_BOOT_CMD(
 	icache,   2,   1,     do_icache,
 	"enable or disable instruction cache",
-	"[on, off, flush]\n"
-	"    - enable, disable, or flush instruction cache"
+	"[on, off]\n"
+	"    - enable or disable instruction cache"
 );
 
 U_BOOT_CMD(
 	dcache,   2,   1,     do_dcache,
 	"enable or disable data cache",
-	"[on, off, flush]\n"
-	"    - enable, disable, or flush data (writethrough) cache"
+	"[on, off]\n"
+	"    - enable or disable data (writethrough) cache"
 );

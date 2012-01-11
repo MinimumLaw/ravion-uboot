@@ -32,8 +32,7 @@ extern void ft_qe_setup(void *blob);
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_BOOTCOUNT_LIMIT) && \
-	(defined(CONFIG_QE))
+#if defined(CONFIG_BOOTCOUNT_LIMIT) && defined(CONFIG_MPC8360)
 #include <asm/immap_qe.h>
 
 void fdt_fixup_muram (void *blob)

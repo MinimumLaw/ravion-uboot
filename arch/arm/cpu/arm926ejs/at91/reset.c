@@ -23,23 +23,22 @@
  */
 
 #include <common.h>
-#include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/at91_rstc.h>
+#include <asm/arch/io.h>
 
-/* Reset the cpu by telling the reset controller to do so */
+/*
+ * Reset the cpu by setting up the watchdog timer and let him time out.
+ */
 void reset_cpu(ulong ignored)
 {
-	at91_rstc_t *rstc = (at91_rstc_t *) ATMEL_BASE_RSTC;
+	at91_rstc_t *rstc = (at91_rstc_t *) AT91_RSTC_BASE;
 
-	writel(AT91_RSTC_KEY
-		| AT91_RSTC_CR_PROCRST	/* Processor Reset */
-		| AT91_RSTC_CR_PERRST	/* Peripheral Reset */
-#ifdef CONFIG_AT91RESET_EXTRST
-		| AT91_RSTC_CR_EXTRST	/* External Reset (assert nRST pin) */
-#endif
-		, &rstc->cr);
-	/* never reached */
-	while (1)
-		;
+	/* this is the way Linux does it */
+
+	writel(AT91_RSTC_KEY | AT91_RSTC_CR_PROCRST | AT91_RSTC_CR_PERRST,
+		&rstc->cr);
+
+	while (1);
+	/* Never reached */
 }

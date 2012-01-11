@@ -1,5 +1,5 @@
 /*
-  * Copyright (C) 2010 Albert ARIBAUD <albert.u.boot@aribaud.net>
+  * Copyright (C) 2010 Albert ARIBAUD <albert.aribaud@free.fr>
  *
  * Based on original Kirkwood support which is
  * Copyright (C) Marvell International Ltd. and its affiliates
@@ -90,10 +90,15 @@ static inline ulong read_timer(void)
 	      / (CONFIG_SYS_TCLK / 1000);
 }
 
-DECLARE_GLOBAL_DATA_PTR;
+static ulong timestamp;
+static ulong lastdec;
 
-#define timestamp gd->tbl
-#define lastdec gd->lastinc
+void reset_timer_masked(void)
+{
+	/* reset time */
+	lastdec = read_timer();
+	timestamp = 0;
+}
 
 ulong get_timer_masked(void)
 {
@@ -112,9 +117,19 @@ ulong get_timer_masked(void)
 	return timestamp;
 }
 
+void reset_timer(void)
+{
+	reset_timer_masked();
+}
+
 ulong get_timer(ulong base)
 {
 	return get_timer_masked() - base;
+}
+
+void set_timer(ulong t)
+{
+	timestamp = t;
 }
 
 static inline ulong uboot_cntr_val(void)
@@ -158,12 +173,9 @@ int timer_init(void)
 	cntmrctrl |= CTCR_ARM_TIMER_EN(UBOOT_CNTR);
 	cntmrctrl |= CTCR_ARM_TIMER_AUTO_EN(UBOOT_CNTR);
 	writel(cntmrctrl, CNTMR_CTRL_REG);
-	return 0;
-}
 
-void timer_init_r(void)
-{
 	/* init the timestamp and lastdec value */
-	lastdec = read_timer();
-	timestamp = 0;
+	reset_timer_masked();
+
+	return 0;
 }

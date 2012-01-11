@@ -76,10 +76,18 @@ static void drv_system_init (void)
 
 	strcpy (dev.name, "serial");
 	dev.flags = DEV_FLAGS_OUTPUT | DEV_FLAGS_INPUT | DEV_FLAGS_SYSTEM;
+#ifdef CONFIG_SERIAL_SOFTWARE_FIFO
+	dev.putc = serial_buffered_putc;
+	dev.puts = serial_buffered_puts;
+	dev.getc = serial_buffered_getc;
+	dev.tstc = serial_buffered_tstc;
+#else
 	dev.putc = serial_putc;
 	dev.puts = serial_puts;
 	dev.getc = serial_getc;
 	dev.tstc = serial_tstc;
+#endif
+
 	stdio_register (&dev);
 
 #ifdef CONFIG_SYS_DEVICE_NULLDEV
@@ -105,7 +113,7 @@ struct list_head* stdio_get_list(void)
 	return &(devs.list);
 }
 
-struct stdio_dev* stdio_get_by_name(const char *name)
+struct stdio_dev* stdio_get_by_name(char* name)
 {
 	struct list_head *pos;
 	struct stdio_dev *dev;
@@ -155,12 +163,12 @@ int stdio_register (struct stdio_dev * dev)
  * returns 0 if success, -1 if device is assigned and 1 if devname not found
  */
 #ifdef	CONFIG_SYS_STDIO_DEREGISTER
-int stdio_deregister(const char *devname)
+int stdio_deregister(char *devname)
 {
 	int l;
 	struct list_head *pos;
 	struct stdio_dev *dev;
-	char temp_names[3][16];
+	char temp_names[3][8];
 
 	dev = stdio_get_by_name(devname);
 
@@ -174,7 +182,7 @@ int stdio_deregister(const char *devname)
 		}
 		memcpy (&temp_names[l][0],
 			stdio_devices[l]->name,
-			sizeof(temp_names[l]));
+			sizeof(stdio_devices[l]->name));
 	}
 
 	list_del(&(dev->list));
@@ -193,7 +201,7 @@ int stdio_deregister(const char *devname)
 
 int stdio_init (void)
 {
-#if defined(CONFIG_NEEDS_MANUAL_RELOC)
+#if !defined(CONFIG_RELOC_FIXUP_WORKS)
 	/* already relocated for current ARM implementation */
 	ulong relocation_offset = gd->reloc_off;
 	int i;
@@ -203,7 +211,7 @@ int stdio_init (void)
 		stdio_names[i] = (char *) (((ulong) stdio_names[i]) +
 						relocation_offset);
 	}
-#endif /* CONFIG_NEEDS_MANUAL_RELOC */
+#endif /* !CONFIG_RELOC_FIXUP_WORKS */
 
 	/* Initialize the list */
 	INIT_LIST_HEAD(&(devs.list));

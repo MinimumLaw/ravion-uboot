@@ -21,7 +21,7 @@
 #include <netdev.h>
 #include <asm/io.h>
 
-#include <faraday/ftsmc020.h>
+#include <asm/arch/ftsmc020.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -46,7 +46,8 @@ int dram_init(void)
 
 	actual_size = get_ram_size((void *)sdram_base, expected_size);
 
-	gd->ram_size = actual_size;
+	gd->bd->bi_dram[0].start = sdram_base;
+	gd->bd->bi_dram[0].size  = actual_size;
 
 	if (expected_size != actual_size)
 		printf("Warning: Only %lu of %lu MiB SDRAM is working\n",

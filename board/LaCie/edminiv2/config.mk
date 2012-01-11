@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010 Albert ARIBAUD <albert.u.boot@aribaud.net>
+# Copyright (C) 2010 Albert ARIBAUD <albert.aribaud@free.fr>
 #
 # (C) Copyright 2009
 # Marvell Semiconductor <www.marvell.com>
@@ -24,5 +24,4 @@
 # MA 02110-1301 USA
 #
 
-# TEXT_BASE must equal the intended FLASH location of u-boot.
-CONFIG_SYS_TEXT_BASE = 0xfff90000
+TEXT_BASE = 0x00100000

@@ -342,3 +342,12 @@ int serial_tstc (void)
 {
 	return 0;
 }
+
+unsigned long post_word_load (void)
+{
+	return 0l;
+}
+void post_word_store (unsigned long val)
+{
+	return;
+}

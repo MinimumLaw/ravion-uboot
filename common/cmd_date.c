@@ -31,17 +31,17 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const char * const weekdays[] = {
+const char *weekdays[] = {
 	"Sun", "Mon", "Tues", "Wednes", "Thurs", "Fri", "Satur",
 };
 
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
-#define RELOC(a)	((typeof(a))((unsigned long)(a) + gd->reloc_off))
-#else
+#ifdef CONFIG_RELOC_FIXUP_WORKS
 #define RELOC(a)	a
+#else
+#define RELOC(a)	((typeof(a))((unsigned long)(a) + gd->reloc_off))
 #endif
 
-int mk_date (const char *, struct rtc_time *);
+int mk_date (char *, struct rtc_time *);
 
 int do_date (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -106,7 +106,7 @@ int do_date (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 /*
  * simple conversion of two-digit string with error checking
  */
-static int cnvrt2 (const char *str, int *valp)
+static int cnvrt2 (char *str, int *valp)
 {
 	int val;
 
@@ -131,7 +131,7 @@ static int cnvrt2 (const char *str, int *valp)
  * Some basic checking for valid values is done, but this will not catch
  * all possible error conditions.
  */
-int mk_date (const char *datestr, struct rtc_time *tmp)
+int mk_date (char *datestr, struct rtc_time *tmp)
 {
 	int len, val;
 	char *ptr;

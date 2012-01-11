@@ -75,7 +75,10 @@ static inline void * phys_to_virt(unsigned long address)
 static inline void *
 map_physmem(phys_addr_t paddr, unsigned long len, unsigned long flags)
 {
-	return (void *)paddr;
+	if (flags == MAP_WRBACK)
+		return (void *)P1SEGADDR(paddr);
+	else
+		return (void *)P2SEGADDR(paddr);
 }
 
 #endif /* __ASM_AVR32_ADDRSPACE_H */

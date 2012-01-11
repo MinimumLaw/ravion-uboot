@@ -22,7 +22,6 @@
 #include <common.h>
 #include <command.h>
 #include <serial.h>
-#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -30,11 +29,10 @@ DECLARE_GLOBAL_DATA_PTR;
  * Miscelaneous platform dependent initialisations
  */
 
-int board_init(void)
+int board_init (void)
 {
-	/* We have RAM, disable cache */
-	dcache_disable();
-	icache_disable();
+	/* memory and cpu-speed are setup before relocation */
+	/* so we do _nothing_ here */
 
 	/* Arch number of Palm Tungsten|C */
 	gd->bd->bi_arch_number = MACH_TYPE_PALMTC;
@@ -43,28 +41,21 @@ int board_init(void)
 	gd->bd->bi_boot_params = 0xa0000100;
 
 	/* Set PWM for LCD */
-	writel(0x5f, PWM_CTRL1);
-	writel(0x3ff, PWM_PERVAL1);
-	writel(892, PWM_PWDUTY1);
+	PWM_CTRL1 = 0x5f;
+	PWM_PERVAL1 = 0x3ff;
+	PWM_PWDUTY1 = 892;
 
 	return 0;
 }
 
-struct serial_device *default_serial_console(void)
+struct serial_device *default_serial_console (void)
 {
 	return &serial_ffuart_device;
 }
 
-extern void pxa_dram_init(void);
-int dram_init(void)
-{
-	pxa_dram_init();
-	gd->ram_size = PHYS_SDRAM_1_SIZE;
-	return 0;
-}
-
-void dram_init_banksize(void)
+int dram_init (void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+	return 0;
 }

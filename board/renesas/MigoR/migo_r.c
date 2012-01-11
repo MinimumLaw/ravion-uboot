@@ -28,8 +28,6 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 int checkboard(void)
 {
 	puts("BOARD: Renesas MigoR\n");
@@ -43,6 +41,8 @@ int board_init(void)
 
 int dram_init (void)
 {
+	DECLARE_GLOBAL_DATA_PTR;
+
 	gd->bd->bi_memstart = CONFIG_SYS_SDRAM_BASE;
 	gd->bd->bi_memsize = CONFIG_SYS_SDRAM_SIZE;
 	printf("DRAM:  %dMB\n", CONFIG_SYS_SDRAM_SIZE / (1024 * 1024));

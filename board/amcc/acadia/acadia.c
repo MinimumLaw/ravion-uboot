@@ -102,16 +102,15 @@ int misc_init_f(void)
  */
 int checkboard(void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 	u8 rev;
 
 	rev = in8(CONFIG_SYS_CPLD_BASE + 0);
 	printf("Board: Acadia - AMCC PPC405EZ Evaluation Board, Rev. %X", rev);
 
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

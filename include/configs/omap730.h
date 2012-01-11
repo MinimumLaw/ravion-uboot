@@ -31,7 +31,7 @@
 #ifndef __INCLUDED_OMAP730_H
 #define __INCLUDED_OMAP730_H
 
-#include <asm/sizes.h>
+#include <asm/arch/sizes.h>
 
 /***************************************************************************
  * OMAP730 Configuration Registers

@@ -48,11 +48,11 @@ static inline uint32_t bfin_read_emudat(void)
 static bool jtag_write_emudat(uint32_t emudat)
 {
 	static bool overflowed = false;
-	ulong timeout = get_timer(0);
+	ulong timeout = get_timer(0) + CONFIG_JTAG_CONSOLE_TIMEOUT;
 	while (bfin_read_DBGSTAT() & 0x1) {
 		if (overflowed)
 			return overflowed;
-		if (get_timer(timeout) > CONFIG_JTAG_CONSOLE_TIMEOUT)
+		if (timeout < get_timer(0))
 			overflowed = true;
 	}
 	overflowed = false;

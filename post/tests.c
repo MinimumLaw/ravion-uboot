@@ -46,7 +46,6 @@ extern int sysmon_post_test (int flags);
 extern int dsp_post_test (int flags);
 extern int codec_post_test (int flags);
 extern int ecc_post_test (int flags);
-extern int flash_post_test(int flags);
 
 extern int dspic_init_post_test (int flags);
 extern int dspic_post_test (int flags);
@@ -166,9 +165,6 @@ struct post_test post_list[] =
     },
 #endif
 #if CONFIG_POST & CONFIG_SYS_POST_UART
-#if defined(CONFIG_POST_UART)
-	CONFIG_POST_UART,
-#else
     {
 	"UART test",
 	"uart",
@@ -179,7 +175,6 @@ struct post_test post_list[] =
 	NULL,
 	CONFIG_SYS_POST_UART
     },
-#endif /* CONFIG_POST_UART */
 #endif
 #if CONFIG_POST & CONFIG_SYS_POST_ETHER
     {
@@ -302,20 +297,8 @@ struct post_test post_list[] =
 	NULL,
 	NULL,
 	CONFIG_SYS_POST_COPROC
-    },
-#endif
-#if CONFIG_POST & CONFIG_SYS_POST_FLASH
-    {
-	"Parallel NOR flash test",
-	"flash",
-	"This test verifies parallel flash operations.",
-	POST_RAM | POST_SLOWTEST | POST_MANUAL,
-	&flash_post_test,
-	NULL,
-	NULL,
-	CONFIG_SYS_POST_FLASH
-    },
+    }
 #endif
 };
 
-unsigned int post_list_size = ARRAY_SIZE(post_list);
+unsigned int post_list_size = sizeof (post_list) / sizeof (struct post_test);

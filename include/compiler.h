@@ -44,9 +44,10 @@
 #ifdef __linux__
 # include <endian.h>
 # include <byteswap.h>
-#elif defined(__MACH__) || defined(__FreeBSD__)
+#elif defined(__MACH__)
 # include <machine/endian.h>
 typedef unsigned long ulong;
+typedef unsigned int  uint;
 #endif
 
 typedef uint8_t __u8;

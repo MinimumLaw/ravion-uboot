@@ -20,4 +20,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
 #
-TEXT_BASE = 0xFFFA0000
+
+#
+# esd AR405 boards
+#
+
+#TEXT_BASE = 0xFFFE0000
+#TEXT_BASE = 0xFFFD0000
+TEXT_BASE = 0xFFFC0000

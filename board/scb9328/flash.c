@@ -97,12 +97,11 @@ static FLASH_BUS_RET flash_status_reg (void)
 static int flash_ready (ulong timeout)
 {
 	int ok = 1;
-	ulong start;
 
-	start = get_timer(0);
+	reset_timer_masked ();
 	while ((flash_status_reg () & FLASH_CMD (CFI_INTEL_SR_READY)) !=
 		   FLASH_CMD (CFI_INTEL_SR_READY)) {
-		if (get_timer(start) > timeout && timeout != 0) {
+		if (get_timer_masked () > timeout && timeout != 0) {
 			ok = 0;
 			break;
 		}

@@ -69,6 +69,15 @@
 	*((vu_short *)((_b_) + ((_o_) * 2) + ISA_OFFSET)) = (_d_)
 #define DP_IN_DATA(_b_, _d_)	(_d_) = *( (vu_short *) ((_b_) + ISA_OFFSET))
 #define DP_OUT_DATA(_b_, _d_)	*( (vu_short *) ((_b_)+ISA_OFFSET)) = (_d_)
+/* Colibri PXA320 Specific goo */
+#elif defined(CONFIG_COLIBRI_PXA320) || defined(CONFIG_COLIBRI_PXA310)
+#define ISA_OFFSET	0x0000
+#define DP_IN(_b_, _o_, _d_)	(_d_) = \
+	*( (vu_char *) ((_b_) + ((_o_) * 2) + ISA_OFFSET))
+#define DP_OUT(_b_, _o_, _d_) \
+	*((vu_char *)((_b_) + ((_o_) * 2) + ISA_OFFSET)) = (_d_)
+#define DP_IN_DATA(_b_, _d_)	(_d_) = *( (vu_char *) ((_b_) + ISA_OFFSET))
+#define DP_OUT_DATA(_b_, _d_)	*( (vu_char *) ((_b_)+ISA_OFFSET)) = (_d_)
 #else
 /* Please change for your target boards */
 #define ISA_OFFSET	0x0000

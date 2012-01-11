@@ -32,7 +32,6 @@
 #include <watchdog.h>
 #include <serial.h>
 #include <asm/arch/pxa-regs.h>
-#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -74,60 +73,60 @@ void pxa_setbrg_dev (unsigned int uart_index)
 	switch (uart_index) {
 		case FFUART_INDEX:
 #ifdef CONFIG_CPU_MONAHANS
-			writel(readl(CKENA) | CKENA_22_FFUART, CKENA);
+			CKENA |= CKENA_22_FFUART;
 #else
-			writel(readl(CKEN) | CKEN6_FFUART, CKEN);
+			CKEN |= CKEN6_FFUART;
 #endif /* CONFIG_CPU_MONAHANS */
 
-			writel(0, FFIER);	/* Disable for now */
-			writel(0, FFFCR);	/* No fifos enabled */
+			FFIER = 0;	/* Disable for now */
+			FFFCR = 0;	/* No fifos enabled */
 
 			/* set baud rate */
-			writel(LCR_WLS0 | LCR_WLS1 | LCR_DLAB, FFLCR);
-			writel(quot & 0xff, FFDLL);
-			writel(quot >> 8, FFDLH);
-			writel(LCR_WLS0 | LCR_WLS1, FFLCR);
+			FFLCR = LCR_WLS0 | LCR_WLS1 | LCR_DLAB;
+			FFDLL = quot & 0xff;
+			FFDLH = quot >> 8;
+			FFLCR = LCR_WLS0 | LCR_WLS1;
 
-			writel(IER_UUE, FFIER);	/* Enable FFUART */
+			FFIER = IER_UUE;	/* Enable FFUART */
 		break;
 
 		case BTUART_INDEX:
 #ifdef CONFIG_CPU_MONAHANS
-			writel(readl(CKENA) | CKENA_21_BTUART, CKENA);
+			CKENA |= CKENA_21_BTUART;
 #else
-			writel(readl(CKEN) | CKEN7_BTUART, CKEN);
+			CKEN |= CKEN7_BTUART;
 #endif /*  CONFIG_CPU_MONAHANS */
 
-			writel(0, BTIER);
-			writel(0, BTFCR);
+			BTIER = 0;
+			BTFCR = 0;
 
 			/* set baud rate */
-			writel(LCR_DLAB, BTLCR);
-			writel(quot & 0xff, BTDLL);
-			writel(quot >> 8, BTDLH);
-			writel(LCR_WLS0 | LCR_WLS1, BTLCR);
+			BTLCR = LCR_DLAB;
+			BTDLL = quot & 0xff;
+			BTDLH = quot >> 8;
+			BTLCR = LCR_WLS0 | LCR_WLS1;
 
-			writel(IER_UUE, BTIER);	/* Enable BFUART */
+			BTIER = IER_UUE;	/* Enable BFUART */
 
 		break;
 
 		case STUART_INDEX:
 #ifdef CONFIG_CPU_MONAHANS
-			writel(readl(CKENA) | CKENA_23_STUART, CKENA);
+			CKENA |= CKENA_23_STUART;
 #else
-			writel(readl(CKEN) | CKEN5_STUART, CKEN);
+			CKEN |= CKEN5_STUART;
 #endif /* CONFIG_CPU_MONAHANS */
 
-			writel(0, STIER);
-			writel(0, STFCR);
+			STIER = 0;
+			STFCR = 0;
 
 			/* set baud rate */
-			writel(LCR_DLAB, STLCR);
-			writel(quot & 0xff, STDLL);
-			writel(quot >> 8, STDLH);
-			writel(LCR_WLS0 | LCR_WLS1, STLCR);
+			STLCR = LCR_DLAB;
+			STDLL = quot & 0xff;
+			STDLH = quot >> 8;
+			STLCR = LCR_WLS0 | LCR_WLS1;
 
-			writel(IER_UUE, STIER);	/* Enable STUART */
+			STIER = IER_UUE;			/* Enable STUART */
 			break;
 
 		default:
@@ -157,21 +156,21 @@ void pxa_putc_dev (unsigned int uart_index,const char c)
 	switch (uart_index) {
 		case FFUART_INDEX:
 		/* wait for room in the tx FIFO on FFUART */
-			while ((readl(FFLSR) & LSR_TEMT) == 0)
+			while ((FFLSR & LSR_TEMT) == 0)
 				WATCHDOG_RESET ();	/* Reset HW Watchdog, if needed */
-			writel(c, FFTHR);
+			FFTHR = c;
 			break;
 
 		case BTUART_INDEX:
-			while ((readl(BTLSR) & LSR_TEMT) == 0)
+			while ((BTLSR & LSR_TEMT ) == 0 )
 				WATCHDOG_RESET ();	/* Reset HW Watchdog, if needed */
-			writel(c, BTTHR);
+			BTTHR = c;
 			break;
 
 		case STUART_INDEX:
-			while ((readl(STLSR) & LSR_TEMT) == 0)
+			while ((STLSR & LSR_TEMT ) == 0 )
 				WATCHDOG_RESET ();	/* Reset HW Watchdog, if needed */
-			writel(c, STTHR);
+			STTHR = c;
 			break;
 	}
 
@@ -189,11 +188,11 @@ int pxa_tstc_dev (unsigned int uart_index)
 {
 	switch (uart_index) {
 		case FFUART_INDEX:
-			return readl(FFLSR) & LSR_DR;
+			return FFLSR & LSR_DR;
 		case BTUART_INDEX:
-			return readl(BTLSR) & LSR_DR;
+			return BTLSR & LSR_DR;
 		case STUART_INDEX:
-			return readl(STLSR) & LSR_DR;
+			return STLSR & LSR_DR;
 	}
 	return -1;
 }
@@ -207,21 +206,18 @@ int pxa_getc_dev (unsigned int uart_index)
 {
 	switch (uart_index) {
 		case FFUART_INDEX:
-			while (!(readl(FFLSR) & LSR_DR))
-				/* Reset HW Watchdog, if needed */
-				WATCHDOG_RESET();
-			return (char) readl(FFRBR) & 0xff;
+			while (!(FFLSR & LSR_DR))
+			WATCHDOG_RESET ();	/* Reset HW Watchdog, if needed */
+			return (char) FFRBR & 0xff;
 
 		case BTUART_INDEX:
-			while (!(readl(BTLSR) & LSR_DR))
-				/* Reset HW Watchdog, if needed */
-				WATCHDOG_RESET();
-			return (char) readl(BTRBR) & 0xff;
+			while (!(BTLSR & LSR_DR))
+			WATCHDOG_RESET ();	/* Reset HW Watchdog, if needed */
+			return (char) BTRBR & 0xff;
 		case STUART_INDEX:
-			while (!(readl(STLSR) & LSR_DR))
-				/* Reset HW Watchdog, if needed */
-				WATCHDOG_RESET();
-			return (char) readl(STRBR) & 0xff;
+			while (!(STLSR & LSR_DR))
+			WATCHDOG_RESET ();	/* Reset HW Watchdog, if needed */
+			return (char) STRBR & 0xff;
 	}
 	return -1;
 }
@@ -268,6 +264,7 @@ static int ffuart_tstc(void)
 struct serial_device serial_ffuart_device =
 {
 	"serial_ffuart",
+	"PXA",
 	ffuart_init,
 	NULL,
 	ffuart_setbrg,
@@ -312,6 +309,7 @@ static int btuart_tstc(void)
 struct serial_device serial_btuart_device =
 {
 	"serial_btuart",
+	"PXA",
 	btuart_init,
 	NULL,
 	btuart_setbrg,
@@ -356,6 +354,7 @@ static int stuart_tstc(void)
 struct serial_device serial_stuart_device =
 {
 	"serial_stuart",
+	"PXA",
 	stuart_init,
 	NULL,
 	stuart_setbrg,

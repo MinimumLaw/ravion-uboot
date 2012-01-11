@@ -37,6 +37,14 @@
 
 #include <common.h>
 
+/* XXX U-BOOT XXX */
+#if 0
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mtd/nand_ecc.h>
+#endif
+
 #include <asm/errno.h>
 #include <linux/mtd/mtd.h>
 
@@ -132,6 +140,10 @@ int nand_calculate_ecc(struct mtd_info *mtd, const u_char *dat,
 
 	return 0;
 }
+/* XXX U-BOOT XXX */
+#if 0
+EXPORT_SYMBOL(nand_calculate_ecc);
+#endif
 #endif /* CONFIG_NAND_SPL */
 
 static inline int countbits(uint32_t byte)
@@ -200,3 +212,8 @@ int nand_correct_data(struct mtd_info *mtd, u_char *dat,
 
 	return -EBADMSG;
 }
+
+/* XXX U-BOOT XXX */
+#if 0
+EXPORT_SYMBOL(nand_correct_data);
+#endif

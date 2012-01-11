@@ -35,14 +35,7 @@
 #include <linux/mtd/nand_ecc.h>
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <asm/ppc4xx.h>
-
-#ifndef CONFIG_SYS_NAND_BCR
-#define CONFIG_SYS_NAND_BCR 0x80002222
-#endif
-#ifndef CONFIG_SYS_NDFC_EBC0_CFG
-#define CONFIG_SYS_NDFC_EBC0_CFG 0xb8400000
-#endif
+#include <ppc4xx.h>
 
 /*
  * We need to store the info, which chip-select (CS) is used for the
@@ -147,24 +140,11 @@ static int ndfc_verify_buf(struct mtd_info *mtdinfo, const uint8_t *buf, int len
 
 	return 0;
 }
-
-/*
- * Read a byte from the NDFC.
- */
-static uint8_t ndfc_read_byte(struct mtd_info *mtd)
-{
-
-	struct nand_chip *chip = mtd->priv;
-
-#ifdef CONFIG_SYS_NDFC_16BIT
-	return (uint8_t) readw(chip->IO_ADDR_R);
-#else
-	return readb(chip->IO_ADDR_R);
-#endif
-
-}
-
 #endif /* #ifndef CONFIG_NAND_SPL */
+
+#ifndef CONFIG_SYS_NAND_BCR
+#define CONFIG_SYS_NAND_BCR 0x80002222
+#endif
 
 void board_nand_select_device(struct nand_chip *nand, int chip)
 {
@@ -218,25 +198,20 @@ int board_nand_init(struct nand_chip *nand)
 	nand->ecc.bytes = 3;
 	nand->select_chip = ndfc_select_chip;
 
-#ifdef CONFIG_SYS_NDFC_16BIT
-	nand->options |= NAND_BUSWIDTH_16;
-#endif
-
 #ifndef CONFIG_NAND_SPL
 	nand->write_buf  = ndfc_write_buf;
 	nand->verify_buf = ndfc_verify_buf;
-	nand->read_byte = ndfc_read_byte;
-
-	chip++;
 #else
 	/*
 	 * Setup EBC (CS0 only right now)
 	 */
-	mtebc(EBC0_CFG, CONFIG_SYS_NDFC_EBC0_CFG);
+	mtebc(EBC0_CFG, 0xb8400000);
 
 	mtebc(PB0CR, CONFIG_SYS_EBC_PB0CR);
 	mtebc(PB0AP, CONFIG_SYS_EBC_PB0AP);
 #endif
+
+	chip++;
 
 	return 0;
 }

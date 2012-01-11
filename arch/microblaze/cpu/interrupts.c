@@ -41,11 +41,8 @@ void enable_interrupts (void)
 
 int disable_interrupts (void)
 {
-	unsigned int msr;
-
-	MFS(msr, rmsr);
 	MSRCLR(0x2);
-	return (msr & 0x2) != 0;
+	return 0;
 }
 
 #ifdef CONFIG_SYS_INTC_0

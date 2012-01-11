@@ -153,25 +153,24 @@ void Init_DMA(void *dst)
 {
 
 #if defined(CONFIG_DEB_DMA_URGENT)
-	bfin_write_EBIU_DDRQUE(bfin_read_EBIU_DDRQUE() | DEB2_URGENT);
+	*pEBIU_DDRQUE |= DEB2_URGENT;
 #endif
 
-	bfin_write_DMA12_START_ADDR(dst);
+	*pDMA12_START_ADDR = dst;
 
 	/* X count */
-	bfin_write_DMA12_X_COUNT((LCD_X_RES * LCD_BPP) / DMA_BUS_SIZE);
-	bfin_write_DMA12_X_MODIFY(DMA_BUS_SIZE / 8);
+	*pDMA12_X_COUNT = (LCD_X_RES * LCD_BPP) / DMA_BUS_SIZE;
+	*pDMA12_X_MODIFY = DMA_BUS_SIZE / 8;
 
 	/* Y count */
-	bfin_write_DMA12_Y_COUNT(LCD_Y_RES);
-	bfin_write_DMA12_Y_MODIFY(DMA_BUS_SIZE / 8);
+	*pDMA12_Y_COUNT = LCD_Y_RES;
+	*pDMA12_Y_MODIFY = DMA_BUS_SIZE / 8;
 
 	/* DMA Config */
-	bfin_write_DMA12_CONFIG(
+	*pDMA12_CONFIG =
 		WDSIZE_32	|	/* 32 bit DMA */
 		DMA2D 		|	/* 2D DMA */
-		FLOW_AUTO		/* autobuffer mode */
-	);
+		FLOW_AUTO;		/* autobuffer mode */
 }
 
 void Init_Ports(void)
@@ -195,12 +194,12 @@ void Init_Ports(void)
 
 void EnableDMA(void)
 {
-	bfin_write_DMA12_CONFIG(bfin_read_DMA12_CONFIG() | DMAEN);
+	*pDMA12_CONFIG |= DMAEN;
 }
 
 void DisableDMA(void)
 {
-	bfin_write_DMA12_CONFIG(bfin_read_DMA12_CONFIG() & ~DMAEN);
+	*pDMA12_CONFIG &= ~DMAEN;
 }
 
 /* enable and disable PPI functions */
@@ -223,12 +222,6 @@ int video_init(void *dst)
 	EnablePPI();
 
 	return 0;
-}
-
-void video_stop(void)
-{
-	DisablePPI();
-	DisableDMA();
 }
 
 static void dma_bitblit(void *dst, fastimage_t *logo, int x, int y)

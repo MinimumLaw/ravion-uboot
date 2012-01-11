@@ -30,6 +30,7 @@ SECTIONS
 	.text : {
 		*(.text*)
 		. = ALIGN(16);
+		*(.eh_frame)
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 	}
 
@@ -38,18 +39,14 @@ SECTIONS
 		*(.data*)
 		*(.sdata*)
 		_GOT2_TABLE_ = .;
-		KEEP(*(.got2))
-		KEEP(*(.got))
-		PROVIDE(_GLOBAL_OFFSET_TABLE_ = . + 4);
+		*(.got2)
+		__got2_entries = (. - _GOT2_TABLE_) >> 2;
 	}
-	__got2_entries = ((_GLOBAL_OFFSET_TABLE_ - _GOT2_TABLE_) >> 2) - 1;
 
 	. = ALIGN(8);
 	__bss_start = .;
-	.bss (NOLOAD) : {
-		*(.*bss)
-	}
-	__bss_end__ = .;
+	.bss (NOLOAD) : { *(.*bss) }
+	_end = .;
 }
 ENTRY(_start)
-ASSERT(__bss_end__ <= 0xfff01000, "NAND bootstrap too big");
+ASSERT(_end <= 0xfff01000, "NAND bootstrap too big");

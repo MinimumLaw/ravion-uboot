@@ -26,34 +26,20 @@
 
 #include <common.h>
 #include <netdev.h>
-#include <asm/arch/clock.h>
-#include <asm/arch/imx-regs.h>
-#include <watchdog.h>
+#include <asm/arch/mx31.h>
+#include <asm/arch/mx31-regs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifdef CONFIG_HW_WATCHDOG
-void hw_watchdog_reset(void)
-{
-	mxc_hw_watchdog_reset();
-}
-#endif
-
 int dram_init(void)
-{
-	/* dram_init must store complete ramsize in gd->ram_size */
-	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
-				PHYS_SDRAM_1_SIZE);
-	return 0;
-}
-
-void dram_init_banksize(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+
+	return 0;
 }
 
-int board_early_init_f(void)
+int board_init(void)
 {
 	/* CS5: CPLD incl. network controller */
 	__REG(CSCR_U(5)) = 0x0000d843;
@@ -64,11 +50,6 @@ int board_early_init_f(void)
 	mx31_uart1_hw_init();
 	mx31_spi2_hw_init();
 
-	return 0;
-}
-
-int board_init(void)
-{
 	gd->bd->bi_arch_number = MACH_TYPE_MX31_3DS; /* board id for linux */
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
@@ -76,17 +57,9 @@ int board_init(void)
 	return 0;
 }
 
-int board_late_init(void)
-{
-#ifdef CONFIG_HW_WATCHDOG
-	mxc_hw_watchdog_enable();
-#endif
-	return 0;
-}
-
 int checkboard(void)
 {
-	printf("Board: MX31PDK\n");
+	printf("Board: i.MX31 MAX PDK (3DS)\n");
 	return 0;
 }
 

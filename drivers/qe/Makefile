@@ -22,9 +22,9 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libqe.o
+LIB	:= $(obj)qe.a
 
-COBJS-$(and $(CONFIG_QE),$(CONFIG_OF_LIBFDT)) += fdt.o
+COBJS-$(CONFIG_OF_LIBFDT) += fdt.o
 COBJS-$(CONFIG_QE) += qe.o uccf.o uec.o uec_phy.o
 
 COBJS	:= $(COBJS-y)
@@ -34,7 +34,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 all:	$(LIB)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

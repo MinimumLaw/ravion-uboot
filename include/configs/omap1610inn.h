@@ -34,8 +34,7 @@
 #define CONFIG_OMAP	1			/* in a TI OMAP core    */
 #define CONFIG_OMAP1610	1		/* which is in a 1610  */
 #define CONFIG_INNOVATOROMAP1610	1	/*  a Innovator Board  */
-
-#define CONFIG_MACH_TYPE	MACH_TYPE_OMAP_INNOVATOR
+#define CONFIG_MACH_OMAP_INNOVATOR	/* Select board mach-type */
 
 /* input clock of PLL */
 /* the OMAP1610 Innovator has 12MHz input clock */
@@ -52,6 +51,7 @@
  * Size of malloc() pool
  */
 #define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + 128*1024)
+#define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes reserved for initial data */
 
 /*
  * Hardware drivers
@@ -178,8 +178,6 @@ extern unsigned long omap_flash_base;		/* set in flash__init */
 
 #endif
 
-#define PHYS_SRAM		0x20000000
-
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
@@ -196,8 +194,5 @@ extern unsigned long omap_flash_base;		/* set in flash__init */
 #define CONFIG_ENV_IS_IN_FLASH	1
 #define CONFIG_ENV_SIZE	0x20000	/* Total Size of Environment Sector */
 #define CONFIG_ENV_OFFSET	0x20000	/* environment starts here  */
-
-#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define CONFIG_SYS_INIT_SP_ADDR 	PHYS_SRAM
 
 #endif							/* __CONFIG_H */

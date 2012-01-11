@@ -94,8 +94,7 @@ unsigned int __get_pci_config_dword (u32 addr)
 			     ".section __ex_table,\"a\"\n"
 			     "       .align 2\n"
 			     "       .long 1b,3b\n"
-			     ".section .text.__get_pci_config_dword"
-				: "=r"(retval) : "r"(addr));
+			     ".text":"=r"(retval):"r"(addr));
 
 	return (retval);
 }

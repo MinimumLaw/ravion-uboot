@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Freescale Semiconductor, Inc.
+ * Copyright 2008 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,7 +14,6 @@
 
 #include "common_timing_params.h"
 
-#if defined(CONFIG_DDR_SPD) || defined(CONFIG_SPD_EEPROM)
 /*
  * Bind the main DDR setup driver's generic names
  * to this specific DDR technology.
@@ -26,7 +25,6 @@ compute_dimm_parameters(const generic_spd_eeprom_t *spd,
 {
 	return ddr_compute_dimm_parameters(spd, pdimm, dimm_number);
 }
-#endif
 
 /*
  * Data Structures
@@ -57,8 +55,7 @@ typedef struct {
 #define STEP_ALL                     0xFFF
 
 extern unsigned long long
-fsl_ddr_compute(fsl_ddr_info_t *pinfo, unsigned int start_step,
-				       unsigned int size_only);
+fsl_ddr_compute(fsl_ddr_info_t *pinfo, unsigned int start_step);
 
 extern const char * step_to_string(unsigned int step);
 
@@ -67,8 +64,7 @@ compute_fsl_memctl_config_regs(const memctl_options_t *popts,
 			       fsl_ddr_cfg_regs_t *ddr,
 			       const common_timing_params_t *common_dimm,
 			       const dimm_params_t *dimm_parameters,
-			       unsigned int dbw_capacity_adjust,
-			       unsigned int size_only);
+			       unsigned int dbw_capacity_adjust);
 extern unsigned int
 compute_lowest_common_dimm_parameters(const dimm_params_t *dimm_params,
 				      common_timing_params_t *outpdimm,
@@ -83,8 +79,4 @@ extern unsigned int mclk_to_picos(unsigned int mclk);
 extern unsigned int get_memory_clk_period_ps(void);
 extern unsigned int picos_to_mclk(unsigned int picos);
 
-/* board specific function */
-int fsl_ddr_get_dimm_params(dimm_params_t *pdimm,
-			unsigned int controller_number,
-			unsigned int dimm_number);
 #endif

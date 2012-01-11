@@ -25,9 +25,8 @@ include $(TOPDIR)/config.mk
 
 #CFLAGS += -DDEBUG
 
-LIB	= $(obj)librtc.o
+LIB	= $(obj)librtc.a
 
-COBJS-$(CONFIG_RTC_AT91SAM9_RTT) += at91sam9_rtt.o
 COBJS-$(CONFIG_RTC_BFIN) += bfin_rtc.o
 COBJS-y += date.o
 COBJS-$(CONFIG_RTC_DS12887) += ds12887.o
@@ -55,13 +54,10 @@ COBJS-$(CONFIG_MCFRTC) += mcfrtc.o
 COBJS-$(CONFIG_RTC_MK48T59) += mk48t59.o
 COBJS-$(CONFIG_RTC_MPC5200) += mpc5xxx.o
 COBJS-$(CONFIG_RTC_MPC8xx) += mpc8xx.o
-COBJS-$(CONFIG_RTC_MV) += mvrtc.o
 COBJS-$(CONFIG_RTC_PCF8563) += pcf8563.o
 COBJS-$(CONFIG_RTC_PL031) += pl031.o
-COBJS-$(CONFIG_RTC_PT7C4338) += pt7c4338.o
 COBJS-$(CONFIG_RTC_RS5C372A) += rs5c372.o
 COBJS-$(CONFIG_RTC_RTC4543) += rtc4543.o
-COBJS-$(CONFIG_RTC_RV3029) += rv3029.o
 COBJS-$(CONFIG_RTC_RX8025) += rx8025.o
 COBJS-$(CONFIG_RTC_S3C24X0) += s3c24x0_rtc.o
 COBJS-$(CONFIG_RTC_S3C44B0) += s3c44b0_rtc.o
@@ -74,7 +70,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 all:	$(LIB)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

@@ -14,7 +14,7 @@
 
 #include <config.h>
 #include <config.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <ppc_asm.tmpl>
 #include <ppc_defs.h>
 #include <asm/cache.h>

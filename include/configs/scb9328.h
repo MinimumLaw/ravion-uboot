@@ -35,6 +35,7 @@
  * Select serial console configuration
  */
 
+
 /*
  * BOOTP options
  */
@@ -42,6 +43,7 @@
 #define CONFIG_BOOTP_BOOTPATH
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_HOSTNAME
+
 
 /*
  * Command line configuration.
@@ -55,6 +57,7 @@
 #undef CONFIG_CMD_CONSOLE
 #undef CONFIG_CMD_LOADS
 #undef CONFIG_CMD_SOURCE
+
 
 /*
  * Boot options. Setting delay to -1 stops autostart count down.
@@ -95,11 +98,16 @@
 #define CONFIG_CMDLINE_TAG	     1	 /* send commandline to Kernel	     */
 #define CONFIG_SETUP_MEMORY_TAGS     1	 /* send memory definition to kernel */
 #define CONFIG_INITRD_TAG	     1	 /* send initrd params		     */
+#undef	CONFIG_VFD			 /* do not send framebuffer setup    */
+
 
 /*
  * Malloc pool need to host env + 128 Kb reserve for other allocations.
  */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (128<<10) )
+
+
+#define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes reserved for initial data */
 
 #define CONFIG_STACKSIZE	(120<<10)      /* stack size		     */
 
@@ -126,10 +134,14 @@
 #define SCB9328_SDRAM_1		0x08000000	/* SDRAM bank #1	   */
 #define SCB9328_SDRAM_1_SIZE	0x01000000	/* 16 MB		   */
 
-#define CONFIG_SYS_TEXT_BASE	0x10000000
+/*
+ * Flash Controller settings
+ */
 
-#define CONFIG_SYS_SDRAM_BASE	SCB9328_SDRAM_1
-#define CONFIG_SYS_INIT_SP_ADDR	(SCB9328_SDRAM_1 + 0xf00000)
+/*
+ * Hardware drivers
+ */
+
 
 /*
  * Configuration for FLASH memory for the Synertronixx board

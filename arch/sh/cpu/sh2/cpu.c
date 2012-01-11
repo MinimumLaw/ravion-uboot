@@ -33,9 +33,6 @@
 #define scif0_enable() do {\
 		writeb(readb(STBCR4) & ~0x80, STBCR4);\
 	} while (0)
-#define scif3_enable() do {\
-		writeb(readb(STBCR4) & ~0x10, STBCR4);\
-	} while (0)
 
 int checkcpu(void)
 {
@@ -50,11 +47,7 @@ int checkcpu(void)
 int cpu_init(void)
 {
 	/* SCIF enable */
-#if defined(CONFIG_CONS_SCIF3)
-	scif3_enable();
-#else
 	scif0_enable();
-#endif
 	/* CMT clock enable */
 	cmt_clock_enable() ;
 	return 0;

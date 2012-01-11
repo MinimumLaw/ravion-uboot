@@ -79,7 +79,7 @@ bmp_image_t *gunzip_bmp(unsigned long addr, unsigned long *lenp)
 		return NULL;
 	}
 
-	debug("Gzipped BMP image detected!\n");
+	puts("Gzipped BMP image detected!\n");
 
 	return bmp;
 }
@@ -136,12 +136,6 @@ static cmd_tbl_t cmd_bmp_sub[] = {
 	U_BOOT_CMD_MKENT(info, 3, 0, do_bmp_info, "", ""),
 	U_BOOT_CMD_MKENT(display, 5, 0, do_bmp_display, "", ""),
 };
-
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
-void bmp_reloc(void) {
-	fixup_cmdtable(cmd_bmp_sub, ARRAY_SIZE(cmd_bmp_sub));
-}
-#endif
 
 /*
  * Subroutine:  do_bmp

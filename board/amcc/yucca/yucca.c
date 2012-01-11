@@ -26,7 +26,7 @@
  */
 
 #include <common.h>
-#include <asm/ppc4xx.h>
+#include <ppc4xx.h>
 #include <i2c.h>
 #include <netdev.h>
 #include <asm/processor.h>
@@ -542,13 +542,12 @@ int board_early_init_f (void)
 
 int checkboard (void)
 {
-	char buf[64];
-	int i = getenv_f("serial#", buf, sizeof(buf));
+	char *s = getenv("serial#");
 
 	printf("Board: Yucca - AMCC 440SPe Evaluation Board");
-	if (i > 0) {
+	if (s != NULL) {
 		puts(", serial# ");
-		puts(buf);
+		puts(s);
 	}
 	putc('\n');
 

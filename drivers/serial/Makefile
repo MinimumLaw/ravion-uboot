@@ -23,11 +23,12 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libserial.o
+LIB	:= $(obj)libserial.a
 
 COBJS-$(CONFIG_ALTERA_UART) += altera_uart.o
 COBJS-$(CONFIG_ALTERA_JTAG_UART) += altera_jtag_uart.o
 COBJS-$(CONFIG_ARM_DCC) += arm_dcc.o
+COBJS-$(CONFIG_AT91RM9200_USART) += at91rm9200_usart.o
 COBJS-$(CONFIG_ATMEL_USART) += atmel_usart.o
 COBJS-$(CONFIG_MCFUART) += mcfuart.o
 COBJS-$(CONFIG_NS9750_UART) += ns9750_serial.o
@@ -35,7 +36,7 @@ COBJS-$(CONFIG_OPENCORES_YANU) += opencores_yanu.o
 COBJS-$(CONFIG_SYS_NS16550) += ns16550.o
 COBJS-$(CONFIG_DRIVER_S3C4510_UART) += s3c4510b_uart.o
 COBJS-$(CONFIG_S3C64XX) += s3c64xx.o
-COBJS-$(CONFIG_S5P) += serial_s5p.o
+COBJS-$(CONFIG_S5PC1XX) += serial_s5p.o
 COBJS-$(CONFIG_SYS_NS16550_SERIAL) += serial.o
 COBJS-$(CONFIG_CLPS7111_SERIAL) += serial_clps7111.o
 COBJS-$(CONFIG_IMX_SERIAL) += serial_imx.o
@@ -54,11 +55,7 @@ COBJS-$(CONFIG_S3C24X0_SERIAL) += serial_s3c24x0.o
 COBJS-$(CONFIG_S3C44B0_SERIAL) += serial_s3c44b0.o
 COBJS-$(CONFIG_XILINX_UARTLITE) += serial_xuartlite.o
 COBJS-$(CONFIG_SCIF_CONSOLE) += serial_sh.o
-COBJS-$(CONFIG_TEGRA2) += serial_tegra2.o
-
-ifndef CONFIG_SPL_BUILD
 COBJS-$(CONFIG_USB_TTY) += usbtty.o
-endif
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
@@ -67,7 +64,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 all:	$(LIB)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

@@ -36,7 +36,6 @@
 #ifndef __ASSEMBLY__
 #ifdef CONFIG_FEC_MXC
 extern void mx25_fec_init_pins(void);
-extern void imx_get_mac_from_fuse(unsigned char *mac);
 #endif
 
 /* Clock Control Module (CCM) registers */
@@ -84,6 +83,18 @@ struct esdramc_regs {
 	u32 cdlyl;	/* delay line cycle length debug */
 };
 
+/* GPIO registers */
+struct gpio_regs {
+	u32 dr;		/* data */
+	u32 dir;	/* direction */
+	u32 psr;	/* pad satus */
+	u32 icr1;	/* interrupt config 1 */
+	u32 icr2;	/* interrupt config 2 */
+	u32 imr;	/* interrupt mask */
+	u32 isr;	/* interrupt status */
+	u32 edge_sel;	/* edge select */
+};
+
 /* General Purpose Timer (GPT) registers */
 struct gpt_regs {
 	u32 ctrl;   	/* control */
@@ -97,11 +108,11 @@ struct gpt_regs {
 
 /* Watchdog Timer (WDOG) registers */
 struct wdog_regs {
-	u16 wcr;	/* Control */
-	u16 wsr;	/* Service */
-	u16 wrsr;	/* Reset Status */
-	u16 wicr;	/* Interrupt Control */
-	u16 wmcr;	/* Misc Control */
+	u32 wcr;	/* Control */
+	u32 wsr;	/* Service */
+	u32 wrsr;	/* Reset Status */
+	u32 wicr;	/* Interrupt Control */
+	u32 wmcr;	/* Misc Control */
 };
 
 /* IIM control registers */
@@ -118,56 +129,12 @@ struct iim_regs {
 	u32 iim_srev;
 	u32 iim_prog_p;
 	u32 res1[0x1f5];
-	struct fuse_bank {
-		u32 fuse_regs[0x20];
-		u32 fuse_rsvd[0xe0];
-	} bank[3];
+	u32 iim_bank_area0[0x20];
+	u32 res2[0xe0];
+	u32 iim_bank_area1[0x20];
+	u32 res3[0xe0];
+	u32 iim_bank_area2[0x20];
 };
-
-struct fuse_bank0_regs {
-	u32 fuse0_25[0x1a];
-	u32 mac_addr[6];
-};
-
-/* Multi-Layer AHB Crossbar Switch (MAX) registers */
-struct max_regs {
-	u32 mpr0;
-	u32 pad00[3];
-	u32 sgpcr0;
-	u32 pad01[59];
-	u32 mpr1;
-	u32 pad02[3];
-	u32 sgpcr1;
-	u32 pad03[59];
-	u32 mpr2;
-	u32 pad04[3];
-	u32 sgpcr2;
-	u32 pad05[59];
-	u32 mpr3;
-	u32 pad06[3];
-	u32 sgpcr3;
-	u32 pad07[59];
-	u32 mpr4;
-	u32 pad08[3];
-	u32 sgpcr4;
-	u32 pad09[251];
-	u32 mgpcr0;
-	u32 pad10[63];
-	u32 mgpcr1;
-	u32 pad11[63];
-	u32 mgpcr2;
-	u32 pad12[63];
-	u32 mgpcr3;
-	u32 pad13[63];
-	u32 mgpcr4;
-};
-
-/* AHB <-> IP-Bus Interface (AIPS) */
-struct aips_regs {
-	u32 mpr_0_7;
-	u32 mpr_8_15;
-};
-
 #endif
 
 /* AIPS 1 */
@@ -341,14 +308,9 @@ struct aips_regs {
 #define GPT_CTRL_TEN		1		/* Timer enable	*/
 
 /* WDOG enable */
-#define WCR_WDE 		0x04
-#define WSR_UNLOCK1		0x5555
-#define WSR_UNLOCK2		0xAAAA
+#define WCR_WDE 0x04
 
-/* Names used in GPIO driver */
-#define GPIO1_BASE_ADDR		IMX_GPIO1_BASE
-#define GPIO2_BASE_ADDR		IMX_GPIO2_BASE
-#define GPIO3_BASE_ADDR		IMX_GPIO3_BASE
-#define GPIO4_BASE_ADDR		IMX_GPIO4_BASE
+/* FUSE bank offsets */
+#define IIM0_MAC		0x1a
 
 #endif				/* _IMX_REGS_H */

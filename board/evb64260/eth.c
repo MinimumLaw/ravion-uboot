@@ -89,7 +89,7 @@ static const char ether_port_phy_addr[3]={4,5,6};
 /* MII PHY access routines are common for all i/f, use gal_ent0 */
 #define GT6426x_MII_DEVNAME	"gal_enet0"
 
-int gt6426x_miiphy_read(const char *devname, unsigned char phy,
+int gt6426x_miiphy_read(char *devname, unsigned char phy,
 		unsigned char reg, unsigned short *val);
 
 static inline unsigned short
@@ -345,7 +345,7 @@ gt6426x_eth_disable(void *v)
 MII utilities - write: write to an MII register via SMI
 ***************************************************************************/
 int
-gt6426x_miiphy_write(const char *devname, unsigned char phy,
+gt6426x_miiphy_write(char *devname, unsigned char phy,
 		unsigned char reg, unsigned short data)
 {
     unsigned int temp= (reg<<21) | (phy<<16) | data;
@@ -360,7 +360,7 @@ gt6426x_miiphy_write(const char *devname, unsigned char phy,
 MII utilities - read: read from an MII register via SMI
 ***************************************************************************/
 int
-gt6426x_miiphy_read(const char *devname, unsigned char phy,
+gt6426x_miiphy_read(char *devname, unsigned char phy,
 		unsigned char reg, unsigned short *val)
 {
     unsigned int temp= (reg<<21) | (phy<<16) | 1<<26;
@@ -422,24 +422,24 @@ gt6426x_dump_mii(bd_t *bis, unsigned short phy)
 static void
 check_phy_state(struct eth_dev_s *p)
 {
-	int bmsr = miiphy_read_ret(ether_port_phy_addr[p->dev], MII_BMSR);
+	int bmsr = miiphy_read_ret(ether_port_phy_addr[p->dev], PHY_BMSR);
 	int psr = GTREGREAD(ETHERNET0_PORT_STATUS_REGISTER + p->reg_base);
 
-	if ((psr & 1<<3) && (bmsr & BMSR_LSTATUS)) {
-		int nego = miiphy_read_ret(ether_port_phy_addr[p->dev], MII_ADVERTISE) &
-				miiphy_read_ret(ether_port_phy_addr[p->dev], MII_LPA);
+	if ((psr & 1<<3) && (bmsr & PHY_BMSR_LS)) {
+		int nego = miiphy_read_ret(ether_port_phy_addr[p->dev], PHY_ANAR) &
+				miiphy_read_ret(ether_port_phy_addr[p->dev], PHY_ANLPAR);
 		int want;
 
-		if (nego & LPA_100FULL) {
+		if (nego & PHY_ANLPAR_TXFD) {
 			want = 0x3;
 			printf("MII: 100Base-TX, Full Duplex\n");
-		} else if (nego & LPA_100HALF) {
+		} else if (nego & PHY_ANLPAR_TX) {
 			want = 0x1;
 			printf("MII: 100Base-TX, Half Duplex\n");
-		} else if (nego & LPA_10FULL) {
+		} else if (nego & PHY_ANLPAR_10FD) {
 			want = 0x2;
 			printf("MII: 10Base-T, Full Duplex\n");
-		} else if (nego & LPA_10HALF) {
+		} else if (nego & PHY_ANLPAR_10) {
 			want = 0x0;
 			printf("MII: 10Base-T, Half Duplex\n");
 		} else {

@@ -45,22 +45,22 @@ inline void switch_LED_off(uint8_t led)
 	saved_state[led] = STATUS_LED_OFF;
 }
 
-void red_led_on(void)
+void red_LED_on(void)
 {
 	switch_LED_on(STATUS_LED_RED);
 }
 
-void red_led_off(void)
+void red_LED_off(void)
 {
 	switch_LED_off(STATUS_LED_RED);
 }
 
-void green_led_on(void)
+void green_LED_on(void)
 {
 	switch_LED_on(STATUS_LED_GREEN);
 }
 
-void green_led_off(void)
+void green_LED_off(void)
 {
 	switch_LED_off(STATUS_LED_GREEN);
 }
@@ -74,14 +74,14 @@ void __led_toggle(led_id_t mask)
 {
 	if (STATUS_LED_RED == mask) {
 		if (STATUS_LED_ON == saved_state[STATUS_LED_RED])
-			red_led_off();
+			red_LED_off();
 		else
-			red_led_on();
+			red_LED_on();
 	} else if (STATUS_LED_GREEN == mask) {
 		if (STATUS_LED_ON == saved_state[STATUS_LED_GREEN])
-			green_led_off();
+			green_LED_off();
 		else
-			green_led_on();
+			green_LED_on();
 	}
 }
 
@@ -89,13 +89,13 @@ void __led_set(led_id_t mask, int state)
 {
 	if (STATUS_LED_RED == mask) {
 		if (STATUS_LED_ON == state)
-			red_led_on();
+			red_LED_on();
 		else
-			red_led_off();
+			red_LED_off();
 	} else if (STATUS_LED_GREEN == mask) {
 		if (STATUS_LED_ON == state)
-			green_led_on();
+			green_LED_on();
 		else
-			green_led_off();
+			green_LED_off();
 	}
 }

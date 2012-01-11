@@ -12,11 +12,11 @@
 #include <common.h>
 #include <command.h>
 #include <stdio_dev.h>
-#include <serial.h>
 #include <environment.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <net.h>
+#include <timestamp.h>
 #include <status_led.h>
 #include <version.h>
 
@@ -39,6 +39,8 @@ int post_flag;
 
 DECLARE_GLOBAL_DATA_PTR;
 
+const char version_string[] = U_BOOT_VERSION " ("U_BOOT_DATE" - "U_BOOT_TIME")";
+
 __attribute__((always_inline))
 static inline void serial_early_puts(const char *s)
 {
@@ -50,11 +52,10 @@ static inline void serial_early_puts(const char *s)
 
 static int display_banner(void)
 {
-	display_options();
-	printf("CPU:   ADSP %s "
+	printf("\n\n%s\n\n", version_string);
+	printf("CPU:   ADSP " MK_STR(CONFIG_BFIN_CPU) " "
 		"(Detected Rev: 0.%d) "
 		"(%s boot)\n",
-		gd->bd->bi_cpu,
 		bfin_revid(),
 		get_bfin_boot_mode(CONFIG_BFIN_BOOT_MODE));
 	return 0;
@@ -205,6 +206,7 @@ extern int timer_init(void);
 
 void board_init_f(ulong bootflag)
 {
+	ulong addr;
 	bd_t *bd;
 	char buf[32];
 
@@ -234,16 +236,21 @@ void board_init_f(ulong bootflag)
 #endif
 
 #ifdef DEBUG
-	if (GENERATED_GBL_DATA_SIZE < sizeof(*gd))
+	if (CONFIG_SYS_GBL_DATA_SIZE < sizeof(*gd))
 		hang();
 #endif
 	serial_early_puts("Init global data\n");
 	gd = (gd_t *) (CONFIG_SYS_GBL_DATA_ADDR);
-	memset((void *)gd, 0, GENERATED_GBL_DATA_SIZE);
+	memset((void *)gd, 0, CONFIG_SYS_GBL_DATA_SIZE);
 
-	bd = (bd_t *) (CONFIG_SYS_BD_INFO_ADDR);
+	/* Board data initialization */
+	addr = (CONFIG_SYS_GBL_DATA_ADDR + sizeof(gd_t));
+
+	/* Align to 4 byte boundary */
+	addr &= ~(4 - 1);
+	bd = (bd_t *) addr;
 	gd->bd = bd;
-	memset((void *)bd, 0, GENERATED_BD_INFO_SIZE);
+	memset((void *)bd, 0, sizeof(bd_t));
 
 	bd->bi_r_version = version_string;
 	bd->bi_cpu = MK_STR(CONFIG_BFIN_CPU);
@@ -263,9 +270,6 @@ void board_init_f(ulong bootflag)
 	init_baudrate();
 	serial_early_puts("Serial init\n");
 	serial_init();
-#ifdef CONFIG_SERIAL_MULTI
-	serial_initialize();
-#endif
 	serial_early_puts("Console init flash\n");
 	console_init_f();
 	serial_early_puts("End of early debugging\n");
@@ -278,11 +282,8 @@ void board_init_f(ulong bootflag)
 	printf("Core: %s MHz, ", strmhz(buf, get_cclk()));
 	printf("System: %s MHz\n", strmhz(buf, get_sclk()));
 
-	if (CONFIG_MEM_SIZE) {
-		printf("RAM:   ");
-		print_size(bd->bi_memsize, "\n");
-	}
-
+	printf("RAM:   ");
+	print_size(bd->bi_memsize, "\n");
 #if defined(CONFIG_POST)
 	post_init_f();
 	post_bootmode_init();
@@ -320,6 +321,7 @@ void board_init_r(gd_t * id, ulong dest_addr)
 
 #if defined(CONFIG_POST)
 	post_output_backlog();
+	post_reloc();
 #endif
 
 	/* initialize malloc() area */
@@ -349,7 +351,7 @@ void board_init_r(gd_t * id, ulong dest_addr)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
-	puts("MMC:   ");
+	puts("MMC:  ");
 	mmc_initialize(bd);
 #endif
 
@@ -391,7 +393,7 @@ void board_init_r(gd_t * id, ulong dest_addr)
 		post_run(NULL, POST_RAM | post_bootmode_get(0));
 #endif
 
-	if (CONFIG_MEM_SIZE && bfin_os_log_check()) {
+	if (bfin_os_log_check()) {
 		puts("\nLog buffer from operating system:\n");
 		bfin_os_log_dump();
 		puts("\n");

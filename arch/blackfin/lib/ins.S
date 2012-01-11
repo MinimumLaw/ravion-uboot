@@ -71,7 +71,6 @@
  */
 
 #define COMMON_INS(func, ops) \
-.section .text._ins##func; \
 ENTRY(_ins##func) \
 	P0 = R0;	/* P0 = port */ \
 	CLI_OUTER;	/* 3 instructions before first read access */ \

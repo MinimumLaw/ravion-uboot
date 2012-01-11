@@ -27,7 +27,6 @@
 #include <common.h>
 #include <asm/immap.h>
 #include <netdev.h>
-#include <asm/io.h>
 
 int checkboard(void)
 {
@@ -64,12 +63,10 @@ phys_size_t initdram(int board_type)
 		__asm__("nop");
 
 		mbar_writeLong(MCFSIM_DACR0, 0x0000322c);
-		mb();
 		__asm__("nop");
 
 		/* Write to this block to initiate precharge */
 		*(u32 *) (CONFIG_SYS_SDRAM_BASE) = 0xa5a5a5a5;
-		mb();
 		__asm__("nop");
 
 		/* Set RE bit in DACR */
@@ -86,7 +83,6 @@ phys_size_t initdram(int board_type)
 		__asm__("nop");
 
 		*(u32 *) (CONFIG_SYS_SDRAM_BASE + 0x800) = 0xa5a5a5a5;
-		mb();
 	}
 
 	return dramsize;

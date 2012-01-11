@@ -22,18 +22,19 @@
  */
 
 #include <common.h>
-#include <linux/compiler.h>
 #include <asm/io.h>
 #include <asm/arch/uart.h>
 #include <asm/arch/clk.h>
 #include <serial.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 static inline struct s5p_uart *s5p_get_base_uart(int dev_index)
 {
 	u32 offset = dev_index * sizeof(struct s5p_uart);
-	return (struct s5p_uart *)(samsung_get_base_uart() + offset);
+
+	if (cpu_is_s5pc100())
+		return (struct s5p_uart *)(S5PC100_UART_BASE + offset);
+	else
+		return (struct s5p_uart *)(S5PC110_UART_BASE + offset);
 }
 
 /*
@@ -64,19 +65,16 @@ static const int udivslot[] = {
 
 void serial_setbrg_dev(const int dev_index)
 {
+	DECLARE_GLOBAL_DATA_PTR;
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
-	u32 uclk = get_uart_clk(dev_index);
+	u32 pclk = get_pclk();
 	u32 baudrate = gd->baudrate;
 	u32 val;
 
-	val = uclk / baudrate;
+	val = pclk / baudrate;
 
 	writel(val / 16 - 1, &uart->ubrdiv);
-
-	if (s5p_uart_divslot())
-		writew(udivslot[val % 16], &uart->rest.slot);
-	else
-		writeb(val % 16, &uart->rest.value);
+	writew(udivslot[val % 16], &uart->udivslot);
 }
 
 /*
@@ -135,7 +133,7 @@ int serial_getc_dev(const int dev_index)
 			return 0;
 	}
 
-	return (int)(readb(&uart->urxh) & 0xff);
+	return (int)(readl(&uart->urxh) & 0xff);
 }
 
 /*
@@ -151,7 +149,7 @@ void serial_putc_dev(const char c, const int dev_index)
 			return;
 	}
 
-	writeb(c, &uart->utxh);
+	writel(c, &uart->utxh);
 
 	/* If \n, also do \r */
 	if (c == '\n')
@@ -183,8 +181,9 @@ int s5p_serial##port##_tstc(void) { return serial_tstc_dev(port); } \
 void s5p_serial##port##_putc(const char c) { serial_putc_dev(c, port); } \
 void s5p_serial##port##_puts(const char *s) { serial_puts_dev(s, port); }
 
-#define INIT_S5P_SERIAL_STRUCTURE(port, name) { \
+#define INIT_S5P_SERIAL_STRUCTURE(port, name, bus) { \
 	name, \
+	bus, \
 	s5p_serial##port##_init, \
 	NULL, \
 	s5p_serial##port##_setbrg, \
@@ -195,28 +194,13 @@ void s5p_serial##port##_puts(const char *s) { serial_puts_dev(s, port); }
 
 DECLARE_S5P_SERIAL_FUNCTIONS(0);
 struct serial_device s5p_serial0_device =
-	INIT_S5P_SERIAL_STRUCTURE(0, "s5pser0");
+	INIT_S5P_SERIAL_STRUCTURE(0, "s5pser0", "S5PUART0");
 DECLARE_S5P_SERIAL_FUNCTIONS(1);
 struct serial_device s5p_serial1_device =
-	INIT_S5P_SERIAL_STRUCTURE(1, "s5pser1");
+	INIT_S5P_SERIAL_STRUCTURE(1, "s5pser1", "S5PUART1");
 DECLARE_S5P_SERIAL_FUNCTIONS(2);
 struct serial_device s5p_serial2_device =
-	INIT_S5P_SERIAL_STRUCTURE(2, "s5pser2");
+	INIT_S5P_SERIAL_STRUCTURE(2, "s5pser2", "S5PUART2");
 DECLARE_S5P_SERIAL_FUNCTIONS(3);
 struct serial_device s5p_serial3_device =
-	INIT_S5P_SERIAL_STRUCTURE(3, "s5pser3");
-
-__weak struct serial_device *default_serial_console(void)
-{
-#if defined(CONFIG_SERIAL0)
-	return &s5p_serial0_device;
-#elif defined(CONFIG_SERIAL1)
-	return &s5p_serial1_device;
-#elif defined(CONFIG_SERIAL2)
-	return &s5p_serial2_device;
-#elif defined(CONFIG_SERIAL3)
-	return &s5p_serial3_device;
-#else
-#error "CONFIG_SERIAL? missing."
-#endif
-}
+	INIT_S5P_SERIAL_STRUCTURE(3, "s5pser3", "S5PUART3");

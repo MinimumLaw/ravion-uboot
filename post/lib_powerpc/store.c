@@ -156,7 +156,8 @@ static struct cpu_post_store_s
 	0xff
     },
 };
-static unsigned int cpu_post_store_size = ARRAY_SIZE(cpu_post_store_table);
+static unsigned int cpu_post_store_size =
+    sizeof (cpu_post_store_table) / sizeof (struct cpu_post_store_s);
 
 int cpu_post_test_store (void)
 {

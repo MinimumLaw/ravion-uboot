@@ -44,7 +44,7 @@
  * Generate embedded environment table
  * inside U-Boot image, if needed.
  */
-#if defined(ENV_IS_EMBEDDED) || defined(CONFIG_BUILD_ENVCRC)
+#if defined(ENV_IS_EMBEDDED)
 /*
  * Only put the environment in it's own section when we are building
  * U-Boot proper.  The host based program "tools/envcrc" does not need

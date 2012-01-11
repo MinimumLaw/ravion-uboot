@@ -23,7 +23,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libinput.o
+LIB	:= $(obj)libinput.a
 
 COBJS-$(CONFIG_I8042_KBD) += i8042.o
 ifdef CONFIG_PS2KBD
@@ -38,7 +38,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 all:	$(LIB)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

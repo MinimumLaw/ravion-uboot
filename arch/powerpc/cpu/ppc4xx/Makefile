@@ -23,7 +23,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(CPU).o
+LIB	= $(obj)lib$(CPU).a
 
 START	:= resetvec.o
 START	+= start.o
@@ -34,27 +34,32 @@ SOBJS	+= kgdb.o
 
 COBJS	:= 40x_spd_sdram.o
 
-ifndef CONFIG_NAND_SPL
-ifndef CONFIG_NAND_U_BOOT
 COBJS	+= 44x_spd_ddr.o
+COBJS	+= 44x_spd_ddr2.o
+ifdef CONFIG_PPC4xx_DDR_AUTOCALIBRATION
+COBJS	+= 4xx_ibm_ddr2_autocalib.o
 endif
-endif
-COBJS-$(CONFIG_SDRAM_PPC4xx_IBM_DDR2) += 44x_spd_ddr2.o
-COBJS-$(CONFIG_PPC4xx_DDR_AUTOCALIBRATION) += 4xx_ibm_ddr2_autocalib.o
 COBJS	+= 4xx_pci.o
 COBJS	+= 4xx_pcie.o
 COBJS	+= bedbug_405.o
-COBJS-$(CONFIG_CMD_CHIP_CONFIG)	+= cmd_chip_config.o
+ifdef CONFIG_CMD_CHIP_CONFIG
+COBJS	+= cmd_chip_config.o
+endif
+COBJS	+= commproc.o
 COBJS	+= cpu.o
 COBJS	+= cpu_init.o
 COBJS	+= denali_data_eye.o
 COBJS	+= denali_spd_ddr2.o
 COBJS	+= ecc.o
-COBJS-$(CONFIG_CMD_ECCTEST) += cmd_ecctest.o
+ifdef CONFIG_CMD_ECCTEST
+COBJS	+= cmd_ecctest.o
+endif
 COBJS	+= fdt.o
 COBJS	+= interrupts.o
 COBJS	+= iop480_uart.o
-COBJS-$(CONFIG_CMD_REGINFO) += reginfo.o
+ifdef CONFIG_CMD_REGINFO
+COBJS	+= reginfo.o
+endif
 COBJS	+= sdram.o
 COBJS	+= speed.o
 COBJS	+= tlb.o
@@ -62,22 +67,23 @@ COBJS	+= traps.o
 COBJS	+= usb.o
 COBJS	+= usb_ohci.o
 COBJS	+= usbdev.o
-COBJS-$(CONFIG_XILINX_440) += xilinx_irq.o
 ifndef CONFIG_XILINX_440
 COBJS	+= 4xx_uart.o
 COBJS	+= gpio.o
 COBJS	+= miiphy.o
 COBJS	+= uic.o
+else
+COBJS	+= xilinx_irq.o
 endif
 
 SRCS	:= $(START:.o=.S) $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS) $(COBJS-y))
+OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 START	:= $(addprefix $(obj),$(START))
 
 all:	$(obj).depend $(START) $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

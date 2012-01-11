@@ -37,7 +37,6 @@
 #include <asm/arch/mem.h>
 #include <asm/arch/sys_proto.h>
 
-DECLARE_GLOBAL_DATA_PTR;
 extern omap3_sysinfo sysinfo;
 
 static struct sdrc *sdrc_base = (struct sdrc *)OMAP34XX_SDRC_BASE;
@@ -100,7 +99,7 @@ u32 get_sdr_cs_offset(u32 cs)
 		return 0;
 
 	offset = readl(&sdrc_base->cs_cfg);
-	offset = (offset & 15) << 27 | (offset & 0x30) << 17;
+	offset = (offset & 15) << 27 | (offset & 0x30) >> 17;
 
 	return offset;
 }
@@ -108,12 +107,18 @@ u32 get_sdr_cs_offset(u32 cs)
 /*
  * do_sdrc_init -
  *  - Initialize the SDRAM for use.
+ *  - Sets up SDRC timings for CS0
  *  - code called once in C-Stack only context for CS0 and a possible 2nd
  *    time depending on memory configuration from stack+global context
  */
 void do_sdrc_init(u32 cs, u32 early)
 {
-	struct sdrc_actim *sdrc_actim_base0, *sdrc_actim_base1;
+	struct sdrc_actim *sdrc_actim_base;
+
+	if (cs)
+		sdrc_actim_base = (struct sdrc_actim *)SDRC_ACTIM_CTRL1_BASE;
+	else
+		sdrc_actim_base = (struct sdrc_actim *)SDRC_ACTIM_CTRL0_BASE;
 
 	if (early) {
 		/* reset sdrc controller */
@@ -133,36 +138,24 @@ void do_sdrc_init(u32 cs, u32 early)
 		sdelay(0x20000);
 	}
 
-	/*
-	 * SDRC timings are set up by x-load or config header
-	 * We don't need to redo them here.
-	 * Older x-loads configure only CS0
-	 * configure CS1 to handle this ommission
-	 */
-	if (cs) {
-		sdrc_actim_base0 = (struct sdrc_actim *)SDRC_ACTIM_CTRL0_BASE;
-		sdrc_actim_base1 = (struct sdrc_actim *)SDRC_ACTIM_CTRL1_BASE;
-		writel(readl(&sdrc_base->cs[CS0].mcfg),
-			&sdrc_base->cs[CS1].mcfg);
-		writel(readl(&sdrc_base->cs[CS0].rfr_ctrl),
-			&sdrc_base->cs[CS1].rfr_ctrl);
-		writel(readl(&sdrc_actim_base0->ctrla),
-			&sdrc_actim_base1->ctrla);
-		writel(readl(&sdrc_actim_base0->ctrlb),
-			&sdrc_actim_base1->ctrlb);
+	writel(RASWIDTH_13BITS | CASWIDTH_10BITS | ADDRMUXLEGACY |
+			RAMSIZE_128 | BANKALLOCATION | B32NOT16 | B32NOT16 |
+			DEEPPD | DDR_SDRAM, &sdrc_base->cs[cs].mcfg);
+	writel(ARCV | ARE_ARCV_1, &sdrc_base->cs[cs].rfr_ctrl);
+	writel(V_ACTIMA_165, &sdrc_actim_base->ctrla);
+	writel(V_ACTIMB_165, &sdrc_actim_base->ctrlb);
 
-		writel(CMD_NOP, &sdrc_base->cs[cs].manual);
-		writel(CMD_PRECHARGE, &sdrc_base->cs[cs].manual);
-		writel(CMD_AUTOREFRESH, &sdrc_base->cs[cs].manual);
-		writel(CMD_AUTOREFRESH, &sdrc_base->cs[cs].manual);
-		writel(readl(&sdrc_base->cs[CS0].mr),
-			&sdrc_base->cs[CS1].mr);
-	}
+	writel(CMD_NOP, &sdrc_base->cs[cs].manual);
+	writel(CMD_PRECHARGE, &sdrc_base->cs[cs].manual);
+	writel(CMD_AUTOREFRESH, &sdrc_base->cs[cs].manual);
+	writel(CMD_AUTOREFRESH, &sdrc_base->cs[cs].manual);
 
 	/*
-	 * Test ram in this bank
-	 * Disable if bad or not present
+	 * CAS latency 3, Write Burst = Read Burst, Serial Mode,
+	 * Burst length = 4
 	 */
+	writel(CASL3 | BURSTLENGTH4, &sdrc_base->cs[cs].mr);
+
 	if (!mem_ok(cs))
 		writel(0, &sdrc_base->cs[cs].mcfg);
 }
@@ -173,6 +166,7 @@ void do_sdrc_init(u32 cs, u32 early)
  */
 int dram_init(void)
 {
+	DECLARE_GLOBAL_DATA_PTR;
 	unsigned int size0 = 0, size1 = 0;
 
 	size0 = get_sdr_cs_size(CS0);
@@ -187,22 +181,13 @@ int dram_init(void)
 
 		size1 = get_sdr_cs_size(CS1);
 	}
-	gd->ram_size = size0 + size1;
-
-	return 0;
-}
-
-void dram_init_banksize (void)
-{
-	unsigned int size0 = 0, size1 = 0;
-
-	size0 = get_sdr_cs_size(CS0);
-	size1 = get_sdr_cs_size(CS1);
 
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = size0;
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_1 + get_sdr_cs_offset(CS1);
 	gd->bd->bi_dram[1].size = size1;
+
+	return 0;
 }
 
 /*

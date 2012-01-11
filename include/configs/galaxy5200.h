@@ -42,20 +42,8 @@
 #define CONFIG_MPC5xxx		1	/* This is an MPC5xxx CPU */
 #define CONFIG_MPC5200		1	/* (more precisely an MPC5200 CPU) */
 #define CONFIG_SYS_MPC5XXX_CLKIN 33333333	/* ... running at 33.333333MHz */
-
-/*
- * Valid values for CONFIG_SYS_TEXT_BASE are:
- * 0xFFF00000	boot high (standard configuration)
- * 0xFE000000	boot low
- * 0x00100000	boot from RAM (for testing only) does not work
- */
-#ifdef CONFIG_galaxy5200_LOWBOOT
-#define	CONFIG_SYS_TEXT_BASE	0xFE000000
-#endif
-
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE	0xFFF00000	/* Standard: boot high */
-#endif
+#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
+#define BOOTFLAG_WARM		0x02	/* Software reboot */
 
 /*
  * Serial console configuration
@@ -88,7 +76,7 @@
 
 #define	CONFIG_TIMESTAMP	1	/* Print image info with timestamp */
 
-#if (CONFIG_SYS_TEXT_BASE == 0xFE000000)		/* Boot low */
+#if (TEXT_BASE == 0xFE000000)		/* Boot low */
 #define CONFIG_SYS_LOWBOOT 1
 #endif
 /* RAMBOOT will be defined automatically in memory section */
@@ -207,13 +195,16 @@
 #define CONFIG_SYS_INIT_RAM_ADDR	MPC5XXX_SRAM
 
 /* End of used area in SPRAM */
-#define CONFIG_SYS_INIT_RAM_SIZE		MPC5XXX_SRAM_SIZE
+#define CONFIG_SYS_INIT_RAM_END		MPC5XXX_SRAM_SIZE
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
-						GENERATED_GBL_DATA_SIZE)
+/* Size in bytes reserved for initial data */
+#define CONFIG_SYS_GBL_DATA_SIZE	128
+
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
+						CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #	define CONFIG_SYS_RAMBOOT		1
 #endif

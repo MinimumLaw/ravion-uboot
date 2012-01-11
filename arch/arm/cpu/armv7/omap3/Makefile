@@ -23,13 +23,16 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	=  $(obj)lib$(SOC).o
+LIB	=  $(obj)lib$(SOC).a
 
 SOBJS	:= lowlevel_init.o
+SOBJS	+= cache.o
 
 COBJS	+= board.o
 COBJS	+= clock.o
+COBJS	+= gpio.o
 COBJS	+= mem.o
+COBJS	+= syslib.o
 COBJS	+= sys_info.o
 
 COBJS-$(CONFIG_EMIF4)	+= emif4.o
@@ -41,7 +44,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS) $(COBJS-y) $(SOBJS))
 all:	 $(obj).depend $(LIB)
 
 $(LIB):	$(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 

@@ -38,11 +38,14 @@
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 #endif
 
+unsigned long (*get_pclk)(void);
+unsigned long (*get_arm_clk)(void);
+unsigned long (*get_pll_clk)(int);
+
 /* s5pc110: return pll clock frequency */
 static unsigned long s5pc100_get_pll_clk(int pllreg)
 {
-	struct s5pc100_clock *clk =
-		(struct s5pc100_clock *)samsung_get_base_clock();
+	struct s5pc100_clock *clk = (struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long r, m, p, s, mask, fout;
 	unsigned int freq;
 
@@ -92,8 +95,7 @@ static unsigned long s5pc100_get_pll_clk(int pllreg)
 /* s5pc100: return pll clock frequency */
 static unsigned long s5pc110_get_pll_clk(int pllreg)
 {
-	struct s5pc110_clock *clk =
-		(struct s5pc110_clock *)samsung_get_base_clock();
+	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long r, m, p, s, mask, fout;
 	unsigned int freq;
 
@@ -149,8 +151,7 @@ static unsigned long s5pc110_get_pll_clk(int pllreg)
 /* s5pc110: return ARM clock frequency */
 static unsigned long s5pc110_get_arm_clk(void)
 {
-	struct s5pc110_clock *clk =
-		(struct s5pc110_clock *)samsung_get_base_clock();
+	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long div;
 	unsigned long dout_apll, armclk;
 	unsigned int apll_ratio;
@@ -169,8 +170,7 @@ static unsigned long s5pc110_get_arm_clk(void)
 /* s5pc100: return ARM clock frequency */
 static unsigned long s5pc100_get_arm_clk(void)
 {
-	struct s5pc100_clock *clk =
-		(struct s5pc100_clock *)samsung_get_base_clock();
+	struct s5pc100_clock *clk = (struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long div;
 	unsigned long dout_apll, armclk;
 	unsigned int apll_ratio, arm_ratio;
@@ -191,8 +191,7 @@ static unsigned long s5pc100_get_arm_clk(void)
 /* s5pc100: return HCLKD0 frequency */
 static unsigned long get_hclk(void)
 {
-	struct s5pc100_clock *clk =
-		(struct s5pc100_clock *)samsung_get_base_clock();
+	struct s5pc100_clock *clk = (struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long hclkd0;
 	uint div, d0_bus_ratio;
 
@@ -208,8 +207,7 @@ static unsigned long get_hclk(void)
 /* s5pc100: return PCLKD1 frequency */
 static unsigned long get_pclkd1(void)
 {
-	struct s5pc100_clock *clk =
-		(struct s5pc100_clock *)samsung_get_base_clock();
+	struct s5pc100_clock *clk = (struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long d1_bus, pclkd1;
 	uint div, d1_bus_ratio, pclkd1_ratio;
 
@@ -229,8 +227,7 @@ static unsigned long get_pclkd1(void)
 /* s5pc110: return HCLKs frequency */
 static unsigned long get_hclk_sys(int dom)
 {
-	struct s5pc110_clock *clk =
-		(struct s5pc110_clock *)samsung_get_base_clock();
+	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long hclk;
 	unsigned int div;
 	unsigned int offset;
@@ -258,8 +255,7 @@ static unsigned long get_hclk_sys(int dom)
 /* s5pc110: return PCLKs frequency */
 static unsigned long get_pclk_sys(int dom)
 {
-	struct s5pc110_clock *clk =
-		(struct s5pc110_clock *)samsung_get_base_clock();
+	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	unsigned long pclk;
 	unsigned int div;
 	unsigned int offset;
@@ -293,51 +289,15 @@ static unsigned long s5pc100_get_pclk(void)
 	return get_pclkd1();
 }
 
-/* s5pc1xx: return uart clock frequency */
-static unsigned long s5pc1xx_get_uart_clk(int dev_index)
+void s5pc1xx_clock_init(void)
 {
-	if (cpu_is_s5pc110())
-		return s5pc110_get_pclk();
-	else
-		return s5pc100_get_pclk();
-}
-
-/* s5pc1xx: return pwm clock frequency */
-static unsigned long s5pc1xx_get_pwm_clk(void)
-{
-	if (cpu_is_s5pc110())
-		return s5pc110_get_pclk();
-	else
-		return s5pc100_get_pclk();
-}
-
-unsigned long get_pll_clk(int pllreg)
-{
-	if (cpu_is_s5pc110())
-		return s5pc110_get_pll_clk(pllreg);
-	else
-		return s5pc100_get_pll_clk(pllreg);
-}
-
-unsigned long get_arm_clk(void)
-{
-	if (cpu_is_s5pc110())
-		return s5pc110_get_arm_clk();
-	else
-		return s5pc100_get_arm_clk();
-}
-
-unsigned long get_pwm_clk(void)
-{
-	return s5pc1xx_get_pwm_clk();
-}
-
-unsigned long get_uart_clk(int dev_index)
-{
-	return s5pc1xx_get_uart_clk(dev_index);
-}
-
-void set_mmc_clk(int dev_index, unsigned int div)
-{
-	/* Do NOTHING */
+	if (cpu_is_s5pc110()) {
+		get_pll_clk = s5pc110_get_pll_clk;
+		get_arm_clk = s5pc110_get_arm_clk;
+		get_pclk = s5pc110_get_pclk;
+	} else {
+		get_pll_clk = s5pc100_get_pll_clk;
+		get_arm_clk = s5pc100_get_arm_clk;
+		get_pclk = s5pc100_get_pclk;
+	}
 }

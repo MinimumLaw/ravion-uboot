@@ -426,7 +426,7 @@ static int tse_mdio_write(struct altera_tse_priv *priv, unsigned int regnum,
 
 /* MDIO access to phy */
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII) && !defined(BITBANGMII)
-static int altera_tse_miiphy_write(const char *devname, unsigned char addr,
+static int altera_tse_miiphy_write(char *devname, unsigned char addr,
 				   unsigned char reg, unsigned short value)
 {
 	struct eth_device *dev;
@@ -439,7 +439,7 @@ static int altera_tse_miiphy_write(const char *devname, unsigned char addr,
 	return 0;
 }
 
-static int altera_tse_miiphy_read(const char *devname, unsigned char addr,
+static int altera_tse_miiphy_read(char *devname, unsigned char addr,
 				  unsigned char reg, unsigned short *value)
 {
 	struct eth_device *dev;
@@ -475,12 +475,12 @@ static uint mii_parse_sr(uint mii_reg, struct altera_tse_priv *priv)
 	 */
 	mii_reg = tse_mdio_read(priv, MIIM_STATUS);
 
-	if (!(mii_reg & MIIM_STATUS_LINK) && (mii_reg & BMSR_ANEGCAPABLE)
-	    && !(mii_reg & BMSR_ANEGCOMPLETE)) {
+	if (!(mii_reg & MIIM_STATUS_LINK) && (mii_reg & PHY_BMSR_AUTN_ABLE)
+	    && !(mii_reg & PHY_BMSR_AUTN_COMP)) {
 		int i = 0;
 
 		puts("Waiting for PHY auto negotiation to complete");
-		while (!(mii_reg & BMSR_ANEGCOMPLETE)) {
+		while (!(mii_reg & PHY_BMSR_AUTN_COMP)) {
 			/*
 			 * Timeout reached ?
 			 */
@@ -643,13 +643,13 @@ static struct phy_info phy_info_generic = {
 	"Unknown/Generic PHY",
 	32,
 	(struct phy_cmd[]){	/* config */
-			   {MII_BMCR, BMCR_RESET, NULL},
-			   {MII_BMCR, BMCR_ANENABLE | BMCR_ANRESTART, NULL},
+			   {PHY_BMCR, PHY_BMCR_RESET, NULL},
+			   {PHY_BMCR, PHY_BMCR_AUTON | PHY_BMCR_RST_NEG, NULL},
 			   {miim_end,}
 			   },
 	(struct phy_cmd[]){	/* startup */
-			   {MII_BMSR, miim_read, NULL},
-			   {MII_BMSR, miim_read, &mii_parse_sr},
+			   {PHY_BMSR, miim_read, NULL},
+			   {PHY_BMSR, miim_read, &mii_parse_sr},
 			   {miim_end,}
 			   },
 	(struct phy_cmd[]){	/* shutdown */

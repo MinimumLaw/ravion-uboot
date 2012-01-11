@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Freescale Semiconductor, Inc.
+ * Copyright 2010 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -8,16 +8,6 @@
 
 #include <common.h>
 #include <asm/fsl_lbc.h>
-
-#ifdef CONFIG_MPC85xx
-/* Boards should provide their own version of this if they use lbc sdram */
-void __lbc_sdram_init(void)
-{
-	/* Do nothing */
-}
-void lbc_sdram_init(void) __attribute__((weak, alias("__lbc_sdram_init")));
-#endif
-
 
 void print_lbc_regs(void)
 {
@@ -33,11 +23,6 @@ void print_lbc_regs(void)
 void init_early_memctl_regs(void)
 {
 	uint init_br1 = 1;
-
-#ifdef CONFIG_SYS_FSL_ERRATUM_ELBC_A001
-	/* Set the local bus monitor timeout value to the maximum */
-	clrsetbits_be32(&(LBC_BASE_ADDR)->lbcr, LBCR_BMT|LBCR_BMTPS, 0xf);
-#endif
 
 #ifdef CONFIG_MPC85xx
 	/* if cs1 is already set via debugger, leave cs0/cs1 alone */
@@ -58,10 +43,8 @@ void init_early_memctl_regs(void)
 #endif
 	/* now restrict to preliminary range */
 	if (init_br1) {
-#if defined(CONFIG_SYS_BR0_PRELIM) && defined(CONFIG_SYS_OR0_PRELIM)
 		set_lbc_br(0, CONFIG_SYS_BR0_PRELIM);
 		set_lbc_or(0, CONFIG_SYS_OR0_PRELIM);
-#endif
 
 #if defined(CONFIG_SYS_BR1_PRELIM) && defined(CONFIG_SYS_OR1_PRELIM)
 		set_lbc_or(1, CONFIG_SYS_OR1_PRELIM);

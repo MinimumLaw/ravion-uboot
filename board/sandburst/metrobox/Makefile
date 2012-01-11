@@ -37,7 +37,7 @@ CFLAGS += -DBUILDUSER='"$(BUILDUSER)"'
 # TBS: end debugging
 
 
-LIB	= $(obj)lib$(BOARD).o
+LIB	= $(obj)lib$(BOARD).a
 
 COBJS	= $(BOARD).o ../common/flash.o ../common/ppc440gx_i2c.o \
 	../common/sb_common.o
@@ -48,7 +48,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(OBJS) $(SOBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 clean:
 	rm -f $(SOBJS) $(OBJS)

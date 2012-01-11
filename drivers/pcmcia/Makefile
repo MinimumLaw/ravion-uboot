@@ -23,7 +23,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libpcmcia.o
+LIB	:= $(obj)libpcmcia.a
 
 COBJS-$(CONFIG_I82365) += i82365.o
 COBJS-$(CONFIG_8xx) += mpc8xx_pcmcia.o
@@ -40,7 +40,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 all:	$(LIB)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS))
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################
 
