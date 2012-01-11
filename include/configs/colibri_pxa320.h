@@ -29,7 +29,7 @@
 #define	CONFIG_CPU_PXA320	1	/* Marvell Monahans P CPU */
 #define	CONFIG_COLIBRI_PXA320	1	/* Colibri PXA320 board */
 
-#undef	BOARD_LATE_INIT
+#define	BOARD_LATE_INIT			/* Set proper Toradex MAC */
 #undef	CONFIG_SKIP_RELOCATE_UBOOT
 #undef	CONFIG_USE_IRQ
 #undef	CONFIG_SKIP_LOWLEVEL_INIT
@@ -40,18 +40,27 @@
 /*
  * Environment settings
  */
-#define	CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 128*1024)
+#define	CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024*1024)
 #define	CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes reserved for initial data */
 #define	CONFIG_SYS_64BIT_VSPRINTF		/* needed for nand_util.c */
 #define	CONFIG_ENV_SIZE			0x8000
 
 #define	CONFIG_ENV_OVERWRITE		/* override default environment */
 
-#define	CONFIG_BOOTCOMMAND		"mmc init ; fatload mmc 0 0xa0000000 uImage ; bootm 0xa0000000"
-#define	CONFIG_BOOTARGS			"console=tty0 console=ttyS0,115200 root=/dev/sda1 rootdelay=15"
+#define	CONFIG_BOOTCOMMAND		"run spo"
+//#define	CONFIG_BOOTARGS			"console=tty0 console=ttyS0,115200 root=/dev/sda1 rootdelay=15"
 #define	CONFIG_TIMESTAMP
-#define	CONFIG_BOOTDELAY		1	/* autoboot delay */
+#define	CONFIG_BOOTDELAY		3	/* autoboot delay */
+#define CONFIG_AUTOBOOT_KEYED           1
+#define CONFIG_AUTOBOOT_PROMPT  \
+        "Enter boot password in %d seconds to stop autoboot process\n", bootdelay
+#undef CONFIG_AUTOBOOT_DELAY_STR
+#define CONFIG_AUTOBOOT_STOP_STR "ravion"
+
 #define	CONFIG_CMDLINE_TAG		/* Commandline ATAG for Linux kernel */
+#define CONFIG_SERIAL_TAG		/* Module serial number - used as eth MAC addr */
+#define CONFIG_REVISION_TAG		/* Module revision number - used by Toradex Kernel */
+
 #define	CONFIG_SETUP_MEMORY_TAGS	/* DRAN ATAG for Linux kernel */
 
 #define	CONFIG_SYS_NO_FLASH		1
@@ -90,9 +99,24 @@
 #define	CONFIG_CMD_PING
 #define	CONFIG_CMD_DHCP
 
-#define	CONFIG_DRIVER_AX88796L
-#define	CONFIG_DRIVER_NE2000_BASE       0x10000000
-#define	CONFIG_NE2000_NOPROM
+/*-----------------------------------------------------------------------
+* Ethernet Adapter AX88796B on module rev before 2.0a
+*/
+#define CONFIG_DRIVER_AX88796B          1
+#define AX88796B_BASE                   0x10000000
+
+/*-----------------------------------------------------------------------
+* Ethernet Adapter AX88796C on module rev 2.0a and more
+*/
+#define CONFIG_DRIVER_AX88796C          1
+#define CONFIG_16BIT_MODE               1 /* 16 bit :1 , 8 bit :0 */
+#define CONFIG_AX88796B_PIN_COMPATIBLE  1
+#define AX88796C_BASE                   0x10000000
+
+/*-----------------------------------------------------------------------
+* Both drivers AX88796B and AX88796C use NET_MULTI
+*/
+#define CONFIG_NET_MULTI                1
 
 #define	CONFIG_BOOTP_BOOTFILESIZE
 #define	CONFIG_BOOTP_BOOTPATH
@@ -102,7 +126,7 @@
 #define	CONFIG_NETMASK			255.255.255.0
 #define	CONFIG_IPADDR			192.168.1.52
 #define	CONFIG_SERVERIP			192.168.1.51
-#define	CONFIG_ETHADDR			00:11:22:33:44:55
+//#define	CONFIG_ETHADDR			00:11:22:33:44:55
 #endif
 
 /*
@@ -146,10 +170,7 @@
  * Clock Configuration
  */
 #undef	CONFIG_SYS_CLKS_IN_HZ
-#define	CONFIG_SYS_HZ			3250000		/* Timer @ 3250000 Hz */
-
-#define	CONFIG_SYS_MONAHANS_RUN_MODE_OSC_RATIO		0x1F	/* valid values: 8, 16, 24, 31 */
-#define	CONFIG_SYS_MONAHANS_TURBO_RUN_MODE_RATIO	0x2	/* valid values: 1, 2 */
+#define	CONFIG_SYS_HZ			1000
 
 /*
  * Stack sizes
@@ -181,6 +202,7 @@
  * NAND
  */
 #ifdef	CONFIG_CMD_NAND
+
 #define	CONFIG_NAND_PXA3XX
 #define	CONFIG_NEW_NAND_CODE
 #define	CONFIG_SYS_NAND0_BASE		0x0
@@ -196,8 +218,68 @@
 
 /* Environment is in NAND */
 #define	CONFIG_ENV_IS_IN_NAND		1
-#define CONFIG_ENV_OFFSET		0x60000
+#define CONFIG_ENV_OFFSET		0x20000
 #define	CONFIG_ENV_SECT_SIZE		0x20000
+
+#define __USE_MTD__
+
+#ifdef __USE_MTD__
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
+#define MTDIDS_DEFAULT          	"nand0=pxa3xx-nand"
+
+// Choice one: __USE_UBIFS__, __USE_JFFS2__ or __USE_YAFFS2__
+#define __USE_UBIFS__
+                                        
+#ifdef __USE_YAFS2__
+#define CONFIG_YAFFS2
+#define CONFIG_MTD_NAND_ECC_YAFFS
+#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx-nand:" \
+					    "128K(ipl),"\
+                                    	    "1M(u-boot),"\
+                                    	    "6M(kernel),"\
+                                    	    "896K(reserved),"\
+                                    	    "-(fs)"
+#define CONFIG_ROOT_DEVICE	"/dev/mtdblock4"
+#define CONFIG_ROOT_FSTYPE	"yaffs2"
+#endif // __USE_YAFFS2__
+
+#ifdef __USE_JFFS2__
+#define CONFIG_CMD_JFFS2
+#define CONFIG_JFFS2_NAND 1
+#define CONFIG_MTD_NAND_ECC_JFFS2
+#define CONFIG_JFFS2_LZO
+#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx-nand:" \
+					    "128K(ipl),"\
+                                    	    "1M(u-boot),"\
+                                    	    "6M(kernel),"\
+                                    	    "896K(reserved),"\
+                                    	    "128M(rootfs)"\
+                                    	    "-(unused)"
+#define CONFIG_ROOT_DEVICE	"/dev/mtdblock4"
+#define CONFIG_ROOT_FSTYPE	"jffs2"
+#endif // __USE_JFFS2__
+
+#ifdef __USE_UBIFS__
+// library
+#define CONFIG_RBTREE
+#define CONFIG_LZO
+// ubi subsys
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
+#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx-nand:" \
+					    "128K(ipl)ro,"\
+					    "256K(u-boot-cfg)," \
+                                    	    "384K(u-boot)ro,"\
+                                    	    "-(ubi)"
+#define CONFIG_UBI_MTD		"ubi.mtd=3"
+#define CONFIG_ROOT_DEVICE	"ubi0:rootfs"
+#define CONFIG_ROOT_FSTYPE	"ubifs"
+#endif // __USE_UBIFS__
+
+#endif // __USE_MTD__
+
 #else
 
 #define	CONFIG_ENV_IS_NOWHERE		1
@@ -222,5 +304,54 @@
 #define	CONFIG_SYS_USB_OHCI_SLOT_NAME	"colibri320"
 #define	CONFIG_USB_STORAGE
 #endif
+
+#define CONFIG_EXTRA_ENV_SETTINGS       \
+        "__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2011\0" \
+        "__produced=by NTC of Schemotecnics NTK PIT\0" \
+        "__requsted=by OAO Radioavionica, Saint-Petersburg, Russia\0" \
+        "serial#=1234567\0" \
+        "rev#=20b\0" \
+        "mtdids=nand0=pxa3xx-nand\0" \
+	"mtdparts="MTDPARTS_DEFAULT"\0" \
+        "IPADDR=192.168.5.101\0" \
+        "NETMSK=255.255.255.0\0" \
+        "SERVER=192.168.5.222\0" \
+        "GATEWAY=192.168.5.254\0" \
+        "HOSTNAME=colibri\0" \
+        "NFS_PATH=/colibri\0" \
+        "KRN_RAM=kernel_ram.img\0" \
+        "BOOT_START=0x60000\0" \
+        "BOOT_LEN=0x60000\0" \
+        "ENV_START=0x00020000\0" \
+        "ENV_LEN=0x00020000\0" \
+        "RAM_LD_ADDR=0xA0008000\0" \
+        "add_basic_args=setenv bootargs\0" \
+        "add_ser_cons=setenv bootargs ${bootargs} console=ttyS0,115200\0" \
+        "add_ip_conf=setenv bootargs ${bootargs} ip=${IPADDR}:${SERVER}:${GATEWAY}:${NETMASK}:${HOSTNAME}:eth0:off\0" \
+        "add_mtd_dev=setenv bootargs ${bootargs} " CONFIG_UBI_MTD " ${mtdparts}\0" \
+        "add_mtd_root=setenv bootargs ${bootargs} root=" CONFIG_ROOT_DEVICE " ro rootfstype=" CONFIG_ROOT_FSTYPE"\0" \
+        "add_sd_root=setenv bootargs ${bootargs} root=/dev/mmcblk0p1 ro rootdelay=2\0" \
+        "add_cf_root=setenv bootargs ${bootargs} root=/dev/sda1 ro rootdelay=2\0" \
+        "add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=2\0" \
+        "add_nfs_root=run add_ip_conf; setenv bootargs ${bootargs} root=/dev/nfs rw nfsroot=${SERVER}:${NFS_PATH}\0" \
+        "boot_from_nand=ubi part ubi; ubifsmount boot; ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
+        "boot_ser_get=echo 'Please, send NEW u-boot.bin via console port with Y-Modem protocol';loady ${RAM_LD_ADDR}\0" \
+        "boot_upd_rom=run boot_ser_get; nand erase ${BOOT_START} ${BOOT_LEN}; nand write ${RAM_LD_ADDR} ${BOOT_START} ${BOOT_LEN}\0" \
+        "clean_env=nand erase ${ENV_START} ${ENV_LEN}\0" \
+        "ldr_net=setenv ipaddr ${IPADDR}; setenv serverip ${SERVER}; setenv gatewayip ${GATEWAY}; setenv hostname ${HOSTNAME}; setenv netmask ${NETMASK}\0" \
+        "make_mtd_args=run add_basic_args; run add_mtd_dev; run add_mtd_root\0" \
+        "make_nfs_args=run add_basic_args; run add_mtd_dev; run add_nfs_root\0" \
+        "make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
+        "make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
+        "make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
+	"make_ubi_parts=nand erase ubi; ubi part ubi;" \
+	    "ubi create boot 1000000; ubi create firmware 800000;" \
+	    "ubi create modules 4000000; ubi create rootfs\0" \
+        "nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
+        "nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
+        "mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
+        "resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
+        "spo=run make_cf_args; run boot_from_nand\0" \
+        "tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
 
 #endif	/* __CONFIG_H */

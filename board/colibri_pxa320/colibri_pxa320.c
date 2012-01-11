@@ -61,7 +61,7 @@ int board_init (void)
 
 	/* Ethernet chip configuration */
 	GPIO3		= 0x00000801;
-	MSC1		= 0x7ff8023c;
+	MSC1		= 0x07790779; // 0x7ff8023c;
 	CSADRCFG2	= 0x0032c80b;
 
 	/* Chipselect 3 configuration */
@@ -111,8 +111,20 @@ int board_init (void)
 
 int board_late_init(void)
 {
-	setenv("stdout", "serial");
-	setenv("stderr", "serial");
+	char* sn_str = getenv("serial#");
+
+	if ( sn_str ) { // Have board SN, set proper MAC
+	    unsigned long sn_part;
+	    char mac_addr[20]; // 19 in real world
+	    
+	    sn_part = simple_strtoul( sn_str, NULL, 10 );
+	    sprintf(mac_addr,"00:14:2D:%02X:%02X:%02X",
+		(unsigned int)(( sn_part & 0xFF0000 ) >> 16),
+		(unsigned int)(( sn_part & 0x00FF00 ) >>  8),
+		(unsigned int)(( sn_part & 0x0000FF ) >>  0) );
+	    setenv( "ethaddr", mac_addr ); 	    
+	};
+	
 	return 0;
 }
 
@@ -167,5 +179,82 @@ void usb_board_stop(void)
 	CKENA &= ~CKENA_2_USBHOST;
 
 	return;
+}
+#endif
+
+#ifdef CONFIG_SERIAL_TAG
+/*****************************************************************************
+Board serial number used to calculate ethernet MAC addres and used directly
+in Linux Kernel. MAC seen like:
+ 00:14:2D:XX:YY;ZZ
+ \______/ \______/
+    \        \_______ Serial number from board label in HEX format
+     \_______________ Toradex MAC series
+And stored in Serial boot tag like:
+serialnr->high = 0x0000ZZYY
+serialnr->low  = 0xXX2D1400
+If no serial# enverooment variable present, use only Toradex part of MAC.
+*****************************************************************************/
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+        char *serial = getenv("serial#");
+        if (serial) {
+            unsigned long tmp;
+
+            tmp = simple_strtoul(serial,NULL,10);
+
+            serialnr->low  = 0x002D1400 | ( ( tmp & 0xFF0000) << 8 );
+            serialnr->high = ( ( tmp & 0xFF ) << 8 ) | ( ( tmp & 0xFF00 ) >> 8 );
+        } else {
+            serialnr->high = 0x00000000;
+            serialnr->low  = 0x002D1400;
+        }
+}
+#endif
+
+#ifdef CONFIG_REVISION_TAG
+/*****************************************************************************
+Board revision number used by Toradex kernel patch
+If no rev# enverooment variable present, use revision 0.0
+*****************************************************************************/
+unsigned int get_board_rev(void)
+{
+	char *revision = getenv("rev#");
+	if (revision) {
+	    unsigned int tmp;
+
+	    tmp = (unsigned int)simple_strtoul(revision,NULL,16);
+	    return tmp;
+	} else
+	    return 0;
+}
+#endif
+
+#ifdef CONFIG_NET_MULTI
+int board_eth_init(bd_t *bis)
+{
+#ifdef CONFIG_REVISION_TAG
+    if ( get_board_rev() < 0x20a ) {
+#ifdef CONFIG_DRIVER_AX88796B
+	return ax88796b_initialize(bis);
+#else
+	return -1; /* no driver present in code */
+#endif
+    } else {
+#ifdef CONFIG_DRIVER_AX88796C
+        return ax88796c_initialize(bis);
+#else
+	return -1; /* no driver present in code */
+#endif
+    };
+#else  /* CONFIG_REVISION_TAG */
+/* no revision tag used - try init all modules */
+#ifdef CONFIG_DRIVER_AX88796B
+        return ax88796b_initialize(bis);
+#endif
+#ifdef CONFIG_DRIVER_AX88796C
+        return ax88796c_initialize(bis);
+#endif
+#endif /* CONFIG_REVISION_TAG */
 }
 #endif
