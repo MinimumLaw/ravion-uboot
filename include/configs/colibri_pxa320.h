@@ -227,7 +227,7 @@
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_MTD_DEVICE
-#define MTDIDS_DEFAULT          	"nand0=pxa3xx-nand"
+#define MTDIDS_DEFAULT          	"nand0=pxa3xx_nand-0"
 
 // Choice one: __USE_UBIFS__, __USE_JFFS2__ or __USE_YAFFS2__
 #define __USE_UBIFS__
@@ -235,7 +235,7 @@
 #ifdef __USE_YAFS2__
 #define CONFIG_YAFFS2
 #define CONFIG_MTD_NAND_ECC_YAFFS
-#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx-nand:" \
+#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx_nand-0:" \
 					    "128K(ipl),"\
                                     	    "1M(u-boot),"\
                                     	    "6M(kernel),"\
@@ -268,7 +268,7 @@
 // ubi subsys
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
-#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx-nand:" \
+#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx_nand-0:" \
 					    "128K(ipl)ro,"\
 					    "256K(u-boot-cfg)," \
                                     	    "384K(u-boot)ro,"\
