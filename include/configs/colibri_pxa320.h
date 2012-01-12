@@ -250,7 +250,7 @@
 #define CONFIG_JFFS2_NAND 1
 #define CONFIG_MTD_NAND_ECC_JFFS2
 #define CONFIG_JFFS2_LZO
-#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx-nand:" \
+#define MTDPARTS_DEFAULT                "mtdparts=pxa3xx_nand-0:" \
 					    "128K(ipl),"\
                                     	    "1M(u-boot),"\
                                     	    "6M(kernel),"\
@@ -311,15 +311,15 @@
         "__requsted=by OAO Radioavionica, Saint-Petersburg, Russia\0" \
         "serial#=1234567\0" \
         "rev#=20b\0" \
-        "mtdids=nand0=pxa3xx-nand\0" \
+        "mtdids=nand0=pxa3xx_nand-0\0" \
 	"mtdparts="MTDPARTS_DEFAULT"\0" \
         "IPADDR=192.168.5.101\0" \
         "NETMSK=255.255.255.0\0" \
         "SERVER=192.168.5.222\0" \
         "GATEWAY=192.168.5.254\0" \
         "HOSTNAME=colibri\0" \
-        "NFS_PATH=/colibri\0" \
-        "KRN_RAM=kernel_ram.img\0" \
+        "NFS_PATH=/cimc/exportfs/gentoo-armv5tel\0" \
+        "KRN_RAM=uImage.pxa\0" \
         "BOOT_START=0x60000\0" \
         "BOOT_LEN=0x60000\0" \
         "ENV_START=0x00020000\0" \
@@ -344,9 +344,9 @@
         "make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
         "make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
         "make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
-	"make_ubi_parts=nand erase ubi; ubi part ubi;" \
-	    "ubi create boot 1000000; ubi create firmware 800000;" \
-	    "ubi create modules 4000000; ubi create rootfs\0" \
+        "make_ubi_parts=nand erase ubi; ubi part ubi;" \
+        "ubi create boot 1000000; ubi create firmware 800000;" \
+        "ubi create modules 4000000; ubi create rootfs\0" \
         "nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
         "nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
         "mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
