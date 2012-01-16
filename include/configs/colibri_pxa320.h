@@ -318,8 +318,8 @@
         "SERVER=192.168.5.222\0" \
         "GATEWAY=192.168.5.254\0" \
         "HOSTNAME=colibri\0" \
-        "NFS_PATH=/cimc/exportfs/gentoo-armv5tel\0" \
-        "KRN_RAM=uImage.pxa\0" \
+        "NFS_PATH=/cimc/exportfs/colibri\0" \
+        "KRN_RAM=kernel_ram.img\0" \
         "BOOT_START=0x60000\0" \
         "BOOT_LEN=0x60000\0" \
         "ENV_START=0x00020000\0" \
