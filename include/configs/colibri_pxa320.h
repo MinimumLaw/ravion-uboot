@@ -273,8 +273,8 @@
 					    "128K(ipl)ro,"\
 					    "256K(u-boot-cfg)," \
 					    "640K(u-boot)ro,"\
-					    "1000M(ubi),"\
-					    "-(bbt)"
+					    "1010M(ubi),"\
+					    "-(reserved)"
 #define CONFIG_UBI_MTD		"ubi.mtd=3"
 #define CONFIG_ROOT_DEVICE	"ubi0:rootfs"
 #define CONFIG_ROOT_FSTYPE	"ubifs"
