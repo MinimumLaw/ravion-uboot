@@ -137,6 +137,7 @@
 #define	CONFIG_PXA_MMC
 #define	CONFIG_SYS_MMC_BASE		0xF0000000
 #define	CONFIG_CMD_FAT
+#define	CONFIG_CMD_EXT2
 #define	CONFIG_DOS_PARTITION
 #endif
 
@@ -271,8 +272,9 @@
 #define MTDPARTS_DEFAULT                "mtdparts=pxa3xx_nand-0:" \
 					    "128K(ipl)ro,"\
 					    "256K(u-boot-cfg)," \
-                                    	    "384K(u-boot)ro,"\
-                                    	    "-(ubi)"
+					    "640K(u-boot)ro,"\
+					    "1000M(ubi),"\
+					    "-(bbt)"
 #define CONFIG_UBI_MTD		"ubi.mtd=3"
 #define CONFIG_ROOT_DEVICE	"ubi0:rootfs"
 #define CONFIG_ROOT_FSTYPE	"ubifs"
@@ -306,52 +308,48 @@
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS       \
-        "__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2011\0" \
-        "__produced=by NTC of Schemotecnics NTK PIT\0" \
-        "__requsted=by OAO Radioavionica, Saint-Petersburg, Russia\0" \
-        "serial#=1234567\0" \
-        "rev#=20b\0" \
-        "mtdids=nand0=pxa3xx_nand-0\0" \
+	"__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2012\0" \
+	"__produced=by NTC of Schemotecnics NTK PIT\0" \
+	"__requsted=by OAO Radioavionica, Saint-Petersburg, Russia\0" \
+	"serial#=1234567\0" \
+	"rev#=20b\0" \
+	"mtdids="MTDIDS_DEFAULT"\0" \
 	"mtdparts="MTDPARTS_DEFAULT"\0" \
-        "IPADDR=192.168.5.101\0" \
-        "NETMSK=255.255.255.0\0" \
-        "SERVER=192.168.5.222\0" \
-        "GATEWAY=192.168.5.254\0" \
-        "HOSTNAME=colibri\0" \
-        "NFS_PATH=/cimc/exportfs/colibri\0" \
-        "KRN_RAM=kernel_ram.img\0" \
-        "BOOT_START=0x60000\0" \
-        "BOOT_LEN=0x60000\0" \
-        "ENV_START=0x00020000\0" \
-        "ENV_LEN=0x00020000\0" \
-        "RAM_LD_ADDR=0xA0008000\0" \
-        "add_basic_args=setenv bootargs\0" \
-        "add_ser_cons=setenv bootargs ${bootargs} console=ttyS0,115200\0" \
-        "add_ip_conf=setenv bootargs ${bootargs} ip=${IPADDR}:${SERVER}:${GATEWAY}:${NETMASK}:${HOSTNAME}:eth0:off\0" \
-        "add_mtd_dev=setenv bootargs ${bootargs} " CONFIG_UBI_MTD " ${mtdparts}\0" \
-        "add_mtd_root=setenv bootargs ${bootargs} root=" CONFIG_ROOT_DEVICE " ro rootfstype=" CONFIG_ROOT_FSTYPE"\0" \
-        "add_sd_root=setenv bootargs ${bootargs} root=/dev/mmcblk0p1 ro rootdelay=2\0" \
-        "add_cf_root=setenv bootargs ${bootargs} root=/dev/sda1 ro rootdelay=2\0" \
-        "add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=2\0" \
-        "add_nfs_root=run add_ip_conf; setenv bootargs ${bootargs} root=/dev/nfs rw nfsroot=${SERVER}:${NFS_PATH}\0" \
-        "boot_from_nand=ubi part ubi; ubifsmount boot; ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
-        "boot_ser_get=echo 'Please, send NEW u-boot.bin via console port with Y-Modem protocol';loady ${RAM_LD_ADDR}\0" \
-        "boot_upd_rom=run boot_ser_get; nand erase ${BOOT_START} ${BOOT_LEN}; nand write ${RAM_LD_ADDR} ${BOOT_START} ${BOOT_LEN}\0" \
-        "clean_env=nand erase ${ENV_START} ${ENV_LEN}\0" \
-        "ldr_net=setenv ipaddr ${IPADDR}; setenv serverip ${SERVER}; setenv gatewayip ${GATEWAY}; setenv hostname ${HOSTNAME}; setenv netmask ${NETMASK}\0" \
-        "make_mtd_args=run add_basic_args; run add_mtd_dev; run add_mtd_root\0" \
-        "make_nfs_args=run add_basic_args; run add_mtd_dev; run add_nfs_root\0" \
-        "make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
-        "make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
-        "make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
-        "make_ubi_parts=nand erase ubi; ubi part ubi;" \
-        "ubi create boot 1000000; ubi create firmware 800000;" \
-        "ubi create modules 4000000; ubi create rootfs\0" \
-        "nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
-        "nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
-        "mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
-        "resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
-        "spo=run make_cf_args; run boot_from_nand\0" \
-        "tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
+	"IPADDR=192.168.5.101\0" \
+	"NETMSK=255.255.255.0\0" \
+	"SERVER=192.168.5.222\0" \
+	"GATEWAY=192.168.5.254\0" \
+	"HOSTNAME=colibri\0" \
+	"NFS_PATH=/colibri\0" \
+	"KRN_RAM=kernel_ram.img\0" \
+	"RAM_LD_ADDR=0xA0008000\0" \
+	"add_basic_args=setenv bootargs\0" \
+	"add_ser_cons=setenv bootargs ${bootargs} console=ttyS0,115200\0" \
+	"add_ip_conf=setenv bootargs ${bootargs} ip=${IPADDR}:${SERVER}:${GATEWAY}:${NETMASK}:${HOSTNAME}:eth0:off\0" \
+	"add_mtd_dev=setenv bootargs ${bootargs} " CONFIG_UBI_MTD " ${mtdparts}\0" \
+	"add_mtd_root=setenv bootargs ${bootargs} root=" CONFIG_ROOT_DEVICE " ro rootfstype=" CONFIG_ROOT_FSTYPE"\0" \
+	"add_sd_root=setenv bootargs ${bootargs} root=/dev/mmcblk0p1 ro rootdelay=2\0" \
+	"add_cf_root=setenv bootargs ${bootargs} root=/dev/sda1 ro rootdelay=2\0" \
+	"add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=2\0" \
+	"add_nfs_root=run add_ip_conf; setenv bootargs ${bootargs} root=/dev/nfs rw nfsroot=${SERVER}:${NFS_PATH}\0" \
+	"boot_from_nand=ubi part ubi; ubifsmount boot; ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
+	"boot_ser_get=echo 'Please, send NEW u-boot.bin via console port with Y-Modem protocol';loady ${RAM_LD_ADDR}\0" \
+	"boot_upd_rom=run boot_ser_get; nand erase u-boot; nand write ${RAM_LD_ADDR} u-boot\0" \
+	"clean_env=nand erase u-boot-cfg\0" \
+	"ldr_net=setenv ipaddr ${IPADDR}; setenv serverip ${SERVER}; setenv gatewayip ${GATEWAY}; setenv hostname ${HOSTNAME}; setenv netmask ${NETMASK}\0" \
+	"make_mtd_args=run add_basic_args; run add_mtd_dev; run add_mtd_root\0" \
+	"make_nfs_args=run add_basic_args; run add_mtd_dev; run add_nfs_root\0" \
+	"make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
+	"make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
+	"make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
+	"make_ubi_parts=nand erase ubi; ubi part ubi;" \
+	"ubi create boot 1000000; ubi create firmware 800000;" \
+	"ubi create modules 4000000; ubi create rootfs\0" \
+	"nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
+	"nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
+	"mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
+	"resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
+	"spo=run make_cf_args; run boot_from_nand\0" \
+	"tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
 
 #endif	/* __CONFIG_H */
