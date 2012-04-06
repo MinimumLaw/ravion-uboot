@@ -351,5 +351,6 @@
 	"resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
 	"spo=run make_cf_args; run boot_from_nand\0" \
 	"tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
+	"_inst_sys=run make_ubi_parts; mmc init; ext2load mmc 0 ${RAM_LD_ADDR} /boot/${KRN_RAM}; run make_sd_args; bootm\0"
 
 #endif	/* __CONFIG_H */
