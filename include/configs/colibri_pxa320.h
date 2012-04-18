@@ -333,24 +333,20 @@
 	"add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=2\0" \
 	"add_nfs_root=run add_ip_conf; setenv bootargs ${bootargs} root=/dev/nfs rw nfsroot=${SERVER}:${NFS_PATH}\0" \
 	"boot_from_nand=ubi part ubi; ubifsmount boot; ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
-	"boot_ser_get=echo 'Please, send NEW u-boot.bin via console port with Y-Modem protocol';loady ${RAM_LD_ADDR}\0" \
-	"boot_upd_rom=run boot_ser_get; nand erase u-boot; nand write ${RAM_LD_ADDR} u-boot\0" \
 	"clean_env=nand erase u-boot-cfg\0" \
 	"ldr_net=setenv ipaddr ${IPADDR}; setenv serverip ${SERVER}; setenv gatewayip ${GATEWAY}; setenv hostname ${HOSTNAME}; setenv netmask ${NETMASK}\0" \
+	"tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
 	"make_mtd_args=run add_basic_args; run add_mtd_dev; run add_mtd_root\0" \
 	"make_nfs_args=run add_basic_args; run add_mtd_dev; run add_nfs_root\0" \
 	"make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
 	"make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
 	"make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
-	"make_ubi_parts=nand erase ubi; ubi part ubi;" \
-	"ubi create boot 1000000; ubi create firmware 800000;" \
-	"ubi create modules 4000000; ubi create rootfs\0" \
+	"make_install_args=run add_basic_args; run add_ser_cons; run add_sd_root\0" \
 	"nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
 	"nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
 	"mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
 	"resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
 	"spo=run make_cf_args; run boot_from_nand\0" \
-	"tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
-	"_inst_sys=run make_ubi_parts; mmc init; ext2load mmc 0 ${RAM_LD_ADDR} /boot/${KRN_RAM}; run make_sd_args; bootm\0"
+	"mksys=nand scrub ubi; run make_install_args; mmc init; ext2load mmc 0 ${RAM_LD_ADDR} /boot/${KRN_RAM}; bootm\0"
 
 #endif	/* __CONFIG_H */
