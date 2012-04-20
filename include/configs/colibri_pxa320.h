@@ -341,7 +341,7 @@
 	"make_usb_args=run add_basic_args; run add_mtd_dev; run add_usb_root\0" \
 	"make_cf_args=run add_basic_args; run add_mtd_dev; run add_cf_root\0" \
 	"make_sd_args=run add_basic_args; run add_mtd_dev; run add_sd_root\0" \
-	"make_install_args=run add_basic_args; run add_ser_cons; run add_sd_root\0" \
+	"make_install_args=setenv bootargs ${mtdparts}; run add_ser_cons; run add_sd_root\0" \
 	"nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
 	"nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
 	"mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
