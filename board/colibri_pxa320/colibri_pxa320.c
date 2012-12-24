@@ -182,6 +182,14 @@ void usb_board_stop(void)
 }
 #endif
 
+#ifdef  CONFIG_CMD_MMC
+int board_mmc_init(bd_t *bis)
+{
+        pxa_mmc_register(0);
+        return 0;
+}
+#endif
+
 #ifdef CONFIG_SERIAL_TAG
 /*****************************************************************************
 Board serial number used to calculate ethernet MAC addres and used directly

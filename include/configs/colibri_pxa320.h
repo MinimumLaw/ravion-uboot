@@ -133,9 +133,11 @@
  * MMC Card Configuration
  */
 #ifdef	CONFIG_CMD_MMC
-#define	CONFIG_MMC
-#define	CONFIG_PXA_MMC
-#define	CONFIG_SYS_MMC_BASE		0xF0000000
+#define CONFIG_MMC
+#define	CONFIG_GENERIC_MMC
+#define	CONFIG_PXA_MMC_GENERIC
+//#define	CONFIG_SYS_MMC_BASE		0xF0000000
+#define CONFIG_PARTITIONS
 #define	CONFIG_CMD_FAT
 #define	CONFIG_CMD_EXT2
 #define	CONFIG_DOS_PARTITION
@@ -219,7 +221,7 @@
 
 /* Environment is in NAND */
 #define	CONFIG_ENV_IS_IN_NAND		1
-#define CONFIG_ENV_OFFSET		0x20000
+#define CONFIG_ENV_OFFSET		0xA0000
 #define	CONFIG_ENV_SECT_SIZE		0x20000
 
 #define __USE_MTD__
@@ -271,8 +273,8 @@
 #define CONFIG_CMD_UBIFS
 #define MTDPARTS_DEFAULT                "mtdparts=pxa3xx_nand-0:" \
 					    "128K(ipl)ro,"\
-					    "256K(u-boot-cfg)," \
-					    "640K(u-boot)ro,"\
+					    "512K(u-boot)ro," \
+					    "384K(u-boot-cfg),"\
 					    "1010M(ubi),"\
 					    "-(reserved)"
 #define CONFIG_UBI_MTD		"ubi.mtd=3"
