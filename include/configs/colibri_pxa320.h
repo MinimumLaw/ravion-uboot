@@ -221,7 +221,7 @@
 
 /* Environment is in NAND */
 #define	CONFIG_ENV_IS_IN_NAND		1
-#define CONFIG_ENV_OFFSET		0xA0000
+#define CONFIG_ENV_OFFSET		0x20000
 #define	CONFIG_ENV_SECT_SIZE		0x20000
 
 #define __USE_MTD__
@@ -273,8 +273,8 @@
 #define CONFIG_CMD_UBIFS
 #define MTDPARTS_DEFAULT                "mtdparts=pxa3xx_nand-0:" \
 					    "128K(ipl)ro,"\
-					    "512K(u-boot)ro," \
-					    "384K(u-boot-cfg),"\
+					    "256K(u-boot-cfg)," \
+					    "640K(u-boot)ro,"\
 					    "1010M(ubi),"\
 					    "-(reserved)"
 #define CONFIG_UBI_MTD		"ubi.mtd=3"
