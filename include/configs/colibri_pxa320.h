@@ -47,7 +47,7 @@
 
 #define	CONFIG_ENV_OVERWRITE		/* override default environment */
 
-#define	CONFIG_BOOTCOMMAND		"run spo"
+#define	CONFIG_BOOTCOMMAND		"run bootmenu"
 //#define	CONFIG_BOOTARGS			"console=tty0 console=ttyS0,115200 root=/dev/sda1 rootdelay=15"
 #define	CONFIG_TIMESTAMP
 #define	CONFIG_BOOTDELAY		3	/* autoboot delay */
@@ -330,9 +330,11 @@
 	"add_mtd_root=setenv bootargs ${bootargs} root=" CONFIG_ROOT_DEVICE " ro rootfstype=" CONFIG_ROOT_FSTYPE"\0" \
 	"add_sd_root=setenv bootargs ${bootargs} root=/dev/mmcblk0p1 ro rootdelay=2\0" \
 	"add_cf_root=setenv bootargs ${bootargs} root=/dev/sda1 ro rootdelay=2\0" \
-	"add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=2\0" \
+	"add_usb_root=setenv bootargs ${bootargs} root=/dev/sdb1 ro rootdelay=10\0" \
 	"add_nfs_root=run add_ip_conf; setenv bootargs ${bootargs} root=/dev/nfs rw nfsroot=${SERVER}:${NFS_PATH}\0" \
-	"boot_from_nand=ubi part ubi; ubifsmount boot; ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
+	"ubi_mount=ubi part ubi; ubifsmount boot\0" \
+	"bootmenu=run ubi_mount; ubifsload ${RAM_LD_ADDR} menu; go 0xA000845C; run bootcmd\0" \
+	"boot_from_nand=ubifsload ${RAM_LD_ADDR} ${KRN_RAM}; bootm ${RAM_LD_ADDR}\0" \
 	"clean_env=nand erase u-boot-cfg\0" \
 	"ldr_net=setenv ipaddr ${IPADDR}; setenv serverip ${SERVER}; setenv gatewayip ${GATEWAY}; setenv hostname ${HOSTNAME}; setenv netmask ${NETMASK}\0" \
 	"tftp_get_ram_kern=run ldr_net; tftpboot ${RAM_LD_ADDR} ${SERVER}:${KRN_RAM}\0" \
@@ -345,8 +347,8 @@
 	"nfsram=run make_nfs_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
 	"nfsrom=run make_nfs_args; run add_ser_cons; run boot_from_nand\0" \
 	"mtdram=run make_mtd_args; run add_ser_cons; run tftp_get_ram_kern; bootm ${RAM_LD_ADDR}\0" \
-	"resque=run make_mtd_args; run add_ser_cons; run boot_from_nand\0" \
-	"spo=run make_cf_args; run boot_from_nand\0" \
+	"resque=run make_mtd_args; run add_ser_cons; run ubi_mount; run boot_from_nand\0" \
+	"spo=run make_cf_args; run ubi_mount; run boot_from_nand\0" \
 	"mksys=nand scrub ubi; run make_install_args; mmc init; ext2load mmc 0 ${RAM_LD_ADDR} /boot/${KRN_RAM}; bootm\0"
 
 #endif	/* __CONFIG_H */
