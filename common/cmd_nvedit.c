@@ -62,9 +62,10 @@ DECLARE_GLOBAL_DATA_PTR;
 	!defined(CONFIG_ENV_IS_IN_ONENAND)	&& \
 	!defined(CONFIG_ENV_IS_IN_SPI_FLASH)	&& \
 	!defined(CONFIG_ENV_IS_IN_REMOTE)	&& \
+	!defined(CONFIG_ENV_IS_IN_UBI)		&& \
 	!defined(CONFIG_ENV_IS_NOWHERE)
 # error Define one of CONFIG_ENV_IS_IN_{EEPROM|FLASH|DATAFLASH|ONENAND|\
-SPI_FLASH|NVRAM|MMC|FAT|REMOTE} or CONFIG_ENV_IS_NOWHERE
+SPI_FLASH|NVRAM|MMC|FAT|REMOTE|UBI} or CONFIG_ENV_IS_NOWHERE
 #endif
 
 /*
@@ -95,7 +96,7 @@ int get_env_id(void)
 static int env_print(char *name, int flag)
 {
 	char *res = NULL;
-	size_t len;
+	ssize_t len;
 
 	if (name) {		/* print a single name */
 		ENTRY e, *ep;
@@ -119,6 +120,7 @@ static int env_print(char *name, int flag)
 	}
 
 	/* should never happen */
+	printf("## Error: cannot export environment\n");
 	return 0;
 }
 
@@ -272,6 +274,10 @@ static int _do_env_set(int flag, int argc, char * const argv[])
 int setenv(const char *varname, const char *varvalue)
 {
 	const char * const argv[4] = { "setenv", varname, varvalue, NULL };
+
+	/* before import into hashtable */
+	if (!(gd->flags & GD_FLG_ENV_READY))
+		return 1;
 
 	if (varvalue == NULL || varvalue[0] == '\0')
 		return _do_env_set(0, 2, (char * const *)argv);
