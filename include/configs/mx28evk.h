@@ -63,6 +63,7 @@
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_BOOTZ
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS
 
 /* Memory configurations */
 #define CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
@@ -138,14 +139,14 @@
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 
 /* Environment is in NAND */
+#ifdef CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 #define CONFIG_ENV_SECT_SIZE		(128 * 1024)
 #define CONFIG_ENV_RANGE		(512 * 1024)
-#ifndef CONFIG_ENV_OFFSET
 #define CONFIG_ENV_OFFSET		0x300000
-#endif
 #define CONFIG_ENV_OFFSET_REDUND	\
 		(CONFIG_ENV_OFFSET + CONFIG_ENV_RANGE)
+#endif
 
 #define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS

@@ -607,6 +607,7 @@ Enric Balletbo i Serra <eballetbo@iseebcn.com>
 	igep0020	ARM ARMV7 (OMAP3xx SoC)
 	igep0030	ARM ARMV7 (OMAP3xx SoC)
 	igep0032	ARM ARMV7 (OMAP3xx SoC)
+	igep0033	ARM ARMV7 (AM33xx Soc)
 
 Eric Benard <eric@eukrea.com>
 
@@ -664,6 +665,7 @@ Fabio Estevam <fabio.estevam@freescale.com>
 	mx6qsabresd	i.MX6Q
 	mx6qsabreauto	i.MX6Q
 	wandboard	i.MX6DL/S
+	mx6slevk	i.MX6SL
 
 Daniel Gorsulowski <daniel.gorsulowski@esd.eu>
 
@@ -683,7 +685,7 @@ Simon Guinot <simon.guinot@sequanux.org>
 
 Igor Grinberg <grinberg@compulab.co.il>
 
-	cm-t35		ARM ARMV7 (OMAP3xx Soc)
+	cm_t35		ARM ARMV7 (OMAP3xx Soc)
 
 Stefan Herbrechtsmeier <stefan@code.herbrechtsmeier.net>
 
@@ -877,6 +879,8 @@ Stefan Roese <sr@denx.de>
 
 	x600		ARM926EJS (spear600 Soc)
 
+	titanium	i.MX6Q
+
 	pdnb3		xscale/ixp
 	scpu		xscale/ixp
 
@@ -954,6 +958,7 @@ Marek Vasut <marek.vasut@gmail.com>
 	mx23_olinuxino	i.MX23
 	m28evk		i.MX28
 	sc_sps_1	i.MX28
+	m53evk		i.MX53
 
 Hugo Villeneuve <hugo.villeneuve@lyrtech.com>
 

@@ -844,6 +844,7 @@ The following options need to be configured:
 		CONFIG_CMD_FDOS		* Dos diskette Support
 		CONFIG_CMD_FLASH	  flinfo, erase, protect
 		CONFIG_CMD_FPGA		  FPGA device initialization support
+		CONFIG_CMD_FUSE		  Device fuse support
 		CONFIG_CMD_GETTIME	* Get time since boot
 		CONFIG_CMD_GO		* the 'go' command (exec code)
 		CONFIG_CMD_GREPENV	* search environment
@@ -929,6 +930,13 @@ The following options need to be configured:
 
 
 		XXX - this list needs to get updated!
+
+- Regular expression support:
+		CONFIG_REGEX
+                If this variable is defined, U-Boot is linked against
+                the SLRE (Super Light Regular Expression) library,
+                which adds regex support to some commands, as for
+                example "env grep" and "setexpr".
 
 - Device tree:
 		CONFIG_OF_CONTROL
@@ -3248,6 +3256,15 @@ Configuration Settings:
 		digits and dots.  Recommended value: 45 (9..1) for 80
 		column displays, 15 (3..1) for 40 column displays.
 
+- CONFIG_FLASH_VERIFY
+		If defined, the content of the flash (destination) is compared
+		against the source after the write operation. An error message
+		will be printed when the contents are not identical.
+		Please note that this option is useless in nearly all cases,
+		since such flash programming errors usually are detected earlier
+		while unprotecting/erasing/programming. Please only enable
+		this option if you really know what you are doing.
+
 - CONFIG_SYS_RX_ETH_BUFFER:
 		Defines the number of Ethernet receive buffers. On some
 		Ethernet controllers it is recommended to set this value
@@ -3323,6 +3340,10 @@ Configuration Settings:
 	offset _bss_start_ofs from CONFIG_SYS_TEXT_BASE, rather than
 	directly. You should not need to touch this setting.
 
+- CONFIG_OMAP_PLATFORM_RESET_TIME_MAX_USEC (OMAP only)
+	This is set by OMAP boards for the max time that reset should
+	be asserted. See doc/README.omap-reset-time for details on how
+	the value can be calulated on a given board.
 
 The following definitions that deal with the placement and management
 of environment data (variable area); in general, we support the

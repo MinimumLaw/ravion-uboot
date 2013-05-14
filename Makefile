@@ -183,6 +183,16 @@ endif
 # load other configuration
 include $(TOPDIR)/config.mk
 
+# Targets which don't build the source code
+NON_BUILD_TARGETS = backup clean clobber distclean mkproper tidy unconfig
+
+# Only do the generic board check when actually building, not configuring
+ifeq ($(filter $(NON_BUILD_TARGETS),$(MAKECMDGOALS)),)
+ifeq ($(findstring _config,$(MAKECMDGOALS)),)
+$(CHECK_GENERIC_BOARD)
+endif
+endif
+
 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
 # that (or fail if absent).  Otherwise, search for a linker script in a
 # standard location.
@@ -331,7 +341,7 @@ ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(C
 LIBS-y += $(CPUDIR)/omap-common/libomap-common.o
 endif
 
-ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx31 mx35))
+ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx31 mx35 mxs))
 LIBS-y += arch/$(ARCH)/imx-common/libimx-common.o
 endif
 
@@ -512,13 +522,9 @@ $(obj)u-boot.ais:       $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
 		cat $(obj)spl/u-boot-spl-pad.ais $(obj)u-boot.img > \
 			$(obj)u-boot.ais
 
-# Specify the target for use in elftosb call
-ELFTOSB_TARGET-$(CONFIG_MX23) = imx23
-ELFTOSB_TARGET-$(CONFIG_MX28) = imx28
 
 $(obj)u-boot.sb:       $(obj)u-boot.bin $(obj)spl/u-boot-spl.bin
-		elftosb -zf $(ELFTOSB_TARGET-y) -c $(TOPDIR)/$(CPUDIR)/$(SOC)/u-boot-$(ELFTOSB_TARGET-y).bd \
-			-o $(obj)u-boot.sb
+		$(MAKE) -C $(SRCTREE)/$(CPUDIR)/$(SOC)/ $(OBJTREE)/u-boot.sb
 
 # On x600 (SPEAr600) U-Boot is appended to U-Boot SPL.
 # Both images are created using mkimage (crc etc), so that the ROM
@@ -553,6 +559,18 @@ endif
 
 $(obj)u-boot-img.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
 		cat $(obj)spl/u-boot-spl.bin $(obj)u-boot.img > $@
+
+# PPC4xx needs the SPL at the end of the image, since the reset vector
+# is located at 0xfffffffc. So we can't use the "u-boot-img.bin" target
+# and need to introduce a new build target with the full blown U-Boot
+# at the start padded up to the start of the SPL image. And then concat
+# the SPL image to the end.
+$(obj)u-boot-img-spl-at-end.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
+		tr "\000" "\377" < /dev/zero | dd ibs=1 count=$(CONFIG_UBOOT_PAD_TO) \
+			of=$(obj)u-boot-pad.img 2>/dev/null
+		dd if=$(obj)u-boot.img of=$(obj)u-boot-pad.img \
+			conv=notrunc 2>/dev/null
+		cat $(obj)u-boot-pad.img $(obj)spl/u-boot-spl.bin > $@
 
 ifeq ($(CONFIG_SANDBOX),y)
 GEN_UBOOT = \
@@ -849,6 +867,7 @@ clobber:	tidy
 	@rm -f $(obj)u-boot.ais
 	@rm -f $(obj)u-boot.dtb
 	@rm -f $(obj)u-boot.sb
+	@rm -f $(obj)u-boot.bd
 	@rm -f $(obj)u-boot.spr
 	@rm -f $(obj)nand_spl/{u-boot.{lds,lst},System.map}
 	@rm -f $(obj)nand_spl/{u-boot-nand_spl.lds,u-boot-spl,u-boot-spl.map}
