@@ -63,7 +63,6 @@
 #define CONFIG_LXT971_NO_SLEEP  1       /* disable sleep mode in LXT971 */
 #define CONFIG_RESET_PHY_R      1       /* use reset_phy() to disable phy sleep mode */
 
-#define CONFIG_NET_MULTI	1
 #undef  CONFIG_HAS_ETH1
 
 #define CONFIG_RTC_M48T35A	1		/* ST Electronics M48 timekeeper */
@@ -114,9 +113,6 @@
 #define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt	*/
 
 #undef	CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
-#ifdef	CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#endif
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size	*/
@@ -199,7 +195,7 @@
 #define CONFIG_SYS_PCI_PTM1PCI 0x00000000      /* Host: use this pci address   */
 #define CONFIG_SYS_PCI_PTM2LA  0xffc00000      /* point to flash               */
 #define CONFIG_SYS_PCI_PTM2MS  0xffc00001      /* 4MB, enable                  */
-#define CONFIG_SYS_PCI_PTM2PCI 0x04000000      /* Host: use this pci address   */
+#define CONFIG_SYS_PCI_PTM2PCI (bd->bi_memsize) /* host use this pci address */
 
 #define CONFIG_PCI_4xx_PTM_OVERWRITE	1 /* overwrite PTMx settings by env */
 

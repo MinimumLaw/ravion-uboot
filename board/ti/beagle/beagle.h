@@ -536,7 +536,7 @@ static const struct venc_regs venc_config_std_tv = {
  * Configure Timings for DVI D
  */
 static const struct panel_config dvid_cfg = {
-	.timing_h	= 0x0ff03f31, /* Horizantal timing */
+	.timing_h	= 0x0ff03f31, /* Horizontal timing */
 	.timing_v	= 0x01400504, /* Vertical timing */
 	.pol_freq	= 0x00007028, /* Pol Freq */
 	.divisor	= 0x00010006, /* 72Mhz Pixel Clock */
@@ -544,11 +544,12 @@ static const struct panel_config dvid_cfg = {
 	.panel_type	= 0x01, /* TFT */
 	.data_lines	= 0x03, /* 24 Bit RGB */
 	.load_mode	= 0x02, /* Frame Mode */
-	.panel_color	= DVI_BEAGLE_ORANGE_COL /* ORANGE */
+	.panel_color	= DVI_BEAGLE_ORANGE_COL, /* ORANGE */
+	.gfx_format	= GFXFORMAT_RGB24_UNPACKED,
 };
 
 static const struct panel_config dvid_cfg_xm = {
-	.timing_h	= 0x1a4024c9, /* Horizantal timing */
+	.timing_h	= 0x1a4024c9, /* Horizontal timing */
 	.timing_v	= 0x02c00509, /* Vertical timing */
 	.pol_freq	= 0x00007028, /* Pol Freq */
 	.divisor	= 0x00010001, /* 96MHz Pixel Clock */
@@ -556,6 +557,7 @@ static const struct panel_config dvid_cfg_xm = {
 	.panel_type	= 0x01, /* TFT */
 	.data_lines	= 0x03, /* 24 Bit RGB */
 	.load_mode	= 0x02, /* Frame Mode */
-	.panel_color	= DVI_BEAGLE_ORANGE_COL /* ORANGE */
+	.panel_color	= DVI_BEAGLE_ORANGE_COL, /* ORANGE */
+	.gfx_format	= GFXFORMAT_RGB24_UNPACKED,
 };
 #endif

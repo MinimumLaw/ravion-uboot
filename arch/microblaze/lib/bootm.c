@@ -59,7 +59,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 	if (ret)
 		return 1;
 
-	show_boot_progress (15);
+	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
 	if (!of_flat_tree && argc > 3)
 		of_flat_tree = (char *)simple_strtoul(argv[3], NULL, 16);
@@ -70,12 +70,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 #endif
 
 #ifdef XILINX_USE_DCACHE
-#ifdef XILINX_DCACHE_BYTE_SIZE
 	flush_cache(0, XILINX_DCACHE_BYTE_SIZE);
-#else
-#warning please rebuild BSPs and update configuration
-	flush_cache(0, 32768);
-#endif
 #endif
 	/*
 	 * Linux Kernel Parameters (passing device tree):

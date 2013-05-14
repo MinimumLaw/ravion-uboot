@@ -29,6 +29,7 @@
 #include <command.h>
 #include <malloc.h>
 #include <stdio_dev.h>
+#include <linux/compiler.h>
 
 #include <asm/immap.h>
 
@@ -76,9 +77,10 @@ static char *failed = "*** failed ***\n";
 #include <environment.h>
 
 extern ulong __init_end;
-extern ulong __bss_end__;
+extern ulong __bss_end;
 
 #if defined(CONFIG_WATCHDOG)
+# undef INIT_FUNC_WATCHDOG_INIT
 # define INIT_FUNC_WATCHDOG_INIT	watchdog_init,
 # define WATCHDOG_DISABLE		watchdog_disable
 
@@ -119,13 +121,8 @@ typedef int (init_fnc_t) (void);
 
 static int init_baudrate (void)
 {
-	char tmp[64];	/* long enough for environment variables */
-	int i = getenv_f("baudrate", tmp, sizeof (tmp));
-
-	gd->baudrate = (i > 0)
-			? (int) simple_strtoul (tmp, NULL, 10)
-			: CONFIG_BAUDRATE;
-	return (0);
+	gd->baudrate = getenv_ulong("baudrate", 10, CONFIG_BAUDRATE);
+	return 0;
 }
 
 /***********************************************************************/
@@ -221,9 +218,7 @@ board_init_f (ulong bootflag)
 	gd_t *id;
 	init_fnc_t **init_fnc_ptr;
 #ifdef CONFIG_PRAM
-	int i;
 	ulong reg;
-	char tmp[64];		/* long enough for environment variables */
 #endif
 
 	/* Pointer is writable since we allocated a register for it */
@@ -250,7 +245,7 @@ board_init_f (ulong bootflag)
 	 *	- monitor code
 	 *	- board info struct
 	 */
-	len = (ulong)&__bss_end__ - CONFIG_SYS_MONITOR_BASE;
+	len = (ulong)&__bss_end - CONFIG_SYS_MONITOR_BASE;
 
 	addr = CONFIG_SYS_SDRAM_BASE + gd->ram_size;
 
@@ -264,8 +259,7 @@ board_init_f (ulong bootflag)
 	/*
 	 * reserve protected RAM
 	 */
-	i = getenv_f("pram", tmp, sizeof (tmp));
-	reg = (i > 0) ? simple_strtoul (tmp, NULL, 10) : CONFIG_PRAM;
+	reg = getenv_ulong("pram", 10, CONFIG_PRAM);
 	addr -= (reg << 10);		/* size is in kB */
 	debug ("Reserving %ldk for protected RAM at %08lx\n", reg, addr);
 #endif /* CONFIG_PRAM */
@@ -356,9 +350,9 @@ board_init_f (ulong bootflag)
 	bd->bi_pcifreq = gd->pci_clk;		/* PCI Freq in Hz */
 #endif
 #ifdef CONFIG_EXTRA_CLOCK
-	bd->bi_inpfreq = gd->inp_clk;		/* input Freq in Hz */
-	bd->bi_vcofreq = gd->vco_clk;		/* vco Freq in Hz */
-	bd->bi_flbfreq = gd->flb_clk;		/* flexbus Freq in Hz */
+	bd->bi_inpfreq = gd->arch.inp_clk;		/* input Freq in Hz */
+	bd->bi_vcofreq = gd->arch.vco_clk;		/* vco Freq in Hz */
+	bd->bi_flbfreq = gd->arch.flb_clk;		/* flexbus Freq in Hz */
 #endif
 	bd->bi_baudrate = gd->baudrate;	/* Console Baudrate     */
 
@@ -395,9 +389,8 @@ board_init_f (ulong bootflag)
  */
 void board_init_r (gd_t *id, ulong dest_addr)
 {
-	char *s;
+	char *s __maybe_unused;
 	bd_t *bd;
-	extern void malloc_bin_reloc (void);
 
 #ifndef CONFIG_ENV_IS_NOWHERE
 	extern char * env_name_spec;
@@ -410,15 +403,13 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 
-#ifdef CONFIG_SERIAL_MULTI
-	serial_initialize();
-#endif
-
 	debug ("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
 
 	WATCHDOG_RESET ();
 
 	gd->reloc_off =  dest_addr - CONFIG_SYS_MONITOR_BASE;
+
+	serial_initialize();
 
 	monitor_flash_len = (ulong)&__init_end - dest_addr;
 
@@ -426,8 +417,8 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/*
 	 * We have to relocate the command table manually
 	 */
-	fixup_cmdtable(&__u_boot_cmd_start,
-		(ulong)(&__u_boot_cmd_end - &__u_boot_cmd_start));
+	fixup_cmdtable(ll_entry_start(cmd_tbl_t, cmd),
+			ll_entry_count(cmd_tbl_t, cmd));
 #endif /* defined(CONFIG_NEEDS_MANUAL_RELOC) */
 
 	/* there are some other pointer constants we must deal with */
@@ -459,7 +450,6 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/* The Malloc area is immediately below the monitor copy in DRAM */
 	mem_malloc_init (CONFIG_SYS_MONITOR_BASE + gd->reloc_off -
 			TOTAL_MALLOC_LEN, TOTAL_MALLOC_LEN);
-	malloc_bin_reloc ();
 
 #if !defined(CONFIG_SYS_NO_FLASH)
 	puts ("Flash: ");
@@ -472,8 +462,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 		 *
 		 * NOTE: Maybe we should add some WATCHDOG_RESET()? XXX
 		 */
-		s = getenv ("flashchecksum");
-		if (s && (*s == 'y')) {
+		if (getenv_yesno("flashchecksum") == 1) {
 			printf ("  CRC: %08X",
 					crc32 (0,
 						   (const unsigned char *) CONFIG_SYS_FLASH_BASE,
@@ -514,15 +503,6 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	/* relocate environment function pointers etc. */
 	env_relocate ();
-
-	/*
-	 * Fill in missing fields of bd_info.
-	 * We do this here, where we have "normal" access to the
-	 * environment; we used to do this still running from ROM,
-	 * where had to use getenv_f(), which can be pretty slow when
-	 * the environment is in EEPROM.
-	 */
-	bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
 
 	WATCHDOG_RESET ();
 
@@ -575,14 +555,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/* Insert function pointers now that we have relocated the code */
 
 	/* Initialize from environment */
-	if ((s = getenv ("loadaddr")) != NULL) {
-		load_addr = simple_strtoul (s, NULL, 16);
-	}
-#if defined(CONFIG_CMD_NET)
-	if ((s = getenv ("bootfile")) != NULL) {
-		copy_filename (BootFile, s, sizeof (BootFile));
-	}
-#endif
+	load_addr = getenv_ulong("loadaddr", 16, load_addr);
 
 	WATCHDOG_RESET ();
 
@@ -606,10 +579,8 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #if defined(FEC_ENET)
 	eth_init(bd);
 #endif
-#if defined(CONFIG_NET_MULTI)
 	puts ("Net:   ");
 	eth_initialize (bd);
-#endif
 #endif
 
 #ifdef CONFIG_POST
@@ -650,18 +621,11 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	 * taking into account the protected RAM at top of memory
 	 */
 	{
-		ulong pram;
+		ulong pram = 0;
 		char memsz[32];
-#ifdef CONFIG_PRAM
-		char *s;
 
-		if ((s = getenv ("pram")) != NULL) {
-			pram = simple_strtoul (s, NULL, 10);
-		} else {
-			pram = CONFIG_PRAM;
-		}
-#else
-		pram=0;
+#ifdef CONFIG_PRAM
+		pram = getenv_ulong("pram", 10, CONFIG_PRAM);
 #endif
 #ifdef CONFIG_LOGBUFFER
 		/* Also take the logbuffer into account (pram is in kB) */

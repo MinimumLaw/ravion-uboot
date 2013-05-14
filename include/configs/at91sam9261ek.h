@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2007-2008
- * Stelian Pop <stelian.pop@leadtechdesign.com>
+ * Stelian Pop <stelian@popies.net>
  * Lead Tech Design <www.leadtechdesign.com>
  *
  * Configuation settings for the AT91SAM9261EK board.
@@ -40,9 +40,6 @@
 
 #include <asm/hardware.h>
 
-#define CONFIG_ARCH_CPU_INIT
-#undef CONFIG_USE_IRQ			/* we don't need IRQ/FIQ stuff	*/
-
 #define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
@@ -50,6 +47,8 @@
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
 #define CONFIG_DISPLAY_CPUINFO
+
+#define CONFIG_OF_LIBFDT
 
 #define CONFIG_ATMEL_LEGACY
 #define CONFIG_SYS_TEXT_BASE		0x21f00000
@@ -67,7 +66,6 @@
 #define CONFIG_USART_BASE		ATMEL_BASE_DBGU
 #define CONFIG_USART_ID			ATMEL_ID_SYS
 #define CONFIG_BAUDRATE			115200
-#define CONFIG_SYS_BAUDRATE_TABLE	{115200, 57600, 38400, 19200, 9600}
 
 /* LCD */
 #define CONFIG_LCD
@@ -153,7 +151,6 @@
 #define CONFIG_SYS_NO_FLASH
 
 /* Ethernet */
-#define CONFIG_NET_MULTI
 #define CONFIG_DRIVER_DM9000
 #define CONFIG_DM9000_BASE		0x30000000
 #define DM9000_IO			CONFIG_DM9000_BASE
@@ -191,7 +188,7 @@
 #define CONFIG_ENV_OFFSET	0x4200
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_DATAFLASH_LOGIC_ADDR_CS0 + CONFIG_ENV_OFFSET)
 #define CONFIG_ENV_SIZE		0x4200
-#define CONFIG_BOOTCOMMAND	"cp.b 0xC0042000 0x22000000 0x210000; bootm"
+#define CONFIG_BOOTCOMMAND	"cp.b 0xC0084000 0x22000000 0x210000; bootm"
 #define CONFIG_BOOTARGS		"console=ttyS0,115200 "			\
 				"root=/dev/mtdblock0 "			\
 				"mtdparts=atmel_nand:-(root) "		\
@@ -205,7 +202,7 @@
 #define CONFIG_ENV_OFFSET	0x4200
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_DATAFLASH_LOGIC_ADDR_CS3 + CONFIG_ENV_OFFSET)
 #define CONFIG_ENV_SIZE		0x4200
-#define CONFIG_BOOTCOMMAND	"cp.b 0xD0042000 0x22000000 0x210000; bootm"
+#define CONFIG_BOOTCOMMAND	"cp.b 0xD0084000 0x22000000 0x210000; bootm"
 #define CONFIG_BOOTARGS		"console=ttyS0,115200 "			\
 				"root=/dev/mtdblock0 "			\
 				"mtdparts=atmel_nand:-(root) "		\
@@ -215,17 +212,16 @@
 
 /* bootstrap + u-boot + env + linux in nandflash */
 #define CONFIG_ENV_IS_IN_NAND
-#define CONFIG_ENV_OFFSET		0x60000
-#define CONFIG_ENV_OFFSET_REDUND	0x80000
+#define CONFIG_ENV_OFFSET		0xc0000
+#define CONFIG_ENV_OFFSET_REDUND	0x100000
 #define CONFIG_ENV_SIZE		0x20000		/* 1 sector = 128 kB */
-#define CONFIG_BOOTCOMMAND	"nand read 0x22000000 0xA0000 0x200000; bootm"
-#define CONFIG_BOOTARGS		"console=ttyS0,115200 "			\
-				"root=/dev/mtdblock5 "			\
-				"mtdparts=atmel_nand:128k(bootstrap)ro,"	\
-				"256k(uboot)ro,128k(env1)ro,"		\
-				"128k(env2)ro,2M(linux),-(root) "	\
-				"rw rootfstype=jffs2"
-
+#define CONFIG_BOOTCOMMAND	"nand read 0x22000000 0x200000 0x300000; bootm"
+#define CONFIG_BOOTARGS							\
+	"console=ttyS0,115200 earlyprintk "				\
+	"mtdparts=atmel_nand:256k(bootstrap)ro,512k(uboot)ro,"		\
+	"256k(env),256k(env_redundant),256k(spare),"			\
+	"512k(dtb),6M(kernel)ro,-(rootfs) "				\
+	"root=/dev/mtdblock7 rw rootfstype=jffs2"
 #endif
 
 #define CONFIG_SYS_PROMPT		"U-Boot> "
@@ -234,16 +230,11 @@
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_CMDLINE_EDITING
+#define CONFIG_AUTO_COMPLETE
 
 /*
  * Size of malloc() pool
  */
 #define CONFIG_SYS_MALLOC_LEN		ROUND(3 * CONFIG_ENV_SIZE + 128*1024, 0x1000)
-
-#define CONFIG_STACKSIZE		(32*1024)	/* regular stack */
-
-#ifdef CONFIG_USE_IRQ
-#error CONFIG_USE_IRQ not supported
-#endif
 
 #endif

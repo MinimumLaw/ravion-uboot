@@ -29,7 +29,9 @@
 #include <config.h>
 #include <version.h>
 #include <asm/global_data.h>
+#include <asm/processor.h>
 #include <asm/processor-flags.h>
+#include <generated/generic-asm-offsets.h>
 
 .section .text
 .code32
@@ -47,7 +49,7 @@ _x86boot_start:
 	cli
 	cld
 
-	/* Turn of cache (this might require a 486-class CPU) */
+	/* Turn off cache (this might require a 486-class CPU) */
 	movl	%cr0, %eax
 	orl	$(X86_CR0_NW | X86_CR0_CD), %eax
 	movl	%eax, %cr0
@@ -55,11 +57,17 @@ _x86boot_start:
 
 	/* Tell 32-bit code it is being entered from an in-RAM copy */
 	movw	$GD_FLG_WARM_BOOT, %bx
+	jmp	1f
 _start:
-	/* This is the 32-bit cold-reset entry point */
+	/*
+	 * This is the 32-bit cold-reset entry point. Initialize %bx to 0
+	 * in case we're preceeded by some sort of boot stub.
+	 */
+	movw	$GD_FLG_COLD_BOOT, %bx
+1:
 
 	/* Load the segement registes to match the gdt loaded in start16.S */
-	movl	$0x18, %eax
+	movl	$(X86_GDT_ENTRY_32BIT_DS * X86_GDT_ENTRY_SIZE), %eax
 	movw	%ax, %fs
 	movw	%ax, %ds
 	movw	%ax, %gs
@@ -83,7 +91,30 @@ car_init_ret:
 	 * or fully initialised SDRAM - we really don't care which)
 	 * starting at CONFIG_SYS_CAR_ADDR to be used as a temporary stack
 	 */
-	movl	$CONFIG_SYS_INIT_SP_ADDR, %esp
+
+	/* Stack grows down from top of CAR */
+	movl	$(CONFIG_SYS_CAR_ADDR + CONFIG_SYS_CAR_SIZE), %esp
+
+	/* Reserve space on stack for global data */
+	subl	$GENERATED_GBL_DATA_SIZE, %esp
+
+	/* Align global data to 16-byte boundary */
+	andl	$0xfffffff0, %esp
+
+	/* Setup first parameter to setup_gdt */
+	movl	%esp, %eax
+
+	/* Reserve space for global descriptor table */
+	subl	$X86_GDT_SIZE, %esp
+
+	/* Align temporary global descriptor table to 16-byte boundary */
+	andl	$0xfffffff0, %esp
+
+	/* Set second parameter to setup_gdt */
+	movl	%esp, %edx
+
+	/* Setup global descriptor table so gd->xyz works */
+	call	setup_gdt
 
 	/* Set parameter to board_init_f() to boot flags */
 	xorl	%eax, %eax
@@ -96,37 +127,78 @@ car_init_ret:
 	movw	$0x85, %ax
 	jmp	die
 
-.globl relocate_code
-.type relocate_code, @function
-relocate_code:
+.globl board_init_f_r_trampoline
+.type board_init_f_r_trampoline, @function
+board_init_f_r_trampoline:
 	/*
 	 * SDRAM has been initialised, U-Boot code has been copied into
 	 * RAM, BSS has been cleared and relocation adjustments have been
 	 * made. It is now time to jump into the in-RAM copy of U-Boot
 	 *
-	 * %eax = Address of top of stack
-	 * %edx = Address of Global Data
-	 * %ecx = Base address of in-RAM copy of U-Boot
+	 * %eax = Address of top of new stack
 	 */
 
-	/* Setup stack in RAM */
+	/* Stack grows down from top of SDRAM */
 	movl	%eax, %esp
 
-	/* Setup call address of in-RAM copy of board_init_r() */
-	movl	$board_init_r, %ebp
-	addl	(GD_RELOC_OFF * 4)(%edx), %ebp
+	/* Reserve space on stack for global data */
+	subl	$GENERATED_GBL_DATA_SIZE, %esp
 
-	/* Setup parameters to board_init_r() */
-	movl	%edx, %eax
-	movl	%ecx, %edx
+	/* Align global data to 16-byte boundary */
+	andl	$0xfffffff0, %esp
 
-	/* Jump to in-RAM copy of board_init_r() */
-	call	*%ebp
+	/* Setup first parameter to memcpy (and setup_gdt) */
+	movl	%esp, %eax
 
-die:	hlt
+	/* Setup second parameter to memcpy */
+	fs movl 0, %edx
+
+	/* Set third parameter to memcpy */
+	movl	$GENERATED_GBL_DATA_SIZE, %ecx
+
+	/* Copy global data from CAR to SDRAM stack */
+	call	memcpy
+
+	/* Reserve space for global descriptor table */
+	subl	$X86_GDT_SIZE, %esp
+
+	/* Align global descriptor table to 16-byte boundary */
+	andl	$0xfffffff0, %esp
+
+	/* Set second parameter to setup_gdt */
+	movl	%esp, %edx
+
+	/* Setup global descriptor table so gd->xyz works */
+	call	setup_gdt
+
+	/* Re-enter U-Boot by calling board_init_f_r */
+	call	board_init_f_r
+
+die:
+	hlt
 	jmp	die
 	hlt
 
 blank_idt_ptr:
 	.word	0		/* limit */
 	.long	0		/* base */
+
+	.p2align	2	/* force 4-byte alignment */
+
+multiboot_header:
+	/* magic */
+	.long	0x1BADB002
+	/* flags */
+	.long	(1 << 16)
+	/* checksum */
+	.long	-0x1BADB002 - (1 << 16)
+	/* header addr */
+	.long	multiboot_header - _x86boot_start + CONFIG_SYS_TEXT_BASE
+	/* load addr */
+	.long	CONFIG_SYS_TEXT_BASE
+	/* load end addr */
+	.long	0
+	/* bss end addr */
+	.long	0
+	/* entry addr */
+	.long	CONFIG_SYS_TEXT_BASE

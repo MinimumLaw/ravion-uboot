@@ -23,30 +23,44 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/tegra2.h>
+#include <asm/arch/tegra.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/funcmux.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch/pinmux.h>
+#include <asm/gpio.h>
 
-/*
- * Routine: gpio_config_uart
- * Description: Force GPIO_PI3 low on Seaboard so UART4 works.
- */
-void gpio_config_uart(void)
+/* TODO: Remove this code when the SPI switch is working */
+#if (CONFIG_MACH_TYPE != MACH_TYPE_VENTANA)
+void gpio_early_init_uart(void)
 {
-	int gp = GPIO_PI3;
-	struct gpio_ctlr *gpio = (struct gpio_ctlr *)NV_PA_GPIO_BASE;
-	struct gpio_ctlr_bank *bank = &gpio->gpio_bank[GPIO_BANK(gp)];
-	u32 val;
-
 	/* Enable UART via GPIO_PI3 (port 8, bit 3) so serial console works */
-	val = readl(&bank->gpio_config[GPIO_PORT(gp)]);
-	val |= 1 << GPIO_BIT(gp);
-	writel(val, &bank->gpio_config[GPIO_PORT(gp)]);
+#ifndef CONFIG_SPL_BUILD
+	gpio_request(GPIO_PI3, NULL);
+#endif
+	gpio_direction_output(GPIO_PI3, 0);
+}
+#endif
 
-	val = readl(&bank->gpio_out[GPIO_PORT(gp)]);
-	val &= ~(1 << GPIO_BIT(gp));
-	writel(val, &bank->gpio_out[GPIO_PORT(gp)]);
+#ifdef CONFIG_TEGRA_MMC
+/*
+ * Routine: pin_mux_mmc
+ * Description: setup the pin muxes/tristate values for the SDMMC(s)
+ */
+void pin_mux_mmc(void)
+{
+	funcmux_select(PERIPH_ID_SDMMC4, FUNCMUX_SDMMC4_ATB_GMA_GME_8_BIT);
+	funcmux_select(PERIPH_ID_SDMMC3, FUNCMUX_SDMMC3_SDB_4BIT);
 
-	val = readl(&bank->gpio_dir_out[GPIO_PORT(gp)]);
-	val |= 1 << GPIO_BIT(gp);
-	writel(val, &bank->gpio_dir_out[GPIO_PORT(gp)]);
+	/* For power GPIO PI6 */
+	pinmux_tristate_disable(PINGRP_ATA);
+	/* For CD GPIO PI5 */
+	pinmux_tristate_disable(PINGRP_ATC);
+}
+#endif
+
+void pin_mux_usb(void)
+{
+	/* For USB's GPIO PD0. For now, since we have no pinmux in fdt */
+	pinmux_tristate_disable(PINGRP_SLXK);
 }

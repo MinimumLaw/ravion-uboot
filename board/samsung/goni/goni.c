@@ -25,7 +25,10 @@
 #include <common.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
-
+#include <power/pmic.h>
+#include <usb/s3c_udc.h>
+#include <asm/arch/cpu.h>
+#include <power/max8998_pmic.h>
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct s5pc110_gpio *s5pc110_gpio;
@@ -37,6 +40,17 @@ int board_init(void)
 
 	gd->bd->bi_arch_number = MACH_TYPE_GONI;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
+
+	return 0;
+}
+
+int power_init_board(void)
+{
+	int ret;
+
+	ret = pmic_init(I2C_5);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -95,4 +109,50 @@ int board_mmc_init(bd_t *bis)
 
 	return s5p_mmc_init(0, 4);
 }
+#endif
+
+#ifdef CONFIG_USB_GADGET
+static int s5pc1xx_phy_control(int on)
+{
+	int ret;
+	static int status;
+	struct pmic *p = pmic_get("MAX8998_PMIC");
+	if (!p)
+		return -ENODEV;
+
+	if (pmic_probe(p))
+		return -1;
+
+	if (on && !status) {
+		ret = pmic_set_output(p, MAX8998_REG_ONOFF1,
+				      MAX8998_LDO3, LDO_ON);
+		ret = pmic_set_output(p, MAX8998_REG_ONOFF2,
+				      MAX8998_LDO8, LDO_ON);
+		if (ret) {
+			puts("MAX8998 LDO setting error!\n");
+			return -1;
+		}
+		status = 1;
+	} else if (!on && status) {
+		ret = pmic_set_output(p, MAX8998_REG_ONOFF1,
+				      MAX8998_LDO3, LDO_OFF);
+		ret = pmic_set_output(p, MAX8998_REG_ONOFF2,
+				      MAX8998_LDO8, LDO_OFF);
+		if (ret) {
+			puts("MAX8998 LDO setting error!\n");
+			return -1;
+		}
+		status = 0;
+	}
+	udelay(10000);
+
+	return 0;
+}
+
+struct s3c_plat_otg_data s5pc110_otg_data = {
+	.phy_control = s5pc1xx_phy_control,
+	.regs_phy = S5PC110_PHY_BASE,
+	.regs_otg = S5PC110_OTG_BASE,
+	.usb_phy_ctrl = S5PC110_USB_PHY_CONTROL,
+};
 #endif

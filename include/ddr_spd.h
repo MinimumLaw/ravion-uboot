@@ -221,7 +221,12 @@ typedef struct ddr3_spd_eeprom_s {
 	unsigned char therm_ref_opt;   /* 31 SDRAM Thermal and Refresh Opts */
 	unsigned char therm_sensor;    /* 32 Module Thermal Sensor */
 	unsigned char device_type;     /* 33 SDRAM device type */
-	unsigned char res_34_59[26];   /* 34-59 Reserved, General Section */
+	int8_t fine_tCK_min;	       /* 34 Fine offset for tCKmin */
+	int8_t fine_tAA_min;	       /* 35 Fine offset for tAAmin */
+	int8_t fine_tRCD_min;	       /* 36 Fine offset for tRCDmin */
+	int8_t fine_tRP_min;	       /* 37 Fine offset for tRPmin */
+	int8_t fine_tRC_min;	       /* 38 Fine offset for tRCmin */
+	unsigned char res_39_59[21];   /* 39-59 Reserved, General Section */
 
 	/* Module-Specific Section: Bytes 60-116 */
 	union {
@@ -325,5 +330,12 @@ extern unsigned int ddr3_spd_check(const ddr3_spd_eeprom_t *spd);
 #define DDR3_SPD_MODULETYPE_MICRO_DIMM	(0x04)
 #define DDR3_SPD_MODULETYPE_MINI_RDIMM	(0x05)
 #define DDR3_SPD_MODULETYPE_MINI_UDIMM	(0x06)
+#define DDR3_SPD_MODULETYPE_MINI_CDIMM	(0x07)
+#define DDR3_SPD_MODULETYPE_72B_SO_UDIMM	(0x08)
+#define DDR3_SPD_MODULETYPE_72B_SO_RDIMM	(0x09)
+#define DDR3_SPD_MODULETYPE_72B_SO_CDIMM	(0x0A)
+#define DDR3_SPD_MODULETYPE_LRDIMM	(0x0B)
+#define DDR3_SPD_MODULETYPE_16B_SO_DIMM	(0x0C)
+#define DDR3_SPD_MODULETYPE_32B_SO_DIMM	(0x0D)
 
 #endif /* _DDR_SPD_H_ */

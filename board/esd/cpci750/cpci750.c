@@ -566,7 +566,7 @@ int do_loadpci(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	volatile unsigned int *ptr;
 	int count = 0;
 	int count2 = 0;
-	int status;
+	int status = 0;
 	char addr[16];
 	char str[] = "\\|/-";
 	char *local_args[2];
@@ -622,7 +622,7 @@ int do_loadpci(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		break;
 	}
 
-	return 0;
+	return status;
 }
 
 U_BOOT_CMD(
@@ -953,22 +953,18 @@ int mem_test_walk (void)
 /*********************************************************************/
 int testdram (void)
 {
-	char *s;
 	int rundata    = 0;
 	int runaddress = 0;
 	int runwalk    = 0;
 
 #ifdef CONFIG_SYS_DRAM_TEST_DATA
-	s = getenv ("testdramdata");
-	rundata = (s && (*s == 'y')) ? 1 : 0;
+	rundata = getenv_yesno("testdramdata") == 1;
 #endif
 #ifdef CONFIG_SYS_DRAM_TEST_ADDRESS
-	s = getenv ("testdramaddress");
-	runaddress = (s && (*s == 'y')) ? 1 : 0;
+	runaddress = getenv_yesno("testdramaddress") == 1;
 #endif
 #ifdef CONFIG_SYS_DRAM_TEST_WALK
-	s = getenv ("testdramwalk");
-	runwalk = (s && (*s == 'y')) ? 1 : 0;
+	runwalk = getenv_yesno("testdramwalk") == 1;
 #endif
 
 	if ((rundata == 1) || (runaddress == 1) || (runwalk == 1)) {
@@ -1101,3 +1097,8 @@ U_BOOT_CMD(
 	pldver, 1, 1, do_pldver,
 	"Show PLD version",
 	"Show PLD version)");
+
+int board_eth_init(bd_t *bis)
+{
+	return mv6436x_eth_initialize(bis);
+}

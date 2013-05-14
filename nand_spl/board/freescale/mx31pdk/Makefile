@@ -1,7 +1,7 @@
 CONFIG_NAND_SPL	= y
+PAD_TO	:= 2048
 
 include $(TOPDIR)/config.mk
-include $(TOPDIR)/nand_spl/board/$(BOARDDIR)/config.mk
 
 nandobj	:= $(OBJTREE)/nand_spl/
 
@@ -11,11 +11,12 @@ LDFLAGS := -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(LDFLAGS) \
 AFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 
-SOBJS	= start.o lowlevel_init.o
+SOBJS	= start.o crt0.o lowlevel_init.o
 COBJS	= nand_boot_fsl_nfc.o
 
 SRCS	:= $(SRCTREE)/nand_spl/nand_boot_fsl_nfc.c
 SRCS	+= $(SRCTREE)/arch/arm/cpu/arm1136/start.S
+SRCS	+= $(SRCTREE)/arch/arm/lib/crt0.S
 SRCS	+= $(SRCTREE)/board/freescale/mx31pdk/lowlevel_init.S
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 __OBJS	:= $(SOBJS) $(COBJS)
@@ -37,11 +38,15 @@ $(nandobj)u-boot-spl:	$(OBJS) $(nandobj)u-boot.lds
 		-o $@
 
 $(nandobj)u-boot.lds: $(LDSCRIPT)
-	$(CPP) $(CPPFLAGS) $(LDPPFLAGS) -ansi -D__ASSEMBLY__ -P - <$^ >$@
+	$(CPP) $(CPPFLAGS) $(LDPPFLAGS) -I$(nandobj)/board/$(BOARDDIR) \
+		-ansi -D__ASSEMBLY__ -P - <$< >$@
 
 #########################################################################
 
 $(obj)%.o:	$(SRCTREE)/arch/arm/cpu/arm1136/%.S
+	$(CC) $(AFLAGS) -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/arch/arm/lib/%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/board/freescale/mx31pdk/%.S

@@ -47,13 +47,6 @@
 **************************************************************************
 **************************************************************************
 *************************************************************************/
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /* In case not using SG on Tx, define MAX_SKB_FRAGS as 0 */
 #ifndef MAX_SKB_FRAGS
 #define MAX_SKB_FRAGS 0
@@ -168,9 +161,7 @@ struct mv64360_eth_priv {
 
 int mv64360_eth_init (struct eth_device *dev);
 int mv64360_eth_stop (struct eth_device *dev);
-int mv64360_eth_start_xmit (struct eth_device*, volatile void* packet, int length);
-/*	return db64360_eth0_poll(); */
-
+int mv64360_eth_start_xmit(struct eth_device *dev, void *packet, int length);
 int mv64360_eth_open (struct eth_device *dev);
 
 

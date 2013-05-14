@@ -24,10 +24,6 @@
 #ifndef __CONFIG_KEYMILE_H
 #define __CONFIG_KEYMILE_H
 
-/* Do boardspecific init for all boards */
-#define CONFIG_BOARD_EARLY_INIT_R
-#define CONFIG_LAST_STAGE_INIT
-
 #define CONFIG_BOOTCOUNT_LIMIT
 
 /*
@@ -37,6 +33,7 @@
 
 #define CONFIG_CMD_ASKENV
 #define CONFIG_CMD_DHCP
+#define CONFIG_CMD_DEFAULTENV_VARS
 #define CONFIG_CMD_ECHO
 #define CONFIG_CMD_IMMAP
 #define CONFIG_CMD_MII
@@ -56,7 +53,6 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_LONGHELP			/* undef to save memory	  */
 #define CONFIG_SYS_PROMPT		"=> "	/* Monitor Command Prompt */
 #if defined(CONFIG_CMD_KGDB)
@@ -81,7 +77,6 @@
 
 #define CONFIG_LOADS_ECHO
 #define CONFIG_SYS_LOADS_BAUD_CHANGE
-#define CONFIG_SYS_BOARD_DRAM_INIT	/* Used board specific dram_init */
 
 #define CONFIG_I2C_MULTI_BUS
 #define CONFIG_SYS_MAX_I2C_BUS		1
@@ -125,15 +120,37 @@
 	"netdev=eth0\0"
 #endif
 
-#ifndef CONFIG_KM_UBI_PARTITION_NAME
-#define CONFIG_KM_UBI_PARTITION_NAME	"ubi0"
-#endif
-#ifndef CONFIG_KM_UBI_LINUX_MTD_NAME
-#define CONFIG_KM_UBI_LINUX_MTD_NAME	"ubi0"
-#endif
+#ifndef CONFIG_KM_UBI_PARTITION_NAME_BOOT
+#define CONFIG_KM_UBI_PARTITION_NAME_BOOT	"ubi0"
+#endif /* CONFIG_KM_UBI_PARTITION_NAME_BOOT */
 
-#define xstr(s)	str(s)
-#define str(s)	#s
+#ifndef CONFIG_KM_UBI_PARTITION_NAME_APP
+/* one flash chip only called boot */
+/* boot: CONFIG_KM_UBI_PARTITION_NAME_BOOT */
+# define CONFIG_KM_UBI_LINUX_MTD					\
+	"ubi.mtd=" CONFIG_KM_UBI_PARTITION_NAME_BOOT
+# define CONFIG_KM_DEV_ENV_FLASH_BOOT_UBI				\
+	"ubiattach=ubi part " CONFIG_KM_UBI_PARTITION_NAME_BOOT "\0"
+#else /* CONFIG_KM_UBI_PARTITION_NAME_APP */
+/* two flash chips called boot and app */
+/* boot: CONFIG_KM_UBI_PARTITION_NAME_BOOT */
+/* app:  CONFIG_KM_UBI_PARTITION_NAME_APP */
+# define CONFIG_KM_UBI_LINUX_MTD					\
+	"ubi.mtd=" CONFIG_KM_UBI_PARTITION_NAME_BOOT " "		\
+	"ubi.mtd=" CONFIG_KM_UBI_PARTITION_NAME_APP
+# define CONFIG_KM_DEV_ENV_FLASH_BOOT_UBI				\
+	"ubiattach=if test ${boot_bank} -eq 0; then; "			\
+	"ubi part " CONFIG_KM_UBI_PARTITION_NAME_BOOT "; else; "	\
+	"ubi part " CONFIG_KM_UBI_PARTITION_NAME_APP "; fi\0"
+#endif /* CONFIG_KM_UBI_PARTITION_NAME_APP */
+
+#ifdef CONFIG_NAND_ECC_BCH
+#define CONFIG_KM_UIMAGE_NAME "ecc_bch_uImage\0"
+#define CONFIG_KM_ECC_MODE    " eccmode=bch"
+#else
+#define CONFIG_KM_UIMAGE_NAME "uImage\0"
+#define CONFIG_KM_ECC_MODE
+#endif
 
 /*
  * boottargets
@@ -170,9 +187,10 @@
 		"ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}"	\
 		":${hostname}:${netdev}:off3"				\
 		" console=" CONFIG_KM_CONSOLE_TTY ",${baudrate}"	\
-		" mem=${pnvramaddr} init=${init}"			\
-		" phram.phram=phvar,${varaddr}," xstr(CONFIG_KM_PHRAM)	\
-		" ubi.mtd=" CONFIG_KM_UBI_LINUX_MTD_NAME " "		\
+		" mem=${kernelmem} init=${init}"			\
+		CONFIG_KM_ECC_MODE					\
+		" phram.phram=phvar,${varaddr}," __stringify(CONFIG_KM_PHRAM)\
+		" " CONFIG_KM_UBI_LINUX_MTD " "				\
 		CONFIG_KM_DEF_BOOT_ARGS_CPU				\
 		"\0"							\
 	"addpanic="							\
@@ -196,12 +214,12 @@
  * - 'cramfsloadfdt': copy fdt from a cramfs to ram
  */
 #define CONFIG_KM_DEF_ENV_FLASH_BOOT					\
-	"cramfsaddr=" xstr(CONFIG_KM_CRAMFS_ADDR) "\0"			\
-	"cramfsloadkernel=cramfsload ${load_addr_r} uImage\0"		\
-	"ubiattach=ubi part " CONFIG_KM_UBI_PARTITION_NAME "\0"		\
-	"ubicopy=ubi read "xstr(CONFIG_KM_CRAMFS_ADDR)			\
+	"cramfsaddr=" __stringify(CONFIG_KM_CRAMFS_ADDR) "\0"		\
+	"cramfsloadkernel=cramfsload ${load_addr_r} ${uimage}\0"	\
+	"ubicopy=ubi read "__stringify(CONFIG_KM_CRAMFS_ADDR)		\
 			" bootfs${boot_bank}\0"				\
-	""
+	"uimage=" CONFIG_KM_UIMAGE_NAME					\
+	CONFIG_KM_DEV_ENV_FLASH_BOOT_UBI
 
 /*
  * constants
@@ -212,7 +230,7 @@
 #define CONFIG_KM_DEF_ENV_CONSTANTS					\
 	"backup_bank=0\0"						\
 	"release=run newenv; reset\0"					\
-	"pnvramsize=" xstr(CONFIG_KM_PNVRAM) "\0"			\
+	"pnvramsize=" __stringify(CONFIG_KM_PNVRAM) "\0"		\
 	"testbootcmd=setenv boot_bank ${test_bank}; "			\
 		"run ${subbootcmds}; reset\0"				\
 	""
@@ -228,20 +246,19 @@
 	CONFIG_KM_DEF_ENV_CONSTANTS					\
 	"altbootcmd=run bootcmd\0"					\
 	"bootcmd=km_checkbidhwk &&  "					\
-	"	setenv bootcmd \'setenv boot_bank ${actual_bank}; "	\
+		"setenv bootcmd \'if km_checktestboot; then; "          \
+				"setenv boot_bank ${test_bank}; else; " \
+				"setenv boot_bank ${actual_bank}; fi;"  \
 			"run ${subbootcmds}; reset\' && "		\
 		"setenv altbootcmd \'setenv boot_bank ${backup_bank}; "	\
 			"run ${subbootcmds}; reset\' && "		\
 		"saveenv && saveenv && boot\0"				\
-	"bootlimit=2\0"							\
+	"bootlimit=3\0"							\
 	"init=/sbin/init-overlay.sh\0"					\
-	"load_addr_r="xstr(CONFIG_KM_KERNEL_ADDR) "\0"			\
+	"load_addr_r="__stringify(CONFIG_KM_KERNEL_ADDR) "\0"		\
 	"load=tftpboot ${load_addr_r} ${u-boot}\0"			\
 	"mtdids=" MTDIDS_DEFAULT "\0"					\
 	"mtdparts=" MTDPARTS_DEFAULT "\0"				\
-	"stderr=serial\0"						\
-	"stdin=serial\0"						\
-	"stdout=serial\0"						\
 	""
 #endif /* CONFIG_KM_DEF_ENV */
 

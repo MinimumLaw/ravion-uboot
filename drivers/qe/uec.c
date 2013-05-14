@@ -264,13 +264,10 @@ static int uec_open(uec_private_t *uec, comm_dir_e mode)
 
 static int uec_stop(uec_private_t *uec, comm_dir_e mode)
 {
-	ucc_fast_private_t	*uccf;
-
 	if (!uec || !uec->uccf) {
 		printf("%s: No handle passed.\n", __FUNCTION__);
 		return -EINVAL;
 	}
-	uccf = uec->uccf;
 
 	/* check if the UCC number is in range. */
 	if (uec->uec_info->uf_info.ucc_num >= UCC_MAX_NUM) {
@@ -325,7 +322,6 @@ static int uec_set_mac_if_mode(uec_private_t *uec,
 		phy_interface_t if_mode, int speed)
 {
 	phy_interface_t		enet_if_mode;
-	uec_info_t		*uec_info;
 	uec_t			*uec_regs;
 	u32			upsmr;
 	u32			maccfg2;
@@ -335,7 +331,6 @@ static int uec_set_mac_if_mode(uec_private_t *uec,
 		return -EINVAL;
 	}
 
-	uec_info = uec->uec_info;
 	uec_regs = uec->uec_regs;
 	enet_if_mode = if_mode;
 
@@ -516,12 +511,10 @@ bus_fail:
 static void adjust_link(struct eth_device *dev)
 {
 	uec_private_t		*uec = (uec_private_t *)dev->priv;
-	uec_t			*uec_regs;
 	struct uec_mii_info	*mii_info = uec->mii_info;
 
 	extern void change_phy_interface_mode(struct eth_device *dev,
 				 phy_interface_t mode, int speed);
-	uec_regs = uec->uec_regs;
 
 	if (mii_info->link) {
 		/* Now we make sure that we can be in full duplex mode.
@@ -587,8 +580,7 @@ static void phy_change(struct eth_device *dev)
 {
 	uec_private_t	*uec = (uec_private_t *)dev->priv;
 
-#if defined(CONFIG_P1012) || defined(CONFIG_P1016) || \
-    defined(CONFIG_P1021) || defined(CONFIG_P1025)
+#if defined(CONFIG_P1012) || defined(CONFIG_P1021) || defined(CONFIG_P1025)
 	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 
 	/* QE9 and QE12 need to be set for enabling QE MII managment signals */
@@ -599,8 +591,7 @@ static void phy_change(struct eth_device *dev)
 	/* Update the link, speed, duplex */
 	uec->mii_info->phyinfo->read_status(uec->mii_info);
 
-#if defined(CONFIG_P1012) || defined(CONFIG_P1016) || \
-    defined(CONFIG_P1021) || defined(CONFIG_P1025)
+#if defined(CONFIG_P1012) || defined(CONFIG_P1021) || defined(CONFIG_P1025)
 	/*
 	 * QE12 is muxed with LBCTL, it needs to be released for enabling
 	 * LBCTL signal for LBC usage.
@@ -1215,16 +1206,14 @@ static int uec_init(struct eth_device* dev, bd_t *bd)
 	uec_private_t		*uec;
 	int			err, i;
 	struct phy_info         *curphy;
-#if defined(CONFIG_P1012) || defined(CONFIG_P1016) || \
-    defined(CONFIG_P1021) || defined(CONFIG_P1025)
+#if defined(CONFIG_P1012) || defined(CONFIG_P1021) || defined(CONFIG_P1025)
 	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 #endif
 
 	uec = (uec_private_t *)dev->priv;
 
 	if (uec->the_first_run == 0) {
-#if defined(CONFIG_P1012) || defined(CONFIG_P1016) || \
-    defined(CONFIG_P1021) || defined(CONFIG_P1025)
+#if defined(CONFIG_P1012) || defined(CONFIG_P1021) || defined(CONFIG_P1025)
 	/* QE9 and QE12 need to be set for enabling QE MII managment signals */
 	setbits_be32(&gur->pmuxcr, MPC85xx_PMUXCR_QE9);
 	setbits_be32(&gur->pmuxcr, MPC85xx_PMUXCR_QE12);
@@ -1256,8 +1245,7 @@ static int uec_init(struct eth_device* dev, bd_t *bd)
 			udelay(100000);
 		} while (1);
 
-#if defined(CONFIG_P1012) || defined(CONFIG_P1016) || \
-    defined(CONFIG_P1021) || defined(CONFIG_P1025)
+#if defined(CONFIG_P1012) || defined(CONFIG_P1021) || defined(CONFIG_P1025)
 		/* QE12 needs to be released for enabling LBCTL signal*/
 		clrbits_be32(&gur->pmuxcr, MPC85xx_PMUXCR_QE12);
 #endif
@@ -1295,7 +1283,7 @@ static void uec_halt(struct eth_device* dev)
 	uec_stop(uec, COMM_DIR_RX_AND_TX);
 }
 
-static int uec_send(struct eth_device* dev, volatile void *buf, int len)
+static int uec_send(struct eth_device *dev, void *buf, int len)
 {
 	uec_private_t		*uec;
 	ucc_fast_private_t	*uccf;

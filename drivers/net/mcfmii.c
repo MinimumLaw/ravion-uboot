@@ -35,7 +35,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_CMD_NET) && defined(CONFIG_NET_MULTI)
+#if defined(CONFIG_CMD_NET)
 #undef MII_DEBUG
 #undef ET_DEBUG
 
@@ -315,13 +315,11 @@ int mcffec_miiphy_read(const char *devname, unsigned char addr, unsigned char re
 int mcffec_miiphy_write(const char *devname, unsigned char addr, unsigned char reg,
 			unsigned short value)
 {
-	short rdreg;		/* register working value */
-
 #ifdef MII_DEBUG
 	printf("miiphy_write(0x%x) @ 0x%x = ", reg, addr);
 #endif
 
-	rdreg = mii_send(mk_mii_write(addr, reg, value));
+	mii_send(mk_mii_write(addr, reg, value));
 
 #ifdef MII_DEBUG
 	printf("0x%04x\n", value);
@@ -330,4 +328,4 @@ int mcffec_miiphy_write(const char *devname, unsigned char addr, unsigned char r
 	return 0;
 }
 
-#endif				/* CONFIG_CMD_NET, FEC_ENET & NET_MULTI */
+#endif				/* CONFIG_CMD_NET */

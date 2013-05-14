@@ -26,6 +26,7 @@
 
 #include <common.h>
 #include <netdev.h>
+#include <asm/arch/cpu.h>
 #include <asm/arch/kirkwood.h>
 #include <asm/arch/mpp.h>
 #include "mv88f6281gtw_ge.h"
@@ -44,7 +45,7 @@ int board_early_init_f(void)
 			MV88F6281GTW_GE_OE_LOW, MV88F6281GTW_GE_OE_HIGH);
 
 	/* Multi-Purpose Pins Functionality configuration */
-	u32 kwmpp_config[] = {
+	static const u32 kwmpp_config[] = {
 		MPP0_SPI_SCn,
 		MPP1_SPI_MOSI,
 		MPP2_SPI_SCK,
@@ -97,7 +98,7 @@ int board_early_init_f(void)
 		MPP49_GPIO,
 		0
 	};
-	kirkwood_mpp_conf(kwmpp_config);
+	kirkwood_mpp_conf(kwmpp_config, NULL);
 	return 0;
 }
 

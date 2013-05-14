@@ -36,12 +36,6 @@
 #include <common.h>
 #include <version.h>
 
-#if defined(CONFIG_OMAP1610)
-#include <./configs/omap1510.h>
-#elif defined(CONFIG_OMAP730)
-#include <./configs/omap730.h>
-#endif
-
 /*
  *************************************************************************
  *
@@ -51,9 +45,18 @@
  */
 
 
+#ifdef CONFIG_SYS_DV_NOR_BOOT_CFG
+.globl _start
+_start:
+.globl _NOR_BOOT_CFG
+_NOR_BOOT_CFG:
+	.word	CONFIG_SYS_DV_NOR_BOOT_CFG
+	b	reset
+#else
 .globl _start
 _start:
 	b	reset
+#endif
 #ifdef CONFIG_SPL_BUILD
 /* No exception handlers in preloader */
 	ldr	pc, _hang
@@ -117,7 +120,15 @@ _fiq:
 
 .globl _TEXT_BASE
 _TEXT_BASE:
+#ifdef CONFIG_NAND_SPL /* deprecated, use instead CONFIG_SPL_BUILD */
 	.word	CONFIG_SYS_TEXT_BASE
+#else
+#ifdef CONFIG_SPL_BUILD
+	.word	CONFIG_SPL_TEXT_BASE
+#else
+	.word	CONFIG_SYS_TEXT_BASE
+#endif
+#endif
 
 /*
  * These are defined in the board-specific linker script.
@@ -131,11 +142,17 @@ _bss_start_ofs:
 
 .globl _bss_end_ofs
 _bss_end_ofs:
-	.word __bss_end__ - _start
+	.word __bss_end - _start
 
 .globl _end_ofs
 _end_ofs:
 	.word _end - _start
+
+#ifdef CONFIG_NAND_U_BOOT
+.globl _end
+_end:
+	.word __bss_end
+#endif
 
 #ifdef CONFIG_USE_IRQ
 /* IRQ stack memory (calculated at run-time) */
@@ -175,15 +192,11 @@ reset:
 	bl	cpu_init_crit
 #endif
 
-/* Set stackpointer in internal RAM to call board_init_f */
-call_board_init_f:
-	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
-	bic	sp, sp, #7 /* 8-byte alignment for ABI compliance */
-	ldr	r0,=0x00000000
-	bl	board_init_f
+	bl	_main
 
 /*------------------------------------------------------------------------------*/
 
+#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_NAND_SPL)
 /*
  * void relocate_code (addr_sp, gd, addr_moni)
  *
@@ -197,13 +210,11 @@ relocate_code:
 	mov	r5, r1	/* save addr of gd */
 	mov	r6, r2	/* save addr of destination */
 
-	/* Set up the stack						    */
-stack_setup:
-	mov	sp, r4
-
 	adr	r0, _start
+	sub	r9, r6, r0		/* r9 <- relocation offset */
 	cmp	r0, r6
-	beq	clear_bss		/* skip relocation */
+	moveq	r9, #0			/* no relocation. offset(r9) = 0 */
+	beq	relocate_done		/* skip relocation */
 	mov	r1, r6			/* r1 <- scratch for copy loop */
 	ldr	r3, _bss_start_ofs
 	add	r2, r0, r3		/* r2 <- source end address	    */
@@ -255,48 +266,9 @@ fixnext:
 	blo	fixloop
 #endif
 
-clear_bss:
-#ifndef CONFIG_SPL_BUILD
-	ldr	r0, _bss_start_ofs
-	ldr	r1, _bss_end_ofs
-	mov	r4, r6			/* reloc addr */
-	add	r0, r0, r4
-	add	r1, r1, r4
-	mov	r2, #0x00000000		/* clear			    */
+relocate_done:
 
-clbss_l:str	r2, [r0]		/* clear loop...		    */
-	add	r0, r0, #4
-	cmp	r0, r1
-	bne	clbss_l
-
-	bl coloured_LED_init
-	bl red_led_on
-#endif
-
-/*
- * We are done. Do not return, instead branch to second part of board
- * initialization, now running from RAM.
- */
-#ifdef CONFIG_NAND_SPL
-	ldr     r0, _nand_boot_ofs
-	mov	pc, r0
-
-_nand_boot_ofs:
-	.word nand_boot
-#else
-	ldr	r0, _board_init_r_ofs
-	ldr	r1, _TEXT_BASE
-	add	lr, r0, r1
-	add	lr, lr, r9
-	/* setup parameters for board_init_r */
-	mov	r0, r5		/* gd_t */
-	mov	r1, r6		/* dest_addr */
-	/* jump to it ... */
-	mov	pc, lr
-
-_board_init_r_ofs:
-	.word board_init_r - _start
-#endif
+	bx	lr
 
 _rel_dyn_start_ofs:
 	.word __rel_dyn_start - _start
@@ -304,6 +276,13 @@ _rel_dyn_end_ofs:
 	.word __rel_dyn_end - _start
 _dynsym_start_ofs:
 	.word __dynsym_start - _start
+
+#endif
+
+	.globl	c_runtime_cpu_setup
+c_runtime_cpu_setup:
+
+	bx	lr
 
 /*
  *************************************************************************
@@ -318,20 +297,32 @@ _dynsym_start_ofs:
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 cpu_init_crit:
 	/*
-	 * flush v4 I/D caches
+	 * flush D cache before disabling it
 	 */
 	mov	r0, #0
-	mcr	p15, 0, r0, c7, c7, 0	/* flush v3/v4 cache */
-	mcr	p15, 0, r0, c8, c7, 0	/* flush v4 TLB */
+flush_dcache:
+	mrc	p15, 0, r15, c7, c10, 3
+	bne	flush_dcache
+
+	mcr	p15, 0, r0, c8, c7, 0	/* invalidate TLB */
+	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I Cache */
 
 	/*
-	 * disable MMU stuff and caches
+	 * disable MMU and D cache
+	 * enable I cache if CONFIG_SYS_ICACHE_OFF is not defined
 	 */
 	mrc	p15, 0, r0, c1, c0, 0
-	bic	r0, r0, #0x00002300	/* clear bits 13, 9:8 (--V- --RS) */
+	bic	r0, r0, #0x00000300	/* clear bits 9:8 (---- --RS) */
 	bic	r0, r0, #0x00000087	/* clear bits 7, 2:0 (B--- -CAM) */
+#ifdef CONFIG_SYS_EXCEPTION_VECTORS_HIGH
+	orr	r0, r0, #0x00002000	/* set bit 13 (--V- ----) */
+#else
+	bic	r0, r0, #0x00002000	/* clear bit 13 (--V- ----) */
+#endif
 	orr	r0, r0, #0x00000002	/* set bit 2 (A) Align */
+#ifndef CONFIG_SYS_ICACHE_OFF
 	orr	r0, r0, #0x00001000	/* set bit 12 (I) I-Cache */
+#endif
 	mcr	p15, 0, r0, c1, c0, 0
 
 	/*

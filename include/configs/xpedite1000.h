@@ -128,7 +128,6 @@ extern void out32(unsigned int, unsigned long);
  * Use the HUSH parser
  */
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 /*
  * NOR flash configuration
@@ -183,7 +182,6 @@ extern void out32(unsigned int, unsigned long);
  */
 #define CONFIG_PPC4xx_EMAC
 #define CONFIG_PHY_GIGE		1	/* Include GbE speed/duplex detection */
-#define CONFIG_NET_MULTI	1
 #define CONFIG_MII		1	/* MII PHY management */
 #define CONFIG_PHY_RESET	1	/* reset phy upon startup */
 #define CONFIG_SYS_RX_ETH_BUFFER 32	/* Number of ethernet rx buffers & descriptors */
@@ -265,9 +263,9 @@ extern void out32(unsigned int, unsigned long);
  * ff000000 - ffbfffff	OS Use/Filesystem (12MB)
  */
 
-#define CONFIG_UBOOT_ENV_ADDR	MK_STR(CONFIG_SYS_TEXT_BASE)
-#define CONFIG_FDT_ENV_ADDR	MK_STR(0xfff00000)
-#define CONFIG_OS_ENV_ADDR	MK_STR(0xffc00000)
+#define CONFIG_UBOOT_ENV_ADDR	__stringify(CONFIG_SYS_TEXT_BASE)
+#define CONFIG_FDT_ENV_ADDR	__stringify(0xfff00000)
+#define CONFIG_OS_ENV_ADDR	__stringify(0xffc00000)
 
 #define CONFIG_PROG_UBOOT						\
 	"$download_cmd $loadaddr $ubootfile; "				\

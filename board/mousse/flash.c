@@ -450,7 +450,7 @@ STATUS flashWrite (flash_dev_t * dev, int pos, char *buf, int len)
 }
 
 /*
- * flashWritable returns TRUE if a range contains all F's.
+ * flashWritable returns true if a range contains all F's.
  */
 
 STATUS flashWritable (flash_dev_t * dev, int pos, int len)
@@ -776,8 +776,7 @@ void flash_print_info (flash_info_t * info)
  */
 int flash_erase (flash_info_t * info, int s_first, int s_last)
 {
-	vu_long *addr = (vu_long *) (info->start[0]);
-	int prot, sect, l_sect;
+	int prot, sect;
 	flash_dev_t *dev = NULL;
 
 	if ((s_first < 0) || (s_first > s_last)) {
@@ -803,17 +802,12 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
 		printf ("\n");
 	}
 
-	l_sect = -1;
-
 	/* Start erase on unprotected sectors */
 	dev = getFlashDevFromInfo (info);
 	if (dev) {
 		printf ("Erase FLASH[%s] -%d sectors:", dev->name, dev->sectors);
 		for (sect = s_first; sect <= s_last; sect++) {
 			if (info->protect[sect] == 0) {	/* not protected */
-				addr = (vu_long *) (dev->base);
-				/*   printf("erase_sector: sector=%d, addr=0x%x\n",
-				   sect, addr); */
 				printf (".");
 				if (ERROR == flashEraseSector (dev, sect)) {
 					printf ("ERROR: could not erase sector %d on FLASH[%s]\n", sect, dev->name);

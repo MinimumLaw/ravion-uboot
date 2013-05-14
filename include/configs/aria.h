@@ -64,7 +64,6 @@
 
 #define CONFIG_SYS_MPC512X_CLKIN	33000000	/* in Hz */
 
-#define CONFIG_BOARD_EARLY_INIT_F		/* call board_early_init_f() */
 #define CONFIG_MISC_INIT_R
 
 #define CONFIG_SYS_IMMR			0x80000000
@@ -247,13 +246,9 @@
  */
 #define CONFIG_CMD_NAND					/* enable NAND support */
 #define CONFIG_JFFS2_NAND				/* with JFFS2 on it */
-
-
 #define CONFIG_NAND_MPC5121_NFC
 #define CONFIG_SYS_NAND_BASE		0x40000000
-
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define NAND_MAX_CHIPS			CONFIG_SYS_MAX_NAND_DEVICE
 
 /*
  * Configuration parameters for MPC5121 NAND driver
@@ -270,10 +265,15 @@
 #define CONFIG_SYS_ARIA_SRAM_BASE	(CONFIG_SYS_SRAM_BASE + \
 					 CONFIG_SYS_SRAM_SIZE)
 #define CONFIG_SYS_ARIA_SRAM_SIZE	0x00100000	/* reserve 1MB-window */
+#define CONFIG_SYS_CS6_START		CONFIG_SYS_ARIA_SRAM_BASE
+#define CONFIG_SYS_CS6_SIZE		CONFIG_SYS_ARIA_SRAM_SIZE
 
 #define CONFIG_SYS_ARIA_FPGA_BASE	(CONFIG_SYS_ARIA_SRAM_BASE + \
 					 CONFIG_SYS_ARIA_SRAM_SIZE)
 #define CONFIG_SYS_ARIA_FPGA_SIZE	0x20000		/* 128 KB */
+
+#define CONFIG_SYS_CS2_START		CONFIG_SYS_ARIA_FPGA_BASE
+#define CONFIG_SYS_CS2_SIZE		CONFIG_SYS_ARIA_FPGA_SIZE
 
 #define CONFIG_SYS_CS0_CFG		0x05059150
 #define CONFIG_SYS_CS2_CFG		(	(5 << 24) | \
@@ -326,6 +326,7 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE		3	/* console on PSC3 */
+#define CONFIG_SYS_PSC3
 #if CONFIG_PSC_CONSOLE != 3
 #error CONFIG_PSC_CONSOLE must be 3
 #endif
@@ -343,7 +344,6 @@
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef  CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #endif
 
 /*
@@ -398,7 +398,6 @@
  * Ethernet configuration
  */
 #define CONFIG_MPC512x_FEC		1
-#define CONFIG_NET_MULTI
 #define CONFIG_PHY_ADDR			0x17
 #define CONFIG_MII			1	/* MII PHY management */
 #define CONFIG_FEC_AN_TIMEOUT		1
@@ -537,8 +536,8 @@
 #define CONFIG_TIMESTAMP
 
 #define CONFIG_HOSTNAME			aria
-#define CONFIG_BOOTFILE			aria/uImage
-#define CONFIG_ROOTPATH			/opt/eldk/ppc_6xx
+#define CONFIG_BOOTFILE			"aria/uImage"
+#define CONFIG_ROOTPATH			"/opt/eldk/ppc_6xx"
 
 #define CONFIG_LOADADDR			400000	/* default load addr */
 
@@ -647,5 +646,22 @@
 #define FSL_ATA_CTRL_DMA_ULTRA		0x04000000
 #define FSL_ATA_CTRL_DMA_WRITE		0x02000000
 #define FSL_ATA_CTRL_IORDY_EN		0x01000000
+
+/* Clocks in use */
+#define SCCR1_CLOCKS_EN	(CLOCK_SCCR1_CFG_EN |				\
+			 CLOCK_SCCR1_LPC_EN |				\
+			 CLOCK_SCCR1_PSC_EN(CONFIG_PSC_CONSOLE) |	\
+			 CLOCK_SCCR1_PSCFIFO_EN |			\
+			 CLOCK_SCCR1_DDR_EN |				\
+			 CLOCK_SCCR1_FEC_EN |				\
+			 CLOCK_SCCR1_NFC_EN |				\
+			 CLOCK_SCCR1_PATA_EN |				\
+			 CLOCK_SCCR1_PCI_EN |				\
+			 CLOCK_SCCR1_TPR_EN)
+
+#define SCCR2_CLOCKS_EN	(CLOCK_SCCR2_MEM_EN |		\
+			 CLOCK_SCCR2_SPDIF_EN |		\
+			 CLOCK_SCCR2_DIU_EN |		\
+			 CLOCK_SCCR2_I2C_EN)
 
 #endif	/* __CONFIG_H */

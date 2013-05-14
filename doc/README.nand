@@ -94,10 +94,22 @@ Commands:
       of data for one 512-byte page or 2 256-byte pages. There is no check
       for bad blocks.
 
+   nand read.raw addr ofs|partition [count]
+   nand write.raw addr ofs|partition [count]
+      Read or write one or more pages at "ofs" in NAND flash, from or to
+      "addr" in memory.  This is a raw access, so ECC is avoided and the
+      OOB area is transferred as well.  If count is absent, it is assumed
+      to be one page.  As with .yaffs2 accesses, the data is formatted as
+      a packed sequence of "data, oob, data, oob, ..." -- no alignment of
+      individual pages is maintained.
+
 Configuration Options:
 
    CONFIG_CMD_NAND
       Enables NAND support and commmands.
+
+   CONFIG_CMD_NAND_TORTURE
+      Enables the torture command (see description of this command below).
 
    CONFIG_MTD_NAND_ECC_JFFS2
       Define this if you want the Error Correction Code information in
@@ -110,6 +122,68 @@ Configuration Options:
 
    CONFIG_SYS_NAND_MAX_CHIPS
       The maximum number of NAND chips per device to be supported.
+
+   CONFIG_SYS_NAND_SELF_INIT
+      Traditionally, glue code in drivers/mtd/nand/nand.c has driven
+      the initialization process -- it provides the mtd and nand
+      structs, calls a board init function for a specific device,
+      calls nand_scan(), and registers with mtd.
+
+      This arrangement does not provide drivers with the flexibility to
+      run code between nand_scan_ident() and nand_scan_tail(), or other
+      deviations from the "normal" flow.
+
+      If a board defines CONFIG_SYS_NAND_SELF_INIT, drivers/mtd/nand/nand.c
+      will make one call to board_nand_init(), with no arguments.  That
+      function is responsible for calling a driver init function for
+      each NAND device on the board, that performs all initialization
+      tasks except setting mtd->name, and registering with the rest of
+      U-Boot.  Those last tasks are accomplished by calling  nand_register()
+      on the new mtd device.
+
+      Example of new init to be added to the end of an existing driver
+      init:
+
+	/*
+	 * devnum is the device number to be used in nand commands
+	 * and in mtd->name.  Must be less than
+	 * CONFIG_SYS_NAND_MAX_DEVICE.
+	 */
+	mtd = &nand_info[devnum];
+
+	/* chip is struct nand_chip, and is now provided by the driver. */
+	mtd->priv = &chip;
+
+	/*
+	 * Fill in appropriate values if this driver uses these fields,
+	 * or uses the standard read_byte/write_buf/etc. functions from
+	 * nand_base.c that use these fields.
+	 */
+	chip.IO_ADDR_R = ...;
+	chip.IO_ADDR_W = ...;
+
+	if (nand_scan_ident(mtd, CONFIG_SYS_MAX_NAND_CHIPS, NULL))
+		error out
+
+	/*
+	 * Insert here any code you wish to run after the chip has been
+	 * identified, but before any other I/O is done.
+	 */
+
+	if (nand_scan_tail(mtd))
+		error out
+
+	if (nand_register(devnum))
+		error out
+
+      In addition to providing more flexibility to the driver, it reduces
+      the difference between a U-Boot driver and its Linux counterpart.
+      nand_init() is now reduced to calling board_nand_init() once, and
+      printing a size summary.  This should also make it easier to
+      transition to delayed NAND initialization.
+
+      Please convert your driver even if you don't need the extra
+      flexibility, so that one day we can eliminate the old mechanism.
 
 NOTE:
 =====
@@ -142,6 +216,24 @@ Miscellaneous and testing commands:
   DANGEROUS!!! Factory set bad blocks will be lost. Use only
   to remove artificial bad blocks created with the "markbad" command.
 
+  "torture offset"
+  Torture block to determine if it is still reliable.
+  Enabled by the CONFIG_CMD_NAND_TORTURE configuration option.
+  This command returns 0 if the block is still reliable, else 1.
+  If the block is detected as unreliable, it is up to the user to decide to
+  mark this block as bad.
+  The analyzed block is put through 3 erase / write cycles (or less if the block
+  is detected as unreliable earlier).
+  This command can be used in scripts, e.g. together with the markbad command to
+  automate retries and handling of possibly newly detected bad blocks if the
+  nand write command fails.
+  It can also be used manually by users having seen some NAND errors in logs to
+  search the root cause of these errors.
+  The underlying nand_torture() function is also useful for code willing to
+  automate actions following a nand->write() error. This would e.g. be required
+  in order to program or update safely firmware to NAND, especially for the UBI
+  part of such firmware.
+
 
 NAND locking command (for chips with active LOCKPRE pin)
 
@@ -157,6 +249,8 @@ NAND locking command (for chips with active LOCKPRE pin)
   "nand unlock [offset] [size]"
   unlock consecutive area (can be called multiple times for different areas)
 
+  "nand unlock.allexcept [offset] [size]"
+  unlock all except specified consecutive area
 
 I have tested the code with board containing 128MiB NAND large page chips
 and 32MiB small page chips.

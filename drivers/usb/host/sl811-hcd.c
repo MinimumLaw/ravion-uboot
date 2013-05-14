@@ -51,8 +51,6 @@
 #define	 SL811_ADR (0x50000000)
 #define	 SL811_DAT (0x50000001)
 
-#define mdelay(n) ({unsigned long msec=(n); while (msec--) udelay(1000);})
-
 #ifdef SL811_DEBUG
 static int debug = 9;
 #endif
@@ -212,14 +210,14 @@ static int sl811_hc_reset(void)
 	return 1;
 }
 
-int usb_lowlevel_init(void)
+int usb_lowlevel_init(int index, void **controller)
 {
 	root_hub_devnum = 0;
 	sl811_hc_reset();
 	return 0;
 }
 
-int usb_lowlevel_stop(void)
+int usb_lowlevel_stop(int index)
 {
 	sl811_hc_reset();
 	return 0;
@@ -236,7 +234,7 @@ static int sl811_send_packet(struct usb_device *dev, unsigned long pipe, __u8 *b
 	__u16 status = 0;
 	int err = 0, time_start = get_timer(0);
 	int need_preamble = !(rh_status.wPortStatus & USB_PORT_STAT_LOW_SPEED) &&
-		usb_pipeslow(pipe);
+		(dev->speed == USB_SPEED_LOW);
 
 	if (len > 239)
 		return -1;
@@ -552,11 +550,12 @@ static int sl811_rh_submit_urb(struct usb_device *usb_dev, unsigned long pipe,
 	__u8 *bufp = data_buf;
 	int len = 0;
 	int status = 0;
-
 	__u16 bmRType_bReq;
-	__u16 wValue;
-	__u16 wIndex;
-	__u16 wLength;
+	__u16 wValue  = le16_to_cpu (cmd->value);
+	__u16 wLength = le16_to_cpu (cmd->length);
+#ifdef SL811_DEBUG
+	__u16 wIndex  = le16_to_cpu (cmd->index);
+#endif
 
 	if (usb_pipeint(pipe)) {
 		PDEBUG(0, "interrupt transfer unimplemented!\n");
@@ -564,9 +563,6 @@ static int sl811_rh_submit_urb(struct usb_device *usb_dev, unsigned long pipe,
 	}
 
 	bmRType_bReq  = cmd->requesttype | (cmd->request << 8);
-	wValue	      = le16_to_cpu (cmd->value);
-	wIndex	      = le16_to_cpu (cmd->index);
-	wLength	      = le16_to_cpu (cmd->length);
 
 	PDEBUG(5, "submit rh urb, req = %d(%x) val = %#x index = %#x len=%d\n",
 	       bmRType_bReq, bmRType_bReq, wValue, wIndex, wLength);

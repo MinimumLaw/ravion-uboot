@@ -153,7 +153,7 @@ int vcxk_init(unsigned long width, unsigned long height)
 #ifdef CONFIG_SYS_VCXK_DOUBLEBUFFERED
 	double_bws_word  = (u_short *)double_bws;
 	double_bws_long  = (u_long *)double_bws;
-	debug("%lx %lx %lx \n", double_bws, double_bws_word, double_bws_long);
+	debug("%px %px %px\n", double_bws, double_bws_word, double_bws_long);
 #endif
 	display_width  = width;
 	display_height = height;
@@ -164,7 +164,7 @@ int vcxk_init(unsigned long width, unsigned long height)
 #else
 	#error CONFIG_SYS_VCXK_DEFAULT_LINEALIGN is invalid
 #endif
-	debug("linesize ((%d + 15) / 8 & ~0x1) = %d\n",
+	debug("linesize ((%ld + 15) / 8 & ~0x1) = %ld\n",
 		display_width, display_bwidth);
 
 #ifdef CONFIG_SYS_VCXK_AUTODETECT
@@ -393,7 +393,6 @@ int vcxk_display_bitmap(ulong addr, int x, int y)
 	unsigned long width;
 	unsigned long height;
 	unsigned long bpp;
-	unsigned long compression;
 
 	unsigned long lw;
 
@@ -404,7 +403,6 @@ int vcxk_display_bitmap(ulong addr, int x, int y)
 	bmp = (bmp_image_t *) addr;
 	if ((bmp->header.signature[0] == 'B') &&
 	    (bmp->header.signature[1] == 'M')) {
-		compression  = le32_to_cpu(bmp->header.compression);
 		width        = le32_to_cpu(bmp->header.width);
 		height       = le32_to_cpu(bmp->header.height);
 		bpp          = le16_to_cpu(bmp->header.bit_count);

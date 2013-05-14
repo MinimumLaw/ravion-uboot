@@ -39,6 +39,7 @@
 #define	CONFIG_SYS_TEXT_BASE	0x40000000
 
 #define CONFIG_LCD
+#define CONFIG_MPC8XX_LCD
 #undef  CONFIG_EDT32F10
 #define CONFIG_SHARP_LQ057Q3DC02
 
@@ -161,8 +162,6 @@
 #define	CONFIG_SYS_LOAD_ADDR		0x100000	/* default load address	*/
 
 #define	CONFIG_SYS_HZ		1000		/* decrementer freq: 1 ms ticks	*/
-
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /*
  * JFFS2 partitions
@@ -331,6 +330,7 @@
  */
 
 #if 1
+#define CONFIG_IDE_PREINIT	1	/* Use preinit IDE hook */
 #define	CONFIG_IDE_8xx_PCCARD	1	/* Use IDE with PC Card	Adapter	*/
 
 #undef	CONFIG_IDE_8xx_DIRECT		/* Direct IDE    not supported	*/

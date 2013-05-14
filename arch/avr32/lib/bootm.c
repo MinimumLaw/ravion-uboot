@@ -109,7 +109,7 @@ static struct tag *setup_clock_tags(struct tag *params)
 	params->hdr.size = tag_size(tag_clock);
 	params->u.clock.clock_id = ACLOCK_BOOTCPU;
 	params->u.clock.clock_flags = 0;
-	params->u.clock.clock_hz = gd->cpu_hz;
+	params->u.clock.clock_hz = gd->arch.cpu_hz;
 
 #ifdef CONFIG_AT32AP7000
 	/*
@@ -192,7 +192,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 
 	theKernel = (void *)images->ep;
 
-	show_boot_progress (15);
+	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
 	params = params_start = (struct tag *)gd->bd->bi_boot_params;
 	params = setup_start_tag(params);

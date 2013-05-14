@@ -57,6 +57,20 @@ static void spi_reset(struct omap3_spi_slave *ds)
 	writel(OMAP3_MCSPI_WAKEUPENABLE_WKEN, &ds->regs->wakeupenable);
 }
 
+static void omap3_spi_write_chconf(struct omap3_spi_slave *ds, int val)
+{
+	writel(val, &ds->regs->channel[ds->slave.cs].chconf);
+	/* Flash post writes to make immediate effect */
+	readl(&ds->regs->channel[ds->slave.cs].chconf);
+}
+
+static void omap3_spi_set_enable(struct omap3_spi_slave *ds, int enable)
+{
+	writel(enable, &ds->regs->channel[ds->slave.cs].chctrl);
+        /* Flash post writes to make immediate effect */
+	readl(&ds->regs->channel[ds->slave.cs].chctrl);
+}
+
 void spi_init()
 {
 	/* do nothing */
@@ -66,12 +80,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 				  unsigned int max_hz, unsigned int mode)
 {
 	struct omap3_spi_slave	*ds;
-
-	ds = malloc(sizeof(struct omap3_spi_slave));
-	if (!ds) {
-		printf("SPI error: malloc of SPI structure failed\n");
-		return NULL;
-	}
+	struct mcspi *regs;
 
 	/*
 	 * OMAP3 McSPI (MultiChannel SPI) has 4 busses (modules)
@@ -84,23 +93,28 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 
 	switch (bus) {
 	case 0:
-		ds->regs = (struct mcspi *)OMAP3_MCSPI1_BASE;
+		regs = (struct mcspi *)OMAP3_MCSPI1_BASE;
 		break;
+#ifdef OMAP3_MCSPI2_BASE
 	case 1:
-		ds->regs = (struct mcspi *)OMAP3_MCSPI2_BASE;
+		regs = (struct mcspi *)OMAP3_MCSPI2_BASE;
 		break;
+#endif
+#ifdef OMAP3_MCSPI3_BASE 
 	case 2:
-		ds->regs = (struct mcspi *)OMAP3_MCSPI3_BASE;
+		regs = (struct mcspi *)OMAP3_MCSPI3_BASE;
 		break;
+#endif
+#ifdef OMAP3_MCSPI4_BASE
 	case 3:
-		ds->regs = (struct mcspi *)OMAP3_MCSPI4_BASE;
+		regs = (struct mcspi *)OMAP3_MCSPI4_BASE;
 		break;
+#endif
 	default:
 		printf("SPI error: unsupported bus %i. \
 			Supported busses 0 - 3\n", bus);
 		return NULL;
 	}
-	ds->slave.bus = bus;
 
 	if (((bus == 0) && (cs > 3)) ||
 			((bus == 1) && (cs > 1)) ||
@@ -110,19 +124,26 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 			on bus %i\n", cs, bus);
 		return NULL;
 	}
-	ds->slave.cs = cs;
 
 	if (max_hz > OMAP3_MCSPI_MAX_FREQ) {
 		printf("SPI error: unsupported frequency %i Hz. \
 			Max frequency is 48 Mhz\n", max_hz);
 		return NULL;
 	}
-	ds->freq = max_hz;
 
 	if (mode > SPI_MODE_3) {
 		printf("SPI error: unsupported SPI mode %i\n", mode);
 		return NULL;
 	}
+
+	ds = spi_alloc_slave(struct omap3_spi_slave, bus, cs);
+	if (!ds) {
+		printf("SPI error: malloc of SPI structure failed\n");
+		return NULL;
+	}
+
+	ds->regs = regs;
+	ds->freq = max_hz;
 	ds->mode = mode;
 
 	return &ds->slave;
@@ -167,8 +188,17 @@ int spi_claim_bus(struct spi_slave *slave)
 	/* standard 4-wire master mode:	SCK, MOSI/out, MISO/in, nCS
 	 * REVISIT: this controller could support SPI_3WIRE mode.
 	 */
+#ifdef CONFIG_OMAP3_SPI_D0_D1_SWAPPED
+	/*
+	 * Some boards have D0 wired as MOSI / D1 as MISO instead of
+	 * The normal D0 as MISO / D1 as MOSI.
+	 */
+	conf &= ~OMAP3_MCSPI_CHCONF_DPE0;
+	conf |= OMAP3_MCSPI_CHCONF_IS|OMAP3_MCSPI_CHCONF_DPE1;
+#else
 	conf &= ~(OMAP3_MCSPI_CHCONF_IS|OMAP3_MCSPI_CHCONF_DPE1);
 	conf |= OMAP3_MCSPI_CHCONF_DPE0;
+#endif
 
 	/* wordlength */
 	conf &= ~OMAP3_MCSPI_CHCONF_WL_MASK;
@@ -197,7 +227,7 @@ int spi_claim_bus(struct spi_slave *slave)
 	/* Transmit & receive mode */
 	conf &= ~OMAP3_MCSPI_CHCONF_TRM_MASK;
 
-	writel(conf, &ds->regs->channel[ds->slave.cs].chconf);
+	omap3_spi_write_chconf(ds,conf);
 
 	return 0;
 }
@@ -218,14 +248,13 @@ int omap3_spi_write(struct spi_slave *slave, unsigned int len, const u8 *txp,
 	int timeout = SPI_WAIT_TIMEOUT;
 	int chconf = readl(&ds->regs->channel[ds->slave.cs].chconf);
 
-	if (flags & SPI_XFER_BEGIN)
-		writel(OMAP3_MCSPI_CHCTRL_EN,
-		       &ds->regs->channel[ds->slave.cs].chctrl);
+	/* Enable the channel */
+	omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_EN);
 
 	chconf &= ~OMAP3_MCSPI_CHCONF_TRM_MASK;
 	chconf |= OMAP3_MCSPI_CHCONF_TRM_TX_ONLY;
 	chconf |= OMAP3_MCSPI_CHCONF_FORCE;
-	writel(chconf, &ds->regs->channel[ds->slave.cs].chconf);
+	omap3_spi_write_chconf(ds,chconf);
 
 	for (i = 0; i < len; i++) {
 		/* wait till TX register is empty (TXS == 1) */
@@ -241,15 +270,17 @@ int omap3_spi_write(struct spi_slave *slave, unsigned int len, const u8 *txp,
 		writel(txp[i], &ds->regs->channel[ds->slave.cs].tx);
 	}
 
+        /* wait to finish of transfer */
+        while (!(readl(&ds->regs->channel[ds->slave.cs].chstat) &
+                         OMAP3_MCSPI_CHSTAT_EOT));
+
+	/* Disable the channel otherwise the next immediate RX will get affected */
+	omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_DIS);
+
 	if (flags & SPI_XFER_END) {
-		/* wait to finish of transfer */
-		while (!(readl(&ds->regs->channel[ds->slave.cs].chstat) &
-			 OMAP3_MCSPI_CHSTAT_EOT));
 
 		chconf &= ~OMAP3_MCSPI_CHCONF_FORCE;
-		writel(chconf, &ds->regs->channel[ds->slave.cs].chconf);
-
-		writel(0, &ds->regs->channel[ds->slave.cs].chctrl);
+		omap3_spi_write_chconf(ds,chconf);
 	}
 	return 0;
 }
@@ -262,14 +293,13 @@ int omap3_spi_read(struct spi_slave *slave, unsigned int len, u8 *rxp,
 	int timeout = SPI_WAIT_TIMEOUT;
 	int chconf = readl(&ds->regs->channel[ds->slave.cs].chconf);
 
-	if (flags & SPI_XFER_BEGIN)
-		writel(OMAP3_MCSPI_CHCTRL_EN,
-		       &ds->regs->channel[ds->slave.cs].chctrl);
+	/* Enable the channel */
+	omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_EN);
 
 	chconf &= ~OMAP3_MCSPI_CHCONF_TRM_MASK;
 	chconf |= OMAP3_MCSPI_CHCONF_TRM_RX_ONLY;
 	chconf |= OMAP3_MCSPI_CHCONF_FORCE;
-	writel(chconf, &ds->regs->channel[ds->slave.cs].chconf);
+	omap3_spi_write_chconf(ds,chconf);
 
 	writel(0, &ds->regs->channel[ds->slave.cs].tx);
 
@@ -283,15 +313,75 @@ int omap3_spi_read(struct spi_slave *slave, unsigned int len, u8 *rxp,
 				return -1;
 			}
 		}
+
+		/* Disable the channel to prevent furher receiving */
+		if(i == (len - 1))
+			omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_DIS);
+
 		/* Read the data */
 		rxp[i] = readl(&ds->regs->channel[ds->slave.cs].rx);
 	}
 
 	if (flags & SPI_XFER_END) {
 		chconf &= ~OMAP3_MCSPI_CHCONF_FORCE;
-		writel(chconf, &ds->regs->channel[ds->slave.cs].chconf);
+		omap3_spi_write_chconf(ds,chconf);
+	}
 
-		writel(0, &ds->regs->channel[ds->slave.cs].chctrl);
+	return 0;
+}
+
+/*McSPI Transmit Receive Mode*/
+int omap3_spi_txrx(struct spi_slave *slave,
+		unsigned int len, const u8 *txp, u8 *rxp, unsigned long flags)
+{
+	struct omap3_spi_slave *ds = to_omap3_spi(slave);
+	int timeout = SPI_WAIT_TIMEOUT;
+	int chconf = readl(&ds->regs->channel[ds->slave.cs].chconf);
+	int irqstatus = readl(&ds->regs->irqstatus);
+	int i=0;
+
+	/*Enable SPI channel*/
+	omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_EN);
+
+	/*set TRANSMIT-RECEIVE Mode*/
+	chconf &= ~OMAP3_MCSPI_CHCONF_TRM_MASK;
+	chconf |= OMAP3_MCSPI_CHCONF_FORCE;
+	omap3_spi_write_chconf(ds,chconf);
+
+	/*Shift in and out 1 byte at time*/
+	for (i=0; i < len; i++){
+		/* Write: wait for TX empty (TXS == 1)*/
+		irqstatus |= (1<< (4*(ds->slave.bus)));
+		while (!(readl(&ds->regs->channel[ds->slave.cs].chstat) &
+			 OMAP3_MCSPI_CHSTAT_TXS)) {
+			if (--timeout <= 0) {
+				printf("SPI TXS timed out, status=0x%08x\n",
+				       readl(&ds->regs->channel[ds->slave.cs].chstat));
+				return -1;
+			}
+		}
+		/* Write the data */
+		writel(txp[i], &ds->regs->channel[ds->slave.cs].tx);
+
+		/*Read: wait for RX containing data (RXS == 1)*/
+		while (!(readl(&ds->regs->channel[ds->slave.cs].chstat) &
+			 OMAP3_MCSPI_CHSTAT_RXS)) {
+			if (--timeout <= 0) {
+				printf("SPI RXS timed out, status=0x%08x\n",
+				       readl(&ds->regs->channel[ds->slave.cs].chstat));
+				return -1;
+			}
+		}
+		/* Read the data */
+		rxp[i] = readl(&ds->regs->channel[ds->slave.cs].rx);
+	}
+	/* Disable the channel */
+        omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_DIS);
+
+	/*if transfer must be terminated disable the channel*/
+	if (flags & SPI_XFER_END) {
+		chconf &= ~OMAP3_MCSPI_CHCONF_FORCE;
+		omap3_spi_write_chconf(ds,chconf);
 	}
 
 	return 0;
@@ -315,24 +405,22 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 		int chconf = readl(&ds->regs->channel[ds->slave.cs].chconf);
 
 		if (flags & SPI_XFER_BEGIN) {
-			writel(OMAP3_MCSPI_CHCTRL_EN,
-			       &ds->regs->channel[ds->slave.cs].chctrl);
+			omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_EN);
 			chconf |= OMAP3_MCSPI_CHCONF_FORCE;
-			writel(chconf,
-			       &ds->regs->channel[ds->slave.cs].chconf);
+			omap3_spi_write_chconf(ds,chconf);
 		}
 		if (flags & SPI_XFER_END) {
 			chconf &= ~OMAP3_MCSPI_CHCONF_FORCE;
-			writel(chconf,
-			       &ds->regs->channel[ds->slave.cs].chconf);
-			writel(0, &ds->regs->channel[ds->slave.cs].chctrl);
+			omap3_spi_write_chconf(ds,chconf);
+			omap3_spi_set_enable(ds,OMAP3_MCSPI_CHCTRL_DIS);
 		}
 		ret = 0;
 	} else {
-		if (dout != NULL)
+		if (dout != NULL && din != NULL)
+			ret = omap3_spi_txrx(slave, len, txp, rxp, flags);
+		else if (dout != NULL)
 			ret = omap3_spi_write(slave, len, txp, flags);
-
-		if (din != NULL)
+		else if (din != NULL)
 			ret = omap3_spi_read(slave, len, rxp, flags);
 	}
 	return ret;

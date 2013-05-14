@@ -37,6 +37,7 @@
 #include <command.h>
 #include <flash.h>
 #include <net.h>
+#include <net/tftp.h>
 #include <malloc.h>
 
 /* env variable holding the location of the update file */
@@ -86,7 +87,7 @@ static int update_load(char *filename, ulong msec_max, int cnt_max, ulong addr)
 	/* download the update file */
 	load_addr = addr;
 	copy_filename(BootFile, filename, sizeof(BootFile));
-	size = NetLoop(TFTP);
+	size = NetLoop(TFTPGET);
 
 	if (size < 0)
 		rv = 1;

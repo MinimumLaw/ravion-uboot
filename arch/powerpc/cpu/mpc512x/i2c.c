@@ -78,9 +78,8 @@ static int wait_for_bb (void)
 	status = mpc_reg_in (&regs->msr);
 
 	while (timeout-- && (status & I2C_BB)) {
-		volatile int temp;
 		mpc_reg_out (&regs->mcr, I2C_STA, I2C_STA);
-		temp = mpc_reg_in (&regs->mdr);
+		(void)mpc_reg_in(&regs->mdr);
 		mpc_reg_out (&regs->mcr, 0, I2C_STA);
 		mpc_reg_out (&regs->mcr, 0, 0);
 		mpc_reg_out (&regs->mcr, I2C_EN, 0);
@@ -251,7 +250,7 @@ static int mpc_get_fdr (int speed)
 			{126, 128}
 		};
 
-		ips = gd->ips_clk;
+		ips = gd->arch.ips_clk;
 		for (i = 7; i >= 0; i--) {
 			for (j = 7; j >= 0; j--) {
 				scl = 2 * (scltap[j].scl2tap +

@@ -22,6 +22,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 #include <asm/arch/kirkwood.h>
 
 #define UBOOT_CNTR	0	/* counter to use for uboot timer */
@@ -85,8 +86,8 @@ struct kwtmr_registers *kwtmr_regs = (struct kwtmr_registers *)KW_TIMER_BASE;
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define timestamp gd->tbl
-#define lastdec gd->lastinc
+#define timestamp gd->arch.tbl
+#define lastdec gd->arch.lastinc
 
 ulong get_timer_masked(void)
 {
@@ -151,4 +152,22 @@ int timer_init(void)
 	timestamp = 0;
 
 	return 0;
+}
+
+/*
+ * This function is derived from PowerPC code (read timebase as long long).
+ * On ARM it just returns the timer value.
+ */
+unsigned long long get_ticks(void)
+{
+	return get_timer(0);
+}
+
+/*
+ * This function is derived from PowerPC code (timebase clock frequency).
+ * On ARM it returns the number of timer ticks per second.
+ */
+ulong get_tbclk (void)
+{
+	return (ulong)CONFIG_SYS_HZ;
 }

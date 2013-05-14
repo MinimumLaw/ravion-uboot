@@ -75,10 +75,9 @@ void set_muxconf_regs(void)
 	MUX_AM3517CRANE();
 }
 
-#ifdef CONFIG_GENERIC_MMC
+#if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
 int board_mmc_init(bd_t *bis)
 {
-	omap_mmc_init(0);
-	return 0;
+	return omap_mmc_init(0, 0, 0, -1, -1);
 }
 #endif

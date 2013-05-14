@@ -242,7 +242,6 @@
 #define CONFIG_SYS_NAND_BASE            0x40000000
 
 #define CONFIG_SYS_MAX_NAND_DEVICE      2
-#define NAND_MAX_CHIPS                  CONFIG_SYS_MAX_NAND_DEVICE
 #define CONFIG_SYS_NAND_SELECT_DEVICE	/* driver supports mutipl. chips */
 
 /*
@@ -259,6 +258,8 @@
  */
 #define CONFIG_SYS_CPLD_BASE		0x82000000
 #define CONFIG_SYS_CPLD_SIZE		0x00010000	/* 64 KB */
+#define CONFIG_SYS_CS2_START		CONFIG_SYS_CPLD_BASE
+#define CONFIG_SYS_CS2_SIZE		CONFIG_SYS_CPLD_SIZE
 
 #define CONFIG_SYS_SRAM_BASE		0x30000000
 #define CONFIG_SYS_SRAM_SIZE		0x00020000	/* 128 KB */
@@ -291,6 +292,7 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE	3	/* console is on PSC3 */
+#define CONFIG_SYS_PSC3
 #if CONFIG_PSC_CONSOLE != 3
 #error CONFIG_PSC_CONSOLE must be 3
 #endif
@@ -307,8 +309,28 @@
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef  CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
+
+/*
+ * Clocks in use
+ */
+#define SCCR1_CLOCKS_EN	(CLOCK_SCCR1_CFG_EN |				\
+			 CLOCK_SCCR1_DDR_EN |				\
+			 CLOCK_SCCR1_FEC_EN |				\
+			 CLOCK_SCCR1_LPC_EN |				\
+			 CLOCK_SCCR1_NFC_EN |				\
+			 CLOCK_SCCR1_PATA_EN |				\
+			 CLOCK_SCCR1_PCI_EN |				\
+			 CLOCK_SCCR1_PSC_EN(CONFIG_PSC_CONSOLE) |	\
+			 CLOCK_SCCR1_PSCFIFO_EN |			\
+			 CLOCK_SCCR1_TPR_EN)
+
+#define SCCR2_CLOCKS_EN	(CLOCK_SCCR2_DIU_EN |		\
+			 CLOCK_SCCR2_I2C_EN |		\
+			 CLOCK_SCCR2_MEM_EN |		\
+			 CLOCK_SCCR2_SPDIF_EN |		\
+			 CLOCK_SCCR2_USB1_EN |		\
+			 CLOCK_SCCR2_USB2_EN)
 
 /*
  * PCI
@@ -362,7 +384,6 @@
  * Ethernet configuration
  */
 #define CONFIG_MPC512x_FEC	1
-#define CONFIG_NET_MULTI
 #define CONFIG_PHY_ADDR		0x1
 #define CONFIG_MII		1	/* MII PHY management		*/
 #define CONFIG_FEC_AN_TIMEOUT	1
@@ -526,8 +547,8 @@
 #define CONFIG_TIMESTAMP
 
 #define CONFIG_HOSTNAME		mpc5121ads
-#define CONFIG_BOOTFILE		mpc5121ads/uImage
-#define CONFIG_ROOTPATH		/opt/eldk/ppc_6xx
+#define CONFIG_BOOTFILE		"mpc5121ads/uImage"
+#define CONFIG_ROOTPATH		"/opt/eldk/ppc_6xx"
 
 #define CONFIG_LOADADDR		400000	/* default location for tftp and bootm */
 

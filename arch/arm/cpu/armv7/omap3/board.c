@@ -33,17 +33,26 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
+#include <spl.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mem.h>
 #include <asm/cache.h>
 #include <asm/armv7.h>
 #include <asm/arch/gpio.h>
+#include <asm/omap_common.h>
+#include <asm/arch/mmc_host_def.h>
+#include <i2c.h>
+#include <linux/compiler.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* Declarations */
 extern omap3_sysinfo sysinfo;
 static void omap3_setup_aux_cr(void);
+#ifndef CONFIG_SYS_L2CACHE_OFF
 static void omap3_invalidate_l2_cache_secure(void);
+#endif
 
 static const struct gpio_bank gpio_bank_34xx[6] = {
 	{ (void *)OMAP34XX_GPIO1_BASE, METHOD_GPIO_24XX },
@@ -56,15 +65,60 @@ static const struct gpio_bank gpio_bank_34xx[6] = {
 
 const struct gpio_bank *const omap_gpio_bank = gpio_bank_34xx;
 
-/******************************************************************************
- * Routine: delay
- * Description: spinning delay to use before udelay works
- *****************************************************************************/
-static inline void delay(unsigned long loops)
+#ifdef CONFIG_SPL_BUILD
+/*
+* We use static variables because global data is not ready yet.
+* Initialized data is available in SPL right from the beginning.
+* We would not typically need to save these parameters in regular
+* U-Boot. This is needed only in SPL at the moment.
+*/
+u32 omap3_boot_device = BOOT_DEVICE_NAND;
+
+/* auto boot mode detection is not possible for OMAP3 - hard code */
+u32 spl_boot_mode(void)
 {
-	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
-			  "bne 1b":"=r" (loops):"0"(loops));
+	switch (spl_boot_device()) {
+	case BOOT_DEVICE_MMC2:
+		return MMCSD_MODE_RAW;
+	case BOOT_DEVICE_MMC1:
+		return MMCSD_MODE_FAT;
+		break;
+	default:
+		puts("spl: ERROR:  unknown device - can't select boot mode\n");
+		hang();
+	}
 }
+
+u32 spl_boot_device(void)
+{
+	return omap3_boot_device;
+}
+
+int board_mmc_init(bd_t *bis)
+{
+	switch (spl_boot_device()) {
+	case BOOT_DEVICE_MMC1:
+		omap_mmc_init(0, 0, 0, -1, -1);
+		break;
+	case BOOT_DEVICE_MMC2:
+	case BOOT_DEVICE_MMC2_2:
+		omap_mmc_init(1, 0, 0, -1, -1);
+		break;
+	}
+	return 0;
+}
+
+void spl_board_init(void)
+{
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_SPL_ONENAND_SUPPORT)
+	gpmc_init();
+#endif
+#ifdef CONFIG_SPL_I2C_SUPPORT
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+#endif
+}
+#endif /* CONFIG_SPL_BUILD */
+
 
 /******************************************************************************
  * Routine: secure_unlock
@@ -113,7 +167,7 @@ void secureworld_exit()
 {
 	unsigned long i;
 
-	/* configrue non-secure access control register */
+	/* configure non-secure access control register */
 	__asm__ __volatile__("mrc p15, 0, %0, c1, c1, 2":"=r"(i));
 	/* enabling co-processor CP10 and CP11 accesses in NS world */
 	__asm__ __volatile__("orr %0, %0, #0xC00":"=r"(i));
@@ -191,14 +245,37 @@ void s_init(void)
 #endif
 
 	set_muxconf_regs();
-	delay(100);
+	sdelay(100);
 
 	prcm_init();
 
 	per_clocks_enable();
 
+#ifdef CONFIG_USB_EHCI_OMAP
+	ehci_clocks_enable();
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+	gd = &gdata;
+
+	preloader_console_init();
+
+	timer_init();
+#endif
+
 	if (!in_sdram)
 		mem_init();
+}
+
+/*
+ * Routine: misc_init_r
+ * Description: A basic misc_init_r that just displays the die ID
+ */
+int __weak misc_init_r(void)
+{
+	dieid_num_r();
+
+	return 0;
 }
 
 /******************************************************************************
@@ -245,7 +322,7 @@ void abort(void)
 {
 }
 
-#ifdef CONFIG_NAND_OMAP_GPMC
+#if defined(CONFIG_NAND_OMAP_GPMC) & !defined(CONFIG_SPL_BUILD)
 /******************************************************************************
  * OMAP3 specific command to switch between NAND HW and SW ecc
  *****************************************************************************/
@@ -273,7 +350,7 @@ U_BOOT_CMD(
 	"[hw/sw] - Switch between NAND hardware (hw) or software (sw) ecc algorithm"
 );
 
-#endif /* CONFIG_NAND_OMAP_GPMC */
+#endif /* CONFIG_NAND_OMAP_GPMC & !CONFIG_SPL_BUILD */
 
 #ifdef CONFIG_DISPLAY_BOARDINFO
 /**
@@ -335,6 +412,19 @@ static void omap3_update_aux_cr_secure(u32 set_bits, u32 clear_bits)
 	}
 }
 
+static void omap3_setup_aux_cr(void)
+{
+	/* Workaround for Cortex-A8 errata: #454179 #430973
+	 *	Set "IBE" bit
+	 *	Set "Disable Branch Size Mispredicts" bit
+	 * Workaround for erratum #621766
+	 *	Enable L1NEON bit
+	 * ACR |= (IBE | DBSM | L1NEON) => ACR |= 0xE0
+	 */
+	omap3_update_aux_cr_secure(0xE0, 0);
+}
+
+#ifndef CONFIG_SYS_L2CACHE_OFF
 static void omap3_update_aux_cr(u32 set_bits, u32 clear_bits)
 {
 	u32 acr;
@@ -348,19 +438,6 @@ static void omap3_update_aux_cr(u32 set_bits, u32 clear_bits)
 	asm volatile ("mcr p15, 0, %0, c1, c0, 1" : : "r" (acr));
 }
 
-static void omap3_setup_aux_cr(void)
-{
-	/* Workaround for Cortex-A8 errata: #454179 #430973
-	 *	Set "IBE" bit
-	 *	Set "Disable Brach Size Mispredicts" bit
-	 * Workaround for erratum #621766
-	 *	Enable L1NEON bit
-	 * ACR |= (IBE | DBSM | L1NEON) => ACR |= 0xE0
-	 */
-	omap3_update_aux_cr_secure(0xE0, 0);
-}
-
-#ifndef CONFIG_SYS_L2CACHE_OFF
 /* Invalidate the entire L2 cache from secure mode */
 static void omap3_invalidate_l2_cache_secure(void)
 {
@@ -389,7 +466,7 @@ void v7_outer_cache_enable(void)
 	omap3_update_aux_cr(0x2, 0);
 }
 
-void v7_outer_cache_disable(void)
+void omap3_outer_cache_disable(void)
 {
 	/* Clear L2EN */
 	omap3_update_aux_cr_secure(0, 0x2);
@@ -401,7 +478,7 @@ void v7_outer_cache_disable(void)
 	 */
 	omap3_update_aux_cr(0, 0x2);
 }
-#endif
+#endif /* !CONFIG_SYS_L2CACHE_OFF */
 
 #ifndef CONFIG_SYS_DCACHE_OFF
 void enable_caches(void)
@@ -409,4 +486,4 @@ void enable_caches(void)
 	/* Enable D-cache. I-cache is already enabled in start.S */
 	dcache_enable();
 }
-#endif
+#endif /* !CONFIG_SYS_DCACHE_OFF */

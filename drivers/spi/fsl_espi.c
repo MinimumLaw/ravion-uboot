@@ -79,12 +79,10 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (!spi_cs_is_valid(bus, cs))
 		return NULL;
 
-	fsl = malloc(sizeof(struct fsl_spi_slave));
+	fsl = spi_alloc_slave(struct fsl_spi_slave, bus, cs);
 	if (!fsl)
 		return NULL;
 
-	fsl->slave.bus = bus;
-	fsl->slave.cs = cs;
 	fsl->mode = mode;
 	fsl->max_transfer_length = ESPI_MAX_DATA_TRANSFER_LEN;
 
@@ -97,8 +95,8 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		pm = spibrg / (max_hz * 16 * 2);
 		if (pm > 16) {
 			pm = 16;
-			debug("Requested speed is too low: %d Hz, "
-				"%d Hz is used.\n", max_hz, spibrg / (32 * 16));
+			debug("Requested speed is too low: %d Hz, %ld Hz "
+				"is used.\n", max_hz, spibrg / (32 * 16));
 		}
 	} else
 		pm = spibrg / (max_hz * 2);
@@ -216,10 +214,8 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *data_out,
 			return 1;
 		}
 		memcpy(buffer, cmd_buf, cmd_len);
-		if (cmd_len != 1) {
-			if (data_in == NULL)
-				memcpy(buffer + cmd_len, data_out, data_len);
-		}
+		if (data_in == NULL)
+			memcpy(buffer + cmd_len, data_out, data_len);
 		break;
 	case SPI_XFER_BEGIN | SPI_XFER_END:
 		len = data_len;
@@ -234,7 +230,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *data_out,
 		break;
 	}
 
-	debug("spi_xfer: slave %u:%u dout %08X(%08x) din %08X(%08x) len %u\n",
+	debug("spi_xfer: slave %u:%u dout %08X(%p) din %08X(%p) len %u\n",
 	      slave->bus, slave->cs, *(uint *) dout,
 	      dout, *(uint *) din, din, len);
 

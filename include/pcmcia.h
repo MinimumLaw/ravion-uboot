@@ -58,8 +58,6 @@
 # define CONFIG_PCMCIA_SLOT_B
 #elif defined(CONFIG_ICU862)		/* The ICU862 use SLOT_B	*/
 # define CONFIG_PCMCIA_SLOT_B
-#elif defined(CONFIG_C2MON)		/* The C2MON  use SLOT_B	*/
-# define CONFIG_PCMCIA_SLOT_B
 #elif defined(CONFIG_R360MPI)		/* The R360MPI use SLOT_B	*/
 # define CONFIG_PCMCIA_SLOT_B
 #elif defined(CONFIG_ATC)		/* The ATC use SLOT_A	*/
@@ -313,8 +311,7 @@ extern u_int *pcmcia_pgcrx[];
 #define	PCMCIA_PGCRX(slot)	(*pcmcia_pgcrx[slot])
 #endif
 
-#if defined(CONFIG_CMD_IDE) && defined(CONFIG_IDE_8xx_PCCARD) \
-	|| defined(CONFIG_PXA_PCMCIA)
+#if defined(CONFIG_CMD_IDE) && defined(CONFIG_IDE_8xx_PCCARD)
 extern int check_ide_device(int slot);
 #endif
 

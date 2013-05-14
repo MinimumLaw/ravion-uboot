@@ -275,7 +275,7 @@ signed char ispVM(void)
 
 static int lattice_validate(Lattice_desc *desc, const char *fn)
 {
-	int ret_val = FALSE;
+	int ret_val = false;
 
 	if (desc) {
 		if ((desc->family > min_lattice_type) &&
@@ -283,7 +283,7 @@ static int lattice_validate(Lattice_desc *desc, const char *fn)
 			if ((desc->iface > min_lattice_iface_type) &&
 				(desc->iface < max_lattice_iface_type)) {
 				if (desc->size) {
-					ret_val = TRUE;
+					ret_val = true;
 				} else {
 					printf("%s: NULL part size\n", fn);
 				}
@@ -317,7 +317,7 @@ int lattice_load(Lattice_desc *desc, const void *buf, size_t bsize)
 			read_bytes = 0;
 			bufsize = bsize;
 			debug("%s: Launching the Lattice ISPVME Loader:"
-				" addr 0x%x size 0x%x...\n",
+				" addr %p size 0x%lx...\n",
 				__func__, fpga_image, bufsize);
 			ret_val = ispVM();
 			if (ret_val)

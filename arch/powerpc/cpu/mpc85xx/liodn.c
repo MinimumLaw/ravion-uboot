@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -39,6 +39,23 @@ int get_dpaa_liodn(enum fsl_dpaa_dev dpaa_dev, u32 *liodns, int liodn_offset)
 
 	return liodn_bases[dpaa_dev].num_ids;
 }
+
+#ifdef CONFIG_SYS_SRIO
+static void set_srio_liodn(struct srio_liodn_id_table *tbl, int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++) {
+		unsigned long reg_off = tbl[i].reg_offset[0];
+		out_be32((u32 *)reg_off, tbl[i].id[0]);
+
+		if (tbl[i].num_ids == 2) {
+			reg_off = tbl[i].reg_offset[1];
+			out_be32((u32 *)reg_off, tbl[i].id[1]);
+		}
+	}
+}
+#endif
 
 static void set_liodn(struct liodn_id_table *tbl, int size)
 {
@@ -120,10 +137,56 @@ static void setup_pme_liodn_base(void)
 #endif
 }
 
+#ifdef CONFIG_SYS_FSL_RAID_ENGINE
+static void setup_raide_liodn_base(void)
+{
+	struct ccsr_raide *raide = (void *)CONFIG_SYS_FSL_RAID_ENGINE_ADDR;
+
+	/* setup raid engine liodn base for data/desc ; both set to 47 */
+	u32 base = (liodn_bases[FSL_HW_PORTAL_RAID_ENGINE].id[0] << 16) |
+			liodn_bases[FSL_HW_PORTAL_RAID_ENGINE].id[0];
+
+	out_be32(&raide->liodnbr, base);
+}
+#endif
+
+#ifdef CONFIG_SYS_DPAA_RMAN
+static void set_rman_liodn(struct liodn_id_table *tbl, int size)
+{
+	int i;
+	struct ccsr_rman *rman = (void *)CONFIG_SYS_FSL_CORENET_RMAN_ADDR;
+
+	for (i = 0; i < size; i++) {
+		/* write the RMan block number */
+		out_be32(&rman->mmitar, i);
+		/* write the liodn offset corresponding to the block */
+		out_be32((u32 *)(tbl[i].reg_offset), tbl[i].id[0]);
+	}
+}
+
+static void setup_rman_liodn_base(struct liodn_id_table *tbl, int size)
+{
+	int i;
+	struct ccsr_rman *rman = (void *)CONFIG_SYS_FSL_CORENET_RMAN_ADDR;
+	u32 base = liodn_bases[FSL_HW_PORTAL_RMAN].id[0];
+
+	out_be32(&rman->mmliodnbr, base);
+
+	/* update liodn offset */
+	for (i = 0; i < size; i++)
+		tbl[i].id[0] += base;
+}
+#endif
+
 void set_liodns(void)
 {
 	/* setup general liodn offsets */
 	set_liodn(liodn_tbl, liodn_tbl_sz);
+
+#ifdef CONFIG_SYS_SRIO
+	/* setup SRIO port liodns */
+	set_srio_liodn(srio_liodn_tbl, srio_liodn_tbl_sz);
+#endif
 
 	/* setup SEC block liodn bases & offsets if we have one */
 	if (IS_E_PROCESSOR(get_svr())) {
@@ -145,6 +208,100 @@ void set_liodns(void)
 #endif
 	/* setup PME liodn base */
 	setup_pme_liodn_base();
+
+#ifdef CONFIG_SYS_FSL_RAID_ENGINE
+	/* raid engine ccr addr code for liodn */
+	set_liodn(raide_liodn_tbl, raide_liodn_tbl_sz);
+	setup_raide_liodn_base();
+#endif
+
+#ifdef CONFIG_SYS_DPAA_RMAN
+	/* setup RMan liodn offsets */
+	set_rman_liodn(rman_liodn_tbl, rman_liodn_tbl_sz);
+	/* setup RMan liodn base */
+	setup_rman_liodn_base(rman_liodn_tbl, rman_liodn_tbl_sz);
+#endif
+}
+
+#ifdef CONFIG_SYS_SRIO
+static void fdt_fixup_srio_liodn(void *blob, struct srio_liodn_id_table *tbl)
+{
+	int i, srio_off;
+
+	/* search for srio node, if doesn't exist just return - nothing todo */
+	srio_off = fdt_node_offset_by_compatible(blob, -1, "fsl,srio");
+	if (srio_off < 0)
+		return ;
+
+	for (i = 0; i < srio_liodn_tbl_sz; i++) {
+		int off, portid = tbl[i].portid;
+
+		off = fdt_node_offset_by_prop_value(blob, srio_off,
+			 "cell-index", &portid, 4);
+		if (off >= 0) {
+			off = fdt_setprop(blob, off, "fsl,liodn",
+				&tbl[i].id[0],
+				sizeof(u32) * tbl[i].num_ids);
+			if (off > 0)
+				printf("WARNING unable to set fsl,liodn for "
+					"fsl,srio port %d: %s\n",
+					portid, fdt_strerror(off));
+		} else {
+			debug("WARNING: couldn't set fsl,liodn for srio: %s.\n",
+				fdt_strerror(off));
+		}
+	}
+}
+#endif
+
+#define CONFIG_SYS_MAX_PCI_EPS		8
+#define CONFIG_SYS_PCI_EP_LIODN_START	256
+
+static void fdt_fixup_pci_liodn_offsets(void *fdt, const char *compat)
+{
+	int off, pci_idx = 0, pci_cnt = 0, i, rc;
+	const uint32_t *base_liodn;
+	uint32_t liodn_offs[CONFIG_SYS_MAX_PCI_EPS + 1] = { 0 };
+
+	/*
+	 * Count the number of pci nodes.
+	 * It's needed later when the interleaved liodn offsets are generated.
+	 */
+	off = fdt_node_offset_by_compatible(fdt, -1, compat);
+	while (off != -FDT_ERR_NOTFOUND) {
+		pci_cnt++;
+		off = fdt_node_offset_by_compatible(fdt, off, compat);
+	}
+
+	for (off = fdt_node_offset_by_compatible(fdt, -1, compat);
+	     off != -FDT_ERR_NOTFOUND;
+	     off = fdt_node_offset_by_compatible(fdt, off, compat)) {
+		base_liodn = fdt_getprop(fdt, off, "fsl,liodn", &rc);
+		if (!base_liodn) {
+			char path[64];
+
+			if (fdt_get_path(fdt, off, path, sizeof(path)) < 0)
+				strcpy(path, "(unknown)");
+			printf("WARNING Could not get liodn of node %s: %s\n",
+			       path, fdt_strerror(rc));
+			continue;
+		}
+		for (i = 0; i < CONFIG_SYS_MAX_PCI_EPS; i++)
+			liodn_offs[i + 1] = CONFIG_SYS_PCI_EP_LIODN_START +
+					i * pci_cnt + pci_idx - *base_liodn;
+		rc = fdt_setprop(fdt, off, "fsl,liodn-offset-list",
+				 liodn_offs, sizeof(liodn_offs));
+		if (rc) {
+			char path[64];
+
+			if (fdt_get_path(fdt, off, path, sizeof(path)) < 0)
+				strcpy(path, "(unknown)");
+			printf("WARNING Unable to set fsl,liodn-offset-list for "
+			       "node %s: %s\n", path, fdt_strerror(rc));
+			continue;
+		}
+		pci_idx++;
+	}
 }
 
 static void fdt_fixup_liodn_tbl(void *blob, struct liodn_id_table *tbl, int sz)
@@ -176,6 +333,10 @@ static void fdt_fixup_liodn_tbl(void *blob, struct liodn_id_table *tbl, int sz)
 
 void fdt_fixup_liodn(void *blob)
 {
+#ifdef CONFIG_SYS_SRIO
+	fdt_fixup_srio_liodn(blob, srio_liodn_tbl);
+#endif
+
 	fdt_fixup_liodn_tbl(blob, liodn_tbl, liodn_tbl_sz);
 #ifdef CONFIG_SYS_DPAA_FMAN
 	fdt_fixup_liodn_tbl(blob, fman1_liodn_tbl, fman1_liodn_tbl_sz);
@@ -184,4 +345,14 @@ void fdt_fixup_liodn(void *blob)
 #endif
 #endif
 	fdt_fixup_liodn_tbl(blob, sec_liodn_tbl, sec_liodn_tbl_sz);
+
+#ifdef CONFIG_SYS_FSL_RAID_ENGINE
+	fdt_fixup_liodn_tbl(blob, raide_liodn_tbl, raide_liodn_tbl_sz);
+#endif
+
+#ifdef CONFIG_SYS_DPAA_RMAN
+	fdt_fixup_liodn_tbl(blob, rman_liodn_tbl, rman_liodn_tbl_sz);
+#endif
+
+	fdt_fixup_pci_liodn_offsets(blob, "fsl,qoriq-pcie-v2.4");
 }

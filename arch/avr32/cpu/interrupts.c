@@ -46,7 +46,7 @@ static unsigned long tb_factor;
 
 unsigned long get_tbclk(void)
 {
-	return gd->cpu_hz;
+	return gd->arch.cpu_hz;
 }
 
 unsigned long long get_ticks(void)
@@ -107,7 +107,7 @@ static int set_interrupt_handler(unsigned int nr, void (*handler)(void),
 	return 0;
 }
 
-void timer_init(void)
+int timer_init(void)
 {
 	extern void timer_interrupt_handler(void);
 	u64 tmp;
@@ -115,13 +115,14 @@ void timer_init(void)
 	sysreg_write(COUNT, 0);
 
 	tmp = (u64)CONFIG_SYS_HZ << 32;
-	tmp += gd->cpu_hz / 2;
-	do_div(tmp, gd->cpu_hz);
+	tmp += gd->arch.cpu_hz / 2;
+	do_div(tmp, gd->arch.cpu_hz);
 	tb_factor = (u32)tmp;
 
 	if (set_interrupt_handler(0, &timer_interrupt_handler, 3))
-		return;
+		return -EINVAL;
 
 	/* For all practical purposes, this gives us an overflow interrupt */
 	sysreg_write(COMPARE, 0xffffffff);
+	return 0;
 }

@@ -199,6 +199,9 @@ static inline int is_10g_interface(phy_interface_t interface)
 
 int phy_init(void);
 int phy_reset(struct phy_device *phydev);
+struct phy_device *phy_find_by_mask(struct mii_dev *bus, unsigned phy_mask,
+		phy_interface_t interface);
+void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev);
 struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 				struct eth_device *dev,
 				phy_interface_t interface);
@@ -207,6 +210,7 @@ int phy_config(struct phy_device *phydev);
 int phy_shutdown(struct phy_device *phydev);
 int phy_register(struct phy_driver *drv);
 int genphy_config_aneg(struct phy_device *phydev);
+int genphy_restart_aneg(struct phy_device *phydev);
 int genphy_update_link(struct phy_device *phydev);
 int genphy_config(struct phy_device *phydev);
 int genphy_startup(struct phy_device *phydev);
@@ -224,6 +228,11 @@ int phy_marvell_init(void);
 int phy_micrel_init(void);
 int phy_natsemi_init(void);
 int phy_realtek_init(void);
+int phy_smsc_init(void);
 int phy_teranetics_init(void);
 int phy_vitesse_init(void);
+
+/* PHY UIDs for various PHYs that are referenced in external code */
+#define PHY_UID_TN2020	0x00a19410
+
 #endif

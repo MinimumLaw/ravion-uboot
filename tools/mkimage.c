@@ -39,6 +39,7 @@ struct mkimage_params params = {
 	.comp = IH_COMP_GZIP,
 	.dtc = MKIMAGE_DEFAULT_DTC_OPTIONS,
 	.imagename = "",
+	.imagename2 = "",
 };
 
 /*
@@ -150,6 +151,8 @@ main (int argc, char **argv)
 	int retval = 0;
 	struct image_type_params *tparams = NULL;
 
+	/* Init Freescale PBL Boot image generation/list support */
+	init_pbl_image_type();
 	/* Init Kirkwood Boot image generation/list support */
 	init_kwb_image_type ();
 	/* Init Freescale imx Boot image generation/list support */
@@ -162,6 +165,8 @@ main (int argc, char **argv)
 	init_default_image_type ();
 	/* Init Davinci UBL support */
 	init_ubl_image_type();
+	/* Init Davinci AIS support */
+	init_ais_image_type();
 
 	params.cmdname = *argv;
 	params.addr = params.ep = 0;
@@ -248,6 +253,18 @@ main (int argc, char **argv)
 					usage ();
 				params.imagename = *++argv;
 				goto NXTARG;
+			case 'R':
+				if (--argc <= 0)
+					usage();
+				/*
+				 * This entry is for the second configuration
+				 * file, if only one is not enough.
+				 */
+				params.imagename2 = *++argv;
+				goto NXTARG;
+			case 's':
+				params.skipcpy = 1;
+				break;
 			case 'v':
 				params.vflag++;
 				break;
@@ -361,11 +378,15 @@ NXTARG:		;
 	}
 
 	/*
-	 * Must be -w then:
-	 *
-	 * write dummy header, to be fixed later
+	 * In case there an header with a variable
+	 * length will be added, the corresponding
+	 * function is called. This is responsible to
+	 * allocate memory for the header itself.
 	 */
-	memset (tparams->hdr, 0, tparams->header_size);
+	if (tparams->vrec_header)
+		tparams->vrec_header(&params, tparams);
+	else
+		memset(tparams->hdr, 0, tparams->header_size);
 
 	if (write(ifd, tparams->hdr, tparams->header_size)
 					!= tparams->header_size) {
@@ -374,63 +395,69 @@ NXTARG:		;
 		exit (EXIT_FAILURE);
 	}
 
-	if (params.type == IH_TYPE_MULTI || params.type == IH_TYPE_SCRIPT) {
-		char *file = params.datafile;
-		uint32_t size;
+	if (!params.skipcpy) {
+		if (params.type == IH_TYPE_MULTI ||
+		    params.type == IH_TYPE_SCRIPT) {
+			char *file = params.datafile;
+			uint32_t size;
 
-		for (;;) {
-			char *sep = NULL;
+			for (;;) {
+				char *sep = NULL;
 
-			if (file) {
-				if ((sep = strchr(file, ':')) != NULL) {
-					*sep = '\0';
+				if (file) {
+					if ((sep = strchr(file, ':')) != NULL) {
+						*sep = '\0';
+					}
+
+					if (stat (file, &sbuf) < 0) {
+						fprintf (stderr, "%s: Can't stat %s: %s\n",
+							 params.cmdname, file, strerror(errno));
+						exit (EXIT_FAILURE);
+					}
+					size = cpu_to_uimage (sbuf.st_size);
+				} else {
+					size = 0;
 				}
 
-				if (stat (file, &sbuf) < 0) {
-					fprintf (stderr, "%s: Can't stat %s: %s\n",
-						params.cmdname, file, strerror(errno));
+				if (write(ifd, (char *)&size, sizeof(size)) != sizeof(size)) {
+					fprintf (stderr, "%s: Write error on %s: %s\n",
+						 params.cmdname, params.imagefile,
+						 strerror(errno));
 					exit (EXIT_FAILURE);
 				}
-				size = cpu_to_uimage (sbuf.st_size);
-			} else {
-				size = 0;
+
+				if (!file) {
+					break;
+				}
+
+				if (sep) {
+					*sep = ':';
+					file = sep + 1;
+				} else {
+					file = NULL;
+				}
 			}
 
-			if (write(ifd, (char *)&size, sizeof(size)) != sizeof(size)) {
-				fprintf (stderr, "%s: Write error on %s: %s\n",
-					params.cmdname, params.imagefile,
-					strerror(errno));
-				exit (EXIT_FAILURE);
-			}
+			file = params.datafile;
 
-			if (!file) {
-				break;
+			for (;;) {
+				char *sep = strchr(file, ':');
+				if (sep) {
+					*sep = '\0';
+					copy_file (ifd, file, 1);
+					*sep++ = ':';
+					file = sep;
+				} else {
+					copy_file (ifd, file, 0);
+					break;
+				}
 			}
-
-			if (sep) {
-				*sep = ':';
-				file = sep + 1;
-			} else {
-				file = NULL;
-			}
+		} else if (params.type == IH_TYPE_PBLIMAGE) {
+			/* PBL has special Image format, implements its' own */
+			pbl_load_uboot(ifd, &params);
+		} else {
+			copy_file (ifd, params.datafile, 0);
 		}
-
-		file = params.datafile;
-
-		for (;;) {
-			char *sep = strchr(file, ':');
-			if (sep) {
-				*sep = '\0';
-				copy_file (ifd, file, 1);
-				*sep++ = ':';
-				file = sep;
-			} else {
-				copy_file (ifd, file, 0);
-				break;
-			}
-		}
-	} else {
-		copy_file (ifd, params.datafile, 0);
 	}
 
 	/* We're a bit of paranoid */

@@ -848,8 +848,10 @@ void ubifs_umount(struct ubifs_info *c)
 	ubifs_debugging_exit(c);
 
 	/* Finally free U-Boot's global copy of superblock */
-	free(ubifs_sb->s_fs_info);
-	free(ubifs_sb);
+	if (ubifs_sb != NULL) {
+		free(ubifs_sb->s_fs_info);
+		free(ubifs_sb);
+	}
 }
 
 /**
@@ -1162,10 +1164,9 @@ static struct file_system_type ubifs_fs_type = {
 	.get_sb  = ubifs_get_sb,
 };
 
-int ubifs_mount(char *vol_name)
+int ubifs_mount(char *name)
 {
 	int flags;
-	char name[80] = "ubi:";
 	void *data;
 	struct vfsmount *mnt;
 	int ret;
@@ -1184,12 +1185,11 @@ int ubifs_mount(char *vol_name)
 	 * Mount in read-only mode
 	 */
 	flags = MS_RDONLY;
-	strcat(name, vol_name);
 	data = NULL;
 	mnt = NULL;
 	ret = ubifs_get_sb(&ubifs_fs_type, flags, name, data, mnt);
 	if (ret) {
-		printf("Error reading superblock on volume '%s'!\n", name);
+		ubifs_err("Error reading superblock on volume '%s' errno=%d!\n", name, ret);
 		return -1;
 	}
 

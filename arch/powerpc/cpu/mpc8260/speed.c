@@ -110,7 +110,7 @@ int get_clocks (void)
 	volatile immap_t *immap = (immap_t *) CONFIG_SYS_IMMR;
 	ulong clkin;
 	ulong sccr, dfbrg;
-	ulong scmr, corecnf, busdf, cpmdf, plldf, pllmf;
+	ulong scmr, corecnf, plldf, pllmf;
 	corecnf_t *cp;
 
 #if !defined(CONFIG_8260_CLKIN)
@@ -130,31 +130,22 @@ int get_clocks (void)
 	corecnf = (scmr & SCMR_CORECNF_MSK) >> SCMR_CORECNF_SHIFT;
 	cp = &corecnf_tab[corecnf];
 
-	busdf = (scmr & SCMR_BUSDF_MSK) >> SCMR_BUSDF_SHIFT;
-	cpmdf = (scmr & SCMR_CPMDF_MSK) >> SCMR_CPMDF_SHIFT;
-
 	/* HiP7, HiP7 Rev01, HiP7 RevA */
 	if ((get_pvr () == PVR_8260_HIP7) ||
 	    (get_pvr () == PVR_8260_HIP7R1) ||
 	    (get_pvr () == PVR_8260_HIP7RA)) {
 		pllmf = (scmr & SCMR_PLLMF_MSKH7) >> SCMR_PLLMF_SHIFT;
-		gd->vco_out = clkin * (pllmf + 1);
+		gd->arch.vco_out = clkin * (pllmf + 1);
 	} else {                        /* HiP3, HiP4 */
 		pllmf = (scmr & SCMR_PLLMF_MSK) >> SCMR_PLLMF_SHIFT;
 		plldf = (scmr & SCMR_PLLDF) ? 1 : 0;
-		gd->vco_out = (clkin * 2 * (pllmf + 1)) / (plldf + 1);
+		gd->arch.vco_out = (clkin * 2 * (pllmf + 1)) / (plldf + 1);
 	}
-#if 0
-	if (gd->vco_out / (busdf + 1) != clkin) {
-		/* aaarrrggghhh!!! */
-		return (1);
-	}
-#endif
 
-	gd->cpm_clk = gd->vco_out / 2;
+	gd->arch.cpm_clk = gd->arch.vco_out / 2;
 	gd->bus_clk = clkin;
-	gd->scc_clk = gd->vco_out / 4;
-	gd->brg_clk = gd->vco_out / (1 << (2 * (dfbrg + 1)));
+	gd->arch.scc_clk = gd->arch.vco_out / 4;
+	gd->arch.brg_clk = gd->arch.vco_out / (1 << (2 * (dfbrg + 1)));
 
 	if (cp->b2c_mult > 0) {
 		gd->cpu_clk = (clkin * cp->b2c_mult) / 2;
@@ -182,7 +173,7 @@ int get_clocks (void)
 			pci_div = pcidf + 1;
 		}
 
-		gd->pci_clk = (gd->cpm_clk * 2) / pci_div;
+		gd->pci_clk = (gd->arch.cpm_clk * 2) / pci_div;
 	}
 #endif
 
@@ -240,10 +231,10 @@ int prt_8260_clks (void)
 			plldf, pllmf, pcidf);
 
 	printf (" - vco_out %10ld, scc_clk %10ld, brg_clk %10ld\n",
-			gd->vco_out, gd->scc_clk, gd->brg_clk);
+			gd->arch.vco_out, gd->arch.scc_clk, gd->arch.brg_clk);
 
 	printf (" - cpu_clk %10ld, cpm_clk %10ld, bus_clk %10ld\n",
-			gd->cpu_clk, gd->cpm_clk, gd->bus_clk);
+			gd->cpu_clk, gd->arch.cpm_clk, gd->bus_clk);
 #ifdef CONFIG_PCI
 	printf (" - pci_clk %10ld\n", gd->pci_clk);
 #endif

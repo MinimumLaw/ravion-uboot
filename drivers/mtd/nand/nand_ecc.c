@@ -39,6 +39,7 @@
 
 #include <asm/errno.h>
 #include <linux/mtd/mtd.h>
+#include <linux/mtd/nand_ecc.h>
 
 /* The PPC4xx NDFC uses Smart Media (SMC) bytes order */
 #ifdef CONFIG_NAND_NDFC
@@ -50,7 +51,7 @@
  * only nand_correct_data() is needed
  */
 
-#ifndef CONFIG_NAND_SPL
+#if !defined(CONFIG_NAND_SPL) || defined(CONFIG_SPL_NAND_SOFTECC)
 /*
  * Pre-calculated 256-way 1 byte column parity
  */

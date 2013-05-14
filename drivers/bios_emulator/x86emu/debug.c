@@ -39,6 +39,7 @@
 
 #include <stdarg.h>
 #include <common.h>
+#include <linux/ctype.h>
 #include "x86emu/x86emui.h"
 
 /*----------------------------- Implementation ----------------------------*/
@@ -308,7 +309,7 @@ void x86emu_single_step(void)
 		case 'P':
 			noDecode = (noDecode) ? 0 : 1;
 			printk("Toggled decoding to %s\n",
-			       (noDecode) ? "FALSE" : "TRUE");
+			       (noDecode) ? "false" : "true");
 			break;
 		case 't':
 		case 0:
@@ -333,7 +334,7 @@ static int x86emu_parse_line(char *s, int *ps, int *n)
 	int cmd;
 
 	*n = 0;
-	while (*s == ' ' || *s == '\t')
+	while (isblank(*s))
 		s++;
 	ps[*n] = *s;
 	switch (*s) {
@@ -346,13 +347,13 @@ static int x86emu_parse_line(char *s, int *ps, int *n)
 	}
 
 	while (1) {
-		while (*s != ' ' && *s != '\t' && *s != '\n')
+		while (!isblank(*s) && *s != '\n')
 			s++;
 
 		if (*s == '\n')
 			return cmd;
 
-		while (*s == ' ' || *s == '\t')
+		while (isblank(*s))
 			s++;
 
 		*n += 1;

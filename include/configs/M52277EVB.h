@@ -41,7 +41,6 @@
 #define CONFIG_MCFUART
 #define CONFIG_SYS_UART_PORT		(0)
 #define CONFIG_BAUDRATE			115200
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600 , 19200 , 38400 , 57600, 115200 }
 
 #undef CONFIG_WATCHDOG
 
@@ -82,11 +81,11 @@
 #ifdef CONFIG_SYS_STMICRO_BOOT
 /* ST Micro serial flash */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
-	"inpclk=" MK_STR(CONFIG_SYS_INPUT_CLKSRC) "\0"	\
+	"inpclk=" __stringify(CONFIG_SYS_INPUT_CLKSRC) "\0"	\
 	"loadaddr=0x40010000\0"			\
 	"uboot=u-boot.bin\0"			\
 	"load=loadb ${loadaddr} ${baudrate};"	\
-	"loadb " MK_STR(CONFIG_SYS_LOAD_ADDR2) " ${baudrate} \0"	\
+	"loadb " __stringify(CONFIG_SYS_LOAD_ADDR2) " ${baudrate} \0"	\
 	"upd=run load; run prog\0"		\
 	"prog=sf probe 0:2 10000 1;"		\
 	"sf erase 0 30000;"			\
@@ -96,20 +95,20 @@
 #endif
 #ifdef CONFIG_SYS_SPANSION_BOOT
 #define CONFIG_EXTRA_ENV_SETTINGS		\
-	"inpclk=" MK_STR(CONFIG_SYS_INPUT_CLKSRC) "\0"	\
+	"inpclk=" __stringify(CONFIG_SYS_INPUT_CLKSRC) "\0"	\
 	"loadaddr=0x40010000\0"			\
 	"uboot=u-boot.bin\0"			\
 	"load=loadb ${loadaddr} ${baudrate}\0"	\
 	"upd=run load; run prog\0"		\
-	"prog=prot off " MK_STR(CONFIG_SYS_FLASH_BASE)	\
-	" " MK_STR(CONFIG_SYS_UBOOT_END) ";"		\
-	"era " MK_STR(CONFIG_SYS_FLASH_BASE) " "	\
-	MK_STR(CONFIG_SYS_UBOOT_END) ";"		\
-	"cp.b ${loadaddr} " MK_STR(CONFIG_SYS_FLASH_BASE)	\
+	"prog=prot off " __stringify(CONFIG_SYS_FLASH_BASE)	\
+	" " __stringify(CONFIG_SYS_UBOOT_END) ";"		\
+	"era " __stringify(CONFIG_SYS_FLASH_BASE) " "		\
+	__stringify(CONFIG_SYS_UBOOT_END) ";"			\
+	"cp.b ${loadaddr} " __stringify(CONFIG_SYS_FLASH_BASE)	\
 	" ${filesize}; save\0"			\
 	"updsbf=run loadsbf; run progsbf\0"	\
 	"loadsbf=loadb ${loadaddr} ${baudrate};"	\
-	"loadb " MK_STR(CONFIG_SYS_LOAD_ADDR2) " ${baudrate} \0"	\
+	"loadb " __stringify(CONFIG_SYS_LOAD_ADDR2) " ${baudrate} \0"	\
 	"progsbf=sf probe 0:2 10000 1;"		\
 	"sf erase 0 30000;"			\
 	"sf write ${loadaddr} 0 30000;"		\
@@ -246,7 +245,8 @@
 
 /*
  * Configuration for environment
- * Environment is embedded in u-boot in the second sector of the flash
+ * Environment is not embedded in u-boot. First time runing may have env
+ * crc error warning if there is no correct environment on the flash.
  */
 #ifdef CONFIG_CF_SBF
 #	define CONFIG_ENV_IS_IN_SPI_FLASH
@@ -261,6 +261,7 @@
  */
 #ifdef CONFIG_SYS_STMICRO_BOOT
 #	define CONFIG_SYS_FLASH_BASE	CONFIG_SYS_CS0_BASE
+#	define CONFIG_SYS_FLASH0_BASE	CONFIG_SYS_CS0_BASE
 #	define CONFIG_ENV_OFFSET	0x30000
 #	define CONFIG_ENV_SIZE		0x1000
 #	define CONFIG_ENV_SECT_SIZE	0x10000
@@ -268,7 +269,7 @@
 #ifdef CONFIG_SYS_SPANSION_BOOT
 #	define CONFIG_SYS_FLASH_BASE	CONFIG_SYS_CS0_BASE
 #	define CONFIG_SYS_FLASH0_BASE	CONFIG_SYS_CS0_BASE
-#	define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x8000)
+#	define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x40000)
 #	define CONFIG_ENV_SIZE		0x1000
 #	define CONFIG_ENV_SECT_SIZE	0x8000
 #endif

@@ -60,6 +60,7 @@ struct mkimage_params {
 	int lflag;
 	int vflag;
 	int xflag;
+	int skipcpy;
 	int os;
 	int arch;
 	int type;
@@ -68,6 +69,7 @@ struct mkimage_params {
 	unsigned int addr;
 	unsigned int ep;
 	char *imagename;
+	char *imagename2;
 	char *datafile;
 	char *imagefile;
 	char *cmdname;
@@ -122,6 +124,13 @@ struct image_type_params {
 	int (*check_image_type) (uint8_t);
 	/* This callback function will be executed if fflag is defined */
 	int (*fflag_handle) (struct mkimage_params *);
+	/*
+	 * This callback function will be executed for variable size record
+	 * It is expected to build this header in memory and return its length
+	 * and a pointer to it
+	 */
+	int (*vrec_header) (struct mkimage_params *,
+		struct image_type_params *);
 	/* pointer to the next registered entry in linked list */
 	struct image_type_params *next;
 };
@@ -139,6 +148,9 @@ void mkimage_register (struct image_type_params *tparams);
  *
  * Supported image types init functions
  */
+void pbl_load_uboot(int fd, struct mkimage_params *mparams);
+void init_pbl_image_type(void);
+void init_ais_image_type(void);
 void init_kwb_image_type (void);
 void init_imx_image_type (void);
 void init_default_image_type (void);

@@ -74,14 +74,8 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_MEMTEST_END		0x00400000
 #define CONFIG_PANIC_HANG	/* do not reset board on panic */
 
-/*
- * Base addresses -- Note these are effective addresses where the
- * actual resources get mapped (not physical addresses)
- */
-#define CONFIG_SYS_CCSRBAR_DEFAULT	0xff700000	/* CCSRBAR Default */
-#define CONFIG_SYS_CCSRBAR		0xe0000000	/* relocated CCSRBAR */
-#define CONFIG_SYS_CCSRBAR_PHYS	CONFIG_SYS_CCSRBAR	/* physical addr of CCSRBAR */
-#define CONFIG_SYS_IMMR		CONFIG_SYS_CCSRBAR	/* PQII uses CONFIG_SYS_IMMR */
+#define CONFIG_SYS_CCSRBAR		0xe0000000
+#define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR
 
 /* DDR Setup */
 #define CONFIG_FSL_DDR2
@@ -230,9 +224,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
-#ifdef	CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
-#endif
 
 /* pass open firmware flat tree */
 #define CONFIG_OF_LIBFDT		1
@@ -326,7 +317,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_ISA_IO_BASE_ADDRESS VIDEO_IO_OFFSET
 #endif
 
-#define CONFIG_NET_MULTI
 #define CONFIG_PCI_PNP			/* do pci plug-and-play */
 
 #undef CONFIG_EEPRO100
@@ -355,10 +345,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 
 
 #if defined(CONFIG_TSEC_ENET)
-
-#ifndef CONFIG_NET_MULTI
-#define CONFIG_NET_MULTI	1
-#endif
 
 #define CONFIG_MII		1	/* MII PHY management */
 #define CONFIG_MII_DEFAULT_TSEC	1	/* Allow unregistered phys */
@@ -429,6 +415,18 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
     #define CONFIG_CMD_EXT2
 #endif
 
+/*
+ * USB
+ */
+#define CONFIG_USB_EHCI
+
+#ifdef CONFIG_USB_EHCI
+#define CONFIG_CMD_USB
+#define CONFIG_USB_EHCI_PCI
+#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
+#define CONFIG_USB_STORAGE
+#define CONFIG_PCI_EHCI_DEVICE			0
+#endif
 
 #undef CONFIG_WATCHDOG			/* watchdog disabled */
 
@@ -478,8 +476,8 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_IPADDR	192.168.1.251
 
 #define CONFIG_HOSTNAME	8544ds_unknown
-#define CONFIG_ROOTPATH	/nfs/mpc85xx
-#define CONFIG_BOOTFILE	8544ds/uImage.uboot
+#define CONFIG_ROOTPATH	"/nfs/mpc85xx"
+#define CONFIG_BOOTFILE	"8544ds/uImage.uboot"
 #define CONFIG_UBOOTPATH	8544ds/u-boot.bin	/* TFTP server */
 
 #define CONFIG_SERVERIP	192.168.1.1
@@ -494,20 +492,25 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_BAUDRATE	115200
 
 #define	CONFIG_EXTRA_ENV_SETTINGS				\
- "netdev=eth0\0"						\
- "uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
- "tftpflash=tftpboot $loadaddr $uboot; "			\
-	"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
-	"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
-	"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
-	"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
-	"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
- "consoledev=ttyS0\0"				\
- "ramdiskaddr=2000000\0"			\
- "ramdiskfile=8544ds/ramdisk.uboot\0"		\
- "fdtaddr=c00000\0"				\
- "fdtfile=8544ds/mpc8544ds.dtb\0"		\
- "bdev=sda3\0"
+"netdev=eth0\0"						\
+"uboot=" __stringify(CONFIG_UBOOTPATH) "\0"			\
+"tftpflash=tftpboot $loadaddr $uboot; "			\
+	"protect off " __stringify(CONFIG_SYS_TEXT_BASE)	\
+		" +$filesize; "	\
+	"erase " __stringify(CONFIG_SYS_TEXT_BASE)		\
+		" +$filesize; "	\
+	"cp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+		" $filesize; "	\
+	"protect on " __stringify(CONFIG_SYS_TEXT_BASE)		\
+		" +$filesize; "	\
+	"cmp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+		" $filesize\0"	\
+"consoledev=ttyS0\0"				\
+"ramdiskaddr=2000000\0"			\
+"ramdiskfile=8544ds/ramdisk.uboot\0"		\
+"fdtaddr=c00000\0"				\
+"fdtfile=8544ds/mpc8544ds.dtb\0"		\
+"bdev=sda3\0"
 
 #define CONFIG_NFSBOOTCOMMAND		\
  "setenv bootargs root=/dev/nfs rw "	\

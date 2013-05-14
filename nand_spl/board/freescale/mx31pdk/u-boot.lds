@@ -46,11 +46,15 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-	__u_boot_cmd_start = .;
-	.u_boot_cmd : { *(.u_boot_cmd) }
-	__u_boot_cmd_end = .;
 
 	. = ALIGN(4);
+	.u_boot_list : {
+		*(SORT(.u_boot_list*));
+	}
+
+	. = ALIGN(4);
+
+	__image_copy_end = .;
 
 	.rel.dyn : {
 		__rel_dyn_start = .;
@@ -69,7 +73,7 @@ SECTIONS
 		__bss_start = .;
 		*(.bss)
 		 . = ALIGN(4);
-		__bss_end__ = .;
+		__bss_end = .;
 	}
 
 	/DISCARD/ : { *(.bss*) }

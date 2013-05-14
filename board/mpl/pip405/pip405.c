@@ -36,9 +36,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #undef SDRAM_DEBUG
 
-#define FALSE           0
-#define TRUE            1
-
 /* stdlib.h causes some compatibility problems; should fixe these! -- wd */
 #ifndef __ldiv_t_defined
 typedef struct {
@@ -179,7 +176,6 @@ void write_4hex (unsigned long val)
 
 int board_early_init_f (void)
 {
-	unsigned char dataout[1];
 	unsigned char datain[128];
 	unsigned long sdram_size = 0;
 	SDRAM_SETUP *t = (SDRAM_SETUP *) sdram_setup_table;
@@ -189,9 +185,13 @@ int board_early_init_f (void)
 	unsigned short i;
 	unsigned char rows, cols, banks, sdram_banks, density;
 	unsigned char supported_cal, trp_clocks, trcd_clocks, tras_clocks,
-			trc_clocks, tctp_clocks;
+		trc_clocks;
 	unsigned char cal_index, cal_val, spd_version, spd_chksum;
 	unsigned char buf[8];
+#ifdef SDRAM_DEBUG
+	unsigned char tctp_clocks;
+#endif
+
 	/* set up the config port */
 	mtdcr (EBC0_CFGADDR, PB7AP);
 	mtdcr (EBC0_CFGDATA, CONFIG_PORT_AP);
@@ -210,7 +210,6 @@ int board_early_init_f (void)
 
 	/* Read Serial Presence Detect Information */
 	i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-	dataout[0] = 0;
 	for (i = 0; i < 128; i++)
 		datain[i] = 127;
 	i2c_read(SPD_EEPROM_ADDRESS,0,1,datain,128);
@@ -307,12 +306,13 @@ int board_early_init_f (void)
 
 	/* trc_clocks is sum of trp_clocks + tras_clocks */
 	trc_clocks = trp_clocks + tras_clocks;
+
+#ifdef SDRAM_DEBUG
 	/* ctp = ((trp + tras) - trp - trcd) => tras - trcd */
 	tctp_clocks =
 			((NSto10PS (datain[30]) - NSto10PS (datain[29])) +
 			 (tmemclk - 1)) / tmemclk;
 
-#ifdef SDRAM_DEBUG
 	serial_puts ("c_RP: ");
 	write_hex (trp_clocks);
 	serial_puts ("\nc_RCD: ");
@@ -563,7 +563,27 @@ int board_early_init_f (void)
 	return 0;
 }
 
+int board_early_init_r(void)
+{
+	int mode;
 
+	/*
+	 * since we are relocated, we can finally enable i-cache
+	 * and set up the flash CS correctly
+	 */
+	icache_enable();
+	setup_cs_reloc();
+	/* get and display boot mode */
+	mode = get_boot_mode();
+	if (mode & BOOT_PCI)
+		printf("PCI Boot %s Map\n", (mode & BOOT_MPS) ?
+			"MPS" : "Flash");
+	else
+		printf("%s Boot\n", (mode & BOOT_MPS) ?
+			"MPS" : "Flash");
+
+	return 0;
+}
 /* ------------------------------------------------------------------------- */
 
 /*
@@ -657,9 +677,6 @@ static int test_dram (unsigned long ramsize)
 	return (1);
 }
 
-
-extern flash_info_t flash_info[];	/* info for FLASH chips */
-
 int misc_init_r (void)
 {
 	/* adjust flash start and size as well as the offset */
@@ -680,7 +697,8 @@ int misc_init_r (void)
 
 int overwrite_console (void)
 {
-	return (in8 (CONFIG_PORT_ADDR) & 0x1);	/* return TRUE if console should be overwritten */
+	/* return true if console should be overwritten */
+	return in8(CONFIG_PORT_ADDR) & 0x1;
 }
 
 
@@ -925,7 +943,7 @@ void print_pip405_info (void)
 
 void user_led0 (unsigned char on)
 {
-	if (on == TRUE)
+	if (on == true)
 		out8 (PLD_LED_USER_REG, (in8 (PLD_LED_USER_REG) | 0x1));
 	else
 		out8 (PLD_LED_USER_REG, (in8 (PLD_LED_USER_REG) & 0xfe));
@@ -933,7 +951,7 @@ void user_led0 (unsigned char on)
 
 void user_led1 (unsigned char on)
 {
-	if (on == TRUE)
+	if (on == true)
 		out8 (PLD_LED_USER_REG, (in8 (PLD_LED_USER_REG) | 0x2));
 	else
 		out8 (PLD_LED_USER_REG, (in8 (PLD_LED_USER_REG) & 0xfd));

@@ -23,7 +23,6 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/davinci_misc.h>
 
@@ -32,8 +31,141 @@ static struct gpio_registry {
 	char name[GPIO_NAME_SIZE];
 } gpio_registry[MAX_NUM_GPIOS];
 
+#if defined(CONFIG_SOC_DA8XX)
 #define pinmux(x)       (&davinci_syscfg_regs->pinmux[x])
 
+#if defined(CONFIG_SOC_DA8XX) && !defined(CONFIG_SOC_DA850)
+static const struct pinmux_config gpio_pinmux[] = {
+	{ pinmux(13), 8, 6 },	/* GP0[0] */
+	{ pinmux(13), 8, 7 },
+	{ pinmux(14), 8, 0 },
+	{ pinmux(14), 8, 1 },
+	{ pinmux(14), 8, 2 },
+	{ pinmux(14), 8, 3 },
+	{ pinmux(14), 8, 4 },
+	{ pinmux(14), 8, 5 },
+	{ pinmux(14), 8, 6 },
+	{ pinmux(14), 8, 7 },
+	{ pinmux(15), 8, 0 },
+	{ pinmux(15), 8, 1 },
+	{ pinmux(15), 8, 2 },
+	{ pinmux(15), 8, 3 },
+	{ pinmux(15), 8, 4 },
+	{ pinmux(15), 8, 5 },
+	{ pinmux(15), 8, 6 },	/* GP1[0] */
+	{ pinmux(15), 8, 7 },
+	{ pinmux(16), 8, 0 },
+	{ pinmux(16), 8, 1 },
+	{ pinmux(16), 8, 2 },
+	{ pinmux(16), 8, 3 },
+	{ pinmux(16), 8, 4 },
+	{ pinmux(16), 8, 5 },
+	{ pinmux(16), 8, 6 },
+	{ pinmux(16), 8, 7 },
+	{ pinmux(17), 8, 0 },
+	{ pinmux(17), 8, 1 },
+	{ pinmux(17), 8, 2 },
+	{ pinmux(17), 8, 3 },
+	{ pinmux(17), 8, 4 },
+	{ pinmux(17), 8, 5 },
+	{ pinmux(17), 8, 6 },	/* GP2[0] */
+	{ pinmux(17), 8, 7 },
+	{ pinmux(18), 8, 0 },
+	{ pinmux(18), 8, 1 },
+	{ pinmux(18), 8, 2 },
+	{ pinmux(18), 8, 3 },
+	{ pinmux(18), 8, 4 },
+	{ pinmux(18), 8, 5 },
+	{ pinmux(18), 8, 6 },
+	{ pinmux(18), 8, 7 },
+	{ pinmux(19), 8, 0 },
+	{ pinmux(9), 8, 2 },
+	{ pinmux(9), 8, 3 },
+	{ pinmux(9), 8, 4 },
+	{ pinmux(9), 8, 5 },
+	{ pinmux(9), 8, 6 },
+	{ pinmux(10), 8, 1 },	/* GP3[0] */
+	{ pinmux(10), 8, 2 },
+	{ pinmux(10), 8, 3 },
+	{ pinmux(10), 8, 4 },
+	{ pinmux(10), 8, 5 },
+	{ pinmux(10), 8, 6 },
+	{ pinmux(10), 8, 7 },
+	{ pinmux(11), 8, 0 },
+	{ pinmux(11), 8, 1 },
+	{ pinmux(11), 8, 2 },
+	{ pinmux(11), 8, 3 },
+	{ pinmux(11), 8, 4 },
+	{ pinmux(9), 8, 7 },
+	{ pinmux(2), 8, 6 },
+	{ pinmux(11), 8, 5 },
+	{ pinmux(11), 8, 6 },
+	{ pinmux(12), 8, 4 },	/* GP4[0] */
+	{ pinmux(12), 8, 5 },
+	{ pinmux(12), 8, 6 },
+	{ pinmux(12), 8, 7 },
+	{ pinmux(13), 8, 0 },
+	{ pinmux(13), 8, 1 },
+	{ pinmux(13), 8, 2 },
+	{ pinmux(13), 8, 3 },
+	{ pinmux(13), 8, 4 },
+	{ pinmux(13), 8, 5 },
+	{ pinmux(11), 8, 7 },
+	{ pinmux(12), 8, 0 },
+	{ pinmux(12), 8, 1 },
+	{ pinmux(12), 8, 2 },
+	{ pinmux(12), 8, 3 },
+	{ pinmux(9), 8, 1 },
+	{ pinmux(7), 8, 3 },	/* GP5[0] */
+	{ pinmux(7), 8, 4 },
+	{ pinmux(7), 8, 5 },
+	{ pinmux(7), 8, 6 },
+	{ pinmux(7), 8, 7 },
+	{ pinmux(8), 8, 0 },
+	{ pinmux(8), 8, 1 },
+	{ pinmux(8), 8, 2 },
+	{ pinmux(8), 8, 3 },
+	{ pinmux(8), 8, 4 },
+	{ pinmux(8), 8, 5 },
+	{ pinmux(8), 8, 6 },
+	{ pinmux(8), 8, 7 },
+	{ pinmux(9), 8, 0 },
+	{ pinmux(7), 8, 1 },
+	{ pinmux(7), 8, 2 },
+	{ pinmux(5), 8, 1 },	/* GP6[0] */
+	{ pinmux(5), 8, 2 },
+	{ pinmux(5), 8, 3 },
+	{ pinmux(5), 8, 4 },
+	{ pinmux(5), 8, 5 },
+	{ pinmux(5), 8, 6 },
+	{ pinmux(5), 8, 7 },
+	{ pinmux(6), 8, 0 },
+	{ pinmux(6), 8, 1 },
+	{ pinmux(6), 8, 2 },
+	{ pinmux(6), 8, 3 },
+	{ pinmux(6), 8, 4 },
+	{ pinmux(6), 8, 5 },
+	{ pinmux(6), 8, 6 },
+	{ pinmux(6), 8, 7 },
+	{ pinmux(7), 8, 0 },
+	{ pinmux(1), 8, 0 },	/* GP7[0] */
+	{ pinmux(1), 8, 1 },
+	{ pinmux(1), 8, 2 },
+	{ pinmux(1), 8, 3 },
+	{ pinmux(1), 8, 4 },
+	{ pinmux(1), 8, 5 },
+	{ pinmux(1), 8, 6 },
+	{ pinmux(1), 8, 7 },
+	{ pinmux(2), 8, 0 },
+	{ pinmux(2), 8, 1 },
+	{ pinmux(2), 8, 2 },
+	{ pinmux(2), 8, 3 },
+	{ pinmux(2), 8, 4 },
+	{ pinmux(2), 8, 5 },
+	{ pinmux(0), 1, 0 },
+	{ pinmux(0), 1, 1 },
+};
+#else /* CONFIG_SOC_DA8XX && CONFIG_SOC_DA850 */
 static const struct pinmux_config gpio_pinmux[] = {
 	{ pinmux(1), 8, 7 },	/* GP0[0] */
 	{ pinmux(1), 8, 6 },
@@ -180,91 +312,98 @@ static const struct pinmux_config gpio_pinmux[] = {
 	{ pinmux(18), 8, 3 },
 	{ pinmux(18), 8, 2 },
 };
+#endif /* CONFIG_SOC_DA8XX && !CONFIG_SOC_DA850 */
+#else /* !CONFIG_SOC_DA8XX */
+#define davinci_configure_pin_mux(a, b)
+#endif /* CONFIG_SOC_DA8XX */
 
-int gpio_request(int gp, const char *label)
+int gpio_request(unsigned gpio, const char *label)
 {
-	if (gp >= MAX_NUM_GPIOS)
+	if (gpio >= MAX_NUM_GPIOS)
 		return -1;
 
-	if (gpio_registry[gp].is_registered)
+	if (gpio_registry[gpio].is_registered)
 		return -1;
 
-	gpio_registry[gp].is_registered = 1;
-	strncpy(gpio_registry[gp].name, label, GPIO_NAME_SIZE);
-	gpio_registry[gp].name[GPIO_NAME_SIZE - 1] = 0;
+	gpio_registry[gpio].is_registered = 1;
+	strncpy(gpio_registry[gpio].name, label, GPIO_NAME_SIZE);
+	gpio_registry[gpio].name[GPIO_NAME_SIZE - 1] = 0;
 
-	davinci_configure_pin_mux(&gpio_pinmux[gp], 1);
+	davinci_configure_pin_mux(&gpio_pinmux[gpio], 1);
 
 	return 0;
 }
 
-void gpio_free(int gp)
+int gpio_free(unsigned gpio)
 {
-	gpio_registry[gp].is_registered = 0;
-}
+	if (gpio >= MAX_NUM_GPIOS)
+		return -1;
 
-void gpio_toggle_value(int gp)
-{
-	struct davinci_gpio *bank;
+	if (!gpio_registry[gpio].is_registered)
+		return -1;
 
-	bank = GPIO_BANK(gp);
-	gpio_set_value(gp, !gpio_get_value(gp));
-}
-
-int gpio_direction_input(int gp)
-{
-	struct davinci_gpio *bank;
-
-	bank = GPIO_BANK(gp);
-	setbits_le32(&bank->dir, 1U << GPIO_BIT(gp));
+	gpio_registry[gpio].is_registered = 0;
+	gpio_registry[gpio].name[0] = '\0';
+	/* Do not configure as input or change pin mux here */
 	return 0;
 }
 
-int gpio_direction_output(int gp, int value)
+int gpio_direction_input(unsigned gpio)
 {
 	struct davinci_gpio *bank;
 
-	bank = GPIO_BANK(gp);
-	clrbits_le32(&bank->dir, 1U << GPIO_BIT(gp));
-	gpio_set_value(gp, value);
+	bank = GPIO_BANK(gpio);
+	setbits_le32(&bank->dir, 1U << GPIO_BIT(gpio));
 	return 0;
 }
 
-int gpio_get_value(int gp)
+int gpio_direction_output(unsigned gpio, int value)
+{
+	struct davinci_gpio *bank;
+
+	bank = GPIO_BANK(gpio);
+	clrbits_le32(&bank->dir, 1U << GPIO_BIT(gpio));
+	gpio_set_value(gpio, value);
+	return 0;
+}
+
+int gpio_get_value(unsigned gpio)
 {
 	struct davinci_gpio *bank;
 	unsigned int ip;
 
-	bank = GPIO_BANK(gp);
-	ip = in_le32(&bank->in_data) & (1U << GPIO_BIT(gp));
+	bank = GPIO_BANK(gpio);
+	ip = in_le32(&bank->in_data) & (1U << GPIO_BIT(gpio));
 	return ip ? 1 : 0;
 }
 
-void gpio_set_value(int gp, int value)
+int gpio_set_value(unsigned gpio, int value)
 {
 	struct davinci_gpio *bank;
 
-	bank = GPIO_BANK(gp);
+	bank = GPIO_BANK(gpio);
 
 	if (value)
-		bank->set_data = 1U << GPIO_BIT(gp);
+		bank->set_data = 1U << GPIO_BIT(gpio);
 	else
-		bank->clr_data = 1U << GPIO_BIT(gp);
+		bank->clr_data = 1U << GPIO_BIT(gpio);
+
+	return 0;
 }
 
 void gpio_info(void)
 {
-	int gp, dir, val;
+	unsigned gpio, dir, val;
 	struct davinci_gpio *bank;
 
-	for (gp = 0; gp < MAX_NUM_GPIOS; ++gp) {
-		bank = GPIO_BANK(gp);
-		dir = in_le32(&bank->dir) & (1U << GPIO_BIT(gp));
-		val = gpio_get_value(gp);
+	for (gpio = 0; gpio < MAX_NUM_GPIOS; ++gpio) {
+		bank = GPIO_BANK(gpio);
+		dir = in_le32(&bank->dir) & (1U << GPIO_BIT(gpio));
+		val = gpio_get_value(gpio);
 
 		printf("% 4d: %s: %d [%c] %s\n",
-			gp, dir ? " in" : "out", val,
-			gpio_registry[gp].is_registered ? 'x' : ' ',
-			gpio_registry[gp].name);
+			gpio, dir ? " in" : "out", val,
+			gpio_registry[gpio].is_registered ? 'x' : ' ',
+			gpio_registry[gpio].name);
 	}
 }

@@ -30,12 +30,8 @@
 #define _U_BOOT_ARM_H_	1
 
 /* for the following variables, see start.S */
-extern ulong _bss_start_ofs;	/* BSS start relative to _start */
-extern ulong _bss_end_ofs;		/* BSS end relative to _start */
-extern ulong _end_ofs;		/* end of image relative to _start */
 extern ulong IRQ_STACK_START;	/* top of IRQ stack */
 extern ulong FIQ_STACK_START;	/* top of FIQ stack */
-extern ulong _TEXT_BASE;	/* code start */
 extern ulong _datarel_start_ofs;
 extern ulong _datarelrolocal_start_ofs;
 extern ulong _datarellocal_start_ofs;
@@ -46,9 +42,13 @@ extern ulong IRQ_STACK_START_IN;	/* 8 bytes in IRQ stack */
 int	cpu_init(void);
 int	cleanup_before_linux(void);
 
+/* Set up ARMv7 MMU, caches and TLBs */
+void	cpu_init_cp15(void);
+
 /* cpu/.../arch/cpu.c */
 int	arch_cpu_init(void);
 int	arch_misc_init(void);
+int	arch_early_init_r(void);
 
 /* board/.../... */
 int	board_init(void);

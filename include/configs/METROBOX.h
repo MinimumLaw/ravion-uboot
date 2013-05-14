@@ -158,7 +158,6 @@
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_serial_clock()
-#define CONFIG_SERIAL_MULTI   1
 #define CONFIG_BAUDRATE	      9600
 
 #define CONFIG_SYS_BAUDRATE_TABLE  \
@@ -228,7 +227,6 @@
  *----------------------------------------------------------------------*/
 #define CONFIG_PPC4xx_EMAC
 #define CONFIG_MII	      1		     /* MII PHY management	*/
-#define CONFIG_NET_MULTI      1
 #define CONFIG_PHY_ADDR	      0xff	     /* no phy on EMAC0		*/
 #define CONFIG_PHY1_ADDR      0xff	     /* no phy on EMAC1		*/
 #define CONFIG_PHY2_ADDR      0x08	     /* PHY addr, MGMT, EMAC2	*/
@@ -289,7 +287,6 @@
 #define CONFIG_SYS_PROMPT	      "MetroBox=> "  /* Monitor Command Prompt	*/
 
 #define CONFIG_SYS_HUSH_PARSER	       1	     /* HUSH for ext'd cli	*/
-#define CONFIG_SYS_PROMPT_HUSH_PS2    "> "
 
 
 /*-----------------------------------------------------------------------

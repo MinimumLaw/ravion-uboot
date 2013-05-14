@@ -26,7 +26,6 @@
 #include <stdio_dev.h>
 #include <i8042.h>
 #include <asm/ptrace.h>
-#include <asm/realmode.h>
 #include <asm/io.h>
 #include <asm/pci.h>
 
@@ -123,7 +122,7 @@ static void __video_putc(const char c, int *x, int *y)
 
 static void video_putc(const char c)
 {
-	int x,y,pos;
+	int x, y, pos;
 
 	x = orig_x;
 	y = orig_y;
@@ -142,7 +141,7 @@ static void video_putc(const char c)
 
 static void video_puts(const char *s)
 {
-	int x,y,pos;
+	int x, y, pos;
 	char c;
 
 	x = orig_x;
@@ -187,7 +186,7 @@ int video_init(void)
 	printf("pos %x %d %d\n", pos, orig_x, orig_y);
 #endif
 	if (orig_y > lines)
-		orig_x = orig_y =0;
+		orig_x = orig_y = 0;
 
 	memset(&vga_dev, 0, sizeof(vga_dev));
 	strcpy(vga_dev.name, "vga");
@@ -222,8 +221,5 @@ int video_init(void)
 
 int drv_video_init(void)
 {
-	if (video_bios_init())
-		return 1;
-
 	return video_init();
 }

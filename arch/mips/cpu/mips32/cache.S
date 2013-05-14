@@ -30,6 +30,10 @@
 #include <asm/addrspace.h>
 #include <asm/cacheops.h>
 
+#ifndef CONFIG_SYS_MIPS_CACHE_MODE
+#define CONFIG_SYS_MIPS_CACHE_MODE CONF_CM_CACHABLE_NONCOHERENT
+#endif
+
 #define RA		t8
 
 /*
@@ -81,17 +85,17 @@ LEAF(mips_init_icache)
 	/* clear tag to invalidate */
 	PTR_LI		t0, INDEX_BASE
 	PTR_ADDU	t1, t0, a1
-1:	cache_op	Index_Store_Tag_I t0
+1:	cache_op	INDEX_STORE_TAG_I t0
 	PTR_ADDU	t0, a2
 	bne		t0, t1, 1b
 	/* fill once, so data field parity is correct */
 	PTR_LI		t0, INDEX_BASE
-2:	cache_op	Fill t0
+2:	cache_op	FILL t0
 	PTR_ADDU	t0, a2
 	bne		t0, t1, 2b
 	/* invalidate again - prudent but not strictly neccessary */
 	PTR_LI		t0, INDEX_BASE
-1:	cache_op	Index_Store_Tag_I t0
+1:	cache_op	INDEX_STORE_TAG_I t0
 	PTR_ADDU	t0, a2
 	bne		t0, t1, 1b
 9:	jr		ra
@@ -106,7 +110,7 @@ LEAF(mips_init_dcache)
 	/* clear all tags */
 	PTR_LI		t0, INDEX_BASE
 	PTR_ADDU	t1, t0, a1
-1:	cache_op	Index_Store_Tag_D t0
+1:	cache_op	INDEX_STORE_TAG_D t0
 	PTR_ADDU	t0, a2
 	bne		t0, t1, 1b
 	/* load from each line (in cached space) */
@@ -116,7 +120,7 @@ LEAF(mips_init_dcache)
 	bne		t0, t1, 2b
 	/* clear all tags */
 	PTR_LI		t0, INDEX_BASE
-1:	cache_op	Index_Store_Tag_D t0
+1:	cache_op	INDEX_STORE_TAG_D t0
 	PTR_ADDU	t0, a2
 	bne		t0, t1, 1b
 9:	jr		ra
@@ -224,7 +228,7 @@ LEAF(dcache_enable)
 	mfc0	t0, CP0_CONFIG
 	ori	t0, CONF_CM_CMASK
 	xori	t0, CONF_CM_CMASK
-	ori	t0, CONF_CM_CACHABLE_NONCOHERENT
+	ori	t0, CONFIG_SYS_MIPS_CACHE_MODE
 	mtc0	t0, CP0_CONFIG
 	jr	ra
 	END(dcache_enable)

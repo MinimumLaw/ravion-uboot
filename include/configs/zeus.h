@@ -53,7 +53,6 @@
 #define CONFIG_PHY_ADDR		0x01	/* PHY address			*/
 #define CONFIG_HAS_ETH1		1
 #define CONFIG_PHY1_ADDR	0x11	/* EMAC1 PHY address		*/
-#define CONFIG_NET_MULTI	1
 #define CONFIG_SYS_RX_ETH_BUFFER	16	/* Number of ethernet rx buffers & descriptors */
 #define CONFIG_PHY_RESET	1
 #define CONFIG_PHY_RESET_DELAY	300	/* PHY RESET recovery delay	*/
@@ -79,7 +78,6 @@
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IRQ
-#define CONFIG_CMD_LOG
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_NFS
@@ -132,7 +130,6 @@
 #undef	CONFIG_SYS_EXT_SERIAL_CLOCK			/* external serial clock */
 #define CONFIG_SYS_BASE_BAUD	691200
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_SERIAL_MULTI
 
 #define CONFIG_SYS_BAUDRATE_TABLE  \
     {300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400}

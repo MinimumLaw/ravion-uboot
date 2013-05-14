@@ -83,7 +83,6 @@
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_serial_clock()
-#define CONFIG_SERIAL_MULTI
 
 /*
  * define CONFIG_SYS_CLK_FREQ to your base crystal clock in Hz
@@ -162,7 +161,6 @@
 #undef CONFIG_LOADS_ECHO   /* no echo on for serial download	*/
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change	*/
 
-#define CONFIG_NET_MULTI
 /* #define CONFIG_EEPRO100_SROM_WRITE */
 /* #define CONFIG_SHOW_MAC */
 #define CONFIG_EEPRO100

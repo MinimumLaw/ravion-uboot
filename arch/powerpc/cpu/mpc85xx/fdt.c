@@ -47,8 +47,8 @@ extern void ft_srio_setup(void *blob);
 void ft_fixup_cpu(void *blob, u64 memory_limit)
 {
 	int off;
-	ulong spin_tbl_addr = get_spin_phys_addr();
-	u32 bootpg = determine_mp_bootpg();
+	phys_addr_t spin_tbl_addr = get_spin_phys_addr();
+	u32 bootpg = determine_mp_bootpg(NULL);
 	u32 id = get_my_id();
 	const char *enable_method;
 
@@ -57,8 +57,9 @@ void ft_fixup_cpu(void *blob, u64 memory_limit)
 		u32 *reg = (u32 *)fdt_getprop(blob, off, "reg", 0);
 
 		if (reg) {
-			u64 val = *reg * SIZE_BOOT_ENTRY + spin_tbl_addr;
-			val = cpu_to_fdt32(val);
+			u32 phys_cpu_id = thread_to_core(*reg);
+			u64 val = phys_cpu_id * SIZE_BOOT_ENTRY + spin_tbl_addr;
+			val = cpu_to_fdt64(val);
 			if (*reg == id) {
 				fdt_setprop_string(blob, off, "status",
 								"okay");
@@ -96,7 +97,32 @@ void ft_fixup_cpu(void *blob, u64 memory_limit)
 	if ((u64)bootpg < memory_limit) {
 		off = fdt_add_mem_rsv(blob, bootpg, (u64)4096);
 		if (off < 0)
-			printf("%s: %s\n", __FUNCTION__, fdt_strerror(off));
+			printf("Failed to reserve memory for bootpg: %s\n",
+				fdt_strerror(off));
+	}
+
+#ifndef CONFIG_MPC8xxx_DISABLE_BPTR
+	/*
+	 * Reserve the default boot page so OSes dont use it.
+	 * The default boot page is always mapped to bootpg above using
+	 * boot page translation.
+	 */
+	if (0xfffff000ull < memory_limit) {
+		off = fdt_add_mem_rsv(blob, 0xfffff000ull, (u64)4096);
+		if (off < 0) {
+			printf("Failed to reserve memory for 0xfffff000: %s\n",
+				fdt_strerror(off));
+		}
+	}
+#endif
+
+	/* Reserve spin table page */
+	if (spin_tbl_addr < memory_limit) {
+		off = fdt_add_mem_rsv(blob,
+			(spin_tbl_addr & ~0xffful), 4096);
+		if (off < 0)
+			printf("Failed to reserve memory for spin table: %s\n",
+				fdt_strerror(off));
 	}
 }
 #endif
@@ -139,16 +165,14 @@ static inline u32 l2cache_size(void)
 		break;
 	case 0x1:
 		if (ver == SVR_8540 || ver == SVR_8560   ||
-		    ver == SVR_8541 || ver == SVR_8541_E ||
-		    ver == SVR_8555 || ver == SVR_8555_E)
+		    ver == SVR_8541 || ver == SVR_8555)
 			return 128;
 		else
 			return 256;
 		break;
 	case 0x2:
 		if (ver == SVR_8540 || ver == SVR_8560   ||
-		    ver == SVR_8541 || ver == SVR_8541_E ||
-		    ver == SVR_8555 || ver == SVR_8555_E)
+		    ver == SVR_8541 || ver == SVR_8555)
 			return 256;
 		else
 			return 512;
@@ -221,18 +245,24 @@ static inline void ft_fixup_l2cache(void *blob)
 
 	/* we dont bother w/L3 since no platform of this type has one */
 }
-#elif defined(CONFIG_BACKSIDE_L2_CACHE)
+#elif defined(CONFIG_BACKSIDE_L2_CACHE) || \
+	defined(CONFIG_SYS_FSL_QORIQ_CHASSIS2)
 static inline void ft_fixup_l2cache(void *blob)
 {
 	int off, l2_off, l3_off = -1;
 	u32 *ph;
+#ifdef	CONFIG_BACKSIDE_L2_CACHE
 	u32 l2cfg0 = mfspr(SPRN_L2CFG0);
+#else
+	struct ccsr_cluster_l2 *l2cache =
+		(struct ccsr_cluster_l2 __iomem *)(CONFIG_SYS_FSL_CLUSTER_1_L2);
+	u32 l2cfg0 = in_be32(&l2cache->l2cfg0);
+#endif
 	u32 size, line_size, num_ways, num_sets;
 	int has_l2 = 1;
 
 	/* P2040/P2040E has no L2, so dont set any L2 props */
-	if ((SVR_SOC_VER(get_svr()) == SVR_P2040) ||
-	    (SVR_SOC_VER(get_svr()) == SVR_P2040_E))
+	if (SVR_SOC_VER(get_svr()) == SVR_P2040)
 		has_l2 = 0;
 
 	size = (l2cfg0 & 0x3fff) * 64 * 1024;
@@ -259,7 +289,12 @@ static inline void ft_fixup_l2cache(void *blob)
 		if (has_l2) {
 #ifdef CONFIG_SYS_CACHE_STASHING
 			u32 *reg = (u32 *)fdt_getprop(blob, off, "reg", 0);
+#ifdef CONFIG_SYS_FSL_QORIQ_CHASSIS2
+			/* Only initialize every eighth thread */
+			if (reg && !((*reg) % 8))
+#else
 			if (reg)
+#endif
 				fdt_setprop_cell(blob, l2_off, "cache-stash-id",
 					 (*reg * 2) + 32 + 1);
 #endif
@@ -361,6 +396,7 @@ void fdt_add_enet_stashing(void *fdt)
 }
 
 #if defined(CONFIG_SYS_DPAA_FMAN) || defined(CONFIG_SYS_DPAA_PME)
+#ifdef CONFIG_SYS_DPAA_FMAN
 static void ft_fixup_clks(void *blob, const char *compat, u32 offset,
 			  unsigned long freq)
 {
@@ -374,18 +410,26 @@ static void ft_fixup_clks(void *blob, const char *compat, u32 offset,
 				"for %s: %s\n", compat, fdt_strerror(off));
 	}
 }
+#endif
 
 static void ft_fixup_dpaa_clks(void *blob)
 {
 	sys_info_t sysinfo;
 
 	get_sys_info(&sysinfo);
+#ifdef CONFIG_SYS_DPAA_FMAN
 	ft_fixup_clks(blob, "fsl,fman", CONFIG_SYS_FSL_FM1_OFFSET,
 			sysinfo.freqFMan[0]);
 
 #if (CONFIG_SYS_NUM_FMAN == 2)
 	ft_fixup_clks(blob, "fsl,fman", CONFIG_SYS_FSL_FM2_OFFSET,
 			sysinfo.freqFMan[1]);
+#endif
+#endif
+
+#ifdef CONFIG_SYS_DPAA_QBMAN
+	do_fixup_by_compat_u32(blob, "fsl,qman",
+			"clock-frequency", sysinfo.freqQMAN, 1);
 #endif
 
 #ifdef CONFIG_SYS_DPAA_PME
@@ -403,7 +447,7 @@ static void ft_fixup_qe_snum(void *blob)
 	unsigned int svr;
 
 	svr = mfspr(SPRN_SVR);
-	if (SVR_SOC_VER(svr) == SVR_8569_E) {
+	if (SVR_SOC_VER(svr) == SVR_8569) {
 		if(IS_SVR_REV(svr, 1, 0))
 			do_fixup_by_compat_u32(blob, "fsl,qe",
 				"fsl,qe-num-snums", 46, 1);
@@ -462,7 +506,7 @@ void fdt_fixup_fman_firmware(void *blob)
 		return;
 	}
 
-	if (length > CONFIG_SYS_FMAN_FW_LENGTH) {
+	if (length > CONFIG_SYS_QE_FMAN_FW_LENGTH) {
 		printf("Fman firmware at %p is too large (size=%u)\n",
 		       fmanfw, length);
 		return;
@@ -500,9 +544,8 @@ void fdt_fixup_fman_firmware(void *blob)
 		       fdt_strerror(rc));
 		return;
 	}
-	phandle = fdt_alloc_phandle(blob);
-	rc = fdt_setprop_cell(blob, fwnode, "linux,phandle", phandle);
-	if (rc < 0) {
+	phandle = fdt_create_phandle(blob, fwnode);
+	if (!phandle) {
 		char s[64];
 		fdt_get_path(blob, fwnode, s, sizeof(s));
 		printf("Could not add phandle property to node %s: %s\n", s,
@@ -534,6 +577,27 @@ void fdt_fixup_fman_firmware(void *blob)
 #define fdt_fixup_fman_firmware(x)
 #endif
 
+#if defined(CONFIG_PPC_P4080)
+static void fdt_fixup_usb(void *fdt)
+{
+	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+	u32 rcwsr11 = in_be32(&gur->rcwsr[11]);
+	int off;
+
+	off = fdt_node_offset_by_compatible(fdt, -1, "fsl,mpc85xx-usb2-mph");
+	if ((rcwsr11 & FSL_CORENET_RCWSR11_EC1) !=
+				FSL_CORENET_RCWSR11_EC1_FM1_USB1)
+		fdt_status_disabled(fdt, off);
+
+	off = fdt_node_offset_by_compatible(fdt, -1, "fsl,mpc85xx-usb2-dr");
+	if ((rcwsr11 & FSL_CORENET_RCWSR11_EC2) !=
+				FSL_CORENET_RCWSR11_EC2_USB2)
+		fdt_status_disabled(fdt, off);
+}
+#else
+#define fdt_fixup_usb(x)
+#endif
+
 void ft_cpu_setup(void *blob, bd_t *bd)
 {
 	int off;
@@ -543,6 +607,14 @@ void ft_cpu_setup(void *blob, bd_t *bd)
 	/* delete crypto node if not on an E-processor */
 	if (!IS_E_PROCESSOR(get_svr()))
 		fdt_fixup_crypto_node(blob, 0);
+#if CONFIG_SYS_FSL_SEC_COMPAT >= 4
+	else {
+		ccsr_sec_t __iomem *sec;
+
+		sec = (void __iomem *)CONFIG_SYS_FSL_SEC_ADDR;
+		fdt_fixup_crypto_node(blob, in_be32(&sec->secvid_ms));
+	}
+#endif
 
 	fdt_fixup_ethernet(blob);
 
@@ -565,9 +637,9 @@ void ft_cpu_setup(void *blob, bd_t *bd)
 		"bus-frequency", bd->bi_busfreq, 1);
 
 	do_fixup_by_compat_u32(blob, "fsl,pq3-localbus",
-		"bus-frequency", gd->lbc_clk, 1);
+		"bus-frequency", gd->arch.lbc_clk, 1);
 	do_fixup_by_compat_u32(blob, "fsl,elbc",
-		"bus-frequency", gd->lbc_clk, 1);
+		"bus-frequency", gd->arch.lbc_clk, 1);
 #ifdef CONFIG_QE
 	ft_qe_setup(blob);
 	ft_fixup_qe_snum(blob);
@@ -636,8 +708,21 @@ void ft_cpu_setup(void *blob, bd_t *bd)
 	do_fixup_by_compat_u32(blob, "fsl,gianfar-ptp-timer",
 			"timer-frequency", gd->bus_clk/2, 1);
 
+	/*
+	 * clock-freq should change to clock-frequency and
+	 * flexcan-v1.0 should change to p1010-flexcan respectively
+	 * in the future.
+	 */
 	do_fixup_by_compat_u32(blob, "fsl,flexcan-v1.0",
-			"clock_freq", gd->bus_clk, 1);
+			"clock_freq", gd->bus_clk/2, 1);
+
+	do_fixup_by_compat_u32(blob, "fsl,flexcan-v1.0",
+			"clock-frequency", gd->bus_clk/2, 1);
+
+	do_fixup_by_compat_u32(blob, "fsl,p1010-flexcan",
+			"clock-frequency", gd->bus_clk/2, 1);
+
+	fdt_fixup_usb(blob);
 }
 
 /*
@@ -650,6 +735,12 @@ void ft_cpu_setup(void *blob, bd_t *bd)
  */
 #define CCSR_VIRT_TO_PHYS(x) \
 	(CONFIG_SYS_CCSRBAR_PHYS + ((x) - CONFIG_SYS_CCSRBAR))
+
+static void msg(const char *name, uint64_t uaddr, uint64_t daddr)
+{
+	printf("Warning: U-Boot configured %s at address %llx,\n"
+	       "but the device tree has it at %llx\n", name, uaddr, daddr);
+}
 
 /*
  * Verify the device tree
@@ -666,33 +757,32 @@ void ft_cpu_setup(void *blob, bd_t *bd)
  */
 int ft_verify_fdt(void *fdt)
 {
-	uint64_t ccsr = 0;
+	uint64_t addr = 0;
 	int aliases;
 	int off;
 
 	/* First check the CCSR base address */
 	off = fdt_node_offset_by_prop_value(fdt, -1, "device_type", "soc", 4);
 	if (off > 0)
-		ccsr = fdt_get_base_address(fdt, off);
+		addr = fdt_get_base_address(fdt, off);
 
-	if (!ccsr) {
+	if (!addr) {
 		printf("Warning: could not determine base CCSR address in "
 		       "device tree\n");
 		/* No point in checking anything else */
 		return 0;
 	}
 
-	if (ccsr != CONFIG_SYS_CCSRBAR_PHYS) {
-		printf("Warning: U-Boot configured CCSR at address %llx,\n"
-		       "but the device tree has it at %llx\n",
-		       (uint64_t) CONFIG_SYS_CCSRBAR_PHYS, ccsr);
+	if (addr != CONFIG_SYS_CCSRBAR_PHYS) {
+		msg("CCSR", CONFIG_SYS_CCSRBAR_PHYS, addr);
 		/* No point in checking anything else */
 		return 0;
 	}
 
 	/*
-	 * Get the 'aliases' node.  If there isn't one, then there's nothing
-	 * left to do.
+	 * Check some nodes via aliases.  We assume that U-Boot and the device
+	 * tree enumerate the devices equally.  E.g. the first serial port in
+	 * U-Boot is the same as "serial0" in the device tree.
 	 */
 	aliases = fdt_path_offset(fdt, "/aliases");
 	if (aliases > 0) {
@@ -708,6 +798,31 @@ int ft_verify_fdt(void *fdt)
 			return 0;
 #endif
 	}
+
+	/*
+	 * The localbus node is typically a root node, even though the lbc
+	 * controller is part of CCSR.  If we were to put the lbc node under
+	 * the SOC node, then the 'ranges' property in the lbc node would
+	 * translate through the 'ranges' property of the parent SOC node, and
+	 * we don't want that.  Since it's a separate node, it's possible for
+	 * the 'reg' property to be wrong, so check it here.  For now, we
+	 * only check for "fsl,elbc" nodes.
+	 */
+#ifdef CONFIG_SYS_LBC_ADDR
+	off = fdt_node_offset_by_compatible(fdt, -1, "fsl,elbc");
+	if (off > 0) {
+		const fdt32_t *reg = fdt_getprop(fdt, off, "reg", NULL);
+		if (reg) {
+			uint64_t uaddr = CCSR_VIRT_TO_PHYS(CONFIG_SYS_LBC_ADDR);
+
+			addr = fdt_translate_address(fdt, off, reg);
+			if (uaddr != addr) {
+				msg("the localbus", uaddr, addr);
+				return 0;
+			}
+		}
+	}
+#endif
 
 	return 1;
 }

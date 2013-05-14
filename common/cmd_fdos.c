@@ -40,7 +40,6 @@ int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     char *name;
     char *ep;
     int size;
-    char buf [12];
     int drive = CONFIG_SYS_FDC_DRIVE_NUMBER;
 
     /* pre-set load_addr */
@@ -72,7 +71,7 @@ int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	name = argv [2];
 	break;
     default:
-	return cmd_usage(cmdtp);
+	return CMD_RET_USAGE;
     }
 
     /* Init physical layer                                                   */
@@ -91,8 +90,7 @@ int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     }
     flush_cache (load_addr, size);
 
-    sprintf(buf, "%x", size);
-    setenv("filesize", buf);
+    setenv_hex("filesize", size);
 
     printf("Floppy DOS load complete: %d bytes loaded to 0x%lx\n",
 	   size, load_addr);

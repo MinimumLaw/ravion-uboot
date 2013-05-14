@@ -28,7 +28,6 @@ static int do_unzip(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long src, dst;
 	unsigned long src_len = ~0UL, dst_len = ~0UL;
-	char buf[32];
 
 	switch (argc) {
 		case 4:
@@ -39,15 +38,14 @@ static int do_unzip(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			dst = simple_strtoul(argv[2], NULL, 16);
 			break;
 		default:
-			return cmd_usage(cmdtp);
+			return CMD_RET_USAGE;
 	}
 
 	if (gunzip((void *) dst, dst_len, (void *) src, &src_len) != 0)
 		return 1;
 
 	printf("Uncompressed size: %ld = 0x%lX\n", src_len, src_len);
-	sprintf(buf, "%lX", src_len);
-	setenv("filesize", buf);
+	setenv_hex("filesize", src_len);
 
 	return 0;
 }

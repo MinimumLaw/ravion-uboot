@@ -39,22 +39,10 @@
 
 #include <common.h>
 #include <asm/io.h>
+#include <asm/arch/timer_defs.h>
+#include <div64.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-struct davinci_timer {
-	u_int32_t	pid12;
-	u_int32_t	emumgt;
-	u_int32_t	na1;
-	u_int32_t	na2;
-	u_int32_t	tim12;
-	u_int32_t	tim34;
-	u_int32_t	prd12;
-	u_int32_t	prd34;
-	u_int32_t	tcr;
-	u_int32_t	tgcr;
-	u_int32_t	wdtcr;
-};
 
 static struct davinci_timer * const timer =
 	(struct davinci_timer *)CONFIG_SYS_TIMERBASE;
@@ -72,8 +60,8 @@ int timer_init(void)
 	writel(0x0, &timer->tim34);
 	writel(TIMER_LOAD_VAL, &timer->prd34);
 	writel(2 << 22, &timer->tcr);
-	gd->timer_rate_hz = CONFIG_SYS_HZ_CLOCK / TIM_CLK_DIV;
-	gd->timer_reset_value = 0;
+	gd->arch.timer_rate_hz = CONFIG_SYS_HZ_CLOCK / TIM_CLK_DIV;
+	gd->arch.timer_reset_value = 0;
 
 	return(0);
 }
@@ -86,27 +74,29 @@ unsigned long long get_ticks(void)
 	unsigned long now = readl(&timer->tim34);
 
 	/* increment tbu if tbl has rolled over */
-	if (now < gd->tbl)
-		gd->tbu++;
-	gd->tbl = now;
+	if (now < gd->arch.tbl)
+		gd->arch.tbu++;
+	gd->arch.tbl = now;
 
-	return (((unsigned long long)gd->tbu) << 32) | gd->tbl;
+	return (((unsigned long long)gd->arch.tbu) << 32) | gd->arch.tbl;
 }
 
 ulong get_timer(ulong base)
 {
 	unsigned long long timer_diff;
 
-	timer_diff = get_ticks() - gd->timer_reset_value;
+	timer_diff = get_ticks() - gd->arch.timer_reset_value;
 
-	return (timer_diff / (gd->timer_rate_hz / CONFIG_SYS_HZ)) - base;
+	return lldiv(timer_diff,
+		     (gd->arch.timer_rate_hz / CONFIG_SYS_HZ)) - base;
 }
 
 void __udelay(unsigned long usec)
 {
 	unsigned long long endtime;
 
-	endtime = ((unsigned long long)usec * gd->timer_rate_hz) / 1000000UL;
+	endtime = lldiv((unsigned long long)usec * gd->arch.timer_rate_hz,
+			1000000UL);
 	endtime += get_ticks();
 
 	while (get_ticks() < endtime)
@@ -119,5 +109,36 @@ void __udelay(unsigned long usec)
  */
 ulong get_tbclk(void)
 {
-	return CONFIG_SYS_HZ;
+	return gd->arch.timer_rate_hz;
 }
+
+#ifdef CONFIG_HW_WATCHDOG
+static struct davinci_timer * const wdttimer =
+	(struct davinci_timer *)CONFIG_SYS_WDTTIMERBASE;
+
+/*
+ * See prufw2.pdf for using Timer as a WDT
+ */
+void davinci_hw_watchdog_enable(void)
+{
+	writel(0x0, &wdttimer->tcr);
+	writel(0x0, &wdttimer->tgcr);
+	/* TIMMODE = 2h */
+	writel(0x08 | 0x03 | ((TIM_CLK_DIV - 1) << 8), &wdttimer->tgcr);
+	writel(CONFIG_SYS_WDT_PERIOD_LOW, &wdttimer->prd12);
+	writel(CONFIG_SYS_WDT_PERIOD_HIGH, &wdttimer->prd34);
+	writel(2 << 22, &wdttimer->tcr);
+	writel(0x0, &wdttimer->tim12);
+	writel(0x0, &wdttimer->tim34);
+	/* set WDEN bit, WDKEY 0xa5c6 */
+	writel(0xa5c64000, &wdttimer->wdtcr);
+	/* clear counter register */
+	writel(0xda7e4000, &wdttimer->wdtcr);
+}
+
+void davinci_hw_watchdog_reset(void)
+{
+	writel(0xa5c64000, &wdttimer->wdtcr);
+	writel(0xda7e4000, &wdttimer->wdtcr);
+}
+#endif

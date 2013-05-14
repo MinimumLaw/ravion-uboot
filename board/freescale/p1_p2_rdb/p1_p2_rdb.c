@@ -108,11 +108,9 @@ int checkboard (void)
 	else
 		panic ("Unexpected Board REV %x detected!!\n", board_rev_gpio);
 
-	cpu = gd->cpu;
+	cpu = gd->arch.cpu;
 	printf ("Board: %sRDB Rev%c\n", cpu->name, board_rev);
-#ifdef CONFIG_PHYS_64BIT
-	puts ("(36-bit addrmap) \n");
-#endif
+
 	setbits_be32(&pgpio->gpdir, GPIO_DIR);
 
 /*
@@ -264,7 +262,9 @@ void ft_board_setup(void *blob, bd_t *bd)
 
 	fdt_fixup_memory(blob, (u64)base, (u64)size);
 
+#if defined(CONFIG_HAS_FSL_DR_USB)
 	fdt_fixup_dr_usb(blob, bd);
+#endif
 
 #if defined(CONFIG_SDCARD) || defined(CONFIG_SPIFLASH)
 	/* Delete eLBC node as it is muxed with USB2 controller */

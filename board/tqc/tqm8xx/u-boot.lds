@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2000
+ * (C) Copyright 2000-2012
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -39,11 +39,8 @@ SECTIONS
     board/tqc/tqm8xx/libtqm8xx.o	(.text*)
     disk/libdisk.o			(.text*)
     drivers/net/libnet.o		(.text*)
-    drivers/pcmcia/libpcmcia.o		(.text*)
-    drivers/rtc/librtc.o		(.text*)
-    drivers/misc/libmisc.o		(.text*)
-    *(.text.print_buffer)
-    *(.text.print_size)
+    drivers/pcmcia/libpcmcia.o		(.text.pcmcia_on)
+    drivers/pcmcia/libpcmcia.o		(.text.pcmcia_hardware_enable)
 
     . = DEFINED(env_offset) ? env_offset : .;
     common/env_embedded.o	(.ppcenv*)
@@ -82,9 +79,11 @@ SECTIONS
   PROVIDE (edata = .);
 
   . = .;
-  __u_boot_cmd_start = .;
-  .u_boot_cmd : { *(.u_boot_cmd) }
-  __u_boot_cmd_end = .;
+
+  . = ALIGN(4);
+  .u_boot_list : {
+	KEEP(*(SORT(.u_boot_list*)));
+  }
 
 
   . = .;
@@ -107,6 +106,6 @@ SECTIONS
    *(COMMON)
    . = ALIGN(4);
   }
-  __bss_end__ = . ;
+  __bss_end = . ;
   PROVIDE (end = .);
 }

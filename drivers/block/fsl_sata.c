@@ -26,9 +26,8 @@
 #include <malloc.h>
 #include <libata.h>
 #include <fis.h>
+#include <sata.h>
 #include "fsl_sata.h"
-
-extern block_dev_desc_t sata_dev_desc[CONFIG_SYS_SATA_MAX_DEVICE];
 
 #ifndef CONFIG_SYS_SATA1_FLAGS
 	#define CONFIG_SYS_SATA1_FLAGS	FLAGS_DMA
@@ -50,37 +49,11 @@ static struct fsl_sata_info fsl_sata_info[] = {
 #endif
 };
 
-static inline void mdelay(unsigned long msec)
-{
-	unsigned long i;
-	for (i = 0; i < msec; i++)
-		udelay(1000);
-}
-
 static inline void sdelay(unsigned long sec)
 {
 	unsigned long i;
 	for (i = 0; i < sec; i++)
 		mdelay(1000);
-}
-
-void dprint_buffer(unsigned char *buf, int len)
-{
-	int i, j;
-
-	i = 0;
-	j = 0;
-	printf("\n\r");
-
-	for (i = 0; i < len; i++) {
-		printf("%02x ", *buf++);
-		j++;
-		if (j == 16) {
-			printf("\n\r");
-			j = 0;
-		}
-	}
-	printf("\n\r");
 }
 
 static void fsl_sata_dump_sfis(struct sata_fis_d2h *s)
@@ -102,7 +75,7 @@ static void fsl_sata_dump_sfis(struct sata_fis_d2h *s)
 	printf("sector_count_exp:	%02x\n\r", s->sector_count_exp);
 }
 
-static int ata_wait_register(volatile unsigned *addr, u32 mask,
+static int ata_wait_register(unsigned __iomem *addr, u32 mask,
 			 u32 val, u32 timeout_msec)
 {
 	int i;
@@ -120,7 +93,7 @@ int init_sata(int dev)
 	cmd_hdr_tbl_t *cmd_hdr;
 	u32 cda;
 	u32 val32;
-	fsl_sata_reg_t *reg;
+	fsl_sata_reg_t __iomem *reg;
 	u32 sig;
 	int i;
 	fsl_sata_t *sata;
@@ -203,27 +176,6 @@ int init_sata(int dev)
 
 	/* Wait the controller offline */
 	ata_wait_register(&reg->hstatus, HSTATUS_ONOFF, 0, 1000);
-
-#if defined(CONFIG_FSL_SATA_V2) && defined(CONFIG_FSL_SATA_ERRATUM_A001)
-	/*
-	 * For P1022/1013 Rev1.0 silicon, after power on SATA host
-	 * controller is configured in legacy mode instead of the
-	 * expected enterprise mode. software needs to clear bit[28]
-	 * of HControl register to change to enterprise mode from
-	 * legacy mode.
-	 */
-	{
-		u32 svr = get_svr();
-		if (IS_SVR_REV(svr, 1, 0) &&
-		    ((SVR_SOC_VER(svr) == SVR_P1022) ||
-		     (SVR_SOC_VER(svr) == SVR_P1022_E) ||
-		     (SVR_SOC_VER(svr) == SVR_P1013) ||
-		     (SVR_SOC_VER(svr) == SVR_P1013_E))) {
-			out_le32(&reg->hstatus, 0x20000000);
-			out_le32(&reg->hcontrol, 0x00000100);
-		}
-	}
-#endif
 
 	/* Set the command header base address to CHBA register to tell DMA */
 	out_le32(&reg->chba, (u32)cmd_hdr & ~0x3);
@@ -316,42 +268,7 @@ int init_sata(int dev)
 	return 0;
 }
 
-/* Hardware reset, like Power-on and COMRESET */
-void fsl_sata_hardware_reset(u32 reg_base)
-{
-	fsl_sata_reg_t *reg = (fsl_sata_reg_t *)reg_base;
-	u32 scontrol;
-
-	/* Disable the SATA interface and put PHY offline */
-	scontrol = in_le32(&reg->scontrol);
-	scontrol = (scontrol & 0x0f0) | 0x304;
-	out_le32(&reg->scontrol, scontrol);
-
-	/* No speed strict */
-	scontrol = in_le32(&reg->scontrol);
-	scontrol = scontrol & ~0x0f0;
-	out_le32(&reg->scontrol, scontrol);
-
-	/* Issue PHY wake/reset, Hardware_reset_asserted */
-	scontrol = in_le32(&reg->scontrol);
-	scontrol = (scontrol & 0x0f0) | 0x301;
-	out_le32(&reg->scontrol, scontrol);
-
-	mdelay(100);
-
-	/* Resume PHY, COMRESET negated, the device initialize hardware
-	 * and execute diagnostics, send good status-signature to host,
-	 * which is D2H register FIS, and then the device enter idle state.
-	 */
-	scontrol = in_le32(&reg->scontrol);
-	scontrol = (scontrol & 0x0f0) | 0x300;
-	out_le32(&reg->scontrol, scontrol);
-
-	mdelay(100);
-	return;
-}
-
-static void fsl_sata_dump_regs(fsl_sata_reg_t *reg)
+static void fsl_sata_dump_regs(fsl_sata_reg_t __iomem *reg)
 {
 	printf("\n\rSATA:           %08x\n\r", (u32)reg);
 	printf("CQR:            %08x\n\r", in_le32(&reg->cqr));
@@ -392,7 +309,7 @@ static int fsl_ata_exec_ata_cmd(struct fsl_sata *sata, struct sata_fis_h2d *cfis
 	u32 prde_count;
 	u32 val32;
 	u32 ttl;
-	fsl_sata_reg_t *reg = sata->reg_base;
+	fsl_sata_reg_t __iomem *reg = sata->reg_base;
 	int i;
 
 	/* Check xfer length */
@@ -649,7 +566,7 @@ static u32 fsl_sata_rw_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_wr
 	return blkcnt;
 }
 
-void fsl_sata_flush_cache(int dev)
+static void fsl_sata_flush_cache(int dev)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
 	struct sata_fis_h2d h2d, *cfis = &h2d;
@@ -693,14 +610,15 @@ static u32 fsl_sata_rw_cmd_ext(int dev, u32 start, u32 blkcnt, u8 *buffer, int i
 	return blkcnt;
 }
 
-u32 fsl_sata_rw_ncq_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write)
+static u32 fsl_sata_rw_ncq_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer,
+			       int is_write)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
 	struct sata_fis_h2d h2d, *cfis = &h2d;
 	int ncq_channel;
 	u64 block;
 
-	if (sata_dev_desc[dev].lba48 != 1) {
+	if (sata->lba48 != 1) {
 		printf("execute FPDMA command on non-LBA48 hard disk\n\r");
 		return -1;
 	}
@@ -736,7 +654,7 @@ u32 fsl_sata_rw_ncq_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write
 	return blkcnt;
 }
 
-void fsl_sata_flush_cache_ext(int dev)
+static void fsl_sata_flush_cache_ext(int dev)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
 	struct sata_fis_h2d h2d, *cfis = &h2d;
@@ -748,12 +666,6 @@ void fsl_sata_flush_cache_ext(int dev)
 	cfis->command = ATA_CMD_FLUSH_EXT;
 
 	fsl_sata_exec_cmd(sata, cfis, CMD_ATA, 0, NULL, 0);
-}
-
-/* Software reset, set SRST of the Device Control register */
-void fsl_sata_software_reset(int dev)
-{
-	return;
 }
 
 static void fsl_sata_init_wcache(int dev, u16 *id)
@@ -786,7 +698,8 @@ static int fsl_sata_get_flush_ext(int dev)
 	return sata->flush_ext;
 }
 
-u32 ata_low_level_rw_lba48(int dev, u32 blknr, u32 blkcnt, void *buffer, int is_write)
+static u32 ata_low_level_rw_lba48(int dev, u32 blknr, lbaint_t blkcnt,
+		const void *buffer, int is_write)
 {
 	u32 start, blks;
 	u8 *addr;
@@ -820,7 +733,8 @@ u32 ata_low_level_rw_lba48(int dev, u32 blknr, u32 blkcnt, void *buffer, int is_
 	return blkcnt;
 }
 
-u32 ata_low_level_rw_lba28(int dev, u32 blknr, u32 blkcnt, void *buffer, int is_write)
+static u32 ata_low_level_rw_lba28(int dev, u32 blknr, u32 blkcnt,
+				  const void *buffer, int is_write)
 {
 	u32 start, blks;
 	u8 *addr;
@@ -851,22 +765,24 @@ u32 ata_low_level_rw_lba28(int dev, u32 blknr, u32 blkcnt, void *buffer, int is_
 /*
  * SATA interface between low level driver and command layer
  */
-ulong sata_read(int dev, u32 blknr, u32 blkcnt, void *buffer)
+ulong sata_read(int dev, ulong blknr, lbaint_t blkcnt, void *buffer)
 {
 	u32 rc;
+	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
 
-	if (sata_dev_desc[dev].lba48)
+	if (sata->lba48)
 		rc = ata_low_level_rw_lba48(dev, blknr, blkcnt, buffer, READ_CMD);
 	else
 		rc = ata_low_level_rw_lba28(dev, blknr, blkcnt, buffer, READ_CMD);
 	return rc;
 }
 
-ulong sata_write(int dev, u32 blknr, u32 blkcnt, void *buffer)
+ulong sata_write(int dev, ulong blknr, lbaint_t blkcnt, const void *buffer)
 {
 	u32 rc;
+	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
 
-	if (sata_dev_desc[dev].lba48) {
+	if (sata->lba48) {
 		rc = ata_low_level_rw_lba48(dev, blknr, blkcnt, buffer, WRITE_CMD);
 		if (fsl_sata_get_wcache(dev) && fsl_sata_get_flush_ext(dev))
 			fsl_sata_flush_cache_ext(dev);
@@ -916,11 +832,14 @@ int scan_sata(int dev)
 	n_sectors = ata_id_n_sectors(id);
 	sata_dev_desc[dev].lba = (u32)n_sectors;
 
+#ifdef CONFIG_LBA48
 	/* Check if support LBA48 */
 	if (ata_id_has_lba48(id)) {
-		sata_dev_desc[dev].lba48 = 1;
+		sata->lba48 = 1;
 		debug("Device support LBA48\n\r");
-	}
+	} else
+		debug("Device supports LBA28\n\r");
+#endif
 
 	/* Get the NCQ queue depth from device */
 	sata->queue_depth = ata_id_queue_depth(id);

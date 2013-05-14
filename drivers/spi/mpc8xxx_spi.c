@@ -45,12 +45,9 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (!spi_cs_is_valid(bus, cs))
 		return NULL;
 
-	slave = malloc(sizeof(struct spi_slave));
+	slave = spi_alloc_slave_base(bus, cs);
 	if (!slave)
 		return NULL;
-
-	slave->bus = bus;
-	slave->cs = cs;
 
 	/*
 	 * TODO: Some of the code in spi_init() should probably move
@@ -124,6 +121,8 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		 * len > 16               0
 		 */
 
+		spi->mode &= ~SPI_MODE_EN;
+
 		if (bitlen <= 16) {
 			if (bitlen <= 4)
 				spi->mode = (spi->mode & 0xff0fffff) |
@@ -137,6 +136,8 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 			bitlen -= 32;
 			dout += 4;
 		}
+
+		spi->mode |= SPI_MODE_EN;
 
 		spi->tx = tmpdout;	/* Write the data out */
 		debug("*** spi_xfer: ... %08x written\n", tmpdout);

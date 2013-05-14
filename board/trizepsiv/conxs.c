@@ -33,6 +33,8 @@
 
 #include <common.h>
 #include <asm/arch/pxa-regs.h>
+#include <asm/arch/pxa.h>
+#include <asm/arch/regs-mmc.h>
 #include <netdev.h>
 #include <asm/io.h>
 
@@ -119,7 +121,6 @@ int board_init (void)
 
 int board_late_init(void)
 {
-#if defined(CONFIG_SERIAL_MULTI)
 	char *console=getenv("boot_console");
 
 	if ((console == NULL) || (strcmp(console,"serial_btuart") &&
@@ -130,19 +131,12 @@ int board_late_init(void)
 	setenv("stdout",console);
 	setenv("stdin", console);
 	setenv("stderr",console);
-#endif
 	return 0;
 }
 
-struct serial_device *default_serial_console (void)
-{
-	return &serial_ffuart_device;
-}
-
-extern void pxa_dram_init(void);
 int dram_init(void)
 {
-	pxa_dram_init();
+	pxa2xx_dram_init();
 	gd->ram_size = PHYS_SDRAM_1_SIZE;
 	return 0;
 }
@@ -157,5 +151,13 @@ void dram_init_banksize(void)
 int board_eth_init(bd_t *bis)
 {
 	return dm9000_initialize(bis);
+}
+#endif
+
+#ifdef CONFIG_CMD_MMC
+int board_mmc_init(bd_t *bis)
+{
+	pxa_mmc_register(0);
+	return 0;
 }
 #endif

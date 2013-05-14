@@ -87,6 +87,11 @@ static void mci_set_mode(struct mmc *mmc, u32 hz, u32 blklen)
 		 | MMCI_BF(BLKLEN, blklen)
 		 | MMCI_BIT(RDPROOF)
 		 | MMCI_BIT(WRPROOF)), &mci->mr);
+	/*
+	 * On some new platforms BLKLEN in mci->mr is ignored.
+	 * Should use the BLKLEN in the block register.
+	 */
+	writel(MMCI_BF(BLKLEN, blklen), &mci->blkr);
 	initialized = 1;
 }
 
@@ -182,6 +187,12 @@ mci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	/* Figure out the transfer arguments */
 	cmdr = mci_encode_cmd(cmd, data, &error_flags);
+
+	/* For multi blocks read/write, set the block register */
+	if ((cmd->cmdidx == MMC_CMD_READ_MULTIPLE_BLOCK)
+			|| (cmd->cmdidx == MMC_CMD_WRITE_MULTIPLE_BLOCK))
+		writel(data->blocks | MMCI_BF(BLKLEN, mmc->read_bl_len),
+			&mci->blkr);
 
 	/* Send the command */
 	writel(cmd->cmdarg, &mci->argr);
@@ -310,8 +321,8 @@ static int mci_init(struct mmc *mmc)
 	writel(MMCI_BIT(MCIEN), &mci->cr);	/* enable mci */
 	writel(MMCI_BF(SCDSEL, MCI_BUS), &mci->sdcr);	/* select port */
 
-	/* Initial Time-outs */
-	writel(0x5f, &mci->dtor);
+	/* This delay can be optimized, but stick with max value */
+	writel(0x7f, &mci->dtor);
 	/* Disable Interrupts */
 	writel(~0UL, &mci->idr);
 
@@ -337,6 +348,8 @@ int atmel_mci_init(void *regs)
 	mmc->send_cmd = mci_send_cmd;
 	mmc->set_ios = mci_set_ios;
 	mmc->init = mci_init;
+	mmc->getcd = NULL;
+	mmc->getwp = NULL;
 
 	/* need to be able to pass these in on a board by board basis */
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34;

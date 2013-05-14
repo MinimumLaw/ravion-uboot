@@ -1,3 +1,4 @@
+#include <common.h>
 #include <exports.h>
 
 #ifndef GCC_VERSION
@@ -167,8 +168,37 @@ gd_t *global_data;
 "	jmp %%g1\n"					\
 "	nop\n"						\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "g1" );
-
+#elif defined(CONFIG_NDS32)
+/*
+ * r16 holds the pointer to the global_data. gp is call clobbered.
+ * not support reduced register (16 GPR).
+ */
+#define EXPORT_FUNC(x) \
+	asm volatile (			\
+"	.globl " #x "\n"		\
+#x ":\n"				\
+"	lwi	$r16, [$gp + (%0)]\n"	\
+"	lwi	$r16, [$r16 + (%1)]\n"	\
+"	jr	$r16\n"			\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "$r16");
+#elif defined(CONFIG_OPENRISC)
+/*
+ * r10 holds the pointer to the global_data, r13 is a call-clobbered
+ * register
+ */
+#define EXPORT_FUNC(x) \
+	asm volatile (			\
+"	.globl " #x "\n"		\
+#x ":\n"				\
+"	l.lwz	r13, %0(r10)\n"	\
+"	l.lwz	r13, %1(r13)\n"	\
+"	l.jr	r13\n"		\
+"	l.nop\n"				\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r13");
 #else
+/*"	addi	$sp, $sp, -24\n"	\
+"	br	$r16\n"			\*/
+
 #error stubs definition missing for this architecture
 #endif
 
@@ -187,16 +217,15 @@ void __attribute__((unused)) dummy(void)
 #include <_exports.h>
 }
 
-extern unsigned long __bss_start, _end;
+#include <asm/sections.h>
 
 void app_startup(char * const *argv)
 {
-	unsigned char * cp = (unsigned char *) &__bss_start;
+	char *cp = __bss_start;
 
 	/* Zero out BSS */
-	while (cp < (unsigned char *)&_end) {
+	while (cp < _end)
 		*cp++ = 0;
-	}
 
 #if defined(CONFIG_X86)
 	/* x86 does not have a dedicated register for passing global_data */

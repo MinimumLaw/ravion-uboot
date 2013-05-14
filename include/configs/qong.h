@@ -25,70 +25,74 @@
 #include <asm/arch/imx-regs.h>
 
 /* High Level Configuration Options */
-#define CONFIG_ARM1136		1	/* This is an arm1136 CPU core */
-#define CONFIG_MX31		1	/* in a mx31 */
-#define CONFIG_QONG		1
-#define CONFIG_MX31_HCLK_FREQ	26000000	/* 26MHz */
-#define CONFIG_MX31_CLK32	32768
+#define CONFIG_ARM1136			/* This is an arm1136 CPU core */
+#define CONFIG_MX31			/* in a mx31 */
+#define CONFIG_QONG
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_SYS_TEXT_BASE 0xa0000000
 
-#define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
-#define CONFIG_SETUP_MEMORY_TAGS	1
-#define CONFIG_INITRD_TAG		1
+#define CONFIG_CMDLINE_TAG			/* enable passing of ATAGs */
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
 
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1536 * 1024)
 
 /*
  * Hardware drivers
  */
 
-#define CONFIG_MXC_UART	1
-#define CONFIG_SYS_MX31_UART1	1
+#define CONFIG_MXC_UART
+#define CONFIG_MXC_UART_BASE	UART1_BASE
 
 #define CONFIG_MXC_GPIO
 #define CONFIG_HW_WATCHDOG
+#define CONFIG_IMX_WATCHDOG
 
 #define CONFIG_MXC_SPI
 #define CONFIG_DEFAULT_SPI_BUS	1
 #define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
-#define CONFIG_RTC_MC13783
+#define CONFIG_RTC_MC13XXX
 
-#define CONFIG_FSL_PMIC
+#define CONFIG_POWER
+#define CONFIG_POWER_SPI
+#define CONFIG_POWER_FSL
 #define CONFIG_FSL_PMIC_BUS	1
 #define CONFIG_FSL_PMIC_CS	0
 #define CONFIG_FSL_PMIC_CLK	100000
 #define CONFIG_FSL_PMIC_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
+#define CONFIG_FSL_PMIC_BITLEN	32
 
 /* FPGA */
 #define CONFIG_FPGA
-#define CONFIG_QONG_FPGA	1
+#define CONFIG_QONG_FPGA
 #define CONFIG_FPGA_BASE	(CS1_BASE)
 #define CONFIG_FPGA_LATTICE
 #define CONFIG_FPGA_COUNT	1
 
 #ifdef CONFIG_QONG_FPGA
 /* Ethernet */
-#define CONFIG_DNET		1
+#define CONFIG_DNET
 #define CONFIG_DNET_BASE	(CS1_BASE + QONG_FPGA_PERIPH_SIZE)
-#define CONFIG_NET_MULTI	1
 
 /* Framebuffer and LCD */
-#define CONFIG_LCD
+#define CONFIG_VIDEO
+#define CONFIG_CFB_CONSOLE
 #define CONFIG_VIDEO_MX3
-#define	CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_SW_CURSOR
+#define CONFIG_VGA_AS_SINGLE_DEVICE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
-#define LCD_BPP		LCD_COLOR16
-#define	CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN
 #define CONFIG_CMD_BMP
 #define CONFIG_BMP_16BPP
-#define CONFIG_DISPLAY_COM57H5M10XRC
+#define CONFIG_VIDEO_BMP_GZIP
+#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(512 << 10)
 
 /* USB */
 #define CONFIG_CMD_USB
@@ -117,7 +121,6 @@
 
 #define CONFIG_CONS_INDEX	1
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
 /***********************************************************
  * Command definition
@@ -134,15 +137,13 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SETEXPR
 #define CONFIG_CMD_SPI
+#define CONFIG_CMD_UNZIP
 
-#define BOARD_LATE_INIT
+#define CONFIG_BOARD_LATE_INIT
 
 #define CONFIG_BOOTDELAY	5
 
 #define CONFIG_LOADADDR		0x80800000	/* loadaddr env var */
-
-#define xstr(s)	str(s)
-#define str(s)	#s
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"netdev=eth0\0"							\
@@ -173,11 +174,14 @@
 		"bootm\0"						\
 	"bootcmd=run flash_self\0"					\
 	"load=tftp ${loadaddr} ${u-boot}\0"				\
-	"update=protect off " xstr(CONFIG_SYS_MONITOR_BASE)		\
-		" +${filesize};era " xstr(CONFIG_SYS_MONITOR_BASE)	\
+	"update=protect off " __stringify(CONFIG_SYS_MONITOR_BASE)	\
+		" +${filesize};era " __stringify(CONFIG_SYS_MONITOR_BASE)\
 		" +${filesize};cp.b ${fileaddr} "			\
-		xstr(CONFIG_SYS_MONITOR_BASE) " ${filesize}\0"		\
+		__stringify(CONFIG_SYS_MONITOR_BASE) " ${filesize}\0"	\
 	"upd=run load update\0"						\
+	"videomode=video=ctfb:x:640,y:480,depth:16,mode:0,pclk:40000,"	\
+		"le:120,ri:40,up:35,lo:10,hs:30,vs:3,sync:100663296,"	\
+		"vmode:0\0"						\
 
 /*
  * Miscellaneous configurable options
@@ -200,19 +204,10 @@
 
 #define CONFIG_SYS_HZ			1000
 
-#define CONFIG_CMDLINE_EDITING	1
-#define CONFIG_SYS_HUSH_PARSER		1	/* Use the HUSH parser		*/
-#ifdef	CONFIG_SYS_HUSH_PARSER
-#define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#endif
+#define CONFIG_CMDLINE_EDITING
+#define CONFIG_SYS_HUSH_PARSER			/* Use the HUSH parser */
 
-#define CONFIG_MISC_INIT_R	1
-/*-----------------------------------------------------------------------
- * Stack sizes
- *
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE	(128 * 1024)	/* regular stack */
+#define CONFIG_MISC_INIT_R
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map
@@ -256,7 +251,7 @@ extern int qong_nand_rdy(void *chip);
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_MONITOR_LEN		0x40000		/* Reserve 256KiB */
 
-#define	CONFIG_ENV_IS_IN_FLASH	1
+#define	CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_ENV_SECT_SIZE	0x20000
 #define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x80000)
@@ -269,13 +264,13 @@ extern int qong_nand_rdy(void *chip);
  * CFI FLASH driver setup
  */
 /* Flash memory is CFI compliant */
-#define CONFIG_SYS_FLASH_CFI			1
+#define CONFIG_SYS_FLASH_CFI
 /* Use drivers/cfi_flash.c */
-#define CONFIG_FLASH_CFI_DRIVER			1
+#define CONFIG_FLASH_CFI_DRIVER
 /* Use buffered writes (~10x faster) */
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE	1
+#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 /* Use hardware sector protection */
-#define CONFIG_SYS_FLASH_PROTECTION		1
+#define CONFIG_SYS_FLASH_PROTECTION
 
 /*
  * Filesystem
@@ -305,6 +300,6 @@ extern int qong_nand_rdy(void *chip);
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_GBL_DATA_OFFSET)
 
-#define CONFIG_BOARD_EARLY_INIT_F	1
+#define CONFIG_BOARD_EARLY_INIT_F
 
 #endif /* __CONFIG_H */

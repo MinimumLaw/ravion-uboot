@@ -768,22 +768,18 @@ int mem_test_walk (void)
 /*********************************************************************/
 int testdram (void)
 {
-	char *s;
 	int rundata    = 0;
 	int runaddress = 0;
 	int runwalk    = 0;
 
 #ifdef CONFIG_SYS_DRAM_TEST_DATA
-	s = getenv ("testdramdata");
-	rundata = (s && (*s == 'y')) ? 1 : 0;
+	rundata = getenv_yesno("testdramdata") == 1;
 #endif
 #ifdef CONFIG_SYS_DRAM_TEST_ADDRESS
-	s = getenv ("testdramaddress");
-	runaddress = (s && (*s == 'y')) ? 1 : 0;
+	runaddress = getenv_yesno("testdramaddress") == 1;
 #endif
 #ifdef CONFIG_SYS_DRAM_TEST_WALK
-	s = getenv ("testdramwalk");
-	runwalk = (s && (*s == 'y')) ? 1 : 0;
+	runwalk = getenv_yesno("testdramwalk") == 1;
 #endif
 
 	if ((rundata == 1) || (runaddress == 1) || (runwalk == 1))
@@ -850,4 +846,9 @@ void my_remap_gt_regs_bootm (u32 cur_loc, u32 new_loc)
 							(INTERNAL_SPACE_DECODE)))))
 	       != temp);
 
+}
+
+int board_eth_init(bd_t *bis)
+{
+	return mv6446x_eth_initialize(bis);
 }

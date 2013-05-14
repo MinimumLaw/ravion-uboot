@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2007-2008
- * Stelian Pop <stelian.pop@leadtechdesign.com>
+ * Stelian Pop <stelian@popies.net>
  * Lead Tech Design <www.leadtechdesign.com>
  *
  * (C) Copyright 2010
@@ -35,8 +35,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define timestamp gd->tbl
-#define lastdec gd->lastinc
+#define timestamp gd->arch.tbl
+#define lastdec gd->arch.lastinc
 
 static inline unsigned long long tick_to_time(unsigned long long tick)
 {

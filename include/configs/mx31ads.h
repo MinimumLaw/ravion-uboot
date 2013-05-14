@@ -27,13 +27,13 @@
  /* High Level Configuration Options */
 #define CONFIG_ARM1136		1		/* This is an arm1136 CPU core */
 #define CONFIG_MX31		1		/* in a mx31 */
-#define CONFIG_MX31_HCLK_FREQ	26000000	/* RedBoot says 26MHz */
-#define CONFIG_MX31_CLK32	32768
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_SYS_TEXT_BASE		0xA0000000
+
+#define CONFIG_MACH_TYPE	MACH_TYPE_MX31ADS
 
 /*
  * Disabled for now due to build problems under Debian and a significant increase
@@ -58,8 +58,8 @@
  * Hardware drivers
  */
 
-#define CONFIG_MXC_UART	1
-#define CONFIG_SYS_MX31_UART1		1
+#define CONFIG_MXC_UART
+#define CONFIG_MXC_UART_BASE	UART1_BASE
 
 #define CONFIG_HARD_SPI		1
 #define CONFIG_MXC_SPI		1
@@ -67,18 +67,21 @@
 #define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
 #define CONFIG_MXC_GPIO
 
-#define CONFIG_FSL_PMIC
+/* PMIC Controller */
+#define CONFIG_POWER
+#define CONFIG_POWER_SPI
+#define CONFIG_POWER_FSL
 #define CONFIG_FSL_PMIC_BUS	1
 #define CONFIG_FSL_PMIC_CS	0
 #define CONFIG_FSL_PMIC_CLK	1000000
 #define CONFIG_FSL_PMIC_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
-#define CONFIG_RTC_MC13783	1
+#define CONFIG_FSL_PMIC_BITLEN	32
+#define CONFIG_RTC_MC13XXX
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX	1
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
 /***********************************************************
  * Command definition
@@ -113,7 +116,6 @@
 		"cp.b ${loadaddr} ${uboot_addr} ${filesize}; "		\
 		"setenv filesize; saveenv\0"
 
-#define CONFIG_NET_MULTI
 #define CONFIG_CS8900
 #define CONFIG_CS8900_BASE	0xb4020300
 #define CONFIG_CS8900_BUS16		1	/* follow the Linux driver */
@@ -149,13 +151,6 @@
 #define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CMDLINE_EDITING	1
-
-/*-----------------------------------------------------------------------
- * Stack sizes
- *
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE	(128 * 1024)	/* regular stack */
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map

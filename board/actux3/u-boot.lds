@@ -34,7 +34,7 @@ SECTIONS
 		net/libnet.o(.text*)
 		board/actux3/libactux3.o(.text*)
 		arch/arm/cpu/ixp/libixp.o(.text*)
-		drivers/serial/libserial.o(.text*)
+		drivers/input/libinput.o(.text*)
 
 		. = env_offset;
 		common/env_embedded.o(.ppcenv)
@@ -54,11 +54,11 @@ SECTIONS
 		*(.got)
 	}
 	. =.;
-	__u_boot_cmd_start =.;
-	.u_boot_cmd : {
-		*(.u_boot_cmd)
+
+	. = ALIGN(4);
+	.u_boot_list : {
+		KEEP(*(SORT(.u_boot_list*)));
 	}
-	__u_boot_cmd_end =.;
 
 	. = ALIGN (4);
 	.rel.dyn : {
@@ -72,13 +72,21 @@ SECTIONS
 		*(.dynsym)
 	}
 
-	.bss __rel_dyn_start (OVERLAY) : {
-		__bss_start = .;
+	_end = .;
+
+	.bss_start __rel_dyn_start (OVERLAY) : {
+		KEEP(*(.__bss_start));
+	}
+
+	.bss __bss_start (OVERLAY) : {
 		*(.bss*)
 		 . = ALIGN(4);
-		_end = .;
+		 __bss_end = .;
 	}
-	__bss_end__ =.;
+	.bss_end __bss_end (OVERLAY) : {
+		KEEP(*(__bss_end));
+	}
+
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
 	/DISCARD/ : { *(.plt*) }

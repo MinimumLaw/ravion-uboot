@@ -31,32 +31,20 @@
 #include <malloc.h>
 #include <search.h>
 #include <errno.h>
+#include <onenand_uboot.h>
 
-#include <linux/mtd/compat.h>
+#include <linux/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
 
-extern struct mtd_info onenand_mtd;
-extern struct onenand_chip onenand_chip;
-
-/* References to names in env_common.c */
-extern uchar default_environment[];
-
 char *env_name_spec = "OneNAND";
 
-#define ONENAND_MAX_ENV_SIZE	4096
+#define ONENAND_MAX_ENV_SIZE	CONFIG_ENV_SIZE
 #define ONENAND_ENV_SIZE(mtd)	(ONENAND_MAX_ENV_SIZE - ENV_HEADER_SIZE)
 
-#ifdef ENV_IS_EMBEDDED
-extern uchar environment[];
-#endif /* ENV_IS_EMBEDDED */
+static char env_buf[CONFIG_ENV_SIZE];
 
 DECLARE_GLOBAL_DATA_PTR;
-
-uchar env_get_char_spec(int index)
-{
-	return (*((uchar *)(gd->env_addr + index)));
-}
 
 void env_relocate_spec(void)
 {
@@ -67,11 +55,10 @@ void env_relocate_spec(void)
 	int rc;
 	size_t retlen;
 #ifdef ENV_IS_EMBEDDED
-	char *buf = (char *)&environment[0];
+	char *buf = (char *)&environment;
 #else
 	loff_t env_addr = CONFIG_ENV_ADDR;
-	char onenand_env[ONENAND_MAX_ENV_SIZE];
-	char *buf = (char *)&onenand_env[0];
+	char *buf = env_buf;
 #endif /* ENV_IS_EMBEDDED */
 
 #ifndef ENV_IS_EMBEDDED
@@ -83,7 +70,7 @@ void env_relocate_spec(void)
 	if (mtd->writesize)
 		/* Ignore read fail */
 		mtd->read(mtd, env_addr, ONENAND_MAX_ENV_SIZE,
-			     &retlen, (u_char *)buf);
+				&retlen, (u_char *)buf);
 	else
 		mtd->writesize = MAX_ONENAND_PAGESIZE;
 #endif /* !ENV_IS_EMBEDDED */
@@ -95,7 +82,7 @@ void env_relocate_spec(void)
 
 int saveenv(void)
 {
-	env_t	env_new;
+	env_t	*env_new = env_buf;
 	ssize_t	len;
 	char	*res;
 	struct mtd_info *mtd = &onenand_mtd;
@@ -108,13 +95,13 @@ int saveenv(void)
 		.callback	= NULL,
 	};
 
-	res = (char *)&env_new.data;
-	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
+	res = (char *)env_new->data;
+	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		return 1;
 	}
-	env_new.crc = crc32(0, env_new.data, ENV_SIZE);
+	env_new->crc = crc32(0, env_new->data, ENV_SIZE);
 
 	instr.len = CONFIG_ENV_SIZE;
 #ifdef CONFIG_ENV_ADDR_FLEX
@@ -133,7 +120,7 @@ int saveenv(void)
 	}
 
 	if (mtd->write(mtd, env_addr, ONENAND_MAX_ENV_SIZE, &retlen,
-	     (u_char *)&env_new)) {
+			(u_char *)env_new)) {
 		printf("OneNAND: write failed at 0x%llx\n", instr.addr);
 		return 2;
 	}
@@ -144,7 +131,7 @@ int saveenv(void)
 int env_init(void)
 {
 	/* use default */
-	gd->env_addr = (ulong) & default_environment[0];
+	gd->env_addr = (ulong)&default_environment[0];
 	gd->env_valid = 1;
 
 	return 0;

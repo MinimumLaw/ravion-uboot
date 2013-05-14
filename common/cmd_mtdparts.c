@@ -147,10 +147,10 @@ static char last_partition[PARTITION_MAXLEN];
 extern void jffs2_free_cache(struct part_info *part);
 
 /* mtdids mapping list, filled by parse_ids() */
-struct list_head mtdids;
+static struct list_head mtdids;
 
 /* device/partition list, parse_cmdline() parses into here */
-struct list_head devices;
+static struct list_head devices;
 
 /* current active device and partition number */
 struct mtd_device *current_mtd_dev = NULL;
@@ -230,7 +230,6 @@ static void memsize_format(char *buf, u32 size)
  */
 static void index_partitions(void)
 {
-	char buf[16];
 	u16 mtddevnum;
 	struct part_info *part;
 	struct list_head *dentry;
@@ -244,8 +243,7 @@ static void index_partitions(void)
 			dev = list_entry(dentry, struct mtd_device, link);
 			if (dev == current_mtd_dev) {
 				mtddevnum += current_mtd_partnum;
-				sprintf(buf, "%d", mtddevnum);
-				setenv("mtddevnum", buf);
+				setenv_ulong("mtddevnum", mtddevnum);
 				break;
 			}
 			mtddevnum += dev->num_parts;
@@ -710,7 +708,7 @@ static int part_parse(const char *const partdef, const char **ret, struct part_i
  * @param size a pointer to the size of the mtd device (output)
  * @return 0 if device is valid, 1 otherwise
  */
-int mtd_device_validate(u8 type, u8 num, u32 *size)
+static int mtd_device_validate(u8 type, u8 num, u32 *size)
 {
 	struct mtd_info *mtd = NULL;
 
@@ -838,7 +836,8 @@ static int device_parse(const char *const mtd_dev, const char **ret, struct mtd_
 	struct mtdids *id;
 	const char *mtd_id;
 	unsigned int mtd_id_len;
-	const char *p, *pend;
+	const char *p;
+	const char *pend;
 	LIST_HEAD(tmp_list);
 	struct list_head *entry, *n;
 	u16 num_parts;
@@ -868,10 +867,12 @@ static int device_parse(const char *const mtd_dev, const char **ret, struct mtd_
 		return 1;
 	}
 
+#ifdef DEBUG
+	pend = strchr(p, ';');
+#endif
 	debug("dev type = %d (%s), dev num = %d, mtd-id = %s\n",
 			id->type, MTD_DEV_TYPE(id->type),
 			id->num, id->mtd_id);
-	pend = strchr(p, ';');
 	debug("parsing partitions %.*s\n", (pend ? pend - p : strlen(p)), p);
 
 
@@ -1039,7 +1040,8 @@ static struct mtdids* id_find_by_mtd_id(const char *mtd_id, unsigned int mtd_id_
  * @param dev_num parsed device number (output)
  * @return 0 on success, 1 otherwise
  */
-int mtd_id_parse(const char *id, const char **ret_id, u8 *dev_type, u8 *dev_num)
+int mtd_id_parse(const char *id, const char **ret_id, u8 *dev_type,
+		 u8 *dev_num)
 {
 	const char *p = id;
 
@@ -1418,7 +1420,7 @@ static int delete_partition(const char *id)
 			return 1;
 
 		if (generate_mtdparts_save(last_parts, MTDPARTS_MAXLEN) != 0) {
-			printf("generated mtdparts too long, reseting to null\n");
+			printf("generated mtdparts too long, resetting to null\n");
 			return 1;
 		}
 		return 0;
@@ -1516,7 +1518,7 @@ static int spread_partitions(void)
 	index_partitions();
 
 	if (generate_mtdparts_save(last_parts, MTDPARTS_MAXLEN) != 0) {
-		printf("generated mtdparts too long, reseting to null\n");
+		printf("generated mtdparts too long, resetting to null\n");
 		return 1;
 	}
 	return 0;
@@ -1881,7 +1883,7 @@ static struct part_info* mtd_part_info(struct mtd_device *dev, unsigned int part
  * @param argv arguments list
  * @return 0 on success, 1 otherwise
  */
-int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 /* command line only */
 	struct mtd_device *dev;
@@ -1919,7 +1921,8 @@ int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  * @param argv arguments list
  * @return 0 on success, 1 otherwise
  */
-int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc,
+		       char * const argv[])
 {
 	if (argc == 2) {
 		if (strcmp(argv[1], "default") == 0) {
@@ -2013,7 +2016,7 @@ int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 		if (generate_mtdparts_save(last_parts, MTDPARTS_MAXLEN) != 0) {
-			printf("generated mtdparts too long, reseting to null\n");
+			printf("generated mtdparts too long, resetting to null\n");
 			return 1;
 		}
 
@@ -2032,7 +2035,7 @@ int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return spread_partitions();
 #endif /* CONFIG_CMD_MTDPARTS_SPREAD */
 
-	return cmd_usage(cmdtp);
+	return CMD_RET_USAGE;
 }
 
 /***************************************************/
@@ -2043,9 +2046,8 @@ U_BOOT_CMD(
 	"    - change active partition (e.g. part-id = nand0,1)"
 );
 
-U_BOOT_CMD(
-	mtdparts,	6,	0,	do_mtdparts,
-	"define flash/nand partitions",
+#ifdef CONFIG_SYS_LONGHELP
+static char mtdparts_help_text[] =
 	"\n"
 	"    - list partition table\n"
 	"mtdparts delall\n"
@@ -2087,6 +2089,11 @@ U_BOOT_CMD(
 	"<size>     := standard linux memsize OR '-' to denote all remaining space\n"
 	"<offset>   := partition start offset within the device\n"
 	"<name>     := '(' NAME ')'\n"
-	"<ro-flag>  := when set to 'ro' makes partition read-only (not used, passed to kernel)"
+	"<ro-flag>  := when set to 'ro' makes partition read-only (not used, passed to kernel)";
+#endif
+
+U_BOOT_CMD(
+	mtdparts,	6,	0,	do_mtdparts,
+	"define flash/nand partitions", mtdparts_help_text
 );
 /***************************************************/

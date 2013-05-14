@@ -63,7 +63,7 @@ Common USB Commands:
 Storage USB Commands:
 - usb scan:	    scans the USB for storage devices.The USB must be
 		    running for this command (usb start)
-- usb device [dev]: show or set current USB staorage device
+- usb device [dev]: show or set current USB storage device
 - usb part [dev]:   print partition table of one or all USB storage
 		    devices
 - usb read addr blk# cnt:
@@ -151,7 +151,6 @@ As with built-in networking, you will also want to enable some network
 commands, for example:
 
 #define CONFIG_CMD_NET
-#define CONFIG_NET_MULTI
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 
@@ -170,7 +169,7 @@ All of these can be obtained from the bootp server if not set.
 
 #define CONFIG_IPADDR		10.0.0.2  (replace with your value)
 #define CONFIG_SERVERIP		10.0.0.1  (replace with your value)
-#define CONFIG_BOOTFILE		uImage
+#define CONFIG_BOOTFILE		"uImage"
 
 
 The 'usb start' command should identify the adapter something like this:

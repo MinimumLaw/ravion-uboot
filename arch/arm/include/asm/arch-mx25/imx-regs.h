@@ -2,7 +2,7 @@
  * Copyright (C) 2009, DENX Software Engineering
  * Author: John Rigby <jcrigby@gmail.com
  *
- *   Based on arch-mx31/mx31-regs.h
+ *   Based on arch-mx31/imx-regs.h
  *	Copyright (C) 2009 Ilya Yanok,
  *		Emcraft Systems <yanok@emcraft.com>
  *   and arch-mx27/imx-regs.h
@@ -33,11 +33,8 @@
 #ifndef _IMX_REGS_H
 #define _IMX_REGS_H
 
-#ifndef __ASSEMBLY__
-#ifdef CONFIG_FEC_MXC
-extern void mx25_fec_init_pins(void);
-extern void imx_get_mac_from_fuse(unsigned char *mac);
-#endif
+#if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
+#include <asm/types.h>
 
 /* Clock Control Module (CCM) registers */
 struct ccm_regs {
@@ -170,6 +167,8 @@ struct aips_regs {
 
 #endif
 
+#define ARCH_MXC
+
 /* AIPS 1 */
 #define IMX_AIPS1_BASE		(0x43F00000)
 #define IMX_MAX_BASE		(0x43F04000)
@@ -181,8 +180,8 @@ struct aips_regs {
 #define IMX_I2C3_BASE		(0x43F84000)
 #define IMX_CAN1_BASE		(0x43F88000)
 #define IMX_CAN2_BASE		(0x43F8C000)
-#define IMX_UART1_BASE		(0x43F90000)
-#define IMX_UART2_BASE		(0x43F94000)
+#define UART1_BASE		(0x43F90000)
+#define UART2_BASE		(0x43F94000)
 #define IMX_I2C2_BASE		(0x43F98000)
 #define IMX_OWIRE_BASE		(0x43F9C000)
 #define IMX_CSPI1_BASE		(0x43FA4000)
@@ -198,15 +197,15 @@ struct aips_regs {
 /* SPBA */
 #define IMX_SPBA_BASE		(0x50000000)
 #define IMX_CSPI3_BASE		(0x50004000)
-#define IMX_UART4_BASE		(0x50008000)
-#define IMX_UART3_BASE		(0x5000C000)
+#define UART4_BASE		(0x50008000)
+#define UART3_BASE		(0x5000C000)
 #define IMX_CSPI2_BASE		(0x50010000)
 #define IMX_SSI2_BASE		(0x50014000)
 #define IMX_ESAI_BASE		(0x50018000)
 #define IMX_ATA_DMA_BASE	(0x50020000)
 #define IMX_SIM1_BASE		(0x50024000)
 #define IMX_SIM2_BASE		(0x50028000)
-#define IMX_UART5_BASE		(0x5002C000)
+#define UART5_BASE		(0x5002C000)
 #define IMX_TSC_BASE		(0x50030000)
 #define IMX_SSI1_BASE		(0x50034000)
 #define IMX_FEC_BASE		(0x50038000)
@@ -242,6 +241,7 @@ struct aips_regs {
 #define IMX_RTIC_BASE		(0x53FEC000)
 #define IMX_IIM_BASE		(0x53FF0000)
 #define IMX_USB_BASE		(0x53FF4000)
+#define IMX_USB_PORT_OFFSET	0x200
 #define IMX_CSI_BASE		(0x53FF8000)
 #define IMX_DRYICE_BASE		(0x53FFC000)
 
@@ -250,6 +250,7 @@ struct aips_regs {
 
 /* 128K Internal Static RAM */
 #define IMX_RAM_BASE		(0x78000000)
+#define IMX_RAM_SIZE		(128 * 1024)
 
 /* SDRAM BANKS */
 #define IMX_SDRAM_BANK0_BASE	(0x80000000)
@@ -350,5 +351,9 @@ struct aips_regs {
 #define GPIO2_BASE_ADDR		IMX_GPIO2_BASE
 #define GPIO3_BASE_ADDR		IMX_GPIO3_BASE
 #define GPIO4_BASE_ADDR		IMX_GPIO4_BASE
+
+#define CHIP_REV_1_0		0x10
+#define CHIP_REV_1_1		0x11
+#define CHIP_REV_1_2		0x12
 
 #endif				/* _IMX_REGS_H */

@@ -25,14 +25,26 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libomap-common.o
 
-SOBJS	:= reset.o
-
-COBJS	:= timer.o
+COBJS	:= reset.o
+COBJS	+= timer.o
 COBJS	+= utils.o
-COBJS	+= gpio.o
 
-ifdef CONFIG_SPL_BUILD
-COBJS	+= spl.o
+ifneq ($(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX),)
+COBJS	+= hwinit-common.o
+COBJS	+= clocks-common.o
+COBJS	+= emif-common.o
+COBJS	+= vc.o
+endif
+
+ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(CONFIG_TI814X),)
+COBJS	+= boot-common.o
+SOBJS	+= lowlevel_init.o
+endif
+
+ifndef CONFIG_SPL_BUILD
+ifneq ($(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX),)
+COBJS	+= mem-common.o
+endif
 endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

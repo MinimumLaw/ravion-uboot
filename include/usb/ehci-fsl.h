@@ -186,35 +186,36 @@ struct usb_ehci {
 	u32     gptimer1_ctrl;	/* 0x08C - General Purpose Timer 1 control */
 	u32	sbuscfg;	/* 0x090 - System Bus Interface Control */
 	u8	res2[0x6C];
-	u16	caplength;	/* 0x100 - Capability Register Length */
+	u8	caplength;	/* 0x100 - Capability Register Length */
+	u8	res3[0x1];
 	u16	hciversion;	/* 0x102 - Host Interface Version */
 	u32	hcsparams;	/* 0x104 - Host Structural Parameters */
 	u32	hccparams;	/* 0x108 - Host Capability Parameters */
-	u8	res3[0x14];
+	u8	res4[0x14];
 	u32	dciversion;	/* 0x120 - Device Interface Version */
 	u32	dciparams;	/* 0x124 - Device Controller Params */
-	u8	res4[0x18];
+	u8	res5[0x18];
 	u32	usbcmd;		/* 0x140 - USB Command */
 	u32	usbsts;		/* 0x144 - USB Status */
 	u32	usbintr;	/* 0x148 - USB Interrupt Enable */
 	u32	frindex;	/* 0x14C - USB Frame Index */
-	u8	res5[0x4];
+	u8	res6[0x4];
 	u32	perlistbase;	/* 0x154 - Periodic List Base
 					 - USB Device Address */
 	u32	ep_list_addr;	/* 0x158 - Next Asynchronous List
 					 - End Point Address */
-	u8	res6[0x4];
+	u8	res7[0x4];
 	u32	burstsize;	/* 0x160 - Programmable Burst Size */
 #define FSL_EHCI_TXPBURST(X)	((X) << 8)
 #define FSL_EHCI_RXPBURST(X)	(X)
 	u32	txfilltuning;	/* 0x164 - Host TT Transmit
 					   pre-buffer packet tuning */
-	u8	res7[0x8];
+	u8	res8[0x8];
 	u32	ulpi_viewpoint;	/* 0x170 - ULPI Reister Access */
-	u8	res8[0xc];
+	u8	res9[0xc];
 	u32	config_flag;	/* 0x180 - Configured Flag Register */
 	u32	portsc;		/* 0x184 - Port status/control */
-	u8	res9[0x1C];
+	u8	res10[0x1C];
 	u32	otgsc;		/* 0x1a4 - Oo-The-Go status and control */
 	u32	usbmode;	/* 0x1a8 - USB Device Mode */
 	u32	epsetupstat;	/* 0x1ac - End Point Setup Status */
@@ -228,18 +229,58 @@ struct usb_ehci {
 	u32	epctrl3;	/* 0x1cc - End Point Control 3 */
 	u32	epctrl4;	/* 0x1d0 - End Point Control 4 */
 	u32	epctrl5;	/* 0x1d4 - End Point Control 5 */
-	u8	res10[0x28];
+	u8	res11[0x28];
 	u32	usbgenctrl;	/* 0x200 - USB General Control */
 	u32	isiphyctrl;	/* 0x204 - On-Chip PHY Control */
-	u8	res11[0x1F8];
+	u8	res12[0x1F8];
 	u32	snoop1;		/* 0x400 - Snoop 1 */
 	u32	snoop2;		/* 0x404 - Snoop 2 */
 	u32	age_cnt_limit;	/* 0x408 - Age Count Threshold */
 	u32	prictrl;	/* 0x40c - Priority Control */
 	u32	sictrl;		/* 0x410 - System Interface Control */
-	u8	res12[0xEC];
+	u8	res13[0xEC];
 	u32	control;	/* 0x500 - Control */
-	u8	res13[0xafc];
+	u8	res14[0xafc];
 };
+
+/*
+ * For MXC SOCs
+ */
+
+/* values for portsc field */
+#define MXC_EHCI_PHY_LOW_POWER_SUSPEND	(1 << 23)
+#define MXC_EHCI_FORCE_FS		(1 << 24)
+#define MXC_EHCI_UTMI_8BIT		(0 << 28)
+#define MXC_EHCI_UTMI_16BIT		(1 << 28)
+#define MXC_EHCI_SERIAL			(1 << 29)
+#define MXC_EHCI_MODE_UTMI		(0 << 30)
+#define MXC_EHCI_MODE_PHILIPS		(1 << 30)
+#define MXC_EHCI_MODE_ULPI		(2 << 30)
+#define MXC_EHCI_MODE_SERIAL		(3 << 30)
+
+/* values for flags field */
+#define MXC_EHCI_INTERFACE_DIFF_UNI	(0 << 0)
+#define MXC_EHCI_INTERFACE_DIFF_BI	(1 << 0)
+#define MXC_EHCI_INTERFACE_SINGLE_UNI	(2 << 0)
+#define MXC_EHCI_INTERFACE_SINGLE_BI	(3 << 0)
+#define MXC_EHCI_INTERFACE_MASK		(0xf)
+
+#define MXC_EHCI_POWER_PINS_ENABLED	(1 << 5)
+#define MXC_EHCI_PWR_PIN_ACTIVE_HIGH	(1 << 6)
+#define MXC_EHCI_OC_PIN_ACTIVE_LOW	(1 << 7)
+#define MXC_EHCI_TTL_ENABLED		(1 << 8)
+
+#define MXC_EHCI_INTERNAL_PHY		(1 << 9)
+#define MXC_EHCI_IPPUE_DOWN		(1 << 10)
+#define MXC_EHCI_IPPUE_UP		(1 << 11)
+
+/* Board-specific initialization */
+int board_ehci_hcd_init(int port);
+
+/* CPU-specific abstracted-out IOMUX init */
+#ifdef CONFIG_MX51
+void setup_iomux_usb_h1(void);
+void setup_iomux_usb_h2(void);
+#endif
 
 #endif /* _EHCI_FSL_H */

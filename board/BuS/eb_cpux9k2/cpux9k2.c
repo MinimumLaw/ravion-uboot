@@ -59,8 +59,6 @@ DECLARE_GLOBAL_DATA_PTR;
 int board_init(void)
 {
 	at91_pio_t *pio	= (at91_pio_t *) ATMEL_BASE_PIO;
-	/* Enable Ctrlc */
-	console_init_f();
 
 	/* Correct IRDA resistor problem / Set PA23_TXD in Output */
 	writel(ATMEL_PMX_AA_TXD2, &pio->pioa.oer);
@@ -93,7 +91,6 @@ int misc_init_r(void)
 	uchar	midx;
 	uchar	macn6, macn7;
 
-#ifdef CONFIG_NET_MULTI
 	if (getenv("ethaddr") == NULL) {
 		if (i2c_read(CONFIG_SYS_I2C_EEPROM_ADDR, 0x00,
 				CONFIG_SYS_I2C_EEPROM_ADDR_LEN,
@@ -117,7 +114,6 @@ int misc_init_r(void)
 				puts("Error: invalid MAC at EEPROM\n");
 		}
 	}
-#endif
 	gd->jt[XF_do_reset] = (void *) do_reset;
 
 #ifdef CONFIG_STATUS_LED
@@ -271,9 +267,9 @@ int drv_video_init(void)
 		display_height = 256;
 	printf("%ld x %ld pixel matrix\n", display_width, display_height);
 
-	/* RWH = 7 | RWS =7  | TDF = 15 | NWS = 0x7F */
-	csr =	AT91_SMC_CSR_RWHOLD(7) | AT91_SMC_CSR_RWSETUP(7) |
-		AT91_SMC_CSR_TDF(15) | AT91_SMC_CSR_NWS(127) |
+	/* RWH = 2 | RWS =2  | TDF = 4 | NWS = 0x6 */
+	csr =	AT91_SMC_CSR_RWHOLD(2) | AT91_SMC_CSR_RWSETUP(2) |
+		AT91_SMC_CSR_TDF(4) | AT91_SMC_CSR_NWS(6) |
 		AT91_SMC_CSR_ACSS_STANDARD | AT91_SMC_CSR_DBW_16 |
 		AT91_SMC_CSR_BAT_16 | AT91_SMC_CSR_WSEN;
 	writel(csr, &mc->smc.csr[2]);

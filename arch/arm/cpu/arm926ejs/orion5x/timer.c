@@ -25,7 +25,7 @@
  */
 
 #include <common.h>
-#include <asm/arch/orion5x.h>
+#include <asm/io.h>
 
 #define UBOOT_CNTR	0	/* counter to use for uboot timer */
 
@@ -92,8 +92,8 @@ static inline ulong read_timer(void)
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define timestamp gd->tbl
-#define lastdec gd->lastinc
+#define timestamp gd->arch.tbl
+#define lastdec gd->arch.lastinc
 
 ulong get_timer_masked(void)
 {
@@ -166,4 +166,22 @@ void timer_init_r(void)
 	/* init the timestamp and lastdec value */
 	lastdec = read_timer();
 	timestamp = 0;
+}
+
+/*
+ * This function is derived from PowerPC code (read timebase as long long).
+ * On ARM it just returns the timer value.
+ */
+unsigned long long get_ticks(void)
+{
+	return get_timer(0);
+}
+
+/*
+ * This function is derived from PowerPC code (timebase clock frequency).
+ * On ARM it returns the number of timer ticks per second.
+ */
+ulong get_tbclk (void)
+{
+	return (ulong)CONFIG_SYS_HZ;
 }

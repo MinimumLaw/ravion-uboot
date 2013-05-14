@@ -62,11 +62,7 @@ static int display_banner(void)
 
 static int init_baudrate(void)
 {
-	char baudrate[15];
-	int i = getenv_f("baudrate", baudrate, sizeof(baudrate));
-	gd->bd->bi_baudrate = gd->baudrate = (i > 0)
-	    ? simple_strtoul(baudrate, NULL, 10)
-	    : CONFIG_BAUDRATE;
+	gd->baudrate = getenv_ulong("baudrate", 10, CONFIG_BAUDRATE);
 	return 0;
 }
 
@@ -81,8 +77,8 @@ static void display_global_data(void)
 	bd = gd->bd;
 	printf(" gd: %p\n", gd);
 	printf(" |-flags: %lx\n", gd->flags);
-	printf(" |-board_type: %lx\n", gd->board_type);
-	printf(" |-baudrate: %lu\n", gd->baudrate);
+	printf(" |-board_type: %lx\n", gd->arch.board_type);
+	printf(" |-baudrate: %u\n", gd->baudrate);
 	printf(" |-have_console: %lx\n", gd->have_console);
 	printf(" |-ram_size: %lx\n", gd->ram_size);
 	printf(" |-env_addr: %lx\n", gd->env_addr);
@@ -90,7 +86,6 @@ static void display_global_data(void)
 	printf(" |-jt(%p): %p\n", gd->jt, *(gd->jt));
 	printf(" \\-bd: %p\n", gd->bd);
 	printf("   |-bi_baudrate: %x\n", bd->bi_baudrate);
-	printf("   |-bi_ip_addr: %lx\n", bd->bi_ip_addr);
 	printf("   |-bi_boot_params: %lx\n", bd->bi_boot_params);
 	printf("   |-bi_memstart: %lx\n", bd->bi_memstart);
 	printf("   |-bi_memsize: %lx\n", bd->bi_memsize);
@@ -101,6 +96,13 @@ static void display_global_data(void)
 
 #define CPLB_PAGE_SIZE (4 * 1024 * 1024)
 #define CPLB_PAGE_MASK (~(CPLB_PAGE_SIZE - 1))
+#if defined(__ADSPBF60x__)
+#define CPLB_EX_PAGE_SIZE (16 * 1024 * 1024)
+#define CPLB_EX_PAGE_MASK (~(CPLB_EX_PAGE_SIZE - 1))
+#else
+#define CPLB_EX_PAGE_SIZE CPLB_PAGE_SIZE
+#define CPLB_EX_PAGE_MASK CPLB_PAGE_MASK
+#endif
 void init_cplbtables(void)
 {
 	volatile uint32_t *ICPLB_ADDR, *ICPLB_DATA;
@@ -132,6 +134,11 @@ void init_cplbtables(void)
 	icplb_add(0xFFA00000, L1_IMEMORY);
 	dcplb_add(0xFF800000, L1_DMEMORY);
 	++i;
+#if defined(__ADSPBF60x__)
+	icplb_add(0x0, 0x0);
+	dcplb_add(CONFIG_SYS_FLASH_BASE, SDRAM_EBIU);
+	++i;
+#endif
 
 	if (CONFIG_MEM_SIZE) {
 		uint32_t mbase = CONFIG_SYS_MONITOR_BASE;
@@ -155,9 +162,11 @@ void init_cplbtables(void)
 		}
 	}
 
+#ifndef __ADSPBF60x__
 	icplb_add(0x20000000, SDRAM_INON_CHBL);
 	dcplb_add(0x20000000, SDRAM_EBIU);
 	++i;
+#endif
 
 	/* Add entries for the rest of external RAM up to the bootrom */
 	extern_memory = 0;
@@ -172,10 +181,11 @@ void init_cplbtables(void)
 	++i;
 #endif
 
-	while (i < 16 && extern_memory < (CONFIG_SYS_MONITOR_BASE & CPLB_PAGE_MASK)) {
+	while (i < 16 && extern_memory <
+		(CONFIG_SYS_MONITOR_BASE & CPLB_EX_PAGE_MASK)) {
 		icplb_add(extern_memory, SDRAM_IGENERIC);
 		dcplb_add(extern_memory, SDRAM_DGENERIC);
-		extern_memory += CPLB_PAGE_SIZE;
+		extern_memory += CPLB_EX_PAGE_SIZE;
 		++i;
 	}
 	while (i < 16) {
@@ -183,6 +193,46 @@ void init_cplbtables(void)
 		dcplb_add(0, 0);
 		++i;
 	}
+}
+
+static int global_board_data_init(void)
+{
+#ifndef CONFIG_SYS_GBL_DATA_ADDR
+# define CONFIG_SYS_GBL_DATA_ADDR 0
+#endif
+#ifndef CONFIG_SYS_BD_INFO_ADDR
+# define CONFIG_SYS_BD_INFO_ADDR 0
+#endif
+
+	bd_t *bd;
+
+	if (CONFIG_SYS_GBL_DATA_ADDR) {
+		gd = (gd_t *) (CONFIG_SYS_GBL_DATA_ADDR);
+		memset((void *)gd, 0, GENERATED_GBL_DATA_SIZE);
+	} else {
+		static gd_t _bfin_gd;
+		gd = &_bfin_gd;
+	}
+
+	if (CONFIG_SYS_BD_INFO_ADDR) {
+		bd = (bd_t *) (CONFIG_SYS_BD_INFO_ADDR);
+		memset(bd, 0, GENERATED_BD_INFO_SIZE);
+	} else {
+		static bd_t _bfin_bd;
+		bd = &_bfin_bd;
+	}
+	gd->bd = bd;
+
+	bd->bi_r_version = version_string;
+	bd->bi_cpu = __stringify(CONFIG_BFIN_CPU);
+	bd->bi_board_name = BFIN_BOARD_NAME;
+	bd->bi_vco = get_vco();
+	bd->bi_cclk = get_cclk();
+	bd->bi_sclk = get_sclk();
+	bd->bi_memstart = CONFIG_SYS_SDRAM_BASE;
+	bd->bi_memsize = CONFIG_SYS_MAX_RAM_SIZE;
+
+	return 0;
 }
 
 /*
@@ -205,7 +255,6 @@ extern int timer_init(void);
 
 void board_init_f(ulong bootflag)
 {
-	bd_t *bd;
 	char buf[32];
 
 #ifdef CONFIG_BOARD_EARLY_INIT_F
@@ -238,21 +287,8 @@ void board_init_f(ulong bootflag)
 		hang();
 #endif
 	serial_early_puts("Init global data\n");
-	gd = (gd_t *) (CONFIG_SYS_GBL_DATA_ADDR);
-	memset((void *)gd, 0, GENERATED_GBL_DATA_SIZE);
 
-	bd = (bd_t *) (CONFIG_SYS_BD_INFO_ADDR);
-	gd->bd = bd;
-	memset((void *)bd, 0, GENERATED_BD_INFO_SIZE);
-
-	bd->bi_r_version = version_string;
-	bd->bi_cpu = MK_STR(CONFIG_BFIN_CPU);
-	bd->bi_board_name = BFIN_BOARD_NAME;
-	bd->bi_vco = get_vco();
-	bd->bi_cclk = get_cclk();
-	bd->bi_sclk = get_sclk();
-	bd->bi_memstart = CONFIG_SYS_SDRAM_BASE;
-	bd->bi_memsize = CONFIG_SYS_MAX_RAM_SIZE;
+	global_board_data_init();
 
 	/* Initialize */
 	serial_early_puts("IRQ init\n");
@@ -263,9 +299,7 @@ void board_init_f(ulong bootflag)
 	init_baudrate();
 	serial_early_puts("Serial init\n");
 	serial_init();
-#ifdef CONFIG_SERIAL_MULTI
 	serial_initialize();
-#endif
 	serial_early_puts("Console init flash\n");
 	console_init_f();
 	serial_early_puts("End of early debugging\n");
@@ -276,11 +310,17 @@ void board_init_f(ulong bootflag)
 
 	printf("Clock: VCO: %s MHz, ", strmhz(buf, get_vco()));
 	printf("Core: %s MHz, ", strmhz(buf, get_cclk()));
+#if defined(__ADSPBF60x__)
+	printf("System0: %s MHz, ", strmhz(buf, get_sclk0()));
+	printf("System1: %s MHz, ", strmhz(buf, get_sclk1()));
+	printf("Dclk: %s MHz\n", strmhz(buf, get_dclk()));
+#else
 	printf("System: %s MHz\n", strmhz(buf, get_sclk()));
+#endif
 
 	if (CONFIG_MEM_SIZE) {
 		printf("RAM:   ");
-		print_size(bd->bi_memsize, "\n");
+		print_size(gd->bd->bi_memsize, "\n");
 	}
 
 #if defined(CONFIG_POST)
@@ -298,21 +338,13 @@ static void board_net_init_r(bd_t *bd)
 	bb_miiphy_init();
 #endif
 #ifdef CONFIG_CMD_NET
-	char *s;
-
-	if ((s = getenv("bootfile")) != NULL)
-		copy_filename(BootFile, s, sizeof(BootFile));
-
-	bd->bi_ip_addr = getenv_IPaddr("ipaddr");
-
 	printf("Net:   ");
-	eth_initialize(gd->bd);
+	eth_initialize(bd);
 #endif
 }
 
 void board_init_r(gd_t * id, ulong dest_addr)
 {
-	char *s;
 	bd_t *bd;
 	gd = id;
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
@@ -374,8 +406,7 @@ void board_init_r(gd_t * id, ulong dest_addr)
 #endif
 
 	/* Initialize from environment */
-	if ((s = getenv("loadaddr")) != NULL)
-		load_addr = simple_strtoul(s, NULL, 16);
+	load_addr = getenv_ulong("loadaddr", 16, load_addr);
 
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */

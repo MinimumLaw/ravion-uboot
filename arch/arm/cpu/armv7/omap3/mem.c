@@ -42,14 +42,7 @@ static const u32 gpmc_m_nand[GPMC_MAX_REG] = {
 	M_NAND_GPMC_CONFIG5,
 	M_NAND_GPMC_CONFIG6, 0
 };
-
-#if defined(CONFIG_ENV_IS_IN_NAND)
-#define GPMC_CS 0
-#else
-#define GPMC_CS 1
-#endif
-
-#endif
+#endif /* CONFIG_CMD_NAND */
 
 #if defined(CONFIG_CMD_ONENAND)
 static const u32 gpmc_onenand[GPMC_MAX_REG] = {
@@ -60,14 +53,7 @@ static const u32 gpmc_onenand[GPMC_MAX_REG] = {
 	ONENAND_GPMC_CONFIG5,
 	ONENAND_GPMC_CONFIG6, 0
 };
-
-#if defined(CONFIG_ENV_IS_IN_ONENAND)
-#define GPMC_CS 0
-#else
-#define GPMC_CS 1
-#endif
-
-#endif
+#endif /* CONFIG_CMD_ONENAND */
 
 /********************************************************
  *  mem_ok() - test used to see if timings are correct
@@ -86,6 +72,7 @@ u32 mem_ok(u32 cs)
 	writel(0x0, addr + 4);		/* remove pattern off the bus */
 	val1 = readl(addr + 0x400);	/* get pos A value */
 	val2 = readl(addr);		/* get val2 */
+	writel(0x0, addr + 0x400);	/* clear pos A */
 
 	if ((val1 != 0) || (val2 != pattern))	/* see if pos A val changed */
 		return 0;
@@ -105,9 +92,15 @@ void enable_gpmc_cs_config(const u32 *gpmc_config, struct gpmc_cs *cs, u32 base,
 	writel(gpmc_config[3], &cs->config4);
 	writel(gpmc_config[4], &cs->config5);
 	writel(gpmc_config[5], &cs->config6);
-	/* Enable the config */
-	writel((((size & 0xF) << 8) | ((base >> 24) & 0x3F) |
-		(1 << 6)), &cs->config7);
+
+	/*
+	 * Enable the config.  size is the CS size and goes in
+	 * bits 11:8.  We set bit 6 to enable this CS and the base
+	 * address goes into bits 5:0.
+	 */
+	 writel((size << 8) | (GPMC_CS_ENABLE << 6) |
+				 ((base >> 24) & GPMC_BASEADDR_MASK),
+				 &cs->config7);
 	sdelay(2000);
 }
 

@@ -27,8 +27,11 @@
 /*
  * High Level Board Configuration Options
  */
-#define	CONFIG_PXA250			1	/* Intel PXA255 CPU */
+#define	CONFIG_CPU_PXA25X			1	/* Intel PXA255 CPU */
 #define	CONFIG_PALMTC			1	/* Palm Tungsten|C board */
+
+/* we will never enable dcache, because we have to setup MMU first */
+#define CONFIG_SYS_DCACHE_OFF
 
 /*
  * Environment settings
@@ -58,8 +61,8 @@
  */
 #define	CONFIG_PXA_SERIAL
 #define	CONFIG_FFUART			1
+#define CONFIG_CONS_INDEX		3
 #define	CONFIG_BAUDRATE			115200
-#define	CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /*
  * Bootloader Components Configuration
@@ -71,13 +74,15 @@
 #define	CONFIG_CMD_ENV
 #define	CONFIG_CMD_MMC
 #define	CONFIG_LCD
+#define	CONFIG_PXA_LCD
 
 /*
  * MMC Card Configuration
  */
 #ifdef	CONFIG_CMD_MMC
 #define	CONFIG_MMC
-#define	CONFIG_PXA_MMC
+#define	CONFIG_GENERIC_MMC
+#define	CONFIG_PXA_MMC_GENERIC
 #define	CONFIG_SYS_MMC_BASE		0xF0000000
 #define	CONFIG_CMD_FAT
 #define	CONFIG_CMD_EXT2
@@ -110,7 +115,6 @@
  * HUSH Shell Configuration
  */
 #define	CONFIG_SYS_HUSH_PARSER		1
-#define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 #define	CONFIG_SYS_LONGHELP
 #ifdef	CONFIG_SYS_HUSH_PARSER
@@ -133,15 +137,6 @@
 #define	CONFIG_SYS_CPUSPEED		0x161		/* 400MHz;L=1 M=3 T=1 */
 
 /*
- * Stack sizes
- */
-#define	CONFIG_STACKSIZE		(128*1024)	/* regular stack */
-#ifdef	CONFIG_USE_IRQ
-#define	CONFIG_STACKSIZE_IRQ		(4*1024)	/* IRQ stack */
-#define	CONFIG_STACKSIZE_FIQ		(4*1024)	/* FIQ stack */
-#endif
-
-/*
  * DRAM Map
  */
 #define	CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
@@ -157,7 +152,7 @@
 #define	CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_DRAM_BASE
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define	CONFIG_SYS_INIT_SP_ADDR		(GENERATED_GBL_DATA_SIZE + PHYS_SDRAM_1)
+#define	CONFIG_SYS_INIT_SP_ADDR		0xfffff800
 
 /*
  * NOR FLASH

@@ -28,11 +28,8 @@
 #include <asm/ppc4xx-gpio.h>
 #include <asm/global_data.h>
 
+#include "405ep.h"
 #include <gdsys_fpga.h>
-
-#define LATCH0_BASE (CONFIG_SYS_LATCH_BASE)
-#define LATCH1_BASE (CONFIG_SYS_LATCH_BASE + 0x100)
-#define LATCH2_BASE (CONFIG_SYS_LATCH_BASE + 0x200)
 
 #define REFLECTION_TESTPATTERN 0xdede
 #define REFLECTION_TESTPATTERN_INV (~REFLECTION_TESTPATTERN & 0xffff)
@@ -41,24 +38,23 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int get_fpga_state(unsigned dev)
 {
-	return gd->fpga_state[dev];
+	return gd->arch.fpga_state[dev];
 }
 
 void print_fpga_state(unsigned dev)
 {
-	if (gd->fpga_state[dev] & FPGA_STATE_DONE_FAILED)
+	if (gd->arch.fpga_state[dev] & FPGA_STATE_DONE_FAILED)
 		puts("       Waiting for FPGA-DONE timed out.\n");
-	if (gd->fpga_state[dev] & FPGA_STATE_REFLECTION_FAILED)
+	if (gd->arch.fpga_state[dev] & FPGA_STATE_REFLECTION_FAILED)
 		puts("       FPGA reflection test failed.\n");
 }
 
 int board_early_init_f(void)
 {
 	unsigned k;
-	unsigned ctr;
 
 	for (k = 0; k < CONFIG_SYS_FPGA_COUNT; ++k)
-		gd->fpga_state[k] = 0;
+		gd->arch.fpga_state[k] = 0;
 
 	mtdcr(UIC0SR, 0xFFFFFFFF);	/* clear all ints */
 	mtdcr(UIC0ER, 0x00000000);	/* disable all ints */
@@ -73,43 +69,45 @@ int board_early_init_f(void)
 	 * -> ca. 15 us
 	 */
 	mtebc(EBC0_CFG, 0xa8400000);	/* ebc always driven */
+	return 0;
+}
+
+int board_early_init_r(void)
+{
+	unsigned k;
+	unsigned ctr;
+
+	for (k = 0; k < CONFIG_SYS_FPGA_COUNT; ++k)
+		gd->arch.fpga_state[k] = 0;
 
 	/*
-	 * setup io-latches for reset
+	 * reset FPGA
 	 */
-	out_le16((void *)LATCH0_BASE, CONFIG_SYS_LATCH0_RESET);
-	out_le16((void *)LATCH1_BASE, CONFIG_SYS_LATCH1_RESET);
+	gd405ep_init();
 
-	/*
-	 * set "startup-finished"-gpios
-	 */
-	gpio_write_bit(21, 0);
-	gpio_write_bit(22, 1);
+	gd405ep_set_fpga_reset(1);
 
-	/*
-	 * wait for fpga-done
-	 */
+	gd405ep_setup_hw();
+
 	for (k = 0; k < CONFIG_SYS_FPGA_COUNT; ++k) {
 		ctr = 0;
-		while (!(in_le16((void *)LATCH2_BASE)
-			& CONFIG_SYS_FPGA_DONE(k))) {
+		while (!gd405ep_get_fpga_done(k)) {
 			udelay(100000);
 			if (ctr++ > 5) {
-				gd->fpga_state[k] |= FPGA_STATE_DONE_FAILED;
+				gd->arch.fpga_state[k] |=
+					FPGA_STATE_DONE_FAILED;
 				break;
 			}
 		}
 	}
 
-	/*
-	 * setup io-latches for boot (stop reset)
-	 */
 	udelay(10);
-	out_le16((void *)LATCH0_BASE, CONFIG_SYS_LATCH0_BOOT);
-	out_le16((void *)LATCH1_BASE, CONFIG_SYS_LATCH1_BOOT);
+
+	gd405ep_set_fpga_reset(0);
 
 	for (k = 0; k < CONFIG_SYS_FPGA_COUNT; ++k) {
-		ihs_fpga_t *fpga = (ihs_fpga_t *) CONFIG_SYS_FPGA_BASE(k);
+		struct ihs_fpga *fpga =
+			(struct ihs_fpga *)CONFIG_SYS_FPGA_BASE(k);
 #ifdef CONFIG_SYS_FPGA_NO_RFL_HI
 		u16 *reflection_target = &fpga->reflection_low;
 #else
@@ -129,7 +127,7 @@ int board_early_init_f(void)
 
 			udelay(100000);
 			if (ctr++ > 5) {
-				gd->fpga_state[k] |=
+				gd->arch.fpga_state[k] |=
 					FPGA_STATE_REFLECTION_FAILED;
 				break;
 			}

@@ -39,13 +39,6 @@
 #define PRINTF(fmt,args...)
 #endif
 
-#ifndef	TRUE
-#define TRUE            1
-#endif
-#ifndef FALSE
-#define FALSE           0
-#endif
-
 /*#if defined(CONFIG_CMD_DATE) */
 /*#include <rtc.h> */
 /*#endif */
@@ -214,9 +207,9 @@ int wait_for_fdc_int(void)
 		timeout--;
 		udelay(10);
 		if(timeout==0) /* timeout occured */
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
 /* reads a byte from the FIFO of the FDC and checks direction and RQM bit
@@ -244,7 +237,7 @@ int fdc_need_more_output(void)
 			c=(unsigned char)read_fdc_byte();
 			printf("Error: more output: %x\n",c);
 	}
-	return TRUE;
+	return true;
 }
 
 
@@ -260,10 +253,10 @@ int write_fdc_byte(unsigned char val)
 		udelay(10);
 		fdc_need_more_output();
 		if(timeout==0) /* timeout occured */
-			return FALSE;
+			return false;
 	}
 	write_fdc_reg(FDC_FIFO,val);
-	return TRUE;
+	return true;
 }
 
 /* sets up all FDC commands and issues it to the FDC. If
@@ -344,9 +337,9 @@ int fdc_issue_cmd(FDC_COMMAND_STRUCT *pCMD,FD_GEO_STRUCT *pFG)
 	}
 	for(i=0;i<pCMD->cmdlen;i++) {
 		/* PRINTF("write cmd%d = 0x%02X\n",i,pCMD->cmd[i]); */
-		if(write_fdc_byte(pCMD->cmd[i])==FALSE) {
+		if (write_fdc_byte(pCMD->cmd[i]) == false) {
 			PRINTF("Error: timeout while issue cmd%d\n",i);
-			return FALSE;
+			return false;
 		}
 	}
 	timeout=FDC_TIME_OUT;
@@ -355,12 +348,12 @@ int fdc_issue_cmd(FDC_COMMAND_STRUCT *pCMD,FD_GEO_STRUCT *pFG)
 			timeout--;
 			if(timeout==0) {
 				PRINTF(" timeout while reading result%d MSR=0x%02X\n",i,read_fdc_reg(FDC_MSR));
-				return FALSE;
+				return false;
 			}
 		}
 		pCMD->result[i]=(unsigned char)read_fdc_byte();
 	}
-	return TRUE;
+	return true;
 }
 
 /* selects the drive assigned in the cmd structur and
@@ -391,9 +384,10 @@ void stop_fdc_drive(FDC_COMMAND_STRUCT *pCMD)
 int fdc_recalibrate(FDC_COMMAND_STRUCT *pCMD,FD_GEO_STRUCT *pFG)
 {
 	pCMD->cmd[COMMAND]=FDC_CMD_RECALIBRATE;
-	if(fdc_issue_cmd(pCMD,pFG)==FALSE)
-		return FALSE;
-	while(wait_for_fdc_int()!=TRUE);
+	if (fdc_issue_cmd(pCMD, pFG) == false)
+		return false;
+	while (wait_for_fdc_int() != true);
+
 	pCMD->cmd[COMMAND]=FDC_CMD_SENSE_INT;
 	return(fdc_issue_cmd(pCMD,pFG));
 }
@@ -403,9 +397,10 @@ int fdc_recalibrate(FDC_COMMAND_STRUCT *pCMD,FD_GEO_STRUCT *pFG)
 int fdc_seek(FDC_COMMAND_STRUCT *pCMD,FD_GEO_STRUCT *pFG)
 {
 	pCMD->cmd[COMMAND]=FDC_CMD_SEEK;
-	if(fdc_issue_cmd(pCMD,pFG)==FALSE)
-		return FALSE;
-	while(wait_for_fdc_int()!=TRUE);
+	if (fdc_issue_cmd(pCMD, pFG) == false)
+		return false;
+	while (wait_for_fdc_int() != true);
+
 	pCMD->cmd[COMMAND]=FDC_CMD_SENSE_INT;
 	return(fdc_issue_cmd(pCMD,pFG));
 }
@@ -421,15 +416,15 @@ int fdc_terminate(FDC_COMMAND_STRUCT *pCMD)
 	for(i=0;i<7;i++) {
 		pCMD->result[i]=(unsigned char)read_fdc_byte();
 	}
-	return TRUE;
+	return true;
 }
 
 /* reads data from FDC, seek commands are issued automatic */
 int fdc_read_data(unsigned char *buffer, unsigned long blocks,FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 {
   /* first seek to start address */
-	unsigned long len,lastblk,readblk,i,timeout,ii,offset;
-	unsigned char pcn,c,retriesrw,retriescal;
+	unsigned long len,readblk,i,timeout,ii,offset;
+	unsigned char c,retriesrw,retriescal;
 	unsigned char *bufferw; /* working buffer */
 	int sect_size;
 	int flags;
@@ -440,20 +435,21 @@ int fdc_read_data(unsigned char *buffer, unsigned long blocks,FDC_COMMAND_STRUCT
 	retriesrw=0;
 	retriescal=0;
 	offset=0;
-	if(fdc_seek(pCMD,pFG)==FALSE) {
+	if (fdc_seek(pCMD, pFG) == false) {
 		stop_fdc_drive(pCMD);
-		enable_interrupts();
-		return FALSE;
+		if (flags)
+			enable_interrupts();
+		return false;
 	}
 	if((pCMD->result[STATUS_0]&0x20)!=0x20) {
 		printf("Seek error Status: %02X\n",pCMD->result[STATUS_0]);
 		stop_fdc_drive(pCMD);
-		enable_interrupts();
-		return FALSE;
+		if (flags)
+			enable_interrupts();
+		return false;
 	}
-	pcn=pCMD->result[STATUS_PCN]; /* current track */
 	/* now determine the next seek point */
-	lastblk=pCMD->blnr + blocks;
+	/*	lastblk=pCMD->blnr + blocks; */
 	/*	readblk=(pFG->head*pFG->sect)-(pCMD->blnr%(pFG->head*pFG->sect)); */
 	readblk=pFG->sect-(pCMD->blnr%pFG->sect);
 	PRINTF("1st nr of block possible read %ld start %ld\n",readblk,pCMD->blnr);
@@ -465,10 +461,11 @@ int fdc_read_data(unsigned char *buffer, unsigned long blocks,FDC_COMMAND_STRUCT
 retryrw:
 		len=sect_size * readblk;
 		pCMD->cmd[COMMAND]=FDC_CMD_READ;
-		if(fdc_issue_cmd(pCMD,pFG)==FALSE) {
+		if (fdc_issue_cmd(pCMD, pFG) == false) {
 			stop_fdc_drive(pCMD);
-			enable_interrupts();
-			return FALSE;
+			if (flags)
+				enable_interrupts();
+			return false;
 		}
 		for (i=0;i<len;i++) {
 			timeout=FDC_TIME_OUT;
@@ -488,15 +485,17 @@ retryrw:
 					if(retriesrw++>FDC_RW_RETRIES) {
 						if (retriescal++>FDC_CAL_RETRIES) {
 							stop_fdc_drive(pCMD);
-							enable_interrupts();
-							return FALSE;
+							if (flags)
+								enable_interrupts();
+							return false;
 						}
 						else {
 							PRINTF(" trying to recalibrate Try %d\n",retriescal);
-							if(fdc_recalibrate(pCMD,pFG)==FALSE) {
+							if (fdc_recalibrate(pCMD, pFG) == false) {
 								stop_fdc_drive(pCMD);
-								enable_interrupts();
-								return FALSE;
+								if (flags)
+									enable_interrupts();
+								return false;
 							}
 							retriesrw=0;
 							goto retrycal;
@@ -508,7 +507,7 @@ retryrw:
 					} /* else >FDC_RW_RETRIES */
 				}/* if output */
 				timeout--;
-			}while(TRUE);
+			} while (true);
 		} /* for len */
 		/* the last sector of a track or all data has been read,
 		 * we need to get the results */
@@ -526,21 +525,22 @@ retryrw:
 			readblk=blocks;
 retrycal:
 		/* a seek is necessary */
-		if(fdc_seek(pCMD,pFG)==FALSE) {
+		if (fdc_seek(pCMD, pFG) == false) {
 			stop_fdc_drive(pCMD);
-			enable_interrupts();
-			return FALSE;
+			if (flags)
+				enable_interrupts();
+			return false;
 		}
 		if((pCMD->result[STATUS_0]&0x20)!=0x20) {
 			PRINTF("Seek error Status: %02X\n",pCMD->result[STATUS_0]);
 			stop_fdc_drive(pCMD);
-			return FALSE;
+			return false;
 		}
-		pcn=pCMD->result[STATUS_PCN]; /* current track */
-	}while(TRUE); /* start over */
+	} while (true); /* start over */
 	stop_fdc_drive(pCMD); /* switch off drive */
-	enable_interrupts();
-	return TRUE;
+	if (flags)
+		enable_interrupts();
+	return true;
 }
 
 /* Scan all drives and check if drive is present and disk is inserted */
@@ -554,20 +554,20 @@ int fdc_check_drive(FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 		pCMD->drive=drives;
 		select_fdc_drive(pCMD);
 		pCMD->blnr=0; /* set to the 1st block */
-		if(fdc_recalibrate(pCMD,pFG)==FALSE)
+		if (fdc_recalibrate(pCMD, pFG) == false)
 			continue;
 		if((pCMD->result[STATUS_0]&0x10)==0x10)
 			continue;
 		/* ok drive connected check for disk */
 		state|=(1<<drives);
 		pCMD->blnr=pFG->size; /* set to the last block */
-		if(fdc_seek(pCMD,pFG)==FALSE)
+		if (fdc_seek(pCMD, pFG) == false)
 			continue;
 		pCMD->blnr=0; /* set to the 1st block */
-		if(fdc_recalibrate(pCMD,pFG)==FALSE)
+		if (fdc_recalibrate(pCMD, pFG) == false)
 			continue;
 		pCMD->cmd[COMMAND]=FDC_CMD_READ_ID;
-		if(fdc_issue_cmd(pCMD,pFG)==FALSE)
+		if (fdc_issue_cmd(pCMD, pFG) == false)
 			continue;
 		state|=(0x10<<drives);
 	}
@@ -579,7 +579,7 @@ int fdc_check_drive(FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 			((state&(0x10<<i))==(0x10<<i)) ? pFG->name : "");
 	}
 	pCMD->flags=state;
-	return TRUE;
+	return true;
 }
 
 
@@ -606,9 +606,9 @@ int fdc_setup(int drive, FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 	write_fdc_reg(FDC_CCR,pFG->rate);
 	/* then initialize the DSR */
 	write_fdc_reg(FDC_DSR,pFG->rate);
-	if(wait_for_fdc_int()==FALSE) {
+	if (wait_for_fdc_int() == false) {
 			PRINTF("Time Out after writing CCR\n");
-			return FALSE;
+			return false;
 	}
 	/* now issue sense Interrupt and status command
 	 * assuming only one drive present (drive 0) */
@@ -616,7 +616,7 @@ int fdc_setup(int drive, FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 	for(i=0;i<4;i++) {
 		/* issue sense interrupt for all 4 possible drives */
 		pCMD->cmd[COMMAND]=FDC_CMD_SENSE_INT;
-		if(fdc_issue_cmd(pCMD,pFG)==FALSE) {
+		if (fdc_issue_cmd(pCMD, pFG) == false) {
 			PRINTF("Sense Interrupt for drive %d failed\n",i);
 		}
 	}
@@ -624,24 +624,24 @@ int fdc_setup(int drive, FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 	pCMD->drive=drive;
 	select_fdc_drive(pCMD);
 	pCMD->cmd[COMMAND]=FDC_CMD_CONFIGURE;
-	if(fdc_issue_cmd(pCMD,pFG)==FALSE) {
+	if (fdc_issue_cmd(pCMD, pFG) == false) {
 		PRINTF(" configure timeout\n");
 		stop_fdc_drive(pCMD);
-		return FALSE;
+		return false;
 	}
 	/* issue specify command */
 	pCMD->cmd[COMMAND]=FDC_CMD_SPECIFY;
-	if(fdc_issue_cmd(pCMD,pFG)==FALSE) {
+	if (fdc_issue_cmd(pCMD, pFG) == false) {
 		PRINTF(" specify timeout\n");
 		stop_fdc_drive(pCMD);
-		return FALSE;
+		return false;
 
 	}
 	/* then, we clear the reset in the DOR */
 	/* fdc_check_drive(pCMD,pFG);	*/
 	/*	write_fdc_reg(FDC_DOR,0x04); */
 
-	return TRUE;
+	return true;
 }
 
 #if defined(CONFIG_CMD_FDOS)
@@ -659,30 +659,30 @@ int fdc_fdos_init (int drive)
 	FDC_COMMAND_STRUCT *pCMD = &cmd;
 
 	/* setup FDC and scan for drives  */
-	if(fdc_setup(drive,pCMD,pFG)==FALSE) {
+	if (fdc_setup(drive, pCMD, pFG) == false) {
 		printf("\n** Error in setup FDC **\n");
-		return FALSE;
+		return false;
 	}
-	if(fdc_check_drive(pCMD,pFG)==FALSE) {
+	if (fdc_check_drive(pCMD, pFG) == false) {
 		printf("\n** Error in check_drives **\n");
-		return FALSE;
+		return false;
 	}
 	if((pCMD->flags&(1<<drive))==0) {
 		/* drive not available */
 		printf("\n** Drive %d not available **\n",drive);
-		return FALSE;
+		return false;
 	}
 	if((pCMD->flags&(0x10<<drive))==0) {
 		/* no disk inserted */
 		printf("\n** No disk inserted in drive %d **\n",drive);
-		return FALSE;
+		return false;
 	}
 	/* ok, we have a valid source */
 	pCMD->drive=drive;
 
 	/* read first block */
 	pCMD->blnr=0;
-	return TRUE;
+	return true;
 }
 /**************************************************************************
 * int fdc_fdos_seek
@@ -739,14 +739,14 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		boot_drive=simple_strtoul(argv[2], NULL, 10);
 		break;
 	default:
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 	}
 	/* setup FDC and scan for drives  */
-	if(fdc_setup(boot_drive,pCMD,pFG)==FALSE) {
+	if (fdc_setup(boot_drive, pCMD, pFG) == false) {
 		printf("\n** Error in setup FDC **\n");
 		return 1;
 	}
-	if(fdc_check_drive(pCMD,pFG)==FALSE) {
+	if (fdc_check_drive(pCMD, pFG) == false) {
 		printf("\n** Error in check_drives **\n");
 		return 1;
 	}
@@ -764,7 +764,7 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	pCMD->drive=boot_drive;
 	/* read first block */
 	pCMD->blnr=0;
-	if(fdc_read_data((unsigned char *)addr,1,pCMD,pFG)==FALSE) {
+	if (fdc_read_data((unsigned char *)addr, 1, pCMD, pFG) == false) {
 		printf("\nRead error:");
 		for(i=0;i<7;i++)
 			printf("result%d: 0x%02X\n",i,pCMD->result[i]);
@@ -796,7 +796,7 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		nrofblk++;
 	printf("Loading %ld Bytes (%d blocks) at 0x%08lx..\n",imsize,nrofblk,addr);
 	pCMD->blnr=0;
-	if(fdc_read_data((unsigned char *)addr,nrofblk,pCMD,pFG)==FALSE) {
+	if (fdc_read_data((unsigned char *)addr, nrofblk, pCMD, pFG) == false) {
 		/* read image block */
 		printf("\nRead error:");
 		for(i=0;i<7;i++)

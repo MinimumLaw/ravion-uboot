@@ -57,11 +57,15 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-	__u_boot_cmd_start = .;
-	.u_boot_cmd : { *(.u_boot_cmd) }
-	__u_boot_cmd_end = .;
 
 	. = ALIGN(4);
+	.u_boot_list : {
+		KEEP(*(SORT(.u_boot_list*)));
+	}
+
+	. = ALIGN(4);
+
+	__image_copy_end = .;
 
 	.rel.dyn : {
 		__rel_dyn_start = .;
@@ -76,11 +80,17 @@ SECTIONS
 
 	_end = .;
 
-	.bss __rel_dyn_start (OVERLAY) : {
-		__bss_start = .;
-		*(.bss)
+	.bss_start __rel_dyn_start (OVERLAY) : {
+		KEEP(*(.__bss_start));
+	}
+
+	.bss __bss_start (OVERLAY) : {
+		*(.bss*)
 		 . = ALIGN(4);
-		__bss_end__ = .;
+		 __bss_end = .;
+	}
+	.bss_end __bss_end (OVERLAY) : {
+		KEEP(*(__bss_end));
 	}
 
 	/DISCARD/ : { *(.bss*) }

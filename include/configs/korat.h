@@ -102,7 +102,6 @@
 #define CONFIG_SYS_NS16550_CLK		get_serial_clock()
 #define CONFIG_SYS_EXT_SERIAL_CLOCK	11059200	/* ext. 11.059MHz clk	*/
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_SERIAL_MULTI	1
 
 #define CONFIG_SYS_BAUDRATE_TABLE						\
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200}
@@ -250,7 +249,6 @@
 #define CONFIG_HAS_ETH0
 #define CONFIG_SYS_RX_ETH_BUFFER	32	/* Number of ethernet rx	*/
 					/*   buffers & descriptors	*/
-#define CONFIG_NET_MULTI	1
 #define CONFIG_HAS_ETH1		1	/* add support for "eth1addr"	*/
 #define CONFIG_PHY1_ADDR	3
 

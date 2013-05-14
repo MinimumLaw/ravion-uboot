@@ -25,29 +25,37 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(ARCH).o
 
-SOBJS-y	+= bios.o
-SOBJS-y	+= bios_pci.o
-SOBJS-y	+= realmode_switch.o
-
-COBJS-y	+= bios_setup.o
+ifeq ($(CONFIG_SYS_GENERIC_BOARD),)
 COBJS-y	+= board.o
+endif
+
 COBJS-y	+= bootm.o
+COBJS-y	+= cmd_boot.o
+COBJS-y	+= gcc.o
+COBJS-y	+= init_helpers.o
+COBJS-y	+= init_wrappers.o
 COBJS-y	+= interrupts.o
 COBJS-$(CONFIG_SYS_PCAT_INTERRUPTS) += pcat_interrupts.o
 COBJS-$(CONFIG_SYS_GENERIC_TIMER) += pcat_timer.o
 COBJS-$(CONFIG_PCI) += pci.o
 COBJS-$(CONFIG_PCI) += pci_type1.o
-COBJS-y	+= realmode.o
-COBJS-y	+= timer.o
-COBJS-y	+= video_bios.o
-COBJS-y	+= video.o
-COBJS-y	+= zimage.o
+COBJS-y	+= relocate.o
+COBJS-y += physmem.o
+COBJS-y	+= string.o
+COBJS-$(CONFIG_SYS_X86_ISR_TIMER)	+= timer.o
+COBJS-$(CONFIG_VIDEO_VGA)	+= video.o
+COBJS-$(CONFIG_CMD_ZBOOT)	+= zimage.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
 
 $(LIB):	$(obj).depend $(OBJS)
 	$(call cmd_link_o_target, $(OBJS))
+
+$(PREFIXED_LIBGCC): $(NORMAL_LIBGCC)
+	$(OBJCOPY) $< $@ --prefix-symbols=__normal_
+
+$(LIB): $(PREFIXED_LIBGCC)
 
 #########################################################################
 

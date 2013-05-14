@@ -75,6 +75,9 @@
 
 #define CONFIG_BOARD_EARLY_INIT_F
 
+#define CONFIG_CMD_BOOTZ
+#define CONFIG_OF_LIBFDT
+
 /*
  * Memory Configuration
  */
@@ -129,7 +132,6 @@
 #define CONFIG_USART_BASE	ATMEL_BASE_DBGU
 #define CONFIG_USART_ID		0/* ignored in arm */
 
-#define CONFIG_SYS_BAUDRATE_TABLE	{115200 , 19200, 38400, 57600, 9600 }
 #define CONFIG_BAUDRATE			115200
 
 /*
@@ -147,7 +149,6 @@
 /*
  * Network Driver Setting
  */
-#define CONFIG_NET_MULTI
 #define CONFIG_DRIVER_AT91EMAC
 #define CONFIG_SYS_RX_ETH_BUFFER	16
 #define CONFIG_RMII
@@ -211,7 +212,6 @@
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT		"U-Boot> "
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_MAXARGS		16	/* max number of command args */
 /* Print Buffer Size */
@@ -227,7 +227,4 @@
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + SZ_4K \
 					- GENERATED_GBL_DATA_SIZE)
 
-#define CONFIG_STACKSIZE		SZ_32K	/* regular stack */
-#define CONFIG_STACKSIZE_IRQ		SZ_4K	/* Unsure if to big or to small*/
-#define CONFIG_STACKSIZE_FIQ		SZ_4K	/* Unsure if to big or to small*/
 #endif /* __AT91RM9200EK_CONFIG_H__ */

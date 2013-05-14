@@ -43,7 +43,7 @@ static const char * const weekdays[] = {
 
 int mk_date (const char *, struct rtc_time *);
 
-int do_date (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_date(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct rtc_time tm;
 	int rcode = 0;
@@ -93,8 +93,7 @@ int do_date (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 		break;
 	default:
-		cmd_usage(cmdtp);
-		rcode = 1;
+		rcode = CMD_RET_USAGE;
 	}
 
 	/* switch back to original I2C bus */

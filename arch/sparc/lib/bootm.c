@@ -36,7 +36,7 @@ extern void srmmu_init_cpu(unsigned int entry);
 extern void prepare_bootargs(char *bootargs);
 
 #ifdef CONFIG_USB_UHCI
-extern int usb_lowlevel_stop(void);
+extern int usb_lowlevel_stop(int index);
 #endif
 
 /* sparc kernel argument (the ROM vector) */
@@ -97,8 +97,6 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t * im
 	char *bootargs;
 	ulong initrd_start, initrd_end;
 	ulong rd_len;
-	unsigned int data, len, checksum;
-	unsigned int initrd_addr, kernend;
 	void (*kernel) (struct linux_romvec *, void *);
 	struct lmb *lmb = &images->lmb;
 	int ret;

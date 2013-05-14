@@ -25,6 +25,7 @@
 #include <stdio_dev.h>
 #include <version.h>
 #include <net.h>
+#include <atmel_mci.h>
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -32,11 +33,15 @@
 
 #include <asm/sections.h>
 #include <asm/arch/mmu.h>
+#include <asm/arch/hardware.h>
 
 #ifndef CONFIG_IDENT_STRING
 #define CONFIG_IDENT_STRING ""
 #endif
 
+#ifdef CONFIG_GENERIC_ATMEL_MCI
+#include <mmc.h>
+#endif
 DECLARE_GLOBAL_DATA_PTR;
 
 unsigned long monitor_flash_len;
@@ -48,6 +53,13 @@ static int __do_nothing(void)
 }
 int board_postclk_init(void) __attribute__((weak, alias("__do_nothing")));
 int board_early_init_r(void) __attribute__((weak, alias("__do_nothing")));
+
+/* provide cpu_mmc_init, to overwrite provide board_mmc_init */
+int cpu_mmc_init(bd_t *bd)
+{
+	/* This calls the atmel_mci_init in gen_atmel_mci.c */
+	return atmel_mci_init((void *)ATMEL_BASE_MMCI);
+}
 
 #ifdef CONFIG_SYS_DMA_ALLOC_LEN
 #include <asm/arch/cacheflush.h>
@@ -95,25 +107,16 @@ static inline void dma_alloc_init(void)
 
 static int init_baudrate(void)
 {
-	char tmp[64];
-	int i;
-
-	i = getenv_f("baudrate", tmp, sizeof(tmp));
-	if (i > 0) {
-		gd->baudrate = simple_strtoul(tmp, NULL, 10);
-	} else {
-		gd->baudrate = CONFIG_BAUDRATE;
-	}
+	gd->baudrate = getenv_ulong("baudrate", 10, CONFIG_BAUDRATE);
 	return 0;
 }
-
 
 static int display_banner (void)
 {
 	printf ("\n\n%s\n\n", version_string);
 	printf ("U-Boot code: %08lx -> %08lx  data: %08lx -> %08lx\n",
 		(unsigned long)_text, (unsigned long)_etext,
-		(unsigned long)_data, (unsigned long)__bss_end__);
+		(unsigned long)_data, (unsigned long)__bss_end);
 	return 0;
 }
 
@@ -185,7 +188,7 @@ void board_init_f(ulong board_type)
 	 *  - stack
 	 */
 	addr = CONFIG_SYS_SDRAM_BASE + sdram_size;
-	monitor_len = __bss_end__ - _text;
+	monitor_len = (char *)__bss_end - _text;
 
 	/*
 	 * Reserve memory for u-boot code, data and bss.
@@ -208,11 +211,11 @@ void board_init_f(ulong board_type)
 #ifdef CONFIG_FB_ADDR
 	printf("LCD: Frame buffer allocated at preset 0x%08x\n",
 	       CONFIG_FB_ADDR);
-	gd->fb_base = (void *)CONFIG_FB_ADDR;
+	gd->fb_base = CONFIG_FB_ADDR;
 #else
 	addr = lcd_setmem(addr);
 	printf("LCD: Frame buffer allocated at 0x%08lx\n", addr);
-	gd->fb_base = (void *)addr;
+	gd->fb_base = addr;
 #endif /* CONFIG_FB_ADDR */
 #endif /* CONFIG_LCD */
 
@@ -228,7 +231,7 @@ void board_init_f(ulong board_type)
 
 	/* And finally, a new, bigger stack. */
 	new_sp = (unsigned long *)addr;
-	gd->stack_end = addr;
+	gd->arch.stack_end = addr;
 	*(--new_sp) = 0;
 	*(--new_sp) = 0;
 
@@ -247,11 +250,9 @@ void board_init_f(ulong board_type)
 
 void board_init_r(gd_t *new_gd, ulong dest_addr)
 {
-	extern void malloc_bin_reloc (void);
 #ifndef CONFIG_ENV_IS_NOWHERE
 	extern char * env_name_spec;
 #endif
-	char *s;
 	bd_t *bd;
 
 	gd = new_gd;
@@ -271,8 +272,8 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	/*
 	 * We have to relocate the command table manually
 	 */
-	fixup_cmdtable(&__u_boot_cmd_start,
-		(ulong)(&__u_boot_cmd_end - &__u_boot_cmd_start));
+	fixup_cmdtable(ll_entry_start(cmd_tbl_t, cmd),
+			ll_entry_count(cmd_tbl_t, cmd));
 #endif /* defined(CONFIG_NEEDS_MANUAL_RELOC) */
 
 	/* there are some other pointer constants we must deal with */
@@ -285,7 +286,6 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	/* The malloc area is right below the monitor image in RAM */
 	mem_malloc_init(CONFIG_SYS_MONITOR_BASE + gd->reloc_off -
 			CONFIG_SYS_MALLOC_LEN, CONFIG_SYS_MALLOC_LEN);
-	malloc_bin_reloc();
 	dma_alloc_init();
 
 	enable_interrupts();
@@ -313,29 +313,24 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	/* initialize environment */
 	env_relocate();
 
-	bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
-
 	stdio_init();
 	jumptable_init();
 	console_init_r();
 
-	s = getenv("loadaddr");
-	if (s)
-		load_addr = simple_strtoul(s, NULL, 16);
+	/* Initialize from environment */
+	load_addr = getenv_ulong("loadaddr", 16, load_addr);
 
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init();
 #endif
 #if defined(CONFIG_CMD_NET)
-	s = getenv("bootfile");
-	if (s)
-		copy_filename(BootFile, s, sizeof(BootFile));
-#if defined(CONFIG_NET_MULTI)
 	puts("Net:   ");
-#endif
 	eth_initialize(gd->bd);
 #endif
 
+#ifdef CONFIG_GENERIC_ATMEL_MCI
+	mmc_initialize(gd->bd);
+#endif
 	for (;;) {
 		main_loop();
 	}

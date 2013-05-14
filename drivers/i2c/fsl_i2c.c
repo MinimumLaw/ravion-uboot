@@ -214,11 +214,20 @@ static unsigned int set_i2c_bus_speed(const struct fsl_i2c *dev,
 	return speed;
 }
 
+static unsigned int get_i2c_clock(int bus)
+{
+	if (bus)
+		return gd->arch.i2c2_clk;	/* I2C2 clock */
+	else
+		return gd->arch.i2c1_clk;	/* I2C1 clock */
+}
+
 void
 i2c_init(int speed, int slaveadd)
 {
-	struct fsl_i2c *dev;
+	const struct fsl_i2c *dev;
 	unsigned int temp;
+	int bus_num, i;
 
 #ifdef CONFIG_SYS_I2C_INIT_BOARD
 	/* Call board specific i2c bus reset routine before accessing the
@@ -227,29 +236,23 @@ i2c_init(int speed, int slaveadd)
 	*/
 	i2c_init_board();
 #endif
-	dev = (struct fsl_i2c *) (CONFIG_SYS_IMMR + CONFIG_SYS_I2C_OFFSET);
-
-	writeb(0, &dev->cr);			/* stop I2C controller */
-	udelay(5);				/* let it shutdown in peace */
-	temp = set_i2c_bus_speed(dev, gd->i2c1_clk, speed);
-	if (gd->flags & GD_FLG_RELOC)
-		i2c_bus_speed[0] = temp;
-	writeb(slaveadd << 1, &dev->adr);	/* write slave address */
-	writeb(0x0, &dev->sr);			/* clear status register */
-	writeb(I2C_CR_MEN, &dev->cr);		/* start I2C controller */
-
-#ifdef	CONFIG_SYS_I2C2_OFFSET
-	dev = (struct fsl_i2c *) (CONFIG_SYS_IMMR + CONFIG_SYS_I2C2_OFFSET);
-
-	writeb(0, &dev->cr);			/* stop I2C controller */
-	udelay(5);				/* let it shutdown in peace */
-	temp = set_i2c_bus_speed(dev, gd->i2c2_clk, speed);
-	if (gd->flags & GD_FLG_RELOC)
-		i2c_bus_speed[1] = temp;
-	writeb(slaveadd << 1, &dev->adr);	/* write slave address */
-	writeb(0x0, &dev->sr);			/* clear status register */
-	writeb(I2C_CR_MEN, &dev->cr);		/* start I2C controller */
+#ifdef CONFIG_SYS_I2C2_OFFSET
+	bus_num = 2;
+#else
+	bus_num = 1;
 #endif
+	for (i = 0; i < bus_num; i++) {
+		dev = i2c_dev[i];
+
+		writeb(0, &dev->cr);		/* stop I2C controller */
+		udelay(5);			/* let it shutdown in peace */
+		temp = set_i2c_bus_speed(dev, get_i2c_clock(i), speed);
+		if (gd->flags & GD_FLG_RELOC)
+			i2c_bus_speed[i] = temp;
+		writeb(slaveadd << 1, &dev->adr);/* write slave address */
+		writeb(0x0, &dev->sr);		/* clear status register */
+		writeb(I2C_CR_MEN, &dev->cr);	/* start I2C controller */
+	}
 
 #ifdef CONFIG_SYS_I2C_BOARD_LATE_INIT
 	/* Call board specific i2c bus reset routine AFTER the bus has been
@@ -465,7 +468,8 @@ int i2c_set_bus_num(unsigned int bus)
 
 int i2c_set_bus_speed(unsigned int speed)
 {
-	unsigned int i2c_clk = (i2c_bus_num == 1) ? gd->i2c2_clk : gd->i2c1_clk;
+	unsigned int i2c_clk = (i2c_bus_num == 1)
+			? gd->arch.i2c2_clk : gd->arch.i2c1_clk;
 
 	writeb(0, &i2c_dev[i2c_bus_num]->cr);		/* stop controller */
 	i2c_bus_speed[i2c_bus_num] =

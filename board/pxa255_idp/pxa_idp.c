@@ -34,6 +34,8 @@
 #include <netdev.h>
 #include <command.h>
 #include <asm/io.h>
+#include <asm/arch/pxa.h>
+#include <asm/arch/regs-mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -76,6 +78,14 @@ int board_init (void)
 	return 0;
 }
 
+#ifdef CONFIG_CMD_MMC
+int board_mmc_init(bd_t *bis)
+{
+	pxa_mmc_register(0);
+	return 0;
+}
+#endif
+
 int board_late_init(void)
 {
 	setenv("stdout", "serial");
@@ -83,10 +93,9 @@ int board_late_init(void)
 	return 0;
 }
 
-extern void pxa_dram_init(void);
 int dram_init(void)
 {
-	pxa_dram_init();
+	pxa2xx_dram_init();
 	gd->ram_size = PHYS_SDRAM_1_SIZE;
 	return 0;
 }

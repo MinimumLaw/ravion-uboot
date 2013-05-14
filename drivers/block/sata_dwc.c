@@ -35,6 +35,7 @@
 #include <asm/io.h>
 #include <malloc.h>
 #include <ata.h>
+#include <sata.h>
 #include <linux/ctype.h>
 
 #include "sata_dwc.h"
@@ -268,8 +269,6 @@ static int ata_dev_read_id(struct ata_device *dev, unsigned int *p_class,
 		unsigned int flags, u16 *id);
 static int check_sata_dev_state(void);
 
-extern block_dev_desc_t sata_dev_desc[CONFIG_SYS_SATA_MAX_DEVICE];
-
 static const struct ata_port_info sata_dwc_port_info[] = {
 	{
 		.flags		= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
@@ -361,7 +360,7 @@ int init_sata(int dev)
 	if (status == 0x7f) {
 		printf("Hard Disk not found.\n");
 		dev_state = SATA_NODEVICE;
-		rc = FALSE;
+		rc = false;
 		return rc;
 	}
 
@@ -382,7 +381,7 @@ int init_sata(int dev)
 			printf("** TimeOUT **\n");
 
 			dev_state = SATA_NODEVICE;
-			rc = FALSE;
+			rc = false;
 			return rc;
 		}
 		if ((i >= 100) && ((i % 100) == 0))
@@ -440,11 +439,9 @@ static int sata_dwc_softreset(struct ata_port *ap)
 {
 	u8 nsect,lbal = 0;
 	u8 tmp = 0;
-	u32 serror = 0;
-	u8 status = 0;
 	struct ata_ioports *ioaddr = &ap->ioaddr;
 
-	serror = in_le32((void *)ap->ioaddr.scr_addr + (SCR_ERROR * 4));
+	in_le32((void *)ap->ioaddr.scr_addr + (SCR_ERROR * 4));
 
 	writeb(0x55, ioaddr->nsect_addr);
 	writeb(0xaa, ioaddr->lbal_addr);
@@ -461,7 +458,7 @@ static int sata_dwc_softreset(struct ata_port *ap)
 	} else {
 		printf("No device found\n");
 		dev_state = SATA_NODEVICE;
-		return FALSE;
+		return false;
 	}
 
 	tmp = ATA_DEVICE_OBS;
@@ -476,7 +473,7 @@ static int sata_dwc_softreset(struct ata_port *ap)
 	writeb(ap->ctl, ioaddr->ctl_addr);
 
 	msleep(150);
-	status = ata_check_status(ap);
+	ata_check_status(ap);
 
 	msleep(50);
 	ata_check_status(ap);
@@ -534,8 +531,7 @@ int scan_sata(int dev)
 	u8 status;
 	const u16 *id;
 	struct ata_device *ata_dev = &ata_device;
-	unsigned long pio_mask, mwdma_mask, udma_mask;
-	unsigned long xfer_mask;
+	unsigned long pio_mask, mwdma_mask;
 	char revbuf[7];
 	u16 iobuf[ATA_SECTOR_WORDS];
 
@@ -625,14 +621,6 @@ int scan_sata(int dev)
 			mwdma_mask |= (1 << 4);
 	}
 
-	udma_mask = 0;
-	if (id[ATA_ID_FIELD_VALID] & (1 << 2))
-		udma_mask = id[ATA_ID_UDMA_MODES] & 0xff;
-
-	xfer_mask = ((pio_mask << ATA_SHIFT_PIO) & ATA_MASK_PIO) |
-		((mwdma_mask << ATA_SHIFT_MWDMA) & ATA_MASK_MWDMA) |
-		((udma_mask << ATA_SHIFT_UDMA) & ATA_MASK_UDMA);
-
 	if (ata_dev->class == ATA_DEV_ATA) {
 		if (ata_id_is_cfa(id)) {
 			if (id[162] & 1)
@@ -651,14 +639,11 @@ int scan_sata(int dev)
 			ata_dev->multi_count = ata_dev->id[59] & 0xff;
 
 		if (ata_id_has_lba(id)) {
-			const char *lba_desc;
 			char ncq_desc[20];
 
-			lba_desc = "LBA";
 			ata_dev->flags |= ATA_DFLAG_LBA;
 			if (ata_id_has_lba48(id)) {
 				ata_dev->flags |= ATA_DFLAG_LBA48;
-				lba_desc = "LBA48";
 
 				if (ata_dev->n_sectors >= (1UL << 28) &&
 					ata_id_has_flush_ext(id))
@@ -752,7 +737,7 @@ static int ata_dev_read_id(struct ata_device *dev, unsigned int *p_class,
 	status = ata_busy_wait(ap, ATA_BUSY, 30000);
 	if (status & ATA_BUSY) {
 		printf("BSY = 0 check. timeout.\n");
-		rc = FALSE;
+		rc = false;
 		return rc;
 	}
 
@@ -890,6 +875,7 @@ retry:
 	return 0;
 
 err_out:
+	printf("failed to READ ID (%s, err_mask=0x%x)\n", reason, err_mask);
 	return rc;
 }
 
@@ -1001,7 +987,7 @@ unsigned ata_exec_internal(struct ata_device *dev,
 	status = ata_busy_wait(ap, ATA_BUSY, 300000);
 	if (status & ATA_BUSY) {
 		printf("BSY = 0 check. timeout.\n");
-		rc = FALSE;
+		rc = false;
 		return rc;
 	}
 
@@ -1011,7 +997,7 @@ unsigned ata_exec_internal(struct ata_device *dev,
 	tag = ATA_TAG_INTERNAL;
 
 	if (test_and_set_bit(tag, &ap->qc_allocated)) {
-		rc = FALSE;
+		rc = false;
 		return rc;
 	}
 
@@ -1670,14 +1656,14 @@ static int check_sata_dev_state(void)
 
 		ret = ata_dev_read_sectors(pdata, datalen, 0, 1);
 
-		if (ret == TRUE)
+		if (ret == true)
 			break;
 
 		i++;
 		if (i > (ATA_RESET_TIME * 100)) {
 			printf("** TimeOUT **\n");
 			dev_state = SATA_NODEVICE;
-			return FALSE;
+			return false;
 		}
 
 		if ((i >= 100) && ((i % 100) == 0))
@@ -1686,7 +1672,7 @@ static int check_sata_dev_state(void)
 
 	dev_state = SATA_READY;
 
-	return TRUE;
+	return true;
 }
 
 static unsigned int ata_dev_set_feature(struct ata_device *dev,
@@ -1786,7 +1772,7 @@ ulong sata_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
 			blks = 0;
 		}
 
-		if (ata_dev_read_sectors(pdata, datalen, block, n_block) != TRUE) {
+		if (ata_dev_read_sectors(pdata, datalen, block, n_block) != true) {
 			printf("sata_dwc : Hard disk read error.\n");
 			blkcnt -= blks;
 			break;
@@ -1807,10 +1793,9 @@ static int ata_dev_read_sectors(unsigned char *pdata, unsigned long datalen,
 	unsigned int err_mask = 0;
 	const char *reason;
 	int may_fallback = 1;
-	int rc;
 
 	if (dev_state == SATA_ERROR)
-		return FALSE;
+		return false;
 
 	ata_dev_select(ap, dev->devno, 1, 1);
 
@@ -1904,24 +1889,15 @@ retry:
 			return -ENOENT;
 		}
 
-		rc = -EIO;
 		reason = "I/O error";
 		goto err_out;
 	}
 
-	/* Falling back doesn't make sense if ID data was read
-	 * successfully at least once.
-	 */
-	may_fallback = 0;
-
-	rc = -EINVAL;
-	reason = "device reports invalid type";
-
-	return TRUE;
+	return true;
 
 err_out:
 	printf("failed to READ SECTORS (%s, err_mask=0x%x)\n", reason, err_mask);
-	return FALSE;
+	return false;
 }
 
 #if defined(CONFIG_SATA_DWC) && !defined(CONFIG_LBA48)
@@ -1930,7 +1906,7 @@ err_out:
 #define SATA_MAX_WRITE_BLK 0xFFFF
 #endif
 
-ulong sata_write(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
+ulong sata_write(int device, ulong blknr, lbaint_t blkcnt, const void *buffer)
 {
 	ulong start,blks, buf_addr;
 	unsigned short smallblks;
@@ -1970,7 +1946,7 @@ ulong sata_write(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
 			blks = 0;
 		}
 
-		if (ata_dev_write_sectors(pdata, datalen, block, n_block) != TRUE) {
+		if (ata_dev_write_sectors(pdata, datalen, block, n_block) != true) {
 			printf("sata_dwc : Hard disk read error.\n");
 			blkcnt -= blks;
 			break;
@@ -1991,10 +1967,9 @@ static int ata_dev_write_sectors(unsigned char* pdata, unsigned long datalen,
 	unsigned int err_mask = 0;
 	const char *reason;
 	int may_fallback = 1;
-	int rc;
 
 	if (dev_state == SATA_ERROR)
-		return FALSE;
+		return false;
 
 	ata_dev_select(ap, dev->devno, 1, 1);
 
@@ -2089,22 +2064,13 @@ retry:
 			return -ENOENT;
 		}
 
-		rc = -EIO;
 		reason = "I/O error";
 		goto err_out;
 	}
 
-	/* Falling back doesn't make sense if ID data was read
-	 * successfully at least once.
-	 */
-	may_fallback = 0;
-
-	rc = -EINVAL;
-	reason = "device reports invalid type";
-
-	return TRUE;
+	return true;
 
 err_out:
 	printf("failed to WRITE SECTORS (%s, err_mask=0x%x)\n", reason, err_mask);
-	return FALSE;
+	return false;
 }
