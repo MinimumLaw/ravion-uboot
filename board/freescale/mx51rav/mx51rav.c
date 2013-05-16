@@ -58,8 +58,7 @@ int dram_init(void)
 u32 get_board_rev(void)
 {
 	u32 rev = get_cpu_rev();
-	if (!gpio_get_value(IMX_GPIO_NR(1, 22)))
-		rev |= BOARD_REV_2_0 << BOARD_VER_OFFSET;
+	/* FixMe: GPIO removed. On Ravion board revision is cpu revision */
 	return rev;
 }
 
@@ -70,8 +69,10 @@ static void setup_iomux_uart(void)
 		MX51_PAD_UART1_TXD__UART1_TXD,
 		MX51_PAD_UART1_RTS__UART1_RTS_DTE,
 		MX51_PAD_UART1_CTS__UART1_CTS,
-		MX51_PAD_UART3_RXD__UART3_RXD,
-		MX51_PAD_UART3_TXD__UART3_TXD,
+		MX51_PAD_KEY_COL4__UART1_RI,
+		MX51_PAD_KEY_COL5__UART1_DCD,
+		MX51_PAD_UART3_RXD__UART1_DTR,
+		MX51_PAD_UART3_TXD__UART1_DSR,
 	};
 
 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
@@ -114,7 +115,7 @@ static void setup_iomux_spi(void)
 		MX51_PAD_CSPI1_MISO__ECSPI1_MISO,
 		MX51_PAD_CSPI1_SS1__GPIO4_25,
 		MX51_PAD_CSPI1_SS0__GPIO4_24,
-		MX51_PAD_CSPI1_RDY__ECSPI1_RDY,
+		MX51_PAD_CSPI1_RDY__GPIO4_26,
 	};
 
 	imx_iomux_v3_setup_multiple_pads(spi_pads, ARRAY_SIZE(spi_pads));
@@ -144,7 +145,7 @@ static void setup_usb_h1(void)
 		MX51_PAD_USBH1_DATA7__USBH1_DATA7,
 
 		NEW_PAD_CTRL(MX51_PAD_GPIO1_7__GPIO1_7, 0), /* H1 hub reset */
-		MX51_PAD_EIM_D17__GPIO2_1,
+		MX51_PAD_CSI2_VSYNC__GPIO4_13,
 		MX51_PAD_EIM_D21__GPIO2_5, /* PHY reset */
 	};
 
@@ -311,31 +312,12 @@ int board_mmc_init(bd_t *bis)
 		NEW_PAD_CTRL(MX51_PAD_SD1_DATA3__SD1_DATA3, PAD_CTL_DSE_MAX |
 			PAD_CTL_HYS | PAD_CTL_PUS_100K_DOWN | PAD_CTL_SRE_FAST),
 		NEW_PAD_CTRL(MX51_PAD_GPIO1_0__SD1_CD, PAD_CTL_HYS),
-		NEW_PAD_CTRL(MX51_PAD_GPIO1_1__SD1_WP, PAD_CTL_HYS),
-	};
-
-	static const iomux_v3_cfg_t sd2_pads[] = {
-		NEW_PAD_CTRL(MX51_PAD_SD2_CMD__SD2_CMD,
-				PAD_CTL_DSE_MAX | PAD_CTL_SRE_FAST),
-		NEW_PAD_CTRL(MX51_PAD_SD2_CLK__SD2_CLK,
-				PAD_CTL_DSE_MAX | PAD_CTL_SRE_FAST),
-		NEW_PAD_CTRL(MX51_PAD_SD2_DATA0__SD2_DATA0,
-				PAD_CTL_DSE_MAX | PAD_CTL_SRE_FAST),
-		NEW_PAD_CTRL(MX51_PAD_SD2_DATA1__SD2_DATA1,
-				PAD_CTL_DSE_MAX | PAD_CTL_SRE_FAST),
-		NEW_PAD_CTRL(MX51_PAD_SD2_DATA2__SD2_DATA2,
-				PAD_CTL_DSE_MAX | PAD_CTL_SRE_FAST),
-		NEW_PAD_CTRL(MX51_PAD_SD2_DATA3__SD2_DATA3,
-				PAD_CTL_DSE_MAX | PAD_CTL_SRE_FAST),
-		NEW_PAD_CTRL(MX51_PAD_GPIO1_6__GPIO1_6, PAD_CTL_HYS),
-		NEW_PAD_CTRL(MX51_PAD_GPIO1_5__GPIO1_5, PAD_CTL_HYS),
 	};
 
 	u32 index;
 	s32 status = 0;
 
 	esdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
-	esdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 
 	for (index = 0; index < CONFIG_SYS_FSL_ESDHC_NUM;
 			index++) {
@@ -344,13 +326,9 @@ int board_mmc_init(bd_t *bis)
 			imx_iomux_v3_setup_multiple_pads(sd1_pads,
 							 ARRAY_SIZE(sd1_pads));
 			break;
-		case 1:
-			imx_iomux_v3_setup_multiple_pads(sd2_pads,
-							 ARRAY_SIZE(sd2_pads));
-			break;
 		default:
 			printf("Warning: you configured more ESDHC controller"
-				"(%d) as supported by the board(2)\n",
+				"(%d) as supported by the board(1)\n",
 				CONFIG_SYS_FSL_ESDHC_NUM);
 			return status;
 		}
@@ -391,7 +369,7 @@ void ravion_init(void)
 	static const iomux_v3_cfg_t ravion_pads[] = {
 		MX51_PAD_CSI2_PIXCLK__GPIO4_15,	/* GPIO4_15, +3.3En (output - 1) */
 		MX51_PAD_GPIO1_1__GPIO1_1,	/* GPIO1_1, EN_SW12V (output - 0) */
-		MX51_PAD_EIM_LBA__GPIO3_1,	/* GPIO3_1, 26M_OSC_EN (output - 1) */
+		MX51_PAD_DI1_PIN12__GPIO3_1,	/* GPIO3_1, 26M_OSC_EN (output - 1) */
 		MX51_PAD_EIM_A18__GPIO2_12,	/* GPIO2_12, GP00 (OUTPUT - 0) */
 		MX51_PAD_EIM_A19__GPIO2_13,	/* GPIO2_13, GP01 (OUTPUT - 0) */
 		MX51_PAD_EIM_A23__GPIO2_17,	/* GPIO2_17, GP02 (OUTPUT - 0) */
