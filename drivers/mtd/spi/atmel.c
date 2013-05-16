@@ -506,10 +506,53 @@ struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode)
 		debug("SF: AT45 status register: %02x\n", status);
 
 		if (!(status & AT45_STATUS_P2_PAGE_SIZE)) {
+#ifdef CONFIG_SPI_FLASH_ATMEL_FIX_NON_POWER2_SECTOR
+			unsigned long timebase;
+			char switch_cmd[] = {0x3D};
+			char switch_dat[] = {0x2A, 0x80, 0xA6};
+			printf("Detected chip page size 528 bytes, "
+				"fixing to 512 bytes\n");
+			ret = spi_flash_cmd_write(spi,
+			    switch_cmd, sizeof(switch_cmd), 
+			    switch_dat, sizeof(switch_dat));
+			if (ret)
+				goto err;
+			timebase = get_timer(0); while(get_timer(timebase) < 100);
+			ret = spi_flash_cmd(spi, CMD_AT45_READ_STATUS, &status, 1);
+			if (ret)
+				goto err;
+			if (!(status & AT45_STATUS_READY)) {
+				printf("ERROR: Flash still busy!!!\n");
+			} else {
+				/* Enter Deep Power-down */
+				ret = spi_flash_cmd(spi, 0xB9, &status, 1);
+				if (ret)
+					goto err;
+				timebase = get_timer(0); while(get_timer(timebase) < 250);
+				/* Resume from Deep Power-down */
+				ret = spi_flash_cmd(spi, 0xAB, &status, 1);
+				if (ret)
+					goto err;
+				timebase = get_timer(0); while(get_timer(timebase) < 100);
+				/* Re-read status */
+				ret = spi_flash_cmd(spi, CMD_AT45_READ_STATUS, &status, 1);
+				if (ret)
+					goto err;
+				if (!(status & AT45_STATUS_P2_PAGE_SIZE)) {
+					printf("ERROR: Flash still have "
+					"528 bytes per sector!\n");
+					goto err;
+				} else {
+					asf->flash.write = dataflash_write_p2;
+					asf->flash.erase = dataflash_erase_p2;
+				}
+			}
+#else
 			asf->flash.read = dataflash_read_fast_at45;
 			asf->flash.write = dataflash_write_at45;
 			asf->flash.erase = dataflash_erase_at45;
 			page_size += 1 << (params->l2_page_size - 5);
+#endif
 		} else {
 			asf->flash.write = dataflash_write_p2;
 			asf->flash.erase = dataflash_erase_p2;
