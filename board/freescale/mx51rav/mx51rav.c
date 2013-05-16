@@ -403,13 +403,52 @@ void ravion_init(void)
 	 * Init external cpu bus
 	 */
 
-	/* CS0 FixMe: Decode values !!! */
+	/* FixMe: Decode values !!! */
+	/* CS0 */
 	writel(0x03310089, &weim_regs->cs0gcr1);
 	writel(0x00000002, &weim_regs->cs0gcr2);
 	writel(0x13022250, &weim_regs->cs0rcr1);
 	writel(0x00000058, &weim_regs->cs0rcr2);
 	writel(0x130A8EA8, &weim_regs->cs0wcr1);
 	writel(0x00000000, &weim_regs->cs0wcr2);
+	/* CS1 */
+	writel(0x04100089, &weim_regs->cs1gcr1);
+	writel(0x00000002, &weim_regs->cs1gcr2);
+	writel(0x32260000, &weim_regs->cs1rcr1);
+	writel(0x00000000, &weim_regs->cs1rcr2);
+	writel(0x72080F00, &weim_regs->cs1wcr1);
+	writel(0x00000000, &weim_regs->cs1wcr2);
+	/* CS2 */
+	writel(0x00010080, &weim_regs->cs2gcr1);
+	writel(0x00000000, &weim_regs->cs2gcr2);
+	writel(0x00000000, &weim_regs->cs2rcr1);
+	writel(0x00000000, &weim_regs->cs2rcr2);
+	writel(0x00000000, &weim_regs->cs2wcr1);
+	writel(0x00000000, &weim_regs->cs2wcr2);
+	/* CS3 */
+	writel(0x00010080, &weim_regs->cs3gcr1);
+	writel(0x00000000, &weim_regs->cs3gcr2);
+	writel(0x00000000, &weim_regs->cs3rcr1);
+	writel(0x00000000, &weim_regs->cs3rcr2);
+	writel(0x00000000, &weim_regs->cs3wcr1);
+	writel(0x00000000, &weim_regs->cs3wcr2);
+	/* CS4 */
+	writel(0x00010080, &weim_regs->cs4gcr1);
+	writel(0x00000000, &weim_regs->cs4gcr2);
+	writel(0x00000000, &weim_regs->cs4rcr1);
+	writel(0x00000000, &weim_regs->cs4rcr2);
+	writel(0x00000000, &weim_regs->cs4wcr1);
+	writel(0x00000000, &weim_regs->cs4wcr2);
+	/* CS5 */
+	writel(0x04100089, &weim_regs->cs5gcr1);
+	writel(0x00000002, &weim_regs->cs5gcr2);
+	writel(0x32260000, &weim_regs->cs5rcr1);
+	writel(0x00000000, &weim_regs->cs5rcr2);
+	writel(0x72080F00, &weim_regs->cs5wcr1);
+	writel(0x00000000, &weim_regs->cs5wcr2);
+	/* global */
+	writel(0x00000020, &weim_regs->wcr);
+	writel(0x00000014, &weim_regs->wiar);
 
 	/*
 	 * Wired MAC address
