@@ -221,6 +221,11 @@
 	"__prepared=by Alex A. Mihaylov AKA MinimumLaw, 2013\0" \
 	"__produced=by NTC of Schemotecnics NTK PIT\0" \
 	"__requsted=by OAO Radioavionica, Saint-Petersburg, Russia\0" \
+	"IPADDR=192.168.5.101\0" \
+	"NETMASK=255.255.255.0\0" \
+	"GATEWAYIP=192.168.5.222\0" \
+	"SERVERIP=192.168.5.222\0" \
+	"NFS_PATH=/cimc/exportfs/mx5test\0" \
 	"mtdids="MTDIDS_DEFAULT"\0" \
 	"mtdparts="MTDPARTS_DEFAULT"\0" \
 	"script_name=bscript.img \0" \
@@ -290,26 +295,30 @@
 	"restboot=setenv ubipart restore; setenv ubifs rootfs; run ubiboot\0" \
 	"resqboot=setenv ubipart resque; setenv ubifs rootfs; run ubiboot\0" \
 	"prepnet=run prepenv; " \
-		"setenv ipaddr 192.168.5.101; " \
-		"setenv netmask 255.255.255.0; " \
-		"setenv gatewayip 192.168.5.222; " \
-		"setenv serverip 192.168.5.222\0" \
+		"setenv ipaddr ${IPADDR}; " \
+		"setenv netmask ${NETMASK}; " \
+		"setenv gatewayip ${GATEWAYIP}; " \
+		"setenv serverip ${SERVERIP}\0" \
 	"boottftp=tftpboot ${script_addr} ${serverip}:${script_name}; " \
-		" source ${script_addr}\0" \
+		"source ${script_addr}\0" \
 	"netboot=run prepnet; run boottftp\0" \
+	"bootnfs=nfs ${script_addr} ${serverip}:${NFS_PATH}/${script_name}; " \
+		"source ${script_addr}\0" \
+	"nfsboot=run prepnet; run bootnfs\0" \
 	"envclean=setenv bootargs\0" \
-	"prepmtd=setenv bootargs ${bootargs} " \
-	"${mtdparts},mxc_dataflash:768K(u-boot)ro,256K(u-boot-env)ro,-(reserved)\0" \
+	"prepmtd=setenv bootargs \"${bootargs} " \
+	"${mtdparts};mxc_dataflash:768K(u-boot)ro,256K(u-boot-env)ro,-(reserved)\"\0" \
 	"prepp54sn=if setenv p54serial# ${p54serial#}; then " \
-		"setenv bootargs ${bootargs} p54spi_sn=${p54serial#}; fi;\0" \
-	"prepcon=setenv bootargs ${bootargs} console=ttymxc0,115200,8n1\0" \
+		"setenv bootargs \"${bootargs} p54spi_sn=${p54serial#}\"; fi;\0" \
+	"prepcon=setenv bootargs \"${bootargs} console=ttymxc0,115200,8n1\"\0" \
 	"prepenv=run envclean; run prepmtd; run prepp54sn\0" \
-	"ravboot=run prepenv; " \
-		"run usbboot; " \
-		"run mmcboot; " \
+	"ravboot=run prepenv; "  \
+		"run usbboot; "  \
+		"run mmcboot; "  \
 		"run restboot; " \
-		"run resqboot; " \
-		"run netboot\0"
+		"run nfsboot; "  \
+		"run netboot; "  \
+		"run resqboot\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	"run ravboot"
