@@ -123,7 +123,7 @@
 #define CONFIG_CMD_MTDPARTS
 #define MTDIDS_DEFAULT			"nand0=mxc_nand-0"
 #define MTDPARTS_DEFAULT		"mtdparts=mxc_nand-0:" \
-					"50M(resque)ro,"\
+					"50M(resque),"\
 					"450M(restore)," \
 					"-(reserved)"
 
