@@ -292,8 +292,8 @@
 	"else " \
 	    "echo Error mount UBI partition ${ubipart}; " \
 	"fi; \0" \
-	"restboot=setenv ubipart restore; setenv ubifs rootfs; run ubiboot\0" \
-	"resqboot=setenv ubipart resque; setenv ubifs rootfs; run ubiboot\0" \
+	"restboot=setenv ubipart restore; setenv ubifs ubi0:rootfs; run ubiboot\0" \
+	"resqboot=setenv ubipart resque; setenv ubifs ubi0:rootfs; run ubiboot\0" \
 	"prepnet=run prepenv; " \
 		"setenv ipaddr ${IPADDR}; " \
 		"setenv netmask ${NETMASK}; " \
