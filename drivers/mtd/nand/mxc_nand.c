@@ -1232,6 +1232,9 @@ int board_nand_init(struct nand_chip *this)
 		this->ecc.write_oob = mxc_nand_write_oob_syndrome;
 		this->ecc.bytes = 9;
 		this->ecc.prepad = 7;
+		this->ecc.postpad = 0;
+		this->ecc.steps = 4; /* 4 x ( 7 + 9 + 0 ) = 64 bytes oob */
+		/* this->ecc.strength = 4;  FixMe: Is this OK? Later CONFIG2_ECC_MODE_8 cleaned */
 	} else {
 		this->ecc.mode = NAND_ECC_HW;
 	}
