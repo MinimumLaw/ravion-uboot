@@ -629,7 +629,7 @@ static void mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
 
 static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 					 struct nand_chip *chip,
-					 const uint8_t *buf)
+					 uint8_t *buf)
 {
 	struct mxc_nand_host *host = chip->priv;
 	int i, n, eccsize = chip->ecc.size;
@@ -640,6 +640,13 @@ static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 	uint8_t *oob = chip->oob_poi;
 
 	chip->ecc.hwctl(mtd, NAND_ECC_WRITE);
+
+	{ /* FixMe: This code VERY dangerous, but I don't understand why it's needed */
+		uint8_t tmp;
+		tmp = buf[2000];              /* NFC swap byte in data area at offset 0xfd0 ... */
+		buf[2000] = chip->oob_poi[49];/* ... and byte in oob area at offset 0x031 ...   */
+		chip->oob_poi[49] = tmp;      /* ... I swap them back, but WTF !!!              */
+	}
 
 	for (i = n = 0;
 	     eccsteps;
