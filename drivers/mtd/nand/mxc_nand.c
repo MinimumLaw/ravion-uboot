@@ -675,6 +675,14 @@ static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 	i = mtd->oobsize - (oob - chip->oob_poi);
 	if (i)
 		chip->write_buf(mtd, oob, i);
+
+	/* swap bytes again, for non destroy input data buffer after writing procedure */
+	{ /* FixMe: This code VERY dangerous, but I don't understand why it's needed */
+		uint8_t tmp;
+		tmp = buf[2000];              /* NFC swap byte in data area at offset 0xfd0 ... */
+		buf[2000] = chip->oob_poi[49];/* ... and byte in oob area at offset 0x031 ...   */
+		chip->oob_poi[49] = tmp;      /* ... I swap them back, but WTF !!!              */
+	}
 }
 
 static int mxc_nand_correct_data(struct mtd_info *mtd, u_char *dat,
