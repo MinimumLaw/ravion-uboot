@@ -554,6 +554,12 @@ static int mxc_nand_read_page_syndrome(struct mtd_info *mtd,
 		oob += eccbytes + chip->ecc.postpad;
 	}
 	_mxc_nand_enable_hwecc(mtd, 1);
+	{ /* FixMe: This code VERY dangerous, but I don't understand why it's needed */
+		uint8_t tmp;
+		tmp = buf[2000];              /* NFC swap byte in data area at offset 0xfd0 ... */
+		buf[2000] = chip->oob_poi[49];/* ... and byte in oob area at offset 0x031 ...   */
+		chip->oob_poi[49] = tmp;      /* ... I swap them back, but WTF !!!              */
+	}
 	return 0;
 }
 
