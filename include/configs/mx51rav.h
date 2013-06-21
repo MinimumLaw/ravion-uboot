@@ -225,10 +225,10 @@
 	"NETMASK=255.255.255.0\0" \
 	"GATEWAYIP=192.168.5.222\0" \
 	"SERVERIP=192.168.5.222\0" \
-	"NFS_PATH=/cimc/exportfs/mx5test\0" \
+	"NFS_PATH=/cimc/exportfs/imx515-ravion\0" \
 	"mtdids="MTDIDS_DEFAULT"\0" \
 	"mtdparts="MTDPARTS_DEFAULT"\0" \
-	"script_name=bscript.img \0" \
+	"script_name=boot/bscript.img \0" \
 	"script_addr=0x98760000 \0" \
 	"blockboot=" \
 	"if fatload ${bdev} ${binst}:${bpart} ${script_addr} ${script_name}; then " \
@@ -243,7 +243,6 @@
 	"fi; \0" \
 	"mmcboot=" \
 	"setenv bdev mmc; setenv binst 0; " \
-	"setenv bpart 2; run blockboot; " \
 	"setenv bpart 1; run blockboot\0" \
 	"usbboot=usb start; " \
 	"if usb storage; then " \
@@ -251,7 +250,6 @@
 	    "if usb dev 0; then " \
 		"echo Try USB device 0; " \
 		"setenv bdev usb; setenv binst 0; " \
-		"setenv bpart 2; run blockboot; " \
 		"setenv bpart 1; run blockboot; " \
 	    "else " \
 		"echo Error setup USB device 0; " \
@@ -259,18 +257,9 @@
 	    "if usb dev 1; then " \
 		"echo Try USB device 1; " \
 		"setenv bdev usb; setenv binst 1; " \
-		"setenv bpart 2; run blockboot; " \
 		"setenv bpart 1; run blockboot; " \
 	    "else " \
 		"echo Error setup USB device 1; " \
-	    "fi; " \
-	    "if usb dev 2; then " \
-		"echo Try USB device 2; " \
-		"setenv bdev usb; setenv binst 2; " \
-		"setenv bpart 2; run blockboot; " \
-		"setenv bpart 1; run blockboot; " \
-	    "else " \
-		"echo Error setup USB device 2; " \
 	    "fi; " \
 	"else " \
 	    "echo No USB storage device(s) found; " \
@@ -316,9 +305,11 @@
 		"run usbboot; "  \
 		"run mmcboot; "  \
 		"run restboot; " \
-		"run nfsboot; "  \
+		"run resqboot; " \
 		"run netboot; "  \
-		"run resqboot\0" \
+		"run nfsboot\0"  \
+	"resque=run prepenv; run resqboot\0" \
+	"nfsram=run prepenv; run netboot\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	"run ravboot"
