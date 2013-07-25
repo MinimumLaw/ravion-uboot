@@ -30,6 +30,8 @@
  /* High Level Configuration Options */
 
 #define CONFIG_MX51	/* in a mx51 */
+#define CONFIG_MX51_PLL_ERRATA
+#define CONFIG_SYS_MAIN_PWR_ON
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -191,9 +193,6 @@
 
 /* watchdog timer */
 #define CONFIG_IMX_WATCHDOG
-
-/* allow boot source choice from cmdline */
-#define CONFIG_CMD_BMODE
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
