@@ -189,6 +189,9 @@
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_IPUV3_CLK	133000000
 
+/* watchdog timer */
+#define CONFIG_IMX_WATCHDOG
+
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX		1
