@@ -300,12 +300,13 @@
 		"source ${script_addr}\0" \
 	"nfsboot=run prepnet; run bootnfs\0" \
 	"envclean=setenv bootargs\0" \
+	"noalign=setenv bootargs \"${bootargs} noalign\0" \
 	"prepmtd=setenv bootargs \"${bootargs} " \
 	"${mtdparts};mxc_dataflash:768K(u-boot)ro,256K(u-boot-env)ro,-(reserved)\"\0" \
 	"prepp54sn=if setenv p54serial# ${p54serial#}; then " \
 		"setenv bootargs \"${bootargs} p54spi_sn=${p54serial#}\"; fi;\0" \
 	"prepcon=setenv bootargs \"${bootargs} console=ttymxc0,115200,8n1\"\0" \
-	"prepenv=run envclean; run prepmtd; run prepp54sn\0" \
+	"prepenv=run envclean; run noalign; run prepmtd; run prepp54sn\0" \
 	"ravboot=run prepenv; "  \
 		"run usbboot; "  \
 		"run mmcboot; "  \
