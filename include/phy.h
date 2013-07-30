@@ -52,6 +52,7 @@ typedef enum {
 	PHY_INTERFACE_MODE_MII,
 	PHY_INTERFACE_MODE_GMII,
 	PHY_INTERFACE_MODE_SGMII,
+	PHY_INTERFACE_MODE_QSGMII,
 	PHY_INTERFACE_MODE_TBI,
 	PHY_INTERFACE_MODE_RMII,
 	PHY_INTERFACE_MODE_RGMII,
@@ -67,6 +68,7 @@ static const char *phy_interface_strings[] = {
 	[PHY_INTERFACE_MODE_MII]		= "mii",
 	[PHY_INTERFACE_MODE_GMII]		= "gmii",
 	[PHY_INTERFACE_MODE_SGMII]		= "sgmii",
+	[PHY_INTERFACE_MODE_QSGMII]		= "qsgmii",
 	[PHY_INTERFACE_MODE_TBI]		= "tbi",
 	[PHY_INTERFACE_MODE_RMII]		= "rmii",
 	[PHY_INTERFACE_MODE_RGMII]		= "rgmii",
@@ -212,6 +214,7 @@ int phy_register(struct phy_driver *drv);
 int genphy_config_aneg(struct phy_device *phydev);
 int genphy_restart_aneg(struct phy_device *phydev);
 int genphy_update_link(struct phy_device *phydev);
+int genphy_parse_link(struct phy_device *phydev);
 int genphy_config(struct phy_device *phydev);
 int genphy_startup(struct phy_device *phydev);
 int genphy_shutdown(struct phy_device *phydev);

@@ -160,8 +160,9 @@ egnite GmbH <info@egnite.de>
 
 Dirk Eibach <eibach@gdsys.de>
 
+	controlcenterd	P1022
 	devconcenter	PPC460EX
-	dlvision        PPC405EP
+	dlvision	PPC405EP
 	dlvision-10g	PPC405EP
 	gdppc440etx	PPC440EP/GR
 	intip		PPC460EX
@@ -600,7 +601,6 @@ Jason Liu <r64343@freescale.com>
 	mx53evk         i.MX53
 	mx53loco        i.MX53
 	mx6qarm2	i.MX6Q
-	mx6qsabrelite   i.MX6Q
 
 Enric Balletbo i Serra <eballetbo@iseebcn.com>
 
@@ -651,6 +651,9 @@ Wolfgang Denk <wd@denx.de>
 	imx27lite	i.MX27
 	qong		i.MX31
 
+Mike Dunn <mikedunn@newsguy.com>
+	palmtreo680	pxa270
+
 Kristoffer Ericson <kristoffer.ericson@gmail.com>
 
 	jornada	SA1110
@@ -662,9 +665,9 @@ Fabio Estevam <fabio.estevam@freescale.com>
 	mx31pdk		i.MX31
 	mx53ard		i.MX53
 	mx53smd		i.MX53
-	mx6qsabresd	i.MX6Q
+	mx6sabresd	i.MX6Q/DL
 	mx6qsabreauto	i.MX6Q
-	wandboard	i.MX6DL/S
+	wandboard	i.MX6DL/S/Q
 	mx6slevk	i.MX6SL
 
 Daniel Gorsulowski <daniel.gorsulowski@esd.eu>
@@ -850,6 +853,10 @@ Sricharan R <r.sricharan@ti.com>
 	omap4_sdp4430	ARM ARMV7 (OMAP4xx SoC)
 	omap5_evm	ARM ARMV7 (OMAP5xx Soc)
 
+Suriyan Ramasami <suriyan.r@gmail.com>
+
+	goflexhome	ARM926EJS (Kirkwood SoC)
+
 Thierry Reding <thierry.reding@avionic-design.de>
 
 	plutux		Tegra20 (ARM7 & A9 Dual Core)
@@ -893,6 +900,10 @@ Steve Sakoman <sakoman@gmail.com>
 
 	omap3_overo	ARM ARMV7 (OMAP3xx SoC)
 
+Leo Sartre <lsartre@adeneo-embedded.com>
+
+	cgtqmx6qeval		i.MX6Q
+
 Jens Scharsig <esw@bus-elektronik.de>
 
 	eb_cpux9k2	ARM920T (AT91RM9200 SoC)
@@ -918,6 +929,7 @@ Matt Sealey <matt@genesi-usa.com>
 
 Bo Shen <voice.shen@atmel.com>
 	at91sam9x5ek		ARM926EJS (AT91SAM9G15,G25,G35,X25,X35 SoC)
+	sama5d3xek		ARMV7 (SAMA5D31, D33, D34, D35 SoC)
 
 Rajeshwari Shinde <rajeshwari.s@samsung.com>
 
@@ -964,9 +976,14 @@ Hugo Villeneuve <hugo.villeneuve@lyrtech.com>
 
 	SFFSDR		ARM926EJS
 
+Lokesh Vutla <lokeshvutla@ti.com>
+
+	dra7xx_evm	ARM ARMV7 (DRA7xx Soc)
+
 Matt Waddel <matt.waddel@linaro.org>
 
-	ca9x4_ct_vxp	ARM ARMV7 (Quad Core)
+	vexpress_ca9x4	ARM ARMV7 (Quad Core)
+	vexpress_ca5x2	ARM ARMV7 (Dual Core)
 
 Otavio Salvador <otavio@ossystems.com.br>
 
@@ -1019,9 +1036,8 @@ Matthias Weisser <weisserm@arcor.de>
 	jadecpu		ARM926EJS (MB86R01 SoC)
 	zmx25		ARM926EJS (imx25 SoC)
 
-Richard Woodruff <r-woodruff2@ti.com>
-
-	omap2420h4	ARM1136EJS
+Josh Wu <josh.wu@atmel.com>
+	at91sam9n12ek	ARM926EJS (AT91SAM9N12 SoC)
 
 Ilya Yanok <yanok@emcraft.com>
 
@@ -1050,12 +1066,21 @@ Pali Rohár <pali.rohar@gmail.com>
 	nokia_rx51	ARM ARMV7 (OMAP34xx SoC)
 
 Eric Nelson <eric.nelson@boundarydevices.com>
+	mx6qsabrelite		i.MX6Q		1GB
 	nitrogen6dl		i.MX6DL		1GB
 	nitrogen6dl2g		i.MX6DL		2GB
 	nitrogen6q		i.MX6Q/6D	1GB
 	nitrogen6q2g    	i.MX6Q/6D	2GB
 	nitrogen6s		i.MX6S		512MB
 	nitrogen6s1g		i.MX6S		1GB
+
+Alison Wang <b18965@freescale.com>
+
+	vf610twr	VF610
+
+Sergey Yanovich <ynvich@gmail.com>
+
+	lp8x4x		xscale/pxa
 
 -------------------------------------------------------------------------
 
@@ -1077,9 +1102,19 @@ Unknown / orphaned boards:
 #	Board		CPU						#
 #########################################################################
 
-Graeme Russ <graeme.russ@gmail.com>
+Simon Glass <sjg@chromium.org>
 
-	eNET		AMD SC520
+	chromebook-x86	Coreboot runs first, then U-Boot
+			Supports Intel Sandy Bridge / Ivy Bridge so far
+
+			Chromebooks for x86, including:
+				Samsung Series 5 Chromebook
+				Acer AC700 Chromebook
+				Acer C7 Chromebook
+				Samsung Chromebook 550
+				HP Pavillion Chromebook
+				Acer C710 Chromebook
+				Chromebook Pixel
 
 #########################################################################
 # MIPS Systems:								#
@@ -1098,10 +1133,6 @@ Vlad Lungu <vlad.lungu@windriver.com>
 Stefan Roese <sr@denx.de>
 
 	vct_xxx		MIPS32 4Kc
-
-Xiangfu Liu <xiangfu@openmobilefree.net>
-
-	qi_lb60		MIPS32 (XBurst Jz4740 SoC)
 
 -------------------------------------------------------------------------
 
@@ -1343,6 +1374,17 @@ Macpaul Lin <macpaul@andestech.com>
 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
 
 	openrisc-generic	OpenRISC
+
+#########################################################################
+# Sandbox:								#
+#									#
+# Maintainer Name, Email Address					#
+#	Board		CPU						#
+#########################################################################
+
+Simon Glass <sjg@chromium.org>
+
+	sandbox		sandbox
 
 #########################################################################
 # End of MAINTAINERS list						#

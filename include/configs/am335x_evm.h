@@ -60,7 +60,7 @@
 	"rdaddr=0x81000000\0" \
 	"bootdir=/boot\0" \
 	"bootfile=uImage\0" \
-	"fdtfile=\0" \
+	"fdtfile=undefined\0" \
 	"console=ttyO0,115200n8\0" \
 	"optargs=\0" \
 	"mtdids=" MTDIDS_DEFAULT "\0" \
@@ -145,8 +145,9 @@
 		"if test $board_name = A33515BB; then " \
 			"setenv fdtfile am335x-evm.dtb; fi; " \
 		"if test $board_name = A335X_SK; then " \
-			"setenv fdtfile am335x-evmsk.dtb; fi\0" \
-
+			"setenv fdtfile am335x-evmsk.dtb; fi; " \
+		"if test $fdtfile = undefined; then " \
+			"echo WARNING: Could not determine device tree to use; fi; \0"
 #endif
 
 #define CONFIG_BOOTCOMMAND \
@@ -305,17 +306,45 @@
 /* Defines for SPL */
 #define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
+/*
+ * Place the image at the start of the ROM defined image space.
+ * We limit our size to the ROM-defined downloaded image area, and use the
+ * rest of the space for stack.
+ */
 #define CONFIG_SPL_TEXT_BASE		0x402F0400
-#define CONFIG_SPL_MAX_SIZE		(101 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(0x4030C000 - CONFIG_SPL_TEXT_BASE)
 #define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
 
-#define CONFIG_SPL_BSS_START_ADDR	0x80000000
+#define CONFIG_SPL_OS_BOOT
+
+#define CONFIG_SPL_BSS_START_ADDR	0x80a00000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000		/* 512 KB */
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x300 /* address 0x60000 */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x200 /* 256 KB */
 #define CONFIG_SYS_MMC_SD_FAT_BOOT_PARTITION	1
 #define CONFIG_SPL_FAT_LOAD_PAYLOAD_NAME	"u-boot.img"
+
+#ifdef CONFIG_SPL_OS_BOOT
+/* fat */
+#define CONFIG_SPL_FAT_LOAD_KERNEL_NAME		"uImage"
+#define CONFIG_SPL_FAT_LOAD_ARGS_NAME		"args"
+#define CONFIG_SYS_SPL_ARGS_ADDR		(PHYS_DRAM_1 + 0x100)
+
+/* raw mmc */
+#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x500 /* address 0xa0000 */
+#define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x8   /* address 0x1000 */
+#define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	8     /* 4KB */
+
+/* nand */
+#define CONFIG_CMD_SPL_NAND_OFS			0x240000 /* end of u-boot */
+#define CONFIG_SYS_NAND_SPL_KERNEL_OFFS		0x280000
+#define CONFIG_CMD_SPL_WRITE_SIZE		0x1000
+
+/* spl export command */
+#define CONFIG_CMD_SPL
+#endif
+
 #define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SPL_FAT_SUPPORT
 #define CONFIG_SPL_I2C_SUPPORT
@@ -327,6 +356,7 @@
 #define CONFIG_SPL_GPIO_SUPPORT
 #define CONFIG_SPL_YMODEM_SUPPORT
 #define CONFIG_SPL_NET_SUPPORT
+#define CONFIG_SPL_ENV_SUPPORT
 #define CONFIG_SPL_NET_VCI_STRING	"AM335x U-Boot SPL"
 #define CONFIG_SPL_ETH_SUPPORT
 #define CONFIG_SPL_SPI_SUPPORT
@@ -373,7 +403,7 @@
  * other needs.
  */
 #define CONFIG_SYS_TEXT_BASE		0x80800000
-#define CONFIG_SYS_SPL_MALLOC_START	0x80208000
+#define CONFIG_SYS_SPL_MALLOC_START	0x80a08000
 #define CONFIG_SYS_SPL_MALLOC_SIZE	0x100000
 
 /* Since SPL did pll and ddr initialization for us,
@@ -469,7 +499,8 @@
 #define MTDPARTS_DEFAULT		"mtdparts=omap2-nand.0:128k(SPL)," \
 					"128k(SPL.backup1)," \
 					"128k(SPL.backup2)," \
-					"128k(SPL.backup3),1920k(u-boot)," \
+					"128k(SPL.backup3),1792k(u-boot)," \
+					"128k(u-boot-spl-os)," \
 					"128k(u-boot-env),5m(kernel),-(rootfs)"
 #define CONFIG_NAND_OMAP_GPMC
 #define GPMC_NAND_ECC_LP_x16_LAYOUT	1

@@ -396,7 +396,7 @@ static void mxc_nand_enable_hwecc(struct mtd_info *mtd, int mode)
 #if defined(MXC_NFC_V2_1) || defined(MXC_NFC_V3_2)
 static int mxc_nand_read_oob_syndrome(struct mtd_info *mtd,
 				      struct nand_chip *chip,
-				      int page, int sndcmd)
+				      int page)
 {
 	struct mxc_nand_host *host = chip->priv;
 	uint8_t *buf = chip->oob_poi;
@@ -450,6 +450,7 @@ static int mxc_nand_read_oob_syndrome(struct mtd_info *mtd,
 static int mxc_nand_read_page_raw_syndrome(struct mtd_info *mtd,
 					   struct nand_chip *chip,
 					   uint8_t *buf,
+					   int oob_required,
 					   int page)
 {
 	struct mxc_nand_host *host = chip->priv;
@@ -494,6 +495,7 @@ static int mxc_nand_read_page_raw_syndrome(struct mtd_info *mtd,
 static int mxc_nand_read_page_syndrome(struct mtd_info *mtd,
 				       struct nand_chip *chip,
 				       uint8_t *buf,
+				       int oob_required,
 				       int page)
 {
 	struct mxc_nand_host *host = chip->priv;
@@ -589,9 +591,10 @@ static int mxc_nand_write_oob_syndrome(struct mtd_info *mtd,
 	return status & NAND_STATUS_FAIL ? -EIO : 0;
 }
 
-static void mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
+static int mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
 					     struct nand_chip *chip,
-					     const uint8_t *buf)
+					     const uint8_t *buf,
+					     int oob_required)
 {
 	struct mxc_nand_host *host = chip->priv;
 	int eccsize = chip->ecc.size;
@@ -625,11 +628,13 @@ static void mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
 	size = mtd->oobsize - (oob - chip->oob_poi);
 	if (size)
 		chip->write_buf(mtd, oob, size);
+	return 0;
 }
 
-static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
+static int mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 					 struct nand_chip *chip,
-					 uint8_t *buf)
+					 uint8_t *buf,
+					 int oob_required)
 {
 	struct mxc_nand_host *host = chip->priv;
 	int i, n, eccsize = chip->ecc.size;
@@ -683,6 +688,8 @@ static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 		buf[2000] = chip->oob_poi[49];/* ... and byte in oob area at offset 0x031 ...   */
 		chip->oob_poi[49] = tmp;      /* ... I swap them back, but WTF !!!              */
 	}
+
+	return 0;
 }
 
 static int mxc_nand_correct_data(struct mtd_info *mtd, u_char *dat,
@@ -1209,7 +1216,7 @@ int board_nand_init(struct nand_chip *this)
 #endif
 
 #ifdef CONFIG_SYS_NAND_USE_FLASH_BBT
-	this->options |= NAND_USE_FLASH_BBT;
+	this->bbt_options |= NAND_BBT_USE_FLASH;
 	this->bbt_td = &bbt_main_descr;
 	this->bbt_md = &bbt_mirror_descr;
 #endif
@@ -1259,6 +1266,11 @@ int board_nand_init(struct nand_chip *this)
 	} else {
 		this->ecc.mode = NAND_ECC_HW;
 	}
+
+	if (is_mxc_nfc_1())
+		this->ecc.strength = 1;
+	else
+		this->ecc.strength = 4;
 
 	host->pagesize_2k = 0;
 

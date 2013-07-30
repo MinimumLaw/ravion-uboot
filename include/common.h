@@ -71,8 +71,6 @@ typedef volatile unsigned char	vu_char;
 #include <mpc5xxx.h>
 #elif defined(CONFIG_MPC512X)
 #include <asm/immap_512x.h>
-#elif defined(CONFIG_MPC8220)
-#include <asm/immap_8220.h>
 #elif defined(CONFIG_8260)
 #if   defined(CONFIG_MPC8247) \
    || defined(CONFIG_MPC8248) \
@@ -199,17 +197,34 @@ typedef void (interrupt_handler_t)(void *);
  * General Purpose Utilities
  */
 #define min(X, Y)				\
-	({ typeof (X) __x = (X);		\
-		typeof (Y) __y = (Y);		\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
 		(__x < __y) ? __x : __y; })
 
 #define max(X, Y)				\
-	({ typeof (X) __x = (X);		\
-		typeof (Y) __y = (Y);		\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
 		(__x > __y) ? __x : __y; })
 
 #define MIN(x, y)  min(x, y)
 #define MAX(x, y)  max(x, y)
+
+#define min3(X, Y, Z)				\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
+		typeof(Z) __z = (Z);		\
+		__x < __y ? (__x < __z ? __x : __z) :	\
+		(__y < __z ? __y : __z); })
+
+#define max3(X, Y, Z)				\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
+		typeof(Z) __z = (Z);		\
+		__x > __y ? (__x > __z ? __x : __z) :	\
+		(__y > __z ? __y : __z); })
+
+#define MIN3(x, y, z)  min3(x, y, z)
+#define MAX3(x, y, z)  max3(x, y, z)
 
 /*
  * Return the absolute value of a number.
@@ -295,9 +310,6 @@ int	readline_into_buffer(const char *const prompt, char *buffer,
 int	parse_line (char *, char *[]);
 void	init_cmd_timeout(void);
 void	reset_cmd_timeout(void);
-#ifdef CONFIG_MENU
-int	abortboot(int bootdelay);
-#endif
 extern char console_buffer[];
 
 /* arch/$(ARCH)/lib/board.c */
@@ -322,6 +334,16 @@ int update_flash_size(int flash_size);
  * @param size	Size of DRAM (which should be displayed along with other info)
  */
 void board_show_dram(ulong size);
+
+/**
+ * arch_fixup_memory_node() - Write arch-specific memory information to fdt
+ *
+ * Defined in arch/$(ARCH)/lib/bootm.c
+ *
+ * @blob:	FDT blob to write to
+ * @return 0 if ok, or -ve FDT_ERR_... on failure
+ */
+int arch_fixup_memory_node(void *blob);
 
 /* common/flash.c */
 void flash_perror (int);
@@ -556,7 +578,6 @@ void	trap_init     (ulong);
     defined (CONFIG_74x)	|| \
     defined (CONFIG_75x)	|| \
     defined (CONFIG_74xx)	|| \
-    defined (CONFIG_MPC8220)	|| \
     defined (CONFIG_MPC85xx)	|| \
     defined (CONFIG_MPC86xx)	|| \
     defined (CONFIG_MPC83xx)
@@ -648,9 +669,6 @@ int	prt_8260_clks (void);
 #elif defined(CONFIG_MPC5xxx)
 int	prt_mpc5xxx_clks (void);
 #endif
-#if defined(CONFIG_MPC8220)
-int	prt_mpc8220_clks (void);
-#endif
 #ifdef CONFIG_4xx
 ulong	get_OPB_freq (void);
 ulong	get_PCI_freq (void);
@@ -732,6 +750,10 @@ void	irq_install_handler(int, interrupt_handler_t *, void *);
 void	irq_free_handler   (int);
 void	reset_timer	   (void);
 ulong	get_timer	   (ulong base);
+
+/* Return value of monotonic microsecond timer */
+unsigned long timer_get_us(void);
+
 void	enable_interrupts  (void);
 int	disable_interrupts (void);
 

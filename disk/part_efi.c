@@ -200,8 +200,8 @@ int get_partition_info_efi(block_dev_desc_t * dev_desc, int part,
 	uuid_string(gpt_pte[part - 1].unique_partition_guid.b, info->uuid);
 #endif
 
-	debug("%s: start 0x%lX, size 0x%lX, name %s", __func__,
-		info->start, info->size, info->name);
+	debug("%s: start 0x" LBAF ", size 0x" LBAF ", name %s", __func__,
+	      info->start, info->size, info->name);
 
 	/* Remember to free pte */
 	free(gpt_pte);
@@ -372,7 +372,7 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 	u32 offset = (u32)le32_to_cpu(gpt_h->first_usable_lba);
 	ulong start;
 	int i, k;
-	size_t name_len;
+	size_t efiname_len, dosname_len;
 #ifdef CONFIG_PARTITION_UUIDS
 	char *str_uuid;
 #endif
@@ -420,13 +420,18 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 		       sizeof(gpt_entry_attributes));
 
 		/* partition name */
-		name_len = sizeof(gpt_e[i].partition_name)
+		efiname_len = sizeof(gpt_e[i].partition_name)
 			/ sizeof(efi_char16_t);
-		for (k = 0; k < name_len; k++)
+		dosname_len = sizeof(partitions[i].name);
+
+		memset(gpt_e[i].partition_name, 0,
+		       sizeof(gpt_e[i].partition_name));
+
+		for (k = 0; k < min(dosname_len, efiname_len); k++)
 			gpt_e[i].partition_name[k] =
 				(efi_char16_t)(partitions[i].name[k]);
 
-		debug("%s: name: %s offset[%d]: 0x%x size[%d]: 0x%lx\n",
+		debug("%s: name: %s offset[%d]: 0x%x size[%d]: 0x" LBAF "\n",
 		      __func__, partitions[i].name, i,
 		      offset, i, partitions[i].size);
 	}
