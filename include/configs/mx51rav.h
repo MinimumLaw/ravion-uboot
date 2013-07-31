@@ -30,7 +30,7 @@
  /* High Level Configuration Options */
 
 #define CONFIG_MX51	/* in a mx51 */
-#define CONFIG_MX51_PLL_ERRATA
+/* #define CONFIG_MX51_PLL_ERRATA */
 #define CONFIG_SYS_MAIN_PWR_ON
 
 #define CONFIG_DISPLAY_CPUINFO
@@ -59,6 +59,9 @@
 /*
  * Hardware drivers
  */
+#define CONFIG_FSL_IIM
+#define CONFIG_CMD_FUSE
+
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 #define CONFIG_MXC_GPIO
