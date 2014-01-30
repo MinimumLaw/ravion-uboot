@@ -4,23 +4,7 @@
  * Copyright (C) 2011 Marek Vasut <marek.vasut@gmail.com>
  * on behalf of DENX Software Engineering GmbH
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -110,6 +94,7 @@ __weak void mxs_adjust_memory_params(uint32_t *dram_vals)
 {
 }
 
+#ifdef CONFIG_MX28
 static void initialize_dram_values(void)
 {
 	int i;
@@ -118,15 +103,36 @@ static void initialize_dram_values(void)
 
 	for (i = 0; i < ARRAY_SIZE(dram_vals); i++)
 		writel(dram_vals[i], MXS_DRAM_BASE + (4 * i));
+}
+#else
+static void initialize_dram_values(void)
+{
+	int i;
 
-#ifdef CONFIG_MX23
+	mxs_adjust_memory_params(dram_vals);
+
+	/*
+	 * HW_DRAM_CTL27, HW_DRAM_CTL28 and HW_DRAM_CTL35 are not initialized as
+	 * per FSL bootlets code.
+	 *
+	 * mx23 Reference Manual marks HW_DRAM_CTL27 and HW_DRAM_CTL28 as
+	 * "reserved".
+	 * HW_DRAM_CTL8 is setup as the last element.
+	 * So skip the initialization of these HW_DRAM_CTL registers.
+	 */
+	for (i = 0; i < ARRAY_SIZE(dram_vals); i++) {
+		if (i == 8 || i == 27 || i == 28 || i == 35)
+			continue;
+		writel(dram_vals[i], MXS_DRAM_BASE + (4 * i));
+	}
+
 	/*
 	 * Enable tRAS lockout in HW_DRAM_CTL08 ; it must be the last
 	 * element to be set
 	 */
 	writel((1 << 24), MXS_DRAM_BASE + (4 * 8));
-#endif
 }
+#endif
 
 static void mxs_mem_init_clock(void)
 {
@@ -234,17 +240,9 @@ static void mx23_mem_setup_vddmem(void)
 	struct mxs_power_regs *power_regs =
 		(struct mxs_power_regs *)MXS_POWER_BASE;
 
-	writel((0x10 << POWER_VDDMEMCTRL_TRG_OFFSET) |
-		POWER_VDDMEMCTRL_ENABLE_ILIMIT |
-		POWER_VDDMEMCTRL_ENABLE_LINREG |
-		POWER_VDDMEMCTRL_PULLDOWN_ACTIVE,
-		&power_regs->hw_power_vddmemctrl);
+	clrbits_le32(&power_regs->hw_power_vddmemctrl,
+		POWER_VDDMEMCTRL_ENABLE_ILIMIT);
 
-	early_delay(10000);
-
-	writel((0x10 << POWER_VDDMEMCTRL_TRG_OFFSET) |
-		POWER_VDDMEMCTRL_ENABLE_LINREG,
-		&power_regs->hw_power_vddmemctrl);
 }
 
 static void mx23_mem_init(void)
@@ -267,22 +265,18 @@ static void mx23_mem_init(void)
 
 	initialize_dram_values();
 
-	/* Set START bit in DRAM_CTL16 */
+	/* Set START bit in DRAM_CTL8 */
 	setbits_le32(MXS_DRAM_BASE + 0x20, 1 << 16);
 
 	clrbits_le32(MXS_DRAM_BASE + 0x40, 1 << 17);
 	early_delay(20000);
 
 	/* Adjust EMI port priority. */
-	clrsetbits_le32(0x80020000, 0x1f << 16, 0x8);
+	clrsetbits_le32(0x80020000, 0x1f << 16, 0x2);
 	early_delay(20000);
 
 	setbits_le32(MXS_DRAM_BASE + 0x40, 1 << 19);
 	setbits_le32(MXS_DRAM_BASE + 0x40, 1 << 11);
-
-	/* Wait for bit 10 (DRAM init complete) in DRAM_CTL18 */
-	while (!(readl(MXS_DRAM_BASE + 0x48) & (1 << 10)))
-		;
 }
 #endif
 

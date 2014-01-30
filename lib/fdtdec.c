@@ -1,22 +1,6 @@
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -37,6 +21,8 @@ DECLARE_GLOBAL_DATA_PTR;
 static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(UNKNOWN, "<none>"),
 	COMPAT(NVIDIA_TEGRA20_USB, "nvidia,tegra20-ehci"),
+	COMPAT(NVIDIA_TEGRA30_USB, "nvidia,tegra30-ehci"),
+	COMPAT(NVIDIA_TEGRA114_USB, "nvidia,tegra114-ehci"),
 	COMPAT(NVIDIA_TEGRA114_I2C, "nvidia,tegra114-i2c"),
 	COMPAT(NVIDIA_TEGRA20_I2C, "nvidia,tegra20-i2c"),
 	COMPAT(NVIDIA_TEGRA20_DVC, "nvidia,tegra20-i2c-dvc"),
@@ -57,15 +43,23 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS5_SOUND, "samsung,exynos-sound"),
 	COMPAT(WOLFSON_WM8994_CODEC, "wolfson,wm8994-codec"),
 	COMPAT(SAMSUNG_EXYNOS_SPI, "samsung,exynos-spi"),
+	COMPAT(GOOGLE_CROS_EC, "google,cros-ec"),
+	COMPAT(GOOGLE_CROS_EC_KEYB, "google,cros-ec-keyb"),
 	COMPAT(SAMSUNG_EXYNOS_EHCI, "samsung,exynos-ehci"),
+	COMPAT(SAMSUNG_EXYNOS5_XHCI, "samsung,exynos5250-xhci"),
 	COMPAT(SAMSUNG_EXYNOS_USB_PHY, "samsung,exynos-usb-phy"),
+	COMPAT(SAMSUNG_EXYNOS5_USB3_PHY, "samsung,exynos5250-usb3-phy"),
 	COMPAT(SAMSUNG_EXYNOS_TMU, "samsung,exynos-tmu"),
 	COMPAT(SAMSUNG_EXYNOS_FIMD, "samsung,exynos-fimd"),
 	COMPAT(SAMSUNG_EXYNOS5_DP, "samsung,exynos5-dp"),
+	COMPAT(SAMSUNG_EXYNOS5_DWMMC, "samsung,exynos5250-dwmmc"),
+	COMPAT(SAMSUNG_EXYNOS_SERIAL, "samsung,exynos4210-uart"),
 	COMPAT(MAXIM_MAX77686_PMIC, "maxim,max77686_pmic"),
 	COMPAT(GENERIC_SPI_FLASH, "spi-flash"),
 	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
 	COMPAT(INFINEON_SLB9635_TPM, "infineon,slb9635-tpm"),
+	COMPAT(INFINEON_SLB9645_TPM, "infineon,slb9645-tpm"),
+	COMPAT(SAMSUNG_EXYNOS5_I2C, "samsung,exynos5-hsi2c"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
@@ -92,10 +86,10 @@ fdt_addr_t fdtdec_get_addr_size(const void *blob, int node,
 			size = (fdt_size_t *)((char *)cell +
 					sizeof(fdt_addr_t));
 			*sizep = fdt_size_to_cpu(*size);
-			debug("addr=%p, size=%p\n", (void *)addr,
-			      (void *)*sizep);
+			debug("addr=%08lx, size=%08x\n",
+			      (ulong)addr, *sizep);
 		} else {
-			debug("%p\n", (void *)addr);
+			debug("%08lx\n", (ulong)addr);
 		}
 		return addr;
 	}
@@ -354,10 +348,11 @@ int fdtdec_check_fdt(void)
  */
 int fdtdec_prepare_fdt(void)
 {
-	if (((uintptr_t)gd->fdt_blob & 3) || fdt_check_header(gd->fdt_blob)) {
+	if (!gd->fdt_blob || ((uintptr_t)gd->fdt_blob & 3) ||
+	    fdt_check_header(gd->fdt_blob)) {
 		printf("No valid FDT found - please append one to U-Boot "
 			"binary, use u-boot-dtb.bin or define "
-			"CONFIG_OF_EMBED\n");
+			"CONFIG_OF_EMBED. For sandbox, use -d <file.dtb>\n");
 		return -1;
 	}
 	return 0;
@@ -616,7 +611,7 @@ int fdtdec_decode_region(const void *blob, int node,
 	if (!cell || (len != sizeof(fdt_addr_t) * 2))
 		return -1;
 
-	*ptrp = (void *)fdt_addr_to_cpu(*cell);
+	*ptrp = map_sysmem(fdt_addr_to_cpu(*cell), *size);
 	*size = fdt_size_to_cpu(cell[1]);
 	debug("%s: size=%zx\n", __func__, *size);
 	return 0;

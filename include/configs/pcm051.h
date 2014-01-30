@@ -20,11 +20,10 @@
 #define __CONFIG_PCM051_H
 
 #define CONFIG_AM33XX
+#define CONFIG_OMAP
+#define CONFIG_OMAP_COMMON
 
 #include <asm/arch/omap.h>
-
-#define CONFIG_DMA_COHERENT
-#define CONFIG_DMA_COHERENT_SIZE	(1 << 20)
 
 #define CONFIG_ENV_SIZE			(128 << 10)	/* 128 KiB */
 #define CONFIG_SYS_MALLOC_LEN		(1024 << 10)
@@ -124,12 +123,11 @@
  * memtest works on 8 MB in DRAM after skipping 32MB from
  * start addr of ram disk
  */
-#define CONFIG_SYS_MEMTEST_START	(PHYS_DRAM_1 + (64 * 1024 * 1024))
+#define CONFIG_SYS_MEMTEST_START	(CONFIG_SYS_SDRAM_BASE + (64 << 20))
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START \
 					+ (8 * 1024 * 1024))
 
 #define CONFIG_SYS_LOAD_ADDR		0x80007fc0 /* Default load address */
-#define CONFIG_SYS_HZ			1000 /* 1ms clock */
 
 #define CONFIG_MMC
 #define CONFIG_GENERIC_MMC
@@ -149,22 +147,19 @@
 
  /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS		1		/*  1 bank of DRAM */
-#define PHYS_DRAM_1			0x80000000	/* DRAM Bank #1 */
 #define CONFIG_MAX_RAM_BANK_SIZE	(1024 << 19)	/* 512MiB */
 
-#define CONFIG_SYS_SDRAM_BASE		PHYS_DRAM_1
+#define CONFIG_SYS_SDRAM_BASE		0x80000000
 #define CONFIG_SYS_INIT_SP_ADDR         (NON_SECURE_SRAM_END - \
 						GENERATED_GBL_DATA_SIZE)
  /* Platform/Board specific defs */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
 #define CONFIG_SYS_PTV			2	/* Divisor: 2^(PTV+1) => 8 */
-#define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CONS_INDEX		1
 /* NS16550 Configuration */
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SERIAL_MULTI
 #define CONFIG_SYS_NS16550_REG_SIZE	(-4)
 #define CONFIG_SYS_NS16550_CLK		(48000000)
 #define CONFIG_SYS_NS16550_COM1		0x44e09000	/* Base EVM has UART0 */
@@ -177,11 +172,10 @@
 /* I2C Configuration */
 #define CONFIG_I2C
 #define CONFIG_CMD_I2C
-#define CONFIG_HARD_I2C
-#define CONFIG_SYS_I2C_SPEED		100000
-#define CONFIG_SYS_I2C_SLAVE		1
-#define CONFIG_I2C_MULTI_BUS
-#define CONFIG_DRIVER_OMAP24XX_I2C
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
+#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
+#define CONFIG_SYS_I2C_OMAP24XX
 #define CONFIG_CMD_EEPROM
 #define CONFIG_ENV_EEPROM_IS_ON_I2C
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x50	/* Main EEPROM */
@@ -194,6 +188,9 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 110, 300, 600, 1200, 2400, \
 4800, 9600, 14400, 19200, 28800, 38400, 56000, 57600, 115200 }
 
+/* CPU */
+#define CONFIG_ARCH_CPU_INIT
+
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_INFO_QUIET
 
@@ -202,8 +199,14 @@
 /* Defines for SPL */
 #define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
+#define CONFIG_SPL_BOARD_INIT
+/*
+ * Place the image at the start of the ROM defined image space.
+ * We limit our size to the ROM-defined downloaded image area, and use the
+ * rest of the space for stack.
+ */
 #define CONFIG_SPL_TEXT_BASE		0x402F0400
-#define CONFIG_SPL_MAX_SIZE		(101 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(0x4030C000 - CONFIG_SPL_TEXT_BASE)
 #define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
 
 #define CONFIG_SPL_BSS_START_ADDR	0x80000000
@@ -224,6 +227,7 @@
 #define CONFIG_SPL_GPIO_SUPPORT
 #define CONFIG_SPL_YMODEM_SUPPORT
 #define CONFIG_SPL_NET_SUPPORT
+#define CONFIG_SPL_ENV_SUPPORT
 #define CONFIG_SPL_NET_VCI_STRING	"pcm051 U-Boot SPL"
 #define CONFIG_SPL_ETH_SUPPORT
 #define CONFIG_SPL_SPI_SUPPORT
@@ -284,7 +288,6 @@
 #define CONFIG_CMD_PING
 #define CONFIG_DRIVER_TI_CPSW
 #define CONFIG_MII
-#define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_DNS
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME

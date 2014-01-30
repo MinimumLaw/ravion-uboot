@@ -1,20 +1,7 @@
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /* Taken from Linux kernel, commit f56c3196 */
@@ -29,7 +16,7 @@ extern char _data[], _sdata[], _edata[];
 extern char __bss_start[], __bss_stop[];
 extern char __init_begin[], __init_end[];
 extern char _sinittext[], _einittext[];
-extern char _end[];
+extern char _end[], _init[];
 extern char __per_cpu_load[], __per_cpu_start[], __per_cpu_end[];
 extern char __kprobes_text_start[], __kprobes_text_end[];
 extern char __entry_text_start[], __entry_text_end[];
@@ -89,9 +76,6 @@ extern void _start(void);
 /* Start/end of the relocation entries, as an offset from _start */
 extern ulong _rel_dyn_start_ofs;
 extern ulong _rel_dyn_end_ofs;
-
-/* Start/end of the relocation symbol table, as an offset from _start */
-extern ulong _dynsym_start_ofs;
 
 /* End of the region to be relocated, as an offset form _start */
 extern ulong _image_copy_end_ofs;

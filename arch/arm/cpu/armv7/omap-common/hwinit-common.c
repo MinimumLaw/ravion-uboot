@@ -9,23 +9,7 @@
  *	Aneesh V	<aneesh@ti.com>
  *	Steve Sakoman	<steve@sakoman.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <spl.h>
@@ -84,7 +68,7 @@ u32 cortex_rev(void)
 	return rev;
 }
 
-void omap_rev_string(void)
+static void omap_rev_string(void)
 {
 	u32 omap_rev = omap_revision();
 	u32 soc_variant	= (omap_rev & 0xF0000000) >> 28;
@@ -101,11 +85,6 @@ void omap_rev_string(void)
 }
 
 #ifdef CONFIG_SPL_BUILD
-static void init_boot_params(void)
-{
-	boot_params_ptr = (u32 *) &boot_params;
-}
-
 void spl_display_print(void)
 {
 	omap_rev_string();
@@ -115,6 +94,17 @@ void spl_display_print(void)
 void __weak srcomp_enable(void)
 {
 }
+
+#ifdef CONFIG_ARCH_CPU_INIT
+/*
+ * SOC specific cpu init
+ */
+int arch_cpu_init(void)
+{
+	save_omap_boot_params();
+	return 0;
+}
+#endif /* CONFIG_ARCH_CPU_INIT */
 
 /*
  * Routine: s_init
@@ -132,6 +122,14 @@ void __weak srcomp_enable(void)
  */
 void s_init(void)
 {
+	/*
+	 * Save the boot parameters passed from romcode.
+	 * We cannot delay the saving further than this,
+	 * to prevent overwrites.
+	 */
+#ifdef CONFIG_SPL_BUILD
+	save_omap_boot_params();
+#endif
 	init_omap_revision();
 	hw_data_init();
 
@@ -152,11 +150,8 @@ void s_init(void)
 #endif
 	prcm_init();
 #ifdef CONFIG_SPL_BUILD
-	timer_init();
-
 	/* For regular u-boot sdram_init() is called from dram_init() */
 	sdram_init();
-	init_boot_params();
 #endif
 }
 

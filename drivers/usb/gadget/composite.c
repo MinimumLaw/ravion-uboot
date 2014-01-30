@@ -4,19 +4,7 @@
  * Copyright (C) 2006-2008 David Brownell
  * U-boot porting: Lukasz Majewski <l.majewski@samsung.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 #undef DEBUG
 
@@ -997,7 +985,8 @@ static int composite_bind(struct usb_gadget *gadget)
 	if (status < 0)
 		goto fail;
 
-	cdev->desc = *composite->dev;
+	memcpy(&cdev->desc, composite->dev,
+	       sizeof(struct usb_device_descriptor));
 	cdev->desc.bMaxPacketSize0 = gadget->ep0->maxpacket;
 
 	debug("%s: ready\n", composite->name);
@@ -1098,4 +1087,5 @@ void usb_composite_unregister(struct usb_composite_driver *driver)
 	if (composite != driver)
 		return;
 	usb_gadget_unregister_driver(&composite_driver);
+	composite = NULL;
 }

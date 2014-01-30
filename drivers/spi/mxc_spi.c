@@ -1,21 +1,7 @@
 /*
  * Copyright (C) 2008, Guennadi Liakhovetski <lg@denx.de>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- *
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -128,8 +114,8 @@ static s32 spi_cfg_mxc(struct mxc_spi_slave *mxcs, unsigned int cs,
 		unsigned int max_hz, unsigned int mode)
 {
 	u32 clk_src = mxc_get_clock(MXC_CSPI_CLK);
-	s32 pre_div = 0, post_div = 0, i, reg_ctrl, reg_config;
-	u32 ss_pol = 0, sclkpol = 0, sclkpha = 0;
+	s32 reg_ctrl, reg_config;
+	u32 ss_pol = 0, sclkpol = 0, sclkpha = 0, pre_div = 0, post_div = 0;
 	struct cspi_regs *regs = (struct cspi_regs *)mxcs->base;
 
 	if (max_hz == 0) {
@@ -147,26 +133,20 @@ static s32 spi_cfg_mxc(struct mxc_spi_slave *mxcs, unsigned int cs,
 	reg_ctrl |=  MXC_CSPICTRL_EN;
 	reg_write(&regs->ctrl, reg_ctrl);
 
-	/*
-	 * The following computation is taken directly from Freescale's code.
-	 */
 	if (clk_src > max_hz) {
-		pre_div = DIV_ROUND_UP(clk_src, max_hz);
-		if (pre_div > 16) {
-			post_div = pre_div / 16;
-			pre_div = 15;
-		}
-		if (post_div != 0) {
-			for (i = 0; i < 16; i++) {
-				if ((1 << i) >= post_div)
-					break;
-			}
-			if (i == 16) {
+		pre_div = (clk_src - 1) / max_hz;
+		/* fls(1) = 1, fls(0x80000000) = 32, fls(16) = 5 */
+		post_div = fls(pre_div);
+		if (post_div > 4) {
+			post_div -= 4;
+			if (post_div >= 16) {
 				printf("Error: no divider for the freq: %d\n",
 					max_hz);
 				return -1;
 			}
-			post_div = i;
+			pre_div >>= post_div;
+		} else {
+			post_div = 0;
 		}
 	}
 
@@ -224,7 +204,7 @@ int spi_xchg_single(struct spi_slave *slave, unsigned int bitlen,
 	const u8 *dout, u8 *din, unsigned long flags)
 {
 	struct mxc_spi_slave *mxcs = to_mxc_spi_slave(slave);
-	int nbytes = (bitlen + 7) / 8;
+	int nbytes = DIV_ROUND_UP(bitlen, 8);
 	u32 data, cnt, i;
 	struct cspi_regs *regs = (struct cspi_regs *)mxcs->base;
 
@@ -275,8 +255,8 @@ int spi_xchg_single(struct spi_slave *slave, unsigned int bitlen,
 			} else {
 				data = *(u32 *)dout;
 				data = cpu_to_be32(data);
+				dout += 4;
 			}
-			dout += 4;
 		}
 		debug("Sending SPI 0x%x\n", data);
 		reg_write(&regs->txdata, data);
@@ -294,7 +274,7 @@ int spi_xchg_single(struct spi_slave *slave, unsigned int bitlen,
 	/* Transfer completed, clear any pending request */
 	reg_write(&regs->stat, MXC_CSPICTRL_TC | MXC_CSPICTRL_RXOVF);
 
-	nbytes = (bitlen + 7) / 8;
+	nbytes = DIV_ROUND_UP(bitlen, 8);
 
 	cnt = nbytes % 32;
 
@@ -330,7 +310,7 @@ int spi_xchg_single(struct spi_slave *slave, unsigned int bitlen,
 int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		void *din, unsigned long flags)
 {
-	int n_bytes = (bitlen + 7) / 8;
+	int n_bytes = DIV_ROUND_UP(bitlen, 8);
 	int n_bits;
 	int ret;
 	u32 blk_size;

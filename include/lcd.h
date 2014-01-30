@@ -7,23 +7,7 @@
  * (C) Copyright 2001
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _LCD_H_
@@ -37,7 +21,6 @@ extern struct vidinfo panel_info;
 
 void lcd_ctrl_init(void *lcdbase);
 void lcd_enable(void);
-int board_splash_screen_prepare(void);
 
 /* setcolreg used in 8bpp/16bpp; initcolregs used in monochrome */
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue);
@@ -46,7 +29,8 @@ void lcd_initcolregs(void);
 int lcd_getfgcolor(void);
 
 /* gunzip_bmp used if CONFIG_VIDEO_BMP_GZIP */
-struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp);
+struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
+			     void **alloc_addr);
 int bmp_display(ulong addr, int x, int y);
 
 /**
@@ -323,6 +307,9 @@ void lcd_show_board_info(void);
 
 /* Return the size of the LCD frame buffer, and the line length */
 int lcd_get_size(int *line_length);
+
+int lcd_dt_simplefb_add_node(void *blob);
+int lcd_dt_simplefb_enable_existing_node(void *blob);
 
 /************************************************************************/
 /* ** BITMAP DISPLAY SUPPORT						*/

@@ -4,23 +4,12 @@
  *
  * Authors: Dipen Dudhat <Dipen.Dudhat@freescale.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <malloc.h>
+#include <nand.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
@@ -28,7 +17,7 @@
 
 #include <asm/io.h>
 #include <asm/errno.h>
-#include <asm/fsl_ifc.h>
+#include <fsl_ifc.h>
 
 #define FSL_IFC_V1_1_0	0x01010000
 #define MAX_BANKS	4
@@ -41,7 +30,6 @@ struct fsl_ifc_ctrl;
 
 /* mtd information per set */
 struct fsl_ifc_mtd {
-	struct mtd_info mtd;
 	struct nand_chip chip;
 	struct fsl_ifc_ctrl *ctrl;
 
@@ -137,6 +125,69 @@ static struct nand_ecclayout oob_4096_ecc8 = {
 	.oobfree = { {2, 6}, {136, 82} },
 };
 
+/* 8192-byte page size with 4-bit ECC */
+static struct nand_ecclayout oob_8192_ecc4 = {
+	.eccbytes = 128,
+	.eccpos = {
+		8, 9, 10, 11, 12, 13, 14, 15,
+		16, 17, 18, 19, 20, 21, 22, 23,
+		24, 25, 26, 27, 28, 29, 30, 31,
+		32, 33, 34, 35, 36, 37, 38, 39,
+		40, 41, 42, 43, 44, 45, 46, 47,
+		48, 49, 50, 51, 52, 53, 54, 55,
+		56, 57, 58, 59, 60, 61, 62, 63,
+		64, 65, 66, 67, 68, 69, 70, 71,
+		72, 73, 74, 75, 76, 77, 78, 79,
+		80, 81, 82, 83, 84, 85, 86, 87,
+		88, 89, 90, 91, 92, 93, 94, 95,
+		96, 97, 98, 99, 100, 101, 102, 103,
+		104, 105, 106, 107, 108, 109, 110, 111,
+		112, 113, 114, 115, 116, 117, 118, 119,
+		120, 121, 122, 123, 124, 125, 126, 127,
+		128, 129, 130, 131, 132, 133, 134, 135,
+	},
+	.oobfree = { {2, 6}, {136, 208} },
+};
+
+/* 8192-byte page size with 8-bit ECC -- requires 218-byte OOB */
+static struct nand_ecclayout oob_8192_ecc8 = {
+	.eccbytes = 256,
+	.eccpos = {
+		8, 9, 10, 11, 12, 13, 14, 15,
+		16, 17, 18, 19, 20, 21, 22, 23,
+		24, 25, 26, 27, 28, 29, 30, 31,
+		32, 33, 34, 35, 36, 37, 38, 39,
+		40, 41, 42, 43, 44, 45, 46, 47,
+		48, 49, 50, 51, 52, 53, 54, 55,
+		56, 57, 58, 59, 60, 61, 62, 63,
+		64, 65, 66, 67, 68, 69, 70, 71,
+		72, 73, 74, 75, 76, 77, 78, 79,
+		80, 81, 82, 83, 84, 85, 86, 87,
+		88, 89, 90, 91, 92, 93, 94, 95,
+		96, 97, 98, 99, 100, 101, 102, 103,
+		104, 105, 106, 107, 108, 109, 110, 111,
+		112, 113, 114, 115, 116, 117, 118, 119,
+		120, 121, 122, 123, 124, 125, 126, 127,
+		128, 129, 130, 131, 132, 133, 134, 135,
+		136, 137, 138, 139, 140, 141, 142, 143,
+		144, 145, 146, 147, 148, 149, 150, 151,
+		152, 153, 154, 155, 156, 157, 158, 159,
+		160, 161, 162, 163, 164, 165, 166, 167,
+		168, 169, 170, 171, 172, 173, 174, 175,
+		176, 177, 178, 179, 180, 181, 182, 183,
+		184, 185, 186, 187, 188, 189, 190, 191,
+		192, 193, 194, 195, 196, 197, 198, 199,
+		200, 201, 202, 203, 204, 205, 206, 207,
+		208, 209, 210, 211, 212, 213, 214, 215,
+		216, 217, 218, 219, 220, 221, 222, 223,
+		224, 225, 226, 227, 228, 229, 230, 231,
+		232, 233, 234, 235, 236, 237, 238, 239,
+		240, 241, 242, 243, 244, 245, 246, 247,
+		248, 249, 250, 251, 252, 253, 254, 255,
+		256, 257, 258, 259, 260, 261, 262, 263,
+	},
+	.oobfree = { {2, 6}, {264, 80} },
+};
 
 /*
  * Generic flash bbt descriptors
@@ -440,20 +491,27 @@ static void fsl_ifc_cmdfunc(struct mtd_info *mtd, unsigned int command,
 		if (mtd->writesize > 512) {
 			nand_fcr0 =
 				(NAND_CMD_SEQIN << IFC_NAND_FCR0_CMD0_SHIFT) |
-				(NAND_CMD_PAGEPROG << IFC_NAND_FCR0_CMD1_SHIFT);
+				(NAND_CMD_STATUS << IFC_NAND_FCR0_CMD1_SHIFT) |
+				(NAND_CMD_PAGEPROG << IFC_NAND_FCR0_CMD2_SHIFT);
 
 			out_be32(&ifc->ifc_nand.nand_fir0,
 				 (IFC_FIR_OP_CW0 << IFC_NAND_FIR0_OP0_SHIFT) |
 				 (IFC_FIR_OP_CA0 << IFC_NAND_FIR0_OP1_SHIFT) |
 				 (IFC_FIR_OP_RA0 << IFC_NAND_FIR0_OP2_SHIFT) |
 				 (IFC_FIR_OP_WBCD  << IFC_NAND_FIR0_OP3_SHIFT) |
-				 (IFC_FIR_OP_CW1 << IFC_NAND_FIR0_OP4_SHIFT));
-			out_be32(&ifc->ifc_nand.nand_fir1, 0);
+				 (IFC_FIR_OP_CMD2 << IFC_NAND_FIR0_OP4_SHIFT));
+			out_be32(&ifc->ifc_nand.nand_fir1,
+				 (IFC_FIR_OP_CW1 << IFC_NAND_FIR1_OP5_SHIFT) |
+				 (IFC_FIR_OP_RDSTAT <<
+					IFC_NAND_FIR1_OP6_SHIFT) |
+				 (IFC_FIR_OP_NOP << IFC_NAND_FIR1_OP7_SHIFT));
 		} else {
 			nand_fcr0 = ((NAND_CMD_PAGEPROG <<
 					IFC_NAND_FCR0_CMD1_SHIFT) |
 				    (NAND_CMD_SEQIN <<
-					IFC_NAND_FCR0_CMD2_SHIFT));
+					IFC_NAND_FCR0_CMD2_SHIFT) |
+				    (NAND_CMD_STATUS <<
+					IFC_NAND_FCR0_CMD3_SHIFT));
 
 			out_be32(&ifc->ifc_nand.nand_fir0,
 				 (IFC_FIR_OP_CW0 << IFC_NAND_FIR0_OP0_SHIFT) |
@@ -462,7 +520,11 @@ static void fsl_ifc_cmdfunc(struct mtd_info *mtd, unsigned int command,
 				 (IFC_FIR_OP_RA0 << IFC_NAND_FIR0_OP3_SHIFT) |
 				 (IFC_FIR_OP_WBCD << IFC_NAND_FIR0_OP4_SHIFT));
 			out_be32(&ifc->ifc_nand.nand_fir1,
-				 (IFC_FIR_OP_CW1 << IFC_NAND_FIR1_OP5_SHIFT));
+				 (IFC_FIR_OP_CMD1 << IFC_NAND_FIR1_OP5_SHIFT) |
+				 (IFC_FIR_OP_CW3 << IFC_NAND_FIR1_OP6_SHIFT) |
+				 (IFC_FIR_OP_RDSTAT <<
+					IFC_NAND_FIR1_OP7_SHIFT) |
+				 (IFC_FIR_OP_NOP << IFC_NAND_FIR1_OP8_SHIFT));
 
 			if (column >= mtd->writesize)
 				nand_fcr0 |=
@@ -686,9 +748,8 @@ static int fsl_ifc_wait(struct mtd_info *mtd, struct nand_chip *chip)
 	return nand_fsr;
 }
 
-static int fsl_ifc_read_page(struct mtd_info *mtd,
-			      struct nand_chip *chip,
-			      uint8_t *buf, int page)
+static int fsl_ifc_read_page(struct mtd_info *mtd, struct nand_chip *chip,
+			     uint8_t *buf, int oob_required, int page)
 {
 	struct fsl_ifc_mtd *priv = chip->priv;
 	struct fsl_ifc_ctrl *ctrl = priv->ctrl;
@@ -705,12 +766,13 @@ static int fsl_ifc_read_page(struct mtd_info *mtd,
 /* ECC will be calculated automatically, and errors will be detected in
  * waitfunc.
  */
-static void fsl_ifc_write_page(struct mtd_info *mtd,
-				struct nand_chip *chip,
-				const uint8_t *buf)
+static int fsl_ifc_write_page(struct mtd_info *mtd, struct nand_chip *chip,
+			       const uint8_t *buf, int oob_required)
 {
 	fsl_ifc_write_buf(mtd, buf, mtd->writesize);
 	fsl_ifc_write_buf(mtd, chip->oob_poi, mtd->oobsize);
+
+	return 0;
 }
 
 static void fsl_ifc_ctrl_init(void)
@@ -794,11 +856,14 @@ static void fsl_ifc_sram_init(void)
 	out_be32(&ifc_ctrl->regs->csor_cs[cs].csor_ext, csor_ext);
 }
 
-int board_nand_init(struct nand_chip *nand)
+static int fsl_ifc_chip_init(int devnum, u8 *addr)
 {
+	struct mtd_info *mtd = &nand_info[devnum];
+	struct nand_chip *nand;
 	struct fsl_ifc_mtd *priv;
 	struct nand_ecclayout *layout;
 	uint32_t cspr = 0, csor = 0, ver = 0;
+	int ret;
 
 	if (!ifc_ctrl) {
 		fsl_ifc_ctrl_init();
@@ -811,18 +876,18 @@ int board_nand_init(struct nand_chip *nand)
 		return -ENOMEM;
 
 	priv->ctrl = ifc_ctrl;
-	priv->vbase = nand->IO_ADDR_R;
+	priv->vbase = addr;
 
 	/* Find which chip select it is connected to.
 	 */
 	for (priv->bank = 0; priv->bank < MAX_BANKS; priv->bank++) {
-		phys_addr_t base_addr = virt_to_phys(nand->IO_ADDR_R);
+		phys_addr_t phys_addr = virt_to_phys(addr);
 
 		cspr = in_be32(&ifc_ctrl->regs->cspr_cs[priv->bank].cspr);
 		csor = in_be32(&ifc_ctrl->regs->csor_cs[priv->bank].csor);
 
 		if ((cspr & CSPR_V) && (cspr & CSPR_MSEL) == CSPR_MSEL_NAND &&
-		    (cspr & CSPR_BA) == CSPR_PHYS_ADDR(base_addr)) {
+		    (cspr & CSPR_BA) == CSPR_PHYS_ADDR(phys_addr)) {
 			ifc_ctrl->cs_nand = priv->bank << IFC_NAND_CSEL_SHIFT;
 			break;
 		}
@@ -834,6 +899,9 @@ int board_nand_init(struct nand_chip *nand)
 		kfree(priv);
 		return -ENODEV;
 	}
+
+	nand = &priv->chip;
+	mtd->priv = nand;
 
 	ifc_ctrl->chips[priv->bank] = priv;
 
@@ -852,8 +920,8 @@ int board_nand_init(struct nand_chip *nand)
 	nand->bbt_md = &bbt_mirror_descr;
 
 	/* set up nand options */
-	nand->options = NAND_NO_READRDY | NAND_NO_AUTOINCR |
-			NAND_USE_FLASH_BBT | NAND_NO_SUBPAGE_WRITE;
+	nand->options = NAND_NO_SUBPAGE_WRITE;
+	nand->bbt_options = NAND_BBT_USE_FLASH;
 
 	if (cspr & CSPR_PORT_SIZE_16) {
 		nand->read_byte = fsl_ifc_read_byte16;
@@ -884,11 +952,13 @@ int board_nand_init(struct nand_chip *nand)
 			bbt_mirror_descr.offs = 0;
 		}
 
+		nand->ecc.strength = 4;
 		priv->bufnum_mask = 15;
 		break;
 
 	case CSOR_NAND_PGS_2K:
 		layout = &oob_2048_ecc4;
+		nand->ecc.strength = 4;
 		priv->bufnum_mask = 3;
 		break;
 
@@ -896,13 +966,30 @@ int board_nand_init(struct nand_chip *nand)
 		if ((csor & CSOR_NAND_ECC_MODE_MASK) ==
 		    CSOR_NAND_ECC_MODE_4) {
 			layout = &oob_4096_ecc4;
+			nand->ecc.strength = 4;
 		} else {
 			layout = &oob_4096_ecc8;
+			nand->ecc.strength = 8;
 			nand->ecc.bytes = 16;
 		}
 
 		priv->bufnum_mask = 1;
 		break;
+
+	case CSOR_NAND_PGS_8K:
+		if ((csor & CSOR_NAND_ECC_MODE_MASK) ==
+		    CSOR_NAND_ECC_MODE_4) {
+			layout = &oob_8192_ecc4;
+			nand->ecc.strength = 4;
+		} else {
+			layout = &oob_8192_ecc8;
+			nand->ecc.strength = 8;
+			nand->ecc.bytes = 16;
+		}
+
+		priv->bufnum_mask = 0;
+		break;
+
 
 	default:
 		printf("ifc nand: bad csor %#x: bad page size\n", csor);
@@ -921,5 +1008,31 @@ int board_nand_init(struct nand_chip *nand)
 	if (ver == FSL_IFC_V1_1_0)
 		fsl_ifc_sram_init();
 
+	ret = nand_scan_ident(mtd, 1, NULL);
+	if (ret)
+		return ret;
+
+	ret = nand_scan_tail(mtd);
+	if (ret)
+		return ret;
+
+	ret = nand_register(devnum);
+	if (ret)
+		return ret;
 	return 0;
+}
+
+#ifndef CONFIG_SYS_NAND_BASE_LIST
+#define CONFIG_SYS_NAND_BASE_LIST { CONFIG_SYS_NAND_BASE }
+#endif
+
+static unsigned long base_address[CONFIG_SYS_MAX_NAND_DEVICE] =
+	CONFIG_SYS_NAND_BASE_LIST;
+
+void board_nand_init(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++)
+		fsl_ifc_chip_init(i, (u8 *)base_address[i]);
 }

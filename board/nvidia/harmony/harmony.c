@@ -2,26 +2,11 @@
  *  (C) Copyright 2010,2011
  *  NVIDIA Corporation <www.nvidia.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
+#include <lcd.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/funcmux.h>
@@ -58,4 +43,10 @@ void pin_mux_usb(void)
 	pinmux_tristate_disable(PINGRP_CDEV2);
 	/* USB2 PHY reset GPIO */
 	pinmux_tristate_disable(PINGRP_UAC);
+}
+
+void pin_mux_display(void)
+{
+	pinmux_set_func(PINGRP_SDC, PMUX_FUNC_PWM);
+	pinmux_tristate_disable(PINGRP_SDC);
 }

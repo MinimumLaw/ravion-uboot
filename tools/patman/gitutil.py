@@ -1,22 +1,6 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 #
-# See file CREDITS for list of people who contributed to this
-# project.
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of
-# the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307 USA
+# SPDX-License-Identifier:	GPL-2.0+
 #
 
 import command
@@ -56,10 +40,14 @@ def GetUpstream(git_dir, branch):
     Returns:
         Name of upstream branch (e.g. 'upstream/master') or None if none
     """
-    remote = command.OutputOneLine('git', '--git-dir', git_dir, 'config',
-            'branch.%s.remote' % branch)
-    merge = command.OutputOneLine('git', '--git-dir', git_dir, 'config',
-            'branch.%s.merge' % branch)
+    try:
+        remote = command.OutputOneLine('git', '--git-dir', git_dir, 'config',
+                                       'branch.%s.remote' % branch)
+        merge = command.OutputOneLine('git', '--git-dir', git_dir, 'config',
+                                      'branch.%s.merge' % branch)
+    except:
+        return None
+
     if remote == '.':
         return merge
     elif remote and merge:
@@ -78,9 +66,11 @@ def GetRangeInBranch(git_dir, branch, include_upstream=False):
         branch: Name of branch
     Return:
         Expression in the form 'upstream..branch' which can be used to
-        access the commits.
+        access the commits. If the branch does not exist, returns None.
     """
     upstream = GetUpstream(git_dir, branch)
+    if not upstream:
+        return None
     return '%s%s..%s' % (upstream, '~' if include_upstream else '', branch)
 
 def CountCommitsInBranch(git_dir, branch, include_upstream=False):
@@ -90,9 +80,12 @@ def CountCommitsInBranch(git_dir, branch, include_upstream=False):
         git_dir: Directory containing git repo
         branch: Name of branch
     Return:
-        Number of patches that exist on top of the branch
+        Number of patches that exist on top of the branch, or None if the
+        branch does not exist.
     """
     range_expr = GetRangeInBranch(git_dir, branch, include_upstream)
+    if not range_expr:
+        return None
     pipe = [['git', '--git-dir', git_dir, 'log', '--oneline', '--no-decorate',
              range_expr],
             ['wc', '-l']]

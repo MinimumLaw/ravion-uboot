@@ -3,19 +3,7 @@
  * Copyright 2008 Sascha Hauer, kernel@pengutronix.de
  * Copyright 2009 Ilya Yanok, <yanok@emcraft.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301, USA.
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -396,7 +384,7 @@ static void mxc_nand_enable_hwecc(struct mtd_info *mtd, int mode)
 #if defined(MXC_NFC_V2_1) || defined(MXC_NFC_V3_2)
 static int mxc_nand_read_oob_syndrome(struct mtd_info *mtd,
 				      struct nand_chip *chip,
-				      int page, int sndcmd)
+				      int page)
 {
 	struct mxc_nand_host *host = chip->priv;
 	uint8_t *buf = chip->oob_poi;
@@ -450,6 +438,7 @@ static int mxc_nand_read_oob_syndrome(struct mtd_info *mtd,
 static int mxc_nand_read_page_raw_syndrome(struct mtd_info *mtd,
 					   struct nand_chip *chip,
 					   uint8_t *buf,
+					   int oob_required,
 					   int page)
 {
 	struct mxc_nand_host *host = chip->priv;
@@ -494,6 +483,7 @@ static int mxc_nand_read_page_raw_syndrome(struct mtd_info *mtd,
 static int mxc_nand_read_page_syndrome(struct mtd_info *mtd,
 				       struct nand_chip *chip,
 				       uint8_t *buf,
+				       int oob_required,
 				       int page)
 {
 	struct mxc_nand_host *host = chip->priv;
@@ -583,9 +573,10 @@ static int mxc_nand_write_oob_syndrome(struct mtd_info *mtd,
 	return status & NAND_STATUS_FAIL ? -EIO : 0;
 }
 
-static void mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
+static int mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
 					     struct nand_chip *chip,
-					     const uint8_t *buf)
+					     const uint8_t *buf,
+					     int oob_required)
 {
 	struct mxc_nand_host *host = chip->priv;
 	int eccsize = chip->ecc.size;
@@ -619,11 +610,13 @@ static void mxc_nand_write_page_raw_syndrome(struct mtd_info *mtd,
 	size = mtd->oobsize - (oob - chip->oob_poi);
 	if (size)
 		chip->write_buf(mtd, oob, size);
+	return 0;
 }
 
-static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
+static int mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 					 struct nand_chip *chip,
-					 const uint8_t *buf)
+					 const uint8_t *buf,
+					 int oob_required)
 {
 	struct mxc_nand_host *host = chip->priv;
 	int i, n, eccsize = chip->ecc.size;
@@ -662,6 +655,7 @@ static void mxc_nand_write_page_syndrome(struct mtd_info *mtd,
 	i = mtd->oobsize - (oob - chip->oob_poi);
 	if (i)
 		chip->write_buf(mtd, oob, i);
+	return 0;
 }
 
 static int mxc_nand_correct_data(struct mtd_info *mtd, u_char *dat,
@@ -1188,7 +1182,7 @@ int board_nand_init(struct nand_chip *this)
 #endif
 
 #ifdef CONFIG_SYS_NAND_USE_FLASH_BBT
-	this->options |= NAND_USE_FLASH_BBT;
+	this->bbt_options |= NAND_BBT_USE_FLASH;
 	this->bbt_td = &bbt_main_descr;
 	this->bbt_md = &bbt_mirror_descr;
 #endif
@@ -1235,6 +1229,11 @@ int board_nand_init(struct nand_chip *this)
 	} else {
 		this->ecc.mode = NAND_ECC_HW;
 	}
+
+	if (is_mxc_nfc_1())
+		this->ecc.strength = 1;
+	else
+		this->ecc.strength = 4;
 
 	host->pagesize_2k = 0;
 

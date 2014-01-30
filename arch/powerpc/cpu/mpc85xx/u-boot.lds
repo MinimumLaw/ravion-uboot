@@ -1,23 +1,7 @@
 /*
  * Copyright 2007-2009, 2011 Freescale Semiconductor, Inc.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include "config.h"	/* CONFIG_BOARDDIR */
@@ -95,6 +79,13 @@ SECTIONS
   . = ALIGN(256);
   __init_end = .;
 
+#ifdef CONFIG_SYS_MPC85XX_NO_RESETVEC
+  .bootpg ADDR(.text) - 0x1000 :
+  {
+    KEEP(arch/powerpc/cpu/mpc85xx/start.o (.bootpg))
+  } :text = 0xffff
+  . = ADDR(.text) + 0x80000;
+#else
   .bootpg RESET_VECTOR_ADDRESS - 0xffc :
   {
     arch/powerpc/cpu/mpc85xx/start.o	(.bootpg)
@@ -116,6 +107,7 @@ SECTIONS
    */
 #if (RESET_VECTOR_ADDRESS == 0xfffffffc)
   . |= 0x10;
+#endif
 #endif
 
   __bss_start = .;

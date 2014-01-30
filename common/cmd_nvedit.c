@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2000-2010
+ * (C) Copyright 2000-2013
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
@@ -7,23 +7,7 @@
  *
  * Copyright 2011 Freescale Semiconductor, Inc.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -164,31 +148,55 @@ static int do_env_print(cmd_tbl_t *cmdtp, int flag, int argc,
 static int do_env_grep(cmd_tbl_t *cmdtp, int flag,
 		       int argc, char * const argv[])
 {
-	ENTRY *match;
-	unsigned char matched[env_htab.size / 8];
-	int rcode = 1, arg = 1, idx;
+	char *res = NULL;
+	int len, grep_how, grep_what;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	memset(matched, 0, env_htab.size / 8);
+	grep_how  = H_MATCH_SUBSTR;	/* default: substring search	*/
+	grep_what = H_MATCH_BOTH;	/* default: grep names and values */
 
-	while (arg <= argc) {
-		idx = 0;
-		while ((idx = hstrstr_r(argv[arg], idx, &match, &env_htab))) {
-			if (!(matched[idx / 8] & (1 << (idx & 7)))) {
-				puts(match->key);
-				puts("=");
-				puts(match->data);
-				puts("\n");
+	while (--argc > 0 && **++argv == '-') {
+		char *arg = *argv;
+		while (*++arg) {
+			switch (*arg) {
+#ifdef CONFIG_REGEX
+			case 'e':		/* use regex matching */
+				grep_how  = H_MATCH_REGEX;
+				break;
+#endif
+			case 'n':		/* grep for name */
+				grep_what = H_MATCH_KEY;
+				break;
+			case 'v':		/* grep for value */
+				grep_what = H_MATCH_DATA;
+				break;
+			case 'b':		/* grep for both */
+				grep_what = H_MATCH_BOTH;
+				break;
+			case '-':
+				goto DONE;
+			default:
+				return CMD_RET_USAGE;
 			}
-			matched[idx / 8] |= 1 << (idx & 7);
-			rcode = 0;
 		}
-		arg++;
 	}
 
-	return rcode;
+DONE:
+	len = hexport_r(&env_htab, '\n',
+			flag | grep_what | grep_how,
+			&res, 0, argc, argv);
+
+	if (len > 0) {
+		puts(res);
+		free(res);
+	}
+
+	if (len < 2)
+		return 1;
+
+	return 0;
 }
 #endif
 #endif /* CONFIG_SPL_BUILD */
@@ -288,7 +296,7 @@ int setenv(const char *varname, const char *varvalue)
 /**
  * Set an environment variable to an integer value
  *
- * @param varname	Environmet variable to set
+ * @param varname	Environment variable to set
  * @param value		Value to set it to
  * @return 0 if ok, 1 on error
  */
@@ -303,7 +311,7 @@ int setenv_ulong(const char *varname, ulong value)
 /**
  * Set an environment variable to an value in hex
  *
- * @param varname	Environmet variable to set
+ * @param varname	Environment variable to set
  * @param value		Value to set it to
  * @return 0 if ok, 1 on error
  */
@@ -313,6 +321,21 @@ int setenv_hex(const char *varname, ulong value)
 
 	sprintf(str, "%lx", value);
 	return setenv(varname, str);
+}
+
+ulong getenv_hex(const char *varname, ulong default_val)
+{
+	const char *s;
+	ulong value;
+	char *endp;
+
+	s = getenv(varname);
+	if (s)
+		value = simple_strtoul(s, &endp, 16);
+	if (!s || endp == s)
+		return default_val;
+
+	return value;
 }
 
 #ifndef CONFIG_SPL_BUILD
@@ -877,7 +900,9 @@ NXTARG:		;
 	argv++;
 
 	if (sep) {		/* export as text file */
-		len = hexport_r(&env_htab, sep, 0, &addr, size, argc, argv);
+		len = hexport_r(&env_htab, sep,
+				H_MATCH_KEY | H_MATCH_IDENT,
+				&addr, size, argc, argv);
 		if (len < 0) {
 			error("Cannot export environment: errno = %d\n", errno);
 			return 1;
@@ -895,7 +920,9 @@ NXTARG:		;
 	else			/* export as raw binary data */
 		res = addr;
 
-	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, argc, argv);
+	len = hexport_r(&env_htab, '\0',
+			H_MATCH_KEY | H_MATCH_IDENT,
+			&res, ENV_SIZE, argc, argv);
 	if (len < 0) {
 		error("Cannot export environment: errno = %d\n", errno);
 		return 1;
@@ -1030,6 +1057,23 @@ sep_err:
 }
 #endif
 
+#if defined(CONFIG_CMD_ENV_EXISTS)
+static int do_env_exists(cmd_tbl_t *cmdtp, int flag, int argc,
+		       char * const argv[])
+{
+	ENTRY e, *ep;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	e.key = argv[1];
+	e.data = NULL;
+	hsearch_r(e, FIND, &ep, &env_htab, 0);
+
+	return (ep == NULL) ? 1 : 0;
+}
+#endif
+
 /*
  * New command line interface: "env" command with subcommands
  */
@@ -1065,6 +1109,9 @@ static cmd_tbl_t cmd_env_sub[] = {
 	U_BOOT_CMD_MKENT(save, 1, 0, do_env_save, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(set, CONFIG_SYS_MAXARGS, 0, do_env_set, "", ""),
+#if defined(CONFIG_CMD_ENV_EXISTS)
+	U_BOOT_CMD_MKENT(exists, 2, 0, do_env_exists, "", ""),
+#endif
 };
 
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
@@ -1107,6 +1154,9 @@ static char env_help_text[] =
 #if defined(CONFIG_CMD_EDITENV)
 	"env edit name - edit environment variable\n"
 #endif
+#if defined(CONFIG_CMD_ENV_EXISTS)
+	"env exists name - tests for existence of variable\n"
+#endif
 #if defined(CONFIG_CMD_EXPORTENV)
 	"env export [-t | -b | -c] [-s size] addr [var ...] - export environment\n"
 #endif
@@ -1114,7 +1164,11 @@ static char env_help_text[] =
 	"env flags - print variables that have non-default flags\n"
 #endif
 #if defined(CONFIG_CMD_GREPENV)
-	"env grep string [...] - search environment\n"
+#ifdef CONFIG_REGEX
+	"env grep [-e] [-n | -v | -b] string [...] - search environment\n"
+#else
+	"env grep [-n | -v | -b] string [...] - search environment\n"
+#endif
 #endif
 #if defined(CONFIG_CMD_IMPORTENV)
 	"env import [-d] [-t | -b | -c] addr [size] - import environment\n"
@@ -1161,8 +1215,17 @@ U_BOOT_CMD_COMPLETE(
 U_BOOT_CMD_COMPLETE(
 	grepenv, CONFIG_SYS_MAXARGS, 0,  do_env_grep,
 	"search environment variables",
-	"string ...\n"
-	"    - list environment name=value pairs matching 'string'",
+#ifdef CONFIG_REGEX
+	"[-e] [-n | -v | -b] string ...\n"
+#else
+	"[-n | -v | -b] string ...\n"
+#endif
+	"    - list environment name=value pairs matching 'string'\n"
+#ifdef CONFIG_REGEX
+	"      \"-e\": enable regular expressions;\n"
+#endif
+	"      \"-n\": search variable names; \"-v\": search values;\n"
+	"      \"-b\": search both names and values (default)",
 	var_complete
 );
 #endif

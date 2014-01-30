@@ -30,9 +30,6 @@
  */
 #define CONFIG_MACH_TYPE		MACH_TYPE_BCM2708
 
-/* Timer */
-#define CONFIG_SYS_HZ			1000
-
 /* Memory layout */
 #define CONFIG_NR_DRAM_BANKS		1
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
@@ -61,6 +58,7 @@
 #define CONFIG_BCM2835_GPIO
 /* LCD */
 #define CONFIG_LCD
+#define CONFIG_LCD_DT_SIMPLEFB
 #define LCD_BPP				LCD_COLOR16
 /*
  * Prevent allocation of RAM for FB; the real FB address is queried
@@ -175,6 +173,7 @@
 
 /* Device tree support for bootm/bootz */
 #define CONFIG_OF_LIBFDT
+#define CONFIG_OF_BOARD_SETUP
 /* ATAGs support for bootm/bootz */
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG

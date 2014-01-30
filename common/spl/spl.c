@@ -4,23 +4,7 @@
  *
  * Aneesh V <aneesh@ti.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <spl.h>
@@ -47,13 +31,6 @@ struct spl_image_info spl_image;
 
 /* Define board data structure */
 static bd_t bdata __attribute__ ((section(".data")));
-
-inline void hang(void)
-{
-	puts("### ERROR ### Please RESET the board ###\n");
-	for (;;)
-		;
-}
 
 /*
  * Default function to determine if u-boot or the OS should
@@ -108,8 +85,9 @@ void spl_parse_image_header(const struct image_header *header)
 		}
 		spl_image.os = image_get_os(header);
 		spl_image.name = image_get_name(header);
-		debug("spl: payload image: %s load addr: 0x%x size: %d\n",
-			spl_image.name, spl_image.load_addr, spl_image.size);
+		debug("spl: payload image: %.*s load addr: 0x%x size: %d\n",
+			sizeof(spl_image.name), spl_image.name,
+			spl_image.load_addr, spl_image.size);
 	} else {
 		/* Signature not found - assume u-boot.bin */
 		debug("mkimage signature not found - ih_magic = %x\n",
@@ -125,17 +103,13 @@ void spl_parse_image_header(const struct image_header *header)
 
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
-	typedef void __noreturn (*image_entry_noargs_t)(u32 *);
+	typedef void __noreturn (*image_entry_noargs_t)(void);
+
 	image_entry_noargs_t image_entry =
 			(image_entry_noargs_t) spl_image->entry_point;
 
 	debug("image entry point: 0x%X\n", spl_image->entry_point);
-	/* Pass the saved boot_params from rom code */
-#if defined(CONFIG_VIRTIO) || defined(CONFIG_ZEBU)
-	image_entry = (image_entry_noargs_t)0x80100000;
-#endif
-	u32 boot_params_ptr_addr = (u32)&boot_params_ptr;
-	image_entry((u32 *)boot_params_ptr_addr);
+	image_entry();
 }
 
 #ifdef CONFIG_SPL_RAM_DEVICE

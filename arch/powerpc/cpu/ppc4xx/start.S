@@ -6,46 +6,7 @@
  *  Copyright (c) 2008 Nuovation System Designs, LLC
  *    Grant Erickson <gerickson@nuovations.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- */
-/*------------------------------------------------------------------------------+
- *   This source code is dual-licensed.  You may use it under the terms of the
- *   GNU General Public License version 2, or under the license below.
- *
- *	 This source code has been made available to you by IBM on an AS-IS
- *	 basis.	 Anyone receiving this source is licensed under IBM
- *	 copyrights to use it in any way he or she deems fit, including
- *	 copying it, modifying it, compiling it, and redistributing it either
- *	 with or without modifications.	 No license under IBM patents or
- *	 patent applications is to be implied by the copyright license.
- *
- *	 Any user of this software should understand that IBM cannot provide
- *	 technical support for this software and will not be responsible for
- *	 any consequences resulting from the use of this software.
- *
- *	 Any person who transfers this source code or any derivative work
- *	 must include the IBM copyright notice, this paragraph, and the
- *	 preceding two paragraphs in the transferred software.
- *
- *	 COPYRIGHT   I B M   CORPORATION 1995
- *	 LICENSED MATERIAL  -  PROGRAM PROPERTY OF I B M
- *-------------------------------------------------------------------------------
+ * SPDX-License-Identifier:	GPL-2.0	IBM-pibs
  */
 
 /*
@@ -232,7 +193,7 @@
  *
  * Use r12 to access the GOT
  */
-#if !defined(CONFIG_NAND_SPL)
+#if !defined(CONFIG_NAND_SPL) && !defined(CONFIG_SPL_BUILD)
 	START_GOT
 	GOT_ENTRY(_GOT2_TABLE_)
 	GOT_ENTRY(_FIXUP_TABLE_)
@@ -248,7 +209,8 @@
 	END_GOT
 #endif /* CONFIG_NAND_SPL */
 
-#if defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_NAND_SPL)
+#if defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_NAND_SPL) && \
+	!defined(CONFIG_SPL_BUILD)
 	/*
 	 * NAND U-Boot image is started from offset 0
 	 */
@@ -268,6 +230,18 @@
 	 */
 	.text
 	bl	_start_440
+#endif
+
+#if defined(CONFIG_SPL) && !defined(CONFIG_SPL_BUILD)
+	/*
+	 * This is the entry of the real U-Boot from a board port
+	 * that supports SPL booting on the PPC4xx. We only need
+	 * to call board_init_f() here. Everything else has already
+	 * been done in the SPL u-boot version.
+	 */
+	GET_GOT			/* initialize GOT access		*/
+	bl	board_init_f	/* run 1st part of board init code (in Flash)*/
+	/* NOTREACHED - board_init_f() does not return */
 #endif
 
 /*
@@ -539,7 +513,7 @@ tlbnx2:	addi	r4,r4,1		/* Next TLB */
  * r3 - 1st arg to board_init(): IMMP pointer
  * r4 - 2nd arg to board_init(): boot flag
  */
-#ifndef CONFIG_NAND_SPL
+#if !defined(CONFIG_NAND_SPL) && !defined(CONFIG_SPL_BUILD)
 	.text
 	.long	0x27051956		/* U-Boot Magic Number			*/
 	.globl	version_string
@@ -611,6 +585,18 @@ _end_of_vectors:
 #endif
 	.globl	_start
 _start:
+
+#if defined(CONFIG_SPL) && !defined(CONFIG_SPL_BUILD)
+	/*
+	 * This is the entry of the real U-Boot from a board port
+	 * that supports SPL booting on the PPC4xx. We only need
+	 * to call board_init_f() here. Everything else has already
+	 * been done in the SPL u-boot version.
+	 */
+	GET_GOT			/* initialize GOT access		*/
+	bl	board_init_f	/* run 1st part of board init code (in Flash)*/
+	/* NOTREACHED - board_init_f() does not return */
+#endif
 
 /*****************************************************************************/
 #if defined(CONFIG_440)
@@ -796,7 +782,9 @@ _start:
 #ifdef CONFIG_NAND_SPL
 	bl	nand_boot_common	/* will not return */
 #else
+#ifndef CONFIG_SPL_BUILD
 	GET_GOT
+#endif
 
 	bl	cpu_init_f	/* run low-level CPU init code	   (from Flash) */
 	bl	board_init_f
@@ -806,7 +794,7 @@ _start:
 #endif /* CONFIG_440 */
 
 /*****************************************************************************/
-#if defined(CONFIG_405GP) || defined(CONFIG_405CR) || \
+#if defined(CONFIG_405GP) || \
     defined(CONFIG_405EP) || defined(CONFIG_405EZ) || \
     defined(CONFIG_405EX) || defined(CONFIG_405)
 	/*----------------------------------------------------------------------- */
@@ -1076,11 +1064,11 @@ _start:
 
 #endif /* CONFIG_NAND_SPL */
 
-#endif	/* CONFIG_405GP || CONFIG_405CR || CONFIG_405 || CONFIG_405EP */
+#endif	/* CONFIG_405GP || CONFIG_405 || CONFIG_405EP */
 	/*----------------------------------------------------------------------- */
 
 
-#ifndef CONFIG_NAND_SPL
+#if !defined(CONFIG_NAND_SPL) && !defined(CONFIG_SPL_BUILD)
 /*
  * This code finishes saving the registers to the exception frame
  * and jumps to the appropriate handler for the exception.
@@ -1262,6 +1250,7 @@ in32r:
 	lwbrx	r3,r0,r3
 	blr
 
+#if !defined(CONFIG_SPL_BUILD)
 /*
  * void relocate_code (addr_sp, gd, addr_moni)
  *
@@ -1626,6 +1615,7 @@ __440_msr_continue:
 
 	mtlr	r4			/* restore link register	*/
 	blr
+#endif /* CONFIG_SPL_BUILD */
 
 #if defined(CONFIG_440)
 /*----------------------------------------------------------------------------+

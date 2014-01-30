@@ -2,23 +2,7 @@
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __COMMON_H_
@@ -71,8 +55,6 @@ typedef volatile unsigned char	vu_char;
 #include <mpc5xxx.h>
 #elif defined(CONFIG_MPC512X)
 #include <asm/immap_512x.h>
-#elif defined(CONFIG_MPC8220)
-#include <asm/immap_8220.h>
 #elif defined(CONFIG_8260)
 #if   defined(CONFIG_MPC8247) \
    || defined(CONFIG_MPC8248) \
@@ -199,17 +181,34 @@ typedef void (interrupt_handler_t)(void *);
  * General Purpose Utilities
  */
 #define min(X, Y)				\
-	({ typeof (X) __x = (X);		\
-		typeof (Y) __y = (Y);		\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
 		(__x < __y) ? __x : __y; })
 
 #define max(X, Y)				\
-	({ typeof (X) __x = (X);		\
-		typeof (Y) __y = (Y);		\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
 		(__x > __y) ? __x : __y; })
 
 #define MIN(x, y)  min(x, y)
 #define MAX(x, y)  max(x, y)
+
+#define min3(X, Y, Z)				\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
+		typeof(Z) __z = (Z);		\
+		__x < __y ? (__x < __z ? __x : __z) :	\
+		(__y < __z ? __y : __z); })
+
+#define max3(X, Y, Z)				\
+	({ typeof(X) __x = (X);			\
+		typeof(Y) __y = (Y);		\
+		typeof(Z) __z = (Z);		\
+		__x > __y ? (__x > __z ? __x : __z) :	\
+		(__y > __z ? __y : __z); })
+
+#define MIN3(x, y, z)  min3(x, y, z)
+#define MAX3(x, y, z)  max3(x, y, z)
 
 /*
  * Return the absolute value of a number.
@@ -295,9 +294,6 @@ int	readline_into_buffer(const char *const prompt, char *buffer,
 int	parse_line (char *, char *[]);
 void	init_cmd_timeout(void);
 void	reset_cmd_timeout(void);
-#ifdef CONFIG_MENU
-int	abortboot(int bootdelay);
-#endif
 extern char console_buffer[];
 
 /* arch/$(ARCH)/lib/board.c */
@@ -322,6 +318,16 @@ int update_flash_size(int flash_size);
  * @param size	Size of DRAM (which should be displayed along with other info)
  */
 void board_show_dram(ulong size);
+
+/**
+ * arch_fixup_memory_node() - Write arch-specific memory information to fdt
+ *
+ * Defined in arch/$(ARCH)/lib/bootm.c
+ *
+ * @blob:	FDT blob to write to
+ * @return 0 if ok, or -ve FDT_ERR_... on failure
+ */
+int arch_fixup_memory_node(void *blob);
 
 /* common/flash.c */
 void flash_perror (int);
@@ -352,6 +358,19 @@ int	envmatch     (uchar *, int);
 char	*getenv	     (const char *);
 int	getenv_f     (const char *name, char *buf, unsigned len);
 ulong getenv_ulong(const char *name, int base, ulong default_val);
+
+/**
+ * getenv_hex() - Return an environment variable as a hex value
+ *
+ * Decode an environment as a hex number (it may or may not have a 0x
+ * prefix). If the environment variable cannot be found, or does not start
+ * with hex digits, the default value is returned.
+ *
+ * @varname:		Variable to decode
+ * @default_val:	Value to return on error
+ */
+ulong getenv_hex(const char *varname, ulong default_val);
+
 /*
  * Read an environment variable as a boolean
  * Return -1 if variable does not exist (default to true)
@@ -364,7 +383,7 @@ int setenv_hex(const char *varname, ulong value);
 /**
  * setenv_addr - Set an environment variable to an address in hex
  *
- * @varname:	Environmet variable to set
+ * @varname:	Environment variable to set
  * @addr:	Value to set it to
  * @return 0 if ok, 1 on error
  */
@@ -386,6 +405,7 @@ static inline int setenv_addr(const char *varname, const void *addr)
 #endif
 #ifdef CONFIG_NDS32
 # include <asm/mach-types.h>
+# include <asm/setup.h>
 # include <asm/u-boot-nds32.h>
 #endif /* CONFIG_NDS32 */
 #ifdef CONFIG_MIPS
@@ -543,7 +563,6 @@ void	trap_init     (ulong);
     defined (CONFIG_74x)	|| \
     defined (CONFIG_75x)	|| \
     defined (CONFIG_74xx)	|| \
-    defined (CONFIG_MPC8220)	|| \
     defined (CONFIG_MPC85xx)	|| \
     defined (CONFIG_MPC86xx)	|| \
     defined (CONFIG_MPC83xx)
@@ -577,6 +596,12 @@ void ddr_enable_ecc(unsigned int dram_size);
 #endif
 #endif
 
+/*
+ * Return the current value of a monotonically increasing microsecond timer.
+ * Granularity may be larger than 1us if hardware does not support this.
+ */
+ulong timer_get_us(void);
+
 /* $(CPU)/cpu.c */
 static inline int cpumask_next(int cpu, unsigned int mask)
 {
@@ -608,6 +633,8 @@ void ft_pci_setup(void *blob, bd_t *bd);
 #endif
 #endif
 
+void smp_set_core_boot_addr(unsigned long addr, int corenr);
+void smp_kick_all_cpus(void);
 
 /* $(CPU)/serial.c */
 int	serial_init   (void);
@@ -634,12 +661,6 @@ int	adjust_sdram_tbs_8xx (void);
 int	prt_8260_clks (void);
 #elif defined(CONFIG_MPC5xxx)
 int	prt_mpc5xxx_clks (void);
-#endif
-#if defined(CONFIG_MPC512X)
-int	prt_mpc512xxx_clks (void);
-#endif
-#if defined(CONFIG_MPC8220)
-int	prt_mpc8220_clks (void);
 #endif
 #ifdef CONFIG_4xx
 ulong	get_OPB_freq (void);
@@ -677,6 +698,10 @@ ulong get_ddr_freq(ulong);
 #if defined(CONFIG_MPC85xx)
 typedef MPC85xx_SYS_INFO sys_info_t;
 void	get_sys_info  ( sys_info_t * );
+#  if defined(CONFIG_OF_LIBFDT)
+	void ft_fixup_cpu(void *, u64);
+	void ft_fixup_num_cores(void *);
+#  endif
 #endif
 #if defined(CONFIG_MPC86xx)
 typedef MPC86xx_SYS_INFO sys_info_t;
@@ -722,6 +747,10 @@ void	irq_install_handler(int, interrupt_handler_t *, void *);
 void	irq_free_handler   (int);
 void	reset_timer	   (void);
 ulong	get_timer	   (ulong base);
+
+/* Return value of monotonic microsecond timer */
+unsigned long timer_get_us(void);
+
 void	enable_interrupts  (void);
 int	disable_interrupts (void);
 
@@ -897,6 +926,11 @@ static inline void *map_sysmem(phys_addr_t paddr, unsigned long len)
 static inline void unmap_sysmem(const void *vaddr)
 {
 }
+
+static inline phys_addr_t map_to_sysmem(const void *ptr)
+{
+	return (phys_addr_t)(uintptr_t)ptr;
+}
 # endif
 
 #endif /* __ASSEMBLY__ */
@@ -993,10 +1027,17 @@ static inline void unmap_sysmem(const void *vaddr)
  * of a function scoped static buffer.  It can not be used to create a cache
  * line aligned global buffer.
  */
-#define ALLOC_ALIGN_BUFFER(type, name, size, align)			\
-	char __##name[ROUND(size * sizeof(type), align) + (align - 1)];	\
+#define PAD_COUNT(s, pad) (((s) - 1) / (pad) + 1)
+#define PAD_SIZE(s, pad) (PAD_COUNT(s, pad) * pad)
+#define ALLOC_ALIGN_BUFFER_PAD(type, name, size, align, pad)		\
+	char __##name[ROUND(PAD_SIZE((size) * sizeof(type), pad), align)  \
+		      + (align - 1)];					\
 									\
 	type *name = (type *) ALIGN((uintptr_t)__##name, align)
+#define ALLOC_ALIGN_BUFFER(type, name, size, align)		\
+	ALLOC_ALIGN_BUFFER_PAD(type, name, size, align, 1)
+#define ALLOC_CACHE_ALIGN_BUFFER_PAD(type, name, size, pad)		\
+	ALLOC_ALIGN_BUFFER_PAD(type, name, size, ARCH_DMA_MINALIGN, pad)
 #define ALLOC_CACHE_ALIGN_BUFFER(type, name, size)			\
 	ALLOC_ALIGN_BUFFER(type, name, size, ARCH_DMA_MINALIGN)
 
@@ -1007,7 +1048,7 @@ static inline void unmap_sysmem(const void *vaddr)
  */
 #define DEFINE_ALIGN_BUFFER(type, name, size, align)			\
 	static char __##name[roundup(size * sizeof(type), align)]	\
-			__attribute__((aligned(align)));				\
+			__aligned(align);				\
 									\
 	static type *name = (type *)__##name
 #define DEFINE_CACHE_ALIGN_BUFFER(type, name, size)			\

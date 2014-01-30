@@ -47,6 +47,12 @@ static inline int fs_read_unsupported(const char *filename, void *buf,
 	return -1;
 }
 
+static inline int fs_write_unsupported(const char *filename, void *buf,
+				      int offset, int len)
+{
+	return -1;
+}
+
 static inline void fs_close_unsupported(void)
 {
 }
@@ -57,6 +63,7 @@ struct fstype_info {
 		     disk_partition_t *fs_partition);
 	int (*ls)(const char *dirname);
 	int (*read)(const char *filename, void *buf, int offset, int len);
+	int (*write)(const char *filename, void *buf, int offset, int len);
 	void (*close)(void);
 };
 
@@ -86,6 +93,7 @@ static struct fstype_info fstypes[] = {
 		.close = sandbox_fs_close,
 		.ls = sandbox_fs_ls,
 		.read = fs_read_sandbox,
+		.write = fs_write_sandbox,
 	},
 #endif
 	{
@@ -94,6 +102,7 @@ static struct fstype_info fstypes[] = {
 		.close = fs_close_unsupported,
 		.ls = fs_ls_unsupported,
 		.read = fs_read_unsupported,
+		.write = fs_write_unsupported,
 	},
 };
 
@@ -125,6 +134,7 @@ int fs_set_blk_dev(const char *ifname, const char *dev_part_str, int fstype)
 			info->close += gd->reloc_off;
 			info->ls += gd->reloc_off;
 			info->read += gd->reloc_off;
+			info->write += gd->reloc_off;
 		}
 		relocated = 1;
 	}
@@ -196,8 +206,32 @@ int fs_read(const char *filename, ulong addr, int offset, int len)
 	return ret;
 }
 
+int fs_write(const char *filename, ulong addr, int offset, int len)
+{
+	struct fstype_info *info = fs_get_info(fs_type);
+	void *buf;
+	int ret;
+
+	/*
+	 * We don't actually know how many bytes are being read, since len==0
+	 * means read the whole file.
+	 */
+	buf = map_sysmem(addr, len);
+	ret = info->write(filename, buf, offset, len);
+	unmap_sysmem(buf);
+
+	/* If we requested a specific number of bytes, check we got it */
+	if (ret >= 0 && len && ret != len) {
+		printf("** Unable to write file %s **\n", filename);
+		ret = -1;
+	}
+	fs_close();
+
+	return ret;
+}
+
 int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
-		int fstype, int cmdline_base)
+		int fstype)
 {
 	unsigned long addr;
 	const char *addr_str;
@@ -216,7 +250,7 @@ int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 		return 1;
 
 	if (argc >= 4) {
-		addr = simple_strtoul(argv[3], NULL, cmdline_base);
+		addr = simple_strtoul(argv[3], NULL, 16);
 	} else {
 		addr_str = getenv("loadaddr");
 		if (addr_str != NULL)
@@ -234,11 +268,11 @@ int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 		}
 	}
 	if (argc >= 6)
-		bytes = simple_strtoul(argv[5], NULL, cmdline_base);
+		bytes = simple_strtoul(argv[5], NULL, 16);
 	else
 		bytes = 0;
 	if (argc >= 7)
-		pos = simple_strtoul(argv[6], NULL, cmdline_base);
+		pos = simple_strtoul(argv[6], NULL, 16);
 	else
 		pos = 0;
 
@@ -274,6 +308,47 @@ int do_ls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 
 	if (fs_ls(argc >= 4 ? argv[3] : "/"))
 		return 1;
+
+	return 0;
+}
+
+int do_save(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+		int fstype)
+{
+	unsigned long addr;
+	const char *filename;
+	unsigned long bytes;
+	unsigned long pos;
+	int len;
+	unsigned long time;
+
+	if (argc < 6 || argc > 7)
+		return CMD_RET_USAGE;
+
+	if (fs_set_blk_dev(argv[1], argv[2], fstype))
+		return 1;
+
+	filename = argv[3];
+	addr = simple_strtoul(argv[4], NULL, 16);
+	bytes = simple_strtoul(argv[5], NULL, 16);
+	if (argc >= 7)
+		pos = simple_strtoul(argv[6], NULL, 16);
+	else
+		pos = 0;
+
+	time = get_timer(0);
+	len = fs_write(filename, addr, pos, bytes);
+	time = get_timer(time);
+	if (len <= 0)
+		return 1;
+
+	printf("%d bytes written in %lu ms", len, time);
+	if (time > 0) {
+		puts(" (");
+		print_size(len / time * 1000, "/s");
+		puts(")");
+	}
+	puts("\n");
 
 	return 0;
 }

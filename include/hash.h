@@ -1,22 +1,6 @@
 /*
  * Copyright (c) 2012 The Chromium OS Authors.
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _HASH_H
@@ -70,5 +54,27 @@ enum {
  */
 int hash_command(const char *algo_name, int flags, cmd_tbl_t *cmdtp, int flag,
 		 int argc, char * const argv[]);
+
+/**
+ * hash_block() - Hash a block according to the requested algorithm
+ *
+ * The caller probably knows the hash length for the chosen algorithm, but
+ * in order to provide a general interface, and output_size parameter is
+ * provided.
+ *
+ * @algo_name:		Hash algorithm to use
+ * @data:		Data to hash
+ * @len:		Lengh of data to hash in bytes
+ * @output:		Place to put hash value
+ * @output_size:	On entry, pointer to the number of bytes available in
+ *			output. On exit, pointer to the number of bytes used.
+ *			If NULL, then it is assumed that the caller has
+ *			allocated enough space for the hash. This is possible
+ *			since the caller is selecting the algorithm.
+ * @return 0 if ok, -ve on error: -EPROTONOSUPPORT for an unknown algorithm,
+ * -ENOSPC if the output buffer is not large enough.
+ */
+int hash_block(const char *algo_name, const void *data, unsigned int len,
+	       uint8_t *output, int *output_size);
 
 #endif

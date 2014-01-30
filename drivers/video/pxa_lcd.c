@@ -4,23 +4,7 @@
  * (C) Copyright 2001-2002
  * Wolfgang Denk, DENX Software Engineering -- wd@denx.de
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /************************************************************************/
@@ -248,6 +232,38 @@ vidinfo_t panel_info = {
 };
 #endif /* CONFIG_ACX517AKN */
 
+#ifdef CONFIG_ACX544AKN
+
+# define LCD_BPP	LCD_COLOR16
+
+/* you have to set lccr0 and lccr3 (including pcd) */
+# define REG_LCCR0	0x003008f9
+# define REG_LCCR3	0x04700007 /* 16bpp */
+
+vidinfo_t panel_info = {
+	.vl_col		= 320,
+	.vl_row		= 320,
+	.vl_width	= 320,
+	.vl_height	= 320,
+	.vl_clkp	= CONFIG_SYS_LOW,
+	.vl_oep		= CONFIG_SYS_LOW,
+	.vl_hsp		= CONFIG_SYS_LOW,
+	.vl_vsp		= CONFIG_SYS_LOW,
+	.vl_dp		= CONFIG_SYS_LOW,
+	.vl_bpix	= LCD_BPP,
+	.vl_lbw		= 0,
+	.vl_splt	= 0,
+	.vl_clor	= 1,
+	.vl_tft		= 1,
+	.vl_hpw		= 0x05,
+	.vl_blw		= 0x13,
+	.vl_elw		= 0x08,
+	.vl_vpw		= 0x02,
+	.vl_bfw		= 0x07,
+	.vl_efw		= 0x05,
+};
+#endif /* CONFIG_ACX544AKN */
+
 /*----------------------------------------------------------------------*/
 
 #ifdef CONFIG_LQ038J7DH53
@@ -378,7 +394,7 @@ void lcd_initcolregs (void)
 #endif /* LCD_MONOCHROME */
 
 /*----------------------------------------------------------------------*/
-void lcd_enable (void)
+__weak void lcd_enable(void)
 {
 }
 

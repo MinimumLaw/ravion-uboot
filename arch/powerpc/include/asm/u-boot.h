@@ -2,21 +2,7 @@
  * (C) Copyright 2000 - 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- *
+ * SPDX-License-Identifier:	GPL-2.0+
  ********************************************************************
  * NOTE: This header file defines an interface to U-Boot. Including
  * this (unmodified) header file in another file is considered normal
@@ -59,14 +45,6 @@ typedef struct bd_info {
 #if defined(CONFIG_MPC83xx)
 	unsigned long	bi_immrbar;
 #endif
-#if defined(CONFIG_MPC8220)
-	unsigned long	bi_mbar_base;	/* base of internal registers */
-	unsigned long   bi_inpfreq;     /* Input Freq, In MHz */
-	unsigned long   bi_pcifreq;     /* PCI Freq, in MHz */
-	unsigned long   bi_pevfreq;     /* PEV Freq, in MHz */
-	unsigned long   bi_flbfreq;     /* Flexbus Freq, in MHz */
-	unsigned long   bi_vcofreq;     /* VCO Freq, in MHz */
-#endif
 	unsigned long	bi_bootflags;	/* boot / reboot flag (Unused) */
 	unsigned long	bi_ip_addr;	/* IP Address */
 	unsigned char	bi_enetaddr[6];	/* OLD: see README.enetaddr */
@@ -89,7 +67,6 @@ typedef struct bd_info {
 	unsigned int	bi_baudrate;	/* Console Baudrate */
 #if defined(CONFIG_405)   || \
     defined(CONFIG_405GP) || \
-    defined(CONFIG_405CR) || \
     defined(CONFIG_405EP) || \
     defined(CONFIG_405EZ) || \
     defined(CONFIG_405EX) || \

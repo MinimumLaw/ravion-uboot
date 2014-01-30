@@ -1,4 +1,5 @@
 #include <common.h>
+#include <watchdog.h>
 #include <asm/errno.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
@@ -111,7 +112,7 @@ int submit_int_msg(struct usb_device *dev, unsigned long pipe,
 	return submit_urb(&hcd, urb);
 }
 
-int usb_lowlevel_init(int index, void **controller)
+int usb_lowlevel_init(int index, enum usb_init_type init, void **controller)
 {
 	u8 power;
 	void *mbase;
@@ -164,6 +165,7 @@ static struct musb *gadget;
 
 int usb_gadget_handle_interrupts(void)
 {
+	WATCHDOG_RESET();
 	if (!gadget || !gadget->isr)
 		return -EINVAL;
 

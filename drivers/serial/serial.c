@@ -2,23 +2,7 @@
  * (C) Copyright 2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -37,7 +21,6 @@ static struct serial_device *serial_current;
  * Table with supported baudrates (defined in config_xyz.h)
  */
 static const unsigned long baudrate_table[] = CONFIG_SYS_BAUDRATE_TABLE;
-#define	N_BAUDRATES (sizeof(baudrate_table) / sizeof(baudrate_table[0]))
 
 /**
  * serial_null() - Void registration routine of a serial driver
@@ -74,11 +57,11 @@ static int on_baudrate(const char *name, const char *value, enum env_op op,
 		if (gd->baudrate == baudrate)
 			return 0;
 
-		for (i = 0; i < N_BAUDRATES; ++i) {
+		for (i = 0; i < ARRAY_SIZE(baudrate_table); ++i) {
 			if (baudrate == baudrate_table[i])
 				break;
 		}
-		if (i == N_BAUDRATES) {
+		if (i == ARRAY_SIZE(baudrate_table)) {
 			if ((flags & H_FORCE) == 0)
 				printf("## Baudrate %d bps not supported\n",
 					baudrate);
@@ -143,7 +126,6 @@ serial_initfunc(au1x00_serial_initialize);
 serial_initfunc(asc_serial_initialize);
 serial_initfunc(jz_serial_initialize);
 serial_initfunc(mpc5xx_serial_initialize);
-serial_initfunc(mpc8220_serial_initialize);
 serial_initfunc(mpc8260_scc_serial_initialize);
 serial_initfunc(mpc8260_smc_serial_initialize);
 serial_initfunc(mpc85xx_serial_initialize);
@@ -174,9 +156,10 @@ serial_initfunc(lh7a40x_serial_initialize);
 serial_initfunc(max3100_serial_initialize);
 serial_initfunc(mxc_serial_initialize);
 serial_initfunc(pl01x_serial_initialize);
-serial_initfunc(s3c44b0_serial_initialize);
 serial_initfunc(sa1100_serial_initialize);
 serial_initfunc(sh_serial_initialize);
+serial_initfunc(arm_dcc_initialize);
+serial_initfunc(mxs_auart_initialize);
 
 /**
  * serial_register() - Register serial driver with serial driver core
@@ -236,7 +219,6 @@ void serial_initialize(void)
 	asc_serial_initialize();
 	jz_serial_initialize();
 	mpc5xx_serial_initialize();
-	mpc8220_serial_initialize();
 	mpc8260_scc_serial_initialize();
 	mpc8260_smc_serial_initialize();
 	mpc85xx_serial_initialize();
@@ -267,9 +249,10 @@ void serial_initialize(void)
 	max3100_serial_initialize();
 	mxc_serial_initialize();
 	pl01x_serial_initialize();
-	s3c44b0_serial_initialize();
 	sa1100_serial_initialize();
 	sh_serial_initialize();
+	arm_dcc_initialize();
+	mxs_auart_initialize();
 
 	serial_assign(default_serial_console()->name);
 }

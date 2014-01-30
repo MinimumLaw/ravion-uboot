@@ -4,24 +4,7 @@
  *
  *	Aneesh V <aneesh@ti.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- *
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CPU_H
@@ -116,20 +99,10 @@ struct watchdog {
 #endif /* __ASSEMBLY__ */
 #endif /* __KERNEL_STRICT_NAMES */
 
+#define BIT(x)				(1 << (x))
+
 #define WD_UNLOCK1		0xAAAA
 #define WD_UNLOCK2		0x5555
-
-#define SYSCLKDIV_1		(0x1 << 6)
-#define SYSCLKDIV_2		(0x1 << 7)
-
-#define CLKSEL_GPT1		(0x1 << 0)
-
-#define EN_GPT1			(0x1 << 0)
-#define EN_32KSYNC		(0x1 << 2)
-
-#define ST_WDT2			(0x1 << 5)
-
-#define RESETDONE		(0x1 << 0)
 
 #define TCLR_ST			(0x1 << 0)
 #define TCLR_AR			(0x1 << 1)
@@ -142,6 +115,8 @@ struct watchdog {
 #define I2C_BASE1		(OMAP54XX_L4_PER_BASE + 0x70000)
 #define I2C_BASE2		(OMAP54XX_L4_PER_BASE + 0x72000)
 #define I2C_BASE3		(OMAP54XX_L4_PER_BASE + 0x60000)
+#define I2C_BASE4		(OMAP54XX_L4_PER_BASE + 0x7A000)
+#define I2C_BASE5		(OMAP54XX_L4_PER_BASE + 0x7C000)
 
 /* MUSB base */
 #define MUSB_BASE		(OMAP54XX_L4_CORE_BASE + 0xAB000)
@@ -184,5 +159,9 @@ struct watchdog {
 #define PRM_RSTCTRL_RESET	0x01
 #define PRM_RSTST		(PRM_DEVICE_BASE + 0x4)
 #define PRM_RSTST_WARM_RESET_MASK	0x7FEA
+
+/* DRA7XX CPSW Config space */
+#define CPSW_BASE			0x48484000
+#define CPSW_MDIO_BASE			0x48485000
 
 #endif /* _CPU_H */

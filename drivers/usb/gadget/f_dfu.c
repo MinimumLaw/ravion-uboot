@@ -5,19 +5,14 @@
  * authors: Andrzej Pietrasiewicz <andrzej.p@samsung.com>
  *          Lukasz Majewski <l.majewski@samsung.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Based on OpenMoko u-boot: drivers/usb/usbdfu.c
+ * (C) 2007 by OpenMoko, Inc.
+ * Author: Harald Welte <laforge@openmoko.org>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * based on existing SAM7DFU code from OpenPCD:
+ * (C) Copyright 2006 by Harald Welte <hwelte at hmw-consulting.de>
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <errno.h>
@@ -45,6 +40,7 @@ struct f_dfu {
 
 	/* Send/received block number is handy for data integrity check */
 	int                             blk_seq_num;
+	unsigned int                    poll_timeout;
 };
 
 typedef int (*dfu_state_fn) (struct f_dfu *,
@@ -133,6 +129,33 @@ static struct usb_gadget_strings *dfu_strings[] = {
 	NULL,
 };
 
+static void dfu_set_poll_timeout(struct dfu_status *dstat, unsigned int ms)
+{
+	/*
+	 * The bwPollTimeout DFU_GETSTATUS request payload provides information
+	 * about minimum time, in milliseconds, that the host should wait before
+	 * sending a subsequent DFU_GETSTATUS request
+	 *
+	 * This permits the device to vary the delay depending on its need to
+	 * erase or program the memory
+	 *
+	 */
+
+	unsigned char *p = (unsigned char *)&ms;
+
+	if (!ms || (ms & ~DFU_POLL_TIMEOUT_MASK)) {
+		dstat->bwPollTimeout[0] = 0;
+		dstat->bwPollTimeout[1] = 0;
+		dstat->bwPollTimeout[2] = 0;
+
+		return;
+	}
+
+	dstat->bwPollTimeout[0] = *p++;
+	dstat->bwPollTimeout[1] = *p++;
+	dstat->bwPollTimeout[2] = *p;
+}
+
 /*-------------------------------------------------------------------------*/
 
 static void dnload_request_complete(struct usb_ep *ep, struct usb_request *req)
@@ -162,11 +185,15 @@ static void handle_getstatus(struct usb_request *req)
 		break;
 	}
 
+	dfu_set_poll_timeout(dstat, 0);
+
+	if (f_dfu->poll_timeout)
+		if (!(f_dfu->blk_seq_num %
+		      (dfu_get_buf_size() / DFU_USB_BUFSIZ)))
+			dfu_set_poll_timeout(dstat, f_dfu->poll_timeout);
+
 	/* send status response */
 	dstat->bStatus = f_dfu->dfu_status;
-	dstat->bwPollTimeout[0] = 0;
-	dstat->bwPollTimeout[1] = 0;
-	dstat->bwPollTimeout[2] = 0;
 	dstat->bState = f_dfu->dfu_state;
 	dstat->iString = 0;
 }
@@ -183,6 +210,7 @@ static inline void to_dfu_mode(struct f_dfu *f_dfu)
 {
 	f_dfu->usb_function.strings = dfu_strings;
 	f_dfu->usb_function.hs_descriptors = f_dfu->function;
+	f_dfu->dfu_state = DFU_STATE_dfuIDLE;
 }
 
 static inline void to_runtime_mode(struct f_dfu *f_dfu)
@@ -233,7 +261,6 @@ static int state_app_idle(struct f_dfu *f_dfu,
 	case USB_REQ_DFU_DETACH:
 		f_dfu->dfu_state = DFU_STATE_appDETACH;
 		to_dfu_mode(f_dfu);
-		f_dfu->dfu_state = DFU_STATE_dfuIDLE;
 		value = RET_ZLP;
 		break;
 	default:
@@ -317,6 +344,8 @@ static int state_dfu_idle(struct f_dfu *f_dfu,
 			DFU_STATE_dfuMANIFEST_WAIT_RST;
 		to_runtime_mode(f_dfu);
 		f_dfu->dfu_state = DFU_STATE_appIDLE;
+
+		dfu_trigger_reset();
 		break;
 	default:
 		f_dfu->dfu_state = DFU_STATE_dfuERROR;
@@ -589,7 +618,7 @@ static int dfu_prepare_function(struct f_dfu *f_dfu, int n)
 	struct usb_interface_descriptor *d;
 	int i = 0;
 
-	f_dfu->function = calloc(sizeof(struct usb_descriptor_header *), n);
+	f_dfu->function = calloc(sizeof(struct usb_descriptor_header *), n + 1);
 	if (!f_dfu->function)
 		goto enomem;
 
@@ -652,6 +681,8 @@ static int dfu_bind(struct usb_configuration *c, struct usb_function *f)
 		((struct usb_interface_descriptor *)f_dfu->function[i])
 			->iInterface = id;
 	}
+
+	to_dfu_mode(f_dfu);
 
 	stringtab_dfu.strings = f_dfu->strings;
 
@@ -724,8 +755,9 @@ static int dfu_bind_config(struct usb_configuration *c)
 	f_dfu->usb_function.unbind = dfu_unbind;
 	f_dfu->usb_function.set_alt = dfu_set_alt;
 	f_dfu->usb_function.disable = dfu_disable;
-	f_dfu->usb_function.strings = dfu_generic_strings,
-	f_dfu->usb_function.setup = dfu_handle,
+	f_dfu->usb_function.strings = dfu_generic_strings;
+	f_dfu->usb_function.setup = dfu_handle;
+	f_dfu->poll_timeout = DFU_DEFAULT_POLL_TIMEOUT;
 
 	status = usb_add_function(c, &f_dfu->usb_function);
 	if (status)

@@ -1,21 +1,7 @@
 /*
  * Generic PHY Management code
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- *
+ * SPDX-License-Identifier:	GPL-2.0+
  *
  * Copyright 2011 Freescale Semiconductor, Inc.
  * author Andy Fleming
@@ -75,6 +61,10 @@ static int genphy_config_advert(struct phy_device *phydev)
 		adv |= ADVERTISE_PAUSE_CAP;
 	if (advertise & ADVERTISED_Asym_Pause)
 		adv |= ADVERTISE_PAUSE_ASYM;
+	if (advertise & ADVERTISED_1000baseX_Half)
+		adv |= ADVERTISE_1000XHALF;
+	if (advertise & ADVERTISED_1000baseX_Full)
+		adv |= ADVERTISE_1000XFULL;
 
 	if (adv != oldadv) {
 		err = phy_write(phydev, MDIO_DEVAD_NONE, MII_ADVERTISE, adv);
@@ -280,21 +270,27 @@ int genphy_update_link(struct phy_device *phydev)
  *
  * Stolen from Linux's mii.c and phy_device.c
  */
-static int genphy_parse_link(struct phy_device *phydev)
+int genphy_parse_link(struct phy_device *phydev)
 {
 	int mii_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMSR);
 
 	/* We're using autonegotiation */
-	if (mii_reg & BMSR_ANEGCAPABLE) {
+	if (phydev->supported & SUPPORTED_Autoneg) {
 		u32 lpa = 0;
-		u32 gblpa = 0;
+		int gblpa = 0;
+		u32 estatus = 0;
 
 		/* Check for gigabit capability */
-		if (mii_reg & BMSR_ERCAP) {
+		if (phydev->supported & (SUPPORTED_1000baseT_Full |
+					SUPPORTED_1000baseT_Half)) {
 			/* We want a list of states supported by
 			 * both PHYs in the link
 			 */
 			gblpa = phy_read(phydev, MDIO_DEVAD_NONE, MII_STAT1000);
+			if (gblpa < 0) {
+				debug("Could not read MII_STAT1000. Ignoring gigabit capability\n");
+				gblpa = 0;
+			}
 			gblpa &= phy_read(phydev,
 					MDIO_DEVAD_NONE, MII_CTRL1000) << 2;
 		}
@@ -327,6 +323,26 @@ static int genphy_parse_link(struct phy_device *phydev)
 
 		} else if (lpa & LPA_10FULL)
 			phydev->duplex = DUPLEX_FULL;
+
+		/*
+		 * Extended status may indicate that the PHY supports
+		 * 1000BASE-T/X even though the 1000BASE-T registers
+		 * are missing. In this case we can't tell whether the
+		 * peer also supports it, so we only check extended
+		 * status if the 1000BASE-T registers are actually
+		 * missing.
+		 */
+		if ((mii_reg & BMSR_ESTATEN) && !(mii_reg & BMSR_ERCAP))
+			estatus = phy_read(phydev, MDIO_DEVAD_NONE,
+					   MII_ESTATUS);
+
+		if (estatus & (ESTATUS_1000_XFULL | ESTATUS_1000_XHALF |
+				ESTATUS_1000_TFULL | ESTATUS_1000_THALF)) {
+			phydev->speed = SPEED_1000;
+			if (estatus & (ESTATUS_1000_XFULL | ESTATUS_1000_TFULL))
+				phydev->duplex = DUPLEX_FULL;
+		}
+
 	} else {
 		u32 bmcr = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);
 
@@ -384,6 +400,10 @@ int genphy_config(struct phy_device *phydev)
 			features |= SUPPORTED_1000baseT_Full;
 		if (val & ESTATUS_1000_THALF)
 			features |= SUPPORTED_1000baseT_Half;
+		if (val & ESTATUS_1000_XFULL)
+			features |= SUPPORTED_1000baseX_Full;
+		if (val & ESTATUS_1000_XHALF)
+			features |= SUPPORTED_1000baseX_Half;
 	}
 
 	phydev->supported = features;
@@ -429,6 +449,12 @@ int phy_init(void)
 #endif
 #ifdef CONFIG_PHY_DAVICOM
 	phy_davicom_init();
+#endif
+#ifdef CONFIG_PHY_ET1011C
+	phy_et1011c_init();
+#endif
+#ifdef CONFIG_PHY_ICPLUS
+	phy_icplus_init();
 #endif
 #ifdef CONFIG_PHY_LXT
 	phy_lxt_init();

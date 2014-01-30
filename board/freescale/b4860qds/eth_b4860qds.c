@@ -2,23 +2,7 @@
  * Copyright 2012 Freescale Semiconductor, Inc.
  * Author: Sandeep Kumar Singh <sandeep@freescale.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /* This file is based on board/freescale/corenet_ds/eth_superhydra.c */
@@ -166,6 +150,8 @@ int board_eth_init(bd_t *bis)
 	struct memac_mdio_info tg_memac_mdio_info;
 	unsigned int i;
 	unsigned int  serdes1_prtcl, serdes2_prtcl;
+	int qsgmii;
+	struct mii_dev *bus;
 	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 	serdes1_prtcl = in_be32(&gur->rcwsr[4]) &
 		FSL_CORENET2_RCWSR4_SRDS1_PRTCL;
@@ -217,8 +203,6 @@ int board_eth_init(bd_t *bis)
 		debug("Setting phy addresses for FM1_DTSEC5: %x and"
 			"FM1_DTSEC6: %x\n", CONFIG_SYS_FM1_DTSEC5_PHY_ADDR,
 			CONFIG_SYS_FM1_DTSEC6_PHY_ADDR);
-		/* Fixing Serdes clock by programming FPGA register */
-		QIXIS_WRITE(brdcfg[4], QIXIS_SRDS1CLK_125);
 		fm_info_set_phy_address(FM1_DTSEC5,
 				CONFIG_SYS_FM1_DTSEC5_PHY_ADDR);
 		fm_info_set_phy_address(FM1_DTSEC6,
@@ -275,10 +259,44 @@ int board_eth_init(bd_t *bis)
 		fm_info_set_phy_address(FM1_DTSEC4,
 				CONFIG_SYS_FM1_DTSEC2_RISER_PHY_ADDR);
 		break;
+	case 0x98:
+		/* XAUI in Slot1 and Slot2 */
+		debug("Setting phy addresses on B4860 QDS AMC2PEX-2S for FM1_10GEC1: %x\n",
+		      CONFIG_SYS_FM1_10GEC1_PHY_ADDR);
+		fm_info_set_phy_address(FM1_10GEC1,
+					CONFIG_SYS_FM1_10GEC1_PHY_ADDR);
+		debug("Setting phy addresses on B4860 QDS AMC2PEX-2S for FM1_10GEC2: %x\n",
+		      CONFIG_SYS_FM1_10GEC2_PHY_ADDR);
+		fm_info_set_phy_address(FM1_10GEC2,
+					CONFIG_SYS_FM1_10GEC2_PHY_ADDR);
+		break;
+	case 0x9E:
+		/* XAUI in Slot2 */
+		debug("Setting phy addresses on B4860 QDS AMC2PEX-2S for FM1_10GEC2: %x\n",
+		      CONFIG_SYS_FM1_10GEC2_PHY_ADDR);
+		fm_info_set_phy_address(FM1_10GEC2,
+					CONFIG_SYS_FM1_10GEC2_PHY_ADDR);
+		break;
 	default:
 		printf("Fman:  Unsupported SerDes2 Protocol 0x%02x\n",
 				serdes2_prtcl);
 		break;
+	}
+
+	/*set PHY address for QSGMII Riser Card on slot2*/
+	bus = miiphy_get_dev_by_name(DEFAULT_FM_MDIO_NAME);
+	qsgmii = is_qsgmii_riser_card(bus, PHY_BASE_ADDR, PORT_NUM, REGNUM);
+
+	if (qsgmii) {
+		switch (serdes2_prtcl) {
+		case 0xb2:
+		case 0x8d:
+			fm_info_set_phy_address(FM1_DTSEC3, PHY_BASE_ADDR);
+			fm_info_set_phy_address(FM1_DTSEC4, PHY_BASE_ADDR + 1);
+			break;
+		default:
+			break;
+		}
 	}
 
 	for (i = FM1_DTSEC1; i < FM1_DTSEC1 + CONFIG_SYS_NUM_FM1_DTSEC; i++) {
@@ -299,6 +317,23 @@ int board_eth_init(bd_t *bis)
 			break;
 		}
 	}
+
+	for (i = FM1_10GEC1; i < FM1_10GEC1 + CONFIG_SYS_NUM_FM1_10GEC; i++) {
+		int idx = i - FM1_10GEC1;
+
+		switch (fm_info_get_enet_if(i)) {
+		case PHY_INTERFACE_MODE_XGMII:
+			fm_info_set_mdio(i,
+					 miiphy_get_dev_by_name(DEFAULT_FM_TGEC_MDIO_NAME));
+			break;
+		default:
+			printf("Fman1: 10GSEC%u set to unknown interface %i\n",
+			       idx + 1, fm_info_get_enet_if(i));
+			fm_info_set_phy_address(i, 0);
+			break;
+		}
+	}
+
 
 	cpu_eth_init(bis);
 #endif

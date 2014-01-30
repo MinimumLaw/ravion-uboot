@@ -19,6 +19,7 @@
 #include <net.h>
 #include <status_led.h>
 #include <version.h>
+#include <watchdog.h>
 
 #include <asm/cplb.h>
 #include <asm/mach-common/bits/mpu.h>
@@ -35,6 +36,10 @@
 #if defined(CONFIG_POST)
 #include <post.h>
 int post_flag;
+#endif
+
+#if defined(CONFIG_SYS_I2C)
+#include <i2c.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -63,6 +68,7 @@ static int display_banner(void)
 static int init_baudrate(void)
 {
 	gd->baudrate = getenv_ulong("baudrate", 10, CONFIG_BAUDRATE);
+	gd->bd->bi_baudrate = gd->baudrate;
 	return 0;
 }
 
@@ -277,9 +283,9 @@ void board_init_f(ulong bootflag)
 	dcache_enable();
 #endif
 
-#ifdef CONFIG_WATCHDOG
+#ifdef CONFIG_HW_WATCHDOG
 	serial_early_puts("Setting up external watchdog\n");
-	watchdog_init();
+	hw_watchdog_init();
 #endif
 
 #ifdef DEBUG
@@ -385,6 +391,9 @@ void board_init_r(gd_t * id, ulong dest_addr)
 	mmc_initialize(bd);
 #endif
 
+#if defined(CONFIG_SYS_I2C)
+	i2c_reloc_fixup();
+#endif
 	/* relocate environment function pointers etc. */
 	env_relocate();
 
@@ -431,18 +440,4 @@ void board_init_r(gd_t * id, ulong dest_addr)
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;)
 		main_loop();
-}
-
-void hang(void)
-{
-#ifdef CONFIG_STATUS_LED
-	status_led_set(STATUS_LED_BOOT, STATUS_LED_OFF);
-	status_led_set(STATUS_LED_CRASH, STATUS_LED_BLINKING);
-#endif
-	puts("### ERROR ### Please RESET the board ###\n");
-	while (1)
-		/* If a JTAG emulator is hooked up, we'll automatically trigger
-		 * a breakpoint in it.  If one isn't, this is just a NOP.
-		 */
-		asm("emuexcpt;");
 }

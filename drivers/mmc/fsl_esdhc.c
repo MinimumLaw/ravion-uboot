@@ -6,23 +6,7 @@
  * (C) Copyright 2003
  * Kyle Harris, Nexus Technologies, Inc. kharris@nexus-tech.net
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <config.h>
@@ -40,31 +24,43 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 struct fsl_esdhc {
-	uint	dsaddr;
-	uint	blkattr;
-	uint	cmdarg;
-	uint	xfertyp;
-	uint	cmdrsp0;
-	uint	cmdrsp1;
-	uint	cmdrsp2;
-	uint	cmdrsp3;
-	uint	datport;
-	uint	prsstat;
-	uint	proctl;
-	uint	sysctl;
-	uint	irqstat;
-	uint	irqstaten;
-	uint	irqsigen;
-	uint	autoc12err;
-	uint	hostcapblt;
-	uint	wml;
-	uint    mixctrl;
-	char    reserved1[4];
-	uint	fevt;
-	char	reserved2[168];
-	uint	hostver;
-	char	reserved3[780];
-	uint	scr;
+	uint    dsaddr;		/* SDMA system address register */
+	uint    blkattr;	/* Block attributes register */
+	uint    cmdarg;		/* Command argument register */
+	uint    xfertyp;	/* Transfer type register */
+	uint    cmdrsp0;	/* Command response 0 register */
+	uint    cmdrsp1;	/* Command response 1 register */
+	uint    cmdrsp2;	/* Command response 2 register */
+	uint    cmdrsp3;	/* Command response 3 register */
+	uint    datport;	/* Buffer data port register */
+	uint    prsstat;	/* Present state register */
+	uint    proctl;		/* Protocol control register */
+	uint    sysctl;		/* System Control Register */
+	uint    irqstat;	/* Interrupt status register */
+	uint    irqstaten;	/* Interrupt status enable register */
+	uint    irqsigen;	/* Interrupt signal enable register */
+	uint    autoc12err;	/* Auto CMD error status register */
+	uint    hostcapblt;	/* Host controller capabilities register */
+	uint    wml;		/* Watermark level register */
+	uint    mixctrl;	/* For USDHC */
+	char    reserved1[4];	/* reserved */
+	uint    fevt;		/* Force event register */
+	uint    admaes;		/* ADMA error status register */
+	uint    adsaddr;	/* ADMA system address register */
+	char    reserved2[160];	/* reserved */
+	uint    hostver;	/* Host controller version register */
+	char    reserved3[4];	/* reserved */
+	uint    dmaerraddr;	/* DMA error address register */
+	char    reserved4[4];	/* reserved */
+	uint    dmaerrattr;	/* DMA error attribute register */
+	char    reserved5[4];	/* reserved */
+	uint    hostcapblt2;	/* Host controller capabilities register 2 */
+	char    reserved6[8];	/* reserved */
+	uint    tcr;		/* Tuning control register */
+	char    reserved7[28];	/* reserved */
+	uint    sddirctl;	/* SD direction control register */
+	char    reserved8[712];	/* reserved */
+	uint    scr;		/* eSDHC control register */
 };
 
 /* Return the XFERTYP flags for a given command and data packet */
@@ -100,7 +96,7 @@ static uint esdhc_xfertyp(struct mmc_cmd *cmd, struct mmc_data *data)
 	else if (cmd->resp_type & MMC_RSP_PRESENT)
 		xfertyp |= XFERTYP_RSPTYP_48;
 
-#ifdef CONFIG_MX53
+#if defined(CONFIG_MX53) || defined(CONFIG_T4240QDS)
 	if (cmd->cmdidx == MMC_CMD_STOP_TRANSMISSION)
 		xfertyp |= XFERTYP_CMDTYP_ABORT;
 #endif
@@ -310,6 +306,9 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	/* Figure out the transfer arguments */
 	xfertyp = esdhc_xfertyp(cmd, data);
 
+	/* Mask all irqs */
+	esdhc_write32(&regs->irqsigen, 0);
+
 	/* Send the command */
 	esdhc_write32(&regs->cmdarg, cmd->cmdarg);
 #if defined(CONFIG_FSL_USDHC)
@@ -320,15 +319,11 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	esdhc_write32(&regs->xfertyp, xfertyp);
 #endif
 
-	/* Mask all irqs */
-	esdhc_write32(&regs->irqsigen, 0);
-
 	/* Wait for the command to complete */
 	while (!(esdhc_read32(&regs->irqstat) & (IRQSTAT_CC | IRQSTAT_CTOE)))
 		;
 
 	irqstat = esdhc_read32(&regs->irqstat);
-	esdhc_write32(&regs->irqstat, irqstat);
 
 	/* Reset CMD and DATA portions on error */
 	if (irqstat & (CMD_ERR | IRQSTAT_CTOE)) {
@@ -471,7 +466,7 @@ static int esdhc_init(struct mmc *mmc)
 	int timeout = 1000;
 
 	/* Reset the entire host controller */
-	esdhc_write32(&regs->sysctl, SYSCTL_RSTA);
+	esdhc_setbits32(&regs->sysctl, SYSCTL_RSTA);
 
 	/* Wait until the controller is available */
 	while ((esdhc_read32(&regs->sysctl) & SYSCTL_RSTA) && --timeout)
@@ -482,7 +477,7 @@ static int esdhc_init(struct mmc *mmc)
 	esdhc_write32(&regs->scr, 0x00000040);
 #endif
 
-	esdhc_write32(&regs->sysctl, SYSCTL_HCKEN | SYSCTL_IPGEN);
+	esdhc_setbits32(&regs->sysctl, SYSCTL_HCKEN | SYSCTL_IPGEN);
 
 	/* Set the initial clock speed */
 	mmc_set_clock(mmc, 400000);
@@ -516,7 +511,7 @@ static void esdhc_reset(struct fsl_esdhc *regs)
 	unsigned long timeout = 100; /* wait max 100 ms */
 
 	/* reset the controller */
-	esdhc_write32(&regs->sysctl, SYSCTL_RSTA);
+	esdhc_setbits32(&regs->sysctl, SYSCTL_RSTA);
 
 	/* hardware clears the bit when it is done */
 	while ((esdhc_read32(&regs->sysctl) & SYSCTL_RSTA) && --timeout)
@@ -535,7 +530,10 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		return -1;
 
 	mmc = malloc(sizeof(struct mmc));
+	if (!mmc)
+		return -ENOMEM;
 
+	memset(mmc, 0, sizeof(struct mmc));
 	sprintf(mmc->name, "FSL_SDHC");
 	regs = (struct fsl_esdhc *)cfg->esdhc_base;
 
@@ -559,6 +557,12 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	caps = caps & ~(ESDHC_HOSTCAPBLT_SRS |
 			ESDHC_HOSTCAPBLT_VS18 | ESDHC_HOSTCAPBLT_VS30);
 #endif
+
+/* T4240 host controller capabilities register should have VS33 bit */
+#ifdef CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
+	caps = caps | ESDHC_HOSTCAPBLT_VS33;
+#endif
+
 	if (caps & ESDHC_HOSTCAPBLT_VS18)
 		voltage_caps |= MMC_VDD_165_195;
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
@@ -601,8 +605,7 @@ int fsl_esdhc_mmc_init(bd_t *bis)
 {
 	struct fsl_esdhc_cfg *cfg;
 
-	cfg = malloc(sizeof(struct fsl_esdhc_cfg));
-	memset(cfg, 0, sizeof(struct fsl_esdhc_cfg));
+	cfg = calloc(sizeof(struct fsl_esdhc_cfg), 1);
 	cfg->esdhc_base = CONFIG_SYS_FSL_ESDHC_ADDR;
 	cfg->sdhc_clk = gd->arch.sdhc_clk;
 	return fsl_esdhc_initialize(bis, cfg);

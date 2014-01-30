@@ -5,20 +5,7 @@
  * (C) Copyright 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  * (C) Copyright 2007 Pengutronix, Juergen Beisert <j.beisert@pengutronix.de>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -283,49 +270,34 @@ static int fec_tx_task_disable(struct fec_priv *fec)
  * @param[in] dsize desired size of each receive buffer
  * @return 0 on success
  *
- * For this task we need additional memory for the data buffers. And each
- * data buffer requires some alignment. Thy must be aligned to a specific
- * boundary each.
+ * Init all RX descriptors to default values.
  */
-static int fec_rbd_init(struct fec_priv *fec, int count, int dsize)
+static void fec_rbd_init(struct fec_priv *fec, int count, int dsize)
 {
 	uint32_t size;
+	uint8_t *data;
 	int i;
 
 	/*
-	 * Allocate memory for the buffers. This allocation respects the
-	 * alignment
+	 * Reload the RX descriptors with default values and wipe
+	 * the RX buffers.
 	 */
 	size = roundup(dsize, ARCH_DMA_MINALIGN);
 	for (i = 0; i < count; i++) {
-		uint32_t data_ptr = readl(&fec->rbd_base[i].data_pointer);
-		if (data_ptr == 0) {
-			uint8_t *data = memalign(ARCH_DMA_MINALIGN,
-						 size);
-			if (!data) {
-				printf("%s: error allocating rxbuf %d\n",
-				       __func__, i);
-				goto err;
-			}
-			writel((uint32_t)data, &fec->rbd_base[i].data_pointer);
-		} /* needs allocation */
-		writew(FEC_RBD_EMPTY, &fec->rbd_base[i].status);
-		writew(0, &fec->rbd_base[i].data_length);
+		data = (uint8_t *)fec->rbd_base[i].data_pointer;
+		memset(data, 0, dsize);
+		flush_dcache_range((uint32_t)data, (uint32_t)data + size);
+
+		fec->rbd_base[i].status = FEC_RBD_EMPTY;
+		fec->rbd_base[i].data_length = 0;
 	}
 
 	/* Mark the last RBD to close the ring. */
-	writew(FEC_RBD_WRAP | FEC_RBD_EMPTY, &fec->rbd_base[i - 1].status);
+	fec->rbd_base[i - 1].status = FEC_RBD_WRAP | FEC_RBD_EMPTY;
 	fec->rbd_index = 0;
 
-	return 0;
-
-err:
-	for (; i >= 0; i--) {
-		uint32_t data_ptr = readl(&fec->rbd_base[i].data_pointer);
-		free((void *)data_ptr);
-	}
-
-	return -ENOMEM;
+	flush_dcache_range((unsigned)fec->rbd_base,
+			   (unsigned)fec->rbd_base + size);
 }
 
 /**
@@ -345,10 +317,12 @@ static void fec_tbd_init(struct fec_priv *fec)
 	unsigned addr = (unsigned)fec->tbd_base;
 	unsigned size = roundup(2 * sizeof(struct fec_bd),
 				ARCH_DMA_MINALIGN);
-	writew(0x0000, &fec->tbd_base[0].status);
-	writew(FEC_TBD_WRAP, &fec->tbd_base[1].status);
+
+	memset(fec->tbd_base, 0, size);
+	fec->tbd_base[0].status = 0;
+	fec->tbd_base[1].status = FEC_TBD_WRAP;
 	fec->tbd_index = 0;
-	flush_dcache_range(addr, addr+size);
+	flush_dcache_range(addr, addr + size);
 }
 
 /**
@@ -466,7 +440,7 @@ static int fec_open(struct eth_device *edev)
 	 */
 	writel(readl(&fec->eth->ecntrl) | FEC_ECNTRL_ETHER_EN,
 		&fec->eth->ecntrl);
-#if defined(CONFIG_MX25) || defined(CONFIG_MX53)
+#if defined(CONFIG_MX25) || defined(CONFIG_MX53) || defined(CONFIG_MX6SL)
 	udelay(100);
 	/*
 	 * setup the MII gasket for RMII mode
@@ -516,9 +490,7 @@ static int fec_open(struct eth_device *edev)
 #ifdef FEC_QUIRK_ENET_MAC
 	{
 		u32 ecr = readl(&fec->eth->ecntrl) & ~FEC_ECNTRL_SPEED;
-		u32 rcr = (readl(&fec->eth->r_cntrl) &
-				~(FEC_RCNTRL_RMII | FEC_RCNTRL_RMII_10T)) |
-				FEC_RCNTRL_RGMII | FEC_RCNTRL_MII_MODE;
+		u32 rcr = readl(&fec->eth->r_cntrl) & ~FEC_RCNTRL_RMII_10T;
 		if (speed == _1000BASET)
 			ecr |= FEC_ECNTRL_SPEED;
 		else if (speed != _100BASET)
@@ -542,52 +514,18 @@ static int fec_init(struct eth_device *dev, bd_t* bd)
 {
 	struct fec_priv *fec = (struct fec_priv *)dev->priv;
 	uint32_t mib_ptr = (uint32_t)&fec->eth->rmon_t_drop;
-	uint32_t size;
-	int i, ret;
+	int i;
 
 	/* Initialize MAC address */
 	fec_set_hwaddr(dev);
 
 	/*
-	 * Allocate transmit descriptors, there are two in total. This
-	 * allocation respects cache alignment.
+	 * Setup transmit descriptors, there are two in total.
 	 */
-	if (!fec->tbd_base) {
-		size = roundup(2 * sizeof(struct fec_bd),
-				ARCH_DMA_MINALIGN);
-		fec->tbd_base = memalign(ARCH_DMA_MINALIGN, size);
-		if (!fec->tbd_base) {
-			ret = -ENOMEM;
-			goto err1;
-		}
-		memset(fec->tbd_base, 0, size);
-		fec_tbd_init(fec);
-		flush_dcache_range((unsigned)fec->tbd_base, size);
-	}
+	fec_tbd_init(fec);
 
-	/*
-	 * Allocate receive descriptors. This allocation respects cache
-	 * alignment.
-	 */
-	if (!fec->rbd_base) {
-		size = roundup(FEC_RBD_NUM * sizeof(struct fec_bd),
-				ARCH_DMA_MINALIGN);
-		fec->rbd_base = memalign(ARCH_DMA_MINALIGN, size);
-		if (!fec->rbd_base) {
-			ret = -ENOMEM;
-			goto err2;
-		}
-		memset(fec->rbd_base, 0, size);
-		/*
-		 * Initialize RxBD ring
-		 */
-		if (fec_rbd_init(fec, FEC_RBD_NUM, FEC_MAX_PKT_SIZE) < 0) {
-			ret = -ENOMEM;
-			goto err3;
-		}
-		flush_dcache_range((unsigned)fec->rbd_base,
-				   (unsigned)fec->rbd_base + size);
-	}
+	/* Setup receive descriptors. */
+	fec_rbd_init(fec, FEC_RBD_NUM, FEC_MAX_PKT_SIZE);
 
 	fec_reg_setup(fec);
 
@@ -624,13 +562,6 @@ static int fec_init(struct eth_device *dev, bd_t* bd)
 #endif
 	fec_open(dev);
 	return 0;
-
-err3:
-	free(fec->rbd_base);
-err2:
-	free(fec->tbd_base);
-err1:
-	return ret;
 }
 
 /**
@@ -740,6 +671,28 @@ static int fec_send(struct eth_device *dev, void *packet, int length)
 	flush_dcache_range(addr, addr + size);
 
 	/*
+	 * Below we read the DMA descriptor's last four bytes back from the
+	 * DRAM. This is important in order to make sure that all WRITE
+	 * operations on the bus that were triggered by previous cache FLUSH
+	 * have completed.
+	 *
+	 * Otherwise, on MX28, it is possible to observe a corruption of the
+	 * DMA descriptors. Please refer to schematic "Figure 1-2" in MX28RM
+	 * for the bus structure of MX28. The scenario is as follows:
+	 *
+	 * 1) ARM core triggers a series of WRITEs on the AHB_ARB2 bus going
+	 *    to DRAM due to flush_dcache_range()
+	 * 2) ARM core writes the FEC registers via AHB_ARB2
+	 * 3) FEC DMA starts reading/writing from/to DRAM via AHB_ARB3
+	 *
+	 * Note that 2) does sometimes finish before 1) due to reordering of
+	 * WRITE accesses on the AHB bus, therefore triggering 3) before the
+	 * DMA descriptor is fully written into DRAM. This results in occasional
+	 * corruption of the DMA descriptor.
+	 */
+	readl(addr + size - 4);
+
+	/*
 	 * Enable SmartDMA transmit task
 	 */
 	fec_tx_task_enable(fec);
@@ -788,7 +741,7 @@ static int fec_recv(struct eth_device *dev)
 	uint16_t bd_status;
 	uint32_t addr, size, end;
 	int i;
-	uchar buff[FEC_MAX_PKT_SIZE] __aligned(ARCH_DMA_MINALIGN);
+	ALLOC_CACHE_ALIGN_BUFFER(uchar, buff, FEC_MAX_PKT_SIZE);
 
 	/*
 	 * Check if any critical events have happened
@@ -901,6 +854,74 @@ static void fec_set_dev_name(char *dest, int dev_id)
 	sprintf(dest, (dev_id == -1) ? "FEC" : "FEC%i", dev_id);
 }
 
+static int fec_alloc_descs(struct fec_priv *fec)
+{
+	unsigned int size;
+	int i;
+	uint8_t *data;
+
+	/* Allocate TX descriptors. */
+	size = roundup(2 * sizeof(struct fec_bd), ARCH_DMA_MINALIGN);
+	fec->tbd_base = memalign(ARCH_DMA_MINALIGN, size);
+	if (!fec->tbd_base)
+		goto err_tx;
+
+	/* Allocate RX descriptors. */
+	size = roundup(FEC_RBD_NUM * sizeof(struct fec_bd), ARCH_DMA_MINALIGN);
+	fec->rbd_base = memalign(ARCH_DMA_MINALIGN, size);
+	if (!fec->rbd_base)
+		goto err_rx;
+
+	memset(fec->rbd_base, 0, size);
+
+	/* Allocate RX buffers. */
+
+	/* Maximum RX buffer size. */
+	size = roundup(FEC_MAX_PKT_SIZE, ARCH_DMA_MINALIGN);
+	for (i = 0; i < FEC_RBD_NUM; i++) {
+		data = memalign(ARCH_DMA_MINALIGN, size);
+		if (!data) {
+			printf("%s: error allocating rxbuf %d\n", __func__, i);
+			goto err_ring;
+		}
+
+		memset(data, 0, size);
+
+		fec->rbd_base[i].data_pointer = (uint32_t)data;
+		fec->rbd_base[i].status = FEC_RBD_EMPTY;
+		fec->rbd_base[i].data_length = 0;
+		/* Flush the buffer to memory. */
+		flush_dcache_range((uint32_t)data, (uint32_t)data + size);
+	}
+
+	/* Mark the last RBD to close the ring. */
+	fec->rbd_base[i - 1].status = FEC_RBD_WRAP | FEC_RBD_EMPTY;
+
+	fec->rbd_index = 0;
+	fec->tbd_index = 0;
+
+	return 0;
+
+err_ring:
+	for (; i >= 0; i--)
+		free((void *)fec->rbd_base[i].data_pointer);
+	free(fec->rbd_base);
+err_rx:
+	free(fec->tbd_base);
+err_tx:
+	return -ENOMEM;
+}
+
+static void fec_free_descs(struct fec_priv *fec)
+{
+	int i;
+
+	for (i = 0; i < FEC_RBD_NUM; i++)
+		free((void *)fec->rbd_base[i].data_pointer);
+	free(fec->rbd_base);
+	free(fec->tbd_base);
+}
+
 #ifdef CONFIG_PHYLIB
 int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
 		struct mii_dev *bus, struct phy_device *phydev)
@@ -933,6 +954,10 @@ static int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
 	memset(edev, 0, sizeof(*edev));
 	memset(fec, 0, sizeof(*fec));
 
+	ret = fec_alloc_descs(fec);
+	if (ret)
+		goto err3;
+
 	edev->priv = fec;
 	edev->init = fec_init;
 	edev->send = fec_send;
@@ -951,7 +976,7 @@ static int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
 	while (readl(&fec->eth->ecntrl) & FEC_ECNTRL_RESET) {
 		if (get_timer(start) > (CONFIG_SYS_HZ * 5)) {
 			printf("FEC MXC: Timeout reseting chip\n");
-			goto err3;
+			goto err4;
 		}
 		udelay(10);
 	}
@@ -974,8 +999,12 @@ static int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
 	if (fec_get_hwaddr(edev, dev_id, ethaddr) == 0) {
 		debug("got MAC%d address from fuse: %pM\n", dev_id, ethaddr);
 		memcpy(edev->enetaddr, ethaddr, 6);
+		if (!getenv("ethaddr"))
+			eth_setenv_enetaddr("ethaddr", ethaddr);
 	}
 	return ret;
+err4:
+	fec_free_descs(fec);
 err3:
 	free(fec);
 err2:

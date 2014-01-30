@@ -1,23 +1,7 @@
 /*
  * Copyright 2011,2012 Freescale Semiconductor, Inc.
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -44,7 +28,6 @@ int checkboard(void)
 {
 	u8 sw;
 	struct cpu_type *cpu = gd->arch.cpu;
-	ccsr_gur_t *gur = (void *)CONFIG_SYS_MPC85xx_GUTS_ADDR;
 	unsigned int i;
 
 	printf("Board: %sRDB, ", cpu->name);
@@ -53,20 +36,6 @@ int checkboard(void)
 
 	sw = CPLD_READ(fbank_sel);
 	printf("vBank: %d\n", sw & 0x1);
-
-	/*
-	 * Display the RCW, so that no one gets confused as to what RCW
-	 * we're actually using for this boot.
-	 */
-	puts("Reset Configuration Word (RCW):");
-	for (i = 0; i < ARRAY_SIZE(gur->rcwsr); i++) {
-		u32 rcw = in_be32(&gur->rcwsr[i]);
-
-		if ((i % 4) == 0)
-			printf("\n       %08x:", i * 4);
-		printf(" %08x", rcw);
-	}
-	puts("\n");
 
 	/*
 	 * Display the actual SERDES reference clocks as configured by the
@@ -186,20 +155,6 @@ unsigned long get_board_sys_clk(unsigned long dummy)
 	}
 }
 
-static const char *serdes_clock_to_string(u32 clock)
-{
-	switch (clock) {
-	case SRDS_PLLCR0_RFCK_SEL_100:
-		return "100";
-	case SRDS_PLLCR0_RFCK_SEL_125:
-		return "125";
-	case SRDS_PLLCR0_RFCK_SEL_156_25:
-		return "156.25";
-	default:
-		return "150";
-	}
-}
-
 #define NUM_SRDS_BANKS	2
 
 int misc_init_r(void)
@@ -227,6 +182,17 @@ int misc_init_r(void)
 				"'00' is unsupported\n");
 		else
 			actual[i] = freq[i][clock];
+
+		/*
+		 * PC board uses a different CPLD with PB board, this CPLD
+		 * has cpld_ver_sub = 1, and pcba_ver = 5. But CPLD on PB
+		 * board has cpld_ver_sub = 0, and pcba_ver = 4.
+		 */
+		if ((i == 1) && (CPLD_READ(cpld_ver_sub) == 1) &&
+		    (CPLD_READ(pcba_ver) == 5)) {
+			/* PC board bank2 frequency */
+			actual[i] = freq[i-1][clock];
+		}
 	}
 
 	for (i = 0; i < NUM_SRDS_BANKS; i++) {

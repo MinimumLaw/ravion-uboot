@@ -2,23 +2,7 @@
  *  (C) Copyright 2010,2011
  *  NVIDIA Corporation <www.nvidia.com>
  *
- * See file CREDITS for list of people who contributed to this
- * project.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _TEGRA_CLK_RST_H_
@@ -224,6 +208,16 @@ enum {
 	IN_408_OUT_48_DIVISOR = 15,
 	IN_408_OUT_9_6_DIVISOR = 83,
 };
+
+/* CLK_RST_CONTROLLER_UTMIP_PLL_CFG1_0 */
+#define PLLU_POWERDOWN		(1 << 16)
+#define PLL_ENABLE_POWERDOWN	(1 << 14)
+#define PLL_ACTIVE_POWERDOWN	(1 << 12)
+
+/* CLK_RST_CONTROLLER_UTMIP_PLL_CFG2_0 */
+#define UTMIP_FORCE_PD_SAMP_C_POWERDOWN		(1 << 4)
+#define UTMIP_FORCE_PD_SAMP_B_POWERDOWN		(1 << 2)
+#define UTMIP_FORCE_PD_SAMP_A_POWERDOWN		(1 << 0)
 
 /* CLK_RST_CONTROLLER_OSC_CTRL_0 */
 #define OSC_XOBP_SHIFT		1

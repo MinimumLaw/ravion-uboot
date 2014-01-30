@@ -152,13 +152,11 @@ struct spi_slave *tegra114_spi_setup_slave(unsigned int bus, unsigned int cs,
 		return NULL;
 	}
 
-	spi = malloc(sizeof(struct tegra_spi_slave));
+	spi = spi_alloc_slave(struct tegra_spi_slave, bus, cs);
 	if (!spi) {
 		printf("SPI error: malloc of SPI structure failed\n");
 		return NULL;
 	}
-	spi->slave.bus = bus;
-	spi->slave.cs = cs;
 	spi->ctrl = &spi_ctrls[bus];
 	if (!spi->ctrl) {
 		printf("SPI error: could not find controller for bus %d\n",
@@ -291,9 +289,6 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 	reg = readl(&regs->fifo_status);
 	writel(reg, &regs->fifo_status);
 
-	/* clear ready bit */
-	setbits_le32(&regs->xfer_status, SPI_XFER_STS_RDY);
-
 	clrsetbits_le32(&regs->command1, SPI_CMD1_CS_SW_VAL,
 			SPI_CMD1_RX_EN | SPI_CMD1_TX_EN | SPI_CMD1_LSBY_FE |
 			(slave->cs << SPI_CMD1_CS_SEL_SHIFT));
@@ -307,7 +302,6 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 	/* handle data in 32-bit chunks */
 	while (num_bytes > 0) {
 		int bytes;
-		int is_read = 0;
 		int tm, i;
 
 		tmpdout = 0;
@@ -321,6 +315,9 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 
 		num_bytes -= bytes;
 
+		/* clear ready bit */
+		setbits_le32(&regs->xfer_status, SPI_XFER_STS_RDY);
+
 		clrsetbits_le32(&regs->command1,
 				SPI_CMD1_BIT_LEN_MASK << SPI_CMD1_BIT_LEN_SHIFT,
 				(bytes * 8 - 1) << SPI_CMD1_BIT_LEN_SHIFT);
@@ -331,20 +328,14 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 		 * Wait for SPI transmit FIFO to empty, or to time out.
 		 * The RX FIFO status will be read and cleared last
 		 */
-		for (tm = 0, is_read = 0; tm < SPI_TIMEOUT; ++tm) {
+		for (tm = 0; tm < SPI_TIMEOUT; ++tm) {
 			u32 fifo_status, xfer_status;
-
-			fifo_status = readl(&regs->fifo_status);
-
-			/* We can exit when we've had both RX and TX activity */
-			if (is_read &&
-			    (fifo_status & SPI_FIFO_STS_TX_FIFO_EMPTY))
-				break;
 
 			xfer_status = readl(&regs->xfer_status);
 			if (!(xfer_status & SPI_XFER_STS_RDY))
 				continue;
 
+			fifo_status = readl(&regs->fifo_status);
 			if (fifo_status & SPI_FIFO_STS_ERR) {
 				debug("%s: got a fifo error: ", __func__);
 				if (fifo_status & SPI_FIFO_STS_TX_FIFO_OVF)
@@ -369,7 +360,6 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 
 			if (!(fifo_status & SPI_FIFO_STS_RX_FIFO_EMPTY)) {
 				tmpdin = readl(&regs->rx_fifo);
-				is_read = 1;
 
 				/* swap bytes read in */
 				if (din != NULL) {
@@ -379,6 +369,9 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 					}
 					din += bytes;
 				}
+
+				/* We can exit when we've had both RX and TX */
+				break;
 			}
 		}
 

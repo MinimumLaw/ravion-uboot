@@ -1,20 +1,7 @@
 /*
  * Copyright (c) 2012, Google Inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -43,6 +30,26 @@ long sandbox_fs_read_at(const char *filename, unsigned long pos,
 	if (!maxsize)
 		maxsize = os_get_filesize(filename);
 	size = os_read(fd, buffer, maxsize);
+	os_close(fd);
+
+	return size;
+}
+
+long sandbox_fs_write_at(const char *filename, unsigned long pos,
+			 void *buffer, unsigned long towrite)
+{
+	ssize_t size;
+	int fd, ret;
+
+	fd = os_open(filename, OS_O_RDWR | OS_O_CREAT);
+	if (fd < 0)
+		return fd;
+	ret = os_lseek(fd, pos, OS_SEEK_SET);
+	if (ret == -1) {
+		os_close(fd);
+		return ret;
+	}
+	size = os_write(fd, buffer, towrite);
 	os_close(fd);
 
 	return size;
@@ -80,4 +87,17 @@ int fs_read_sandbox(const char *filename, void *buf, int offset, int len)
 	}
 
 	return len_read;
+}
+
+int fs_write_sandbox(const char *filename, void *buf, int offset, int len)
+{
+	int len_written;
+
+	len_written = sandbox_fs_write_at(filename, offset, buf, len);
+	if (len_written == -1) {
+		printf("** Unable to write file %s **\n", filename);
+		return -1;
+	}
+
+	return len_written;
 }

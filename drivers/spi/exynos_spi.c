@@ -2,19 +2,7 @@
  * (C) Copyright 2012 SAMSUNG Electronics
  * Padmavathi Venna <padma.v@samsung.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -38,6 +26,7 @@ struct spi_bus {
 	struct exynos_spi *regs;
 	int inited;		/* 1 if this bus is ready for use */
 	int node;
+	uint deactivate_delay_us;	/* Delay to wait after deactivate */
 };
 
 /* A list of spi buses that we know about */
@@ -51,6 +40,9 @@ struct exynos_spi_slave {
 	unsigned int mode;
 	enum periph_id periph_id;	/* Peripheral ID for this device */
 	unsigned int fifo_size;
+	int skip_preamble;
+	struct spi_bus *bus;		/* Pointer to our SPI bus info */
+	ulong last_transaction_us;	/* Time of last transaction end */
 };
 
 static struct spi_bus *spi_get_bus(unsigned dev_index)
@@ -96,6 +88,7 @@ struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 	}
 
 	bus = &spi_bus[busnum];
+	spi_slave->bus = bus;
 	spi_slave->regs = bus->regs;
 	spi_slave->mode = mode;
 	spi_slave->periph_id = bus->periph_id;
@@ -104,6 +97,9 @@ struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 		spi_slave->fifo_size = 64;
 	else
 		spi_slave->fifo_size = 256;
+
+	spi_slave->skip_preamble = 0;
+	spi_slave->last_transaction_us = timer_get_us();
 
 	spi_slave->freq = bus->frequency;
 	if (max_hz)
@@ -208,55 +204,136 @@ static void spi_get_fifo_levels(struct exynos_spi *regs,
  *
  * @param regs	SPI peripheral registers
  * @param count	Number of bytes to transfer
+ * @param step	Number of bytes to transfer in each packet (1 or 4)
  */
-static void spi_request_bytes(struct exynos_spi *regs, int count)
+static void spi_request_bytes(struct exynos_spi *regs, int count, int step)
 {
+	/* For word address we need to swap bytes */
+	if (step == 4) {
+		setbits_le32(&regs->mode_cfg,
+			     SPI_MODE_CH_WIDTH_WORD | SPI_MODE_BUS_WIDTH_WORD);
+		count /= 4;
+		setbits_le32(&regs->swap_cfg, SPI_TX_SWAP_EN | SPI_RX_SWAP_EN |
+			SPI_TX_BYTE_SWAP | SPI_RX_BYTE_SWAP |
+			SPI_TX_HWORD_SWAP | SPI_RX_HWORD_SWAP);
+	} else {
+		/* Select byte access and clear the swap configuration */
+		clrbits_le32(&regs->mode_cfg,
+			     SPI_MODE_CH_WIDTH_WORD | SPI_MODE_BUS_WIDTH_WORD);
+		writel(0, &regs->swap_cfg);
+	}
+
 	assert(count && count < (1 << 16));
 	setbits_le32(&regs->ch_cfg, SPI_CH_RST);
 	clrbits_le32(&regs->ch_cfg, SPI_CH_RST);
+
 	writel(count | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
 }
 
-static void spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
-			void **dinp, void const **doutp)
+static int spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
+			void **dinp, void const **doutp, unsigned long flags)
 {
 	struct exynos_spi *regs = spi_slave->regs;
 	uchar *rxp = *dinp;
 	const uchar *txp = *doutp;
 	int rx_lvl, tx_lvl;
 	uint out_bytes, in_bytes;
+	int toread;
+	unsigned start = get_timer(0);
+	int stopping;
+	int step;
 
 	out_bytes = in_bytes = todo;
+
+	stopping = spi_slave->skip_preamble && (flags & SPI_XFER_END) &&
+					!(spi_slave->mode & SPI_SLAVE);
+
+	/*
+	 * Try to transfer words if we can. This helps read performance at
+	 * SPI clock speeds above about 20MHz.
+	 */
+	step = 1;
+	if (!((todo | (uintptr_t)rxp | (uintptr_t)txp) & 3) &&
+	    !spi_slave->skip_preamble)
+		step = 4;
 
 	/*
 	 * If there's something to send, do a software reset and set a
 	 * transaction size.
 	 */
-	spi_request_bytes(regs, todo);
+	spi_request_bytes(regs, todo, step);
 
 	/*
 	 * Bytes are transmitted/received in pairs. Wait to receive all the
 	 * data because then transmission will be done as well.
 	 */
+	toread = in_bytes;
+
 	while (in_bytes) {
 		int temp;
 
 		/* Keep the fifos full/empty. */
 		spi_get_fifo_levels(regs, &rx_lvl, &tx_lvl);
-		if (tx_lvl < spi_slave->fifo_size && out_bytes) {
-			temp = txp ? *txp++ : 0xff;
+
+		/*
+		 * Don't completely fill the txfifo, since we don't want our
+		 * rxfifo to overflow, and it may already contain data.
+		 */
+		while (tx_lvl < spi_slave->fifo_size/2 && out_bytes) {
+			if (!txp)
+				temp = -1;
+			else if (step == 4)
+				temp = *(uint32_t *)txp;
+			else
+				temp = *txp;
 			writel(temp, &regs->tx_data);
-			out_bytes--;
+			out_bytes -= step;
+			if (txp)
+				txp += step;
+			tx_lvl += step;
 		}
-		if (rx_lvl > 0 && in_bytes) {
-			temp = readl(&regs->rx_data);
-			if (rxp)
-				*rxp++ = temp;
-			in_bytes--;
+		if (rx_lvl >= step) {
+			while (rx_lvl >= step) {
+				temp = readl(&regs->rx_data);
+				if (spi_slave->skip_preamble) {
+					if (temp == SPI_PREAMBLE_END_BYTE) {
+						spi_slave->skip_preamble = 0;
+						stopping = 0;
+					}
+				} else {
+					if (rxp || stopping) {
+						*rxp = temp;
+						rxp += step;
+					}
+					in_bytes -= step;
+				}
+				toread -= step;
+				rx_lvl -= step;
+			}
+		} else if (!toread) {
+			/*
+			 * We have run out of input data, but haven't read
+			 * enough bytes after the preamble yet. Read some more,
+			 * and make sure that we transmit dummy bytes too, to
+			 * keep things going.
+			 */
+			assert(!out_bytes);
+			out_bytes = in_bytes;
+			toread = in_bytes;
+			txp = NULL;
+			spi_request_bytes(regs, toread, step);
+		}
+		if (spi_slave->skip_preamble && get_timer(start) > 100) {
+			printf("SPI timeout: in_bytes=%d, out_bytes=%d, ",
+			       in_bytes, out_bytes);
+			return -1;
 		}
 	}
+
 	*dinp = rxp;
 	*doutp = txp;
+
+	return 0;
 }
 
 /**
@@ -276,6 +353,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	int upto, todo;
 	int bytelen;
+	int ret = 0;
 
 	/* spi core configured to do 8 bit transfers */
 	if (bitlen % 8) {
@@ -287,18 +365,30 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	if ((flags & SPI_XFER_BEGIN))
 		spi_cs_activate(slave);
 
-	/* Exynos SPI limits each transfer to 65535 bytes */
+	/*
+	 * Exynos SPI limits each transfer to 65535 transfers. To keep
+	 * things simple, allow a maximum of 65532 bytes. We could allow
+	 * more in word mode, but the performance difference is small.
+	 */
 	bytelen =  bitlen / 8;
-	for (upto = 0; upto < bytelen; upto += todo) {
-		todo = min(bytelen - upto, (1 << 16) - 1);
-		spi_rx_tx(spi_slave, todo, &din, &dout);
+	for (upto = 0; !ret && upto < bytelen; upto += todo) {
+		todo = min(bytelen - upto, (1 << 16) - 4);
+		ret = spi_rx_tx(spi_slave, todo, &din, &dout, flags);
+		if (ret)
+			break;
 	}
 
 	/* Stop the transaction, if necessary. */
-	if ((flags & SPI_XFER_END))
+	if ((flags & SPI_XFER_END) && !(spi_slave->mode & SPI_SLAVE)) {
 		spi_cs_deactivate(slave);
+		if (spi_slave->skip_preamble) {
+			assert(!spi_slave->skip_preamble);
+			debug("Failed to complete premable transaction\n");
+			ret = -1;
+		}
+	}
 
-	return 0;
+	return ret;
 }
 
 /**
@@ -323,8 +413,22 @@ void spi_cs_activate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 
+	/* If it's too soon to do another transaction, wait */
+	if (spi_slave->bus->deactivate_delay_us &&
+	    spi_slave->last_transaction_us) {
+		ulong delay_us;		/* The delay completed so far */
+		delay_us = timer_get_us() - spi_slave->last_transaction_us;
+		if (delay_us < spi_slave->bus->deactivate_delay_us)
+			udelay(spi_slave->bus->deactivate_delay_us - delay_us);
+	}
+
 	clrbits_le32(&spi_slave->regs->cs_reg, SPI_SLAVE_SIG_INACT);
 	debug("Activate CS, bus %d\n", spi_slave->slave.bus);
+	spi_slave->skip_preamble = spi_slave->mode & SPI_PREAMBLE;
+
+	/* Remember time of this transaction so we can honour the bus delay */
+	if (spi_slave->bus->deactivate_delay_us)
+		spi_slave->last_transaction_us = timer_get_us();
 }
 
 /**
@@ -374,6 +478,8 @@ static int spi_get_config(const void *blob, int node, struct spi_bus *bus)
 	/* Use 500KHz as a suitable default */
 	bus->frequency = fdtdec_get_int(blob, node, "spi-max-frequency",
 					500000);
+	bus->deactivate_delay_us = fdtdec_get_int(blob, node,
+					"spi-deactivate-delay", 0);
 
 	return 0;
 }
@@ -415,6 +521,28 @@ static int process_nodes(const void *blob, int node_list[], int count)
 	return 0;
 }
 #endif
+
+/**
+ * Set up a new SPI slave for an fdt node
+ *
+ * @param blob		Device tree blob
+ * @param node		SPI peripheral node to use
+ * @return 0 if ok, -1 on error
+ */
+struct spi_slave *spi_setup_slave_fdt(const void *blob, int slave_node,
+				      int spi_node)
+{
+	struct spi_bus *bus;
+	unsigned int i;
+
+	for (i = 0, bus = spi_bus; i < bus_count; i++, bus++) {
+		if (bus->node == spi_node)
+			return spi_base_setup_slave_fdt(blob, i, slave_node);
+	}
+
+	debug("%s: Failed to find bus node %d\n", __func__, spi_node);
+	return NULL;
+}
 
 /* Sadly there is no error return from this function */
 void spi_init(void)
