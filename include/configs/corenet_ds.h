@@ -15,19 +15,15 @@
 #ifdef CONFIG_RAMBOOT_PBL
 #define CONFIG_RAMBOOT_TEXT_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_RESET_VECTOR_ADDRESS	0xfffffffc
-#define CONFIG_SYS_FSL_PBL_PBI $(SRCTREE)/board/freescale/corenet_ds/pbi.cfg
+#define CONFIG_SYS_FSL_PBL_PBI board/freescale/corenet_ds/pbi.cfg
 #if defined(CONFIG_P3041DS)
-#define CONFIG_SYS_FSL_PBL_RCW \
-			$(SRCTREE)/board/freescale/corenet_ds/rcw_p3041ds.cfg
+#define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p3041ds.cfg
 #elif defined(CONFIG_P4080DS)
-#define CONFIG_SYS_FSL_PBL_RCW \
-			$(SRCTREE)/board/freescale/corenet_ds/rcw_p4080ds.cfg
+#define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p4080ds.cfg
 #elif defined(CONFIG_P5020DS)
-#define CONFIG_SYS_FSL_PBL_RCW \
-			$(SRCTREE)/board/freescale/corenet_ds/rcw_p5020ds.cfg
+#define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p5020ds.cfg
 #elif defined(CONFIG_P5040DS)
-#define CONFIG_SYS_FSL_PBL_RCW \
-			$(SRCTREE)/board/freescale/corenet_ds/rcw_p5040ds.cfg
+#define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p5040ds.cfg
 #endif
 #endif
 
@@ -45,7 +41,6 @@
 #define CONFIG_E500			/* BOOKE e500 family */
 #define CONFIG_E500MC			/* BOOKE e500mc family */
 #define CONFIG_SYS_BOOK3E_HV		/* Category E.HV supported */
-#define CONFIG_MPC85xx			/* MPC85xx/PQ3 platform */
 #define CONFIG_MP			/* support multiple processors */
 
 #ifndef CONFIG_SYS_TEXT_BASE
