@@ -29,6 +29,8 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
 
+#define GPT_PRESCALLER	1000000
+
 /* General purpose timers registers */
 struct mxc_gpt {
 	unsigned int control;
@@ -44,6 +46,8 @@ static struct mxc_gpt *cur_gpt = (struct mxc_gpt *)GPT1_BASE_ADDR;
 #define GPTCR_SWR		(1 << 15)	/* Software reset */
 #define GPTCR_FRR		(1 << 9)	/* Freerun / restart */
 #define GPTCR_CLKSOURCE_32	(4 << 6)	/* Clock source */
+#define GPTCR_CLKSOURCE_IPG	(1 << 6)	/* Clock source */
+#define GPTPR			(66)		/* IPG clock prescaler */
 #define GPTCR_TEN		1		/* Timer enable */
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -51,14 +55,14 @@ DECLARE_GLOBAL_DATA_PTR;
 static inline unsigned long long tick_to_time(unsigned long long tick)
 {
 	tick *= CONFIG_SYS_HZ;
-	do_div(tick, MXC_CLK32);
+	do_div(tick, GPT_PRESCALLER);
 
 	return tick;
 }
 
 static inline unsigned long long us_to_tick(unsigned long long usec)
 {
-	usec = usec * MXC_CLK32 + 999999;
+	usec = usec * GPT_PRESCALLER + 999999;
 	do_div(usec, 1000000);
 
 	return usec;
@@ -75,11 +79,11 @@ int timer_init(void)
 	for (i = 0; i < 100; i++)
 		__raw_writel(0, &cur_gpt->control);
 
-	__raw_writel(0, &cur_gpt->prescaler); /* 32Khz */
+	__raw_writel(GPTPR, &cur_gpt->prescaler); /* 1Mhz */
 
 	/* Freerun Mode, PERCLK1 input */
 	i = __raw_readl(&cur_gpt->control);
-	__raw_writel(i | GPTCR_CLKSOURCE_32 | GPTCR_TEN, &cur_gpt->control);
+	__raw_writel(i | GPTCR_CLKSOURCE_IPG | GPTCR_TEN, &cur_gpt->control);
 
 	gd->arch.tbl = __raw_readl(&cur_gpt->counter);
 	gd->arch.tbu = 0;
@@ -102,7 +106,7 @@ ulong get_timer_masked(void)
 {
 	/*
 	 * get_ticks() returns a long long (64 bit), it wraps in
-	 * 2^64 / MXC_CLK32 = 2^64 / 2^15 = 2^49 ~ 5 * 10^14 (s) ~
+	 * 2^64 / GPT_PRESCALLER = 2^64 / 2^15 = 2^49 ~ 5 * 10^14 (s) ~
 	 * 5 * 10^9 days... and get_ticks() * CONFIG_SYS_HZ wraps in
 	 * 5 * 10^6 days - long enough.
 	 */
@@ -133,5 +137,5 @@ void __udelay(unsigned long usec)
  */
 ulong get_tbclk(void)
 {
-	return MXC_CLK32;
+	return GPT_PRESCALLER;
 }
