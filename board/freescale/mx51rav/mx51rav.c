@@ -208,19 +208,19 @@ static void power_init(void)
 	/* power up the system first */
 	pmic_reg_write(p, REG_POWER_MISC, PWUP);
 
-	/* Set core voltage to 1.1V */
+	/* Set core voltage to 1.05V */
 	pmic_reg_read(p, REG_SW_0, &val);
-	val = (val & ~SWx_VOLT_MASK) | SWx_1_100V;
+	val = (val & ~SWx_VOLT_MASK) | SWx_1_050V;
 	pmic_reg_write(p, REG_SW_0, val);
 
-	/* Setup VCC (SW2) to 1.25 */
+	/* Setup VCC (SW2) to 1.225 */
 	pmic_reg_read(p, REG_SW_1, &val);
-	val = (val & ~SWx_VOLT_MASK) | SWx_1_250V;
+	val = (val & ~SWx_VOLT_MASK) | SWx_1_225V;
 	pmic_reg_write(p, REG_SW_1, val);
 
-	/* Setup 1V2_DIG1 (SW3) to 1.25 */
+	/* Setup 1V2_DIG1 (SW3) to 1.2 */
 	pmic_reg_read(p, REG_SW_2, &val);
-	val = (val & ~SWx_VOLT_MASK) | SWx_1_250V;
+	val = (val & ~SWx_VOLT_MASK) | SWx_1_200V;
 	pmic_reg_write(p, REG_SW_2, val);
 	udelay(50);
 
