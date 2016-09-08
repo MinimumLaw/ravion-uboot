@@ -25,6 +25,10 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
+#define CONFIG_IMX6_THERMAL
+
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
@@ -35,7 +39,7 @@
 #define CONFIG_MXC_UART
 
 #define CONFIG_CMD_FUSE
-#ifdef CONFIG_CMD_FUSE
+#if defined(CONFIG_CMD_FUSE) || defined(CONFIG_IMX6_THERMAL)
 #define CONFIG_MXC_OCOTP
 #endif
 
@@ -49,6 +53,8 @@
 #define CONFIG_GENERIC_MMC
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_CMD_EXT2
+#define CONFIG_CMD_EXT4
+#define CONFIG_CMD_EXT4_WRITE
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 
@@ -72,7 +78,7 @@
 #define CONFIG_SPI_FLASH_STMICRO
 #define CONFIG_MXC_SPI
 #define CONFIG_SF_DEFAULT_BUS		0
-#define CONFIG_SF_DEFAULT_CS		(0 | (IMX_GPIO_NR(4, 9) << 8))
+#define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		20000000
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
 #endif
@@ -105,12 +111,10 @@
 			"setenv get_cmd tftp; " \
 		"fi; " \
 		"if ${get_cmd} ${update_sd_firmware_filename}; then " \
-			"if mmc dev ${emmcdev} && " \
-				"mmc open ${emmcdev} 1; then "	\
+			"if mmc dev ${emmcdev} 1; then "	\
 				"setexpr fw_sz ${filesize} / 0x200; " \
 				"setexpr fw_sz ${fw_sz} + 1; "	\
 				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
-				"mmc close ${emmcdev} 1; " \
 			"fi; "	\
 		"fi\0"
 #else
@@ -213,9 +217,6 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2     "> "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE              256
-
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_MAXARGS             16
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
 
@@ -249,13 +250,46 @@
 #define CONFIG_ENV_IS_IN_MMC
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
-#define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
+#define CONFIG_ENV_OFFSET		(8 * 64 * 1024)
 #endif
 
 #define CONFIG_OF_LIBFDT
 
 #ifndef CONFIG_SYS_DCACHE_OFF
 #define CONFIG_CMD_CACHE
+#endif
+
+/* Framebuffer */
+#define CONFIG_VIDEO
+#define CONFIG_VIDEO_IPUV3
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#define CONFIG_VIDEO_BMP_RLE8
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_BMP_16BPP
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_BMP_LOGO
+#define CONFIG_IPUV3_CLK 260000000
+#define CONFIG_IMX_HDMI
+#define CONFIG_IMX_VIDEO_SKIP
+
+#ifndef CONFIG_SPL
+#define CONFIG_CI_UDC
+#define CONFIG_USBD_HS
+#define CONFIG_USB_GADGET_DUALSPEED
+
+#define CONFIG_USB_GADGET
+#define CONFIG_CMD_USB_MASS_STORAGE
+#define CONFIG_USB_GADGET_MASS_STORAGE
+#define CONFIG_USBDOWNLOAD_GADGET
+#define CONFIG_USB_GADGET_VBUS_DRAW	2
+
+#define CONFIG_G_DNL_VENDOR_NUM		0x0525
+#define CONFIG_G_DNL_PRODUCT_NUM	0xa4a5
+#define CONFIG_G_DNL_MANUFACTURER	"FSL"
 #endif
 
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */

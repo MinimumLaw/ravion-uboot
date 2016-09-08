@@ -15,11 +15,12 @@
 #include <asm/hardware.h>
 #include <linux/sizes.h>
 
-#define CONFIG_SYS_TEXT_BASE		0x20000000
+#define CONFIG_SYS_TEXT_BASE		0x21f00000
 
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_MAIN_CLOCK	18432000 /* External Crystal, in Hz */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
+#define CONFIG_SYS_GENERIC_BOARD
 
 /* CPU */
 #define CONFIG_ARCH_CPU_INIT
@@ -28,7 +29,6 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 #define CONFIG_SKIP_LOWLEVEL_INIT
-#define CONFIG_SKIP_RELOCATE_UBOOT
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_FIT
 
@@ -84,8 +84,10 @@
 
 /* UARTs/Serial console */
 #define CONFIG_ATMEL_USART
+#ifndef CONFIG_DM_SERIAL
 #define CONFIG_USART_BASE		ATMEL_BASE_DBGU
 #define CONFIG_USART_ID			ATMEL_ID_SYS
+#endif
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_PROMPT		"Snapper> "
 
@@ -159,7 +161,7 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_I2C
-#undef CONFIG_CMD_GPIO
+#define CONFIG_CMD_GPIO
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NAND

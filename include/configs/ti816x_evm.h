@@ -58,7 +58,6 @@
 		+ sizeof(CONFIG_SYS_PROMPT) + 16) /* print buffer size */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE /* boot arg buffer size */
 
-#undef  CONFIG_SYS_CLKS_IN_HZ
 #define CONFIG_SYS_LOAD_ADDR		0x81000000 /* Default load address */
 
 #define CONFIG_CMD_ASKEN
@@ -134,19 +133,17 @@
 
 /* SPL */
 /* Defines for SPL */
-#define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE    0x40400000
 #define CONFIG_SPL_MAX_SIZE     ((128 - 18) * 1024)
-#define CONFIG_SPL_STACK        CONFIG_SYS_INIT_SP_ADDR
 
 #define CONFIG_SPL_BSS_START_ADDR   0x80000000
 #define CONFIG_SPL_BSS_MAX_SIZE     0x80000     /* 512 KB */
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR 0x300 /* address 0x60000 */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS      0x200 /* 256 KB */
-#define CONFIG_SYS_MMC_SD_FAT_BOOT_PARTITION    1
-#define CONFIG_SPL_FAT_LOAD_PAYLOAD_NAME        "u-boot.img"
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION     1
+#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME        "u-boot.img"
 #define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SPL_FAT_SUPPORT
 

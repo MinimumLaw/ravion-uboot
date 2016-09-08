@@ -67,10 +67,22 @@ ENTRY(_main)
 	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
 #endif
 	bic	sp, sp, #7	/* 8-byte alignment for ABI compliance */
+	mov	r2, sp
 	sub	sp, sp, #GD_SIZE	/* allocate one GD above SP */
 	bic	sp, sp, #7	/* 8-byte alignment for ABI compliance */
 	mov	r9, sp		/* GD is above SP */
+	mov	r1, sp
 	mov	r0, #0
+clr_gd:
+	cmp	r1, r2			/* while not at end of GD */
+	strlo	r0, [r1]		/* clear 32-bit GD word */
+	addlo	r1, r1, #4		/* move to next */
+	blo	clr_gd
+#if defined(CONFIG_SYS_MALLOC_F_LEN)
+	sub	sp, sp, #CONFIG_SYS_MALLOC_F_LEN
+	str	sp, [r9, #GD_MALLOC_BASE]
+#endif
+	/* mov r0, #0 not needed due to above code */
 	bl	board_init_f
 
 #if ! defined(CONFIG_SPL_BUILD)
@@ -92,24 +104,45 @@ ENTRY(_main)
 	ldr	r0, [r9, #GD_RELOCADDR]		/* r0 = gd->relocaddr */
 	b	relocate_code
 here:
+/*
+ * now relocate vectors
+ */
+
+	bl	relocate_vectors
 
 /* Set up final (full) environment */
 
 	bl	c_runtime_cpu_setup	/* we still call old routine here */
-
+#endif
+#if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_SPL_FRAMEWORK)
+# ifdef CONFIG_SPL_BUILD
+	/* Use a DRAM stack for the rest of SPL, if requested */
+	bl	spl_relocate_stack_gd
+	cmp	r0, #0
+	movne	sp, r0
+# endif
 	ldr	r0, =__bss_start	/* this is auto-relocated! */
-	ldr	r1, =__bss_end		/* this is auto-relocated! */
 
+#ifdef CONFIG_USE_ARCH_MEMSET
+	ldr	r3, =__bss_end		/* this is auto-relocated! */
+	mov	r1, #0x00000000		/* prepare zero to clear BSS */
+
+	subs	r2, r3, r0		/* r2 = memset len */
+	bl	memset
+#else
+	ldr	r1, =__bss_end		/* this is auto-relocated! */
 	mov	r2, #0x00000000		/* prepare zero to clear BSS */
 
 clbss_l:cmp	r0, r1			/* while not at end of BSS */
 	strlo	r2, [r0]		/* clear 32-bit BSS word */
 	addlo	r0, r0, #4		/* move to next */
 	blo	clbss_l
+#endif
 
+#if ! defined(CONFIG_SPL_BUILD)
 	bl coloured_LED_init
 	bl red_led_on
-
+#endif
 	/* call board_init_r(gd_t *id, ulong dest_addr) */
 	mov     r0, r9                  /* gd_t */
 	ldr	r1, [r9, #GD_RELOCADDR]	/* dest_addr */
@@ -117,7 +150,6 @@ clbss_l:cmp	r0, r1			/* while not at end of BSS */
 	ldr	pc, =board_init_r	/* this is auto-relocated! */
 
 	/* we should not return here. */
-
 #endif
 
 ENDPROC(_main)

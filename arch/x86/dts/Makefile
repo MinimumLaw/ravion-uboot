@@ -1,5 +1,7 @@
-dtb-y += link.dtb \
-	alex.dtb
+dtb-y += chromebook_link.dtb \
+	crownbay.dtb \
+	galileo.dtb \
+	minnowmax.dtb
 
 targets += $(dtb-y)
 

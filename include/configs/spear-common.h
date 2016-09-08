@@ -11,6 +11,8 @@
  * Common configurations used for both spear3xx as well as spear6xx
  */
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* U-boot Load Address */
 #define CONFIG_SYS_TEXT_BASE			0x00700000
 
@@ -37,8 +39,8 @@
 #define CONFIG_EXTRA_ENV_USBTTY			"usbtty=cdc_acm\0"
 
 /* I2C driver configuration */
-#define CONFIG_HARD_I2C
-#define CONFIG_DW_I2C
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_DW
 #if defined(CONFIG_SPEAR600)
 #define CONFIG_SYS_I2C_BASE			0xD0200000
 #elif defined(CONFIG_SPEAR300)

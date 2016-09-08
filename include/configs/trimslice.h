@@ -11,11 +11,6 @@
 #include <linux/sizes.h>
 #include "tegra20-common.h"
 
-/* Enable fdt support for TrimSlice. Flash the image in u-boot-dtb.bin */
-#define CONFIG_DEFAULT_DEVICE_TREE	tegra20-trimslice
-#define CONFIG_OF_CONTROL
-#define CONFIG_OF_SEPARATE
-
 /* High-level configuration options */
 #define V_PROMPT		"Tegra20 (TrimSlice) # "
 #define CONFIG_TEGRA_BOARD_STRING	"Compulab Trimslice"
@@ -27,8 +22,6 @@
 
 #define CONFIG_MACH_TYPE		MACH_TYPE_TRIMSLICE
 
-#define CONFIG_BOARD_EARLY_INIT_F
-
 /* SPI */
 #define CONFIG_TEGRA20_SFLASH
 #define CONFIG_SPI_FLASH
@@ -39,10 +32,7 @@
 
 /* I2C */
 #define CONFIG_SYS_I2C_TEGRA
-#define CONFIG_SYS_I2C_INIT_BOARD
-#define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_CMD_I2C
-#define CONFIG_SYS_I2C
 
 /* SD/MMC */
 #define CONFIG_MMC
@@ -67,6 +57,16 @@
 /* USB networking support */
 #define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_ETHER_ASIX
+
+/* PCI host support */
+#define CONFIG_PCI
+#define CONFIG_PCI_TEGRA
+#define CONFIG_PCI_PNP
+#define CONFIG_CMD_PCI
+#define CONFIG_CMD_PCI_ENUM
+
+/* PCI networking support */
+#define CONFIG_RTL8169
 
 /* General networking support */
 #define CONFIG_CMD_NET

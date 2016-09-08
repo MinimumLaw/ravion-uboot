@@ -15,9 +15,12 @@
 #include <common.h>
 
 #include <command.h>
+#include <errno.h>
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <pci.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 #define PCI_HOSE_OP(rw, size, type)					\
 int pci_hose_##rw##_config_##size(struct pci_controller *hose,		\
@@ -123,6 +126,14 @@ void *pci_map_bar(pci_dev_t pdev, int bar, int flags)
 
 static struct pci_controller* hose_head;
 
+struct pci_controller *pci_get_hose_head(void)
+{
+	if (gd->hose)
+		return gd->hose;
+
+	return hose_head;
+}
+
 void pci_register_hose(struct pci_controller* hose)
 {
 	struct pci_controller **phose = &hose_head;
@@ -139,7 +150,7 @@ struct pci_controller *pci_bus_to_hose(int bus)
 {
 	struct pci_controller *hose;
 
-	for (hose = hose_head; hose; hose = hose->next) {
+	for (hose = pci_get_hose_head(); hose; hose = hose->next) {
 		if (bus >= hose->first_busno && bus <= hose->last_busno)
 			return hose;
 	}
@@ -152,7 +163,7 @@ struct pci_controller *find_hose_by_cfg_addr(void *cfg_addr)
 {
 	struct pci_controller *hose;
 
-	for (hose = hose_head; hose; hose = hose->next) {
+	for (hose = pci_get_hose_head(); hose; hose = hose->next) {
 		if (hose->cfg_addr == cfg_addr)
 			return hose;
 	}
@@ -162,7 +173,7 @@ struct pci_controller *find_hose_by_cfg_addr(void *cfg_addr)
 
 int pci_last_busno(void)
 {
-	struct pci_controller *hose = hose_head;
+	struct pci_controller *hose = pci_get_hose_head();
 
 	if (!hose)
 		return -1;
@@ -181,20 +192,18 @@ pci_dev_t pci_find_devices(struct pci_device_id *ids, int index)
 	pci_dev_t bdf;
 	int i, bus, found_multi = 0;
 
-	for (hose = hose_head; hose; hose = hose->next) {
+	for (hose = pci_get_hose_head(); hose; hose = hose->next) {
 #ifdef CONFIG_SYS_SCSI_SCAN_BUS_REVERSE
 		for (bus = hose->last_busno; bus >= hose->first_busno; bus--)
 #else
 		for (bus = hose->first_busno; bus <= hose->last_busno; bus++)
 #endif
 			for (bdf = PCI_BDF(bus, 0, 0);
-#if defined(CONFIG_ELPPC) || defined(CONFIG_PPMC7XX)
-			     bdf < PCI_BDF(bus, PCI_MAX_PCI_DEVICES - 1,
-				PCI_MAX_PCI_FUNCTIONS - 1);
-#else
 			     bdf < PCI_BDF(bus + 1, 0, 0);
-#endif
 			     bdf += PCI_BDF(0, 0, 1)) {
+				if (pci_skip_dev(hose, bdf))
+					continue;
+
 				if (!PCI_FUNC(bdf)) {
 					pci_read_config_byte(bdf,
 							     PCI_HEADER_TYPE,
@@ -228,9 +237,51 @@ pci_dev_t pci_find_devices(struct pci_device_id *ids, int index)
 	return -1;
 }
 
+pci_dev_t pci_find_class(uint find_class, int index)
+{
+	int bus;
+	int devnum;
+	pci_dev_t bdf;
+	uint32_t class;
+
+	for (bus = 0; bus <= pci_last_busno(); bus++) {
+		for (devnum = 0; devnum < PCI_MAX_PCI_DEVICES - 1; devnum++) {
+			pci_read_config_dword(PCI_BDF(bus, devnum, 0),
+					      PCI_CLASS_REVISION, &class);
+			if (class >> 16 == 0xffff)
+				continue;
+
+			for (bdf = PCI_BDF(bus, devnum, 0);
+					bdf <= PCI_BDF(bus, devnum,
+						PCI_MAX_PCI_FUNCTIONS - 1);
+					bdf += PCI_BDF(0, 0, 1)) {
+				pci_read_config_dword(bdf, PCI_CLASS_REVISION,
+						      &class);
+				class >>= 8;
+
+				if (class != find_class)
+					continue;
+				/*
+				 * Decrement the index. We want to return the
+				 * correct device, so index is 0 for the first
+				 * matching device, 1 for the second, etc.
+				 */
+				if (index) {
+					index--;
+					continue;
+				}
+				/* Return index'th controller. */
+				return bdf;
+			}
+		}
+	}
+
+	return -ENODEV;
+}
+
 pci_dev_t pci_find_device(unsigned int vendor, unsigned int device, int index)
 {
-	static struct pci_device_id ids[2] = {{}, {0, 0}};
+	struct pci_device_id ids[2] = { {}, {0, 0} };
 
 	ids[0].vendor = vendor;
 	ids[0].device = device;
@@ -323,7 +374,7 @@ int __pci_hose_bus_to_phys(struct pci_controller *hose,
 			continue;
 
 		if (bus_addr >= res->bus_start &&
-			bus_addr < res->bus_start + res->size) {
+			(bus_addr - res->bus_start) < res->size) {
 			*pa = (bus_addr - res->bus_start + res->phys_start);
 			return 0;
 		}
@@ -363,9 +414,27 @@ phys_addr_t pci_hose_bus_to_phys(struct pci_controller* hose,
 	return phys_addr;
 }
 
-/*
- *
- */
+void pci_write_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum,
+		     u32 addr_and_ctrl)
+{
+	int bar;
+
+	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
+	pci_hose_write_config_dword(hose, dev, bar, addr_and_ctrl);
+}
+
+u32 pci_read_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum)
+{
+	u32 addr;
+	int bar;
+
+	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
+	pci_hose_read_config_dword(hose, dev, bar, &addr);
+	if (addr & PCI_BASE_ADDRESS_SPACE_IO)
+		return addr & PCI_BASE_ADDRESS_IO_MASK;
+	else
+		return addr & PCI_BASE_ADDRESS_MEM_MASK;
+}
 
 int pci_hose_config_device(struct pci_controller *hose,
 			   pci_dev_t dev,
@@ -572,7 +641,7 @@ const char * pci_class_str(u8 class)
 }
 #endif /* CONFIG_CMD_PCI || CONFIG_PCI_SCAN_SHOW */
 
-int __pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
+__weak int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
 {
 	/*
 	 * Check if pci device should be skipped in configuration
@@ -591,19 +660,15 @@ int __pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
 
 	return 0;
 }
-int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
-	__attribute__((weak, alias("__pci_skip_dev")));
 
 #ifdef CONFIG_PCI_SCAN_SHOW
-int __pci_print_dev(struct pci_controller *hose, pci_dev_t dev)
+__weak int pci_print_dev(struct pci_controller *hose, pci_dev_t dev)
 {
 	if (dev == PCI_BDF(hose->first_busno, 0, 0))
 		return 0;
 
 	return 1;
 }
-int pci_print_dev(struct pci_controller *hose, pci_dev_t dev)
-	__attribute__((weak, alias("__pci_print_dev")));
 #endif /* CONFIG_PCI_SCAN_SHOW */
 
 int pci_hose_scan_bus(struct pci_controller *hose, int bus)
@@ -648,6 +713,10 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 		pci_hose_read_config_word(hose, dev, PCI_DEVICE_ID, &device);
 		pci_hose_read_config_word(hose, dev, PCI_CLASS_DEVICE, &class);
 
+#ifdef CONFIG_PCI_FIXUP_DEV
+		board_pci_fixup_dev(hose, dev, vendor, device, class);
+#endif
+
 #ifdef CONFIG_PCI_SCAN_SHOW
 		indent++;
 
@@ -662,13 +731,15 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 #endif
 
 #ifdef CONFIG_PCI_PNP
-		sub_bus = max(pciauto_config_device(hose, dev), sub_bus);
+		sub_bus = max((unsigned int)pciauto_config_device(hose, dev),
+			      sub_bus);
 #else
 		cfg = pci_find_config(hose, class, vendor, device,
 				      PCI_BUS(dev), PCI_DEV(dev), PCI_FUNC(dev));
 		if (cfg) {
 			cfg->config_device(hose, dev, cfg);
-			sub_bus = max(sub_bus, hose->current_busno);
+			sub_bus = max(sub_bus,
+				      (unsigned int)hose->current_busno);
 		}
 #endif
 
@@ -686,11 +757,10 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 int pci_hose_scan(struct pci_controller *hose)
 {
 #if defined(CONFIG_PCI_BOOTDELAY)
-	static int pcidelay_done;
 	char *s;
 	int i;
 
-	if (!pcidelay_done) {
+	if (!gd->pcidelay_done) {
 		/* wait "pcidelay" ms (if defined)... */
 		s = getenv("pcidelay");
 		if (s) {
@@ -698,7 +768,7 @@ int pci_hose_scan(struct pci_controller *hose)
 			for (i = 0; i < val; i++)
 				udelay(1000);
 		}
-		pcidelay_done = 1;
+		gd->pcidelay_done = 1;
 	}
 #endif /* CONFIG_PCI_BOOTDELAY */
 

@@ -146,8 +146,13 @@ static uint32_t mxs_nand_aux_status_offset(void)
 static inline uint32_t mxs_nand_get_ecc_strength(uint32_t page_data_size,
 						uint32_t page_oob_size)
 {
-	if (page_data_size == 2048)
-		return 8;
+	if (page_data_size == 2048) {
+		if (page_oob_size == 64)
+			return 8;
+
+		if (page_oob_size == 112)
+			return 14;
+	}
 
 	if (page_data_size == 4096) {
 		if (page_oob_size == 128)
@@ -448,7 +453,7 @@ static void mxs_nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int length)
 	d->cmd.data =
 		MXS_DMA_DESC_COMMAND_NO_DMAXFER | MXS_DMA_DESC_IRQ |
 		MXS_DMA_DESC_NAND_WAIT_4_READY | MXS_DMA_DESC_DEC_SEM |
-		MXS_DMA_DESC_WAIT4END | (4 << MXS_DMA_DESC_PIO_WORDS_OFFSET);
+		MXS_DMA_DESC_WAIT4END | (1 << MXS_DMA_DESC_PIO_WORDS_OFFSET);
 
 	d->cmd.address = 0;
 
@@ -505,7 +510,7 @@ static void mxs_nand_write_buf(struct mtd_info *mtd, const uint8_t *buf,
 	d->cmd.data =
 		MXS_DMA_DESC_COMMAND_DMA_READ | MXS_DMA_DESC_IRQ |
 		MXS_DMA_DESC_DEC_SEM | MXS_DMA_DESC_WAIT4END |
-		(4 << MXS_DMA_DESC_PIO_WORDS_OFFSET) |
+		(1 << MXS_DMA_DESC_PIO_WORDS_OFFSET) |
 		(length << MXS_DMA_DESC_BYTES_OFFSET);
 
 	d->cmd.address = (dma_addr_t)nand_info->data_buf;

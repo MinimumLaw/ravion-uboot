@@ -20,6 +20,7 @@
 #include <fsl_mdio.h>
 #include <asm/errno.h>
 #include <asm/processor.h>
+#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -270,6 +271,9 @@ void redundant_init(struct eth_device *dev)
 	out_be32(&regs->tstat, TSTAT_CLEAR_THALT);
 	out_be32(&regs->rstat, RSTAT_CLEAR_RHALT);
 	clrbits_be32(&regs->dmactrl, DMACTRL_GRS | DMACTRL_GTS);
+#ifdef CONFIG_LS102XA
+	setbits_be32(&regs->dmactrl, DMACTRL_LE);
+#endif
 
 	do {
 		uint16_t status;
@@ -366,6 +370,9 @@ static void startup_tsec(struct eth_device *dev)
 	out_be32(&regs->tstat, TSTAT_CLEAR_THALT);
 	out_be32(&regs->rstat, RSTAT_CLEAR_RHALT);
 	clrbits_be32(&regs->dmactrl, DMACTRL_GRS | DMACTRL_GTS);
+#ifdef CONFIG_LS102XA
+	setbits_be32(&regs->dmactrl, DMACTRL_LE);
+#endif
 }
 
 /* This returns the status bits of the device.	The return value
@@ -590,6 +597,8 @@ static int init_phy(struct eth_device *dev)
 		tsec_configure_serdes(priv);
 
 	phydev = phy_connect(priv->bus, priv->phyaddr, dev, priv->interface);
+	if (!phydev)
+		return 0;
 
 	phydev->supported &= supported;
 	phydev->advertising = phydev->supported;

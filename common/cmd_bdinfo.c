@@ -144,11 +144,8 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_eth(5);
 #endif
 
-#ifdef CONFIG_HERMES
-	print_mhz("ethspeed",		bd->bi_ethspeed);
-#endif
 	printf("IP addr     = %s\n", getenv("ipaddr"));
-	printf("baudrate    = %6u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %6u bps\n", gd->baudrate);
 	print_num("relocaddr", gd->relocaddr);
 	board_detail();
 	return 0;
@@ -176,7 +173,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
 
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
@@ -186,8 +183,14 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	bd_t *bd = gd->bd;
-	print_num("mem start      ",	(ulong)bd->bi_memstart);
-	print_lnum("mem size       ",	(u64)bd->bi_memsize);
+	int i;
+
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
+		print_num("DRAM bank",	i);
+		print_num("-> start",	bd->bi_dram[i].start);
+		print_num("-> size",	bd->bi_dram[i].size);
+	}
+
 	print_num("flash start    ",	(ulong)bd->bi_flashstart);
 	print_num("flash size     ",	(ulong)bd->bi_flashsize);
 	print_num("flash offset   ",	(ulong)bd->bi_flashoffset);
@@ -198,7 +201,13 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #if defined(CONFIG_CMD_NET)
 	print_eths();
 #endif
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
+	print_num("relocaddr", gd->relocaddr);
+	print_num("reloc off", gd->reloc_off);
+	print_num("fdt_blob", (ulong)gd->fdt_blob);
+	print_num("new_fdt", (ulong)gd->new_fdt);
+	print_num("fdt_size", (ulong)gd->fdt_size);
+
 	return 0;
 }
 
@@ -231,7 +240,7 @@ int do_bdinfo(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
-	printf("baudrate               = %6u bps\n", bd->bi_baudrate);
+	printf("baudrate               = %6u bps\n", gd->baudrate);
 	return 0;
 }
 
@@ -277,7 +286,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
@@ -304,7 +313,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
@@ -324,7 +333,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
@@ -336,22 +345,23 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	bd_t *bd = gd->bd;
 
 	print_num("boot_params",	(ulong)bd->bi_boot_params);
-	print_num("memstart",		(ulong)bd->bi_memstart);
-	print_lnum("memsize",		(u64)bd->bi_memsize);
+	print_num("memstart",		(ulong)bd->bi_dram[0].start);
+	print_lnum("memsize",		(u64)bd->bi_dram[0].size);
 	print_num("flashstart",		(ulong)bd->bi_flashstart);
 	print_num("flashsize",		(ulong)bd->bi_flashsize);
 	print_num("flashoffset",	(ulong)bd->bi_flashoffset);
 
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
 
 #elif defined(CONFIG_ARM)
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
+			char * const argv[])
 {
 	int i;
 	bd_t *bd = gd->bd;
@@ -368,7 +378,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #if defined(CONFIG_CMD_NET)
 	print_eths();
 #endif
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
 	print_num("TLB addr", gd->arch.tlb_addr);
 #endif
@@ -406,7 +416,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 	return 0;
 }
 
@@ -440,7 +450,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 	print_mhz("ethspeed",	    bd->bi_ethspeed);
 #endif
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
@@ -490,7 +500,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
@@ -512,12 +522,12 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
 
-	printf("baudrate    = %u bps\n", bd->bi_baudrate);
+	printf("baudrate    = %u bps\n", gd->baudrate);
 
 	return 0;
 }
 
-#elif defined(CONFIG_ARC700)
+#elif defined(CONFIG_ARC)
 
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -530,7 +540,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_eth(0);
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 #endif
-	printf("baudrate    = %d bps\n", bd->bi_baudrate);
+	printf("baudrate    = %d bps\n", gd->baudrate);
 
 	return 0;
 }

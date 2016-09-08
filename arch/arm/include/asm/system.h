@@ -70,6 +70,7 @@ void __asm_invalidate_dcache_all(void);
 void __asm_flush_dcache_range(u64 start, u64 end);
 void __asm_invalidate_tlb_all(void);
 void __asm_invalidate_icache_all(void);
+int __asm_flush_l3_cache(void);
 
 void armv8_switch_to_el2(void);
 void armv8_switch_to_el1(void);
@@ -77,6 +78,8 @@ void gic_init(void);
 void gic_send_sgi(unsigned long sgino);
 void wait_for_wakeup(void);
 void smp_kick_all_cpus(void);
+
+void flush_l3_cache(void);
 
 #endif	/* __ASSEMBLY__ */
 
@@ -140,6 +143,21 @@ void smp_kick_all_cpus(void);
 
 #ifndef __ASSEMBLY__
 
+/**
+ * save_boot_params() - Save boot parameters before starting reset sequence
+ *
+ * If you provide this function it will be called immediately U-Boot starts,
+ * both for SPL and U-Boot proper.
+ *
+ * All registers are unchanged from U-Boot entry. No registers need be
+ * preserved.
+ *
+ * This is not a normal C function. There is no stack. Return by branching to
+ * save_boot_params_ret.
+ *
+ * void save_boot_params(u32 r0, u32 r1, u32 r2, u32 r3);
+ */
+
 #define isb() __asm__ __volatile__ ("" : : : "memory")
 
 #define nop() __asm__ __volatile__("mov\tr0,r0\t@ nop\n\t");
@@ -183,6 +201,7 @@ enum dcache_option {
 	DCACHE_OFF = 0x12,
 	DCACHE_WRITETHROUGH = 0x1a,
 	DCACHE_WRITEBACK = 0x1e,
+	DCACHE_WRITEALLOC = 0x16,
 };
 
 /* Size of an MMU section */
@@ -198,7 +217,7 @@ enum {
  * \param size		size of memory region to change
  * \param option	dcache option to select
  */
-void mmu_set_region_dcache_behaviour(u32 start, int size,
+void mmu_set_region_dcache_behaviour(phys_addr_t start, size_t size,
 				     enum dcache_option option);
 
 /**
@@ -208,6 +227,11 @@ void mmu_set_region_dcache_behaviour(u32 start, int size,
  * \param stop		stop address of update in page table
  */
 void mmu_page_table_flush(unsigned long start, unsigned long stop);
+
+#ifdef CONFIG_SYS_NONCACHED_MEMORY
+void noncached_init(void);
+phys_addr_t noncached_alloc(size_t size, size_t align);
+#endif /* CONFIG_SYS_NONCACHED_MEMORY */
 
 #endif /* __ASSEMBLY__ */
 

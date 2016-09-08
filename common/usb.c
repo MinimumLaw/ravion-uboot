@@ -33,8 +33,7 @@
 #include <linux/ctype.h>
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
-#include <compiler.h>
-
+#include <errno.h>
 #include <usb.h>
 #ifdef CONFIG_4xx
 #include <asm/4xx_pci.h>
@@ -60,6 +59,8 @@ int usb_init(void)
 	void *ctrl;
 	struct usb_device *dev;
 	int i, start_index = 0;
+	int controllers_initialized = 0;
+	int ret;
 
 	dev_index = 0;
 	asynch_allowed = 1;
@@ -75,7 +76,14 @@ int usb_init(void)
 	for (i = 0; i < CONFIG_USB_MAX_CONTROLLER_COUNT; i++) {
 		/* init low_level USB */
 		printf("USB%d:   ", i);
-		if (usb_lowlevel_init(i, USB_INIT_HOST, &ctrl)) {
+		ret = usb_lowlevel_init(i, USB_INIT_HOST, &ctrl);
+		if (ret == -ENODEV) {	/* No such device. */
+			puts("Port not available.\n");
+			controllers_initialized++;
+			continue;
+		}
+
+		if (ret) {		/* Other error. */
 			puts("lowlevel init failed\n");
 			continue;
 		}
@@ -83,6 +91,7 @@ int usb_init(void)
 		 * lowlevel init is OK, now scan the bus for devices
 		 * i.e. search HUBs and configure them
 		 */
+		controllers_initialized++;
 		start_index = dev_index;
 		printf("scanning bus %d for devices... ", i);
 		dev = usb_alloc_new_device(ctrl);
@@ -104,12 +113,10 @@ int usb_init(void)
 
 	debug("scan end\n");
 	/* if we were not able to find at least one working bus, bail out */
-	if (!usb_started) {
+	if (controllers_initialized == 0)
 		puts("USB error: all controllers failed lowlevel init\n");
-		return -1;
-	}
 
-	return 0;
+	return usb_started ? 0 : -1;
 }
 
 /******************************************************************************
@@ -920,7 +927,6 @@ int usb_new_device(struct usb_device *dev)
 	 * thread_id=5729457&forum_id=5398
 	 */
 	__maybe_unused struct usb_device_descriptor *desc;
-	int port = -1;
 	struct usb_device *parent = dev->parent;
 	unsigned short portstatus;
 
@@ -958,26 +964,14 @@ int usb_new_device(struct usb_device *dev)
 #endif
 
 	if (parent) {
-		int j;
-
-		/* find the port number we're at */
-		for (j = 0; j < parent->maxchild; j++) {
-			if (parent->children[j] == dev) {
-				port = j;
-				break;
-			}
-		}
-		if (port < 0) {
-			printf("usb_new_device:cannot locate device's port.\n");
-			return 1;
-		}
-
 		/* reset the port for the second time */
-		err = hub_port_reset(dev->parent, port, &portstatus);
+		err = hub_port_reset(dev->parent, dev->portnr - 1, &portstatus);
 		if (err < 0) {
-			printf("\n     Couldn't reset port %i\n", port);
+			printf("\n     Couldn't reset port %i\n", dev->portnr);
 			return 1;
 		}
+	} else {
+		usb_reset_root_port();
 	}
 #endif
 

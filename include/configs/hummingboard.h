@@ -27,6 +27,8 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(2 * SZ_1M)
 
@@ -183,9 +185,6 @@
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		1024
-
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_MAXARGS	       16
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
 

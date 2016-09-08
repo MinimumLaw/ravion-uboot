@@ -419,10 +419,13 @@ static int raw_access(nand_info_t *nand, ulong addr, loff_t off, ulong count,
 			.mode = MTD_OPS_RAW
 		};
 
-		if (read)
+		if (read) {
 			ret = mtd_read_oob(nand, off, &ops);
-		else
+		} else {
 			ret = mtd_write_oob(nand, off, &ops);
+			if (!ret)
+				ret = nand_verify_page_oob(nand, &ops, off);
+		}
 
 		if (ret) {
 			printf("%s: error at offset %llx, ret %d\n",
@@ -605,22 +608,16 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		opts.spread = spread;
 
 		if (scrub) {
-			if (!scrub_yes)
-				puts(scrub_warn);
-
-			if (scrub_yes)
+			if (scrub_yes) {
 				opts.scrub = 1;
-			else if (getc() == 'y') {
-				puts("y");
-				if (getc() == '\r')
+			} else {
+				puts(scrub_warn);
+				if (confirm_yesno()) {
 					opts.scrub = 1;
-				else {
+				} else {
 					puts("scrub aborted\n");
 					return 1;
 				}
-			} else {
-				puts("scrub aborted\n");
-				return 1;
 			}
 		}
 		ret = nand_erase_opts(nand, &opts);
@@ -653,8 +650,6 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		read = strncmp(cmd, "read", 4) == 0; /* 1 = read, 0 = write */
 		printf("\nNAND %s: ", read ? "read" : "write");
 
-		nand = &nand_info[dev];
-
 		s = strchr(cmd, '.');
 
 		if (s && !strcmp(s, ".raw")) {
@@ -662,6 +657,8 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 			if (arg_off(argv[3], &dev, &off, &size, &maxsize))
 				return 1;
+
+			nand = &nand_info[dev];
 
 			if (argc > 4 && !str2long(argv[4], &pagecount)) {
 				printf("'%s' is not a number\n", argv[4]);
@@ -685,6 +682,8 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			rwsize = size;
 		}
 
+		nand = &nand_info[dev];
+
 		if (!s || !strcmp(s, ".jffs2") ||
 		    !strcmp(s, ".e") || !strcmp(s, ".i")) {
 			if (read)
@@ -694,7 +693,8 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			else
 				ret = nand_write_skip_bad(nand, off, &rwsize,
 							  NULL, maxsize,
-							  (u_char *)addr, 0);
+							  (u_char *)addr,
+							  WITH_WR_VERIFY);
 #ifdef CONFIG_CMD_NAND_TRIMFFS
 		} else if (!strcmp(s, ".trimffs")) {
 			if (read) {
@@ -703,17 +703,7 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			}
 			ret = nand_write_skip_bad(nand, off, &rwsize, NULL,
 						maxsize, (u_char *)addr,
-						WITH_DROP_FFS);
-#endif
-#ifdef CONFIG_CMD_NAND_YAFFS
-		} else if (!strcmp(s, ".yaffs")) {
-			if (read) {
-				printf("Unknown nand command suffix '%s'.\n", s);
-				return 1;
-			}
-			ret = nand_write_skip_bad(nand, off, &rwsize, NULL,
-						maxsize, (u_char *)addr,
-						WITH_YAFFS_OOB);
+						WITH_DROP_FFS | WITH_WR_VERIFY);
 #endif
 		} else if (!strcmp(s, ".oob")) {
 			/* out-of-band data */
@@ -857,11 +847,6 @@ static char nand_help_text[] =
 	"    'addr', skipping bad blocks and dropping any pages at the end\n"
 	"    of eraseblocks that contain only 0xFF\n"
 #endif
-#ifdef CONFIG_CMD_NAND_YAFFS
-	"nand write.yaffs - addr off|partition size\n"
-	"    write 'size' bytes starting at offset 'off' with yaffs format\n"
-	"    from memory address 'addr', skipping bad blocks.\n"
-#endif
 	"nand erase[.spread] [clean] off size - erase 'size' bytes "
 	"from offset 'off'\n"
 	"    With '.spread', erase enough for given file size, otherwise,\n"
@@ -904,7 +889,9 @@ static int nand_load_image(cmd_tbl_t *cmdtp, nand_info_t *nand,
 	int r;
 	char *s;
 	size_t cnt;
+#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
 	image_header_t *hdr;
+#endif
 #if defined(CONFIG_FIT)
 	const void *fit_hdr = NULL;
 #endif
@@ -930,6 +917,7 @@ static int nand_load_image(cmd_tbl_t *cmdtp, nand_info_t *nand,
 	bootstage_mark(BOOTSTAGE_ID_NAND_HDR_READ);
 
 	switch (genimg_get_format ((void *)addr)) {
+#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
 	case IMAGE_FORMAT_LEGACY:
 		hdr = (image_header_t *)addr;
 
@@ -938,6 +926,7 @@ static int nand_load_image(cmd_tbl_t *cmdtp, nand_info_t *nand,
 
 		cnt = image_get_image_size (hdr);
 		break;
+#endif
 #if defined(CONFIG_FIT)
 	case IMAGE_FORMAT_FIT:
 		fit_hdr = (const void *)addr;

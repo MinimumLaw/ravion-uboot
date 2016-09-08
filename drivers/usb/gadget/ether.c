@@ -25,14 +25,9 @@
 
 #define atomic_read
 extern struct platform_data brd;
-#define spin_lock(x)
-#define spin_unlock(x)
 
 
 unsigned packet_received, packet_sent;
-
-#define GFP_ATOMIC ((gfp_t) 0)
-#define GFP_KERNEL ((gfp_t) 0)
 
 /*
  * Ethernet gadget driver -- with CDC and non-CDC options
@@ -73,7 +68,6 @@ unsigned packet_received, packet_sent;
 #define ETH_ZLEN	60		/* Min. octets in frame sans FCS */
 #define ETH_DATA_LEN	1500		/* Max. octets in payload	 */
 #define ETH_FRAME_LEN	PKTSIZE_ALIGN	/* Max. octets in frame sans FCS */
-#define ETH_FCS_LEN	4		/* Octets in the FCS		 */
 
 #define DRIVER_DESC		"Ethernet Gadget"
 /* Based on linux 2.6.27 version */
@@ -856,30 +850,6 @@ DEFINE_CACHE_ALIGN_BUFFER(u8, control_req, USB_BUFSIZ);
 #if defined(CONFIG_USB_ETH_CDC) || defined(CONFIG_USB_ETH_RNDIS)
 DEFINE_CACHE_ALIGN_BUFFER(u8, status_req, STATUS_BYTECOUNT);
 #endif
-
-
-/**
- * strlcpy - Copy a %NUL terminated string into a sized buffer
- * @dest: Where to copy the string to
- * @src: Where to copy the string from
- * @size: size of destination buffer
- *
- * Compatible with *BSD: the result is always a valid
- * NUL-terminated string that fits in the buffer (unless,
- * of course, the buffer size is zero). It does not pad
- * out the result like strncpy() does.
- */
-size_t strlcpy(char *dest, const char *src, size_t size)
-{
-	size_t ret = strlen(src);
-
-	if (size) {
-		size_t len = (ret >= size) ? size - 1 : ret;
-		memcpy(dest, src, len);
-		dest[len] = '\0';
-	}
-	return ret;
-}
 
 /*============================================================================*/
 

@@ -39,16 +39,6 @@
 #error No card type defined!
 #endif
 
-/*
- * Define processor
- * possible values for Urmel board: only Coldfire M5373 processor supported
- * (please do not change)
- */
-
-/* it seems not clear yet which processor defines we should use */
-#define CONFIG_MCF537x			/* define processor family */
-#define CONFIG_MCF532x			/* define processor family */
-#define CONFIG_M5373			/* define processor type */
 #define CONFIG_ASTRO5373L		/* define board type */
 
 /* Command line configuration */
@@ -88,6 +78,7 @@
 #define CONFIG_CMD_LOADS
 #define CONFIG_CMD_LOADB
 #define CONFIG_CMD_FPGA
+#define CONFIG_CMD_FPGA_LOADMK
 #define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_SYS_HUSH_PARSER

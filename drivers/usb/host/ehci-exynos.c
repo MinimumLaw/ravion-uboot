@@ -31,7 +31,7 @@ DECLARE_GLOBAL_DATA_PTR;
 struct exynos_ehci {
 	struct exynos_usb_phy *usb;
 	struct ehci_hccr *hcd;
-	struct fdt_gpio_state vbus_gpio;
+	struct gpio_desc vbus_gpio;
 };
 
 static struct exynos_ehci exynos;
@@ -61,7 +61,8 @@ static int exynos_usb_parse_dt(const void *blob, struct exynos_ehci *exynos)
 	exynos->hcd = (struct ehci_hccr *)addr;
 
 	/* Vbus gpio */
-	fdtdec_decode_gpio(blob, node, "samsung,vbus-gpio", &exynos->vbus_gpio);
+	gpio_request_by_name_nodev(blob, node, "samsung,vbus-gpio", 0,
+				   &exynos->vbus_gpio, GPIOD_IS_OUT);
 
 	depth = 0;
 	node = fdtdec_next_compatible_subnode(blob, node,
@@ -85,14 +86,9 @@ static int exynos_usb_parse_dt(const void *blob, struct exynos_ehci *exynos)
 }
 #endif
 
-/* Setup the EHCI host controller. */
-static void setup_usb_phy(struct exynos_usb_phy *usb)
+static void exynos5_setup_usb_phy(struct exynos_usb_phy *usb)
 {
 	u32 hsic_ctrl;
-
-	set_usbhost_mode(USB20_PHY_CFG_HOST_LINK_EN);
-
-	set_usbhost_phy_ctrl(POWER_USB_HOST_PHY_CTRL_EN);
 
 	clrbits_le32(&usb->usbphyctrl0,
 			HOST_CTRL0_FSEL_MASK |
@@ -150,8 +146,34 @@ static void setup_usb_phy(struct exynos_usb_phy *usb)
 			EHCICTRL_ENAINCR16);
 }
 
-/* Reset the EHCI host controller. */
-static void reset_usb_phy(struct exynos_usb_phy *usb)
+static void exynos4412_setup_usb_phy(struct exynos4412_usb_phy *usb)
+{
+	writel(CLK_24MHZ, &usb->usbphyclk);
+
+	clrbits_le32(&usb->usbphyctrl, (PHYPWR_NORMAL_MASK_HSIC0 |
+		PHYPWR_NORMAL_MASK_HSIC1 | PHYPWR_NORMAL_MASK_PHY1 |
+		PHYPWR_NORMAL_MASK_PHY0));
+
+	setbits_le32(&usb->usbphyrstcon, (RSTCON_HOSTPHY_SWRST | RSTCON_SWRST));
+	udelay(10);
+	clrbits_le32(&usb->usbphyrstcon, (RSTCON_HOSTPHY_SWRST | RSTCON_SWRST));
+}
+
+static void setup_usb_phy(struct exynos_usb_phy *usb)
+{
+	set_usbhost_mode(USB20_PHY_CFG_HOST_LINK_EN);
+
+	set_usbhost_phy_ctrl(POWER_USB_HOST_PHY_CTRL_EN);
+
+	if (cpu_is_exynos5())
+		exynos5_setup_usb_phy(usb);
+	else if (cpu_is_exynos4())
+		if (proid_is_exynos4412())
+			exynos4412_setup_usb_phy((struct exynos4412_usb_phy *)
+						 usb);
+}
+
+static void exynos5_reset_usb_phy(struct exynos_usb_phy *usb)
 {
 	u32 hsic_ctrl;
 
@@ -171,6 +193,24 @@ static void reset_usb_phy(struct exynos_usb_phy *usb)
 
 	setbits_le32(&usb->hsicphyctrl1, hsic_ctrl);
 	setbits_le32(&usb->hsicphyctrl2, hsic_ctrl);
+}
+
+static void exynos4412_reset_usb_phy(struct exynos4412_usb_phy *usb)
+{
+	setbits_le32(&usb->usbphyctrl, (PHYPWR_NORMAL_MASK_HSIC0 |
+		PHYPWR_NORMAL_MASK_HSIC1 | PHYPWR_NORMAL_MASK_PHY1 |
+		PHYPWR_NORMAL_MASK_PHY0));
+}
+
+/* Reset the EHCI host controller. */
+static void reset_usb_phy(struct exynos_usb_phy *usb)
+{
+	if (cpu_is_exynos5())
+		exynos5_reset_usb_phy(usb);
+	else if (cpu_is_exynos4())
+		if (proid_is_exynos4412())
+			exynos4412_reset_usb_phy((struct exynos4412_usb_phy *)
+						 usb);
 
 	set_usbhost_phy_ctrl(POWER_USB_HOST_PHY_CTRL_DISABLE);
 }
@@ -197,8 +237,8 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 
 #ifdef CONFIG_OF_CONTROL
 	/* setup the Vbus gpio here */
-	if (!fdtdec_setup_gpio(&ctx->vbus_gpio))
-		gpio_direction_output(ctx->vbus_gpio.gpio, 1);
+	if (dm_gpio_is_valid(&ctx->vbus_gpio))
+		dm_gpio_set_value(&ctx->vbus_gpio, 1);
 #endif
 
 	setup_usb_phy(ctx->usb);

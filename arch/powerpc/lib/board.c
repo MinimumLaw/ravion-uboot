@@ -226,6 +226,9 @@ static int init_func_spi(void)
 #if defined(CONFIG_WATCHDOG)
 int init_func_watchdog_init(void)
 {
+#if defined(CONFIG_MPC85xx)
+	init_85xx_watchdog();
+#endif
 	puts("       Watchdog enabled\n");
 	WATCHDOG_RESET();
 	return 0;
@@ -355,6 +358,8 @@ void board_init_f(ulong bootflag)
 	/* Clear initial global data */
 	memset((void *) gd, 0, sizeof(gd_t));
 #endif
+
+	gd->flags = bootflag;
 
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr)
 		if ((*init_fnc_ptr) () != 0)
@@ -531,7 +536,6 @@ void board_init_f(ulong bootflag)
 	bd->bi_ipbfreq = gd->arch.ipb_clk;
 	bd->bi_pcifreq = gd->pci_clk;
 #endif /* CONFIG_MPC5xxx */
-	bd->bi_baudrate = gd->baudrate;	/* Console Baudrate     */
 
 #ifdef CONFIG_SYS_EXTBDINFO
 	strncpy((char *) bd->bi_s_version, "1.2", sizeof(bd->bi_s_version));
@@ -795,13 +799,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	mac_read_from_eeprom();
 #endif
 
-#ifdef	CONFIG_HERMES
-	if ((gd->board_type >> 16) == 2)
-		bd->bi_ethspeed = gd->board_type & 0xFFFF;
-	else
-		bd->bi_ethspeed = 0xFFFF;
-#endif
-
 #ifdef CONFIG_CMD_NET
 	/* kept around for legacy kernels only ... ignore the next section */
 	eth_getenv_enetaddr("ethaddr", bd->bi_enetaddr);
@@ -849,11 +846,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r();
-#endif
-
-#ifdef	CONFIG_HERMES
-	if (bd->bi_ethspeed != 0xFFFF)
-		hermes_start_lxt980((int) bd->bi_ethspeed);
 #endif
 
 #if defined(CONFIG_CMD_KGDB)
@@ -974,14 +966,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #ifdef CONFIG_PS2KBD
 	puts("PS/2:  ");
 	kbd_init();
-#endif
-
-#ifdef CONFIG_MODEM_SUPPORT
-	{
-		extern int do_mdm_init;
-
-		do_mdm_init = gd->do_mdm_init;
-	}
 #endif
 
 	/* Initialization complete - start the monitor */

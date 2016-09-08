@@ -53,6 +53,8 @@ const struct dpll_regs dpll_ddr_regs = {
 
 void setup_clocks_for_console(void)
 {
+	u32 clkctrl, idlest = MODULE_CLKCTRL_IDLEST_DISABLED;
+
 	/* Do not add any spl_debug prints in this function */
 	clrsetbits_le32(&cmwkup->wkclkstctrl, CD_CLKCTRL_CLKTRCTRL_MASK,
 			CD_CLKCTRL_CLKTRCTRL_SW_WKUP <<
@@ -63,6 +65,13 @@ void setup_clocks_for_console(void)
 			MODULE_CLKCTRL_MODULEMODE_MASK,
 			MODULE_CLKCTRL_MODULEMODE_SW_EXPLICIT_EN <<
 			MODULE_CLKCTRL_MODULEMODE_SHIFT);
+
+	while ((idlest == MODULE_CLKCTRL_IDLEST_DISABLED) ||
+		(idlest == MODULE_CLKCTRL_IDLEST_TRANSITIONING)) {
+		clkctrl = readl(&cmwkup->wkup_uart0ctrl);
+		idlest = (clkctrl & MODULE_CLKCTRL_IDLEST_MASK) >>
+			 MODULE_CLKCTRL_IDLEST_SHIFT;
+	}
 }
 
 void enable_basic_clocks(void)
@@ -109,4 +118,7 @@ void enable_basic_clocks(void)
 
 	/* Select the Master osc clk as Timer2 clock source */
 	writel(0x1, &cmdpll->clktimer2clk);
+
+	/* For OPP100 the mac clock should be /5. */
+	writel(0x4, &cmdpll->clkselmacclk);
 }

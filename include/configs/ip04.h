@@ -61,7 +61,7 @@
 #define CONFIG_EBIU_AMBCTL0_VAL	0xffc2ffc2
 #define CONFIG_EBIU_AMBCTL1_VAL	0xffc2ffc2
 
-#define CONFIG_SYS_MONITOR_LEN		(256 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(384 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(128 * 1024)
 
 
@@ -77,6 +77,7 @@
 #define DM9000_IO		CONFIG_DM9000_BASE
 #define DM9000_DATA		(CONFIG_DM9000_BASE + 2)
 
+#define CONFIG_LIB_RAND
 
 /*
  * Flash Settings
@@ -132,7 +133,6 @@
 #define CONFIG_BAUDRATE		115200
 #define CONFIG_MISC_INIT_R	/* needed for MAC address */
 #define CONFIG_UART_CONSOLE	0
-#define CONFIG_CC_OPTIMIZE_LIBS_FOR_SPEED
 
 #undef CONFIG_SHOW_BOOT_PROGRESS
 /* Enable this if bootretry required; currently it's disabled */

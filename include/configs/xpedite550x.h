@@ -22,6 +22,8 @@
 #define CONFIG_SYS_FORM_PMC_XMC	1
 #define CONFIG_PRPMC_PCI_ALIAS	"pci0"	/* Processor PMC interface on pci0 */
 #define CONFIG_BOARD_EARLY_INIT_R	/* Call board_pre_init */
+#define CONFIG_SYS_GENERIC_BOARD
+#define CONFIG_DISPLAY_BOARDINFO
 
 #ifndef CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_TEXT_BASE	0xfff80000
@@ -120,7 +122,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_NAND_BASE_LIST	{CONFIG_SYS_NAND_BASE, \
 					 CONFIG_SYS_NAND_BASE2}
 #define CONFIG_SYS_MAX_NAND_DEVICE	2
-#define CONFIG_MTD_NAND_VERIFY_WRITE
 #define CONFIG_SYS_NAND_QUIET_TEST	/* 2nd NAND flash not always populated */
 #define CONFIG_NAND_FSL_ELBC
 

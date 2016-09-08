@@ -18,18 +18,20 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_ARMV7		1	/* This is an ARM V7 CPU core */
 #define CONFIG_OMAP		1	/* in a TI OMAP core */
-#define CONFIG_OMAP34XX		1	/* which is a 34XX */
 #define CONFIG_MVBLX		1	/* working with mvBlueLYNX-X */
 #define CONFIG_MACH_TYPE	MACH_TYPE_MVBLX
 #define CONFIG_OMAP_GPIO
 #define CONFIG_OMAP_COMMON
+/* Common ARM Erratas */
+#define CONFIG_ARM_ERRATA_454179
+#define CONFIG_ARM_ERRATA_430973
+#define CONFIG_ARM_ERRATA_621766
 
 #define CONFIG_SDRC	/* The chip has SDRC controller */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
-#include <asm/arch/omap3.h>
+#include <asm/arch/omap.h>
 
 /*
  * Display CPU and Board information
@@ -127,6 +129,7 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_FPGA
+#define CONFIG_CMD_FPGA_LOADMK
 
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_OMAP24_I2C_SPEED	100000

@@ -117,7 +117,6 @@
 /*
  * Clock Configuration
  */
-#undef  CONFIG_SYS_CLKS_IN_HZ
 #define CONFIG_SYS_CPUSPEED             0x210           /* 416MHz ; N=2,L=16 */
 
 /*
@@ -205,7 +204,6 @@
 /*
  * SPL
  */
-#define CONFIG_SPL
 #define CONFIG_SPL_TEXT_BASE    0xa1700000 /* IPL loads SPL here */
 #define CONFIG_SPL_STACK        0x5c040000 /* end of internal SRAM */
 #define CONFIG_SPL_NAND_SUPPORT /* build libnand for spl */

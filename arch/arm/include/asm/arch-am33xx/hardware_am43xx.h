@@ -13,6 +13,9 @@
 
 /* Module base addresses */
 
+/* L3 Fast Configuration Bandwidth Limiter Base Address */
+#define L3F_CFG_BWLIMITER		0x44005200
+
 /* UART Base Address */
 #define UART0_BASE			0x44E09000
 
@@ -40,6 +43,11 @@
 #define VTP0_CTRL_ADDR			0x44E10E0C
 #define VTP1_CTRL_ADDR			0x48140E10
 
+/* USB CTRL Base Address */
+#define USB1_CTRL			0x44e10628
+#define USB1_CTRL_CM_PWRDN		BIT(0)
+#define USB1_CTRL_OTG_PWRDN		BIT(1)
+
 /* DDR Base address */
 #define DDR_PHY_CMD_ADDR		0x44E12000
 #define DDR_PHY_DATA_ADDR		0x44E120C8
@@ -63,6 +71,7 @@
 #define PRM_PER_USBPHYOCP2SCP1_CLKCTRL (CM_PER + 0x5c0)
 #define USBPHYOCPSCP_MODULE_EN	(1 << 1)
 #define CM_DEVICE_INST			0x44df4100
+#define PRM_DEVICE_INST			0x44df4000
 
 /* Control status register */
 #define CTRL_CRYSTAL_FREQ_SRC_MASK		(1 << 31)

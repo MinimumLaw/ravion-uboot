@@ -13,12 +13,13 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch-tegra/clk_rst.h>
+#include <asm/arch-tegra/mmc.h>
 #include <asm/arch-tegra/tegra_mmc.h>
 #include <mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-struct mmc_host mmc_host[MAX_HOSTS];
+struct mmc_host mmc_host[CONFIG_SYS_MMC_MAX_DEVICE];
 
 #ifndef CONFIG_OF_CONTROL
 #error "Please enable device tree support to use this driver"
@@ -292,7 +293,7 @@ static int mmc_send_cmd_bounced(struct mmc *mmc, struct mmc_cmd *cmd,
 				/* Transfer Complete */
 				debug("r/w is done\n");
 				break;
-			} else if (get_timer(start) > 2000UL) {
+			} else if (get_timer(start) > 8000UL) {
 				writel(mask, &host->reg->norintsts);
 				printf("%s: MMC Timeout\n"
 				       "    Interrupt status        0x%08x\n"
@@ -508,14 +509,14 @@ static int tegra_mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-int tegra_mmc_getcd(struct mmc *mmc)
+static int tegra_mmc_getcd(struct mmc *mmc)
 {
 	struct mmc_host *host = mmc->priv;
 
 	debug("tegra_mmc_getcd called\n");
 
-	if (fdt_gpio_isvalid(&host->cd_gpio))
-		return fdtdec_get_gpio(&host->cd_gpio);
+	if (dm_gpio_is_valid(&host->cd_gpio))
+		return dm_gpio_get_value(&host->cd_gpio);
 
 	return 1;
 }
@@ -530,7 +531,6 @@ static const struct mmc_ops tegra_mmc_ops = {
 static int do_mmc_init(int dev_index)
 {
 	struct mmc_host *host;
-	char gpusage[12]; /* "SD/MMCn PWR" or "SD/MMCn CD" */
 	struct mmc *mmc;
 
 	/* DT should have been read & host config filled in */
@@ -538,27 +538,15 @@ static int do_mmc_init(int dev_index)
 	if (!host->enabled)
 		return -1;
 
-	debug(" do_mmc_init: index %d, bus width %d "
-		"pwr_gpio %d cd_gpio %d\n",
-		dev_index, host->width,
-		host->pwr_gpio.gpio, host->cd_gpio.gpio);
+	debug(" do_mmc_init: index %d, bus width %d pwr_gpio %d cd_gpio %d\n",
+	      dev_index, host->width, gpio_get_number(&host->pwr_gpio),
+	      gpio_get_number(&host->cd_gpio));
 
 	host->clock = 0;
 	clock_start_periph_pll(host->mmc_id, CLOCK_ID_PERIPH, 20000000);
 
-	if (fdt_gpio_isvalid(&host->pwr_gpio)) {
-		sprintf(gpusage, "SD/MMC%d PWR", dev_index);
-		gpio_request(host->pwr_gpio.gpio, gpusage);
-		gpio_direction_output(host->pwr_gpio.gpio, 1);
-		debug(" Power GPIO name = %s\n", host->pwr_gpio.name);
-	}
-
-	if (fdt_gpio_isvalid(&host->cd_gpio)) {
-		sprintf(gpusage, "SD/MMC%d CD", dev_index);
-		gpio_request(host->cd_gpio.gpio, gpusage);
-		gpio_direction_input(host->cd_gpio.gpio);
-		debug(" CD GPIO name = %s\n", host->cd_gpio.name);
-	}
+	if (dm_gpio_is_valid(&host->pwr_gpio))
+		dm_gpio_set_value(&host->pwr_gpio, 1);
 
 	memset(&host->cfg, 0, sizeof(host->cfg));
 
@@ -625,9 +613,12 @@ static int mmc_get_config(const void *blob, int node, struct mmc_host *host)
 		debug("%s: no sdmmc width found\n", __func__);
 
 	/* These GPIOs are optional */
-	fdtdec_decode_gpio(blob, node, "cd-gpios", &host->cd_gpio);
-	fdtdec_decode_gpio(blob, node, "wp-gpios", &host->wp_gpio);
-	fdtdec_decode_gpio(blob, node, "power-gpios", &host->pwr_gpio);
+	gpio_request_by_name_nodev(blob, node, "cd-gpios", 0, &host->cd_gpio,
+				   GPIOD_IS_IN);
+	gpio_request_by_name_nodev(blob, node, "wp-gpios", 0, &host->wp_gpio,
+				   GPIOD_IS_IN);
+	gpio_request_by_name_nodev(blob, node, "power-gpios", 0,
+				   &host->pwr_gpio, GPIOD_IS_OUT);
 
 	debug("%s: found controller at %p, width = %d, periph_id = %d\n",
 		__func__, host->reg, host->width, host->mmc_id);
@@ -669,13 +660,14 @@ static int process_nodes(const void *blob, int node_list[], int count)
 
 void tegra_mmc_init(void)
 {
-	int node_list[MAX_HOSTS], count;
+	int node_list[CONFIG_SYS_MMC_MAX_DEVICE], count;
 	const void *blob = gd->fdt_blob;
 	debug("%s entry\n", __func__);
 
 	/* See if any Tegra124 MMC controllers are present */
 	count = fdtdec_find_aliases_for_id(blob, "sdhci",
-		COMPAT_NVIDIA_TEGRA124_SDMMC, node_list, MAX_HOSTS);
+		COMPAT_NVIDIA_TEGRA124_SDMMC, node_list,
+		CONFIG_SYS_MMC_MAX_DEVICE);
 	debug("%s: count of Tegra124 sdhci nodes is %d\n", __func__, count);
 	if (process_nodes(blob, node_list, count)) {
 		printf("%s: Error processing T30 mmc node(s)!\n", __func__);
@@ -684,7 +676,8 @@ void tegra_mmc_init(void)
 
 	/* See if any Tegra30 MMC controllers are present */
 	count = fdtdec_find_aliases_for_id(blob, "sdhci",
-		COMPAT_NVIDIA_TEGRA30_SDMMC, node_list, MAX_HOSTS);
+		COMPAT_NVIDIA_TEGRA30_SDMMC, node_list,
+		CONFIG_SYS_MMC_MAX_DEVICE);
 	debug("%s: count of T30 sdhci nodes is %d\n", __func__, count);
 	if (process_nodes(blob, node_list, count)) {
 		printf("%s: Error processing T30 mmc node(s)!\n", __func__);
@@ -693,7 +686,8 @@ void tegra_mmc_init(void)
 
 	/* Now look for any Tegra20 MMC controllers */
 	count = fdtdec_find_aliases_for_id(blob, "sdhci",
-		COMPAT_NVIDIA_TEGRA20_SDMMC, node_list, MAX_HOSTS);
+		COMPAT_NVIDIA_TEGRA20_SDMMC, node_list,
+		CONFIG_SYS_MMC_MAX_DEVICE);
 	debug("%s: count of T20 sdhci nodes is %d\n", __func__, count);
 	if (process_nodes(blob, node_list, count)) {
 		printf("%s: Error processing T20 mmc node(s)!\n", __func__);

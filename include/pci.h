@@ -623,6 +623,7 @@ extern void pci_register_hose(struct pci_controller* hose);
 extern struct pci_controller* pci_bus_to_hose(int bus);
 extern struct pci_controller *find_hose_by_cfg_addr(void *cfg_addr);
 
+extern int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev);
 extern int pci_hose_scan(struct pci_controller *hose);
 extern int pci_hose_scan_bus(struct pci_controller *hose, int bus);
 
@@ -643,8 +644,7 @@ extern int pciauto_config_device(struct pci_controller *hose, pci_dev_t dev);
 
 extern pci_dev_t pci_find_device (unsigned int vendor, unsigned int device, int index);
 extern pci_dev_t pci_find_devices (struct pci_device_id *ids, int index);
-extern pci_dev_t pci_find_class(int wanted_class, int wanted_sub_code,
-				int wanted_prog_if, int index);
+pci_dev_t pci_find_class(unsigned int find_class, int index);
 
 extern int pci_hose_config_device(struct pci_controller *hose,
 				  pci_dev_t dev,
@@ -659,16 +659,51 @@ extern int pci_hose_find_cap_start(struct pci_controller *hose, pci_dev_t dev,
 extern int pci_find_cap(struct pci_controller *hose, pci_dev_t dev, int pos,
 			int cap);
 
+#ifdef CONFIG_PCI_FIXUP_DEV
+extern void board_pci_fixup_dev(struct pci_controller *hose, pci_dev_t dev,
+				unsigned short vendor,
+				unsigned short device,
+				unsigned short class);
+#endif
+
 const char * pci_class_str(u8 class);
 int pci_last_busno(void);
-
-#ifdef CONFIG_MPC824X
-extern void pci_mpc824x_init (struct pci_controller *hose);
-#endif
 
 #ifdef CONFIG_MPC85xx
 extern void pci_mpc85xx_init (struct pci_controller *hose);
 #endif
+
+/**
+ * pci_write_bar32() - Write the address of a BAR including control bits
+ *
+ * This writes a raw address (with control bits) to a bar
+ *
+ * @hose:	PCI hose to use
+ * @dev:	PCI device to update
+ * @barnum:	BAR number (0-5)
+ * @addr:	BAR address with control bits
+ */
+void pci_write_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum,
+		     u32 addr_and_ctrl);
+
+/**
+ * pci_read_bar32() - read the address of a bar
+ *
+ * @hose:	PCI hose to use
+ * @dev:	PCI device to inspect
+ * @barnum:	BAR number (0-5)
+ * @return address of the bar, masking out any control bits
+ * */
+u32 pci_read_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum);
+
+/**
+ * pciauto_setup_rom() - Set up access to a device ROM
+ *
+ * @hose:	PCI hose to use
+ * @dev:	PCI device to adjust
+ * @return 0 if done, -ve on error
+ */
+int pciauto_setup_rom(struct pci_controller *hose, pci_dev_t dev);
 
 #endif /* __ASSEMBLY__ */
 #endif /* _PCI_H */

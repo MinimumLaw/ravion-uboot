@@ -17,8 +17,9 @@
 #include <asm/arch/imx-regs.h>
 
 /* High Level Configuration Options */
-#define CONFIG_ARM1136			/* This is an arm1136 CPU core */
-#define CONFIG_MX31			/* in a mx31 */
+#define CONFIG_MX31			/* This is a mx31 */
+
+#define CONFIG_SYS_GENERIC_BOARD
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -29,7 +30,6 @@
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_MX31_3DS
 
-#define CONFIG_SPL
 #define CONFIG_SPL_TARGET	"u-boot-with-spl.bin"
 #define CONFIG_SPL_LDSCRIPT	"arch/$(ARCH)/cpu/u-boot-spl.lds"
 #define CONFIG_SPL_MAX_SIZE	2048
@@ -121,9 +121,6 @@
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE + \
-				sizeof(CONFIG_SYS_PROMPT)+16)
 /* max number of command args */
 #define CONFIG_SYS_MAXARGS	16
 /* Boot Argument Buffer Size */

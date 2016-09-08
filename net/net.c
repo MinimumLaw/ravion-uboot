@@ -6,6 +6,7 @@
  *	Copyright 2000 Roland Borde
  *	Copyright 2000 Paolo Scaffardi
  *	Copyright 2000-2002 Wolfgang Denk, wd@denx.de
+ *	SPDX-License-Identifier:	GPL-2.0
  */
 
 /*
@@ -385,14 +386,14 @@ restart:
 #endif
 #if defined(CONFIG_CMD_DHCP)
 		case DHCP:
-			BootpTry = 0;
+			BootpReset();
 			NetOurIP = 0;
 			DhcpRequest();		/* Basically same as BOOTP */
 			break;
 #endif
 
 		case BOOTP:
-			BootpTry = 0;
+			BootpReset();
 			NetOurIP = 0;
 			BootpRequest();
 			break;
@@ -419,7 +420,7 @@ restart:
 			CDPStart();
 			break;
 #endif
-#ifdef CONFIG_NETCONSOLE
+#if defined (CONFIG_NETCONSOLE) && !(CONFIG_SPL_BUILD)
 		case NETCONS:
 			NcStart();
 			break;
@@ -1085,7 +1086,7 @@ NetReceive(uchar *inpkt, int len)
 		if ((ip->ip_hl_v & 0x0f) > 0x05)
 			return;
 		/* Check the Checksum of the header */
-		if (!NetCksumOk((uchar *)ip, IP_HDR_SIZE / 2)) {
+		if (!ip_checksum_ok((uchar *)ip, IP_HDR_SIZE)) {
 			debug("checksum bad\n");
 			return;
 		}
@@ -1182,7 +1183,7 @@ NetReceive(uchar *inpkt, int len)
 #endif
 
 
-#ifdef CONFIG_NETCONSOLE
+#if defined (CONFIG_NETCONSOLE) && !(CONFIG_SPL_BUILD)
 		nc_input_packet((uchar *)ip + IP_UDP_HDR_SIZE,
 					src_ip,
 					ntohs(ip->udp_dst),
@@ -1290,27 +1291,6 @@ common:
 /**********************************************************************/
 
 int
-NetCksumOk(uchar *ptr, int len)
-{
-	return !((NetCksum(ptr, len) + 1) & 0xfffe);
-}
-
-
-unsigned
-NetCksum(uchar *ptr, int len)
-{
-	ulong	xsum;
-	ushort *p = (ushort *)ptr;
-
-	xsum = 0;
-	while (len-- > 0)
-		xsum += *p++;
-	xsum = (xsum & 0xffff) + (xsum >> 16);
-	xsum = (xsum & 0xffff) + (xsum >> 16);
-	return xsum & 0xffff;
-}
-
-int
 NetEthHdrSize(void)
 {
 	ushort myvlanid;
@@ -1409,7 +1389,7 @@ void net_set_udp_header(uchar *pkt, IPaddr_t dest, int dport, int sport,
 	net_set_ip_header(pkt, dest, NetOurIP);
 	ip->ip_len   = htons(IP_UDP_HDR_SIZE + len);
 	ip->ip_p     = IPPROTO_UDP;
-	ip->ip_sum   = ~NetCksum((uchar *)ip, IP_HDR_SIZE >> 1);
+	ip->ip_sum   = compute_ip_checksum(ip, IP_HDR_SIZE);
 
 	ip->udp_src  = htons(sport);
 	ip->udp_dst  = htons(dport);

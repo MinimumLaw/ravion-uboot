@@ -27,7 +27,6 @@
 
 #ifndef __ASSEMBLY__
 typedef struct bd_info {
-	unsigned int	bi_baudrate;	/* serial console baudrate */
     ulong	        bi_arch_number;	/* unique id for this board */
     ulong	        bi_boot_params;	/* where this board expects params */
 	unsigned long	bi_arm_freq; /* arm frequency */
@@ -48,6 +47,10 @@ typedef struct bd_info {
 #define IH_ARCH_DEFAULT IH_ARCH_ARM
 #else
 #define IH_ARCH_DEFAULT IH_ARCH_ARM64
+#endif
+
+#if defined(CONFIG_USE_PRIVATE_LIBGCC) && defined(CONFIG_SYS_THUMB_BUILD)
+#error Thumb build does not work with private libgcc.
 #endif
 
 #endif	/* _U_BOOT_H_ */
