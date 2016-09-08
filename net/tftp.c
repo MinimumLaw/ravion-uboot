@@ -239,6 +239,8 @@ static void show_block_marker(void)
 #ifdef CONFIG_TFTP_TSIZE
 	if (TftpTsize) {
 		ulong pos = TftpBlock * TftpBlkSize + TftpBlockWrapOffset;
+		if(pos > TftpTsize)
+			pos = TftpTsize;
 
 		while (TftpNumchars < pos * 50 / TftpTsize) {
 			putc('#');

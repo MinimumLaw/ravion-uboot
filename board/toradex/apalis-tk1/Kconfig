@@ -1,0 +1,28 @@
+if TARGET_APALIS_TK1
+
+config SYS_BOARD
+	default "apalis-tk1"
+
+config SYS_VENDOR
+	default "toradex"
+
+config SYS_CONFIG_NAME
+	default "apalis-tk1"
+
+config TRDX_CFG_BLOCK
+	default y
+
+config TRDX_HAVE_MMC
+	default y
+
+config TRDX_CFG_BLOCK_DEV
+	default "0"
+
+config TRDX_CFG_BLOCK_PART
+	default "1"
+
+# Toradex Configblock in eMMC, at the end of 1st "boot sector"
+config TRDX_CFG_BLOCK_OFFSET
+	default "-512"
+
+endif

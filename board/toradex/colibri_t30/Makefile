@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014 Stefan Agner
+# Copyright (c) 2012-2015 Toradex, Inc.
 # SPDX-License-Identifier:      GPL-2.0+
 
 include $(srctree)/board/nvidia/common/common.mk

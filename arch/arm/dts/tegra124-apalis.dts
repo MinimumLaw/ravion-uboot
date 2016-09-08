@@ -1,0 +1,364 @@
+/dts-v1/;
+
+#include "tegra124.dtsi"
+
+/ {
+	model = "Toradex Apalis TK1";
+	compatible = "toradex,apalis-tk1", "nvidia,tegra124";
+
+	chosen {
+		stdout-path = &uarta;
+	};
+
+	aliases {
+		i2c0 = "/i2c@7000d000";
+		i2c1 = "/i2c@7000c000";
+		i2c2 = "/i2c@7000c400";
+		i2c3 = "/i2c@7000c500";
+		sdhci0 = "/sdhci@700b0600";
+		sdhci1 = "/sdhci@700b0000";
+		sdhci2 = "/sdhci@700b0400";
+		spi0 = "/spi@7000d400";
+		spi1 = "/spi@7000da00";
+		spi2 = "/spi@7000d600";
+		usb0 = "/usb@7d000000";
+		usb1 = "/usb@7d004000";
+		usb2 = "/usb@7d008000";
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x80000000 0x80000000>;
+	};
+
+	pcie-controller@01003000 {
+		status = "okay";
+
+		avddio-pex-supply = <&vdd_1v05>;
+		dvddio-pex-supply = <&vdd_1v05>;
+		avdd-pex-pll-supply = <&vdd_1v05>;
+		hvdd-pex-supply = <&reg_3v3>;
+		hvdd-pex-pll-e-supply = <&reg_3v3>;
+		vddio-pex-ctl-supply = <&reg_3v3>;
+		avdd-pll-erefe-supply = <&avdd_1v05>;
+
+		/* I210 Gigabit Ethernet Controller (on-module) */
+		pci@2,0 {
+			status = "okay";
+		};
+	};
+
+	/*
+	 * GEN1_I2C: I2C1_SDA/SCL on MXM3 pin 209/211 (e.g. RTC on carrier
+	 * board)
+	 */
+	i2c@7000c000 {
+		status = "okay";
+		clock-frequency = <100000>;
+	};
+
+	/*
+	 * GEN2_I2C: I2C2_SDA/SCL (DDC) on MXM3 pin 205/207 (e.g. display EDID)
+	 */
+	hdmi_ddc: i2c@7000c400 {
+		status = "okay";
+		clock-frequency = <100000>;
+	};
+
+	/*
+	 * CAM_I2C: I2C3_SDA/SCL (CAM) on MXM3 pin 201/203 (e.g. camera sensor
+	 * on carrier board)
+	 */
+	i2c@7000c500 {
+		status = "okay";
+		clock-frequency = <100000>;
+	};
+
+	/* I2C4 (DDC): unused */
+
+	/* PWR_I2C: power I2C to audio codec, PMIC and temperature sensor */
+	i2c@7000d000 {
+		status = "okay";
+		clock-frequency = <400000>;
+
+		pmic: pmic@40 {
+			compatible = "ams,as3722";
+			reg = <0x40>;
+			interrupts = <0 86 IRQ_TYPE_LEVEL_HIGH>;
+
+			ams,system-power-controller;
+
+			#interrupt-cells = <2>;
+			interrupt-controller;
+
+			gpio-controller;
+			#gpio-cells = <2>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&as3722_default>;
+
+			as3722_default: pinmux {
+				/* gpio2: PWR_EN_+V3.3 */
+
+				/* gpio7: +V1.6_LPO */
+
+				gpio1_2_4_7 {
+					pins = "gpio1", "gpio2", "gpio4", "gpio7";
+					function = "gpio";
+					bias-pull-up;
+				};
+
+				gpio3_5_6 {
+					pins = "gpio3", "gpio5", "gpio6";
+					bias-high-impedance;
+				};
+			};
+
+			regulators {
+				vsup-sd2-supply = <&reg_3v3>;
+				vsup-sd3-supply = <&reg_3v3>;
+				vsup-sd4-supply = <&reg_3v3>;
+				vsup-sd5-supply = <&reg_3v3>;
+				vin-ldo0-supply = <&vddio_ddr_1v35>;
+				vin-ldo1-6-supply = <&reg_3v3>;
+				vin-ldo2-5-7-supply = <&vddio_1v8>;
+				vin-ldo3-4-supply = <&reg_3v3>;
+				vin-ldo9-10-supply = <&reg_3v3>;
+				vin-ldo11-supply = <&reg_3v3>;
+
+				vdd_cpu: sd0 {
+					regulator-name = "+VDD_CPU_AP";
+					regulator-min-microvolt = <700000>;
+					regulator-max-microvolt = <1400000>;
+					regulator-min-microamp = <3500000>;
+					regulator-max-microamp = <3500000>;
+					regulator-always-on;
+					regulator-boot-on;
+					ams,ext-control = <2>;
+				};
+
+				sd1 {
+					regulator-name = "+VDD_CORE";
+					regulator-min-microvolt = <700000>;
+					regulator-max-microvolt = <1350000>;
+					regulator-min-microamp = <2500000>;
+					regulator-max-microamp = <2500000>;
+					regulator-always-on;
+					regulator-boot-on;
+					ams,ext-control = <1>;
+				};
+
+				vddio_ddr_1v35: sd2 {
+					regulator-name = "+V1.35_VDDIO_DDR(sd2)";
+					regulator-min-microvolt = <1350000>;
+					regulator-max-microvolt = <1350000>;
+					regulator-always-on;
+					regulator-boot-on;
+				};
+
+				sd3 {
+					regulator-name = "+V1.35_VDDIO_DDR(sd3)";
+					regulator-min-microvolt = <1350000>;
+					regulator-max-microvolt = <1350000>;
+					regulator-always-on;
+					regulator-boot-on;
+				};
+
+				vdd_1v05: sd4 {
+					regulator-name = "+V1.05";
+					regulator-min-microvolt = <1050000>;
+					regulator-max-microvolt = <1050000>;
+				};
+
+				vddio_1v8: sd5 {
+					regulator-name = "+V1.8";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+					regulator-boot-on;
+					regulator-always-on;
+				};
+
+				vdd_gpu: sd6 {
+					regulator-name = "+VDD_GPU_AP";
+					regulator-min-microvolt = <650000>;
+					regulator-max-microvolt = <1200000>;
+					regulator-min-microamp = <3500000>;
+					regulator-max-microamp = <3500000>;
+					regulator-boot-on;
+					regulator-always-on;
+				};
+
+				avdd_1v05: ldo0 {
+					regulator-name = "+V1.05_AVDD";
+					regulator-min-microvolt = <1050000>;
+					regulator-max-microvolt = <1050000>;
+					regulator-boot-on;
+					regulator-always-on;
+					ams,ext-control = <1>;
+				};
+
+				vddio_sdmmc1: ldo1 {
+					regulator-name = "VDDIO_SDMMC1";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <3300000>;
+				};
+
+				ldo2 {
+					regulator-name = "+V1.2";
+					regulator-min-microvolt = <1200000>;
+					regulator-max-microvolt = <1200000>;
+					regulator-boot-on;
+					regulator-always-on;
+				};
+
+				ldo3 {
+					regulator-name = "+V1.05_RTC";
+					regulator-min-microvolt = <1000000>;
+					regulator-max-microvolt = <1000000>;
+					regulator-boot-on;
+					regulator-always-on;
+					ams,enable-tracking;
+				};
+
+				/* 1.8V for LVDS, 3.3V for eDP */
+				ldo4 {
+					regulator-name = "AVDD_LVDS0_PLL";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+				};
+
+				/* LDO5 not used */
+
+				vddio_sdmmc3: ldo6 {
+					regulator-name = "VDDIO_SDMMC3";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <3300000>;
+				};
+
+				/* LDO7 not used */
+
+				/* LDO9 not used */
+
+				/* LDO10 not used */
+
+				ldo11 {
+					regulator-name = "+V1.8_VPP_FUSE";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+				};
+			};
+		};
+	};
+
+	/* SPI1: Apalis SPI1 */
+	spi@0,7000d400 {
+		status = "okay";
+		spi-max-frequency = <25000000>;
+	};
+
+	/* SPI2: MCU SPI */
+	spi@0,7000d600 {
+		status = "okay";
+		spi-max-frequency = <25000000>;
+	};
+
+	/* SPI4: Apalis SPI2 */
+	spi@0,7000da00 {
+		status = "okay";
+		spi-max-frequency = <25000000>;
+	};
+
+	padctl@7009f000 {
+		pinctrl-0 = <&padctl_default>;
+		pinctrl-names = "default";
+
+		padctl_default: pinmux {
+			usb3 {
+				nvidia,lanes = "pcie-0", "pcie-1";
+				nvidia,function = "usb3";
+				nvidia,iddq = <0>;
+			};
+
+			pcie {
+				nvidia,lanes = "pcie-2", "pcie-3",
+					       "pcie-4";
+				nvidia,function = "pcie";
+				nvidia,iddq = <0>;
+			};
+
+			sata {
+				nvidia,lanes = "sata-0";
+				nvidia,function = "sata";
+				nvidia,iddq = <0>;
+			};
+		};
+	};
+
+	/* Apalis MMC1 */
+	sdhci@700b0000 {
+		status = "okay";
+		/* MMC1_CD# */
+		cd-gpios = <&gpio TEGRA_GPIO(V, 3) GPIO_ACTIVE_LOW>;
+		bus-width = <4>;
+	};
+
+	/* Apalis SD1 */
+	sdhci@700b0400 {
+		status = "okay";
+		/*
+		 * Don't use SD1_CD# aka SDMMC3_CLK_LB_OUT for now as it
+		 * features some magic properties even though the external
+		 * loopback is disabled and the internal loopback used as per
+		 * SDMMC_VENDOR_MISC_CNTRL_0 register's SDMMC_SPARE1 bits being
+		 * set to 0xfffd according to the TRM!
+		 * cd-gpios = <&gpio TEGRA_GPIO(EE, 4) GPIO_ACTIVE_LOW>;
+		 */
+		bus-width = <4>;
+	};
+
+	/* eMMC */
+	sdhci@700b0600 {
+		status = "okay";
+		bus-width = <8>;
+		non-removable;
+	};
+
+	/* EHCI instance 0: USB1_DP/N -> USBO1_DP/N */
+	usb@7d000000 {
+		status = "okay";
+		dr_mode = "peripheral";
+		/* USBO1_EN */
+		nvidia,vbus-gpio = <&gpio TEGRA_GPIO(N, 4) GPIO_ACTIVE_HIGH>;
+	};
+
+	/* EHCI instance 1: USB2_DP/N -> USBH2_DP/N */
+	usb@7d004000 {
+		status = "okay";
+		/* USBH_EN */
+		nvidia,vbus-gpio = <&gpio TEGRA_GPIO(N, 5) GPIO_ACTIVE_HIGH>;
+		phy_type = "utmi";
+	};
+
+	/* EHCI instance 2: USB3_DP/N -> USBH4_DP/N */
+	usb@7d008000 {
+		status = "okay";
+		nvidia,vbus-gpio = <&gpio TEGRA_GPIO(N, 5) GPIO_ACTIVE_HIGH>;
+	};
+
+	reg_3v3_mxm: regulator-3v3-mxm {
+		compatible = "regulator-fixed";
+		regulator-name = "+V3.3_MXM";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	reg_3v3: regulator-3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "+V3.3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&pmic 2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&reg_3v3_mxm>;
+	};
+};

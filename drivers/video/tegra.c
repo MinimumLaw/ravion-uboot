@@ -13,8 +13,8 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/funcmux.h>
 #include <asm/arch/pinmux.h>
-#include <asm/arch/pwm.h>
-#include <asm/arch/display.h>
+#include <asm/arch-tegra/pwm.h>
+#include <asm/arch-tegra/display.h>
 #include <asm/arch-tegra/timer.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -215,8 +215,10 @@ static int handle_stage(const void *blob)
 		break;
 	case STAGE_PWM:
 		/* Enable PWM at 15/16 high, 32768 Hz with divider 1 */
+#ifdef CONFIG_MACH_T20
 		pinmux_set_func(PMUX_PINGRP_GPU, PMUX_FUNC_PWM);
 		pinmux_tristate_disable(PMUX_PINGRP_GPU);
+#endif
 
 		pwm_enable(config.pwm_channel, 32768, 0xdf, 1);
 		break;

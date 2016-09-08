@@ -467,10 +467,15 @@ static void mmc_reset(struct mmc_host *host, struct mmc *mmc)
 static int tegra_mmc_core_init(struct mmc *mmc)
 {
 	struct mmc_host *host = mmc->priv;
-	unsigned int mask;
+	unsigned int mask, val;
 	debug(" mmc_core_init called\n");
 
 	mmc_reset(host, mmc);
+
+	/* Disable external clock loopback and use internal one on SDMMC3 */
+	val = readl(&host->reg->venmiscctl);
+	val &= 0xfffdffff;
+	writel(val, &host->reg->venmiscctl);
 
 	host->version = readw(&host->reg->hcver);
 	debug("host version = %x\n", host->version);

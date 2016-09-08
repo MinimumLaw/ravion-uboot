@@ -565,6 +565,7 @@ KBUILD_CFLAGS += -DBUILD_TAG='"$(BUILD_TAG)"'
 endif
 
 KBUILD_CFLAGS += $(call cc-option,-fno-stack-protector)
+KBUILD_CFLAGS += $(call cc-option,-fno-delete-null-pointer-checks)
 
 KBUILD_CFLAGS	+= -g
 # $(KBUILD_AFLAGS) sets -g, which causes gcc to pass a suitable -g<format>
@@ -811,6 +812,9 @@ u-boot-dtb.bin: u-boot.bin dts/dt.dtb FORCE
 	$(call if_changed,cat)
 
 %.imx: %.bin
+	$(Q)$(MAKE) $(build)=arch/arm/imx-common $@
+
+u-boot-nand.imx: u-boot.bin
 	$(Q)$(MAKE) $(build)=arch/arm/imx-common $@
 
 quiet_cmd_copy = COPY    $@

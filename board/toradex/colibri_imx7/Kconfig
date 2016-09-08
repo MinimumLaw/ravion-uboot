@@ -1,0 +1,38 @@
+if TARGET_COLIBRI_IMX7
+
+config SYS_BOARD
+	default "colibri_imx7"
+
+config SYS_VENDOR
+	default "toradex"
+
+config SYS_SOC
+	default "mx7"
+
+config SYS_CONFIG_NAME
+	default "colibri_imx7"
+
+config TRDX_CFG_BLOCK
+	default y
+
+config TRDX_HAVE_NAND
+	default y
+
+config TRDX_CFG_BLOCK_OFFSET
+	default "2048"
+
+config TRDX_CFG_BLOCK_OFFSET2
+	default "133120"
+
+config TRDX_CFG_BLOCK_2ND_ETHADDR
+	default y
+
+menuconfig TRDX_CMD_IMX_MFGR
+	bool "Enable factory testing commands for Toradex iMX 7[B modules"
+	help
+	  This adds the command
+	    mfgr_fuse: OTP fusing during module production
+	  If executed on already fused modules they don't change any fuse setting.
+	default y
+
+endif

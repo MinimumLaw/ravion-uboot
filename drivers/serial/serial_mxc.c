@@ -74,6 +74,7 @@
 #define  UCR4_OREN	 (1<<1)  /* Receiver overrun interrupt enable */
 #define  UCR4_DREN	 (1<<0)  /* Recv data ready interrupt enable */
 #define  UFCR_RXTL_SHF   0       /* Receiver trigger level shift */
+#define  UFCR_DCEDTE     (1<<6)  /* DCE=0 */
 #define  UFCR_RFDIV      (7<<7)  /* Reference freq divider mask */
 #define  UFCR_TXTL_SHF   10      /* Transmitter trigger level shift */
 #define  USR1_PARITYERR  (1<<15) /* Parity error interrupt flag */
@@ -142,7 +143,7 @@ static void mxc_serial_setbrg(void)
 	if (!gd->baudrate)
 		gd->baudrate = CONFIG_BAUDRATE;
 
-	__REG(UART_PHYS + UFCR) = 4 << 7; /* divide input clock by 2 */
+	__REG(UART_PHYS + UFCR) = (__REG(UART_PHYS + UFCR) & ~UFCR_RFDIV) | (4 << 7); /* divide input clock by 2 */
 	__REG(UART_PHYS + UBIR) = 0xf;
 	__REG(UART_PHYS + UBMR) = clk / (2 * gd->baudrate);
 
@@ -197,6 +198,9 @@ static int mxc_serial_init(void)
 	__REG(UART_PHYS + UTIM) = 0x0;
 
 	__REG(UART_PHYS + UTS) = 0x0;
+
+	/* keep the DCE DTE setting */
+	__REG(UART_PHYS + UFCR) = __REG(UART_PHYS + UFCR) & UFCR_DCEDTE;
 
 	serial_setbrg();
 

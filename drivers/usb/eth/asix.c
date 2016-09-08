@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
+ * Copyright (c) 2012-2014 Toradex, Inc.
+ *
+ * Patched for AX88772B by Antmicro Ltd <www.antmicro.com>
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -64,8 +67,14 @@
 	 AX_MEDIUM_AC | AX_MEDIUM_RE)
 
 /* AX88772 & AX88178 RX_CTL values */
+#define AX_RX_CTL_RH2M			0x0200	/* Enable IP header in receive
+						   buffer aligned on 32-bit
+						   boundary */
+#define AX_RX_CTL_RH1M			0x0100	/* Enable RX-Header mode 0 */
 #define AX_RX_CTL_SO			0x0080
 #define AX_RX_CTL_AB			0x0008
+#define AX_RX_HEADER_DEFAULT		(AX_RX_CTL_RH1M | \
+					 AX_RX_CTL_RH2M)
 
 #define AX_DEFAULT_RX_CTL	\
 	(AX_RX_CTL_SO | AX_RX_CTL_AB)
@@ -426,7 +435,15 @@ static int asix_init(struct eth_device *eth, bd_t *bd)
 
 	debug("** %s()\n", __func__);
 
-	if (asix_write_rx_ctl(dev, AX_DEFAULT_RX_CTL) < 0)
+	if ((dev->pusb_dev->descriptor.idVendor == 0x0b95) &&
+	    (dev->pusb_dev->descriptor.idProduct == 0x772b)) {
+		if (asix_write_rx_ctl(dev, AX_DEFAULT_RX_CTL |
+					   AX_RX_HEADER_DEFAULT) < 0)
+			goto out_err;
+	} else if (asix_write_rx_ctl(dev, AX_DEFAULT_RX_CTL) < 0)
+		goto out_err;
+
+	if (asix_write_hwaddr(eth) < 0)
 		goto out_err;
 
 	do {
@@ -446,6 +463,10 @@ static int asix_init(struct eth_device *eth, bd_t *bd)
 		printf("unable to connect.\n");
 		goto out_err;
 	}
+
+	/* Wait some more to avoid timeout on first transfer
+	   (e.g. EHCI timed out on TD - token=0x8008d80) */
+	udelay(25000);
 
 	return 0;
 out_err:
@@ -532,6 +553,10 @@ static int asix_recv(struct eth_device *eth)
 			debug("Rx: too large packet: %d\n", packet_len);
 			return -1;
 		}
+
+		if ((dev->pusb_dev->descriptor.idVendor == 0x0b95) &&
+		    (dev->pusb_dev->descriptor.idProduct == 0x772b))
+			buf_ptr += 2;
 
 		/* Notify net stack */
 		NetReceive(buf_ptr + sizeof(packet_len), packet_len);

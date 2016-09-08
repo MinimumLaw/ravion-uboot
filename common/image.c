@@ -101,6 +101,9 @@ static const table_entry_t uimage_os[] = {
 	{	IH_OS_RTEMS,	"rtems",	"RTEMS",		},
 	{	IH_OS_U_BOOT,	"u-boot",	"U-Boot",		},
 	{	IH_OS_VXWORKS,	"vxworks",	"VxWorks",		},
+	{	IH_OS_ECOS,	"ecos",		"eCos",			},
+	{	IH_OS_MQX,	"mqx",		"MQX",			},
+	{	IH_OS_BAREMETAL,"baremetal",	"Bare-metal",		},
 #if defined(CONFIG_CMD_ELF) || defined(USE_HOSTCC)
 	{	IH_OS_QNX,	"qnx",		"QNX",			},
 #endif

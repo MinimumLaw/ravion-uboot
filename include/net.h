@@ -364,7 +364,7 @@ struct icmp_hdr {
  * maximum packet size =  1518
  * maximum packet size and multiple of 32 bytes =  1536
  */
-#define PKTSIZE			1518
+#define PKTSIZE			1522
 #define PKTSIZE_ALIGN		1536
 /*#define PKTSIZE		608*/
 

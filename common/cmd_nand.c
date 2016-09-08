@@ -404,7 +404,7 @@ static void nand_print_and_set_info(int idx)
 	setenv_hex("nand_erasesize", nand->erasesize);
 }
 
-static int raw_access(nand_info_t *nand, ulong addr, loff_t off, ulong count,
+int raw_access(nand_info_t *nand, ulong addr, loff_t off, ulong count,
 			int read)
 {
 	int ret = 0;

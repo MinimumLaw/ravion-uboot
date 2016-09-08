@@ -3,6 +3,9 @@ if TEGRA124
 choice
 	prompt "Tegra124 board select"
 
+config TARGET_APALIS_TK1
+	bool "Toradex Apalis TK1 board"
+
 config TARGET_JETSON_TK1
 	bool "NVIDIA Tegra124 Jetson TK1 board"
 
@@ -23,6 +26,7 @@ endchoice
 config SYS_SOC
 	default "tegra124"
 
+source "board/toradex/apalis-tk1/Kconfig"
 source "board/nvidia/jetson-tk1/Kconfig"
 source "board/nvidia/nyan-big/Kconfig"
 source "board/nvidia/venice2/Kconfig"

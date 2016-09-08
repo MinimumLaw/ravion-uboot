@@ -51,11 +51,16 @@ void hw_watchdog_init(void)
 }
 #endif
 
+#ifndef CONFIG_TARGET_COLIBRI_IMX7
 void reset_cpu(ulong addr)
 {
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
+#if defined(CONFIG_MX7)
+	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+#else
 	writew(WCR_WDE, &wdog->wcr);
+#endif
 	writew(0x5555, &wdog->wsr);
 	writew(0xaaaa, &wdog->wsr);	/* load minimum 1/2 second timeout */
 	while (1) {
@@ -64,3 +69,4 @@ void reset_cpu(ulong addr)
 		 */
 	}
 }
+#endif

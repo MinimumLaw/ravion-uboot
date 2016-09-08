@@ -165,6 +165,40 @@ static void store_ecc8(struct bch_control *bch, uint8_t *dst,
 	memcpy(dst, pad, BCH_ECC_BYTES(bch)-4*nwords);
 }
 
+#ifdef CONFIG_TARGET_COLIBRI_IMX7
+/*
+ * reverse bit for byte
+ */
+static uint8_t reverse_bit(uint8_t in_byte)
+{
+	int i;
+	uint8_t out_byte = 0;
+
+	for (i = 0; i < 8; i++) {
+		if (in_byte & ((0x80) >> i)) {
+			out_byte |= 1 << i;
+		}
+	}
+
+	return out_byte;
+}
+
+ /*
+  * swap 32-bit data, including bit reverse and swap to big endian
+  */
+static uint32_t swap_data(uint32_t data)
+{
+	uint32_t r = 0;
+
+	r = reverse_bit(data & 0xFF) << 24;
+	r |= reverse_bit((data >> 8) & 0xFF) << 16;
+	r |= reverse_bit((data >> 16) & 0xFF) << 8;
+	r |= reverse_bit((data >> 24) & 0xFF);
+
+	return r;
+}
+#endif
+
 /**
  * encode_bch - calculate BCH ecc parity of data
  * @bch:   BCH control structure
@@ -228,7 +262,14 @@ void encode_bch(struct bch_control *bch, const uint8_t *data,
 	 */
 	while (mlen--) {
 		/* input data is read in big-endian format */
+#if CONFIG_TARGET_COLIBRI_IMX7
+		/*TODO: big little endian*/
+		/*w = r[0]^cpu_to_be32(*pdata++);*/
+		/*w = r[0]^(uint32_t)(*pdata++);*/
+		w = r[0]^swap_data(*pdata++);
+#else
 		w = r[0]^cpu_to_be32(*pdata++);
+#endif
 		p0 = tab0 + (l+1)*((w >>  0) & 0xff);
 		p1 = tab1 + (l+1)*((w >>  8) & 0xff);
 		p2 = tab2 + (l+1)*((w >> 16) & 0xff);

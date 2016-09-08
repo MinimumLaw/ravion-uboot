@@ -153,6 +153,9 @@ struct lmb;
 #define IH_OS_OSE		22	/* OSE		*/
 #define IH_OS_PLAN9		23	/* Plan 9	*/
 #define IH_OS_OPENRTOS		24	/* OpenRTOS	*/
+#define IH_OS_ECOS		25	/* eCos		*/
+#define IH_OS_MQX		26	/* MQX		*/
+#define IH_OS_BAREMETAL		27	/* Bare-metal	*/
 
 /*
  * CPU Architecture Codes (supported by Linux)
@@ -1082,6 +1085,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len);
 int android_image_get_ramdisk(const struct andr_img_hdr *hdr,
 			      ulong *rd_data, ulong *rd_len);
+int android_image_get_fdt(const struct andr_img_hdr *hdr,
+			      ulong *fdt_data, ulong *fdt_len);
 ulong android_image_get_end(const struct andr_img_hdr *hdr);
 ulong android_image_get_kload(const struct andr_img_hdr *hdr);
 

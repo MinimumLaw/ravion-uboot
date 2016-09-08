@@ -4,7 +4,7 @@
  * Copyright (C) 2009 by Jan Weitzel Phytec Messtechnik GmbH,
  *                       <armlinux@phytec.de>
  *
- * Copyright (C) 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2004-2015 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -41,8 +41,19 @@ void imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 	}
 #endif
 
-	if (mux_ctrl_ofs)
-		__raw_writel(mux_mode, base + mux_ctrl_ofs);
+#ifdef CONFIG_IOMUX_LPSR
+	u32 lpsr = (pad & MUX_MODE_LPSR) >> MUX_MODE_SHIFT;
+
+	if (lpsr == IOMUX_CONFIG_LPSR) {
+		base = (void *)IOMUXC_LPSR_BASE_ADDR;
+		mux_mode &= ~IOMUX_CONFIG_LPSR;
+		/* set daisy chain sel_input */
+		if (sel_input_ofs)
+			sel_input_ofs += IOMUX_LPSR_SEL_INPUT_OFS;
+	}
+#endif
+
+	__raw_writel(mux_mode, base + mux_ctrl_ofs);
 
 	if (sel_input_ofs)
 		__raw_writel(sel_input, base + sel_input_ofs);
@@ -55,6 +66,12 @@ void imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 	if (!(pad_ctrl & NO_PAD_CTRL) && pad_ctrl_ofs)
 		__raw_writel(pad_ctrl, base + pad_ctrl_ofs);
 #endif
+
+#ifdef CONFIG_IOMUX_LPSR
+	if (lpsr == IOMUX_CONFIG_LPSR)
+		base = (void *)IOMUXC_BASE_ADDR;
+#endif
+
 }
 
 /* configures a list of pads within declared with IOMUX_PADS macro */
@@ -92,3 +109,22 @@ void imx_iomux_set_gpr_register(int group, int start_bit,
 	reg |= (value << start_bit);
 	writel(reg, base + group * 4);
 }
+
+#ifdef CONFIG_IOMUX_SHARE_CONF_REG
+void imx_iomux_gpio_set_direction(unsigned int gpio,
+				unsigned int direction)
+{
+        u32 reg;
+	/*
+	 * Only on Vybrid the input/output buffer enable flags
+	 * are part of the shared mux/conf register.
+	 */
+	reg = readl(base + (gpio << 2));
+        if(direction)
+                reg |= 0x2;
+        else
+		reg &= ~0x2;
+
+        writel(reg, (base + (gpio << 2)));
+}
+#endif

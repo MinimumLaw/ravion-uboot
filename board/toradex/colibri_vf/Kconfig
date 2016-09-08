@@ -1,0 +1,30 @@
+if TARGET_COLIBRI_VF
+
+config SYS_CPU
+	default "armv7"
+
+config SYS_BOARD
+	default "colibri_vf"
+
+config SYS_VENDOR
+	default "toradex"
+
+config SYS_SOC
+	default "vf610"
+
+config SYS_CONFIG_NAME
+	default "colibri_vf"
+
+config TRDX_CFG_BLOCK
+	default y
+
+config TRDX_HAVE_NAND
+	default y
+
+config TRDX_CFG_BLOCK_OFFSET
+	default "2048"
+
+config TRDX_CFG_BLOCK_2ND_ETHADDR
+	default y
+
+endif

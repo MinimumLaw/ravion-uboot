@@ -1,0 +1,65 @@
+menuconfig TRDX_CFG_BLOCK
+	bool "Enable Toradex config block support"
+	help
+	  The Toradex config block stored production data on the on-module
+	  flash device (NAND or eMMC). The area is normally preserved by
+	  software and contains the serial number (out of which the MAC
+	  address is generated) and the exact module type.
+
+# Helper config to determine the correct default location of the cfg block
+config TRDX_HAVE_NAND
+	bool
+
+config TRDX_HAVE_MMC
+	bool
+
+if TRDX_CFG_BLOCK
+
+choice
+	prompt "Toradex config block location"
+	depends on TRDX_CFG_BLOCK
+	default TRDX_CFG_BLOCK_IS_IN_NAND if TRDX_HAVE_NAND
+	default TRDX_CFG_BLOCK_IS_IN_MMC if TRDX_HAVE_MMC
+	help
+	  Configure the location of the Toradex config block. By default, the
+	  factory version of the Toradex config block is on the NAND or eMMC
+	  flash device on the module.
+
+config TRDX_CFG_BLOCK_IS_IN_NAND
+	bool "Location of the config block is in NAND"
+
+config TRDX_CFG_BLOCK_IS_IN_MMC
+	bool "Location of the config block is in eMMC"
+
+endchoice
+
+config TRDX_CFG_BLOCK_DEV
+	int "Toradex config block eMMC device ID"
+	depends on TRDX_CFG_BLOCK_IS_IN_MMC
+
+config TRDX_CFG_BLOCK_PART
+	int "Toradex config block eMMC partition ID"
+	depends on TRDX_CFG_BLOCK_IS_IN_MMC
+
+config TRDX_CFG_BLOCK_OFFSET
+	int "Toradex config block offset"
+	help
+	  Specify the byte offset of the Toradex config block within the flash
+	  device the config block is stored on.
+
+config TRDX_CFG_BLOCK_OFFSET2
+	int "Toradex config block offset, second instance"
+	default 0
+	help
+	  Specify the byte offset of the 2nd instance of the Toradex config block
+	  within the flash device the config block is stored on.
+	  Set to 0 on modules which have no 2nd instance.
+
+config TRDX_CFG_BLOCK_2ND_ETHADDR
+	bool "Set the second ethernet address"
+	help
+	  For each serial number two Ethernet addresses are available for dual
+	  Ethernet carrier boards. This options enables the code to set the
+	  second ethernet address as environment variable (eth1addr).
+
+endif

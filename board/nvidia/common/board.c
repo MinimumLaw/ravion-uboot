@@ -12,13 +12,13 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #ifdef CONFIG_LCD
-#include <asm/arch/display.h>
+#include <asm/arch-tegra/display.h>
 #endif
 #include <asm/arch/funcmux.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/pmu.h>
 #ifdef CONFIG_PWM_TEGRA
-#include <asm/arch/pwm.h>
+#include <asm/arch-tegra/pwm.h>
 #endif
 #include <asm/arch/tegra.h>
 #include <asm/arch-tegra/ap.h>
@@ -53,9 +53,11 @@ U_BOOT_DEVICE(tegra_gpios) = {
 };
 #endif
 
+#ifdef CONFIG_DISPLAY_BOARDINFO
 const struct tegra_sysinfo sysinfo = {
 	CONFIG_TEGRA_BOARD_STRING
 };
+#endif	/* CONFIG_DISPLAY_BOARDINFO */
 
 __weak void pinmux_init(void) {}
 __weak void pin_mux_usb(void) {}

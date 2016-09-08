@@ -50,6 +50,8 @@ void tegra_i2c_ll_write_data(uint data, uint config)
 #define TPS62361B_SET3_DATA		(0x4600 | TPS62361B_SET3_REG)
 
 #define TPS65911_I2C_ADDR		0x5A
+#define TPS65911_GPIO1_REG		0x61
+#define TPS65911_GPIO1_DATA		(0x0000 | TPS65911_GPIO1_REG)
 #define TPS65911_VDDCTRL_OP_REG		0x28
 #define TPS65911_VDDCTRL_SR_REG		0x27
 #define TPS65911_VDDCTRL_OP_DATA	(0x2400 | TPS65911_VDDCTRL_OP_REG)
@@ -74,6 +76,14 @@ static void enable_cpu_power_rail(void)
 #ifdef CONFIG_TEGRA_VDD_CORE_TPS62361B_SET3
 	tegra_i2c_ll_write_addr(TPS62361B_I2C_ADDR, 2);
 	tegra_i2c_ll_write_data(TPS62361B_SET3_DATA, I2C_SEND_2_BYTES);
+#endif
+#ifdef CONFIG_TEGRA_VDD_CORE_TPS62362_SET_TPS65911_GPIO1
+	/*
+	 * Just release TPS65911 GPIO1 (EN_CORE_DVFS_N) connected to TPS62362
+	 * VSEL1 to switch VDD_CORE back to boot set 1 defaulting to 1.200V
+	 */
+	tegra_i2c_ll_write_addr(TPS65911_I2C_ADDR, 2);
+	tegra_i2c_ll_write_data(TPS65911_GPIO1_DATA, I2C_SEND_2_BYTES);
 #endif
 	udelay(1000);
 

@@ -1,0 +1,191 @@
+/*
+ * Copyright (C) 2014, Toradex AG
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+// Register Output for PF0100 programmer
+// Customer: Toradex AG
+// Program: Apalis iMX6
+// Sample marking: 
+// Date: 12.02.2014
+// Time: 17:16:41
+// Generated from Spreadsheet Revision: P1.8
+
+/* sed commands to get from programmer script to struct */
+/* sed -e 's/^WRITE_I2C:\(..\):\(..\)/\{pmic_i2c, 0x\1, 0x\2\},/g' -e 's/^DELAY:\([0-9]*\)/\{pmic_delay, 0, \1\},/g' pf0100_otp.txt > pf0100_otp.inc
+   sed -i -e 's/^VPGM:ON/\{pmic_vpgm, 0, 1},/g' -e 's/^VPGM:OFF/\{pmic_vpgm, 0, 0},/g' pf0100_otp.inc
+   sed -i -e 's/^PWRON: HIGH/\{pmic_pwr, 0, 1},/g' -e 's/^PWRON:LOW/\{pmic_pwr, 0, 0},/g' pf0100_otp.inc */
+
+enum { pmic_i2c, pmic_delay, pmic_vpgm, pmic_pwr };
+struct pmic_otp_prog_t{
+	unsigned char cmd;
+	unsigned char reg;
+	unsigned short value;
+};
+
+struct pmic_otp_prog_t pmic_otp_prog[] = {
+WRITE_I2C:7F:01 // Access FSL EXT Page 1
+WRITE_I2C:A0:2B // Auto gen from Row94
+WRITE_I2C:A1:01 // Auto gen from Row95
+WRITE_I2C:A2:05 // Auto gen from Row96
+WRITE_I2C:A8:2B // Auto gen from Row102
+WRITE_I2C:A9:02 // Auto gen from Row103
+WRITE_I2C:AA:01 // Auto gen from Row104
+WRITE_I2C:AC:18 // Auto gen from Row106
+WRITE_I2C:AE:01 // Auto gen from Row108
+WRITE_I2C:B0:2C // Auto gen from Row110
+WRITE_I2C:B1:04 // Auto gen from Row111
+WRITE_I2C:B2:01 // Auto gen from Row112
+WRITE_I2C:B4:2C // Auto gen from Row114
+WRITE_I2C:B5:04 // Auto gen from Row115
+WRITE_I2C:B6:01 // Auto gen from Row116
+WRITE_I2C:B8:18 // Auto gen from Row118
+WRITE_I2C:BA:01 // Auto gen from Row120
+WRITE_I2C:BD:1F // Auto gen from Row123
+WRITE_I2C:C0:06 // Auto gen from Row126
+WRITE_I2C:C4:04 // Auto gen from Row130
+WRITE_I2C:C8:0E // Auto gen from Row134
+WRITE_I2C:C9:08 // Auto gen from Row135
+WRITE_I2C:CC:0E // Auto gen from Row138
+WRITE_I2C:CD:05 // Auto gen from Row139
+WRITE_I2C:D0:0C // Auto gen from Row142
+WRITE_I2C:D1:05 // Auto gen from Row143
+WRITE_I2C:D5:07 // Auto gen from Row147
+WRITE_I2C:D8:07 // Auto gen from Row150
+WRITE_I2C:D9:06 // Auto gen from Row151
+WRITE_I2C:DC:0A // Auto gen from Row154
+WRITE_I2C:DD:03 // Auto gen from Row155
+WRITE_I2C:E0:07 // Auto gen from Row158
+
+#if 1 /* TBB mode */
+WRITE_I2C:E4:80 // TBB_POR = 1
+DELAY:10
+#else
+// Write OTP
+WRITE_I2C:E4:02 // FUSE POR1=1
+WRITE_I2C:E5:02 // FUSE POR2=1
+WRITE_I2C:E6:02 // FUSE POR3=1
+WRITE_I2C:F0:1F // Enable ECC for fuse banks 1 to 5 by writing to OTP EN ECC0 register
+WRITE_I2C:F1:1F // Enable ECC for fuse banks 6 to 10 by writing to OTP EN ECC1 register
+WRITE_I2C:7F:02 // Access PF0100 EXT Page2
+WRITE_I2C:D0:1F // Set Auto ECC for fuse banks 1 to 5 by writing to OTP AUTO ECC0 register
+WRITE_I2C:D1:1F // Set Auto ECC for fuse banks 6 to 10 by writing to OTP AUTO ECC1 register
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F1:00 // Reset Bank 1 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F2:00 // Reset Bank 2 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F3:00 // Reset Bank 3 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F4:00 // Reset Bank 4 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F5:00 // Reset Bank 5 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F6:00 // Reset Bank 6 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F7:00 // Reset Bank 7 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F8:00 // Reset Bank 8 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F9:00 // Reset Bank 9 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:FA:00 // Reset Bank 10 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+VPGM:ON // Turn ON 8V SWBST
+//VPGM:DOWN:n
+//VPGM:UP:n
+DELAY:500 // Adds 500msec delay to allow VPGM time to ramp up
+//-----------------------------------------------------------------------------------
+// PF0100 OTP MANUAL-PROGRAMMING (BANK 1 thru 10)
+//-----------------------------------------------------------------------------------
+// BANK 1
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F1:00 // Reset Bank 1 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F1:03 // Set Bank 1 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F1:0B // Set Bank 1 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F1:03 // Reset Bank 1 ANTIFUSE_EN
+WRITE_I2C:F1:00 // Reset Bank 1 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 2
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F2:00 // Reset Bank 2 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F2:03 // Set Bank 2 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F2:0B // Set Bank 2 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F2:03 // Reset Bank 2 ANTIFUSE_EN
+WRITE_I2C:F2:00 // Reset Bank 2 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 3
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F3:00 // Reset Bank 3 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F3:03 // Set Bank 3 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F3:0B // Set Bank 3 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F3:03 // Reset Bank 3 ANTIFUSE_EN
+WRITE_I2C:F3:00 // Reset Bank 3 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 4
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F4:00 // Reset Bank 4 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F4:03 // Set Bank 4 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F4:0B // Set Bank 4 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F4:03 // Reset Bank 4 ANTIFUSE_EN
+WRITE_I2C:F4:00 // Reset Bank 4 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 5
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F5:00 // Reset Bank 5 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F5:03 // Set Bank 5 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F5:0B // Set Bank 5 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F5:03 // Reset Bank 5 ANTIFUSE_EN
+WRITE_I2C:F5:00 // Reset Bank 5 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 6
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F6:00 // Reset Bank 6 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F6:03 // Set Bank 6 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F6:0B // Set Bank 6 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F6:03 // Reset Bank 6 ANTIFUSE_EN
+WRITE_I2C:F6:00 // Reset Bank 6 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 7
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F7:00 // Reset Bank 7 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F7:03 // Set Bank 7 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F7:0B // Set Bank 7 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F7:03 // Reset Bank 7 ANTIFUSE_EN
+WRITE_I2C:F7:00 // Reset Bank 7 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 8
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F8:00 // Reset Bank 8 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F8:03 // Set Bank 8 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F8:0B // Set Bank 8 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F8:03 // Reset Bank 8 ANTIFUSE_EN
+WRITE_I2C:F8:00 // Reset Bank 8 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 9
+//-----------------------------------------------------------------------------------
+WRITE_I2C:F9:00 // Reset Bank 9 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F9:03 // Set Bank 9 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:F9:0B // Set Bank 9 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:F9:03 // Reset Bank 9 ANTIFUSE_EN
+WRITE_I2C:F9:00 // Reset Bank 9 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+// BANK 10
+//-----------------------------------------------------------------------------------
+WRITE_I2C:FA:00 // Reset Bank 10 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:FA:03 // Set Bank 10 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+WRITE_I2C:FA:0B // Set Bank 10 ANTIFUSE_EN
+DELAY:10 // Allow time for bank programming to complete
+WRITE_I2C:FA:03 // Reset Bank 10 ANTIFUSE_EN
+WRITE_I2C:FA:00 // Reset Bank 10 ANTIFUSE_RW and ANTIFUSE_BYPASS bits
+//-----------------------------------------------------------------------------------
+VPGM:OFF // Turn off 8V SWBST
+DELAY:500 // Adds delay to allow VPGM to bleed off
+WRITE_I2C:D0:00 // Clear
+WRITE_I2C:D1:00 // Clear
+PWRON:LOW // PWRON LOW to reload new OTP data
+DELAY:500
+PWRON: HIGH
+#endif
+};

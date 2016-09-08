@@ -409,6 +409,11 @@ int genphy_config(struct phy_device *phydev)
 
 	phydev->supported = features;
 	phydev->advertising = features;
+	if (getenv("disable_giga")) {
+		phydev->advertising &= ~(SUPPORTED_1000baseT_Full |
+			SUPPORTED_1000baseT_Half | SUPPORTED_1000baseX_Full |
+			SUPPORTED_1000baseX_Half);
+	}
 
 	genphy_config_aneg(phydev);
 
@@ -695,6 +700,12 @@ int phy_reset(struct phy_device *phydev)
 	}
 
 	reg |= BMCR_RESET;
+
+#ifdef CONFIG_MX6
+	/* at least on a Micrel KSZ8041 the following bits do not get
+	 * cleared by a SW reset, but they should */
+	reg &= ~(BMCR_PDOWN|BMCR_LOOPBACK|BMCR_CTST);
+#endif
 
 	if (phy_write(phydev, devad, MII_BMCR, reg) < 0) {
 		debug("PHY reset failed\n");

@@ -4381,7 +4381,9 @@ e1000_get_phy_cfg_done(struct e1000_hw *hw)
 		if (!timeout) {
 			DEBUGOUT("MNG configuration cycle has not "
 					"completed.\n");
-			return -E1000_ERR_RESET;
+//hack to avoid the following error on unprogrammed i210 for now
+//e1000: e1000#0: ERROR: Hardware Initialization Failed
+//			return -E1000_ERR_RESET;
 		}
 		break;
 	}

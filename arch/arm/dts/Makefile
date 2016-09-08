@@ -31,6 +31,7 @@ dtb-$(CONFIG_TEGRA) += tegra20-harmony.dtb \
 	tegra30-colibri.dtb \
 	tegra30-tec-ng.dtb \
 	tegra114-dalmore.dtb \
+	tegra124-apalis.dtb \
 	tegra124-jetson-tk1.dtb \
 	tegra124-nyan-big.dtb \
 	tegra124-venice2.dtb
@@ -53,6 +54,9 @@ dtb-$(CONFIG_SOCFPGA) +=				\
 	socfpga_arria5_socdk.dtb			\
 	socfpga_cyclone5_socdk.dtb			\
 	socfpga_cyclone5_socrates.dtb
+
+dtb-$(CONFIG_VF610) += vf500-colibri.dtb \
+	vf610-colibri.dtb
 
 targets += $(dtb-y)
 

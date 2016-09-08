@@ -86,17 +86,8 @@ struct fdt_nand {
 
 struct nand_drv {
 	struct nand_ctlr *reg;
-
-	/*
-	* When running in PIO mode to get READ ID bytes from register
-	* RESP_0, we need this variable as an index to know which byte in
-	* register RESP_0 should be read.
-	* Because common code in nand_base.c invokes read_byte function two
-	* times for NAND_CMD_READID.
-	* And our controller returns 4 bytes at once in register RESP_0.
-	*/
-	int pio_byte_index;
 	struct fdt_nand config;
+	uint8_t *data_buf;	/* cache alignment bounce buffer */
 };
 
 static struct nand_drv nand_ctrl;
@@ -181,25 +172,16 @@ static int nand_waitfor_cmd_completion(struct nand_ctlr *reg)
 static uint8_t read_byte(struct mtd_info *mtd)
 {
 	struct nand_chip *chip = mtd->priv;
-	u32 dword_read;
 	struct nand_drv *info;
 
 	info = (struct nand_drv *)chip->priv;
 
-	/* In PIO mode, only 4 bytes can be transferred with single CMD_GO. */
-	if (info->pio_byte_index > 3) {
-		info->pio_byte_index = 0;
-		writel(CMD_GO | CMD_PIO
-			| CMD_RX | CMD_CE0,
-			&info->reg->command);
-		if (!nand_waitfor_cmd_completion(info->reg))
-			printf("Command timeout\n");
-	}
+	writel(CMD_GO | CMD_PIO | CMD_RX | CMD_CE0 | CMD_A_VALID,
+	       &info->reg->command);
+	if (!nand_waitfor_cmd_completion(info->reg))
+		printf("Command timeout\n");
 
-	dword_read = readl(&info->reg->resp);
-	dword_read = dword_read >> (8 * info->pio_byte_index);
-	info->pio_byte_index++;
-	return (uint8_t)dword_read;
+	return (uint8_t)readl(&info->reg->resp);
 }
 
 /**
@@ -314,6 +296,9 @@ static void nand_command(struct mtd_info *mtd, unsigned int command,
 	if (column != -1 && (chip->options & NAND_BUSWIDTH_16))
 		column >>= 1;
 
+	/* Disable subpage writes as we do not provide ecc->hwctl */
+	chip->options |= NAND_NO_SUBPAGE_WRITE;
+
 	nand_clear_interrupt_status(info->reg);
 
 	/* Stop DMA engine, clear DMA completion status */
@@ -330,12 +315,8 @@ static void nand_command(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_READID:
 		writel(NAND_CMD_READID, &info->reg->cmd_reg1);
 		writel(column & 0xFF, &info->reg->addr_reg1);
-		writel(CMD_GO | CMD_CLE | CMD_ALE | CMD_PIO
-			| CMD_RX |
-			((4 - 1) << CMD_TRANS_SIZE_SHIFT)
-			| CMD_CE0,
+		writel(CMD_GO | CMD_CLE | CMD_ALE | CMD_CE0,
 			&info->reg->command);
-		info->pio_byte_index = 0;
 		break;
 	case NAND_CMD_PARAM:
 		writel(NAND_CMD_PARAM, &info->reg->cmd_reg1);
@@ -376,7 +357,6 @@ static void nand_command(struct mtd_info *mtd, unsigned int command,
 			| ((1 - 0) << CMD_TRANS_SIZE_SHIFT)
 			| CMD_CE0,
 			&info->reg->command);
-		info->pio_byte_index = 0;
 		break;
 	case NAND_CMD_RESET:
 		writel(NAND_CMD_RESET, &info->reg->cmd_reg1);
@@ -555,6 +535,7 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 	char *tag_ptr;
 	struct nand_drv *info;
 	struct fdt_nand *config;
+	uint8_t *temp_buf = NULL;
 
 	if ((uintptr_t)buf & 0x03) {
 		printf("buf %p has to be 4-byte aligned\n", buf);
@@ -565,6 +546,12 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 	config = &info->config;
 	if (set_bus_width_page_size(config, &reg_val))
 		return -EINVAL;
+
+	/* cache alignment */
+	if ((!is_writing) && ((uintptr_t)buf & (ARCH_DMA_MINALIGN - 1))) {
+		temp_buf = buf;
+		buf = info->data_buf;
+	}
 
 	/* Need to be 4-byte aligned */
 	tag_ptr = (char *)tag_buf;
@@ -588,17 +575,12 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 	if (with_ecc) {
 		tag_size = chip->ecc.layout->oobavail + TAG_ECC_BYTES;
 		reg_val |= (CFG_SKIP_SPARE_SEL_4
-			| CFG_SKIP_SPARE_ENABLE
-			| CFG_HW_ECC_CORRECTION_ENABLE
-			| CFG_ECC_EN_TAG_DISABLE
-			| CFG_HW_ECC_SEL_RS
-			| CFG_HW_ECC_ENABLE
-			| CFG_TVAL4
-			| (tag_size - 1));
+			| CFG_SKIP_SPARE_ENABLE);
 
 		if (!is_writing)
 			tag_size += SKIPPED_SPARE_BYTES;
 		dma_prepare(tag_ptr, tag_size, is_writing);
+		writel(BCH_CONFIG_BCH_TVAL16 | BCH_CONFIG_BCH_ECC_ENABLE, &info->reg->bch_config);
 	} else {
 		tag_size = mtd->oobsize;
 		reg_val |= (CFG_SKIP_SPARE_DISABLE
@@ -607,12 +589,12 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 			| CFG_HW_ECC_DISABLE
 			| (tag_size - 1));
 		dma_prepare(chip->oob_poi, tag_size, is_writing);
+
+		writel(BCH_CONFIG_BCH_ECC_DISABLE, &info->reg->bch_config);
 	}
 	writel(reg_val, &info->reg->config);
 
 	dma_prepare(buf, 1 << chip->page_shift, is_writing);
-
-	writel(BCH_CONFIG_BCH_ECC_DISABLE, &info->reg->bch_config);
 
 	writel(tag_size - 1, &info->reg->dma_cfg_b);
 
@@ -622,7 +604,7 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 		| CMD_SEC_CMD
 		| (CMD_ALE_BYTES5 << CMD_ALE_BYTE_SIZE_SHIFT)
 		| CMD_A_VALID
-		| CMD_B_VALID
+		| (with_ecc ? 0 : CMD_B_VALID)
 		| (CMD_TRANS_SIZE_PAGE << CMD_TRANS_SIZE_SHIFT)
 		| CMD_CE0;
 	if (!is_writing)
@@ -635,7 +617,7 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 	reg_val = DMA_MST_CTRL_GO_ENABLE
 		| DMA_MST_CTRL_BURST_8WORDS
 		| DMA_MST_CTRL_EN_A_ENABLE
-		| DMA_MST_CTRL_EN_B_ENABLE;
+		| (with_ecc ? 0 : DMA_MST_CTRL_EN_B_ENABLE);
 
 	if (!is_writing)
 		reg_val |= DMA_MST_CTRL_DIR_READ;
@@ -657,6 +639,11 @@ static int nand_rw_page(struct mtd_info *mtd, struct nand_chip *chip,
 			printf("without ECC");
 		printf("\n");
 		return -EIO;
+	}
+
+	/* cache alignment */
+	if (temp_buf) {
+		memcpy(temp_buf, buf, 1 << chip->page_shift);
 	}
 
 	if (with_ecc && !is_writing) {
@@ -1019,6 +1006,11 @@ int tegra_nand_init(struct nand_chip *nand, int devnum)
 
 	nand->ecc.size = our_mtd->writesize;
 	nand->ecc.bytes = our_mtd->oobsize;
+
+	/* cache alignment */
+	info->data_buf = memalign(ARCH_DMA_MINALIGN, our_mtd->writesize);
+	if (!info->data_buf)
+		return -ENOMEM;
 
 	ret = nand_scan_tail(our_mtd);
 	if (ret)

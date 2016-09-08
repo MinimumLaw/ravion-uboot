@@ -1640,11 +1640,11 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 			fit_image_check_type(fit, noffset,
 					     IH_TYPE_KERNEL_NOLOAD));
 
-	os_ok = image_type == IH_TYPE_FLATDT ||
-		fit_image_check_os(fit, noffset, IH_OS_LINUX) ||
-		fit_image_check_os(fit, noffset, IH_OS_OPENRTOS);
+	fit_image_get_os(fit, noffset, &os);
+	os_ok = image_type == IH_TYPE_FLATDT || os == IH_OS_LINUX ||
+		os == IH_OS_OPENRTOS || os == IH_OS_ECOS ||
+		os == IH_OS_MQX || os == IH_OS_BAREMETAL;
 	if (!type_ok || !os_ok) {
-		fit_image_get_os(fit, noffset, &os);
 		printf("No %s %s %s Image\n",
 		       genimg_get_os_name(os),
 		       genimg_get_arch_name(arch),

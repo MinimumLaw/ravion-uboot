@@ -22,6 +22,17 @@
 		usb2 = "/usb@7d008000";
 	};
 
+	host1x {
+		status = "okay";
+		dc@54200000 {
+			status = "okay";
+			rgb {
+				status = "okay";
+				nvidia,panel = <&lcd_panel>;
+			};
+		};
+	};
+
 	memory {
 		device_type = "memory";
 		reg = <0x80000000 0x40000000>;
@@ -92,5 +103,23 @@
 		status = "okay";
 		/* USBH_PEN */
 		nvidia,vbus-gpio = <&gpio TEGRA_GPIO(W, 2) GPIO_ACTIVE_LOW>;
+	};
+
+	lcd_panel: panel {
+		clock = <25175000>;
+		xres = <640>;
+		yres = <480>;
+		left-margin = <48>;	/* horizontal back porch */
+		right-margin = <16>;	/* horizontal front porch */
+		hsync-len = <96>;
+		lower-margin = <11>;	/* vertical front porch */
+		upper-margin = <31>;	/* vertical back porch */
+		vsync-len = <2>;
+		hsync-active-high;
+		vsync-active-high;
+		nvidia,bits-per-pixel = <16>;
+		nvidia,pwm = <&pwm 0 0>;
+		nvidia,backlight-enable-gpios = <&gpio TEGRA_GPIO(V, 2) GPIO_ACTIVE_HIGH>;
+		nvidia,panel-timings = <0 0 0 0>;
 	};
 };

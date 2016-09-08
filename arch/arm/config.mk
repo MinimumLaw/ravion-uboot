@@ -128,7 +128,12 @@ else
 ifeq ($(CONFIG_OF_SEPARATE),y)
 ALL-y += u-boot-dtb.imx
 else
+ifeq ($(CONFIG_IMX_NAND),y)
+# u-boot-nand.imx builds u-boot.imx as well
+ALL-y += u-boot-nand.imx
+else
 ALL-y += u-boot.imx
+endif
 endif
 endif
 endif

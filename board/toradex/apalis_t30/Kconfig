@@ -9,4 +9,20 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "apalis_t30"
 
+config TRDX_CFG_BLOCK
+	default y
+
+config TRDX_HAVE_MMC
+	default y
+
+config TRDX_CFG_BLOCK_DEV
+	default "0"
+
+config TRDX_CFG_BLOCK_PART
+	default "1"
+
+# Toradex Configblock in eMMC, at the end of 1st "boot sector"
+config TRDX_CFG_BLOCK_OFFSET
+	default "-512"
+
 endif

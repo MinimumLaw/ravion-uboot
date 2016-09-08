@@ -306,7 +306,7 @@ static int parse_verify_sum(struct hash_algo *algo, char *verify_str,
 			env_var = 1;
 	}
 
-	if (!env_var) {
+	if (env_var) {
 		ulong addr;
 		void *buf;
 
