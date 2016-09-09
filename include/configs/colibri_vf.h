@@ -169,12 +169,16 @@
 	"mmc rescan && load mmc 0:1 ${loadaddr} ${boot_file} && " \
 	"source ${loadaddr}\0" \
 
+#define TFTP_BOOTCMD \
+	"tftpboot=run setup; setenv bootargs ${defargs} " \
+	"${setupargs} ${vidargs}; echo Booting from TFTP...;" \
+	"tftp ${loadaddr} ${boot_file}&& "	\
+	"source ${loadaddr}\0" \
+
 #define NFS_BOOTCMD \
-	"nfsargs=ip=:::::eth0: root=/dev/nfs\0"	\
-	"nfsboot=run setup; " \
-	"setenv bootargs ${defargs} ${nfsargs} " \
+	"nfsboot=run setup; setenv bootargs ${defargs} " \
 	"${setupargs} ${vidargs}; echo Booting from NFS...;" \
-	"dhcp ${loadaddr} && "	\
+	"nfs ${loadaddr} ${serverip}:${server_path}/${boot_file}&& "	\
 	"source ${loadaddr}\0" \
 
 #define UBI_BOOTCMD	\
@@ -192,20 +196,23 @@
 	"nand erase.part u-boot; nand erase.part u-boot-env; " \
 	"tftp u-boot-nand.imx; nand write ${loadaddr} u-boot ${filesize}\0"
 
-#define CONFIG_BOOTCOMMAND "run usbboot; run sdboot; run nfsboot; run ubiboot"
+#define CONFIG_BOOTCOMMAND "run usbboot; run sdboot; " \
+	"run tftpboot; run nfsboot; run ubiboot"
 
 #define DFU_ALT_NAND_INFO	"vf-bcb part 0,1;u-boot part 0,2;ubi part 0,4"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	MEM_LAYOUT_ENV_SETTINGS \
+	"server_path=/cimc/root/armv7a-neon/exports\0" \
 	"console=ttyLP0\0" \
 	"defargs=\0" \
 	"dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
 	"boot_file=boot/bscript.img\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	NFS_BOOTCMD \
-	SD_BOOTCMD \
 	USB_BOOTCMD \
+	SD_BOOTCMD \
+	TFTP_BOOTCMD \
+	NFS_BOOTCMD \
 	UBI_BOOTCMD \
 	UBOOTUPDATECMD \
 	"setup=setenv setupargs " \
@@ -218,7 +225,7 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#define CONFIG_SYS_PROMPT		"Ravion VFxx # "
+#define CONFIG_SYS_PROMPT		"Ravion VFxxx # "
 #undef CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE		\
