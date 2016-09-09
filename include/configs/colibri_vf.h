@@ -135,9 +135,9 @@
 #define CONFIG_IP_DEFRAG
 #define CONFIG_TFTP_BLOCKSIZE		16384
 
-#define CONFIG_IPADDR		192.168.10.2
+#define CONFIG_IPADDR		192.168.5.101
 #define CONFIG_NETMASK		255.255.255.0
-#define CONFIG_SERVERIP		192.168.10.1
+#define CONFIG_SERVERIP		192.168.5.222
 
 #define CONFIG_BOOTDELAY		1
 #define CONFIG_ZERO_BOOTDELAY_CHECK
@@ -157,22 +157,25 @@
 	"kernel_addr_r=0x81000000\0" \
 	"ramdisk_addr_r=0x82100000\0"
 
+#define USB_BOOTCMD \
+	"usbboot=run setup; setenv bootargs ${defargs} "	\
+	"${setupargs} ${vidargs}; echo Booting from USB device...; " \
+	"usb start && load usb 0:1 ${loadaddr} ${boot_file} && " \
+	"source ${loadaddr}\0" \
+
 #define SD_BOOTCMD \
-	"sdargs=root=/dev/mmcblk0p2 rw rootwait\0"	\
-	"sdboot=run setup; setenv bootargs ${defargs} ${sdargs} " \
+	"sdboot=run setup; setenv bootargs ${defargs} " \
 	"${setupargs} ${vidargs}; echo Booting from MMC/SD card...; " \
-	"load mmc 0:2 ${kernel_addr_r} /boot/${kernel_file} && " \
-	"load mmc 0:2 ${fdt_addr_r} /boot/${soc}-colibri-${fdt_board}.dtb && " \
-	"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+	"mmc rescan && load mmc 0:1 ${loadaddr} ${boot_file} && " \
+	"source ${loadaddr}\0" \
 
 #define NFS_BOOTCMD \
 	"nfsargs=ip=:::::eth0: root=/dev/nfs\0"	\
 	"nfsboot=run setup; " \
 	"setenv bootargs ${defargs} ${nfsargs} " \
 	"${setupargs} ${vidargs}; echo Booting from NFS...;" \
-	"dhcp ${kernel_addr_r} && "	\
-	"tftp ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb && " \
-	"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+	"dhcp ${loadaddr} && "	\
+	"source ${loadaddr}\0" \
 
 #define UBI_BOOTCMD	\
 	"ubiargs=ubi.mtd=ubi root=ubi0:rootfs rootfstype=ubifs " \
@@ -180,12 +183,16 @@
 	"ubiboot=run setup; " \
 	"setenv bootargs ${defargs} ${ubiargs} " \
 	"${setupargs} ${vidargs}; echo Booting from NAND...; " \
-	"ubi part ubi && " \
-	"ubi read ${kernel_addr_r} kernel && " \
-	"ubi read ${fdt_addr_r} dtb && " \
-	"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+	"ubi part ubi && ubifsmount ubi0:rootfs && " \
+	"ubifsload ${loadaddr} ${boot_file} && " \
+	"source ${loadaddr}\0" \
 
-#define CONFIG_BOOTCOMMAND "run ubiboot; run sdboot; run nfsboot"
+#define UBOOTUPDATECMD	\
+	"ubootupdate=" \
+	"nand erase.part u-boot; nand erase.part u-boot-env; " \
+	"tftp u-boot-nand.imx; nand write ${loadaddr} u-boot ${filesize}\0"
+
+#define CONFIG_BOOTCOMMAND "run usbboot; run sdboot; run nfsboot; run ubiboot"
 
 #define DFU_ALT_NAND_INFO	"vf-bcb part 0,1;u-boot part 0,2;ubi part 0,4"
 
@@ -194,35 +201,24 @@
 	"console=ttyLP0\0" \
 	"defargs=\0" \
 	"dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
-	"fdt_board=eval-v3\0" \
-	"fdt_file=${soc}-colibri-${fdt_board}.dtb\0" \
-	"fdt_fixup=;\0" \
-	"kernel_file=zImage\0" \
+	"boot_file=boot/bscript.img\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	NFS_BOOTCMD \
 	SD_BOOTCMD \
-	"setethupdate=if env exists ethaddr; then; else setenv ethaddr " \
-		"00:14:2d:00:00:00; fi; tftpboot ${loadaddr} " \
-		"flash_eth.img && source ${loadaddr}\0" \
-	"setsdupdate=mmc rescan && setenv interface mmc && " \
-		"fatload ${interface} 0:1 ${loadaddr} flash_blk.img && " \
-		"source ${loadaddr}\0" \
-	"setup=setenv setupargs " \
-		"console=tty1 console=${console}" \
-		",${baudrate}n8 ${memargs} consoleblank=0\0" \
-	"setupdate=run setsdupdate || run setusbupdate || run setethupdate\0" \
-	"setusbupdate=usb start && setenv interface usb && " \
-		"fatload ${interface} 0:1 ${loadaddr} flash_blk.img && " \
-		"source ${loadaddr}\0" \
-	"splashpos=m,m\0" \
+	USB_BOOTCMD \
 	UBI_BOOTCMD \
+	UBOOTUPDATECMD \
+	"setup=setenv setupargs " \
+		"console=tty1 ${memargs} consoleblank=0\0" \
+	"debug=setenv bootargs ${bootargs} " \
+		"console=${console},${baudrate}n8\0" \
 	"video-mode=dcufb:640x480-16@60,monitor=lcd\0"
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#define CONFIG_SYS_PROMPT		"Colibri VFxx # "
+#define CONFIG_SYS_PROMPT		"Ravion VFxx # "
 #undef CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE		\
