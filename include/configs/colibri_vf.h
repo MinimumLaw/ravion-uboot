@@ -196,6 +196,11 @@
 	"nand erase.part u-boot; nand erase.part u-boot-env; " \
 	"tftp u-boot-nand.imx; nand write ${loadaddr} u-boot ${filesize}\0"
 
+#define UBIUPDATECMD \
+	"ubiupdate = " \
+	"nand erase.part ubi; tftp ${loadaddr} rootfs-vf.ubi; " \
+	"nand write ${loadaddr} ubi ${filesize}\0"
+
 #define CONFIG_BOOTCOMMAND "run usbboot; run sdboot; " \
 	"run tftpboot; run nfsboot; run ubiboot"
 
@@ -215,6 +220,7 @@
 	NFS_BOOTCMD \
 	UBI_BOOTCMD \
 	UBOOTUPDATECMD \
+	UBIUPDATECMD \
 	"setup=setenv setupargs " \
 		"console=tty1 ${memargs} consoleblank=0\0" \
 	"debug=setenv bootargs ${bootargs} " \
