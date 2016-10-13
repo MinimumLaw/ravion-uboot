@@ -197,7 +197,7 @@
 	"tftp u-boot-nand.imx; nand write ${loadaddr} u-boot ${filesize}\0"
 
 #define UBIUPDATECMD \
-	"ubiupdate = " \
+	"ubiupdate=" \
 	"nand erase.part ubi; tftp ${loadaddr} rootfs-vf.ubi; " \
 	"nand write ${loadaddr} ubi ${filesize}\0"
 
