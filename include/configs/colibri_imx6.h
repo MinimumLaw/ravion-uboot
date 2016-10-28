@@ -79,6 +79,7 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NET
+#define CONFIG_CMD_NFS
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET_BASE_ADDR
@@ -211,7 +212,7 @@
 
 #define NFS_BOOTCMD \
 	"nfsboot=nfs ${script_addr_r} " \
-	"${serverip}:${nfs_root_path}${boot_script_file} && " \
+	"${serverip}:${server_path}${boot_script_file} && " \
 	"source ${script_addr_r}\0" \
 
 #define TFTP_BOOTCMD \
@@ -239,10 +240,13 @@
 	"bootcmd=run usbboot; run sdboot; " \
 	    "run emmcboot; " \
 	    "ums 0 mmc 0\0" \
-	"nfs_root_path=/cimc/root/armv7a-neon/exports\0" \
+	"server_path=/cimc/root/armv7a-neon/exports\0" \
 	"boot_script_file=/boot/bscript.img\0" \
 	"console=ttymxc0\0" \
 	"defargs=enable_wait_mode=off galcore.contiguousSize=50331648\0" \
+	"debug=setenv bootargs \"${bootargs} ${defargs} ${vidargs} " \
+	    "console=tty0 console=${console},${baudrate}n8 \"; " \
+	    "printenv bootargs\0" \
 	MEM_LAYOUT_ENV_SETTINGS \
 	BLKDEV_BOOTCMD \
 	USB_BOOTCMD \

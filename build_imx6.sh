@@ -1,7 +1,14 @@
 #!/bin/bash
+#################################################################
+#              ! ! !    A T T E N T I O N    ! ! !              #
+#################################################################
+# GCC verision 4.5 build u-boot binary, but resulted bootloader #
+# can't load linux kernel (zImage and uImage).  Working version #
+# build with GCC version 4.9 (tested) or above.                 #
+#################################################################
 
 export ARCH=arm
-export CROSS_COMPILE=armv7a-hardfloat-linux-gnueabi-
+export CROSS_COMPILE=arm-hardfloat-linux-gnueabi-
 
 if [ -z ${1} ]; then
     if [ -f .config ]; then
