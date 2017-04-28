@@ -15,6 +15,14 @@ config SYS_SOC
 config SYS_VENDOR
 	default "toradex"
 
+config RAVION_DISPLAY_KOE
+	bool "KOE display connected to ravion board"
+	help
+	 Build uboot command for KOE display init with
+	 bitbanged SPI 9bits bus on SoDIMM pins 56,63,69,77.
+	 (SCL - 69,MOSI 63, MISO - 69, CS - 77)
+	default y
+
 config TRDX_CFG_BLOCK
 	default y
 
