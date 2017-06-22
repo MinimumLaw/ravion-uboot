@@ -25,11 +25,11 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 iomux_v3_cfg_t const bb_spi_9b_pads[] = {
-	MX6_PAD_DI0_DISP_CLK__GPIO4_IO16 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* CS */
-	MX6_PAD_GPIO_8__GPIO1_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),		/* SCK */
-	MX6_PAD_SD2_CMD__GPIO1_IO11 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MOSI */
-	MX6_PAD_EIM_D18__GPIO3_IO18 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MISO */
-#	define PIN_CS	IMX_GPIO_NR(4, 16)
+	MX6_PAD_GPIO_7__GPIO1_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),		/* CS   - soDimm 55 */
+	MX6_PAD_GPIO_8__GPIO1_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),		/* SCK  - soDimm 63 */
+	MX6_PAD_SD2_CMD__GPIO1_IO11 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MOSI - soDimm 69 */
+	MX6_PAD_EIM_D18__GPIO3_IO18 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MISO - soDimm 77 */
+#	define PIN_CS	IMX_GPIO_NR(1, 7)
 #	define PIN_SCK	IMX_GPIO_NR(1, 8)
 #	define PIN_MOSI	IMX_GPIO_NR(1, 11)
 #	define PIN_MISO	IMX_GPIO_NR(3, 18)
@@ -127,6 +127,6 @@ int do_koe_display_init(cmd_tbl_t *cmdtp, int flag, int argc,
 
 U_BOOT_CMD(
 	koe_display_init, 2, 0, do_koe_display_init,
-	"Init KOE display connected to 56,63,69,77 SoDimm pins.",
+	"Init KOE display connected to 55,63,69,77 SoDimm pins.",
 	"<mode>\nWhere mode: on,off,refresh\n"
 );
