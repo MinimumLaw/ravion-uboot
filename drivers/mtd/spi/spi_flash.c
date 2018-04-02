@@ -16,6 +16,7 @@
 #include <spi.h>
 #include <spi_flash.h>
 #include <linux/log2.h>
+#include <dma.h>
 
 #include "sf_internal.h"
 
@@ -28,16 +29,6 @@ static void spi_flash_addr(u32 addr, u8 *cmd)
 	cmd[2] = addr >> 8;
 	cmd[3] = addr >> 0;
 }
-
-/* Read commands array */
-static u8 spi_read_cmds_array[] = {
-	CMD_READ_ARRAY_SLOW,
-	CMD_READ_ARRAY_FAST,
-	CMD_READ_DUAL_OUTPUT_FAST,
-	CMD_READ_DUAL_IO_FAST,
-	CMD_READ_QUAD_OUTPUT_FAST,
-	CMD_READ_QUAD_IO_FAST,
-};
 
 static int read_sr(struct spi_flash *flash, u8 *rs)
 {
@@ -121,6 +112,37 @@ static int write_cr(struct spi_flash *flash, u8 wc)
 }
 #endif
 
+#ifdef CONFIG_SPI_FLASH_STMICRO
+static int read_evcr(struct spi_flash *flash, u8 *evcr)
+{
+	int ret;
+	const u8 cmd = CMD_READ_EVCR;
+
+	ret = spi_flash_read_common(flash, &cmd, 1, evcr, 1);
+	if (ret < 0) {
+		debug("SF: error reading EVCR\n");
+		return ret;
+	}
+
+	return 0;
+}
+
+static int write_evcr(struct spi_flash *flash, u8 evcr)
+{
+	u8 cmd;
+	int ret;
+
+	cmd = CMD_WRITE_EVCR;
+	ret = spi_flash_write_common(flash, &cmd, 1, &evcr, 1);
+	if (ret < 0) {
+		debug("SF: error while writing EVCR register\n");
+		return ret;
+	}
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_SPI_FLASH_BAR
 static int spi_flash_write_bar(struct spi_flash *flash, u32 offset)
 {
@@ -149,7 +171,7 @@ static int spi_flash_read_bar(struct spi_flash *flash, u8 idcode0)
 	int ret;
 
 	if (flash->size <= SPI_FLASH_16MB_BOUN)
-		goto bank_end;
+		goto bar_end;
 
 	switch (idcode0) {
 	case SPI_FLASH_CFI_MFR_SPANSION:
@@ -168,7 +190,7 @@ static int spi_flash_read_bar(struct spi_flash *flash, u8 idcode0)
 		return ret;
 	}
 
-bank_end:
+bar_end:
 	flash->bank_curr = curr_bank;
 	return 0;
 }
@@ -177,13 +199,15 @@ bank_end:
 #ifdef CONFIG_SF_DUAL_FLASH
 static void spi_flash_dual(struct spi_flash *flash, u32 *addr)
 {
+	struct spi_slave *spi = flash->spi;
+
 	switch (flash->dual_flash) {
 	case SF_DUAL_STACKED_FLASH:
 		if (*addr >= (flash->size >> 1)) {
 			*addr -= flash->size >> 1;
-			flash->spi->flags |= SPI_XFER_U_PAGE;
+			spi->flags |= SPI_XFER_U_PAGE;
 		} else {
-			flash->spi->flags &= ~SPI_XFER_U_PAGE;
+			spi->flags &= ~SPI_XFER_U_PAGE;
 		}
 		break;
 	case SF_DUAL_PARALLEL_FLASH:
@@ -268,7 +292,7 @@ int spi_flash_write_common(struct spi_flash *flash, const u8 *cmd,
 	if (buf == NULL)
 		timeout = SPI_FLASH_PAGE_ERASE_TIMEOUT;
 
-	ret = spi_claim_bus(flash->spi);
+	ret = spi_claim_bus(spi);
 	if (ret) {
 		debug("SF: unable to claim SPI bus\n");
 		return ret;
@@ -353,6 +377,7 @@ int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 		size_t len, const void *buf)
 {
+	struct spi_slave *spi = flash->spi;
 	unsigned long byte_addr, page_size;
 	u32 write_addr;
 	size_t chunk_len, actual;
@@ -385,9 +410,9 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 		byte_addr = offset % page_size;
 		chunk_len = min(len - actual, (size_t)(page_size - byte_addr));
 
-		if (flash->spi->max_write_size)
+		if (spi->max_write_size)
 			chunk_len = min(chunk_len,
-					(size_t)flash->spi->max_write_size);
+					(size_t)spi->max_write_size);
 
 		spi_flash_addr(write_addr, cmd);
 
@@ -413,7 +438,7 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 	struct spi_slave *spi = flash->spi;
 	int ret;
 
-	ret = spi_claim_bus(flash->spi);
+	ret = spi_claim_bus(spi);
 	if (ret) {
 		debug("SF: unable to claim SPI bus\n");
 		return ret;
@@ -430,14 +455,23 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 	return ret;
 }
 
+/*
+ * TODO: remove the weak after all the other spi_flash_copy_mmap
+ * implementations removed from drivers
+ */
 void __weak spi_flash_copy_mmap(void *data, void *offset, size_t len)
 {
+#ifdef CONFIG_DMA
+	if (!dma_memcpy(data, offset, len))
+		return;
+#endif
 	memcpy(data, offset, len);
 }
 
 int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
+	struct spi_slave *spi = flash->spi;
 	u8 *cmd, cmdsz;
 	u32 remain_len, read_len, read_addr;
 	int bank_sel = 0;
@@ -445,15 +479,15 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 
 	/* Handle memory-mapped SPI */
 	if (flash->memory_map) {
-		ret = spi_claim_bus(flash->spi);
+		ret = spi_claim_bus(spi);
 		if (ret) {
 			debug("SF: unable to claim SPI bus\n");
 			return ret;
 		}
-		spi_xfer(flash->spi, 0, NULL, NULL, SPI_XFER_MMAP);
+		spi_xfer(spi, 0, NULL, NULL, SPI_XFER_MMAP);
 		spi_flash_copy_mmap(data, flash->memory_map + offset, len);
-		spi_xfer(flash->spi, 0, NULL, NULL, SPI_XFER_MMAP_END);
-		spi_release_bus(flash->spi);
+		spi_xfer(spi, 0, NULL, NULL, SPI_XFER_MMAP_END);
+		spi_release_bus(spi);
 		return 0;
 	}
 
@@ -505,6 +539,7 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 #ifdef CONFIG_SPI_FLASH_SST
 static int sst_byte_write(struct spi_flash *flash, u32 offset, const void *buf)
 {
+	struct spi_slave *spi = flash->spi;
 	int ret;
 	u8 cmd[4] = {
 		CMD_SST_BP,
@@ -514,13 +549,13 @@ static int sst_byte_write(struct spi_flash *flash, u32 offset, const void *buf)
 	};
 
 	debug("BP[%02x]: 0x%p => cmd = { 0x%02x 0x%06x }\n",
-	      spi_w8r8(flash->spi, CMD_READ_STATUS), buf, cmd[0], offset);
+	      spi_w8r8(spi, CMD_READ_STATUS), buf, cmd[0], offset);
 
 	ret = spi_flash_cmd_write_enable(flash);
 	if (ret)
 		return ret;
 
-	ret = spi_flash_cmd_write(flash->spi, cmd, sizeof(cmd), buf, 1);
+	ret = spi_flash_cmd_write(spi, cmd, sizeof(cmd), buf, 1);
 	if (ret)
 		return ret;
 
@@ -530,11 +565,12 @@ static int sst_byte_write(struct spi_flash *flash, u32 offset, const void *buf)
 int sst_write_wp(struct spi_flash *flash, u32 offset, size_t len,
 		const void *buf)
 {
+	struct spi_slave *spi = flash->spi;
 	size_t actual, cmd_len;
 	int ret;
 	u8 cmd[4];
 
-	ret = spi_claim_bus(flash->spi);
+	ret = spi_claim_bus(spi);
 	if (ret) {
 		debug("SF: Unable to claim SPI bus\n");
 		return ret;
@@ -561,10 +597,10 @@ int sst_write_wp(struct spi_flash *flash, u32 offset, size_t len,
 
 	for (; actual < len - 1; actual += 2) {
 		debug("WP[%02x]: 0x%p => cmd = { 0x%02x 0x%06x }\n",
-		      spi_w8r8(flash->spi, CMD_READ_STATUS), buf + actual,
+		      spi_w8r8(spi, CMD_READ_STATUS), buf + actual,
 		      cmd[0], offset);
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, cmd_len,
+		ret = spi_flash_cmd_write(spi, cmd, cmd_len,
 					buf + actual, 2);
 		if (ret) {
 			debug("SF: sst word program failed\n");
@@ -590,17 +626,18 @@ int sst_write_wp(struct spi_flash *flash, u32 offset, size_t len,
 	debug("SF: sst: program %s %zu bytes @ 0x%zx\n",
 	      ret ? "failure" : "success", len, offset - actual);
 
-	spi_release_bus(flash->spi);
+	spi_release_bus(spi);
 	return ret;
 }
 
 int sst_write_bp(struct spi_flash *flash, u32 offset, size_t len,
 		const void *buf)
 {
+	struct spi_slave *spi = flash->spi;
 	size_t actual;
 	int ret;
 
-	ret = spi_claim_bus(flash->spi);
+	ret = spi_claim_bus(spi);
 	if (ret) {
 		debug("SF: Unable to claim SPI bus\n");
 		return ret;
@@ -621,14 +658,14 @@ int sst_write_bp(struct spi_flash *flash, u32 offset, size_t len,
 	debug("SF: sst: program %s %zu bytes @ 0x%zx\n",
 	      ret ? "failure" : "success", len, offset - actual);
 
-	spi_release_bus(flash->spi);
+	spi_release_bus(spi);
 	return ret;
 }
 #endif
 
 #if defined(CONFIG_SPI_FLASH_STMICRO) || defined(CONFIG_SPI_FLASH_SST)
 static void stm_get_locked_range(struct spi_flash *flash, u8 sr, loff_t *ofs,
-				 u32 *len)
+				 u64 *len)
 {
 	u8 mask = SR_BP2 | SR_BP1 | SR_BP0;
 	int shift = ffs(mask) - 1;
@@ -648,11 +685,11 @@ static void stm_get_locked_range(struct spi_flash *flash, u8 sr, loff_t *ofs,
 /*
  * Return 1 if the entire region is locked, 0 otherwise
  */
-static int stm_is_locked_sr(struct spi_flash *flash, u32 ofs, u32 len,
+static int stm_is_locked_sr(struct spi_flash *flash, loff_t ofs, u64 len,
 			    u8 sr)
 {
 	loff_t lock_offs;
-	u32 lock_len;
+	u64 lock_len;
 
 	stm_get_locked_range(flash, sr, &lock_offs, &lock_len);
 
@@ -803,7 +840,7 @@ int stm_unlock(struct spi_flash *flash, u32 ofs, size_t len)
 
 
 #ifdef CONFIG_SPI_FLASH_MACRONIX
-static int spi_flash_set_qeb_mxic(struct spi_flash *flash)
+static int macronix_quad_enable(struct spi_flash *flash)
 {
 	u8 qeb_status;
 	int ret;
@@ -812,12 +849,18 @@ static int spi_flash_set_qeb_mxic(struct spi_flash *flash)
 	if (ret < 0)
 		return ret;
 
-	if (qeb_status & STATUS_QEB_MXIC) {
-		debug("SF: mxic: QEB is already set\n");
-	} else {
-		ret = write_sr(flash, STATUS_QEB_MXIC);
-		if (ret < 0)
-			return ret;
+	if (qeb_status & STATUS_QEB_MXIC)
+		return 0;
+
+	ret = write_sr(flash, qeb_status | STATUS_QEB_MXIC);
+	if (ret < 0)
+		return ret;
+
+	/* read SR and check it */
+	ret = read_sr(flash, &qeb_status);
+	if (!(ret >= 0 && (qeb_status & STATUS_QEB_MXIC))) {
+		printf("SF: Macronix SR Quad bit not clear\n");
+		return -EINVAL;
 	}
 
 	return ret;
@@ -825,7 +868,7 @@ static int spi_flash_set_qeb_mxic(struct spi_flash *flash)
 #endif
 
 #if defined(CONFIG_SPI_FLASH_SPANSION) || defined(CONFIG_SPI_FLASH_WINBOND)
-static int spi_flash_set_qeb_winspan(struct spi_flash *flash)
+static int spansion_quad_enable(struct spi_flash *flash)
 {
 	u8 qeb_status;
 	int ret;
@@ -834,34 +877,67 @@ static int spi_flash_set_qeb_winspan(struct spi_flash *flash)
 	if (ret < 0)
 		return ret;
 
-	if (qeb_status & STATUS_QEB_WINSPAN) {
-		debug("SF: winspan: QEB is already set\n");
-	} else {
-		ret = write_cr(flash, STATUS_QEB_WINSPAN);
-		if (ret < 0)
-			return ret;
+	if (qeb_status & STATUS_QEB_WINSPAN)
+		return 0;
+
+	ret = write_cr(flash, qeb_status | STATUS_QEB_WINSPAN);
+	if (ret < 0)
+		return ret;
+
+	/* read CR and check it */
+	ret = read_cr(flash, &qeb_status);
+	if (!(ret >= 0 && (qeb_status & STATUS_QEB_WINSPAN))) {
+		printf("SF: Spansion CR Quad bit not clear\n");
+		return -EINVAL;
 	}
 
 	return ret;
 }
 #endif
 
-static int spi_flash_set_qeb(struct spi_flash *flash, u8 idcode0)
+#ifdef CONFIG_SPI_FLASH_STMICRO
+static int micron_quad_enable(struct spi_flash *flash)
+{
+	u8 qeb_status;
+	int ret;
+
+	ret = read_evcr(flash, &qeb_status);
+	if (ret < 0)
+		return ret;
+
+	if (!(qeb_status & STATUS_QEB_MICRON))
+		return 0;
+
+	ret = write_evcr(flash, qeb_status & ~STATUS_QEB_MICRON);
+	if (ret < 0)
+		return ret;
+
+	/* read EVCR and check it */
+	ret = read_evcr(flash, &qeb_status);
+	if (!(ret >= 0 && !(qeb_status & STATUS_QEB_MICRON))) {
+		printf("SF: Micron EVCR Quad bit not clear\n");
+		return -EINVAL;
+	}
+
+	return ret;
+}
+#endif
+
+static int set_quad_mode(struct spi_flash *flash, u8 idcode0)
 {
 	switch (idcode0) {
 #ifdef CONFIG_SPI_FLASH_MACRONIX
 	case SPI_FLASH_CFI_MFR_MACRONIX:
-		return spi_flash_set_qeb_mxic(flash);
+		return macronix_quad_enable(flash);
 #endif
 #if defined(CONFIG_SPI_FLASH_SPANSION) || defined(CONFIG_SPI_FLASH_WINBOND)
 	case SPI_FLASH_CFI_MFR_SPANSION:
 	case SPI_FLASH_CFI_MFR_WINBOND:
-		return spi_flash_set_qeb_winspan(flash);
+		return spansion_quad_enable(flash);
 #endif
 #ifdef CONFIG_SPI_FLASH_STMICRO
 	case SPI_FLASH_CFI_MFR_STMICRO:
-		debug("SF: QEB is volatile for %02x flash\n", idcode0);
-		return 0;
+		return micron_quad_enable(flash);
 #endif
 	default:
 		printf("SF: Need set QEB func for %02x flash\n", idcode0);
@@ -872,14 +948,10 @@ static int spi_flash_set_qeb(struct spi_flash *flash, u8 idcode0)
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 int spi_flash_decode_fdt(const void *blob, struct spi_flash *flash)
 {
+#ifdef CONFIG_DM_SPI_FLASH
 	fdt_addr_t addr;
 	fdt_size_t size;
-	int node;
-
-	/* If there is no node, do nothing */
-	node = fdtdec_next_compatible(blob, 0, COMPAT_GENERIC_SPI_FLASH);
-	if (node < 0)
-		return 0;
+	int node = flash->dev->of_offset;
 
 	addr = fdtdec_get_addr_size(blob, node, "memory-map", &size);
 	if (addr == FDT_ADDR_T_NONE) {
@@ -892,6 +964,7 @@ int spi_flash_decode_fdt(const void *blob, struct spi_flash *flash)
 		return -1;
 	}
 	flash->memory_map = map_sysmem(addr, size);
+#endif
 
 	return 0;
 }
@@ -902,15 +975,21 @@ int spi_flash_scan(struct spi_flash *flash)
 	struct spi_slave *spi = flash->spi;
 	const struct spi_flash_params *params;
 	u16 jedec, ext_jedec;
-	u8 idcode[5];
-	u8 cmd;
+	u8 cmd, idcode[5];
 	int ret;
+	static u8 spi_read_cmds_array[] = {
+		CMD_READ_ARRAY_SLOW,
+		CMD_READ_ARRAY_FAST,
+		CMD_READ_DUAL_OUTPUT_FAST,
+		CMD_READ_QUAD_OUTPUT_FAST,
+		CMD_READ_DUAL_IO_FAST,
+		CMD_READ_QUAD_IO_FAST };
 
 	/* Read the ID codes */
 	ret = spi_flash_cmd(spi, CMD_READ_ID, idcode, sizeof(idcode));
 	if (ret) {
 		printf("SF: Failed to get idcodes\n");
-		return -EINVAL;
+		return ret;
 	}
 
 #ifdef DEBUG
@@ -950,7 +1029,7 @@ int spi_flash_scan(struct spi_flash *flash)
 	/* Assign spi data */
 	flash->name = params->name;
 	flash->memory_map = spi->memory_map;
-	flash->dual_flash = flash->spi->option;
+	flash->dual_flash = spi->option;
 
 	/* Assign spi flash flags */
 	if (params->flags & SST_WR)
@@ -961,7 +1040,7 @@ int spi_flash_scan(struct spi_flash *flash)
 	flash->write = spi_flash_cmd_write_ops;
 #if defined(CONFIG_SPI_FLASH_SST)
 	if (flash->flags & SNOR_F_SST_WR) {
-		if (flash->spi->op_mode_tx & SPI_OPM_TX_BP)
+		if (spi->mode & SPI_TX_BYTE)
 			flash->write = sst_write_bp;
 		else
 			flash->write = sst_write_wp;
@@ -1025,7 +1104,7 @@ int spi_flash_scan(struct spi_flash *flash)
 	flash->sector_size = flash->erase_size;
 
 	/* Look for the fastest read cmd */
-	cmd = fls(params->e_rd_cmd & flash->spi->op_mode_rx);
+	cmd = fls(params->e_rd_cmd & spi->mode_rx);
 	if (cmd) {
 		cmd = spi_read_cmds_array[cmd - 1];
 		flash->read_cmd = cmd;
@@ -1035,7 +1114,7 @@ int spi_flash_scan(struct spi_flash *flash)
 	}
 
 	/* Not require to look for fastest only two write cmds yet */
-	if (params->flags & WR_QPP && flash->spi->op_mode_tx & SPI_OPM_TX_QPP)
+	if (params->flags & WR_QPP && spi->mode & SPI_TX_QUAD)
 		flash->write_cmd = CMD_QUAD_PAGE_PROGRAM;
 	else
 		/* Go for default supported write cmd */
@@ -1045,7 +1124,7 @@ int spi_flash_scan(struct spi_flash *flash)
 	if ((flash->read_cmd == CMD_READ_QUAD_OUTPUT_FAST) ||
 	    (flash->read_cmd == CMD_READ_QUAD_IO_FAST) ||
 	    (flash->write_cmd == CMD_QUAD_PAGE_PROGRAM)) {
-		ret = spi_flash_set_qeb(flash, idcode[0]);
+		ret = set_quad_mode(flash, idcode[0]);
 		if (ret) {
 			debug("SF: Fail to set QEB for %02x\n", idcode[0]);
 			return -EINVAL;

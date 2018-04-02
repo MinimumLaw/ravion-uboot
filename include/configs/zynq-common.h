@@ -36,12 +36,8 @@
 #define CONFIG_SYS_BAUDRATE_TABLE  \
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400}
 
-/* DCC driver */
-#if defined(CONFIG_ZYNQ_DCC)
-# define CONFIG_ARM_DCC
-#else
-# define CONFIG_ZYNQ_SERIAL
-#endif
+#define CONFIG_ARM_DCC
+#define CONFIG_ZYNQ_SERIAL
 
 #define CONFIG_ZYNQ_GPIO
 
@@ -50,6 +46,7 @@
 # define CONFIG_MII
 # define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 # define CONFIG_PHY_MARVELL
+# define CONFIG_PHY_REALTEK
 # define CONFIG_BOOTP_SERVERIP
 # define CONFIG_BOOTP_BOOTPATH
 # define CONFIG_BOOTP_GATEWAY
@@ -66,7 +63,6 @@
 #ifdef CONFIG_ZYNQ_QSPI
 # define CONFIG_SF_DEFAULT_SPEED	30000000
 # define CONFIG_SPI_FLASH_ISSI
-# define CONFIG_SPI_FLASH_BAR
 # define CONFIG_CMD_SF
 #endif
 
@@ -87,11 +83,10 @@
 #endif
 
 /* MMC */
-#if defined(CONFIG_ZYNQ_SDHCI0) || defined(CONFIG_ZYNQ_SDHCI1)
+#if defined(CONFIG_ZYNQ_SDHCI)
 # define CONFIG_MMC
 # define CONFIG_GENERIC_MMC
 # define CONFIG_SDHCI
-# define CONFIG_ZYNQ_SDHCI
 # define CONFIG_CMD_MMC
 # define CONFIG_ZYNQ_SDHCI_MAX_FREQ	52000000
 #endif
@@ -132,7 +127,7 @@
 	"dfu_ram=run dfu_ram_info && dfu 0 ram 0\0" \
 	"thor_ram=run dfu_ram_info && thordown 0 ram 0\0"
 
-# if defined(CONFIG_ZYNQ_SDHCI0) || defined(CONFIG_ZYNQ_SDHCI1)
+# if defined(CONFIG_ZYNQ_SDHCI)
 #  define CONFIG_DFU_MMC
 #  define DFU_ALT_INFO_MMC \
 	"dfu_mmc_info=" \
@@ -198,7 +193,11 @@
 /* Environment */
 #ifndef CONFIG_ENV_IS_NOWHERE
 # ifndef CONFIG_SYS_NO_FLASH
+/* Environment in NOR flash */
 #  define CONFIG_ENV_IS_IN_FLASH
+# elif defined(CONFIG_ZYNQ_QSPI)
+/* Environment in Serial Flash */
+#  define CONFIG_ENV_IS_IN_SPI_FLASH
 # elif defined(CONFIG_SYS_NO_FLASH)
 #  define CONFIG_ENV_IS_NOWHERE
 # endif
@@ -228,8 +227,7 @@
 	"usbboot=if usb start; then " \
 			"echo Copying FIT from USB to RAM... && " \
 			"load usb 0 ${load_addr} ${fit_image} && " \
-			"bootm ${load_addr}\0" \
-		"fi\0" \
+			"bootm ${load_addr}; fi\0" \
 		DFU_ALT_INFO
 
 #define CONFIG_BOOTCOMMAND		"run $modeboot"
@@ -289,9 +287,7 @@
 #define CONFIG_SYS_BOOTM_LEN	(60 * 1024 * 1024)
 
 /* Boot FreeBSD/vxWorks from an ELF image */
-#if defined(CONFIG_ZYNQ_BOOT_FREEBSD)
-# define CONFIG_SYS_MMC_MAX_DEVICE	1
-#endif
+#define CONFIG_SYS_MMC_MAX_DEVICE	1
 
 #define CONFIG_SYS_LDSCRIPT  "arch/arm/mach-zynq/u-boot.lds"
 
@@ -308,11 +304,12 @@
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_BOARD_INIT
+#define CONFIG_SPL_RAM_DEVICE
 
 #define CONFIG_SPL_LDSCRIPT	"arch/arm/mach-zynq/u-boot-spl.lds"
 
 /* MMC support */
-#ifdef CONFIG_ZYNQ_SDHCI0
+#ifdef CONFIG_ZYNQ_SDHCI
 #define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR 0x300 /* address 0x60000 */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS      0x200 /* 256 KB */

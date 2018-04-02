@@ -19,6 +19,7 @@
 #include <asm/io.h>
 #include <phy.h>
 #include <miiphy.h>
+#include <wait_bit.h>
 #include <watchdog.h>
 #include <asm/system.h>
 #include <asm/arch/hardware.h>
@@ -56,7 +57,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ZYNQ_GEM_NWCFG_SPEED1000	0x000000400 /* 1Gbps operation */
 #define ZYNQ_GEM_NWCFG_FDEN		0x000000002 /* Full Duplex mode */
 #define ZYNQ_GEM_NWCFG_FSREM		0x000020000 /* FCS removal */
+#ifdef CONFIG_ARM64
+#define ZYNQ_GEM_NWCFG_MDCCLKDIV	0x000100000 /* Div pclk by 64, max 160MHz */
+#else
 #define ZYNQ_GEM_NWCFG_MDCCLKDIV	0x0000c0000 /* Div pclk by 48, max 120MHz */
+#endif
 
 #ifdef CONFIG_ARM64
 # define ZYNQ_GEM_DBUS_WIDTH	(1 << 21) /* 64 bit bus */
@@ -448,38 +453,6 @@ static int zynq_gem_init(struct udevice *dev)
 	return 0;
 }
 
-static int wait_for_bit(const char *func, u32 *reg, const u32 mask,
-			bool set, unsigned int timeout)
-{
-	u32 val;
-	unsigned long start = get_timer(0);
-
-	while (1) {
-		val = readl(reg);
-
-		if (!set)
-			val = ~val;
-
-		if ((val & mask) == mask)
-			return 0;
-
-		if (get_timer(start) > timeout)
-			break;
-
-		if (ctrlc()) {
-			puts("Abort\n");
-			return -EINTR;
-		}
-
-		udelay(1);
-	}
-
-	debug("%s: Timeout (reg=%p mask=%08x wait_set=%i)\n",
-	      func, reg, mask, set);
-
-	return -ETIMEDOUT;
-}
-
 static int zynq_gem_send(struct udevice *dev, void *ptr, int len)
 {
 	u32 addr, size;
@@ -521,7 +494,7 @@ static int zynq_gem_send(struct udevice *dev, void *ptr, int len)
 		printf("TX buffers exhausted in mid frame\n");
 
 	return wait_for_bit(__func__, &regs->txsr, ZYNQ_GEM_TSR_DONE,
-			    true, 20000);
+			    true, 20000, true);
 }
 
 /* Do not check frame_recd flag in rx_status register 0x20 - just poll BD */

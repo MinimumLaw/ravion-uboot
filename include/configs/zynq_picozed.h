@@ -10,13 +10,9 @@
 #ifndef __CONFIG_ZYNQ_PICOZED_H
 #define __CONFIG_ZYNQ_PICOZED_H
 
-#define CONFIG_SYS_SDRAM_SIZE		(1024 * 1024 * 1024)
-
 #define CONFIG_SYS_NO_FLASH
 
-#define CONFIG_ZYNQ_SDHCI1
 #define CONFIG_ZYNQ_USB
-#define CONFIG_ZYNQ_BOOT_FREEBSD
 
 #include <configs/zynq-common.h>
 

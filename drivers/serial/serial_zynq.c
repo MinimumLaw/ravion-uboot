@@ -19,7 +19,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define ZYNQ_UART_SR_TXFULL	0x00000010 /* TX FIFO full */
+#define ZYNQ_UART_SR_TXEMPTY	(1 << 3) /* TX FIFO empty */
 #define ZYNQ_UART_SR_TXACTIVE	(1 << 11)  /* TX active */
 #define ZYNQ_UART_SR_RXEMPTY	0x00000002 /* RX FIFO empty */
 
@@ -97,7 +97,7 @@ static void _uart_zynq_serial_init(struct uart_zynq *regs)
 
 static int _uart_zynq_serial_putc(struct uart_zynq *regs, const char c)
 {
-	if (readl(&regs->channel_sts) & ZYNQ_UART_SR_TXFULL)
+	if (!(readl(&regs->channel_sts) & ZYNQ_UART_SR_TXEMPTY))
 		return -EAGAIN;
 
 	writel(c, &regs->tx_rx_fifo);
@@ -156,13 +156,8 @@ static int zynq_serial_pending(struct udevice *dev, bool input)
 static int zynq_serial_ofdata_to_platdata(struct udevice *dev)
 {
 	struct zynq_uart_priv *priv = dev_get_priv(dev);
-	fdt_addr_t addr;
 
-	addr = fdtdec_get_addr(gd->fdt_blob, dev->of_offset, "reg");
-	if (addr == FDT_ADDR_T_NONE)
-		return -EINVAL;
-
-	priv->regs = (struct uart_zynq *)addr;
+	priv->regs = (struct uart_zynq *)dev_get_addr(dev);
 
 	return 0;
 }
@@ -177,6 +172,7 @@ static const struct dm_serial_ops zynq_serial_ops = {
 static const struct udevice_id zynq_serial_ids[] = {
 	{ .compatible = "xlnx,xuartps" },
 	{ .compatible = "cdns,uart-r1p8" },
+	{ .compatible = "cdns,uart-r1p12" },
 	{ }
 };
 

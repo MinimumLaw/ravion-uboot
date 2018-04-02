@@ -443,6 +443,12 @@ static int sdhci_init(struct mmc *mmc)
 	sdhci_set_power(host, fls(mmc->cfg->voltages) - 1);
 
 	if (host->quirks & SDHCI_QUIRK_NO_CD) {
+#if defined(CONFIG_PIC32_SDHCI)
+		/* PIC32 SDHCI CD errata:
+		 * - set CD_TEST and clear CD_TEST_INS bit
+		 */
+		sdhci_writeb(host, SDHCI_CTRL_CD_TEST, SDHCI_HOST_CONTROL);
+#else
 		unsigned int status;
 
 		sdhci_writeb(host, SDHCI_CTRL_CD_TEST_INS | SDHCI_CTRL_CD_TEST,
@@ -453,6 +459,7 @@ static int sdhci_init(struct mmc *mmc)
 		    (!(status & SDHCI_CARD_STATE_STABLE)) ||
 		    (!(status & SDHCI_CARD_DETECT_PIN_LEVEL)))
 			status = sdhci_readl(host, SDHCI_PRESENT_STATE);
+#endif
 	}
 
 	/* Enable only interrupts served by the SD controller */
@@ -530,6 +537,10 @@ int add_sdhci(struct sdhci_host *host, u32 max_clk, u32 min_clk)
 		if (caps & SDHCI_CAN_DO_8BIT)
 			host->cfg.host_caps |= MMC_MODE_8BIT;
 	}
+
+	if (host->quirks & SDHCI_QUIRK_NO_HISPD_BIT)
+		host->cfg.host_caps &= ~(MMC_MODE_HS | MMC_MODE_HS_52MHz);
+
 	if (host->host_caps)
 		host->cfg.host_caps |= host->host_caps;
 
