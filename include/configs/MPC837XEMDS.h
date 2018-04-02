@@ -469,7 +469,6 @@ extern int board_pci_host_broken(void);
 /*
  * Command line configuration.
  */
-#define CONFIG_CMD_DATE
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI
@@ -643,8 +642,6 @@ extern int board_pci_host_broken(void);
 #define CONFIG_HAS_ETH0
 #define CONFIG_HAS_ETH1
 #endif
-
-#define CONFIG_BAUDRATE 115200
 
 #define CONFIG_LOADADDR 800000	/* default location for tftp and bootm */
 

@@ -13,7 +13,7 @@
 #define CONFIG_GICV3
 #define CONFIG_FSL_TZPC_BP147
 
-#include <asm/arch/ls2080a_stream_id.h>
+#include <asm/arch/stream_id_lsch3.h>
 #include <asm/arch/config.h>
 
 /* Link Definitions */
@@ -91,7 +91,6 @@
 #define CONFIG_SYS_NS16550_REG_SIZE     1
 #define CONFIG_SYS_NS16550_CLK          (get_serial_clock())
 
-#define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /* IFC */
@@ -141,7 +140,6 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SYS_NAND_BASE_PHYS		0x30000000
 
 /* MC firmware */
-#define CONFIG_FSL_MC_ENET
 /* TODO Actual DPL max length needs to be confirmed with the MC FW team */
 #define CONFIG_SYS_LS_MC_DPC_MAX_LENGTH	    0x20000
 #define CONFIG_SYS_LS_MC_DRAM_DPC_OFFSET    0x00F00000
@@ -159,7 +157,6 @@ unsigned long long get_qixis_addr(void);
  */
 #ifdef CONFIG_FSL_MC_ENET
 #define CONFIG_SYS_LS_MC_DRAM_BLOCK_MIN_SIZE		(512UL * 1024 * 1024)
-#define CONFIG_SYS_MC_RSV_MEM_ALIGN			(512UL * 1024 * 1024)
 #endif
 
 /* Command line configuration */

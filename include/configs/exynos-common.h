@@ -23,7 +23,7 @@
 
 /* input clock of PLL: 24MHz input clock */
 #define CONFIG_SYS_CLK_FREQ		24000000
-#define CONFIG_TIMER_CLK_FREQ		CONFIG_SYS_CLK_FREQ
+#define COUNTER_FREQUENCY		CONFIG_SYS_CLK_FREQ
 
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
@@ -34,7 +34,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (80 << 20))
 
 /* select serial console configuration */
-#define CONFIG_BAUDRATE			115200
 
 /* SD/MMC configuration */
 #define CONFIG_BOUNCE_BUFFER

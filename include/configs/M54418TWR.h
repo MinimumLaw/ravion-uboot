@@ -22,7 +22,6 @@
 
 #define CONFIG_MCFUART
 #define CONFIG_SYS_UART_PORT		(0)
-#define CONFIG_BAUDRATE		115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600 , 19200 , 38400 , 57600, 115200 }
 
 #undef CONFIG_WATCHDOG
@@ -38,7 +37,6 @@
 #define CONFIG_BOOTP_HOSTNAME
 
 /* Command line configuration */
-#undef CONFIG_CMD_DATE
 #undef CONFIG_CMD_JFFS2
 #undef CONFIG_CMD_NAND
 #define CONFIG_CMD_REGINFO

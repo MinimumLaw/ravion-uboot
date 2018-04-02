@@ -37,7 +37,6 @@
 #define CONFIG_SYS_SDRAM_BASE		0x88000000
 #define CONFIG_SYS_MALLOC_LEN		(256 << 10)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(4 << 10)
-#define CONFIG_STACKSIZE		(4 << 10) /* regular stack */
 
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(192 << 10)
@@ -54,12 +53,10 @@
  * Commands
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_CMD_CLK
 
 /*------------------------------------------------------------
  * Console Configuration
  */
-#define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_CBSIZE		1024 /* Console I/O Buffer Size   */
 #define CONFIG_SYS_MAXARGS		16   /* max number of command args*/
 #define CONFIG_SYS_PBSIZE		\

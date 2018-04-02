@@ -11,8 +11,6 @@
 
 #include <asm/arch/imx-regs.h>
 
-#define CONFIG_VF610
-
 #define CONFIG_SYS_FSL_CLK
 
 #define CONFIG_MACH_TYPE		4146
@@ -32,7 +30,6 @@
 
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_BAUDRATE			115200
 
 /* NAND support */
 #define CONFIG_CMD_NAND
@@ -211,12 +208,6 @@
 
 #define CONFIG_SYS_MEMTEST_START	0x80010000
 #define CONFIG_SYS_MEMTEST_END		0x87C00000
-
-/*
- * Stack sizes
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE		(128 * 1024)	/* regular stack */
 
 /* Physical memory map */
 #define CONFIG_NR_DRAM_BANKS		1

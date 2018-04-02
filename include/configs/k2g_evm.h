@@ -10,6 +10,9 @@
 #ifndef __CONFIG_K2G_EVM_H
 #define __CONFIG_K2G_EVM_H
 
+#include <environment/ti/mmc.h>
+#include <environment/ti/spi.h>
+
 /* Platform type */
 #define CONFIG_SOC_K2G
 
@@ -76,4 +79,5 @@
 #define CONFIG_BOUNCE_BUFFER
 #endif
 
+#define SPI_MTD_PARTS	KEYSTONE_SPI1_MTD_PARTS
 #endif /* __CONFIG_K2G_EVM_H */

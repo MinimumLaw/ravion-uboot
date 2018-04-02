@@ -50,7 +50,6 @@
  * Serial Driver
  */
 #define CONFIG_SYS_LPC32XX_UART		5   /* UART5 - NS16550 */
-#define CONFIG_BAUDRATE			115200
 
 /*
  * Ethernet Driver
@@ -83,7 +82,6 @@
  * I2C RTC
  */
 
-#define CONFIG_CMD_DATE
 #define CONFIG_RTC_DS1374
 
 /*

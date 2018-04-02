@@ -48,7 +48,6 @@
 #define CONFIG_SYS_MEMTEST_END 	(PHYS_SDRAM_1 + 0x2000000 + 16*1024*1024)
 
 #define CONFIG_NR_DRAM_BANKS	1 /* we have 1 bank of DRAM */
-#define CONFIG_STACKSIZE	(256*1024) /* regular stack */
 
 #define CONFIG_SYS_DA850_SYSCFG_SUSPSRC (	\
 	DAVINCI_SYSCFG_SUSPSRC_TIMER0 |		\
@@ -127,7 +126,6 @@
 #define CONFIG_SYS_NS16550_COM1	DAVINCI_UART2_BASE /* Base address of UART2 */
 #define CONFIG_SYS_NS16550_CLK	clk_get(DAVINCI_UART2_CLKID)
 #define CONFIG_CONS_INDEX	1		/* use UART0 for console */
-#define CONFIG_BAUDRATE		115200		/* Default baud rate */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 #define CONFIG_SPI
@@ -262,36 +260,32 @@
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_REVISION_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
-#define CONFIG_BOOTARGS		"console=ttyS2,115200n8 root=/dev/mmcblk0p2 rw rootwait ip=off"
 #define CONFIG_BOOTCOMMAND \
-	"if mmc rescan; then " \
-		"run mmcboot; " \
-	"else " \
-		"run spiboot; " \
-	"fi"
-#define CONFIG_EXTRA_ENV_SETTINGS \
+		"run envboot; " \
+		"run mmcboot; "
+
+#define DEFAULT_LINUX_BOOT_ENV \
+	"loadaddr=0xc0700000\0" \
 	"fdtaddr=0xc0600000\0" \
+	"scriptaddr=0xc0600000\0"
+
+#include <environment/ti/mmc.h>
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	DEFAULT_LINUX_BOOT_ENV \
+	DEFAULT_MMC_TI_ARGS \
+	"bootpart=0:2\0" \
+	"bootdir=/boot\0" \
+	"bootfile=zImage\0" \
 	"fdtfile=da850-lcdk.dtb\0" \
-	"fdtboot=bootz 0xc0700000 - ${fdtaddr};\0" \
-	"mmcboot=" \
-		"if fatload mmc 0 0xc0600000 boot.scr; then " \
-			"source 0xc0600000; " \
-		"else " \
-			"fatload mmc 0 0xc0700000 " \
-				__stringify(CONFIG_BOOTFILE) "; " \
-			"fatload mmc 0 ${fdtaddr} ${fdtfile}; " \
-			"run fdtboot; " \
-		"fi;\0" \
-	"spiboot=" \
-		"sf probe 0; " \
-		"sf read 0xc0700000 0x80000 0x220000; " \
-		"bootz 0xc0700000;\0"
+	"boot_fdt=yes\0" \
+	"boot_fit=0\0" \
+	"console=ttyS2,115200n8\0"
 
 /*
  * U-Boot commands
  */
 #define CONFIG_CMD_ENV
-#define CONFIG_CMD_DIAG
 #define CONFIG_CMD_SAVES
 #ifdef CONFIG_CMD_BDI
 #define CONFIG_CLOCKS

@@ -55,7 +55,9 @@ endif
 
 obj-y	+= cache.o
 ifndef CONFIG_ARM64
+ifndef CONFIG_CPU_V7M
 obj-y	+= cache-cp15.o
+endif
 endif
 
 obj-y	+= psci-dt.o
@@ -71,7 +73,7 @@ asflags-y += -DCONFIG_ARM_ASM_UNIFIED
 
 # some files can only build in ARM or THUMB2, not THUMB1
 
-ifdef CONFIG_SYS_THUMB_BUILD
+ifdef CONFIG_$(SPL_)SYS_THUMB_BUILD
 asflags-$(CONFIG_HAS_THUMB2) += -DCONFIG_THUMB2_KERNEL
 ifndef CONFIG_HAS_THUMB2
 

@@ -35,7 +35,6 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE	1	/* console is on PSC1 */
-#define CONFIG_BAUDRATE		115200	/* ... at 9600 bps */
 #define CONFIG_SYS_BAUDRATE_TABLE { 9600, 19200, 38400, 57600, 115200, 230400 }
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history */
@@ -89,10 +88,6 @@
 /*
  * Command line configuration.
  */
-#ifdef CONFIG_VIDEO
-#define CONFIG_CMD_BMP		/* BMP support */
-#endif
-#define CONFIG_CMD_DATE		/* support for RTC, date/time...*/
 #define CONFIG_CMD_IDE		/* IDE harddisk support */
 #define CONFIG_CMD_IRQ		/* irqinfo */
 #define CONFIG_CMD_PCI		/* pciinfo */

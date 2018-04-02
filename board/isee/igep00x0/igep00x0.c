@@ -199,7 +199,7 @@ int board_eth_init(bd_t *bis)
 static inline void setup_net_chip(void) {}
 #endif
 
-#if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
+#if defined(CONFIG_GENERIC_MMC)
 int board_mmc_init(bd_t *bis)
 {
 	return omap_mmc_init(0, 0, 0, -1, -1);
@@ -214,6 +214,20 @@ void board_mmc_power_init(void)
 #endif
 
 #ifdef CONFIG_OF_BOARD_SETUP
+static int ft_enable_by_compatible(void *blob, char *compat, int enable)
+{
+	int off = fdt_node_offset_by_compatible(blob, -1, compat);
+	if (off < 0)
+		return off;
+
+	if (enable)
+		fdt_status_okay(blob, off);
+	else
+		fdt_status_disabled(blob, off);
+
+	return 0;
+}
+
 int ft_board_setup(void *blob, bd_t *bd)
 {
 #ifdef CONFIG_FDT_FIXUP_PARTITIONS
@@ -224,6 +238,11 @@ int ft_board_setup(void *blob, bd_t *bd)
 
 	fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
 #endif
+	ft_enable_by_compatible(blob, "ti,omap2-nand",
+				gpmc_cs0_flash == MTD_DEV_TYPE_NAND);
+	ft_enable_by_compatible(blob, "ti,omap2-onenand",
+				gpmc_cs0_flash == MTD_DEV_TYPE_ONENAND);
+
 	return 0;
 }
 #endif

@@ -28,7 +28,6 @@
 #define CONFIG_NR_DRAM_BANKS		1
 
 #define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
-#define CONFIG_STACKSIZE		(256 * 1024)
 
 /* Some commands use this as the default load address */
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_SDRAM_BASE
@@ -46,8 +45,6 @@
 /* Serial Info */
 #define CONFIG_SYS_NS16550_SERIAL
 
-#define CONFIG_BAUDRATE			115200
-
 #define CONFIG_ENV_SIZE			0x2000
 #define CONFIG_ENV_IS_NOWHERE
 
@@ -61,7 +58,6 @@
 /* version string, parser, etc */
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_CMDLINE_EDITING
-#define CONFIG_COMMAND_HISTORY
 #define CONFIG_SYS_LONGHELP
 
 #define CONFIG_CRC32_VERIFY

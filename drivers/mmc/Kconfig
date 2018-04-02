@@ -105,6 +105,12 @@ config MMC_DW_SOCFPGA
 	  Synopsys DesignWare Memory Card Interface driver. Select this option
 	  for platforms based on Altera SOCFPGA.
 
+config MMC_MESON_GX
+	bool "Meson GX EMMC controller support"
+	depends on DM_MMC && BLK && DM_MMC_OPS && ARCH_MESON
+	help
+	 Support for EMMC host controller on Meson GX ARM SoCs platform (S905)
+
 config MMC_MXC
 	bool "Freescale i.MX21/27/31 or MPC512x Multimedia Card support"
 	help
@@ -119,6 +125,14 @@ config MMC_MXS
 	help
 	  This selects the Freescale SSP MMC controller found on MXS based
 	  platforms like mx23/28.
+
+	  If unsure, say N.
+
+config MMC_PCI
+	bool "Support for MMC controllers on PCI"
+	help
+	  This selects PCI-based MMC controllers.
+	  If you have an MMC controller on a PCI bus, say Y here.
 
 	  If unsure, say N.
 
@@ -299,6 +313,13 @@ config MMC_SDHCI_SPEAR
 
 	  If unsure, say N.
 
+config MMC_SDHCI_STI
+	bool "SDHCI support for STMicroelectronics SoC"
+	depends on MMC_SDHCI && OF_CONTROL
+	help
+	  This selects the Secure Digital Host Controller Interface (SDHCI)
+	  on STMicroelectronics STiH410 SoC.
+
 config MMC_SDHCI_XENON
 	bool "SDHCI support for the Xenon SDHCI controller"
 	depends on MMC_SDHCI && DM_MMC && OF_CONTROL
@@ -307,6 +328,20 @@ config MMC_SDHCI_XENON
 	  7k/8k ARM SoCs platforms
 
 	  If you have a controller with this interface, say Y here.
+
+	  If unsure, say N.
+
+config MMC_SDHCI_TANGIER
+	bool "Tangier SDHCI controller support"
+	depends on DM_MMC && BLK
+	depends on MMC_SDHCI
+	help
+	  This selects support for SDHCI controller on Tanginer
+	  SoC. Note that this controller does not sit on PCI bus and,
+	  hence, cannot be enumerated by standard PCI means.
+
+	  If you're using an Intel Tangier SoC (available on Intel
+	  Edison board), say Y here.
 
 	  If unsure, say N.
 
@@ -336,7 +371,27 @@ config MMC_SUNXI
 	  This selects support for the SD/MMC Host Controller on
 	  Allwinner sunxi SoCs.
 
+config GENERIC_ATMEL_MCI
+	bool "Atmel Multimedia Card Interface support"
+	depends on DM_MMC && BLK && DM_MMC_OPS && ARCH_AT91
+	help
+	  This enables support for Atmel High Speed Multimedia Card Interface
+	  (HSMCI), which supports the MultiMedia Card (MMC) Specification V4.3,
+	  the SD Memory Card Specification V2.0, the SDIO V2.0 specification
+	  and CE-ATA V1.1.
+
 endif
+
+config TEGRA124_MMC_DISABLE_EXT_LOOPBACK
+	bool "Disable external clock loopback"
+	depends on MMC_SDHCI_TEGRA && TEGRA124
+	help
+	  Disable the external clock loopback and use the internal one on SDMMC3
+	  as per the SDMMC_VENDOR_MISC_CNTRL_0 register's SDMMC_SPARE1 bits
+	  being set to 0xfffd according to the TRM.
+
+	  TODO(marcel.ziswiler@toradex.com): Move to device tree controlled
+	  approach once proper kernel integration made it mainline.
 
 endmenu
 

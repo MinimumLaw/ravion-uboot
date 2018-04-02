@@ -67,7 +67,6 @@ struct lmb;
 #  endif
 # else
 #  define CONFIG_CRC32		/* FIT images need CRC32 support */
-#  define CONFIG_MD5		/* and MD5 */
 #  define CONFIG_SHA1		/* and SHA1 */
 #  define CONFIG_SHA256		/* and SHA256 */
 #  define IMAGE_ENABLE_CRC32	1
@@ -1257,7 +1256,8 @@ void android_print_contents(const struct andr_img_hdr *hdr);
  */
 int board_fit_config_name_match(const char *name);
 
-#ifdef CONFIG_SPL_FIT_IMAGE_POST_PROCESS
+#if defined(CONFIG_SPL_FIT_IMAGE_POST_PROCESS) || \
+	defined(CONFIG_FIT_IMAGE_POST_PROCESS)
 /**
  * board_fit_image_post_process() - Do any post-process on FIT binary data
  *

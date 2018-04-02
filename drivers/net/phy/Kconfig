@@ -15,6 +15,19 @@ if PHYLIB
 config MV88E61XX_SWITCH
 	bool "Marvel MV88E61xx Ethernet switch PHY support."
 
+if MV88E61XX_SWITCH
+
+config MV88E61XX_CPU_PORT
+	int "CPU Port"
+
+config MV88E61XX_PHY_PORTS
+	hex "Bitmask of PHY Ports"
+
+config MV88E61XX_FIXED_PORTS
+	hex "Bitmask of PHYless serdes Ports"
+
+endif # MV88E61XX_SWITCH
+
 config PHYLIB_10G
 	bool "Generic 10G PHY support"
 
@@ -89,5 +102,15 @@ config PHY_VITESSE
 
 config PHY_XILINX
 	bool "Xilinx Ethernet PHYs support"
+
+config PHY_FIXED
+	bool "Fixed-Link PHY"
+	depends on DM_ETH
+	help
+	  Fixed PHY is used for having a 'fixed-link' to another MAC with a direct
+	  connection (MII, RGMII, ...).
+	  There is nothing like autoneogation and so
+	  on, the link is always up with fixed speed and fixed duplex-setting.
+	  More information: doc/device-tree-bindings/net/fixed-link.txt
 
 endif #PHYLIB

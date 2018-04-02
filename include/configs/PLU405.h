@@ -26,8 +26,6 @@
 
 #define CONFIG_SYS_CLK_FREQ     33333400 /* external frequency to pll   */
 
-#define CONFIG_BAUDRATE		9600
-
 #undef	CONFIG_BOOTARGS
 #undef	CONFIG_BOOTCOMMAND
 
@@ -60,7 +58,6 @@
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_IDE
 #define CONFIG_CMD_NAND
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_EEPROM
 
 #define CONFIG_SUPPORT_VFAT

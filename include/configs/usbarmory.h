@@ -11,7 +11,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_MX53
 #define CONFIG_SYS_FSL_CLK
 #define CONFIG_MXC_GPIO
 
@@ -35,7 +34,6 @@
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 #define CONFIG_CONS_INDEX	1
-#define CONFIG_BAUDRATE		115200
 
 /* SD/MMC */
 #define CONFIG_FSL_ESDHC

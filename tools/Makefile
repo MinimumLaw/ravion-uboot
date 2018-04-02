@@ -120,7 +120,7 @@ _libfdt.so-sharedobjs += $(LIBFDT_OBJS)
 libfdt:
 
 tools/_libfdt.so: $(patsubst %.o,%.c,$(LIBFDT_OBJS)) tools/libfdt_wrap.c
-	LDFLAGS="$(HOSTLDFLAGS)" python $(srctree)/lib/libfdt/setup.py \
+	LDFLAGS="$(HOSTLDFLAGS)" CFLAGS= ${PYTHON} $(srctree)/lib/libfdt/setup.py \
 		"$(_hostc_flags)" $^
 	mv _libfdt.so $@
 
@@ -179,6 +179,8 @@ hostprogs-$(CONFIG_MX28) += mxsboot
 HOSTCFLAGS_mxsboot.o := -pedantic
 
 hostprogs-$(CONFIG_ARCH_SUNXI) += mksunxiboot
+hostprogs-$(CONFIG_ARCH_SUNXI) += sunxi-spl-image-builder
+sunxi-spl-image-builder-objs := sunxi-spl-image-builder.o lib/bch.o
 
 hostprogs-$(CONFIG_NETCONSOLE) += ncb
 hostprogs-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1
@@ -262,7 +264,7 @@ $(LOGO_DATA_H):	$(obj)/bmp_logo $(LOGO_BMP)
 subdir- += env
 
 ifneq ($(CROSS_BUILD_TOOLS),)
-HOSTCC = $(CC)
+override HOSTCC = $(CC)
 
 quiet_cmd_crosstools_strip = STRIP   $^
       cmd_crosstools_strip = $(STRIP) $^; touch $@

@@ -14,7 +14,6 @@
 #define __CONFIG_H
 
 /* High Level Configuration Options */
-#define CONFIG_MX51
 
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* U-Boot is a 2nd stage bootloader */
 
@@ -73,7 +72,6 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE		/* disable vendor parameters protection (serial#, ethaddr) */
 #define CONFIG_CONS_INDEX		1 /* use UART0 : used by serial driver */
-#define CONFIG_BAUDRATE			115200
 
 /***********************************************************
  * Command definition

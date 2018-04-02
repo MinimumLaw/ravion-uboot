@@ -10,8 +10,6 @@
 #ifndef __CONFIG_TOPIC_MIAMI_H
 #define __CONFIG_TOPIC_MIAMI_H
 
-#define CONFIG_ZYNQ_PS_CLK_FREQ		33333333UL
-
 #define CONFIG_ZYNQ_I2C0
 #define CONFIG_ZYNQ_I2C1
 
@@ -144,6 +142,5 @@
 /* Further tweaks to reduce image size */
 #undef CONFIG_CMD_BOOTZ
 #undef CONFIG_CMD_NET
-#undef CONFIG_CMD_AES
 
 #endif /* __CONFIG_TOPIC_MIAMI_H */

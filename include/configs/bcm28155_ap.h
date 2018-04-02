@@ -24,7 +24,6 @@
 #define CONFIG_NR_DRAM_BANKS		1
 
 #define CONFIG_SYS_MALLOC_LEN		SZ_4M	/* see armv7/start.S. */
-#define CONFIG_STACKSIZE		SZ_256K
 
 /* GPIO Driver */
 #define CONFIG_KONA_GPIO
@@ -79,8 +78,6 @@
 #define CONFIG_SYS_NS16550_CLK		13000000
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_COM1		0x3e000000
-
-#define CONFIG_BAUDRATE			115200
 
 /* must fit into GPT:u-boot-env partition */
 #define CONFIG_ENV_IS_IN_MMC

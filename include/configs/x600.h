@@ -16,7 +16,6 @@
  */
 #define CONFIG_SPEAR600				/* SPEAr600 SoC */
 #define CONFIG_X600				/* on X600 board */
-#define CONFIG_SYS_THUMB_BUILD
 
 #include <asm/arch/hardware.h>
 
@@ -44,7 +43,6 @@
 #define CONFIG_PL011_SERIAL
 #define CONFIG_PL011_CLOCK			(48 * 1000 * 1000)
 #define CONFIG_CONS_INDEX			0
-#define CONFIG_BAUDRATE				115200
 #define CONFIG_SYS_BAUDRATE_TABLE		{ 9600, 19200, 38400, \
 						  57600, 115200 }
 #define CONFIG_SYS_LOADS_BAUD_CHANGE
@@ -109,7 +107,6 @@
 /*
  * Command support defines
  */
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_FPGA_LOADMK
 #define CONFIG_CMD_MTDPARTS

@@ -104,7 +104,6 @@
 
 /* NS16550 Configuration: primary UART via FTDI */
 #define CONFIG_SYS_NS16550_COM1		0x44e09000
-#define CONFIG_BAUDRATE			115200
 
 /* I2C Configuration */
 #define	CONFIG_SYS_I2C_SPEED		100000
@@ -155,8 +154,6 @@
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x200000
 
 #define CONFIG_CMD_MTDPARTS
-
-#define CONFIG_CMD_DIAG /* monitor functions : Diagnostics */
 
 #define MTDIDS_DEFAULT			"nand0=omap2-nand.0"
 /* Size must be a multiple of Nand erase size (524288 b) */

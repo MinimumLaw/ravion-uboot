@@ -13,14 +13,13 @@
 #define CONFIG_MAX_RAM_BANK_SIZE	(1024 << 21)	/* 2GB */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
 
-#include <environment/ti/dfu.h>
 #include <asm/arch/omap.h>
 
 /* NS16550 Configuration */
 #define CONFIG_SYS_NS16550_CLK		48000000
-#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_DM_SERIAL)
+#if !defined(CONFIG_SPL_DM) || !defined(CONFIG_DM_SERIAL)
+#define CONFIG_SYS_NS16550_REG_SIZE    (-4)
 #define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE	(-4)
 #endif
 
 /* I2C Configuration */
@@ -111,9 +110,6 @@
  * DM support in SPL
  */
 #ifdef CONFIG_SPL_BUILD
-#undef CONFIG_DM_MMC
-#undef CONFIG_DM_SPI
-#undef CONFIG_DM_SPI_FLASH
 #undef CONFIG_TIMER
 #endif
 
@@ -165,6 +161,9 @@
 #define CONFIG_TI_EDMA3
 
 #ifndef CONFIG_SPL_BUILD
+#include <environment/ti/dfu.h>
+#include <environment/ti/mmc.h>
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV \
 	DEFAULT_MMC_TI_ARGS \

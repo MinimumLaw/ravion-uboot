@@ -28,7 +28,6 @@
 #define CONFIG_NR_DRAM_BANKS		2
 #define CONFIG_SYS_LPAE_SDRAM_BASE	0x800000000
 #define CONFIG_MAX_RAM_BANK_SIZE	(2 << 30)       /* 2GB */
-#define CONFIG_STACKSIZE		(512 << 10)     /* 512 KiB */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SPL_TEXT_BASE - \
 					GENERATED_GBL_DATA_SIZE)
 
@@ -54,6 +53,13 @@
 					KEYSTONE_SPL_STACK_SIZE - 4)
 #define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	CONFIG_SPL_PAD_TO
+
+/* SRAM scratch space entries  */
+#define SRAM_SCRATCH_SPACE_ADDR	CONFIG_SPL_STACK + 0x8
+
+#define TI_SRAM_SCRATCH_BOARD_EEPROM_START	(SRAM_SCRATCH_SPACE_ADDR)
+#define TI_SRAM_SCRATCH_BOARD_EEPROM_END	(SRAM_SCRATCH_SPACE_ADDR + 0x200)
+#define KEYSTONE_SRAM_SCRATCH_SPACE_END		(TI_SRAM_SCRATCH_BOARD_EEPROM_END)
 
 /* UART Configuration */
 #define CONFIG_SYS_NS16550_MEM32
@@ -213,6 +219,10 @@
 /* EDMA3 */
 #define CONFIG_TI_EDMA3
 
+#define KERNEL_MTD_PARTS						\
+	"mtdparts="							\
+	SPI_MTD_PARTS
+
 #define DEFAULT_FW_INITRAMFS_BOOT_ENV					\
 	"name_fw_rd=k2-fw-initrd.cpio.gz\0"				\
 	"set_rd_spec=setenv rd_spec ${rdaddr}:${filesize}\0"		\
@@ -269,7 +279,8 @@
 		"sf write ${loadaddr} 0 ${filesize}\0"		\
 	"burn_uboot_nand=nand erase 0 0x100000; "			\
 		"nand write ${loadaddr} 0 ${filesize}\0"		\
-	"args_all=setenv bootargs console=ttyS0,115200n8 rootwait=1\0"	\
+	"args_all=setenv bootargs console=ttyS0,115200n8 rootwait=1 "	\
+		KERNEL_MTD_PARTS					\
 	"args_net=setenv bootargs ${bootargs} rootfstype=nfs "		\
 		"root=/dev/nfs rw nfsroot=${serverip}:${nfs_root},"	\
 		"${nfs_options} ip=dhcp\0"				\

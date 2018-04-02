@@ -11,10 +11,6 @@
 
 #include <asm/arch/imx-regs.h>
 
-#define CONFIG_VF610
-
-#define CONFIG_SYS_THUMB_BUILD
-
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
 /* Enable passing of ATAGs */
@@ -25,7 +21,6 @@
 
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_BAUDRATE			115200
 
 /* NAND support */
 #define CONFIG_CMD_NAND
@@ -91,7 +86,6 @@
 #define CONFIG_SYS_I2C_MXC
 
 /* RTC (actually an RV-4162 but M41T62-compatible) */
-#define CONFIG_CMD_DATE
 #define CONFIG_RTC_M41T62
 #define CONFIG_SYS_I2C_RTC_ADDR 0x68
 #define CONFIG_SYS_RTC_BUS_NUM 2
@@ -230,12 +224,6 @@
 #define CONFIG_SYS_MEMTEST_END		0x87C00000
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-
-/*
- * Stack sizes
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE		(128 * 1024)	/* regular stack */
 
 /* Physical memory map */
 #define CONFIG_NR_DRAM_BANKS		1

@@ -18,8 +18,6 @@
 
 #define CONFIG_SYS_CLK_FREQ	33330000 /* external frequency to pll	*/
 
-#define CONFIG_BAUDRATE		115200
-
 #undef  CONFIG_BOOTARGS
 #undef  CONFIG_BOOTCOMMAND
 
@@ -50,9 +48,6 @@
 /*
  * Command line configuration.
  */
-#define CONFIG_CMD_BSP
-#define CONFIG_CMD_CHIP_CONFIG
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_PCI

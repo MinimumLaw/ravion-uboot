@@ -1354,6 +1354,10 @@ void ll_puts(const char *);
 /* In misc.c */
 void _nmask_and_or_msr(unsigned long nmask, unsigned long or_val);
 
+int prt_83xx_rsr(void);
+int prt_8260_rsr(void);
+int prt_8260_clks(void);
+
 #endif /* ndef ASSEMBLY*/
 
 #ifdef CONFIG_MACH_SPECIFIC

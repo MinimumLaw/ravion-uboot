@@ -45,7 +45,6 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE	1	/* console is on PSC1			*/
-#define CONFIG_BAUDRATE		115200	/* ... at 115200 bps			*/
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200, 230400 }
 #define CONFIG_BOOTCOUNT_LIMIT	1
 
@@ -145,15 +144,9 @@
 /*
  * Command line configuration.
  */
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_JFFS2
 #define CONFIG_CMD_REGINFO
-#define CONFIG_CMD_BSP
-
-#ifdef CONFIG_VIDEO
-    #define CONFIG_CMD_BMP
-#endif
 
 #ifdef CONFIG_PCI
 #define CONFIG_CMD_PCI
@@ -169,10 +162,6 @@
 	defined(CONFIG_STK52XX)
     #define CONFIG_CFG_USB
     #define CONFIG_CFG_FAT
-#endif
-
-#ifdef CONFIG_POST
-    #define CONFIG_CMD_DIAG
 #endif
 
 #define	CONFIG_TIMESTAMP		/* display image timestamps */

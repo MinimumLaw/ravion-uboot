@@ -36,14 +36,12 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE	1	    /* console is on PSC1 */
-#define CONFIG_BAUDRATE		115200	/* ... at 115200 bps */
 #define CONFIG_SYS_BAUDRATE_TABLE		\
 	{ 9600, 19200, 38400, 57600, 115200, 230400 }
 
 /*
  * Command line configuration.
  */
-#define CONFIG_CMD_BSP
 #define CONFIG_CMD_REGINFO
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_BOOTP_SERVERIP

@@ -26,7 +26,6 @@
 
 /* select serial console configuration */
 #define CONFIG_SERIAL2
-#define CONFIG_BAUDRATE			115200
 
 /* Console configuration */
 
@@ -191,7 +190,6 @@ int universal_spi_read(void);
 
 /* LCD console */
 #define LCD_BPP			LCD_COLOR16
-#define CONFIG_SYS_WHITE_ON_BLACK
 
 /*
  * LCD Settings

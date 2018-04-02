@@ -11,6 +11,7 @@
 #define CONFIG_GICV2
 
 #include <asm/arch/config.h>
+#include <asm/arch/stream_id_lsch2.h>
 
 #define CONFIG_SUPPORT_RAW_INITRD
 
@@ -81,7 +82,6 @@
 #define CONFIG_SYS_NS16550_REG_SIZE     1
 #define CONFIG_SYS_NS16550_CLK          (get_serial_clock())
 
-#define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /* Command line configuration */
@@ -122,7 +122,5 @@
 
 #define CONFIG_PANIC_HANG
 #define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */
-
-#include <asm/fsl_secure_boot.h>
 
 #endif /* __LS1012A_COMMON_H */

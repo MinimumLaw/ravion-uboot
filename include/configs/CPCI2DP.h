@@ -23,8 +23,6 @@
 
 #define CONFIG_SYS_CLK_FREQ	33330000 /* external frequency to pll	*/
 
-#define CONFIG_BAUDRATE		9600
-
 #undef	CONFIG_BOOTARGS
 #undef	CONFIG_BOOTCOMMAND
 
@@ -49,7 +47,6 @@
  */
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_IRQ
-#define CONFIG_CMD_BSP
 #define CONFIG_CMD_EEPROM
 
 #undef	CONFIG_WATCHDOG			/* watchdog disabled		*/

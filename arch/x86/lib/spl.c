@@ -6,9 +6,9 @@
 
 #include <common.h>
 #include <debug_uart.h>
+#include <init_helpers.h>
 #include <spl.h>
 #include <asm/cpu.h>
-#include <asm/init_helpers.h>
 #include <asm/mtrr.h>
 #include <asm/processor.h>
 #include <asm-generic/sections.h>
@@ -37,8 +37,6 @@ static int x86_spl_init(void)
 		debug("%s: spl_init() failed\n", __func__);
 		return ret;
 	}
-	preloader_console_init();
-
 	ret = arch_cpu_init();
 	if (ret) {
 		debug("%s: arch_cpu_init() failed\n", __func__);
@@ -49,6 +47,7 @@ static int x86_spl_init(void)
 		debug("%s: arch_cpu_init_dm() failed\n", __func__);
 		return ret;
 	}
+	preloader_console_init();
 	ret = print_cpuinfo();
 	if (ret) {
 		debug("%s: print_cpuinfo() failed\n", __func__);

@@ -39,7 +39,6 @@
 #define CONFIG_LCD_LOGO
 #define CONFIG_LCD_INFO
 #define CONFIG_LCD_INFO_BELOW_LOGO
-#define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_ATMEL_HLCD
 #define CONFIG_ATMEL_LCD_RGB565
 
@@ -190,8 +189,6 @@
 	"512k(dtb),6M(kernel)ro,-(rootfs) "				\
 	"rootfstype=ubifs ubi.mtd=7 root=ubi0:rootfs rw"
 #endif
-
-#define CONFIG_BAUDRATE		115200
 
 #define CONFIG_SYS_CBSIZE	256
 #define CONFIG_SYS_MAXARGS	16

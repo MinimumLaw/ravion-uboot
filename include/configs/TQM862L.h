@@ -28,7 +28,6 @@
 #define	CONFIG_8xx_CONS_SMC1	1	/* Console is on SMC1		*/
 #define CONFIG_SYS_SMC_RXBUFLEN	128
 #define CONFIG_SYS_MAXIDLE	10
-#define CONFIG_BAUDRATE		115200	/* console baudrate = 115kbps	*/
 
 #define	CONFIG_BOOTCOUNT_LIMIT
 
@@ -90,7 +89,6 @@
 /*
  * Command line configuration.
  */
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_IDE
 #define CONFIG_CMD_JFFS2
 

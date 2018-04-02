@@ -815,7 +815,6 @@
  * Command line configuration.
  */
 #define CONFIG_CMD_IRQ
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_REGINFO
 
 /*
@@ -883,8 +882,6 @@
 #define CONFIG_LOADADDR	1000000
 
 #define CONFIG_BOOTARGS	/* the boot command will set bootargs */
-
-#define CONFIG_BAUDRATE	115200
 
 #ifdef __SW_BOOT_NOR
 #define __NOR_RST_CMD	\

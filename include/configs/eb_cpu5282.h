@@ -19,7 +19,6 @@
 
 #define CONFIG_MCFUART
 #define CONFIG_SYS_UART_PORT		(0)
-#define CONFIG_BAUDRATE			115200
 
 #undef	CONFIG_MONITOR_IS_IN_RAM		/* starts uboot direct */
 
@@ -58,7 +57,6 @@
  * Command line configuration.
  */
 #define CONFIG_CMDLINE_EDITING
-#define CONFIG_CMD_DATE
 
 #define CONFIG_MCFTMR
 

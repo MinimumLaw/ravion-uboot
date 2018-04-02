@@ -24,7 +24,6 @@
 /* auto boot */
 #define CONFIG_PREBOOT
 
-#define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, \
 					  115200, 230400, 460800, 921600 }
 
@@ -81,6 +80,14 @@
 #define CONFIG_ENV_OFFSET		0x180000 /* as Marvell U-Boot version */
 #define CONFIG_ENV_SIZE			(64 << 10) /* 64KiB */
 #define CONFIG_ENV_SECT_SIZE		(64 << 10) /* 64KiB sectors */
+
+/*
+ * Ethernet Driver configuration
+ */
+#define CONFIG_ENV_OVERWRITE	/* ethaddr can be reprogrammed */
+#define CONFIG_PHY_GIGE		/* GbE speed/duplex detect */
+#define CONFIG_ARP_TIMEOUT	200
+#define CONFIG_NET_RETRY_COUNT	50
 
 /* USB 2.0 */
 #define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS 3

@@ -16,12 +16,10 @@
 
 #include <asm/arch/rmobile.h>
 
-#define CONFIG_CMD_DFL
 #define CONFIG_CMD_SDRAM
 
 #define BOARD_LATE_INIT
 
-#define CONFIG_BAUDRATE		115200
 #define CONFIG_BOOTARGS		""
 
 #undef	CONFIG_SHOW_BOOT_PROGRESS

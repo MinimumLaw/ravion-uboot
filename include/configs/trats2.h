@@ -35,7 +35,6 @@
 
 /* select serial console configuration */
 #define CONFIG_SERIAL2
-#define CONFIG_BAUDRATE			115200
 
 /* Console configuration */
 
@@ -184,7 +183,6 @@
 
 /* LCD console */
 #define LCD_BPP                 LCD_COLOR16
-#define CONFIG_SYS_WHITE_ON_BLACK
 
 /* LCD */
 #define CONFIG_BMP_16BPP

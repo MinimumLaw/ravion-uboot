@@ -17,7 +17,6 @@
 #define __CONFIG_AM335X_EVM_H
 
 #include <configs/ti_am335x_common.h>
-#include <environment/ti/dfu.h>
 
 #ifndef CONFIG_SPL_BUILD
 # define CONFIG_TIMESTAMP
@@ -96,6 +95,9 @@
 #include <config_distro_bootcmd.h>
 
 #ifndef CONFIG_SPL_BUILD
+#include <environment/ti/dfu.h>
+#include <environment/ti/mmc.h>
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV \
 	DEFAULT_MMC_TI_ARGS \
@@ -138,8 +140,14 @@
 			"setenv fdtfile am335x-bone.dtb; fi; " \
 		"if test $board_name = A335BNLT; then " \
 			"setenv fdtfile am335x-boneblack.dtb; fi; " \
+		"if test $board_name = BBBW; then " \
+			"setenv fdtfile am335x-boneblack-wireless.dtb; fi; " \
 		"if test $board_name = BBG1; then " \
 			"setenv fdtfile am335x-bonegreen.dtb; fi; " \
+		"if test $board_name = BBGW; then " \
+			"setenv fdtfile am335x-bonegreen-wireless.dtb; fi; " \
+		"if test $board_name = BBBL; then " \
+			"setenv fdtfile am335x-boneblue.dtb; fi; " \
 		"if test $board_name = A33515BB; then " \
 			"setenv fdtfile am335x-evm.dtb; fi; " \
 		"if test $board_name = A335X_SK; then " \
@@ -167,7 +175,6 @@
 #define CONFIG_SYS_NS16550_COM4		0x481a6000	/* UART3 */
 #define CONFIG_SYS_NS16550_COM5		0x481a8000	/* UART4 */
 #define CONFIG_SYS_NS16550_COM6		0x481aa000	/* UART5 */
-#define CONFIG_BAUDRATE			115200
 
 #define CONFIG_CMD_EEPROM
 #define CONFIG_ENV_EEPROM_IS_ON_I2C

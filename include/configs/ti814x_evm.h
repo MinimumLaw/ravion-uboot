@@ -135,8 +135,6 @@
 #define CONFIG_SYS_NS16550_CLK		(48000000)
 #define CONFIG_SYS_NS16550_COM1		0x48020000	/* Base EVM has UART0 */
 
-#define CONFIG_BAUDRATE			115200
-
 /* CPU */
 #define CONFIG_ARCH_CPU_INIT
 
@@ -180,9 +178,6 @@
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #endif
-
-/* Unsupported features */
-#undef CONFIG_USE_IRQ
 
 /* Ethernet */
 #define CONFIG_DRIVER_TI_CPSW

@@ -152,6 +152,7 @@ static void erratum_rcw_src(void)
  * This erratum requires setting glitch_en bit to enable
  * digital glitch filter to improve clock stability.
  */
+#ifdef CONFIG_SYS_FSL_ERRATUM_A009203
 static void erratum_a009203(void)
 {
 	u8 __iomem *ptr;
@@ -178,6 +179,7 @@ static void erratum_a009203(void)
 #endif
 #endif
 }
+#endif
 
 void bypass_smmu(void)
 {
@@ -191,7 +193,9 @@ void fsl_lsch3_early_init_f(void)
 {
 	erratum_rcw_src();
 	init_early_memctl_regs();	/* tighten IFC timing */
+#ifdef CONFIG_SYS_FSL_ERRATUM_A009203
 	erratum_a009203();
+#endif
 	erratum_a008514();
 	erratum_a008336();
 #ifdef CONFIG_CHAIN_OF_TRUST
@@ -233,10 +237,8 @@ int sata_init(void)
 {
 	struct ccsr_ahci __iomem *ccsr_ahci = (void *)CONFIG_SYS_SATA;
 
-#ifdef CONFIG_ARCH_LS1046A
 	/* Disable SATA ECC */
 	out_le32((void *)CONFIG_SYS_DCSR_DCFG_ADDR + 0x520, 0x80000000);
-#endif
 	out_le32(&ccsr_ahci->ppcfg, AHCI_PORT_PHY_1_CFG);
 	out_le32(&ccsr_ahci->ptc, AHCI_PORT_TRANS_CFG);
 	out_le32(&ccsr_ahci->axicc, AHCI_PORT_AXICC_CFG);

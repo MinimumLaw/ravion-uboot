@@ -413,7 +413,6 @@
  * U-Boot environment setup
  */
 #define CONFIG_CMD_NAND
-#define CONFIG_CMD_DATE
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_CMD_JFFS2
 #define CONFIG_BOOTP_SUBNETMASK
@@ -448,8 +447,6 @@
 #define CONFIG_LOADADDR		0x400000
 #define CONFIG_CMD_ENV_FLAGS
 #define CONFIG_ENV_FLAGS_LIST_STATIC "ethaddr:mo,eth1addr:mo"
-
-#define CONFIG_BAUDRATE		115200
 
 /* Initial Memory map for Linux*/
 #define CONFIG_SYS_BOOTMAPSZ		(256 << 20)

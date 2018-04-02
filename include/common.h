@@ -76,9 +76,6 @@ typedef volatile unsigned char	vu_char;
 #ifdef	CONFIG_4xx
 #include <asm/ppc4xx.h>
 #endif
-#ifdef CONFIG_BLACKFIN
-#include <asm/blackfin.h>
-#endif
 #ifdef CONFIG_SOC_DA8XX
 #include <asm/arch/hardware.h>
 #endif
@@ -206,13 +203,27 @@ typedef void (interrupt_handler_t)(void *);
  */
 int dram_init(void);
 
+/**
+ * dram_init_banksize() - Set up DRAM bank sizes
+ *
+ * This can be implemented by boards to set up the DRAM bank information in
+ * gd->bd->bi_dram(). It is called just before relocation, after dram_init()
+ * is called.
+ *
+ * If this is not provided, a default implementation will try to set up a
+ * single bank. It will do this if CONFIG_NR_DRAM_BANKS and
+ * CONFIG_SYS_SDRAM_BASE are set. The bank will have a start address of
+ * CONFIG_SYS_SDRAM_BASE and the size will be determined by a call to
+ * get_effective_memsize().
+ *
+ * @return 0 if OK, -ve on error
+ */
+int dram_init_banksize(void);
+
 void	hang		(void) __attribute__ ((noreturn));
 
 int	timer_init(void);
 int	cpu_init(void);
-
-/* */
-phys_size_t initdram (int);
 
 #include <display_options.h>
 
@@ -287,6 +298,22 @@ int mdm_init(void);
 int print_cpuinfo(void);
 int update_flash_size(int flash_size);
 int arch_early_init_r(void);
+
+/*
+ * setup_board_extra() - Fill in extra details in the bd_t structure
+ *
+ * @return 0 if OK, -ve on error
+ */
+int setup_board_extra(void);
+
+/**
+ * arch_fsp_init() - perform firmware support package init
+ *
+ * Where U-Boot relies on binary blobs to handle part of the system init, this
+ * function can be used to set up the blobs. This is used on some Intel
+ * platforms.
+ */
+int arch_fsp_init(void);
 
 /**
  * arch_cpu_init_dm() - init CPU after driver model is available
@@ -497,6 +524,7 @@ extern ssize_t spi_write (uchar *, int, uchar *, int);
 
 /* $(BOARD)/$(BOARD).c */
 int board_early_init_f (void);
+int board_fix_fdt (void *rw_fdt_blob); /* manipulate the U-Boot fdt before its relocation */
 int board_late_init (void);
 int board_postclk_init (void); /* after clocks/timebase, before env/serial */
 int board_early_init_r (void);
@@ -630,12 +658,7 @@ int serial_stub_tstc(struct stdio_dev *sdev);
 
 /* $(CPU)/speed.c */
 int	get_clocks (void);
-int	get_clocks_866 (void);
-int	sdram_adjust_866 (void);
-int	adjust_sdram_tbs_8xx (void);
-#if defined(CONFIG_MPC8260)
-int	prt_8260_clks (void);
-#elif defined(CONFIG_MPC5xxx)
+#if defined(CONFIG_MPC5xxx)
 int	prt_mpc5xxx_clks (void);
 #endif
 #ifdef CONFIG_4xx
@@ -706,11 +729,6 @@ ulong cpu_init_f(void);
 #endif
 
 int	cpu_init_r    (void);
-#if defined(CONFIG_MPC8260)
-int	prt_8260_rsr  (void);
-#elif defined(CONFIG_MPC83xx)
-int	prt_83xx_rsr  (void);
-#endif
 
 /* $(CPU)/interrupts.c */
 int	interrupt_init	   (void);
@@ -776,7 +794,6 @@ void	wait_ticks    (unsigned long);
 /* arch/$(ARCH)/lib/time.c */
 ulong	usec2ticks    (unsigned long usec);
 ulong	ticks2usec    (unsigned long ticks);
-int	init_timebase (void);
 
 /* lib/gunzip.c */
 int gunzip(void *, int, unsigned char *, unsigned long *);

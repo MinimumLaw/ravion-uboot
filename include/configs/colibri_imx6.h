@@ -10,7 +10,6 @@
 #define __CONFIG_H
 
 #include "mx6_common.h"
-#define CONFIG_SYS_THUMB_BUILD
 
 #undef CONFIG_DISPLAY_BOARDINFO
 #define CONFIG_DISPLAY_BOARDINFO_LATE	/* Calls show_board_info() */
@@ -103,7 +102,6 @@
 #define CONFIG_DFU_MMC
 
 /* Miscellaneous commands */
-#define CONFIG_CMD_BMODE
 #define CONFIG_MXC_GPIO
 
 /* Framebuffer and LCD */
@@ -121,12 +119,10 @@
 #define CONFIG_CONSOLE_MUX
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_CMD_BMP
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX		1
-#define CONFIG_BAUDRATE			115200
 
 /* Command definition */
 #undef CONFIG_CMD_LOADB
@@ -172,6 +168,7 @@
 		"${fdt_file} && setenv dtbparam \" - ${fdt_addr_r}\" && true\0"
 
 #define MEM_LAYOUT_ENV_SETTINGS \
+	"bootm_size=0x10000000\0" \
 	"fdt_addr_r=0x12000000\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \

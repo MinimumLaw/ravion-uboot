@@ -40,7 +40,6 @@
  * Serial console configuration
  */
 #define CONFIG_PSC_CONSOLE	5	/* console is on PSC5 */
-#define CONFIG_BAUDRATE		115200	/* ... at 115200 bps */
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{ 9600, 19200, 38400, 57600, 115200, 230400 }
 
@@ -72,9 +71,6 @@
 #define CONFIG_CMD_EEPROM
 #ifdef CONFIG_PCI
 #define CONFIG_CMD_PCI
-#endif
-#ifdef CONFIG_POST
-#define CONFIG_CMD_DIAG
 #endif
 
 #if (CONFIG_SYS_TEXT_BASE == 0xFC000000) || (CONFIG_SYS_TEXT_BASE == 0xFF000000)

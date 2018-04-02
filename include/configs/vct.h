@@ -54,7 +54,6 @@
 #define CONFIG_SYS_NS16550_COM1		UART_1_BASE
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_CLK		921600
-#define CONFIG_BAUDRATE			115200
 
 /*
  * SDRAM
@@ -256,7 +255,6 @@ int vct_gpio_get(int pin);
  * (NOR/OneNAND) usage and Linux kernel booting.
  */
 #if defined(CONFIG_VCT_SMALL_IMAGE)
-#undef CONFIG_CMD_BEDBUG
 #undef CONFIG_CMD_EEPROM
 #undef CONFIG_CMD_EEPROM
 #undef CONFIG_CMD_IRQ

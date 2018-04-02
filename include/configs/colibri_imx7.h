@@ -14,8 +14,6 @@
 
 #include "mx7_common.h"
 
-#define CONFIG_SYS_THUMB_BUILD
-
 /*#define CONFIG_DBG_MONITOR*/
 #define PHYS_SDRAM_SIZE			SZ_512M
 
@@ -26,8 +24,6 @@
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
-
-#define CONFIG_CMD_BMODE
 
 /* Network */
 #define CONFIG_FEC_MXC
@@ -61,6 +57,7 @@
 #define CONFIG_SERVERIP			192.168.10.1
 
 #define MEM_LAYOUT_ENV_SETTINGS \
+	"bootm_size=0x10000000\0" \
 	"fdt_addr_r=0x82000000\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
@@ -119,13 +116,14 @@
 		"${board}/flash_blk.img && source ${loadaddr}\0" \
 	"setup=setenv setupargs " \
 		"console=tty1 console=${console}" \
-		",${baudrate}n8 ${memargs} consoleblank=0 ${mtdparts}\0" \
+		",${baudrate}n8 ${memargs} consoleblank=0\0" \
 	"setupdate=run setsdupdate || run setusbupdate || run setethupdate\0" \
 	"setusbupdate=usb start && setenv interface usb && " \
 		"fatload ${interface} 0:1 ${loadaddr} " \
 		"${board}/flash_blk.img && source ${loadaddr}\0" \
 	"splashpos=m,m\0" \
 	"videomode=video=ctfb:x:640,y:480,depth:18,pclk:39722,le:48,ri:16,up:33,lo:10,hs:96,vs:2,sync:0,vmode:0\0" \
+	"updlevel=2\0"
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
@@ -135,8 +133,6 @@
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000
-
-#define CONFIG_STACKSIZE		SZ_128K
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS		1
@@ -160,8 +156,8 @@
 #define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
 #define CONFIG_ENV_OFFSET		(8 * SZ_64K)
 #elif defined(CONFIG_ENV_IS_IN_NAND)
-#define CONFIG_ENV_OFFSET		(4 * 1024 * 1024)
 #define CONFIG_ENV_SECT_SIZE		(128 * 1024)
+#define CONFIG_ENV_OFFSET		(28 * CONFIG_ENV_SECT_SIZE)
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #endif
 
@@ -188,7 +184,8 @@
 #define MTDIDS_DEFAULT		"nand0=gpmi-nand"
 #define MTDPARTS_DEFAULT	"mtdparts=gpmi-nand:"		\
 				"512k(mx7-bcb),"		\
-				"3584k(u-boot)ro,"		\
+				"1536k(u-boot1)ro,"		\
+				"1536k(u-boot2)ro,"		\
 				"512k(u-boot-env),"		\
 				"-(ubi)"
 
@@ -219,7 +216,6 @@
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_SPLASH_SCREEN
 #define CONFIG_SPLASH_SCREEN_ALIGN
-#define CONFIG_CMD_BMP
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO

@@ -70,6 +70,12 @@ static void mctl_set_bit_delays(struct dram_para *para)
 		writel(ACBDLR_WRITE_DELAY(para->ac_delays[i]),
 		       &mctl_ctl->acbdlr[i]);
 
+#ifdef CONFIG_MACH_SUN8I_R40
+	/* DQSn, DMn, DQn output enable bit delay */
+	for (i = 0; i < 4; i++)
+		writel(0x6 << 24, &mctl_ctl->dx[i].sdlr);
+#endif
+
 	setbits_le32(&mctl_ctl->pgcr[0], 1 << 26);
 }
 
@@ -86,6 +92,9 @@ enum {
 	MBUS_PORT_DI            = 9,
 	MBUS_PORT_DE            = 10,
 	MBUS_PORT_DE_CFD        = 11,
+	MBUS_PORT_UNKNOWN1	= 12,
+	MBUS_PORT_UNKNOWN2	= 13,
+	MBUS_PORT_UNKNOWN3	= 14,
 };
 
 enum {
@@ -177,6 +186,70 @@ static void mctl_set_master_priority_a64(void)
 	writel(0x81000004, &mctl_com->mdfs_bwlr[2]);
 }
 
+static void mctl_set_master_priority_h5(void)
+{
+	struct sunxi_mctl_com_reg * const mctl_com =
+			(struct sunxi_mctl_com_reg *)SUNXI_DRAM_COM_BASE;
+
+	/* enable bandwidth limit windows and set windows size 1us */
+	writel(399, &mctl_com->tmr);
+	writel((1 << 16), &mctl_com->bwcr);
+
+	/* set cpu high priority */
+	writel(0x00000001, &mctl_com->mapr);
+
+	/* Port 2 is reserved per Allwinner's linux-3.10 source, yet
+	 * they initialise it */
+	MBUS_CONF(   CPU, true, HIGHEST, 0,  300,  260,  150);
+	MBUS_CONF(   GPU, true, HIGHEST, 0,  600,  400,  200);
+	MBUS_CONF(UNUSED, true, HIGHEST, 0,  512,  256,   96);
+	MBUS_CONF(   DMA, true, HIGHEST, 0,  256,  128,   32);
+	MBUS_CONF(    VE, true, HIGHEST, 0, 1900, 1500, 1000);
+	MBUS_CONF(   CSI, true, HIGHEST, 0,  150,  120,  100);
+	MBUS_CONF(  NAND, true,    HIGH, 0,  256,  128,   64);
+	MBUS_CONF(    SS, true, HIGHEST, 0,  256,  128,   64);
+	MBUS_CONF(    TS, true, HIGHEST, 0,  256,  128,   64);
+	MBUS_CONF(    DI, true,    HIGH, 0, 1024,  256,   64);
+	MBUS_CONF(    DE, true, HIGHEST, 3, 3400, 2400, 1024);
+	MBUS_CONF(DE_CFD, true, HIGHEST, 0,  600,  400,  200);
+}
+
+static void mctl_set_master_priority_r40(void)
+{
+	struct sunxi_mctl_com_reg * const mctl_com =
+			(struct sunxi_mctl_com_reg *)SUNXI_DRAM_COM_BASE;
+
+	/* enable bandwidth limit windows and set windows size 1us */
+	writel(399, &mctl_com->tmr);
+	writel((1 << 16), &mctl_com->bwcr);
+
+	/* set cpu high priority */
+	writel(0x00000001, &mctl_com->mapr);
+
+	/* Port 2 is reserved per Allwinner's linux-3.10 source, yet
+	 * they initialise it */
+	MBUS_CONF(     CPU, true, HIGHEST, 0,  300,  260,  150);
+	MBUS_CONF(     GPU, true, HIGHEST, 0,  600,  400,  200);
+	MBUS_CONF(  UNUSED, true, HIGHEST, 0,  512,  256,   96);
+	MBUS_CONF(     DMA, true, HIGHEST, 0,  256,  128,   32);
+	MBUS_CONF(      VE, true, HIGHEST, 0, 1900, 1500, 1000);
+	MBUS_CONF(     CSI, true, HIGHEST, 0,  150,  120,  100);
+	MBUS_CONF(    NAND, true,    HIGH, 0,  256,  128,   64);
+	MBUS_CONF(      SS, true, HIGHEST, 0,  256,  128,   64);
+	MBUS_CONF(      TS, true, HIGHEST, 0,  256,  128,   64);
+	MBUS_CONF(      DI, true,    HIGH, 0, 1024,  256,   64);
+
+	/*
+	 * The port names are probably wrong, but no correct sources
+	 * are available.
+	 */
+	MBUS_CONF(      DE, true,    HIGH, 0,  128,   48,    0);
+	MBUS_CONF(  DE_CFD, true,    HIGH, 0,  384,  256,    0);
+	MBUS_CONF(UNKNOWN1, true, HIGHEST, 0,  512,  384,  256);
+	MBUS_CONF(UNKNOWN2, true, HIGHEST, 2, 8192, 6144, 1024);
+	MBUS_CONF(UNKNOWN3, true,    HIGH, 0, 1280,  144,   64);
+}
+
 static void mctl_set_master_priority(uint16_t socid)
 {
 	switch (socid) {
@@ -185,6 +258,12 @@ static void mctl_set_master_priority(uint16_t socid)
 		return;
 	case SOCID_A64:
 		mctl_set_master_priority_a64();
+		return;
+	case SOCID_H5:
+		mctl_set_master_priority_h5();
+		return;
+	case SOCID_R40:
+		mctl_set_master_priority_r40();
 		return;
 	}
 }
@@ -237,6 +316,9 @@ static void mctl_set_timing_params(uint16_t socid, struct dram_para *para)
 	writel(0x18, &mctl_ctl->mr[2]);		/* CWL=8 */
 	writel(0x0, &mctl_ctl->mr[3]);
 
+	if (socid == SOCID_R40)
+		writel(0x3, &mctl_ctl->lp3mr11);	/* odt_en[7:4] */
+
 	/* set DRAM timing */
 	writel(DRAMTMG0_TWTP(twtp) | DRAMTMG0_TFAW(tfaw) |
 	       DRAMTMG0_TRAS_MAX(trasmax) | DRAMTMG0_TRAS(tras),
@@ -256,7 +338,7 @@ static void mctl_set_timing_params(uint16_t socid, struct dram_para *para)
 
 	/* set two rank timing */
 	clrsetbits_le32(&mctl_ctl->dramtmg[8], (0xff << 8) | (0xff << 0),
-			(0x66 << 8) | (0x10 << 0));
+			((socid == SOCID_H5 ? 0x33 : 0x66) << 8) | (0x10 << 0));
 
 	/* set PHY interface timing, write latency and read latency configure */
 	writel((0x2 << 24) | (t_rdata_en << 16) | (0x1 << 8) |
@@ -352,7 +434,7 @@ static void mctl_h3_zq_calibration_quirk(struct dram_para *para)
 	}
 }
 
-static void mctl_set_cr(struct dram_para *para)
+static void mctl_set_cr(uint16_t socid, struct dram_para *para)
 {
 	struct sunxi_mctl_com_reg * const mctl_com =
 			(struct sunxi_mctl_com_reg *)SUNXI_DRAM_COM_BASE;
@@ -362,6 +444,14 @@ static void mctl_set_cr(struct dram_para *para)
 	       (para->dual_rank ? MCTL_CR_DUAL_RANK : MCTL_CR_SINGLE_RANK) |
 	       MCTL_CR_PAGE_SIZE(para->page_size) |
 	       MCTL_CR_ROW_BITS(para->row_bits), &mctl_com->cr);
+
+	if (socid == SOCID_R40) {
+		if (para->dual_rank)
+			panic("Dual rank memory not supported\n");
+
+		/* Mux pin to A15 address line for single rank memory. */
+		setbits_le32(&mctl_com->cr_r1, MCTL_CR_R1_MUX_A15);
+	}
 }
 
 static void mctl_sys_init(uint16_t socid, struct dram_para *para)
@@ -376,14 +466,14 @@ static void mctl_sys_init(uint16_t socid, struct dram_para *para)
 	clrbits_le32(&ccm->ahb_gate0, 1 << AHB_GATE_OFFSET_MCTL);
 	clrbits_le32(&ccm->ahb_reset0_cfg, 1 << AHB_RESET_OFFSET_MCTL);
 	clrbits_le32(&ccm->pll5_cfg, CCM_PLL5_CTRL_EN);
-	if (socid == SOCID_A64)
+	if (socid == SOCID_A64 || socid == SOCID_R40)
 		clrbits_le32(&ccm->pll11_cfg, CCM_PLL11_CTRL_EN);
 	udelay(10);
 
 	clrbits_le32(&ccm->dram_clk_cfg, CCM_DRAMCLK_CFG_RST);
 	udelay(1000);
 
-	if (socid == SOCID_A64) {
+	if (socid == SOCID_A64 || socid == SOCID_R40) {
 		clock_set_pll11(CONFIG_DRAM_CLK * 2 * 1000000, false);
 		clrsetbits_le32(&ccm->dram_clk_cfg,
 				CCM_DRAMCLK_CFG_DIV_MASK |
@@ -391,7 +481,7 @@ static void mctl_sys_init(uint16_t socid, struct dram_para *para)
 				CCM_DRAMCLK_CFG_DIV(1) |
 				CCM_DRAMCLK_CFG_SRC_PLL11 |
 				CCM_DRAMCLK_CFG_UPD);
-	} else if (socid == SOCID_H3) {
+	} else if (socid == SOCID_H3 || socid == SOCID_H5) {
 		clock_set_pll5(CONFIG_DRAM_CLK * 2 * 1000000, false);
 		clrsetbits_le32(&ccm->dram_clk_cfg,
 				CCM_DRAMCLK_CFG_DIV_MASK |
@@ -410,7 +500,7 @@ static void mctl_sys_init(uint16_t socid, struct dram_para *para)
 	setbits_le32(&ccm->dram_clk_cfg, CCM_DRAMCLK_CFG_RST);
 	udelay(10);
 
-	writel(0xc00e, &mctl_ctl->clken);
+	writel(socid == SOCID_H5 ? 0x8000 : 0xc00e, &mctl_ctl->clken);
 	udelay(500);
 }
 
@@ -428,13 +518,16 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 
 	unsigned int i;
 
-	mctl_set_cr(para);
+	mctl_set_cr(socid, para);
 	mctl_set_timing_params(socid, para);
 	mctl_set_master_priority(socid);
 
 	/* setting VTC, default disable all VT */
 	clrbits_le32(&mctl_ctl->pgcr[0], (1 << 30) | 0x3f);
-	clrsetbits_le32(&mctl_ctl->pgcr[1], 1 << 24, 1 << 26);
+	if (socid == SOCID_H5)
+		setbits_le32(&mctl_ctl->pgcr[1], (1 << 24) | (1 << 26));
+	else
+		clrsetbits_le32(&mctl_ctl->pgcr[1], 1 << 24, 1 << 26);
 
 	/* increase DFI_PHY_UPD clock */
 	writel(PROTECT_MAGIC, &mctl_com->protect);
@@ -444,15 +537,22 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 	udelay(100);
 
 	/* set dramc odt */
-	for (i = 0; i < 4; i++)
-		clrsetbits_le32(&mctl_ctl->dx[i].gcr, (0x3 << 4) |
-				(0x1 << 1) | (0x3 << 2) | (0x3 << 12) |
-				(0x3 << 14),
-				IS_ENABLED(CONFIG_DRAM_ODT_EN) ?
-					DX_GCR_ODT_DYNAMIC : DX_GCR_ODT_OFF);
+	for (i = 0; i < 4; i++) {
+		u32 clearmask = (0x3 << 4) | (0x1 << 1) | (0x3 << 2) |
+				(0x3 << 12) | (0x3 << 14);
+		u32 setmask = IS_ENABLED(CONFIG_DRAM_ODT_EN) ?
+				DX_GCR_ODT_DYNAMIC : DX_GCR_ODT_OFF;
+
+		if (socid == SOCID_H5) {
+			clearmask |= 0x2 << 8;
+			setmask |= 0x4 << 8;
+		}
+		clrsetbits_le32(&mctl_ctl->dx[i].gcr, clearmask, setmask);
+	}
 
 	/* AC PDR should always ON */
-	setbits_le32(&mctl_ctl->aciocr, 0x1 << 1);
+	clrsetbits_le32(&mctl_ctl->aciocr, socid == SOCID_H5 ? (0x1 << 11) : 0,
+			0x1 << 1);
 
 	/* set DQS auto gating PD mode */
 	setbits_le32(&mctl_ctl->pgcr[2], 0x3 << 6);
@@ -464,7 +564,14 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 		/* dphy & aphy phase select 270 degree */
 		clrsetbits_le32(&mctl_ctl->pgcr[2], (0x3 << 10) | (0x3 << 8),
 				(0x1 << 10) | (0x2 << 8));
-	} else if (socid == SOCID_A64) {
+	} else if (socid == SOCID_A64 || socid == SOCID_H5) {
+		/* dphy & aphy phase select ? */
+		clrsetbits_le32(&mctl_ctl->pgcr[2], (0x3 << 10) | (0x3 << 8),
+				(0x0 << 10) | (0x3 << 8));
+	} else if (socid == SOCID_R40) {
+		/* dx ddr_clk & hdr_clk dynamic mode (tpr13[9] == 0) */
+		clrbits_le32(&mctl_ctl->pgcr[0], (0x3 << 14) | (0x3 << 12));
+
 		/* dphy & aphy phase select ? */
 		clrsetbits_le32(&mctl_ctl->pgcr[2], (0x3 << 10) | (0x3 << 8),
 				(0x0 << 10) | (0x3 << 8));
@@ -488,11 +595,17 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 
 		mctl_phy_init(PIR_PLLINIT | PIR_DCAL | PIR_PHYRST |
 			      PIR_DRAMRST | PIR_DRAMINIT | PIR_QSGATE);
-	} else if (socid == SOCID_A64) {
+	} else if (socid == SOCID_A64 || socid == SOCID_H5) {
 		clrsetbits_le32(&mctl_ctl->zqcr, 0xffffff, CONFIG_DRAM_ZQ);
 
 		mctl_phy_init(PIR_ZCAL | PIR_PLLINIT | PIR_DCAL | PIR_PHYRST |
 			      PIR_DRAMRST | PIR_DRAMINIT | PIR_QSGATE);
+		/* no PIR_QSGATE for H5 ???? */
+	} else if (socid == SOCID_R40) {
+		clrsetbits_le32(&mctl_ctl->zqcr, 0xffffff, CONFIG_DRAM_ZQ);
+
+		mctl_phy_init(PIR_ZCAL | PIR_PLLINIT | PIR_DCAL | PIR_PHYRST |
+			      PIR_DRAMRST | PIR_DRAMINIT);
 	}
 
 	/* detect ranks and bus width */
@@ -512,7 +625,7 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 			para->bus_width = 16;
 		}
 
-		mctl_set_cr(para);
+		mctl_set_cr(socid, para);
 		udelay(20);
 
 		/* re-train */
@@ -533,7 +646,7 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 	/* set PGCR3, CKE polarity */
 	if (socid == SOCID_H3)
 		writel(0x00aa0060, &mctl_ctl->pgcr[3]);
-	else if (socid == SOCID_A64)
+	else if (socid == SOCID_A64 || socid == SOCID_H5 || socid == SOCID_R40)
 		writel(0xc0aa0060, &mctl_ctl->pgcr[3]);
 
 	/* power down zq calibration module for power save */
@@ -545,12 +658,12 @@ static int mctl_channel_init(uint16_t socid, struct dram_para *para)
 	return 0;
 }
 
-static void mctl_auto_detect_dram_size(struct dram_para *para)
+static void mctl_auto_detect_dram_size(uint16_t socid, struct dram_para *para)
 {
 	/* detect row address bits */
 	para->page_size = 512;
 	para->row_bits = 16;
-	mctl_set_cr(para);
+	mctl_set_cr(socid, para);
 
 	for (para->row_bits = 11; para->row_bits < 16; para->row_bits++)
 		if (mctl_mem_matches((1 << (para->row_bits + 3)) * para->page_size))
@@ -558,7 +671,7 @@ static void mctl_auto_detect_dram_size(struct dram_para *para)
 
 	/* detect page size */
 	para->page_size = 8192;
-	mctl_set_cr(para);
+	mctl_set_cr(socid, para);
 
 	for (para->page_size = 512; para->page_size < 8192; para->page_size *= 2)
 		if (mctl_mem_matches(para->page_size))
@@ -588,6 +701,22 @@ static void mctl_auto_detect_dram_size(struct dram_para *para)
 	   0,  0,  0,  0,  0,  0,  0,  0,			\
 	   0,  0,  0,  0,  0,  0,  0      }
 
+#define SUN8I_R40_DX_READ_DELAYS				\
+	{{ 14, 14, 14, 14, 14, 14, 14, 14, 14,  0,  0 },	\
+	 { 14, 14, 14, 14, 14, 14, 14, 14, 14,  0,  0 },	\
+	 { 14, 14, 14, 14, 14, 14, 14, 14, 14,  0,  0 },	\
+	 { 14, 14, 14, 14, 14, 14, 14, 14, 14,  0,  0 } }
+#define SUN8I_R40_DX_WRITE_DELAYS				\
+	{{  0,  0,  0,  0,  0,  0,  0,  0,  0,  6,  0 },	\
+	 {  0,  0,  0,  0,  0,  0,  0,  0,  0,  6,  0 },	\
+	 {  0,  0,  0,  0,  0,  0,  0,  0,  0,  6,  0 },	\
+	 {  0,  0,  0,  0,  0,  0,  0,  0,  0,  6,  0 } }
+#define SUN8I_R40_AC_DELAYS					\
+	{  0,  0,  3,  0,  0,  0,  0,  0,			\
+	   0,  0,  0,  0,  0,  0,  0,  0,			\
+	   0,  0,  0,  0,  0,  0,  0,  0,			\
+	   0,  0,  0,  0,  0,  0,  0      }
+
 #define SUN50I_A64_DX_READ_DELAYS				\
 	{{ 16, 16, 16, 16, 17, 16, 16, 17, 16,  1,  0 },	\
 	 { 17, 17, 17, 17, 17, 17, 17, 17, 17,  1,  0 },	\
@@ -603,6 +732,22 @@ static void mctl_auto_detect_dram_size(struct dram_para *para)
 	   0,  3,  3,  3,  1,  0,  0,  0,			\
 	   3,  4,  0,  3,  4,  1,  4,  0,			\
 	   1,  1,  0,  1, 13,  5,  4      }
+
+#define SUN8I_H5_DX_READ_DELAYS					\
+	{{ 14, 15, 17, 17, 17, 17, 17, 18, 17,  3,  3 },	\
+	 { 21, 21, 12, 22, 21, 21, 21, 21, 21,  3,  3 },	\
+	 { 16, 19, 19, 17, 22, 22, 21, 22, 19,  3,  3 },	\
+	 { 21, 21, 22, 22, 20, 21, 19, 19, 19,  3,  3 } }
+#define SUN8I_H5_DX_WRITE_DELAYS				\
+	{{  1,  2,  3,  4,  3,  4,  4,  4,  6,  6,  6 },	\
+	 {  6,  6,  6,  5,  5,  5,  5,  5,  6,  6,  6 },	\
+	 {  0,  2,  4,  2,  6,  5,  5,  5,  6,  6,  6 },	\
+	 {  3,  3,  3,  2,  2,  1,  1,  1,  4,  4,  4 } }
+#define SUN8I_H5_AC_DELAYS					\
+	{  0,  0,  5,  5,  0,  0,  0,  0,			\
+	   0,  0,  0,  0,  3,  3,  3,  3,			\
+	   3,  3,  3,  3,  3,  3,  3,  3,			\
+	   3,  3,  3,  3,  2,  0,  0      }
 
 unsigned long sunxi_dram_init(void)
 {
@@ -621,10 +766,18 @@ unsigned long sunxi_dram_init(void)
 		.dx_read_delays  = SUN8I_H3_DX_READ_DELAYS,
 		.dx_write_delays = SUN8I_H3_DX_WRITE_DELAYS,
 		.ac_delays	 = SUN8I_H3_AC_DELAYS,
+#elif defined(CONFIG_MACH_SUN8I_R40)
+		.dx_read_delays  = SUN8I_R40_DX_READ_DELAYS,
+		.dx_write_delays = SUN8I_R40_DX_WRITE_DELAYS,
+		.ac_delays	 = SUN8I_R40_AC_DELAYS,
 #elif defined(CONFIG_MACH_SUN50I)
 		.dx_read_delays  = SUN50I_A64_DX_READ_DELAYS,
 		.dx_write_delays = SUN50I_A64_DX_WRITE_DELAYS,
 		.ac_delays	 = SUN50I_A64_AC_DELAYS,
+#elif defined(CONFIG_MACH_SUN50I_H5)
+		.dx_read_delays  = SUN8I_H5_DX_READ_DELAYS,
+		.dx_write_delays = SUN8I_H5_DX_WRITE_DELAYS,
+		.ac_delays	 = SUN8I_H5_AC_DELAYS,
 #endif
 	};
 /*
@@ -634,8 +787,12 @@ unsigned long sunxi_dram_init(void)
  */
 #if defined(CONFIG_MACH_SUN8I_H3)
 	uint16_t socid = SOCID_H3;
+#elif defined(CONFIG_MACH_SUN8I_R40)
+	uint16_t socid = SOCID_R40;
 #elif defined(CONFIG_MACH_SUN50I)
 	uint16_t socid = SOCID_A64;
+#elif defined(CONFIG_MACH_SUN50I_H5)
+	uint16_t socid = SOCID_H5;
 #endif
 
 	mctl_sys_init(socid, &para);
@@ -652,8 +809,11 @@ unsigned long sunxi_dram_init(void)
 	if (socid == SOCID_H3)
 		writel(0x0c000400, &mctl_ctl->odtcfg);
 
-	if (socid == SOCID_A64) {
-		setbits_le32(&mctl_ctl->vtfcr, 2 << 8);
+	if (socid == SOCID_A64 || socid == SOCID_H5 || socid == SOCID_R40) {
+		/* VTF enable (tpr13[8] == 1) */
+		setbits_le32(&mctl_ctl->vtfcr,
+			     (socid != SOCID_A64 ? 3 : 2) << 8);
+		/* DQ hold disable (tpr13[26] == 1) */
 		clrbits_le32(&mctl_ctl->pgcr[2], (1 << 13));
 	}
 
@@ -661,8 +821,8 @@ unsigned long sunxi_dram_init(void)
 	setbits_le32(&mctl_com->cccr, 1 << 31);
 	udelay(10);
 
-	mctl_auto_detect_dram_size(&para);
-	mctl_set_cr(&para);
+	mctl_auto_detect_dram_size(socid, &para);
+	mctl_set_cr(socid, &para);
 
 	return (1UL << (para.row_bits + 3)) * para.page_size *
 						(para.dual_rank ? 2 : 1);

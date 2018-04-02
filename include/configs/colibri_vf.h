@@ -14,8 +14,6 @@
 
 #include <asm/arch/imx-regs.h>
 
-#define CONFIG_VF610
-#define CONFIG_SYS_THUMB_BUILD
 #define CONFIG_SYS_FSL_CLK
 
 #define CONFIG_DISPLAY_BOARDINFO_LATE	/* Calls show_board_info() */
@@ -27,6 +25,16 @@
 #define CONFIG_MXC_OCOTP
 #endif
 
+#ifdef CONFIG_VIDEO_FSL_DCU_FB
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_BMP_LOGO
+#define CONFIG_SYS_FSL_DCU_LE
+
+#define CONFIG_SYS_DCU_ADDR		DCU0_BASE_ADDR
+#define DCU_LAYER_MAX_NUM		64
+#endif
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 
@@ -34,7 +42,6 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_ENV_VARS_UBOOT_CONFIG
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-#define CONFIG_BAUDRATE			115200
 
 /* NAND support */
 #define CONFIG_CMD_NAND
@@ -133,6 +140,8 @@
 	"setupdate=run setsdupdate || run setusbupdate\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
+	"video-mode=dcufb:640x480-16@60,monitor=lcd\0" \
+	"splashpos=m,m\0" \
 	SD_BOOTCMD \
 	NFS_BOOTCMD \
 	UBI_BOOTCMD
@@ -152,12 +161,6 @@
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000
 #define CONFIG_CMDLINE_EDITING
-
-/*
- * Stack sizes
- * The stack sizes are set up in start.S using the settings below
- */
-#define CONFIG_STACKSIZE		(128 * 1024)	/* regular stack */
 
 /* Physical memory map */
 #define CONFIG_NR_DRAM_BANKS		1

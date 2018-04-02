@@ -12,7 +12,6 @@
 
 #include <asm/arch/rmobile.h>
 
-#define CONFIG_CMD_DFL
 #define CONFIG_CMD_SDRAM
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_EXT2
@@ -36,8 +35,6 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_OF_LIBFDT
-
-#define CONFIG_BAUDRATE		115200
 
 #undef	CONFIG_SHOW_BOOT_PROGRESS
 

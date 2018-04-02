@@ -25,8 +25,6 @@
 #define	CONFIG_5xx_CONS_SCI1
 #undef	CONFIG_5xx_CONS_SCI2
 
-#define CONFIG_BAUDRATE		9600
-
 /*
  * BOOTP options
  */
@@ -40,7 +38,6 @@
  */
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_REGINFO
-#define CONFIG_CMD_BSP
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_IRQ
 

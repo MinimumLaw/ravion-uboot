@@ -29,9 +29,6 @@
 #endif
 #endif
 
-
-#define CONFIG_BAUDRATE		115200
-
 #define	CONFIG_TIMESTAMP		/* Print image info with timestamp */
 #undef	CONFIG_BOOTARGS
 
@@ -152,6 +149,5 @@
  */
 
 #undef CONFIG_CMD_IDE
-#undef CONFIG_CMD_BEDBUG
 
 #endif	/* __CONFIG_H */

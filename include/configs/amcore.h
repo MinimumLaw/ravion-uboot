@@ -15,7 +15,6 @@
 #define CONFIG_MCFTMR
 #define CONFIG_MCFUART
 #define CONFIG_SYS_UART_PORT		0
-#define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 #define CONFIG_BOOTCOMMAND		"bootm ffc20000"
@@ -30,9 +29,6 @@
 	"upgrade_jffs2=loady; "					\
 		"erase 0xfff00000 0xffffffff; "			\
 		"cp.b 0x20000 0xfff00000 ${filesize}\0"
-
-#undef CONFIG_CMD_AES
-#define CONFIG_CMD_DIAG
 
 /* undef to save memory	*/
 #undef	CONFIG_SYS_LONGHELP

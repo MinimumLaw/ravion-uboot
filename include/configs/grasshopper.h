@@ -69,11 +69,6 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 
-#define CONFIG_STACKSIZE		(2048)
-
-#define CONFIG_BAUDRATE			115200
-
-
 /*
  * After booting the board for the first time, new ethernet addresses
  * should be generated and assigned to the environment variables

@@ -69,7 +69,6 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX	1
-#define CONFIG_BAUDRATE		115200
 
 /*
  * Command definition
@@ -81,7 +80,6 @@
 #define CONFIG_CMD_NAND
 
 #define CONFIG_NET_RETRY_COUNT	100
-#define CONFIG_CMD_DATE
 
 
 #define CONFIG_LOADADDR		0x80800000	/* loadaddr env var */

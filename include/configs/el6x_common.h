@@ -55,11 +55,8 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_MXC_UART_BASE	UART2_BASE
-#define CONFIG_BAUDRATE             115200
 
 /* Command definition */
-
-#define CONFIG_CMD_BMODE
 #undef CONFIG_CMD_IMLS
 
 #define CONFIG_BOARD_NAME	EL6Q
@@ -99,8 +96,6 @@
 #define CONFIG_SYS_MEMTEST_START       0x10000000
 #define CONFIG_SYS_MEMTEST_END         0x10800000
 #define CONFIG_SYS_MEMTEST_SCRATCH     0x10800000
-
-#define CONFIG_STACKSIZE               (128 * 1024)
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS           1

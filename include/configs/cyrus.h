@@ -239,7 +239,6 @@
 #define CONFIG_SYS_I2C_MAC2_CHIP_ADDR 0x50
 #define CONFIG_SYS_I2C_MAC2_DATA_ADDR 0xfa
 
-#define CONFIG_CMD_DATE			1
 #define CONFIG_RTC_MCP79411		1
 #define CONFIG_SYS_RTC_BUS_NUM		3
 #define CONFIG_SYS_I2C_RTC_ADDR		0x6f
@@ -478,9 +477,6 @@
 
 /* default location for tftp and bootm */
 #define CONFIG_LOADADDR		1000000
-
-
-#define CONFIG_BAUDRATE	115200
 
 #define __USB_PHY_TYPE	utmi
 

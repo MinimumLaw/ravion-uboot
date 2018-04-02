@@ -21,7 +21,7 @@
 #define CONFIG_MXC_GPT_HCLK
 #define CONFIG_SYSCOUNTER_TIMER
 #define CONFIG_SC_TIMER_CLK 8000000 /* 8Mhz */
-#define CONFIG_TIMER_CLK_FREQ CONFIG_SC_TIMER_CLK
+#define COUNTER_FREQUENCY CONFIG_SC_TIMER_CLK
 #define CONFIG_SYS_FSL_CLK
 
 #define CONFIG_SYS_BOOTM_LEN	0x1000000
@@ -35,7 +35,6 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX               1
-#define CONFIG_BAUDRATE                 115200
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
@@ -68,7 +67,6 @@
 /* Secure boot (HAB) support */
 #ifdef CONFIG_SECURE_BOOT
 #define CONFIG_CSF_SIZE			0x2000
-#define CONFIG_CMD_DEKBLOB
 #endif
 
 #endif

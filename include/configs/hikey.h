@@ -52,7 +52,6 @@
 
 /* Serial port PL010/PL011 through the device model */
 #define CONFIG_PL01X_SERIAL
-#define CONFIG_BAUDRATE			115200
 
 #ifdef CONFIG_CMD_USB
 #define CONFIG_USB_DWC2
@@ -108,8 +107,6 @@
 				BOOTENV
 
 /* Preserve environment on sd card */
-#define CONFIG_COMMAND_HISTORY
-
 #define CONFIG_ENV_SIZE			0x1000
 #define CONFIG_ENV_IS_IN_FAT
 #define FAT_ENV_INTERFACE               "mmc"

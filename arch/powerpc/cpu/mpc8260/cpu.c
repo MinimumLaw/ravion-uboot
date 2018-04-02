@@ -50,7 +50,14 @@ int checkcpu (void)
 	uint pvr = get_pvr ();
 	uint immr, rev, m, k;
 	char buf[32];
+	int ret;
 
+	ret = prt_8260_rsr();
+	if (ret)
+		return ret;
+	ret = prt_8260_clks();
+	if (ret)
+		return ret;
 	puts ("CPU:   ");
 
 	switch (pvr) {
@@ -287,11 +294,6 @@ void watchdog_reset (void)
 #ifdef CONFIG_OF_BOARD_SETUP
 void ft_cpu_setup (void *blob, bd_t *bd)
 {
-#if defined(CONFIG_HAS_ETH0) || defined(CONFIG_HAS_ETH1) ||\
-    defined(CONFIG_HAS_ETH2) || defined(CONFIG_HAS_ETH3)
-	fdt_fixup_ethernet(blob);
-#endif
-
 	do_fixup_by_compat_u32(blob, "fsl,cpm2-brg",
 			       "clock-frequency", bd->bi_brgfreq, 1);
 

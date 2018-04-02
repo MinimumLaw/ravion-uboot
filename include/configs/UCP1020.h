@@ -443,11 +443,9 @@
  * Command line configuration.
  */
 #define CONFIG_CMD_IRQ
-#define CONFIG_CMD_DATE
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ERRATA
-#define CONFIG_CMD_CRAMFS
 
 /*
  * USB
@@ -554,8 +552,6 @@
 #define CONFIG_LOADADDR		1000000
 
 #define CONFIG_BOOTARGS	/* the boot command will set bootargs */
-
-#define CONFIG_BAUDRATE	115200
 
 #if defined(CONFIG_DONGLE)
 
