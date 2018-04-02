@@ -31,9 +31,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{9600, 19200, 38400, 57600, 115200}
 
-#define CONFIG_BOOTARGS                 "console=ttyS0,115200 " \
-					"root=/dev/mtdblock2 " \
-					"rootfstype=squashfs"
 #define CONFIG_BOOTCOMMAND              "sf probe;" \
 					"mtdparts default;" \
 					"bootm 0x9f680000"
@@ -45,21 +42,11 @@
 					"64k(ART)"
 
 #define CONFIG_ENV_SPI_MAX_HZ           25000000
-#define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_OFFSET               0x40000
 #define CONFIG_ENV_SECT_SIZE            0x10000
 #define CONFIG_ENV_SIZE                 0x10000
 
-/*
- * Command
- */
-#define CONFIG_CMD_MTDPARTS
-
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_CBSIZE               256
-#define CONFIG_SYS_MAXARGS              16
-#define CONFIG_SYS_PBSIZE               (CONFIG_SYS_CBSIZE + \
-					sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_AUTO_COMPLETE

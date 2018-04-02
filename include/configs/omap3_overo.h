@@ -8,7 +8,6 @@
 #define __CONFIG_H
 
 #define CONFIG_NR_DRAM_BANKS	2	/* CS1 may or may not be populated */
-#define CONFIG_NAND
 
 #include <configs/ti_omap3_common.h>
 /*
@@ -17,8 +16,6 @@
  */
 #undef CONFIG_SPL_TEXT_BASE
 #define CONFIG_SPL_TEXT_BASE		0x40200000
-
-#define CONFIG_BCH
 
 /* call misc_init_r */
 #define CONFIG_MISC_INIT_R
@@ -34,23 +31,16 @@
 #define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + (128 << 15))
 
 /* I2C Support */
-#define CONFIG_SYS_I2C_OMAP34XX
 
 /* TWL4030 LED */
 #define CONFIG_TWL4030_LED
 
 /* USB EHCI */
 #define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	183
-#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS	3
 
 /* commands to include */
 
 #ifdef CONFIG_NAND
-#define CONFIG_CMD_UBIFS	/* Read-only UBI volume operations */
-
-#define CONFIG_RBTREE		/* required by CONFIG_CMD_UBI */
-#define CONFIG_LZO		/* required by CONFIG_CMD_UBIFS */
-
 #define CONFIG_MTD_PARTITIONS	/* required for UBI partition support */
 
 /* NAND block size is 128 KiB.  Synchronize these values with
@@ -184,7 +174,6 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
-#define CONFIG_ENV_IS_IN_NAND
 #define ONENAND_ENV_OFFSET		0x240000 /* environment starts here */
 #define SMNAND_ENV_OFFSET		0x240000 /* environment starts here */
 
@@ -225,9 +214,7 @@
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000
 /* NAND: SPL falcon mode configs */
 #ifdef CONFIG_SPL_OS_BOOT
-#define CONFIG_CMD_SPL_NAND_OFS		0x240000
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS	0x280000
-#define CONFIG_CMD_SPL_WRITE_SIZE	0x2000
 #endif
 
 #endif				/* __CONFIG_H */

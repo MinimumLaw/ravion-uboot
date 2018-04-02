@@ -178,12 +178,43 @@ static void prepare_backup_gpt_header(gpt_header *gpt_h)
  * Public Functions (include/part.h)
  */
 
+/*
+ * UUID is displayed as 32 hexadecimal digits, in 5 groups,
+ * separated by hyphens, in the form 8-4-4-4-12 for a total of 36 characters
+ */
+int get_disk_guid(struct blk_desc * dev_desc, char *guid)
+{
+	ALLOC_CACHE_ALIGN_BUFFER_PAD(gpt_header, gpt_head, 1, dev_desc->blksz);
+	gpt_entry *gpt_pte = NULL;
+	unsigned char *guid_bin;
+
+	/* This function validates AND fills in the GPT header and PTE */
+	if (is_gpt_valid(dev_desc, GPT_PRIMARY_PARTITION_TABLE_LBA,
+			 gpt_head, &gpt_pte) != 1) {
+		printf("%s: *** ERROR: Invalid GPT ***\n", __func__);
+		if (is_gpt_valid(dev_desc, dev_desc->lba - 1,
+				 gpt_head, &gpt_pte) != 1) {
+			printf("%s: *** ERROR: Invalid Backup GPT ***\n",
+			       __func__);
+			return -EINVAL;
+		} else {
+			printf("%s: ***        Using Backup GPT ***\n",
+			       __func__);
+		}
+	}
+
+	guid_bin = gpt_head->disk_guid.b;
+	uuid_bin_to_str(guid_bin, guid, UUID_STR_FORMAT_GUID);
+
+	return 0;
+}
+
 void part_print_efi(struct blk_desc *dev_desc)
 {
 	ALLOC_CACHE_ALIGN_BUFFER_PAD(gpt_header, gpt_head, 1, dev_desc->blksz);
 	gpt_entry *gpt_pte = NULL;
 	int i = 0;
-	char uuid[37];
+	char uuid[UUID_STR_LEN + 1];
 	unsigned char *uuid_bin;
 
 	/* This function validates AND fills in the GPT header and PTE */
@@ -397,11 +428,11 @@ int write_gpt_table(struct blk_desc *dev_desc,
 	return -1;
 }
 
-int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
-		disk_partition_t *partitions, int parts)
+int gpt_fill_pte(struct blk_desc *dev_desc,
+		 gpt_header *gpt_h, gpt_entry *gpt_e,
+		 disk_partition_t *partitions, int parts)
 {
 	lbaint_t offset = (lbaint_t)le64_to_cpu(gpt_h->first_usable_lba);
-	lbaint_t start;
 	lbaint_t last_usable_lba = (lbaint_t)
 			le64_to_cpu(gpt_h->last_usable_lba);
 	int i, k;
@@ -414,27 +445,44 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 	char *str_type_guid;
 	unsigned char *bin_type_guid;
 #endif
+	size_t hdr_start = gpt_h->my_lba;
+	size_t hdr_end = hdr_start + 1;
+
+	size_t pte_start = gpt_h->partition_entry_lba;
+	size_t pte_end = pte_start +
+		gpt_h->num_partition_entries * gpt_h->sizeof_partition_entry /
+		dev_desc->blksz;
 
 	for (i = 0; i < parts; i++) {
 		/* partition starting lba */
-		start = partitions[i].start;
-		if (start && (start < offset)) {
+		lbaint_t start = partitions[i].start;
+		lbaint_t size = partitions[i].size;
+
+		if (start) {
+			offset = start + size;
+		} else {
+			start = offset;
+			offset += size;
+		}
+
+		/*
+		 * If our partition overlaps with either the GPT
+		 * header, or the partition entry, reject it.
+		 */
+		if (((start <= hdr_end && hdr_start <= (start + size)) ||
+		     (start <= pte_end && pte_start <= (start + size)))) {
 			printf("Partition overlap\n");
 			return -1;
 		}
-		if (start) {
-			gpt_e[i].starting_lba = cpu_to_le64(start);
-			offset = start + partitions[i].size;
-		} else {
-			gpt_e[i].starting_lba = cpu_to_le64(offset);
-			offset += partitions[i].size;
-		}
+
+		gpt_e[i].starting_lba = cpu_to_le64(start);
+
 		if (offset > (last_usable_lba + 1)) {
 			printf("Partitions layout exceds disk size\n");
 			return -1;
 		}
 		/* partition ending lba */
-		if ((i == parts - 1) && (partitions[i].size == 0))
+		if ((i == parts - 1) && (size == 0))
 			/* extend the last partition to maximuim */
 			gpt_e[i].ending_lba = gpt_h->last_usable_lba;
 		else
@@ -494,7 +542,7 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 		debug("%s: name: %s offset[%d]: 0x" LBAF
 		      " size[%d]: 0x" LBAF "\n",
 		      __func__, partitions[i].name, i,
-		      offset, i, partitions[i].size);
+		      offset, i, size);
 	}
 
 	return 0;
@@ -503,6 +551,7 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 static uint32_t partition_entries_offset(struct blk_desc *dev_desc)
 {
 	uint32_t offset_blks = 2;
+	uint32_t __maybe_unused offset_bytes;
 	int __maybe_unused config_offset;
 
 #if defined(CONFIG_EFI_PARTITION_ENTRIES_OFF)
@@ -514,8 +563,9 @@ static uint32_t partition_entries_offset(struct blk_desc *dev_desc)
 	 * the disk) for the entries can be set in
 	 * CONFIG_EFI_PARTITION_ENTRIES_OFF.
 	 */
-	offset_blks =
+	offset_bytes =
 		PAD_TO_BLOCKSIZE(CONFIG_EFI_PARTITION_ENTRIES_OFF, dev_desc);
+	offset_blks = offset_bytes / dev_desc->blksz;
 #endif
 
 #if defined(CONFIG_OF_CONTROL)
@@ -527,8 +577,10 @@ static uint32_t partition_entries_offset(struct blk_desc *dev_desc)
 	config_offset = fdtdec_get_config_int(gd->fdt_blob,
 					      "u-boot,efi-partition-entries-offset",
 					      -EINVAL);
-	if (config_offset != -EINVAL)
-		offset_blks = PAD_TO_BLOCKSIZE(config_offset, dev_desc);
+	if (config_offset != -EINVAL) {
+		offset_bytes = PAD_TO_BLOCKSIZE(config_offset, dev_desc);
+		offset_blks = offset_bytes / dev_desc->blksz;
+	}
 #endif
 
 	debug("efi: partition entries offset (in blocks): %d\n", offset_blks);
@@ -596,7 +648,7 @@ int gpt_restore(struct blk_desc *dev_desc, char *str_disk_guid,
 		goto err;
 
 	/* Generate partition entries */
-	ret = gpt_fill_pte(gpt_h, gpt_e, partitions, parts_count);
+	ret = gpt_fill_pte(dev_desc, gpt_h, gpt_e, partitions, parts_count);
 	if (ret)
 		goto err;
 

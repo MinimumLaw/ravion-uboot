@@ -63,12 +63,6 @@
 
 #endif
 
-/* USB */
-
-#ifdef CONFIG_CMD_USB
-#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS	3
-#endif
-
 /* USB device */
 #define CONFIG_USB_ETHER
 #define CONFIG_USB_ETH_RNDIS
@@ -80,10 +74,6 @@
 #define CONFIG_RMII
 #define CONFIG_NET_RETRY_COUNT		20
 #define CONFIG_MACB_SEARCH_PHY
-
-#define CONFIG_USB_HOST_ETHER
-#define CONFIG_USB_ETHER_SMSC95XX
-#define CONFIG_USB_ETHER_RNDIS
 
 #ifdef CONFIG_SYS_USE_SERIALFLASH
 /* bootstrap + u-boot + env + linux in serial flash */
@@ -102,9 +92,6 @@
 			    "mmc read ${loadaddr} ${k_offset} ${k_blksize};" \
 			    "mmc read ${oftaddr} ${dtb_offset} ${dtb_blksize};" \
 			    "bootz ${loadaddr} -  ${oftaddr}"
-
-#undef CONFIG_BOOTARGS
-#define CONFIG_BOOTARGS	    "console=ttyS0,115200 earlyprintk rw root=/dev/mmcblk0p2 rootfstype=ext4 rootwait quiet lpj=1990656"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"kernel_start=0x20000\0" \

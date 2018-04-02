@@ -95,6 +95,26 @@ config SYS_MALLOC_F_LEN
 	  particular needs this to operate, so that it can allocate the
 	  initial serial device and any others that are needed.
 
+config SPL_SYS_MALLOC_F_LEN
+        hex "Size of malloc() pool in SPL before relocation"
+        depends on SYS_MALLOC_F
+        default SYS_MALLOC_F_LEN
+        help
+          Before relocation, memory is very limited on many platforms. Still,
+          we can provide a small malloc() pool if needed. Driver model in
+          particular needs this to operate, so that it can allocate the
+          initial serial device and any others that are needed.
+
+config TPL_SYS_MALLOC_F_LEN
+        hex "Size of malloc() pool in TPL before relocation"
+        depends on SYS_MALLOC_F
+        default SYS_MALLOC_F_LEN
+        help
+          Before relocation, memory is very limited on many platforms. Still,
+          we can provide a small malloc() pool if needed. Driver model in
+          particular needs this to operate, so that it can allocate the
+          initial serial device and any others that are needed.
+
 menuconfig EXPERT
 	bool "Configure standard U-Boot features (expert users)"
 	default y
@@ -141,6 +161,13 @@ config PHYS_64BIT
 endmenu		# General setup
 
 menu "Boot images"
+
+config ANDROID_BOOT_IMAGE
+	bool "Enable support for Android Boot Images"
+	default y if FASTBOOT
+	help
+	  This enables support for booting images which use the Android
+	  image format header.
 
 config FIT
 	bool "Support Flattened Image Tree"
@@ -325,11 +352,13 @@ config SYS_EXTRA_OPTIONS
 config SYS_TEXT_BASE
 	depends on ARC || X86 || ARCH_UNIPHIER || ARCH_ZYNQMP || \
 		(M68K && !TARGET_ASTRO_MCF5373L) || MICROBLAZE || MIPS || \
-		ARCH_ZYNQ || ARCH_KEYSTONE
+		ARCH_ZYNQ || ARCH_KEYSTONE || ARCH_OMAP2PLUS
 	depends on !EFI_APP
 	hex "Text Base"
 	help
 	  TODO: Move CONFIG_SYS_TEXT_BASE for all the architecture
+
+	default 0x80800000 if ARCH_OMAP2PLUS
 
 
 config SYS_CLK_FREQ
@@ -357,6 +386,8 @@ source "cmd/Kconfig"
 source "disk/Kconfig"
 
 source "dts/Kconfig"
+
+source "env/Kconfig"
 
 source "net/Kconfig"
 

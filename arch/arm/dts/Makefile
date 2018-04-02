@@ -34,6 +34,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rk3288-fennec.dtb \
 	rk3288-firefly.dtb \
 	rk3288-miqi.dtb \
+	rk3288-phycore-rdk.dtb \
 	rk3288-popmetal.dtb \
 	rk3288-rock2-square.dtb \
 	rk3288-tinker.dtb \
@@ -41,6 +42,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rk3288-veyron-mickey.dtb \
 	rk3288-veyron-minnie.dtb \
 	rk3328-evb.dtb \
+	rk3368-lion.dtb \
 	rk3368-sheep.dtb \
 	rk3368-geekbox.dtb \
 	rk3368-px5-evb.dtb \
@@ -117,8 +119,6 @@ dtb-$(CONFIG_ARCH_UNIPHIER_PXS2) += \
 	uniphier-pxs2-vodka.dtb
 dtb-$(CONFIG_ARCH_UNIPHIER_PXS3) += \
 	uniphier-pxs3-ref.dtb
-dtb-$(CONFIG_ARCH_UNIPHIER_SLD3) += \
-	uniphier-sld3-ref.dtb
 dtb-$(CONFIG_ARCH_UNIPHIER_SLD8) += \
 	uniphier-sld8-ref.dtb
 
@@ -131,13 +131,14 @@ dtb-$(CONFIG_ARCH_ZYNQ) += zynq-zc702.dtb \
 	zynq-topic-miami.dtb \
 	zynq-topic-miamilite.dtb \
 	zynq-topic-miamiplus.dtb \
+	zynq-zturn-myir.dtb \
 	zynq-zc770-xm010.dtb \
 	zynq-zc770-xm011.dtb \
 	zynq-zc770-xm012.dtb \
 	zynq-zc770-xm013.dtb
 dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-ep108.dtb			\
-	zynqmp-zcu102.dtb			\
+	zynqmp-zcu102-revA.dtb			\
 	zynqmp-zcu102-revB.dtb			\
 	zynqmp-zc1751-xm015-dc1.dtb		\
 	zynqmp-zc1751-xm016-dc2.dtb		\
@@ -333,6 +334,8 @@ dtb-$(CONFIG_MACH_SUN50I_H5) += \
 	sun50i-h5-orangepi-zero-plus2.dtb
 dtb-$(CONFIG_MACH_SUN50I) += \
 	sun50i-a64-bananapi-m64.dtb \
+	sun50i-a64-nanopi-a64.dtb \
+	sun50i-a64-olinuxino.dtb \
 	sun50i-a64-orangepi-win.dtb \
 	sun50i-a64-pine64-plus.dtb \
 	sun50i-a64-pine64.dtb
@@ -354,6 +357,7 @@ dtb-$(CONFIG_MX6) += imx6ull-14x14-evk.dtb \
 	imx6sll-evk.dtb \
 	imx6dl-icore.dtb \
 	imx6dl-icore-rqs.dtb \
+	imx6q-cm-fx6.dtb \
 	imx6q-icore.dtb \
 	imx6q-icore-rqs.dtb \
 	imx6q-logicpd.dtb \
@@ -369,10 +373,22 @@ dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
 
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb
 
+dtb-$(CONFIG_RCAR_GEN3) += \
+	r8a7795-h3ulcb.dtb \
+	r8a7795-salvator-x.dtb \
+	r8a7796-m3ulcb.dtb \
+	r8a7796-salvator-x.dtb
+
 dtb-$(CONFIG_SOC_KEYSTONE) += keystone-k2hk-evm.dtb \
 	keystone-k2l-evm.dtb \
 	keystone-k2e-evm.dtb \
-	keystone-k2g-evm.dtb
+	keystone-k2g-evm.dtb \
+	keystone-k2g-generic.dtb \
+	keystone-k2g-ice.dtb
+
+dtb-$(CONFIG_TARGET_AT91SAM9261EK) += at91sam9261ek.dtb
+
+dtb-$(CONFIG_TARGET_PM9263) += at91sam9263ek.dtb
 
 dtb-$(CONFIG_TARGET_AT91SAM9263EK) += at91sam9263ek.dtb
 

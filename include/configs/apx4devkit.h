@@ -18,10 +18,6 @@
 #define CONFIG_MX28				/* i.MX28 SoC */
 #define CONFIG_MACH_TYPE	MACH_TYPE_APX4DEVKIT
 
-/* U-Boot Commands */
-
-#define CONFIG_CMD_NAND
-
 /* Memory configuration */
 #define CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
 #define PHYS_SDRAM_1			0x40000000	/* Base address */
@@ -30,7 +26,6 @@
 
 /* Environment */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_ENV_IS_IN_NAND
 
 /* Environment is in MMC */
 #if defined(CONFIG_CMD_MMC) && defined(CONFIG_ENV_IS_IN_MMC)
@@ -52,10 +47,6 @@
 
 /* UBI and NAND partitioning */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_CMD_UBIFS
-#define CONFIG_CMD_MTDPARTS
-#define CONFIG_RBTREE
-#define CONFIG_LZO
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT			"nand0=gpmi-nand"

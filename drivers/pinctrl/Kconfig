@@ -60,7 +60,7 @@ config PINCONF
 	  framework.
 
 config SPL_PINCTRL
-	bool "Support pin controlloers in SPL"
+	bool "Support pin controllers in SPL"
 	depends on SPL && SPL_DM
 	help
 	  This option is an SPL-variant of the PINCTRL option.
@@ -173,6 +173,16 @@ config PINCTRL_ROCKCHIP_RK3188
 	depends on DM
 	help
 	  Support pin multiplexing control on Rockchip rk3188 SoCs.
+
+	  The driver is controlled by a device tree node which contains both
+	  the GPIO definitions and pin control functions for each available
+	  multiplex function.
+
+config PINCTRL_ROCKCHIP_RK322X
+	bool "Rockchip rk322x pin control driver"
+	depends on DM
+	help
+	  Support pin multiplexing control on Rockchip rk322x SoCs.
 
 	  The driver is controlled by a device tree node which contains both
 	  the GPIO definitions and pin control functions for each available

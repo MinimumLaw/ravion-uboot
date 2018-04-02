@@ -24,14 +24,7 @@
 
 #ifdef CONFIG_HAS_FSL_XHCI_USB
 #define CONFIG_USB_XHCI_FSL
-#define CONFIG_USB_XHCI_DWC3
 #define CONFIG_USB_MAX_CONTROLLER_COUNT		1
-#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS	2
-#endif
-
-#if defined(CONFIG_HAS_FSL_DR_USB) || defined(CONFIG_HAS_FSL_XHCI_USB)
-#define CONFIG_USB_STORAGE
-#define CONFIG_CMD_EXT2
 #endif
 
 #define CONFIG_SYS_CLK_FREQ		100000000
@@ -77,7 +70,6 @@
 #define CONFIG_SYS_FSL_PBL_RCW	\
 	board/freescale/ls1021aiot/ls102xa_rcw_sd.cfg
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_LDSCRIPT	"arch/$(ARCH)/cpu/u-boot-spl.lds"
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
 #define CONFIG_SPL_ENV_SUPPORT
@@ -143,7 +135,6 @@
 #define CONFIG_FSL_ESDHC
 
 /* SATA */
-#define CONFIG_CMD_SCSI
 #define CONFIG_LIBATA
 #define CONFIG_SCSI_AHCI
 #define CONFIG_SCSI_AHCI_PLAT
@@ -200,8 +191,6 @@
 
 #define CONFIG_ETHPRIME			"eTSEC2"
 
-#define CONFIG_PHY_GIGE
-#define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
 
 #define CONFIG_HAS_ETH0
@@ -217,7 +206,6 @@
 
 #ifdef CONFIG_PCI
 #define CONFIG_PCI_SCAN_SHOW
-#define CONFIG_CMD_PCI
 #endif
 
 #define CONFIG_CMD_PING
@@ -252,11 +240,6 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
-#define CONFIG_SYS_PBSIZE		\
-	(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #define CONFIG_CMD_GREPENV
 #define CONFIG_CMD_MEMINFO
@@ -287,11 +270,9 @@
 
 #if defined(CONFIG_SD_BOOT)
 #define CONFIG_ENV_OFFSET		0x100000
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #define CONFIG_ENV_SIZE			0x2000
 #elif defined(CONFIG_QSPI_BOOT)
-#define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_SIZE			0x2000
 #define CONFIG_ENV_OFFSET		0x100000
 #define CONFIG_ENV_SECT_SIZE	0x10000

@@ -4,6 +4,7 @@
  */
 
 #ifndef USE_HOSTCC
+#include <boot_fit.h>
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
@@ -33,12 +34,6 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(NVIDIA_TEGRA20_EMC, "nvidia,tegra20-emc"),
 	COMPAT(NVIDIA_TEGRA20_EMC_TABLE, "nvidia,tegra20-emc-table"),
 	COMPAT(NVIDIA_TEGRA20_NAND, "nvidia,tegra20-nand"),
-	COMPAT(NVIDIA_TEGRA124_PMC, "nvidia,tegra124-pmc"),
-	COMPAT(NVIDIA_TEGRA186_SDMMC, "nvidia,tegra186-sdhci"),
-	COMPAT(NVIDIA_TEGRA210_SDMMC, "nvidia,tegra210-sdhci"),
-	COMPAT(NVIDIA_TEGRA124_SDMMC, "nvidia,tegra124-sdhci"),
-	COMPAT(NVIDIA_TEGRA30_SDMMC, "nvidia,tegra30-sdhci"),
-	COMPAT(NVIDIA_TEGRA20_SDMMC, "nvidia,tegra20-sdhci"),
 	COMPAT(NVIDIA_TEGRA124_XUSB_PADCTL, "nvidia,tegra124-xusb-padctl"),
 	COMPAT(NVIDIA_TEGRA210_XUSB_PADCTL, "nvidia,tegra210-xusb-padctl"),
 	COMPAT(SMSC_LAN9215, "smsc,lan9215"),
@@ -1221,6 +1216,15 @@ int fdtdec_setup(void)
 		gd->fdt_blob = (ulong *)&_image_binary_end;
 	else
 		gd->fdt_blob = (ulong *)&__bss_end;
+
+#  elif defined CONFIG_FIT_EMBED
+	gd->fdt_blob = locate_dtb_in_fit(&_end);
+
+	if (gd->fdt_blob == NULL || gd->fdt_blob <= ((void *)&_end)) {
+		puts("Failed to find proper dtb in embedded FIT Image\n");
+		return -1;
+	}
+
 #  else
 	/* FDT is at end of image */
 	gd->fdt_blob = (ulong *)&_end;
@@ -1236,7 +1240,7 @@ int fdtdec_setup(void)
 # endif
 # ifndef CONFIG_SPL_BUILD
 	/* Allow the early environment to override the fdt address */
-	gd->fdt_blob = (void *)getenv_ulong("fdtcontroladdr", 16,
+	gd->fdt_blob = (void *)env_get_ulong("fdtcontroladdr", 16,
 						(uintptr_t)gd->fdt_blob);
 # endif
 #endif

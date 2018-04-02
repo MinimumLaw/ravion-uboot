@@ -26,8 +26,6 @@
 	"fatload mmc 0 ${loadaddr} uImage;"	\
 	"bootm ${loadaddr}"			\
 
-#define CONFIG_BOOTARGS	"console=ttyO2,115200n8 noinitrd earlyprintk"
-
 /* Clock Defines */
 #define V_OSCK          24000000    /* Clock output from T2 */
 #define V_SCLK          (V_OSCK >> 1)
@@ -107,7 +105,6 @@
 					"8m(NAND.kernel)," \
 					"-(NAND.file-system)"
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x000c0000
-#define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_OFFSET		0x001c0000
 #define CONFIG_ENV_OFFSET_REDUND	0x001e0000
 #define CONFIG_SYS_ENV_SECT_SIZE	CONFIG_SYS_NAND_BLOCK_SIZE
@@ -118,8 +115,6 @@
 #define CONFIG_SPL_TEXT_BASE    0x40400000
 #define CONFIG_SPL_MAX_SIZE		(SRAM_SCRATCH_SPACE_ADDR - \
 					 CONFIG_SPL_TEXT_BASE)
-
-#define CONFIG_SPL_LDSCRIPT     "arch/arm/mach-omap2/u-boot-spl.lds"
 
 #define CONFIG_SYS_TEXT_BASE        0x80800000
 
@@ -146,6 +141,5 @@
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_DM_MMC
 #undef CONFIG_TIMER
-#undef CONFIG_DM_USB
 #endif
 #endif

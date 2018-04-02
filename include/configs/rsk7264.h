@@ -16,16 +16,12 @@
 
 #define CONFIG_DISPLAY_BOARDINFO
 
-#define CONFIG_BOOTARGS		"console=ttySC3,115200"
 #define CONFIG_SYS_BAUDRATE_TABLE	{ CONFIG_BAUDRATE }
 
 #define CONFIG_SYS_LONGHELP	1	/* undef to save memory	*/
-#define CONFIG_SYS_CBSIZE	256	/* Buffer size for input from the Console */
 #define CONFIG_SYS_PBSIZE	256	/* Buffer size for Console output */
-#define CONFIG_SYS_MAXARGS	16	/* max args accepted for monitor commands */
 
 /* Serial */
-#define CONFIG_SCIF_CONSOLE	1
 #define CONFIG_CONS_SCIF3	1
 
 /* Memory */
@@ -48,7 +44,6 @@
 #define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_MAX_FLASH_SECT	512
 
-#define CONFIG_ENV_IS_IN_FLASH	1
 #define CONFIG_ENV_OFFSET	(128 * 1024)
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + CONFIG_ENV_OFFSET)
 #define CONFIG_ENV_SECT_SIZE	(128 * 1024)

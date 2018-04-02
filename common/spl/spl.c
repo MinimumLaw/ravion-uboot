@@ -6,6 +6,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+
 #include <common.h>
 #include <dm.h>
 #include <spl.h>
@@ -220,12 +221,12 @@ static int spl_common_init(bool setup_malloc)
 
 	debug("spl_early_init()\n");
 
-#if defined(CONFIG_SYS_MALLOC_F_LEN)
+#if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (setup_malloc) {
 #ifdef CONFIG_MALLOC_F_ADDR
 		gd->malloc_base = CONFIG_MALLOC_F_ADDR;
 #endif
-		gd->malloc_limit = CONFIG_SYS_MALLOC_F_LEN;
+		gd->malloc_limit = CONFIG_VAL(SYS_MALLOC_F_LEN);
 		gd->malloc_ptr = 0;
 	}
 #endif
@@ -243,7 +244,7 @@ static int spl_common_init(bool setup_malloc)
 			return ret;
 		}
 	}
-	if (IS_ENABLED(CONFIG_SPL_DM)) {
+	if (CONFIG_IS_ENABLED(DM)) {
 		bootstage_start(BOOTSTATE_ID_ACCUM_DM_SPL, "dm_spl");
 		/* With CONFIG_SPL_OF_PLATDATA, bring in all devices */
 		ret = dm_init_and_scan(!CONFIG_IS_ENABLED(OF_PLATDATA));
@@ -378,7 +379,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		if (spl_init())
 			hang();
 	}
-#ifndef CONFIG_PPC
+#if !defined(CONFIG_PPC) && !defined(CONFIG_ARCH_MX6)
 	/*
 	 * timer_init() does not exist on PPC systems. The timer is initialized
 	 * and enabled (decrementer) in interrupt_init() here.
@@ -419,12 +420,12 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	default:
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
-#if defined(CONFIG_SYS_MALLOC_F_LEN) && !defined(CONFIG_SYS_SPL_MALLOC_SIZE)
+#if CONFIG_VAL(SYS_MALLOC_F_LEN) && !defined(CONFIG_SYS_SPL_MALLOC_SIZE)
 	debug("SPL malloc() used %#lx bytes (%ld KB)\n", gd->malloc_ptr,
 	      gd->malloc_ptr / 1024);
 #endif
 
-	if (IS_ENABLED(CONFIG_SPL_ATF_SUPPORT)) {
+	if (CONFIG_IS_ENABLED(ATF_SUPPORT)) {
 		debug("loaded - jumping to U-Boot via ATF BL31.\n");
 		bl31_entry();
 	}
@@ -486,7 +487,7 @@ ulong spl_relocate_stack_gd(void)
 	gd_t *new_gd;
 	ulong ptr = CONFIG_SPL_STACK_R_ADDR;
 
-#ifdef CONFIG_SPL_SYS_MALLOC_SIMPLE
+#if defined(CONFIG_SPL_SYS_MALLOC_SIMPLE) && CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN) {
 		ptr -= CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN;
 		gd->malloc_base = ptr;

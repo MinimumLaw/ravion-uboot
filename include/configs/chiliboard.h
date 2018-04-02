@@ -7,15 +7,12 @@
 #ifndef __CONFIG_CHILIBOARD_H
 #define __CONFIG_CHILIBOARD_H
 
-#define CONFIG_NAND
-
 #include <configs/ti_am335x_common.h>
 
 #define CONFIG_CONS_INDEX		1
 
 #ifndef CONFIG_SPL_BUILD
 # define CONFIG_TIMESTAMP
-# define CONFIG_LZO
 #endif
 
 /* Clock Defines */
@@ -130,8 +127,6 @@
 #define CONFIG_BOOTCOUNT_AM33XX
 #define CONFIG_SYS_BOOTCOUNT_BE
 
-#define CONFIG_SPL_LDSCRIPT	"arch/arm/mach-omap2/u-boot-spl.lds"
-
 /* NAND: device related configs */
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT	(CONFIG_SYS_NAND_BLOCK_SIZE / \
@@ -188,9 +183,7 @@
  */
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_DM_MMC
-#undef CONFIG_DM_MMC_OPS
 #undef CONFIG_TIMER
-#undef CONFIG_DM_USB
 #endif
 
 #if defined(CONFIG_ENV_IS_IN_NAND)
@@ -199,7 +192,6 @@
 #define CONFIG_ENV_SIZE			SZ_128K
 #define CONFIG_SYS_ENV_SECT_SIZE	CONFIG_SYS_NAND_BLOCK_SIZE
 #else
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_OFFSET		SZ_128K
 #define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
@@ -208,7 +200,6 @@
 #endif
 
 /* Network. */
-#define CONFIG_PHYLIB
 #define CONFIG_PHY_SMSC
 
 #endif	/* ! __CONFIG_CHILIBOARD_H */

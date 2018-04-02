@@ -33,8 +33,6 @@
 #define CONFIG_SYS_MONITOR_BASE			CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_MONITOR_LEN			0x60000
 
-#define CONFIG_ENV_IS_IN_FLASH
-
 /* Serial Configuration (PL011) */
 #define CONFIG_SYS_SERIAL0			0xD0000000
 #define CONFIG_SYS_SERIAL1			0xD0080000
@@ -66,20 +64,15 @@
 #define CONFIG_SYS_FSMC_NAND_8BIT
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_NAND_ECC_BCH
-#define CONFIG_BCH
 
 /* UBI/UBI config options */
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#define CONFIG_RBTREE
 
 /* Ethernet config options */
 #define CONFIG_MII
 #define CONFIG_PHY_RESET_DELAY			10000		/* in usec */
 #define CONFIG_PHY_ADDR		0	/* PHY address */
-#define CONFIG_PHY_GIGE			/* Include GbE speed/duplex detection */
-#define CONFIG_PHY_MICREL
-#define CONFIG_PHY_MICREL_KSZ9031
 
 #define CONFIG_SPEAR_GPIO
 
@@ -102,15 +95,6 @@
 /* USB EHCI options */
 #define CONFIG_USB_EHCI_SPEAR
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	2
-
-/*
- * Command support defines
- */
-#define CONFIG_CMD_MTDPARTS
-#define CONFIG_CMD_NAND
-#define CONFIG_CMD_SAVES
-#define CONFIG_CMD_UBIFS
-#define CONFIG_LZO
 
 /* Filesystem support (for USB key) */
 #define CONFIG_SUPPORT_VFAT
@@ -141,11 +125,6 @@
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE			256
-#define CONFIG_SYS_PBSIZE			(CONFIG_SYS_CBSIZE + \
-						 sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS			16
-#define CONFIG_SYS_BARGSIZE			CONFIG_SYS_CBSIZE
 #define CONFIG_SYS_LOAD_ADDR			0x00800000
 
 /* Use last 2 lwords in internal SRAM for bootcounter */
@@ -252,7 +231,6 @@
 #define CONFIG_SPL_TEXT_BASE		0xd2800b00
 #define CONFIG_SPL_MAX_SIZE		(CONFIG_SRAM_SIZE - 0xb00)
 #define	CONFIG_SPL_START_S_PATH	"arch/arm/cpu/arm926ejs/spear"
-#define CONFIG_SPL_LDSCRIPT	"arch/arm/cpu/arm926ejs/spear/u-boot-spl.lds"
 
 #define CONFIG_SPL_FRAMEWORK
 

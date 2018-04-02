@@ -11,7 +11,6 @@
 #include <asm/io.h>
 #include <serial.h>
 #include <asm/arch/stm32.h>
-#include <dm/platform_data/serial_stm32x7.h>
 #include "serial_stm32x7.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -20,16 +19,9 @@ static int stm32_serial_setbrg(struct udevice *dev, int baudrate)
 {
 	struct stm32x7_serial_platdata *plat = dev->platdata;
 	struct stm32_usart *const usart = plat->base;
-	u32  clock, int_div, mantissa, fraction, oversampling;
+	u32 int_div, mantissa, fraction, oversampling;
 
-	if (((u32)usart & STM32_BUS_MASK) == APB1_PERIPH_BASE)
-		clock = clock_get(CLOCK_APB1);
-	else if (((u32)usart & STM32_BUS_MASK) == APB2_PERIPH_BASE)
-		clock = clock_get(CLOCK_APB2);
-	else
-		return -EINVAL;
-
-	int_div = DIV_ROUND_CLOSEST(clock, baudrate);
+	int_div = DIV_ROUND_CLOSEST(plat->clock_rate, baudrate);
 
 	if (int_div < 16) {
 		oversampling = 8;
@@ -101,6 +93,12 @@ static int stm32_serial_probe(struct udevice *dev)
 		return ret;
 	}
 #endif
+
+	plat->clock_rate = clk_get_rate(&clk);
+	if (plat->clock_rate < 0) {
+		clk_disable(&clk);
+		return plat->clock_rate;
+	};
 
 	/* Disable usart-> disable overrun-> enable usart */
 	clrbits_le32(&usart->cr1, USART_CR1_RE | USART_CR1_TE | USART_CR1_UE);

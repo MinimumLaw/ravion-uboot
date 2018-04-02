@@ -174,75 +174,6 @@ config SPI_BOOT
 
 endmenu
 
-menu "Environment"
-
-if ARCH_SUNXI
-
-choice
-	prompt "Environment Device"
-	default ENV_IS_IN_MMC if ARCH_SUNXI
-
-config ENV_IS_IN_MMC
-	bool "Environment in an MMC device"
-	depends on CMD_MMC
-	help
-	  Define this if you have an MMC device which you want to use for the
-	  environment.
-
-config ENV_IS_IN_NAND
-	bool "Environment in a NAND device"
-	depends on CMD_NAND
-	help
-	  Define this if you have a NAND device which you want to use for the
-	  environment.
-
-config ENV_IS_IN_UBI
-	bool "Environment in a UBI volume"
-	depends on CMD_UBI
-	depends on CMD_MTDPARTS
-	help
-	  Define this if you have a UBI volume which you want to use for the
-	  environment.
-
-config ENV_IS_NOWHERE
-	bool "Environment is not stored"
-	help
-	  Define this if you don't want to or can't have an environment stored
-	  on a storage medium
-
-endchoice
-
-config ENV_OFFSET
-	hex "Environment Offset"
-	depends on !ENV_IS_IN_UBI
-	depends on !ENV_IS_NOWHERE
-	default 0x88000 if ARCH_SUNXI
-	help
-	  Offset from the start of the device (or partition)
-
-config ENV_SIZE
-	hex "Environment Size"
-	depends on !ENV_IS_NOWHERE
-	default 0x20000 if ARCH_SUNXI
-	help
-	  Size of the environment storage area
-
-config ENV_UBI_PART
-	string "UBI partition name"
-	depends on ENV_IS_IN_UBI
-	help
-	  MTD partition containing the UBI device
-
-config ENV_UBI_VOLUME
-	string "UBI volume name"
-	depends on ENV_IS_IN_UBI
-	help
-	  Name of the volume that you want to store the environment in.
-
-endif
-
-endmenu
-
 config BOOTDELAY
 	int "delay in seconds before automatically booting"
 	default 2
@@ -254,6 +185,22 @@ config BOOTDELAY
 	  set to -2 to autoboot with no delay and not check for abort
 
 	  See doc/README.autoboot for details.
+
+config USE_BOOTARGS
+	bool "Enable boot arguments"
+	help
+	  Provide boot arguments to bootm command. Boot arguments are specified
+	  in CONFIG_BOOTARGS option. Enable this option to be able to specify
+	  CONFIG_BOOTARGS string. If this option is disabled, CONFIG_BOOTARGS
+	  will be undefined and won't take any space in U-Boot image.
+
+config BOOTARGS
+	string "Boot arguments"
+	depends on USE_BOOTARGS
+	help
+	  This can be used to pass arguments to the bootm command. The value of
+	  CONFIG_BOOTARGS goes into the environment value "bootargs". Note that
+	  this value will also override the "chosen" node in FDT blob.
 
 menu "Console"
 
@@ -437,6 +384,22 @@ config SYS_STDIO_DEREGISTER
 
 endmenu
 
+config DTB_RESELECT
+	bool "Support swapping dtbs at a later point in boot"
+	depends on FIT_EMBED
+	help
+	  It is possible during initial boot you may need to use a generic
+	  dtb until you can fully determine the board your running on. This
+	  config allows boards to implement a function at a later point
+	  during boot to switch to the "correct" dtb.
+
+config FIT_EMBED
+	bool "Support a FIT image embedded in the U-boot image"
+	help
+	  This option provides hooks to allow U-boot to parse an
+	  appended FIT image and enable board specific code to then select
+	  the correct DTB to be used.
+
 config DEFAULT_FDT_FILE
 	string "Default fdt file"
 	help
@@ -472,7 +435,7 @@ config DISPLAY_CPUINFO
 
 config DISPLAY_BOARDINFO
 	bool "Display information about the board during start up"
-	default y if ARM || M68K || MIPS || PPC || XTENSA
+	default y if ARM || M68K || MIPS || PPC || SANDBOX || XTENSA
 	help
 	  Display information about the board that U-Boot is running on
 	  when U-Boot starts up. The board function checkboard() is called
@@ -482,7 +445,6 @@ menu "Start-up hooks"
 
 config ARCH_EARLY_INIT_R
 	bool "Call arch-specific init soon after relocation"
-	default y if X86
 	help
 	  With this option U-Boot will call arch_early_init_r() soon after
 	  relocation. Driver model is running by this point, and the cache
@@ -499,7 +461,6 @@ config ARCH_MISC_INIT
 
 config BOARD_EARLY_INIT_F
 	bool "Call board-specific init before relocation"
-	default y if X86
 	help
 	  Some boards need to perform initialisation as soon as possible
 	  after boot. With this option, U-Boot calls board_early_init_f()

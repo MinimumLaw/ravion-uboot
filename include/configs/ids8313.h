@@ -411,7 +411,6 @@
 /*
  * U-Boot environment setup
  */
-#define CONFIG_CMD_NAND
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_BOOTP_GATEWAY
@@ -429,7 +428,6 @@
 /*
  * Environment Configuration
  */
-#define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE \
 				+ CONFIG_SYS_MONITOR_LEN)
 #define CONFIG_ENV_SIZE		0x20000
@@ -453,9 +451,6 @@
  */
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_CBSIZE		1024
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE \
-					 + sizeof(CONFIG_SYS_PROMPT)+16)
-#define CONFIG_SYS_MAXARGS		16
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #define CONFIG_SYS_MEMTEST_START	0x00001000
@@ -468,7 +463,6 @@
 #define CONFIG_PREBOOT			"echo;" \
 					"echo Type \\\"run nfsboot\\\" " \
 					"to mount root filesystem over NFS;echo"
-#undef	CONFIG_BOOTARGS
 #define CONFIG_BOOTCOMMAND		"run boot_cramfs"
 #undef	CONFIG_SYS_LOADS_BAUD_CHANGE
 
@@ -476,7 +470,6 @@
 #define CONFIG_JFFS2_DEV		"0"
 
 /* mtdparts command line support */
-#define CONFIG_CMD_MTDPARTS
 #define CONFIG_FLASH_CFI_MTD
 #define CONFIG_MTD_DEVICE
 #define MTDIDS_DEFAULT		"nor0=ff800000.flash,nand0=e1000000.flash"
@@ -526,10 +519,6 @@
 	"bootm ${loadaddr} - ${fdtaddr}"
 
 /* UBI Support */
-#define CONFIG_CMD_NAND_TRIMFFS
-#define CONFIG_CMD_UBIFS
-#define CONFIG_RBTREE
-#define CONFIG_LZO
 #define CONFIG_MTD_PARTITIONS
 
 /* bootcount support */

@@ -45,11 +45,6 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_HOSTNAME
 
-/*
- * Command line configuration.
- */
-#define CONFIG_CMD_NAND
-
 #define CONFIG_NR_DRAM_BANKS		1
 #define CONFIG_SYS_SDRAM_BASE		0x20000000
 #define CONFIG_SYS_SDRAM_SIZE		0x08000000
@@ -76,6 +71,7 @@
 #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
 #define CONFIG_SYS_NAND_ENABLE_PIN	GPIO_PIN_PD(4)
 #define CONFIG_SYS_NAND_READY_PIN	GPIO_PIN_PD(5)
+#endif
 
 /* PMECC & PMERRLOC */
 #define CONFIG_ATMEL_NAND_HWECC
@@ -84,13 +80,8 @@
 #define CONFIG_PMECC_SECTOR_SIZE	512
 #define CONFIG_PMECC_INDEX_TABLE_OFFSET	0x8000
 
-#define CONFIG_CMD_NAND_TRIMFFS
-
-#endif
-
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_MTD_DEVICE
-#define CONFIG_CMD_MTDPARTS
 #define MTDIDS_DEFAULT			"nand0=atmel_nand"
 #define MTDPARTS_DEFAULT						\
 	"mtdparts=atmel_nand:256k(bootstrap)ro,512k(uboot)ro,"		\
@@ -126,7 +117,6 @@
 #ifdef CONFIG_SYS_USE_SPIFLASH
 
 /* bootstrap + u-boot + env + linux in dataflash on CS0 */
-#define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_OFFSET		0x5000
 #define CONFIG_ENV_SIZE			0x3000
 #define CONFIG_ENV_SECT_SIZE		0x1000
@@ -138,7 +128,6 @@
 #elif defined(CONFIG_SYS_USE_NANDFLASH)
 
 /* bootstrap + u-boot + env + linux in nandflash */
-#define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_OFFSET		0x120000
 #define CONFIG_ENV_OFFSET_REDUND	0x100000
 #define CONFIG_ENV_SIZE			0x20000		/* 1 sector = 128 kB */
@@ -159,10 +148,6 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #else
 /* Use file in FAT file to save environment */
-#define CONFIG_ENV_IS_IN_FAT
-#define FAT_ENV_INTERFACE		"mmc"
-#define FAT_ENV_FILE			"uboot.env"
-#define FAT_ENV_DEVICE_AND_PART		"0"
 #define CONFIG_ENV_SIZE			0x4000
 #endif
 
@@ -174,8 +159,6 @@
 
 #endif
 
-#define CONFIG_SYS_CBSIZE	256
-#define CONFIG_SYS_MAXARGS	16
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_AUTO_COMPLETE
@@ -204,7 +187,6 @@
 #define CONFIG_SYS_MCKR_CSS		0x1302
 
 #ifdef CONFIG_SYS_USE_MMC
-#define CONFIG_SPL_LDSCRIPT		arch/arm/mach-at91/arm926ejs/u-boot-spl.lds
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
 

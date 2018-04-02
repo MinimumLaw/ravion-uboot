@@ -76,8 +76,6 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-#define CONFIG_CMD_NAND
-
 #define CONFIG_MXC_GPIO
 
 #define CONFIG_NET_RETRY_COUNT	100
@@ -90,8 +88,6 @@
  */
 #define CONFIG_FEC_MXC
 #define IMX_FEC_BASE	FEC_BASE_ADDR
-#define CONFIG_PHYLIB
-#define CONFIG_PHY_MICREL
 #define CONFIG_FEC_MXC_PHYADDR	0x1
 
 #define CONFIG_MII
@@ -106,11 +102,6 @@
 #define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
-#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE /* Boot Argument Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	0	/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x10000
@@ -135,7 +126,6 @@
 /*
  * MTD Command for mtdparts
  */
-#define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_DEVICE
 #define CONFIG_FLASH_CFI_MTD
 #define CONFIG_MTD_PARTITIONS
@@ -167,8 +157,6 @@
 
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + \
 				CONFIG_SYS_MONITOR_LEN)
-
-#define CONFIG_ENV_IS_IN_FLASH
 
 /*
  * CFI FLASH driver setup

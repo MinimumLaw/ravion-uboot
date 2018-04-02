@@ -21,10 +21,6 @@
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
 /*
- * Commands configuration
- */
-#define CONFIG_CMD_NAND
-/*
  * mv-common.h should be defined after CMD configs since it used them
  * to enable certain macros
  */
@@ -34,10 +30,7 @@
  *  Environment variables configurations
  */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_ENV_IS_IN_NAND		1
 #define CONFIG_ENV_SECT_SIZE		0x20000	/* 128K */
-#else
-#define CONFIG_ENV_IS_NOWHERE		1	/* if env in SDRAM */
 #endif
 /*
  * max 4k env size is enough, but in case of nand
@@ -79,11 +72,7 @@
 /*
  * File system
  */
-#define CONFIG_CMD_UBIFS
-#define CONFIG_RBTREE
 #define CONFIG_MTD_DEVICE               /* needed for mtdparts commands */
 #define CONFIG_MTD_PARTITIONS
-#define CONFIG_CMD_MTDPARTS
-#define CONFIG_LZO
 
 #endif /* _CONFIG_DOCKSTAR_H */

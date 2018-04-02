@@ -219,8 +219,8 @@ int board_late_init(void)
 			gd->bd->bi_arch_number = board->machine_id;
 
 		/* If the user has not set fdtimage, set the default */
-		if (!getenv("fdtimage"))
-			setenv("fdtimage", board->fdtfile);
+		if (!env_get("fdtimage"))
+			env_set("fdtimage", board->fdtfile);
 	}
 
 	/* restore hsusb0_data5 pin as hsusb0_data5 */
@@ -320,7 +320,7 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(SDRC_DQS2), (IEN  | PTD | DIS | M0)); /*SDRC_DQS2*/
 	MUX_VAL(CP(SDRC_DQS3), (IEN  | PTD | DIS | M0)); /*SDRC_DQS3*/
 	MUX_VAL(CP(SDRC_CKE0), (IDIS | PTU | EN  | M0)); /*SDRC_CKE0*/
-	MUX_VAL(CP(SDRC_CKE1), (IDIS | PTD | DIS | M7)); /*SDRC_CKE1*/
+	MUX_VAL(CP(SDRC_CKE1), (IDIS | PTU | DIS | M0)); /*SDRC_CKE1*/
 
 	MUX_VAL(CP(GPMC_A1), (IDIS | PTU | EN  | M0)); /*GPMC_A1*/
 	MUX_VAL(CP(GPMC_A2), (IDIS | PTU | EN  | M0)); /*GPMC_A2*/

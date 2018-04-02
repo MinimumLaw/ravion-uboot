@@ -102,22 +102,9 @@
 #define CONFIG_CMDLINE_EDITING		/* add command line history */
 #define CONFIG_AUTO_COMPLETE		/* add autocompletion support */
 
-#ifdef ONENAND_SUPPORT
-
-#define CONFIG_CMD_ONENAND		/* ONENAND support */
-#define CONFIG_CMD_MTDPARTS		/* mtd parts support */
-
-#ifdef UBIFS_SUPPORT
-#define CONFIG_CMD_UBIFS		/* UBIFS Support */
-#endif
-
-#endif
-
-#define CONFIG_OMAP3_SPI
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_OMAP24_I2C_SPEED	100000
 #define CONFIG_SYS_OMAP24_I2C_SLAVE	1
-#define CONFIG_SYS_I2C_OMAP34XX
 
 /*
  * TWL4030
@@ -178,11 +165,6 @@
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-
-#ifdef UBIFS_SUPPORT
-#define CONFIG_RBTREE
-#define CONFIG_LZO
-#endif
 
 #define MTDIDS_DEFAULT			"onenand0=onenand"
 #define MTDPARTS_DEFAULT		"mtdparts=onenand:" \
@@ -349,13 +331,6 @@ int rx51_kp_getc(struct stdio_dev *sdev);
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP			/* undef to save memory */
-#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
-						sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS		16	/* max number of command args */
-/* Boot Argument Buffer Size */
-#define CONFIG_SYS_BARGSIZE		(CONFIG_SYS_CBSIZE)
 
 #define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)
 #define CONFIG_SYS_MEMTEST_END		(OMAP34XX_SDRC_CS0 + 0x01F00000)/*31MB*/
@@ -380,8 +355,6 @@ int rx51_kp_getc(struct stdio_dev *sdev);
 /*
  * FLASH and environment organization
  */
-
-#define CONFIG_ENV_IS_NOWHERE
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 #define CONFIG_SYS_INIT_RAM_ADDR	0x4020f800

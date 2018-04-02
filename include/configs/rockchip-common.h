@@ -28,6 +28,12 @@
 #endif
 
 #define CONFIG_RANDOM_UUID
+
+#ifdef CONFIG_ARM64
+#define ROOT_UUID "B921B045-1DF0-41C3-AF44-4C6F280D3FAE;\0"
+#else
+#define ROOT_UUID "69DAD710-2CE4-4E3C-B16C-21A1D49ABED3;\0"
+#endif
 #define PARTS_DEFAULT \
 	"uuid_disk=${uuid_gpt_disk};" \
 	"name=loader1,start=32K,size=4000K,uuid=${uuid_gpt_loader1};" \
@@ -36,11 +42,11 @@
 	"name=loader2,size=4MB,uuid=${uuid_gpt_loader2};" \
 	"name=atf,size=4M,uuid=${uuid_gpt_atf};" \
 	"name=boot,size=112M,bootable,uuid=${uuid_gpt_boot};" \
-	"name=rootfs,size=-,uuid=${uuid_gpt_rootfs};\0" \
+	"name=rootfs,size=-,uuid="ROOT_UUID
 
 #endif
 
-#ifdef CONFIG_ROCKCHIP_SPL_BACK_TO_BROM
+#if CONFIG_IS_ENABLED(ROCKCHIP_BACK_TO_BROM)
 /* SPL @ 32k for 34k
  * u-boot directly after @ 68k for 400k or so
  * ENV @ 992k

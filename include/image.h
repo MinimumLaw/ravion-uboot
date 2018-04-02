@@ -373,7 +373,7 @@ typedef struct bootm_headers {
 	bd_t		*kbd;
 #endif
 
-	int		verify;		/* getenv("verify")[0] != 'n' */
+	int		verify;		/* env_get("verify")[0] != 'n' */
 
 #define	BOOTM_STATE_START	(0x00000001)
 #define	BOOTM_STATE_FINDOS	(0x00000002)
@@ -769,9 +769,9 @@ static inline void image_set_name(image_header_t *hdr, const char *name)
 int image_check_hcrc(const image_header_t *hdr);
 int image_check_dcrc(const image_header_t *hdr);
 #ifndef USE_HOSTCC
-ulong getenv_bootm_low(void);
-phys_size_t getenv_bootm_size(void);
-phys_size_t getenv_bootm_mapsize(void);
+ulong env_get_bootm_low(void);
+phys_size_t env_get_bootm_size(void);
+phys_size_t env_get_bootm_mapsize(void);
 #endif
 void memmove_wd(void *to, void *from, size_t len, ulong chunksz);
 
@@ -1269,6 +1269,11 @@ int board_fit_config_name_match(const char *name);
  */
 void board_fit_image_post_process(void **p_image, size_t *p_size);
 #endif /* CONFIG_SPL_FIT_IMAGE_POST_PROCESS */
+
+#define FDT_ERROR	((ulong)(-1))
+
+ulong fdt_getprop_u32(const void *fdt, int node, const char *prop);
+int fit_find_config_node(const void *fdt);
 
 /**
  * Mapping of image types to function handlers to be invoked on the associated

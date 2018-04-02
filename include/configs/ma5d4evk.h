@@ -11,7 +11,6 @@
 #define CONFIG_TIMESTAMP		/* Print image info with timestamp */
 
 #include "at91-sama5_common.h"
-#undef CONFIG_BOOTARGS
 #define CONFIG_SYS_USE_SERIALFLASH	1
 #define CONFIG_BOARD_LATE_INIT
 
@@ -32,7 +31,6 @@
 /*
  * Environment
  */
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 #define CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 #define CONFIG_ENV_SIZE			0x4000
@@ -97,7 +95,6 @@
  * USB
  */
 #ifdef CONFIG_CMD_USB
-#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS	3
 
 /* USB device */
 #define CONFIG_USB_ETHER
@@ -115,7 +112,6 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_BOOTFILE		"fitImage"
-#define CONFIG_BOOTARGS		"console=ttyS3,115200"
 #define CONFIG_LOADADDR		0x20800000
 #define CONFIG_BOOTCOMMAND	"run mmc_mmc"
 #define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
@@ -216,7 +212,6 @@
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x10000
 
 #define CONFIG_SYS_USE_MMC
-#define CONFIG_SPL_LDSCRIPT		arch/arm/mach-at91/armv7/u-boot-spl.lds
 #define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR 0x200
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1

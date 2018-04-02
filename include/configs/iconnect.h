@@ -25,13 +25,11 @@
  * Compression configuration
  */
 #define CONFIG_BZIP2
-#define CONFIG_LZO
 
 /*
  * Commands configuration
  */
 #define CONFIG_SYS_MVFS
-#define CONFIG_CMD_NAND
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -43,10 +41,7 @@
  * Environment variables configuration
  */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_SECT_SIZE	0x20000
-#else
-#define CONFIG_ENV_IS_NOWHERE
 #endif
 #define CONFIG_ENV_SIZE		0x20000
 #define CONFIG_ENV_OFFSET	0x80000
@@ -86,10 +81,7 @@
 /*
  * File system
  */
-#define CONFIG_CMD_UBIFS
-#define CONFIG_RBTREE
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#define CONFIG_CMD_MTDPARTS
 
 #endif /* _CONFIG_ICONNECT_H */

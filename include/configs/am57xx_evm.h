@@ -22,7 +22,6 @@
 #define CONFIG_NR_DRAM_BANKS		2
 
 /* MMC ENV related defines */
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		1		/* eMMC */
 #define CONFIG_SYS_MMC_ENV_PART		0
 #define CONFIG_ENV_SIZE			SZ_128K
@@ -85,21 +84,17 @@
 #define CONFIG_NET_RETRY_COUNT		10
 #define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
 #define CONFIG_MII			/* Required in net/eth.c */
-#define CONFIG_PHY_GIGE			/* per-board part of CPSW */
-#define CONFIG_PHYLIB
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs longer aneg time at 1G */
 
 #define CONFIG_SUPPORT_EMMC_BOOT
 
 /* USB xHCI HOST */
 #define CONFIG_USB_XHCI_OMAP
-#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS 2
 
 #define CONFIG_OMAP_USB_PHY
 #define CONFIG_OMAP_USB3PHY1_HOST
 
 /* SATA */
-#define CONFIG_SCSI
 #define CONFIG_LIBATA
 #define CONFIG_SCSI_AHCI
 #define CONFIG_SCSI_AHCI_PLAT
@@ -128,7 +123,6 @@
 #define CONFIG_SYS_SPI_U_BOOT_OFFS     0x40000
 
 /* SPI */
-#undef	CONFIG_OMAP3_SPI
 #define CONFIG_TI_SPI_MMAP
 #define CONFIG_SF_DEFAULT_SPEED                76800000
 #define CONFIG_SF_DEFAULT_MODE                 SPI_MODE_0

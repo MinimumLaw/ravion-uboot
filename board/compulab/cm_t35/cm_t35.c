@@ -398,7 +398,7 @@ void board_mmc_power_init(void)
 }
 #endif
 
-#ifdef CONFIG_SYS_I2C_OMAP34XX
+#ifdef CONFIG_SYS_I2C_OMAP24XX
 /*
  * Routine: reset_net_chip
  * Description: reset the Ethernet controller via TPS65930 GPIO
@@ -434,7 +434,7 @@ static int handle_mac_address(void)
 	unsigned char enetaddr[6];
 	int rc;
 
-	rc = eth_getenv_enetaddr("ethaddr", enetaddr);
+	rc = eth_env_get_enetaddr("ethaddr", enetaddr);
 	if (rc)
 		return 0;
 
@@ -445,7 +445,7 @@ static int handle_mac_address(void)
 	if (!is_valid_ethaddr(enetaddr))
 		return -1;
 
-	return eth_setenv_enetaddr("ethaddr", enetaddr);
+	return eth_env_set_enetaddr("ethaddr", enetaddr);
 }
 
 /*

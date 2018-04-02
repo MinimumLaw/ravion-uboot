@@ -531,9 +531,11 @@
 			};
 		};
 
-		aidet@5fc20000 {
-			compatible = "simple-mfd", "syscon";
+		aidet: aidet@5fc20000 {
+			compatible = "socionext,uniphier-pro4-aidet";
 			reg = <0x5fc20000 0x200>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
 		};
 
 		timer@60000200 {
@@ -587,6 +589,7 @@
 				compatible = "snps,dwc3";
 				reg = <0x65a00000 0x10000>;
 				interrupts = <0 134 4>;
+				dr_mode = "host";
 				tx-fifo-resize;
 			};
 		};
@@ -604,6 +607,7 @@
 				compatible = "snps,dwc3";
 				reg = <0x65c00000 0x10000>;
 				interrupts = <0 137 4>;
+				dr_mode = "host";
 				tx-fifo-resize;
 			};
 		};
@@ -617,9 +621,8 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_nand>;
 			clocks = <&sys_clk 2>;
-			nand-ecc-strength = <8>;
 		};
 	};
 };
 
-/include/ "uniphier-pinctrl.dtsi"
+#include "uniphier-pinctrl.dtsi"

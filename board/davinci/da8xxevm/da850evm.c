@@ -131,7 +131,7 @@ int misc_init_r(void)
 	uchar env_enetaddr[6];
 	int enetaddr_found;
 
-	enetaddr_found = eth_getenv_enetaddr("ethaddr", env_enetaddr);
+	enetaddr_found = eth_env_get_enetaddr("ethaddr", env_enetaddr);
 
 #ifdef CONFIG_MAC_ADDR_IN_SPIFLASH
 	int spi_mac_read;
@@ -147,7 +147,7 @@ int misc_init_r(void)
 	if (!enetaddr_found) {
 		if (!spi_mac_read) {
 			if (is_valid_ethaddr(buff)) {
-				if (eth_setenv_enetaddr("ethaddr", buff)) {
+				if (eth_env_set_enetaddr("ethaddr", buff)) {
 					printf("Warning: Failed to "
 					"set MAC address from SPI flash\n");
 				}
@@ -292,7 +292,7 @@ u32 get_board_rev(void)
 	u32 maxcpuclk = CONFIG_DA850_EVM_MAX_CPU_CLK;
 	u32 rev = 0;
 
-	s = getenv("maxcpuclk");
+	s = env_get("maxcpuclk");
 	if (s)
 		maxcpuclk = simple_strtoul(s, NULL, 10);
 

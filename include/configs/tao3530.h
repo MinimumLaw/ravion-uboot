@@ -62,17 +62,13 @@
 #define CONFIG_ENV_OVERWRITE
 
 /* commands to include */
-#define CONFIG_CMD_MTDPARTS	/* Enable MTD parts commands */
 #define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
 					"1920k(u-boot),128k(u-boot-env),"\
 					"4m(kernel),-(fs)"
 
-#define CONFIG_CMD_NAND		/* NAND support			*/
-
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_OMAP34XX
 #define CONFIG_SYS_OMAP24_I2C_SPEED	100000
 #define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 #define CONFIG_I2C_MULTI_BUS
@@ -152,18 +148,10 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 
 /* turn on command-line edit/hist/auto */
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_AUTO_COMPLETE
-
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
-					sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS		16	/* max number of command args */
-/* Boot Argument Buffer Size */
-#define CONFIG_SYS_BARGSIZE		(CONFIG_SYS_CBSIZE)
 
 #define CONFIG_SYS_ALT_MEMTEST		1
 #define CONFIG_SYS_MEMTEST_START	(0x82000000)		/* memtest */
@@ -203,7 +191,6 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
-#define CONFIG_ENV_IS_IN_NAND		1
 #define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
 #define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
@@ -218,8 +205,6 @@
 					 CONFIG_SYS_INIT_RAM_SIZE - \
 					 GENERATED_GBL_DATA_SIZE)
 
-#define CONFIG_OMAP3_SPI
-
 /*
  * USB
  *
@@ -230,12 +215,7 @@
 /* USB EHCI */
 #define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	162
 
-#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS 3
-#define CONFIG_USB_HOST_ETHER
-#define CONFIG_USB_ETHER_SMSC95XX
-
 #define CONFIG_USB_ETHER
-#define CONFIG_USB_ETHER_RNDIS
 
 /* Defines for SPL */
 #define CONFIG_SPL_FRAMEWORK
@@ -247,8 +227,6 @@
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_ECC
-#define CONFIG_SPL_OMAP3_ID_NAND
-#define CONFIG_SPL_LDSCRIPT		"arch/arm/mach-omap2/u-boot-spl.lds"
 
 /* NAND boot config */
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE

@@ -357,7 +357,8 @@ int fm_init_common(int index, struct ccsr_fman *reg)
 	size_t fw_length = CONFIG_SYS_QE_FMAN_FW_LENGTH;
 	void *addr = malloc(CONFIG_SYS_QE_FMAN_FW_LENGTH);
 
-	rc = nand_read(nand_info[0], (loff_t)CONFIG_SYS_FMAN_FW_ADDR,
+	rc = nand_read(get_nand_dev_by_index(0),
+		       (loff_t)CONFIG_SYS_FMAN_FW_ADDR,
 		       &fw_length, (u_char *)addr);
 	if (rc == -EUCLEAN) {
 		printf("NAND read of FMAN firmware at offset 0x%x failed %d\n",
@@ -417,7 +418,7 @@ int fm_init_common(int index, struct ccsr_fman *reg)
 	rc = fman_upload_firmware(index, &reg->fm_imem, addr);
 	if (rc)
 		return rc;
-	setenv_addr("fman_ucode", addr);
+	env_set_addr("fman_ucode", addr);
 
 	fm_init_muram(index, &reg->muram);
 	fm_init_qmi(&reg->fm_qmi_common);

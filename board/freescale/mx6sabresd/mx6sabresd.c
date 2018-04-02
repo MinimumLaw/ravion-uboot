@@ -12,10 +12,10 @@
 #include <asm/arch/mx6-pins.h>
 #include <linux/errno.h>
 #include <asm/gpio.h>
-#include <asm/imx-common/mxc_i2c.h>
-#include <asm/imx-common/iomux-v3.h>
-#include <asm/imx-common/boot_mode.h>
-#include <asm/imx-common/video.h>
+#include <asm/mach-imx/mxc_i2c.h>
+#include <asm/mach-imx/iomux-v3.h>
+#include <asm/mach-imx/boot_mode.h>
+#include <asm/mach-imx/video.h>
 #include <mmc.h>
 #include <fsl_esdhc.h>
 #include <miiphy.h>
@@ -700,14 +700,14 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-	setenv("board_name", "SABRESD");
+	env_set("board_name", "SABRESD");
 
 	if (is_mx6dqp())
-		setenv("board_rev", "MX6QP");
+		env_set("board_rev", "MX6QP");
 	else if (is_mx6dq())
-		setenv("board_rev", "MX6Q");
+		env_set("board_rev", "MX6Q");
 	else if (is_mx6sdl())
-		setenv("board_rev", "MX6DL");
+		env_set("board_rev", "MX6DL");
 #endif
 
 	return 0;
@@ -745,23 +745,6 @@ static void ccgr_init(void)
 	writel(0x00FFF300, &ccm->CCGR4);
 	writel(0x0F0000C3, &ccm->CCGR5);
 	writel(0x000003FF, &ccm->CCGR6);
-}
-
-static void gpr_init(void)
-{
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
-
-	/* enable AXI cache for VDOA/VPU/IPU */
-	writel(0xF00000CF, &iomux->gpr[4]);
-	if (is_mx6dqp()) {
-		/* set IPU AXI-id1 Qos=0x1 AXI-id0/2/3 Qos=0x7 */
-		writel(0x007F007F, &iomux->gpr[6]);
-		writel(0x007F007F, &iomux->gpr[7]);
-	} else {
-		/* set IPU AXI-id0 Qos=0xf(bypass) AXI-id1 Qos=0x7 */
-		writel(0x007F007F, &iomux->gpr[6]);
-		writel(0x007F007F, &iomux->gpr[7]);
-	}
 }
 
 static int mx6q_dcd_table[] = {

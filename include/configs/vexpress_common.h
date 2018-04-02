@@ -262,7 +262,6 @@
 #define CONFIG_ENV_OVERWRITE		1
 
 /* Store environment at top of flash */
-#define CONFIG_ENV_IS_IN_FLASH		1
 #define CONFIG_ENV_OFFSET		(PHYS_FLASH_SIZE - \
 					(2 * CONFIG_ENV_SECT_SIZE))
 #define CONFIG_ENV_ADDR			(CONFIG_SYS_FLASH_BASE1 + \
@@ -274,11 +273,6 @@
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
-					sizeof(CONFIG_SYS_PROMPT) + 16)
-
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE /* Boot args buffer */
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_MAXARGS		16	/* max command args */
 
 #endif /* VEXPRESS_COMMON_H */

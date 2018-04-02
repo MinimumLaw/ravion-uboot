@@ -149,16 +149,16 @@
 #define SCAN_DEV_FOR_EFI
 #endif
 
-#ifdef CONFIG_CMD_SATA
+#ifdef CONFIG_SATA
 #define BOOTENV_SHARED_SATA	BOOTENV_SHARED_BLKDEV(sata)
 #define BOOTENV_DEV_SATA	BOOTENV_DEV_BLKDEV
 #define BOOTENV_DEV_NAME_SATA	BOOTENV_DEV_NAME_BLKDEV
 #else
 #define BOOTENV_SHARED_SATA
 #define BOOTENV_DEV_SATA \
-	BOOT_TARGET_DEVICES_references_SATA_without_CONFIG_CMD_SATA
+	BOOT_TARGET_DEVICES_references_SATA_without_CONFIG_SATA
 #define BOOTENV_DEV_NAME_SATA \
-	BOOT_TARGET_DEVICES_references_SATA_without_CONFIG_CMD_SATA
+	BOOT_TARGET_DEVICES_references_SATA_without_CONFIG_SATA
 #endif
 
 #ifdef CONFIG_SCSI
@@ -198,7 +198,7 @@
 	BOOT_TARGET_DEVICES_references_IDE_without_CONFIG_IDE
 #endif
 
-#if defined(CONFIG_CMD_PCI_ENUM) || defined(CONFIG_DM_PCI)
+#if defined(CONFIG_DM_PCI)
 #define BOOTENV_RUN_NET_PCI_ENUM "run boot_net_pci_enum; "
 #define BOOTENV_SHARED_PCI \
 	"boot_net_pci_enum=pci enum\0"

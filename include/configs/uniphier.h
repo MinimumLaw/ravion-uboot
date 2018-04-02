@@ -13,8 +13,6 @@
 
 #define CONFIG_ARMV7_PSCI_1_0
 
-#define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS  10
-
 /*-----------------------------------------------------------------------
  * MMU and Cache Setting
  *----------------------------------------------------------------------*/
@@ -62,17 +60,11 @@
 
 #define CONFIG_CMDLINE_EDITING		/* add command line history	*/
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS		16	/* max number of command */
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		(CONFIG_SYS_CBSIZE)
 
 #define CONFIG_CONS_INDEX		1
 
-/* #define CONFIG_ENV_IS_NOWHERE */
-/* #define CONFIG_ENV_IS_IN_NAND */
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_ENV_OFFSET			0x100000
 #define CONFIG_ENV_SIZE				0x2000
 /* #define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE) */
@@ -80,42 +72,21 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART		1
 
-#ifdef CONFIG_ARMV8_MULTIENTRY
-#define CPU_RELEASE_ADDR			0x80000000
-#define COUNTER_FREQUENCY			50000000
-#define CONFIG_GICV3
-#define GICD_BASE				0x5fe00000
-#if defined(CONFIG_ARCH_UNIPHIER_LD11)
-#define GICR_BASE				0x5fe40000
-#elif defined(CONFIG_ARCH_UNIPHIER_LD20)
-#define GICR_BASE				0x5fe80000
-#endif
-#elif !defined(CONFIG_ARM64)
+#if !defined(CONFIG_ARM64)
 /* Time clock 1MHz */
 #define CONFIG_SYS_TIMER_RATE			1000000
 #endif
 
 #define CONFIG_SYS_MAX_NAND_DEVICE			1
-#define CONFIG_SYS_NAND_MAX_CHIPS			2
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 
 #define CONFIG_NAND_DENALI_ECC_SIZE			1024
 
-#ifdef CONFIG_ARCH_UNIPHIER_SLD3
-#define CONFIG_SYS_NAND_REGS_BASE			0xf8100000
-#define CONFIG_SYS_NAND_DATA_BASE			0xf8000000
-#else
 #define CONFIG_SYS_NAND_REGS_BASE			0x68100000
 #define CONFIG_SYS_NAND_DATA_BASE			0x68000000
-#endif
-
-#define CONFIG_SYS_NAND_BASE		(CONFIG_SYS_NAND_DATA_BASE + 0x10)
 
 #define CONFIG_SYS_NAND_USE_FLASH_BBT
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS			0
-
-/* USB */
-#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS	4
 
 /* SD/MMC */
 #define CONFIG_SUPPORT_EMMC_BOOT
@@ -137,7 +108,7 @@
 
 #define CONFIG_CMDLINE_EDITING		/* add command line history	*/
 
-#if defined(CONFIG_ARM64) && !defined(CONFIG_ARMV8_MULTIENTRY)
+#if defined(CONFIG_ARM64)
 /* ARM Trusted Firmware */
 #define BOOT_IMAGES \
 	"second_image=unph_bl.bin\0" \
@@ -265,28 +236,16 @@
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE)
 
 /* only for SPL */
-#if defined(CONFIG_ARM64)
-#define CONFIG_SPL_TEXT_BASE		0x30000000
-#elif defined(CONFIG_ARCH_UNIPHIER_SLD3) || \
-	defined(CONFIG_ARCH_UNIPHIER_LD4) || \
+#if defined(CONFIG_ARCH_UNIPHIER_LD4) || \
 	defined(CONFIG_ARCH_UNIPHIER_SLD8)
 #define CONFIG_SPL_TEXT_BASE		0x00040000
 #else
 #define CONFIG_SPL_TEXT_BASE		0x00100000
 #endif
 
-#if defined(CONFIG_ARCH_UNIPHIER_LD11)
-#define CONFIG_SPL_STACK		(0x30014c00)
-#elif defined(CONFIG_ARCH_UNIPHIER_LD20)
-#define CONFIG_SPL_STACK		(0x3001c000)
-#else
 #define CONFIG_SPL_STACK		(0x00100000)
-#endif
 
 #define CONFIG_SPL_FRAMEWORK
-#ifdef CONFIG_ARM64
-#define CONFIG_SPL_BOARD_LOAD_IMAGE
-#endif
 
 #define CONFIG_SYS_NAND_U_BOOT_OFFS		0x20000
 
@@ -295,16 +254,7 @@
 
 #define CONFIG_SPL_TARGET			"u-boot-with-spl.bin"
 #define CONFIG_SPL_MAX_FOOTPRINT		0x10000
-#if defined(CONFIG_ARCH_UNIPHIER_LD20)
-#define CONFIG_SPL_MAX_SIZE			0x14000
-#else
 #define CONFIG_SPL_MAX_SIZE			0x10000
-#endif
-#if defined(CONFIG_ARCH_UNIPHIER_LD11)
-#define CONFIG_SPL_BSS_START_ADDR		0x30012000
-#elif defined(CONFIG_ARCH_UNIPHIER_LD20)
-#define CONFIG_SPL_BSS_START_ADDR		0x30016000
-#endif
 #define CONFIG_SPL_BSS_MAX_SIZE			0x2000
 
 #define CONFIG_SPL_PAD_TO			0x20000

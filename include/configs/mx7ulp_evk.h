@@ -42,7 +42,6 @@
 #define CONFIG_SYS_MMC_IMG_LOAD_PART    1
 
 #define CONFIG_ENV_OFFSET		(12 * SZ_64K)
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_ENV_SIZE			SZ_8K
 
 /* Using ULP WDOG for reset */
@@ -79,10 +78,7 @@
 #define CONFIG_SYS_PROMPT		"=> "
 #define CONFIG_SYS_CBSIZE		512
 
-/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS		256
-#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
-#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #define CONFIG_CMDLINE_EDITING
 

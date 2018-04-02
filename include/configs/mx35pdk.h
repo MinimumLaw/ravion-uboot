@@ -77,8 +77,6 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
-#define CONFIG_CMD_NAND
-
 #define CONFIG_NET_RETRY_COUNT	100
 
 
@@ -112,9 +110,6 @@
 #define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
-#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
-#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE /* Boot Argument Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	0	/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x10000
@@ -141,7 +136,6 @@
 /*
  * MTD Command for mtdparts
  */
-#define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_DEVICE
 #define CONFIG_FLASH_CFI_MTD
 #define CONFIG_MTD_PARTITIONS
@@ -170,10 +164,7 @@
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + \
 				CONFIG_SYS_MONITOR_LEN)
 
-#define CONFIG_ENV_IS_IN_FLASH
-
 #if defined(CONFIG_FSL_ENV_IN_NAND)
-	#define CONFIG_ENV_IS_IN_NAND
 	#define CONFIG_ENV_OFFSET       (1024 * 1024)
 #endif
 
@@ -199,7 +190,6 @@
 #define CONFIG_SYS_NAND_LARGEPAGE
 
 /* EHCI driver */
-#define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS	1
 #define CONFIG_EHCI_IS_TDI
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
 #define CONFIG_USB_EHCI_MXC

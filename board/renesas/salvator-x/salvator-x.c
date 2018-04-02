@@ -74,10 +74,10 @@ int board_early_init_f(void)
 	/* SDHI0, 3 */
 	mstp_clrbits_le32(MSTPSR3, SMSTPCR3, SD0_MSTP314 | SD3_MSTP311);
 
-	writel(0, SD0CKCR);
-	writel(0, SD1CKCR);
-	writel(0, SD2CKCR);
-	writel(0, SD3CKCR);
+	writel(1, SD0CKCR);
+	writel(1, SD1CKCR);
+	writel(1, SD2CKCR);
+	writel(1, SD3CKCR);
 
 #if defined(CONFIG_SYS_I2C) && defined(CONFIG_SYS_I2C_SH)
 	/* DVFS for reset */
@@ -116,7 +116,7 @@ int board_init(void)
 	/* USB1 pull-up */
 	setbits_le32(PFC_PUEN6, PUEN_USB1_OVC | PUEN_USB1_PWEN);
 
-#ifdef CONFIG_RAVB
+#ifdef CONFIG_RENESAS_RAVB
 	/* EtherAVB Enable */
 	/* GPSR2 */
 	gpio_request(GPIO_GFN_AVB_AVTP_CAPTURE_A, NULL);
@@ -158,25 +158,7 @@ int board_init(void)
 	udelay(1);
 #endif
 
-	return 0;
-}
-
-static struct eth_pdata salvator_x_ravb_platdata = {
-	.iobase		= 0xE6800000,
-	.phy_interface	= 0,
-	.max_speed	= 1000,
-};
-
-U_BOOT_DEVICE(salvator_x_ravb) = {
-	.name		= "ravb",
-	.platdata	= &salvator_x_ravb_platdata,
-};
-
-#ifdef CONFIG_SH_SDHI
-int board_mmc_init(bd_t *bis)
-{
-	int ret = -ENODEV;
-
+#ifdef CONFIG_MMC
 	/* SDHI0 */
 	gpio_request(GPIO_GFN_SD0_DAT0, NULL);
 	gpio_request(GPIO_GFN_SD0_DAT1, NULL);
@@ -191,11 +173,6 @@ int board_mmc_init(bd_t *bis)
 	gpio_request(GPIO_GP_5_1, NULL);
 	gpio_direction_output(GPIO_GP_5_2, 1);	/* power on */
 	gpio_direction_output(GPIO_GP_5_1, 1);	/* 1: 3.3V, 0: 1.8V */
-
-	ret = sh_sdhi_init(CONFIG_SYS_SH_SDHI0_BASE, 0,
-			   SH_SDHI_QUIRK_64BIT_BUF);
-	if (ret)
-		return ret;
 
 	/* SDHI1/SDHI2 eMMC */
 	gpio_request(GPIO_GFN_SD1_DAT0, NULL);
@@ -218,11 +195,6 @@ int board_mmc_init(bd_t *bis)
 	gpio_request(GPIO_GP_5_9, NULL);
 	gpio_direction_output(GPIO_GP_5_3, 0);	/* 1: 3.3V, 0: 1.8V */
 	gpio_direction_output(GPIO_GP_5_9, 0);	/* 1: 3.3V, 0: 1.8V */
-
-	ret = sh_sdhi_init(CONFIG_SYS_SH_SDHI2_BASE, 1,
-			   SH_SDHI_QUIRK_64BIT_BUF);
-	if (ret)
-		return ret;
 
 #if defined(CONFIG_R8A7795)
 	/* SDHI3 */
@@ -250,12 +222,10 @@ int board_mmc_init(bd_t *bis)
 	gpio_request(GPIO_GP_3_14, NULL);
 	gpio_direction_output(GPIO_GP_3_15, 1);	/* power on */
 	gpio_direction_output(GPIO_GP_3_14, 1);	/* 1: 3.3V, 0: 1.8V */
-
-	ret = sh_sdhi_init(CONFIG_SYS_SH_SDHI3_BASE, 2,
-			   SH_SDHI_QUIRK_64BIT_BUF);
-	return ret;
-}
 #endif
+
+	return 0;
+}
 
 int dram_init(void)
 {
@@ -311,15 +281,3 @@ void reset_cpu(ulong addr)
 	writel(RST_CODE, RST_CA57RESCNT);
 #endif
 }
-
-static const struct sh_serial_platdata serial_platdata = {
-	.base = SCIF2_BASE,
-	.type = PORT_SCIF,
-	.clk = CONFIG_SH_SCIF_CLK_FREQ,
-	.clk_mode = INT_CLK,
-};
-
-U_BOOT_DEVICE(salvator_x_scif2) = {
-	.name = "serial_sh",
-	.platdata = &serial_platdata,
-};

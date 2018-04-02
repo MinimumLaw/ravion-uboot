@@ -26,6 +26,8 @@ config ARCH_LS1043A
 	select SYS_FSL_HAS_DDR4
 	select ARCH_EARLY_INIT_R
 	select BOARD_EARLY_INIT_F
+	imply SCSI
+	imply CMD_PCI
 
 config ARCH_LS1046A
 	bool
@@ -46,6 +48,7 @@ config ARCH_LS1046A
 	select SYS_FSL_SRDS_2
 	select ARCH_EARLY_INIT_R
 	select BOARD_EARLY_INIT_F
+	imply SCSI
 
 config ARCH_LS2080A
 	bool
@@ -305,7 +308,7 @@ config SYS_FSL_DSPI_CLK_DIV
 	default 2
 	help
 	  This is the divider that is used to derive DSPI clock from Platform
-	  PLL, in another word DSPI_clk = Platform_PLL_freq / this_divider.
+	  clock, in another word DSPI_clk = Platform_clk / this_divider.
 
 config SYS_FSL_DUART_CLK_DIV
 	int "DUART clock divider"
@@ -390,3 +393,6 @@ config SYS_MC_RSV_MEM_ALIGN
 	help
 	  Reserved memory needs to be aligned for MC to use. Default value
 	  is 512MB.
+
+config SPL_LDSCRIPT
+	default "arch/arm/cpu/armv8/u-boot-spl.lds" if ARCH_LS1043A || ARCH_LS1046A || ARCH_LS2080A

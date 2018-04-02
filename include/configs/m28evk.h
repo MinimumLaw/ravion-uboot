@@ -13,10 +13,6 @@
 
 #define CONFIG_TIMESTAMP		/* Print image info with timestamp */
 
-/* U-Boot Commands */
-#define CONFIG_CMD_NAND
-#define CONFIG_CMD_NAND_TRIMFFS
-
 /* Memory configuration */
 #define CONFIG_NR_DRAM_BANKS		1		/* 1 bank of DRAM */
 #define PHYS_SDRAM_1			0x40000000	/* Base address */
@@ -25,7 +21,6 @@
 
 /* Environment */
 #define CONFIG_ENV_SIZE			(16 * 1024)
-#define CONFIG_ENV_IS_IN_NAND
 
 /* Environment is in NAND */
 #if defined(CONFIG_CMD_NAND) && defined(CONFIG_ENV_IS_IN_NAND)
@@ -36,10 +31,6 @@
 #define CONFIG_ENV_OFFSET_REDUND	\
 		(CONFIG_ENV_OFFSET + CONFIG_ENV_RANGE)
 
-#define CONFIG_CMD_UBIFS
-#define CONFIG_CMD_MTDPARTS
-#define CONFIG_RBTREE
-#define CONFIG_LZO
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT			"nand0=gpmi-nand"
@@ -51,8 +42,6 @@
 		"14m(boot),"			\
 		"238m(data),"			\
 		"-@4096k(UBI)"
-#else
-#define CONFIG_ENV_IS_NOWHERE
 #endif
 
 /* FEC Ethernet on SoC */
@@ -113,7 +102,6 @@
 
 /* Booting Linux */
 #define CONFIG_BOOTFILE		"fitImage"
-#define CONFIG_BOOTARGS		"console=ttyAMA0,115200n8 "
 #define CONFIG_BOOTCOMMAND	"run mmc_mmc"
 #define CONFIG_LOADADDR		0x42000000
 #define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR

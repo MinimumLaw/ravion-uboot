@@ -162,9 +162,7 @@
  * Flash & Environment
  */
 #ifdef CONFIG_USE_NAND
-#undef CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_NAND_DAVINCI
-#define CONFIG_ENV_IS_IN_NAND		/* U-Boot env in NAND Flash  */
 #define CONFIG_ENV_OFFSET		0x0 /* Block 0--not used by bootcode */
 #define CONFIG_ENV_SIZE			(128 << 10)
 #define	CONFIG_SYS_NAND_USE_FLASH_BBT
@@ -218,7 +216,6 @@
 #endif
 
 #ifdef CONFIG_USE_NOR
-#define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_FLASH_CFI_DRIVER
 #define CONFIG_SYS_FLASH_CFI
 #define CONFIG_SYS_FLASH_PROTECTION
@@ -234,9 +231,6 @@
 #endif
 
 #ifdef CONFIG_USE_SPIFLASH
-#undef CONFIG_ENV_IS_IN_FLASH
-#undef CONFIG_ENV_IS_IN_NAND
-#define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_SIZE			(64 << 10)
 #define CONFIG_ENV_OFFSET		(512 << 10)
 #define CONFIG_ENV_SECT_SIZE		(64 << 10)
@@ -248,8 +242,6 @@
 #define CONFIG_MISC_INIT_R
 #define CONFIG_BOOTFILE		"uImage" /* Boot file name */
 #define CONFIG_SYS_CBSIZE	1024 /* Console I/O Buffer Size	*/
-#define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
-#define CONFIG_SYS_MAXARGS	16 /* max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE /* Boot Args Buffer Size */
 #define CONFIG_SYS_LOAD_ADDR	(PHYS_SDRAM_1 + 0x700000)
 #define CONFIG_AUTO_COMPLETE
@@ -265,14 +257,7 @@
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_REVISION_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
-#define CONFIG_BOOTARGS		\
-	"mem=32M console=ttyS2,115200n8 root=/dev/mtdblock2 rw noinitrd ip=dhcp"
 #define CONFIG_EXTRA_ENV_SETTINGS	"hwconfig=dsp:wake=yes"
-
-/*
- * U-Boot commands
- */
-#define CONFIG_CMD_SAVES
 
 #ifdef CONFIG_CMD_BDI
 #define CONFIG_CLOCKS
@@ -282,14 +267,8 @@
 #endif
 
 #ifdef CONFIG_USE_NAND
-#define CONFIG_CMD_NAND
-
-#define CONFIG_CMD_MTDPARTS
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#define CONFIG_LZO
-#define CONFIG_RBTREE
-#define CONFIG_CMD_UBIFS
 #endif
 
 #ifdef CONFIG_USE_SPIFLASH
@@ -298,7 +277,6 @@
 #if !defined(CONFIG_USE_NAND) && \
 	!defined(CONFIG_USE_NOR) && \
 	!defined(CONFIG_USE_SPIFLASH)
-#define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_ENV_SIZE		(16 << 10)
 #endif
 
@@ -309,7 +287,6 @@
 						CONFIG_SYS_MALLOC_LEN)
 #define CONFIG_SYS_SPL_MALLOC_SIZE	CONFIG_SYS_MALLOC_LEN
 #define CONFIG_SPL_SPI_LOAD
-#define CONFIG_SPL_LDSCRIPT	"board/$(BOARDDIR)/u-boot-spl-da850evm.lds"
 #define CONFIG_SPL_STACK	0x8001ff00
 #define CONFIG_SPL_TEXT_BASE	0x80000000
 #define CONFIG_SPL_MAX_FOOTPRINT	32768

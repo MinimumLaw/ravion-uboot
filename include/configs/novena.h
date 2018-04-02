@@ -17,8 +17,6 @@
 #include "mx6_common.h"
 
 /* U-Boot Commands */
-#define CONFIG_CMD_PCI
-#define CONFIG_CMD_SATA
 
 /* U-Boot general configurations */
 
@@ -31,19 +29,15 @@
  * http://homepage.ntlworld.com./jonathan.deboynepollard/FGA/disc-partition-alignment.html
  */
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_OFFSET		(512 * 1024)
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 #define CONFIG_ENV_OFFSET_REDUND	\
 		(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
-#else
-#define CONFIG_ENV_IS_NOWHERE
 #endif
 
 /* Booting Linux */
 #define CONFIG_BOOTFILE			"fitImage"
-#define CONFIG_BOOTARGS			"console=ttymxc1,115200 "
 #define CONFIG_BOOTCOMMAND		"run distro_bootcmd ; run net_nfs"
 #define CONFIG_HOSTNAME			novena
 
@@ -76,9 +70,6 @@
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_ETHPRIME			"FEC"
 #define CONFIG_FEC_MXC_PHYADDR		0x7
-#define CONFIG_PHYLIB
-#define CONFIG_PHY_MICREL
-#define CONFIG_PHY_MICREL_KSZ9021
 #define CONFIG_ARP_TIMEOUT		200UL
 #endif
 
@@ -133,10 +124,6 @@
 
 /* USB Configs */
 #ifdef CONFIG_CMD_USB
-#define CONFIG_SYS_USB_EVENT_POLL_VIA_CONTROL_EP
-#define CONFIG_USB_HOST_ETHER
-#define CONFIG_USB_ETHER_ASIX
-#define CONFIG_USB_ETHER_SMSC95XX
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_MXC_USB_FLAGS		0

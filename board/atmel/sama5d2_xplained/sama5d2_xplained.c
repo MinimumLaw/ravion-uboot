@@ -169,7 +169,7 @@ static int set_ethaddr_from_eeprom(void)
 	const char *ETHADDR_NAME = "ethaddr";
 	struct udevice *bus, *dev;
 
-	if (getenv(ETHADDR_NAME))
+	if (env_get(ETHADDR_NAME))
 		return 0;
 
 	if (uclass_get_device_by_seq(UCLASS_I2C, 1, &bus)) {
@@ -192,7 +192,7 @@ static int set_ethaddr_from_eeprom(void)
 		return -1;
 	}
 
-	return eth_setenv_enetaddr(ETHADDR_NAME, ethaddr);
+	return eth_env_set_enetaddr(ETHADDR_NAME, ethaddr);
 }
 #else
 static int set_ethaddr_from_eeprom(void)

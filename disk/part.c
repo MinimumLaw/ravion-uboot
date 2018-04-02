@@ -132,6 +132,7 @@ void dev_print (struct blk_desc *dev_desc)
 	case IF_TYPE_SD:
 	case IF_TYPE_MMC:
 	case IF_TYPE_USB:
+	case IF_TYPE_NVME:
 		printf ("Vendor: %s Rev: %s Prod: %s\n",
 			dev_desc->vendor,
 			dev_desc->revision,
@@ -263,7 +264,10 @@ static void print_part_header(const char *type, struct blk_desc *dev_desc)
 		puts ("MMC");
 		break;
 	case IF_TYPE_HOST:
-		puts("HOST");
+		puts ("HOST");
+		break;
+	case IF_TYPE_NVME:
+		puts ("NVMe");
 		break;
 	default:
 		puts ("UNKNOWN");
@@ -388,7 +392,6 @@ cleanup:
 
 #define PART_UNSPECIFIED -2
 #define PART_AUTO -1
-#define MAX_SEARCH_PARTITIONS 16
 int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 			     struct blk_desc **dev_desc,
 			     disk_partition_t *info, int allow_whole_dev)
@@ -452,7 +455,7 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 	/* If no dev_part_str, use bootdevice environment variable */
 	if (!dev_part_str || !strlen(dev_part_str) ||
 	    !strcmp(dev_part_str, "-"))
-		dev_part_str = getenv("bootdevice");
+		dev_part_str = env_get("bootdevice");
 
 	/* If still no dev_part_str, it's an error */
 	if (!dev_part_str) {

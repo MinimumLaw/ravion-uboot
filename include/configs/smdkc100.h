@@ -56,15 +56,6 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 
-/***********************************************************
- * Command definition
- ***********************************************************/
-#undef CONFIG_CMD_NAND
-
-#define CONFIG_CMD_REGINFO
-#define CONFIG_CMD_ONENAND
-#define CONFIG_CMD_MTDPARTS
-
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 
@@ -86,9 +77,6 @@
 #define CONFIG_COMMON_BOOT	"console=ttySAC0,115200n8" \
 				" mem=128M " \
 				" " MTDPARTS_DEFAULT
-
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
-			" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x32008000 0x0 0x40000\0"
@@ -140,11 +128,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
-#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
-/* Boot Argument Buffer Size */
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 /* memtest works on */
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
@@ -176,7 +160,6 @@
 /*-----------------------------------------------------------------------
  * Boot configuration
  */
-#define CONFIG_ENV_IS_IN_ONENAND	1
 #define CONFIG_ENV_SIZE			(128 << 10)	/* 128KiB, 0x20000 */
 #define CONFIG_ENV_ADDR			(256 << 10)	/* 256KiB, 0x40000 */
 #define CONFIG_ENV_OFFSET		(256 << 10)	/* 256KiB, 0x40000 */

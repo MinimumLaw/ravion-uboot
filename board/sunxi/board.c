@@ -602,7 +602,7 @@ void get_board_serial(struct tag_serialnr *serialnr)
 	char *serial_string;
 	unsigned long long serial;
 
-	serial_string = getenv("serial#");
+	serial_string = env_get("serial#");
 
 	if (serial_string) {
 		serial = simple_strtoull(serial_string, NULL, 16);
@@ -646,7 +646,7 @@ static void parse_spl_header(const uint32_t spl_addr)
 		return;
 	}
 	/* otherwise assume .scr format (mkimage-type script) */
-	setenv_hex("fel_scriptaddr", spl->fel_script_address);
+	env_set_hex("fel_scriptaddr", spl->fel_script_address);
 }
 
 /*
@@ -694,7 +694,7 @@ static void setup_environment(const void *fdt)
 			else
 				sprintf(ethaddr, "eth%daddr", i);
 
-			if (getenv(ethaddr))
+			if (env_get(ethaddr))
 				continue;
 
 			/* Non OUI / registered MAC address */
@@ -705,14 +705,14 @@ static void setup_environment(const void *fdt)
 			mac_addr[4] = (sid[3] >>  8) & 0xff;
 			mac_addr[5] = (sid[3] >>  0) & 0xff;
 
-			eth_setenv_enetaddr(ethaddr, mac_addr);
+			eth_env_set_enetaddr(ethaddr, mac_addr);
 		}
 
-		if (!getenv("serial#")) {
+		if (!env_get("serial#")) {
 			snprintf(serial_string, sizeof(serial_string),
 				"%08x%08x", sid[0], sid[3]);
 
-			setenv("serial#", serial_string);
+			env_set("serial#", serial_string);
 		}
 	}
 }
@@ -721,11 +721,11 @@ int misc_init_r(void)
 {
 	__maybe_unused int ret;
 
-	setenv("fel_booted", NULL);
-	setenv("fel_scriptaddr", NULL);
+	env_set("fel_booted", NULL);
+	env_set("fel_scriptaddr", NULL);
 	/* determine if we are running in FEL mode */
 	if (!is_boot0_magic(SPL_ADDR + 4)) { /* eGON.BT0 */
-		setenv("fel_booted", "1");
+		env_set("fel_booted", "1");
 		parse_spl_header(SPL_ADDR);
 	}
 

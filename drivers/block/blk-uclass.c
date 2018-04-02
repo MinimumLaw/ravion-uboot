@@ -22,10 +22,11 @@ static const char *if_typename_str[IF_TYPE_COUNT] = {
 	[IF_TYPE_SATA]		= "sata",
 	[IF_TYPE_HOST]		= "host",
 	[IF_TYPE_SYSTEMACE]	= "ace",
+	[IF_TYPE_NVME]		= "nvme",
 };
 
 static enum uclass_id if_type_uclass_id[IF_TYPE_COUNT] = {
-	[IF_TYPE_IDE]		= UCLASS_INVALID,
+	[IF_TYPE_IDE]		= UCLASS_IDE,
 	[IF_TYPE_SCSI]		= UCLASS_SCSI,
 	[IF_TYPE_ATAPI]		= UCLASS_INVALID,
 	[IF_TYPE_USB]		= UCLASS_MASS_STORAGE,
@@ -34,6 +35,7 @@ static enum uclass_id if_type_uclass_id[IF_TYPE_COUNT] = {
 	[IF_TYPE_SD]		= UCLASS_INVALID,
 	[IF_TYPE_SATA]		= UCLASS_AHCI,
 	[IF_TYPE_HOST]		= UCLASS_ROOT,
+	[IF_TYPE_NVME]		= UCLASS_NVME,
 	[IF_TYPE_SYSTEMACE]	= UCLASS_INVALID,
 };
 
@@ -53,6 +55,11 @@ static enum if_type if_typename_to_iftype(const char *if_typename)
 static enum uclass_id if_type_to_uclass_id(enum if_type if_type)
 {
 	return if_type_uclass_id[if_type];
+}
+
+const char *blk_get_if_type_name(enum if_type if_type)
+{
+	return if_typename_str[if_type];
 }
 
 struct blk_desc *blk_get_devnum_by_type(enum if_type if_type, int devnum)
@@ -589,7 +596,7 @@ int blk_create_devicef(struct udevice *parent, const char *drv_name,
 	}
 	device_set_name_alloced(*devp);
 
-	return ret;
+	return 0;
 }
 
 int blk_unbind_all(int if_type)

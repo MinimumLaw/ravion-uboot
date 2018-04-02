@@ -43,13 +43,11 @@
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 /* NAND support */
-#define CONFIG_CMD_NAND
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		NFC_BASE_ADDR
 
 /* Dynamic MTD partition support */
-#define CONFIG_CMD_MTDPARTS	/* Enable 'mtdparts' command line support */
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
 #define MTDIDS_DEFAULT		"nand0=vf610_nfc"
@@ -63,17 +61,11 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
-#define CONFIG_RBTREE
-#define CONFIG_LZO
-#define CONFIG_CMD_UBIFS	/* increases size by almost 60 KB */
-
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET1_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RMII
 #define CONFIG_FEC_MXC_PHYADDR          0
-#define CONFIG_PHYLIB
-#define CONFIG_PHY_MICREL
 
 #define CONFIG_IPADDR		192.168.10.2
 #define CONFIG_NETMASK		255.255.255.0
@@ -149,9 +141,6 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #undef CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
-#define CONFIG_SYS_PBSIZE		\
-			(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS		16	/* max number of command args */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #define CONFIG_SYS_MEMTEST_START	0x80010000

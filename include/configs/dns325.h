@@ -28,7 +28,6 @@
 /*
  * Commands configuration
  */
-#define CONFIG_CMD_NAND
 #define CONFIG_SYS_MVFS
 
 #define CONFIG_NR_DRAM_BANKS		1
@@ -73,10 +72,7 @@
  * Environment variables configurations
  */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_SECT_SIZE		0x20000	/* 128KB */
-#else
-#define CONFIG_ENV_IS_NOWHERE
 #endif
 
 #define CONFIG_ENV_SIZE			0x20000	/* 128KB */

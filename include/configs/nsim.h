@@ -36,13 +36,11 @@
  * Command line configuration
  */
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_MAXARGS		16
 #define CONFIG_CMDLINE_EDITING
 
 /*
  * Environment settings
  */
-#define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_ENV_SIZE			SZ_512
 #define CONFIG_ENV_OFFSET		0
 
@@ -50,16 +48,11 @@
  * Environment configuration
  */
 #define CONFIG_BOOTFILE			"uImage"
-#define CONFIG_BOOTARGS			"console=ttyARC0,115200n8"
 #define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR
 
 /*
  * Console configuration
  */
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_CBSIZE		SZ_256
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
-						sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #endif /* _CONFIG_NSIM_H_ */

@@ -116,9 +116,6 @@
 4800, 9600, 14400, 19200, 28800, 38400, 56000, 57600, 115200 }
 
 /* CPU */
-#define CONFIG_ENV_IS_NOWHERE
-
-#define CONFIG_SPL_LDSCRIPT		"arch/arm/mach-omap2/u-boot-spl.lds"
 
 #ifdef CONFIG_SPI_BOOT
 #define CONFIG_SPL_SPI_LOAD
@@ -141,8 +138,6 @@
 #define CONFIG_USB_ETH_RNDIS
 #endif /* CONFIG_USB_MUSB_GADGET */
 
-#define CONFIG_PHY_GIGE
-#define CONFIG_PHYLIB
 #define CONFIG_PHY_SMSC
 
 #endif	/* ! __CONFIG_PCM051_H */

@@ -17,7 +17,7 @@
 #define CONFIG_SYS_GENERIC_BOARD
 
 #include <asm/arch/imx-regs.h>
-#include <asm/imx-common/gpio.h>
+#include <asm/mach-imx/gpio.h>
 
 #ifdef CONFIG_SPL
 #include "imx6_spl.h"
@@ -72,30 +72,21 @@
 #define CONFIG_FEC_XCV_TYPE		RMII
 #define CONFIG_ETHPRIME			"FEC"
 #define CONFIG_FEC_MXC_PHYADDR		1
-#define CONFIG_PHYLIB
-#define CONFIG_PHY_MICREL
 #define CONFIG_IP_DEFRAG
 #define CONFIG_TFTP_BLOCKSIZE		16352
 #define CONFIG_TFTP_TSIZE
 
 /* USB Configs */
 /* Host */
-#define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_MAX_CONTROLLER_COUNT		2
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_MXC_USB_FLAGS		0
-#define CONFIG_USB_KEYBOARD
-#ifdef CONFIG_USB_KEYBOARD
-#define CONFIG_SYS_USB_EVENT_POLL
-#endif /* CONFIG_USB_KEYBOARD */
 /* Client */
-#define CONFIG_USB_GADGET_VBUS_DRAW	2
 #define CONFIG_USBD_HS
 
 #define CONFIG_USB_GADGET_MASS_STORAGE
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
-#define CONFIG_G_DNL_MANUFACTURER	"Toradex"
 /* USB DFU */
 #define CONFIG_DFU_MMC
 
@@ -270,8 +261,6 @@
 
 /* environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
-
-#define CONFIG_ENV_IS_IN_MMC
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 /* Environment in eMMC, before config block at the end of 1st "boot sector" */

@@ -74,7 +74,6 @@
 #ifdef CONFIG_USB_MUSB_HOST
 
 #ifdef CONFIG_USB_KEYBOARD
-#define CONFIG_SYS_USB_EVENT_POLL
 #define CONFIG_PREBOOT "usb start"
 #endif /* CONFIG_USB_KEYBOARD */
 
@@ -87,15 +86,10 @@
 
 #endif /* CONFIG_USB_MUSB_AM35X */
 
-/* commands to include */
-#define CONFIG_CMD_NAND
-#define CONFIG_CMD_MTDPARTS
-
 /* I2C */
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_OMAP24_I2C_SPEED	100000
 #define CONFIG_SYS_OMAP24_I2C_SLAVE	1
-#define CONFIG_SYS_I2C_OMAP34XX
 
 /* Ethernet */
 #define CONFIG_DRIVER_TI_EMAC
@@ -111,10 +105,6 @@
 #ifdef CONFIG_NAND
 #define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_NAND_OMAP_GPMC_PREFETCH
-#define CONFIG_BCH
-#define CONFIG_CMD_UBIFS		/* Read-only UBI volume operations */
-#define CONFIG_RBTREE			/* required by CONFIG_CMD_UBI */
-#define CONFIG_LZO			/* required by CONFIG_CMD_UBIFS */
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
 #define CONFIG_SYS_NAND_BASE		NAND_BASE	/* physical address */
@@ -243,11 +233,6 @@
 
 /* Console I/O Buffer Size */
 #define CONFIG_SYS_CBSIZE		512
-/* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE \
-					+ sizeof(CONFIG_SYS_PROMPT) + 16)
-/* Boot Argument Buffer Size */
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 /* memtest works on */
 #define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)
@@ -296,7 +281,6 @@
 #define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 #define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
 #define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
-#define CONFIG_ENV_IS_IN_NAND
 
 /* Defines for SPL */
 #define CONFIG_SPL_FRAMEWORK
@@ -314,6 +298,5 @@
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_ECC
-#define CONFIG_SPL_LDSCRIPT		"arch/arm/mach-omap2/u-boot-spl.lds"
 
 #endif /* __CONFIG_H */

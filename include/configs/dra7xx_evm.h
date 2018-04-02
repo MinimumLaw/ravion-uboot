@@ -24,7 +24,6 @@
 
 #ifndef CONFIG_QSPI_BOOT
 /* MMC ENV related defines */
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SLOT2: eMMC(1) */
 #define CONFIG_ENV_SIZE			(128 << 10)
 #define CONFIG_ENV_OFFSET		0x260000
@@ -77,15 +76,6 @@
 	DFU_ALT_INFO_EMMC \
 	DFU_ALT_INFO_RAM \
 	DFU_ALT_INFO_QSPI
-#else
-/* Discard fastboot in SPL build, to spare some space */
-#undef CONFIG_FASTBOOT
-#undef CONFIG_USB_FUNCTION_FASTBOOT
-#undef CONFIG_CMD_FASTBOOT
-#undef CONFIG_ANDROID_BOOT_IMAGE
-#undef CONFIG_FASTBOOT_BUF_ADDR
-#undef CONFIG_FASTBOOT_BUF_SIZE
-#undef CONFIG_FASTBOOT_FLASH
 #endif
 
 #ifdef CONFIG_SPL_BUILD
@@ -113,12 +103,9 @@
 #define CONFIG_NET_RETRY_COUNT		10
 #define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
 #define CONFIG_MII			/* Required in net/eth.c */
-#define CONFIG_PHY_GIGE			/* per-board part of CPSW */
-#define CONFIG_PHYLIB
 #define CONFIG_PHY_TI
 
 /* SPI */
-#undef	CONFIG_OMAP3_SPI
 #define CONFIG_TI_SPI_MMAP
 #define CONFIG_SF_DEFAULT_SPEED                76800000
 #define CONFIG_SF_DEFAULT_MODE                 SPI_MODE_0
@@ -138,7 +125,6 @@
 #define CONFIG_SYS_SPI_ARGS_OFFS	0x140000
 #define CONFIG_SYS_SPI_ARGS_SIZE	0x80000
 #if defined(CONFIG_QSPI_BOOT)
-#define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #define CONFIG_ENV_SPI_MAX_HZ           CONFIG_SF_DEFAULT_SPEED
 #define CONFIG_ENV_SIZE			(64 << 10)
@@ -156,13 +142,11 @@
 
 /* USB xHCI HOST */
 #define CONFIG_USB_XHCI_OMAP
-#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS 2
 
 #define CONFIG_OMAP_USB_PHY
 #define CONFIG_OMAP_USB2PHY2_HOST
 
 /* SATA */
-#define CONFIG_SCSI
 #define CONFIG_LIBATA
 #define CONFIG_SCSI_AHCI
 #define CONFIG_SCSI_AHCI_PLAT
@@ -215,9 +199,7 @@
 #endif
 /* NAND: SPL falcon mode configs */
 #ifdef CONFIG_SPL_OS_BOOT
-#define CONFIG_CMD_SPL_NAND_OFS		0x00080000 /* os-boot params*/
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS	0x00200000 /* kernel offset */
-#define CONFIG_CMD_SPL_WRITE_SIZE	0x2000
 #endif
 #endif /* !CONFIG_NAND */
 
@@ -238,7 +220,6 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 /* Reduce SPL size by removing unlikey targets */
 #ifdef CONFIG_NOR_BOOT
-#define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_ENV_SECT_SIZE		(128 * 1024)	/* 128 KiB */
 #define MTDIDS_DEFAULT			"nor0=physmap-flash.0"
 #define MTDPARTS_DEFAULT		"mtdparts=physmap-flash.0:" \

@@ -24,7 +24,6 @@
 
 /* SATA Configs */
 
-#define CONFIG_CMD_SATA
 #ifdef CONFIG_CMD_SATA
 #define CONFIG_DWC_AHSATA
 #define CONFIG_SYS_SATA_MAX_DEVICE	1
@@ -61,7 +60,6 @@
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_ETHPRIME			"FEC"
 #define CONFIG_FEC_MXC_PHYADDR		1
-#define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
 
 /* Framebuffer */
@@ -89,6 +87,7 @@
 	"fdt_addr=0x18000000\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
+	"finduuid=part uuid mmc 0:1 uuid\0" \
 	"update_sd_firmware_filename=u-boot.imx\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
@@ -124,12 +123,14 @@
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
 	func(MMC, mmc, 1) \
+	func(SATA, sata, 0) \
 	func(USB, usb, 0) \
 	func(PXE, pxe, na) \
 	func(DHCP, dhcp, na)
 
 #define CONFIG_BOOTCOMMAND \
 	   "run findfdt; " \
+	   "run finduuid; " \
 	   "run distro_bootcmd"
 
 #include <config_distro_bootcmd.h>
@@ -150,7 +151,6 @@
 /* Environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
-#define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_ENV_OFFSET		(768 * 1024)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 

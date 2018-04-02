@@ -8,6 +8,7 @@
 #include <common.h>
 #include <command.h>
 #include <cmd_spl.h>
+#include <libfdt.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -118,6 +119,11 @@ static int spl_export(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		case SPL_EXPORT_FDT:
 			printf("Argument image is now in RAM: 0x%p\n",
 				(void *)images.ft_addr);
+			env_set_addr("fdtargsaddr", images.ft_addr);
+			env_set_hex("fdtargslen", fdt_totalsize(images.ft_addr));
+			if (fdt_totalsize(images.ft_addr) >
+			    CONFIG_CMD_SPL_WRITE_SIZE)
+				puts("WARN: FDT size > CMD_SPL_WRITE_SIZE\n");
 			break;
 #endif
 		case SPL_EXPORT_ATAGS:

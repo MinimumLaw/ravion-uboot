@@ -33,10 +33,7 @@
 
 /* environment variables configuration */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_SECT_SIZE	0x20000
-#else
-#define CONFIG_ENV_IS_NOWHERE
 #endif
 #define CONFIG_ENV_SIZE		0x20000
 #define CONFIG_ENV_OFFSET	0xe0000
@@ -73,7 +70,6 @@
 #define CONFIG_NET_MULTI
 #define CONFIG_MVGBE_PORTS	{1, 0}	/* enable port 0 only */
 #define CONFIG_PHY_BASE_ADR	1
-#define CONFIG_PHY_GIGE
 #define CONFIG_RESET_PHY_R
 #endif /* CONFIG_CMD_NET */
 

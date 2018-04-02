@@ -9,6 +9,8 @@
 
 #include <blk.h>
 #include <ide.h>
+#include <uuid.h>
+#include <linux/list.h>
 
 struct block_drvr {
 	char *name;
@@ -46,23 +48,33 @@ struct block_drvr {
 #define DEV_TYPE_CDROM		0x05	/* CD-ROM */
 #define DEV_TYPE_OPDISK		0x07	/* optical disk */
 
+#define PART_NAME_LEN 32
+#define PART_TYPE_LEN 32
+#define MAX_SEARCH_PARTITIONS 64
+
 typedef struct disk_partition {
 	lbaint_t	start;	/* # of first block in partition	*/
 	lbaint_t	size;	/* number of blocks in partition	*/
 	ulong	blksz;		/* block size in bytes			*/
-	uchar	name[32];	/* partition name			*/
-	uchar	type[32];	/* string type description		*/
+	uchar	name[PART_NAME_LEN];	/* partition name			*/
+	uchar	type[PART_TYPE_LEN];	/* string type description		*/
 	int	bootable;	/* Active/Bootable flag is set		*/
 #if CONFIG_IS_ENABLED(PARTITION_UUIDS)
-	char	uuid[37];	/* filesystem UUID as string, if exists	*/
+	char	uuid[UUID_STR_LEN + 1];	/* filesystem UUID as string, if exists	*/
 #endif
 #ifdef CONFIG_PARTITION_TYPE_GUID
-	char	type_guid[37];	/* type GUID as string, if exists	*/
+	char	type_guid[UUID_STR_LEN + 1];	/* type GUID as string, if exists	*/
 #endif
 #ifdef CONFIG_DOS_PARTITION
 	uchar	sys_ind;	/* partition type 			*/
 #endif
 } disk_partition_t;
+
+struct disk_part {
+	int partnum;
+	disk_partition_t gpt_part_info;
+	struct list_head list;
+};
 
 /* Misc _get_dev functions */
 #ifdef CONFIG_PARTITIONS
@@ -277,6 +289,7 @@ int write_gpt_table(struct blk_desc *dev_desc,
 /**
  * gpt_fill_pte(): Fill the GPT partition table entry
  *
+ * @param dev_desc - block device descriptor
  * @param gpt_h - GPT header representation
  * @param gpt_e - GPT partition table entries
  * @param partitions - list of partitions
@@ -284,8 +297,9 @@ int write_gpt_table(struct blk_desc *dev_desc,
  *
  * @return zero on success
  */
-int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
-		disk_partition_t *partitions, int parts);
+int gpt_fill_pte(struct blk_desc *dev_desc,
+		 gpt_header *gpt_h, gpt_entry *gpt_e,
+		 disk_partition_t *partitions, int parts);
 
 /**
  * gpt_fill_header(): Fill the GPT header
@@ -367,6 +381,21 @@ int gpt_verify_headers(struct blk_desc *dev_desc, gpt_header *gpt_head,
 int gpt_verify_partitions(struct blk_desc *dev_desc,
 			  disk_partition_t *partitions, int parts,
 			  gpt_header *gpt_head, gpt_entry **gpt_pte);
+
+
+/**
+ * get_disk_guid() - Function to read the GUID string from a device's GPT
+ *
+ * This function reads the GUID string from a block device whose descriptor
+ * is provided.
+ *
+ * @param dev_desc - block device descriptor
+ * @param guid - pre-allocated string in which to return the GUID
+ *
+ * @return - '0' on success, otherwise error
+ */
+int get_disk_guid(struct blk_desc *dev_desc, char *guid);
+
 #endif
 
 #if CONFIG_IS_ENABLED(DOS_PARTITION)

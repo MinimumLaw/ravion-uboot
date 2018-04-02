@@ -14,6 +14,8 @@
 #include <dm/ofnode.h>
 #include <dm/uclass.h>
 
+struct resource;
+
 #if CONFIG_IS_ENABLED(OF_LIVE)
 static inline const struct device_node *dev_np(struct udevice *dev)
 {
@@ -197,6 +199,24 @@ int dev_read_phandle_with_args(struct udevice *dev, const char *list_name,
 				struct ofnode_phandle_args *out_args);
 
 /**
+ * dev_count_phandle_with_args() - Return phandle number in a list
+ *
+ * This function is usefull to get phandle number contained in a property list.
+ * For example, this allows to allocate the right amount of memory to keep
+ * clock's reference contained into the "clocks" property.
+ *
+ *
+ * @dev:	device whose node containing a list
+ * @list_name:	property name that contains a list
+ * @cells_name:	property name that specifies phandles' arguments count
+ * @Returns number of phandle found on success, on error returns appropriate
+ * errno value.
+ */
+
+int dev_count_phandle_with_args(struct udevice *dev, const char *list_name,
+				const char *cells_name);
+
+/**
  * dev_read_addr_cells() - Get the number of address cells for a device's node
  *
  * This walks back up the tree to find the closest #address-cells property
@@ -219,6 +239,26 @@ int dev_read_addr_cells(struct udevice *dev);
 int dev_read_size_cells(struct udevice *dev);
 
 /**
+ * dev_read_addr_cells() - Get the address cells property in a node
+ *
+ * This function matches fdt_address_cells().
+ *
+ * @dev: devioe to check
+ * @return number of address cells this node uses
+ */
+int dev_read_simple_addr_cells(struct udevice *dev);
+
+/**
+ * dev_read_size_cells() - Get the size cells property in a node
+ *
+ * This function matches fdt_size_cells().
+ *
+ * @dev: devioe to check
+ * @return number of size cells this node uses
+ */
+int dev_read_simple_size_cells(struct udevice *dev);
+
+/**
  * dev_read_phandle() - Get the phandle from a device
  *
  * @dev: device to check
@@ -234,7 +274,7 @@ int dev_read_phandle(struct udevice *dev);
  * @lenp: place to put length on success
  * @return pointer to property, or NULL if not found
  */
-const u32 *dev_read_prop(struct udevice *dev, const char *propname, int *lenp);
+const void *dev_read_prop(struct udevice *dev, const char *propname, int *lenp);
 
 /**
  * dev_read_alias_seq() - Get the alias sequence number of a node
@@ -302,6 +342,40 @@ ofnode dev_read_next_subnode(ofnode node);
  */
 const uint8_t *dev_read_u8_array_ptr(struct udevice *dev, const char *propname,
 				     size_t sz);
+
+/**
+ * dev_read_enabled() - check whether a node is enabled
+ *
+ * This looks for a 'status' property. If this exists, then returns 1 if
+ * the status is 'ok' and 0 otherwise. If there is no status property,
+ * it returns 1 on the assumption that anything mentioned should be enabled
+ * by default.
+ *
+ * @dev: device to examine
+ * @return integer value 0 (not enabled) or 1 (enabled)
+ */
+int dev_read_enabled(struct udevice *dev);
+
+/**
+ * dev_read_resource() - obtain an indexed resource from a device.
+ *
+ * @dev: device to examine
+ * @index index of the resource to retrieve (0 = first)
+ * @res returns the resource
+ * @return 0 if ok, negative on error
+ */
+int dev_read_resource(struct udevice *dev, uint index, struct resource *res);
+
+/**
+ * dev_read_resource_byname() - obtain a named resource from a device.
+ *
+ * @dev: device to examine
+ * @name: name of the resource to retrieve
+ * @res: returns the resource
+ * @return 0 if ok, negative on error
+ */
+int dev_read_resource_byname(struct udevice *dev, const char *name,
+			     struct resource *res);
 
 #else /* CONFIG_DM_DEV_READ_INLINE is enabled */
 
@@ -371,12 +445,31 @@ static inline int dev_read_phandle_with_args(struct udevice *dev,
 					      out_args);
 }
 
+static inline int dev_count_phandle_with_args(struct udevice *dev,
+		const char *list_name, const char *cells_name)
+{
+	return ofnode_count_phandle_with_args(dev_ofnode(dev), list_name,
+					      cells_name);
+}
+
 static inline int dev_read_addr_cells(struct udevice *dev)
 {
+	/* NOTE: this call should walk up the parent stack */
 	return fdt_address_cells(gd->fdt_blob, dev_of_offset(dev));
 }
 
 static inline int dev_read_size_cells(struct udevice *dev)
+{
+	/* NOTE: this call should walk up the parent stack */
+	return fdt_size_cells(gd->fdt_blob, dev_of_offset(dev));
+}
+
+static inline int dev_read_simple_addr_cells(struct udevice *dev)
+{
+	return fdt_address_cells(gd->fdt_blob, dev_of_offset(dev));
+}
+
+static inline int dev_read_simple_size_cells(struct udevice *dev)
 {
 	return fdt_size_cells(gd->fdt_blob, dev_of_offset(dev));
 }
@@ -386,10 +479,10 @@ static inline int dev_read_phandle(struct udevice *dev)
 	return fdt_get_phandle(gd->fdt_blob, dev_of_offset(dev));
 }
 
-static inline const u32 *dev_read_prop(struct udevice *dev,
-				       const char *propname, int *lenp)
+static inline const void *dev_read_prop(struct udevice *dev,
+					const char *propname, int *lenp)
 {
-	return ofnode_read_prop(dev_ofnode(dev), propname, lenp);
+	return ofnode_get_property(dev_ofnode(dev), propname, lenp);
 }
 
 static inline int dev_read_alias_seq(struct udevice *dev, int *devnump)
@@ -418,6 +511,24 @@ static inline const uint8_t *dev_read_u8_array_ptr(struct udevice *dev,
 					const char *propname, size_t sz)
 {
 	return ofnode_read_u8_array_ptr(dev_ofnode(dev), propname, sz);
+}
+
+static inline int dev_read_enabled(struct udevice *dev)
+{
+	return fdtdec_get_is_enabled(gd->fdt_blob, dev_of_offset(dev));
+}
+
+static inline int dev_read_resource(struct udevice *dev, uint index,
+				    struct resource *res)
+{
+	return ofnode_read_resource(dev_ofnode(dev), index, res);
+}
+
+static inline int dev_read_resource_byname(struct udevice *dev,
+					   const char *name,
+					   struct resource *res)
+{
+	return ofnode_read_resource_byname(dev_ofnode(dev), name, res);
 }
 
 #endif /* CONFIG_DM_DEV_READ_INLINE */

@@ -105,14 +105,6 @@
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET /* re-init HCD after CMD_RESET */
 #endif /* CONFIG_CMD_USB */
 
-#if defined(CONFIG_VCT_NAND)
-#define CONFIG_CMD_NAND
-#endif
-
-#if defined(CONFIG_VCT_ONENAND)
-#define CONFIG_CMD_ONENAND
-#endif
-
 /*
  * BOOTP options
  */
@@ -127,9 +119,6 @@
  */
 #define CONFIG_SYS_LONGHELP			/* undef to save memory		*/
 #define CONFIG_SYS_CBSIZE	512		/* Console I/O Buffer Size	*/
-#define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE + \
-				 sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS	16		/* max number of command args	*/
 #define CONFIG_TIMESTAMP			/* Print image info with timestamp */
 #define CONFIG_CMDLINE_EDITING			/* add command line history	*/
 
@@ -137,7 +126,6 @@
  * FLASH and environment organization
  */
 #if defined(CONFIG_VCT_NOR)
-#define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_FLASH_NOT_MEM_MAPPED
 
 /*
@@ -184,7 +172,6 @@
 
 #if defined(CONFIG_VCT_ONENAND)
 #define CONFIG_USE_ONENAND_BOARD_INIT
-#define	CONFIG_ENV_IS_IN_ONENAND
 #define	CONFIG_SYS_ONENAND_BASE		0x00000000	/* this is not real address */
 #define CONFIG_SYS_FLASH_BASE		0x00000000
 #define CONFIG_ENV_ADDR			(128 << 10)	/* after compr. U-Boot image */
@@ -233,11 +220,8 @@ int vct_gpio_get(int pin);
  * UBI configuration
  */
 #if defined(CONFIG_VCT_ONENAND)
-#define CONFIG_SYS_USE_UBI
-#define	CONFIG_RBTREE
 #define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
 #define CONFIG_MTD_PARTITIONS
-#define CONFIG_CMD_MTDPARTS
 
 #define MTDIDS_DEFAULT		"onenand0=onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=onenand:128k(u-boot),"	\
@@ -252,10 +236,6 @@ int vct_gpio_get(int pin);
  * (NOR/OneNAND) usage and Linux kernel booting.
  */
 #if defined(CONFIG_VCT_SMALL_IMAGE)
-#undef CONFIG_CMD_REGINFO
-#undef CONFIG_CMD_STRINGS
-#undef CONFIG_CMD_TERMINAL
-
 #undef CONFIG_SMC911X
 #undef CONFIG_SYS_I2C_SOFT
 #undef CONFIG_SOURCE
