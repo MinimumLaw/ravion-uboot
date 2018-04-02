@@ -24,7 +24,6 @@
 
 #define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
 
-#define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 #define CONFIG_MISC_INIT_R	 1	/* call misc_init_r()		*/
 
 #define CONFIG_SYS_CLK_FREQ	33330000 /* external frequency to pll	*/
@@ -69,9 +68,6 @@
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_BSP
 #define CONFIG_CMD_EEPROM
-
-#define CONFIG_MAC_PARTITION
-#define CONFIG_DOS_PARTITION
 
 #define CONFIG_SUPPORT_VFAT
 

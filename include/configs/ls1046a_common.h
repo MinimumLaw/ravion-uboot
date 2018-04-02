@@ -10,7 +10,6 @@
 #define CONFIG_REMAKE_ELF
 #define CONFIG_FSL_LAYERSCAPE
 #define CONFIG_MP
-#define CONFIG_SYS_FSL_CLK
 #define CONFIG_GICV2
 
 #include <asm/arch/config.h>
@@ -21,7 +20,6 @@
 #define CONFIG_SUPPORT_RAW_INITRD
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
-#define CONFIG_BOARD_EARLY_INIT_F	1
 
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000
@@ -41,7 +39,7 @@
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
-#define CONFIG_SYS_NS16550_CLK		(get_bus_freq(0)/2)
+#define CONFIG_SYS_NS16550_CLK          (get_serial_clock())
 
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
@@ -118,11 +116,7 @@
 #ifdef CONFIG_MMC
 #define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
-#define CONFIG_GENERIC_MMC
-#define CONFIG_DOS_PARTITION
 #endif
-
-#define CONFIG_FSL_CAAM			/* Enable SEC/CAAM */
 
 #define CONFIG_SYS_DPAA_QBMAN		/* Support Q/Bman */
 
@@ -159,8 +153,6 @@
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LOAD_ADDR	(CONFIG_SYS_DDR_SDRAM_BASE + 0x10000000)
-#define CONFIG_ARCH_EARLY_INIT_R
-#define CONFIG_BOARD_LATE_INIT
 
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		128

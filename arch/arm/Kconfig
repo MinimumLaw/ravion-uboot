@@ -19,6 +19,72 @@ config HAS_VBAR
 config HAS_THUMB2
 	bool
 
+# If set, the workarounds for these ARM errata are applied early during U-Boot
+# startup. Note that in general these options force the workarounds to be
+# applied; no CPU-type/version detection exists, unlike the similar options in
+# the Linux kernel. Do not set these options unless they apply!  Also note that
+# the following can be machine specific errata. These do have ability to
+# provide rudimentary version and machine specific checks, but expect no
+# product checks:
+# CONFIG_ARM_ERRATA_430973
+# CONFIG_ARM_ERRATA_454179
+# CONFIG_ARM_ERRATA_621766
+# CONFIG_ARM_ERRATA_798870
+# CONFIG_ARM_ERRATA_801819
+config ARM_ERRATA_430973
+	bool
+
+config ARM_ERRATA_454179
+	bool
+
+config ARM_ERRATA_621766
+	bool
+
+config ARM_ERRATA_716044
+	bool
+
+config ARM_ERRATA_742230
+	bool
+
+config ARM_ERRATA_743622
+	bool
+
+config ARM_ERRATA_751472
+	bool
+
+config ARM_ERRATA_761320
+	bool
+
+config ARM_ERRATA_773022
+	bool
+
+config ARM_ERRATA_774769
+	bool
+
+config ARM_ERRATA_794072
+	bool
+
+config ARM_ERRATA_798870
+	bool
+
+config ARM_ERRATA_801819
+	bool
+
+config ARM_ERRATA_826974
+	bool
+
+config ARM_ERRATA_828024
+	bool
+
+config ARM_ERRATA_829520
+	bool
+
+config ARM_ERRATA_833069
+	bool
+
+config ARM_ERRATA_833471
+	bool
+
 config CPU_ARM720T
 	bool
 	select SYS_CACHE_SHIFT_5
@@ -128,7 +194,16 @@ config ENABLE_ARM_SOC_BOOT0_HOOK
 
 config USE_ARCH_MEMCPY
 	bool "Use an assembly optimized implementation of memcpy"
-	default y if CPU_V7
+	default y
+	depends on !ARM64
+	help
+	  Enable the generation of an optimized version of memcpy.
+	  Such implementation may be faster under some conditions
+	  but may increase the binary size.
+
+config SPL_USE_ARCH_MEMCPY
+	bool "Use an assembly optimized implementation of memcpy"
+	default y if USE_ARCH_MEMCPY
 	depends on !ARM64
 	help
 	  Enable the generation of an optimized version of memcpy.
@@ -137,7 +212,16 @@ config USE_ARCH_MEMCPY
 
 config USE_ARCH_MEMSET
 	bool "Use an assembly optimized implementation of memset"
-	default y if CPU_V7
+	default y
+	depends on !ARM64
+	help
+	  Enable the generation of an optimized version of memset.
+	  Such implementation may be faster under some conditions
+	  but may increase the binary size.
+
+config SPL_USE_ARCH_MEMSET
+	bool "Use an assembly optimized implementation of memset"
+	default y if USE_ARCH_MEMSET
 	depends on !ARM64
 	help
 	  Enable the generation of an optimized version of memset.
@@ -183,6 +267,8 @@ config ARCH_DAVINCI
 config KIRKWOOD
 	bool "Marvell Kirkwood"
 	select CPU_ARM926EJS
+	select BOARD_EARLY_INIT_F
+	select ARCH_MISC_INIT
 
 config ARCH_MVEBU
 	bool "Marvell MVEBU family (Armada XP/375/38x/3700/7K/8K)"
@@ -206,10 +292,13 @@ config TARGET_WORK_92105
 
 config TARGET_MX25PDK
 	bool "Support mx25pdk"
+	select BOARD_LATE_INIT
 	select CPU_ARM926EJS
+	select BOARD_EARLY_INIT_F
 
 config TARGET_ZMX25
 	bool "Support zmx25"
+	select BOARD_LATE_INIT
 	select CPU_ARM926EJS
 
 config TARGET_APF27
@@ -236,16 +325,19 @@ config TARGET_MX23EVK
 	bool "Support mx23evk"
 	select CPU_ARM926EJS
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX28EVK
 	bool "Support mx28evk"
 	select CPU_ARM926EJS
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX23_OLINUXINO
 	bool "Support mx23_olinuxino"
 	select CPU_ARM926EJS
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_BG0900
 	bool "Support bg0900"
@@ -269,18 +361,22 @@ config ORION5X
 config TARGET_SPEAR300
 	bool "Support spear300"
 	select CPU_ARM926EJS
+	select BOARD_EARLY_INIT_F
 
 config TARGET_SPEAR310
 	bool "Support spear310"
 	select CPU_ARM926EJS
+	select BOARD_EARLY_INIT_F
 
 config TARGET_SPEAR320
 	bool "Support spear320"
 	select CPU_ARM926EJS
+	select BOARD_EARLY_INIT_F
 
 config TARGET_SPEAR600
 	bool "Support spear600"
 	select CPU_ARM926EJS
+	select BOARD_EARLY_INIT_F
 
 config TARGET_STV0991
 	bool "Support stv0991"
@@ -293,21 +389,32 @@ config TARGET_STV0991
 
 config TARGET_X600
 	bool "Support x600"
+	select BOARD_LATE_INIT
 	select CPU_ARM926EJS
 	select SUPPORT_SPL
 
 config TARGET_IMX31_PHYCORE
-	bool "Support imx31_phycore"
+	bool "Support imx31_phycore_eet"
 	select CPU_ARM1136
+	select BOARD_EARLY_INIT_F
+
+config TARGET_IMX31_PHYCORE_EET
+	bool "Support imx31_phycore_eet"
+	select BOARD_LATE_INIT
+	select CPU_ARM1136
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX31ADS
 	bool "Support mx31ads"
 	select CPU_ARM1136
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX31PDK
 	bool "Support mx31pdk"
+	select BOARD_LATE_INIT
 	select CPU_ARM1136
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_WOODBURN
 	bool "Support woodburn"
@@ -324,6 +431,7 @@ config TARGET_FLEA3
 
 config TARGET_MX35PDK
 	bool "Support mx35pdk"
+	select BOARD_LATE_INIT
 	select CPU_ARM1136
 
 config ARCH_BCM283X
@@ -350,14 +458,17 @@ config TARGET_VEXPRESS_CA9X4
 config TARGET_BRXRE1
 	bool "Support BRXRE1"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 
 config TARGET_BRPPT1
 	bool "Support BRPPT1"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 
 config TARGET_DRACO
 	bool "Support draco"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -365,6 +476,7 @@ config TARGET_DRACO
 config TARGET_THUBAN
 	bool "Support thuban"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -372,6 +484,7 @@ config TARGET_THUBAN
 config TARGET_RASTABAN
 	bool "Support rastaban"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -379,6 +492,7 @@ config TARGET_RASTABAN
 config TARGET_ETAMIN
 	bool "Support etamin"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -386,6 +500,7 @@ config TARGET_ETAMIN
 config TARGET_PXM2
 	bool "Support pxm2"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -393,6 +508,7 @@ config TARGET_PXM2
 config TARGET_RUT
 	bool "Support rut"
 	select ARCH_OMAP2
+	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -467,6 +583,8 @@ config ARCH_MX7
 	select SYS_FSL_HAS_SEC if SECURE_BOOT
 	select SYS_FSL_SEC_COMPAT_4
 	select SYS_FSL_SEC_LE
+	select BOARD_EARLY_INIT_F
+	select ARCH_MISC_INIT
 
 config ARCH_MX6
 	bool "Freescale MX6"
@@ -478,45 +596,95 @@ config ARCH_MX6
 config ARCH_MX5
 	bool "Freescale MX5"
 	select CPU_V7
+	select BOARD_EARLY_INIT_F
 
 config TARGET_M53EVK
 	bool "Support m53evk"
 	select CPU_V7
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX51EVK
 	bool "Support mx51evk"
+	select BOARD_LATE_INIT
 	select CPU_V7
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX53ARD
 	bool "Support mx53ard"
 	select CPU_V7
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX53EVK
 	bool "Support mx53evk"
+	select BOARD_LATE_INIT
 	select CPU_V7
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX53LOCO
 	bool "Support mx53loco"
+	select BOARD_LATE_INIT
 	select CPU_V7
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX53SMD
 	bool "Support mx53smd"
 	select CPU_V7
+	select BOARD_EARLY_INIT_F
 
 config OMAP34XX
 	bool "OMAP34XX SoC"
 	select ARCH_OMAP2
+	select ARM_ERRATA_430973
+	select ARM_ERRATA_454179
+	select ARM_ERRATA_621766
 	select USE_TINY_PRINTF
+	imply SPL_EXT_SUPPORT
+	imply SPL_FAT_SUPPORT
+	imply SPL_GPIO_SUPPORT
+	imply SPL_I2C_SUPPORT
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBDISK_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_MMC_SUPPORT
+	imply SPL_NAND_SUPPORT
+	imply SPL_POWER_SUPPORT
+	imply SPL_SERIAL_SUPPORT
 
 config OMAP44XX
 	bool "OMAP44XX SoC"
 	select ARCH_OMAP2
 	select USE_TINY_PRINTF
+	imply SPL_DISPLAY_PRINT
+	imply SPL_EXT_SUPPORT
+	imply SPL_FAT_SUPPORT
+	imply SPL_GPIO_SUPPORT
+	imply SPL_I2C_SUPPORT
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBDISK_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_MMC_SUPPORT
+	imply SPL_NAND_SUPPORT
+	imply SPL_POWER_SUPPORT
+	imply SPL_SERIAL_SUPPORT
 
 config OMAP54XX
 	bool "OMAP54XX SoC"
 	select ARCH_OMAP2
+	select ARM_ERRATA_798870
+	imply SPL_DISPLAY_PRINT
+	imply SPL_ENV_SUPPORT
+	imply SPL_EXT_SUPPORT
+	imply SPL_FAT_SUPPORT
+	imply SPL_GPIO_SUPPORT
+	imply SPL_I2C_SUPPORT
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBDISK_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_MMC_SUPPORT
+	imply SPL_NAND_SUPPORT
+	imply SPL_POWER_SUPPORT
+	imply SPL_SERIAL_SUPPORT
 
 config AM43XX
 	bool "AM43XX SoC"
@@ -542,6 +710,7 @@ config ARCH_RMOBILE
 	bool "Renesas ARM SoCs"
 	select DM
 	select DM_SERIAL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_S32V234EVB
 	bool "Support s32v234evb"
@@ -568,6 +737,9 @@ config ARCH_SOCFPGA
 	select DM_SPI_FLASH
 	select DM_SPI
 	select ENABLE_ARM_SOC_BOOT0_HOOK
+	select ARCH_EARLY_INIT_R
+	select ARCH_MISC_INIT
+	select SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION
 
 config TARGET_CM_T43
 	bool "Support cm_t43"
@@ -612,6 +784,7 @@ config TARGET_VF610TWR
 
 config TARGET_COLIBRI_VF
 	bool "Support Colibri VF50/61"
+	select BOARD_LATE_INIT
 	select CPU_V7
 	select SYS_FSL_ERRATUM_ESDHC111
 
@@ -631,6 +804,7 @@ config TARGET_BK4R1
 
 config ARCH_ZYNQ
 	bool "Xilinx Zynq Platform"
+	select BOARD_LATE_INIT
 	select CPU_V7
 	select SUPPORT_SPL
 	select OF_CONTROL
@@ -651,6 +825,7 @@ config ARCH_ZYNQ
 config ARCH_ZYNQMP
 	bool "Support Xilinx ZynqMP Platform"
 	select ARM64
+	select BOARD_LATE_INIT
 	select DM
 	select OF_CONTROL
 	select DM_SERIAL
@@ -689,6 +864,7 @@ config TARGET_LS2080A_EMU
 	select ARCH_LS2080A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_MISC_INIT
 	help
 	  Support for Freescale LS2080A_EMU platform
 	  The LS2080A Development System (EMULATOR) is a pre silicon
@@ -700,6 +876,7 @@ config TARGET_LS2080A_SIMU
 	select ARCH_LS2080A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_MISC_INIT
 	help
 	  Support for Freescale LS2080A_SIMU platform
 	  The LS2080A Development System (QDS) is a pre silicon
@@ -711,7 +888,9 @@ config TARGET_LS2080AQDS
 	select ARCH_LS2080A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	select SUPPORT_SPL
+	select ARCH_MISC_INIT
 	help
 	  Support for Freescale LS2080AQDS platform
 	  The LS2080A Development System (QDS) is a high-performance
@@ -723,7 +902,9 @@ config TARGET_LS2080ARDB
 	select ARCH_LS2080A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	select SUPPORT_SPL
+	select ARCH_MISC_INIT
 	help
 	  Support for Freescale LS2080ARDB platform.
 	  The LS2080A Reference design board (RDB) is a high-performance
@@ -745,6 +926,7 @@ config TARGET_LS1012AQDS
 	bool "Support ls1012aqds"
 	select ARCH_LS1012A
 	select ARM64
+	select BOARD_LATE_INIT
 	help
 	  Support for Freescale LS1012AQDS platform.
 	  The LS1012A Development System (QDS) is a high-performance
@@ -755,6 +937,7 @@ config TARGET_LS1012ARDB
 	bool "Support ls1012ardb"
 	select ARCH_LS1012A
 	select ARM64
+	select BOARD_LATE_INIT
 	help
 	  Support for Freescale LS1012ARDB platform.
 	  The LS1012A Reference design board (RDB) is a high-performance
@@ -773,6 +956,7 @@ config TARGET_LS1012AFRDM
 
 config TARGET_LS1021AQDS
 	bool "Support ls1021aqds"
+	select BOARD_LATE_INIT
 	select CPU_V7
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
@@ -781,9 +965,11 @@ config TARGET_LS1021AQDS
 	select ARCH_SUPPORT_PSCI
 	select LS1_DEEP_SLEEP
 	select SYS_FSL_DDR
+	select BOARD_EARLY_INIT_F
 
 config TARGET_LS1021ATWR
 	bool "Support ls1021atwr"
+	select BOARD_LATE_INIT
 	select CPU_V7
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
@@ -791,9 +977,11 @@ config TARGET_LS1021ATWR
 	select ARCH_LS1021A
 	select ARCH_SUPPORT_PSCI
 	select LS1_DEEP_SLEEP
+	select BOARD_EARLY_INIT_F
 
 config TARGET_LS1021AIOT
 	bool "Support ls1021aiot"
+	select BOARD_LATE_INIT
 	select CPU_V7
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
@@ -811,7 +999,9 @@ config TARGET_LS1043AQDS
 	select ARCH_LS1043A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 	help
 	  Support for Freescale LS1043AQDS platform.
 
@@ -820,7 +1010,9 @@ config TARGET_LS1043ARDB
 	select ARCH_LS1043A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	select SUPPORT_SPL
+	select BOARD_EARLY_INIT_F
 	help
 	  Support for Freescale LS1043ARDB platform.
 
@@ -829,8 +1021,10 @@ config TARGET_LS1046AQDS
 	select ARCH_LS1046A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select DM_SPI_FLASH if DM_SPI
+	select BOARD_EARLY_INIT_F
 	help
 	  Support for Freescale LS1046AQDS platform.
 	  The LS1046A Development System (QDS) is a high-performance
@@ -842,8 +1036,11 @@ config TARGET_LS1046ARDB
 	select ARCH_LS1046A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select DM_SPI_FLASH if DM_SPI
+	select POWER_MC34VR500
+	select BOARD_EARLY_INIT_F
 	help
 	  Support for Freescale LS1046ARDB platform.
 	  The LS1046A Reference Design Board (RDB) is a high-performance
@@ -864,6 +1061,7 @@ config TARGET_COLIBRI_PXA270
 
 config ARCH_UNIPHIER
 	bool "Socionext UniPhier SoCs"
+	select BOARD_LATE_INIT
 	select CLK_UNIPHIER
 	select DM
 	select DM_GPIO
@@ -875,12 +1073,11 @@ config ARCH_UNIPHIER
 	select OF_CONTROL
 	select OF_LIBFDT
 	select PINCTRL
-	select SPL
-	select SPL_DM
-	select SPL_LIBCOMMON_SUPPORT
-	select SPL_LIBGENERIC_SUPPORT
-	select SPL_OF_CONTROL
-	select SPL_PINCTRL
+	select SPL_DM if SPL
+	select SPL_LIBCOMMON_SUPPORT if SPL
+	select SPL_LIBGENERIC_SUPPORT if SPL
+	select SPL_OF_CONTROL if SPL
+	select SPL_PINCTRL if SPL
 	select SUPPORT_SPL
 	help
 	  Support for UniPhier SoC family developed by Socionext Inc.
@@ -917,7 +1114,14 @@ config TARGET_THUNDERX_88XX
 	select OF_CONTROL
 	select SYS_CACHE_SHIFT_7
 
+config ARCH_ASPEED
+	bool "Support Aspeed SoCs"
+	select OF_CONTROL
+	select DM
+
 endchoice
+
+source "arch/arm/mach-aspeed/Kconfig"
 
 source "arch/arm/mach-at91/Kconfig"
 
@@ -934,8 +1138,6 @@ source "arch/arm/mach-integrator/Kconfig"
 source "arch/arm/mach-keystone/Kconfig"
 
 source "arch/arm/mach-kirkwood/Kconfig"
-
-source "arch/arm/mach-litesom/Kconfig"
 
 source "arch/arm/mach-mvebu/Kconfig"
 
@@ -1028,6 +1230,7 @@ source "board/freescale/mx53loco/Kconfig"
 source "board/freescale/mx53smd/Kconfig"
 source "board/freescale/s32v234evb/Kconfig"
 source "board/freescale/vf610twr/Kconfig"
+source "board/grinn/chiliboard/Kconfig"
 source "board/gumstix/pepper/Kconfig"
 source "board/h2200/Kconfig"
 source "board/hisilicon/hikey/Kconfig"

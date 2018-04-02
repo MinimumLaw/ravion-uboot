@@ -38,12 +38,10 @@
  * This board might be of different versions so handle it
  */
 #define CONFIG_BOARD_TYPES
-#define CONFIG_BOARD_EARLY_INIT_F
 
 /*
  * NAND Flash configuration
  */
-#define CONFIG_SYS_NO_FLASH
 #define CONFIG_SYS_NAND_BASE		(ARC_FPGA_PERIPHERAL_BASE + 0x16000)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 
@@ -81,13 +79,6 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW	1
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	64
-
-/*
- * SD/MMC configuration
- */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_DWMMC
-#define CONFIG_DOS_PARTITION
 
 /*
  * Ethernet PHY configuration

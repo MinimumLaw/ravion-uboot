@@ -61,7 +61,6 @@
 #else
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 #endif
-#define CONFIG_BOARD_EARLY_INIT_F
 
 #define CONFIG_DM_SERIAL
 #define CONFIG_FSL_LINFLEXUART
@@ -83,9 +82,7 @@
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
 #define CONFIG_CMD_MMC
-#define CONFIG_GENERIC_MMC
 /* #define CONFIG_CMD_EXT2 EXT2 Support */
-#define CONFIG_DOS_PARTITION
 
 #if 0
 
@@ -230,9 +227,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-/* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
-
+/* environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC
 

@@ -35,7 +35,7 @@
 /*
  * High Level Configuration Options
  */
-#ifdef CONFIG_SPL_BUILD
+#if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_ARM64)
 #define CONFIG_SYS_THUMB_BUILD	/* Thumbs mode to save space in SPL */
 #endif
 
@@ -140,8 +140,6 @@
 
 /* mmc config */
 #ifdef CONFIG_MMC
-#define CONFIG_GENERIC_MMC
-#define CONFIG_MMC_SUNXI
 #define CONFIG_MMC_SUNXI_SLOT		0
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0	/* first detected MMC controller */
@@ -172,8 +170,6 @@
 
 /* FLASH and environment organization */
 
-#define CONFIG_SYS_NO_FLASH
-
 #define CONFIG_SYS_MONITOR_LEN		(768 << 10)	/* 768 KiB */
 
 #define CONFIG_ENV_OFFSET		(544 << 10) /* (8 + 24 + 512) KiB */
@@ -183,7 +179,9 @@
 
 #define CONFIG_SPL_FRAMEWORK
 
+#ifndef CONFIG_ARM64		/* AArch64 FEL support is not ready yet */
 #define CONFIG_SPL_BOARD_LOAD_IMAGE
+#endif
 
 #if defined(CONFIG_MACH_SUN9I)
 #define CONFIG_SPL_TEXT_BASE		0x10040		/* sram start+header */
@@ -337,7 +335,6 @@ extern int soft_i2c_gpio_scl;
 
 #ifdef CONFIG_MMC
 #define CONFIG_FASTBOOT_FLASH_MMC_DEV	0
-#define CONFIG_EFI_PARTITION
 #endif
 #endif
 

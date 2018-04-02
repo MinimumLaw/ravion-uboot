@@ -30,8 +30,6 @@
 #define CONFIG_KONA_GPIO
 
 /* MMC/SD Driver */
-#define CONFIG_GENERIC_MMC
-
 #define CONFIG_SYS_SDIO_BASE0 SDIO1_BASE_ADDR
 #define CONFIG_SYS_SDIO_BASE1 SDIO2_BASE_ADDR
 #define CONFIG_SYS_SDIO_BASE2 SDIO3_BASE_ADDR
@@ -90,8 +88,6 @@
 #define CONFIG_ENV_OFFSET		(0x00011a00 * 512)
 #define CONFIG_ENV_SIZE			(8 * 512)
 
-#define CONFIG_SYS_NO_FLASH	/* Not using NAND/NOR unmanaged flash */
-
 /* console configuration */
 #define CONFIG_SYS_CBSIZE		1024	/* Console buffer size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
@@ -104,8 +100,6 @@
  * This is necessary for the fatls command to work on an SD card
  * for example.
  */
-#define CONFIG_DOS_PARTITION
-#define CONFIG_EFI_PARTITION
 
 /* version string, parser, etc */
 #define CONFIG_AUTO_COMPLETE

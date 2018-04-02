@@ -36,7 +36,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rk3288-rock2-square.dtb \
 	rk3288-evb.dtb \
 	rk3288-fennec.dtb \
-	rk3288-miniarm.dtb \
+	rk3288-tinker.dtb \
 	rk3288-popmetal.dtb \
 	rk3399-evb.dtb
 dtb-$(CONFIG_ARCH_MESON) += \
@@ -81,19 +81,30 @@ dtb-$(CONFIG_ARCH_MVEBU) +=			\
 	armada-xp-synology-ds414.dtb		\
 	armada-xp-theadorable.dtb
 
-dtb-$(CONFIG_ARCH_UNIPHIER) += \
-	uniphier-ld11-ref.dtb \
-	uniphier-ld20-ref.dtb \
-	uniphier-ld4-ref.dtb \
-	uniphier-ld6b-ref.dtb \
+dtb-$(CONFIG_ARCH_UNIPHIER_LD11) += \
+	uniphier-ld11-ref.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_LD20) += \
+	uniphier-ld20-ref.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_LD4) += \
+	uniphier-ld4-ref.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_LD6B) += \
+	uniphier-ld6b-ref.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_PRO4) += \
 	uniphier-pro4-ace.dtb \
 	uniphier-pro4-ref.dtb \
-	uniphier-pro4-sanji.dtb \
-	uniphier-pro5-4kbox.dtb \
+	uniphier-pro4-sanji.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_PRO5) += \
+	uniphier-pro5-4kbox.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_PXS2) += \
 	uniphier-pxs2-gentil.dtb \
-	uniphier-pxs2-vodka.dtb \
-	uniphier-sld3-ref.dtb \
+	uniphier-pxs2-vodka.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_PXS3) += \
+	uniphier-pxs3-ref.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_SLD3) += \
+	uniphier-sld3-ref.dtb
+dtb-$(CONFIG_ARCH_UNIPHIER_SLD8) += \
 	uniphier-sld8-ref.dtb
+
 dtb-$(CONFIG_ARCH_ZYNQ) += zynq-zc702.dtb \
 	zynq-zc706.dtb \
 	zynq-zed.dtb \
@@ -164,6 +175,8 @@ dtb-$(CONFIG_FSL_LSCH2) += fsl-ls1043a-qds-duart.dtb \
 	fsl-ls1012a-frdm.dtb
 
 dtb-$(CONFIG_ARCH_SNAPDRAGON) += dragonboard410c.dtb
+
+dtb-$(CONFIG_STM32F7) += stm32f746-disco.dtb
 
 dtb-$(CONFIG_MACH_SUN4I) += \
 	sun4i-a10-a1000.dtb \
@@ -271,6 +284,7 @@ dtb-$(CONFIG_MACH_SUN8I_A83T) += \
 	sun8i-a83t-cubietruck-plus.dtb \
 	sun8i-a83t-sinovoip-bpi-m3.dtb
 dtb-$(CONFIG_MACH_SUN8I_H3) += \
+	sun8i-h2-plus-orangepi-zero.dtb \
 	sun8i-h3-bananapi-m2-plus.dtb \
 	sun8i-h3-orangepi-2.dtb \
 	sun8i-h3-orangepi-lite.dtb \
@@ -301,14 +315,15 @@ dtb-$(CONFIG_MX6) += imx6ull-14x14-evk.dtb \
 	imx6dl-icore-rqs.dtb \
 	imx6q-icore.dtb \
 	imx6q-icore-rqs.dtb \
+	imx6sx-sabreauto.dtb \
 	imx6ul-geam-kit.dtb
 
 dtb-$(CONFIG_MX7) += imx7-colibri.dtb
 
-dtb-$(CONFIG_SOC_KEYSTONE) += k2hk-evm.dtb \
-	k2l-evm.dtb \
-	k2e-evm.dtb \
-	k2g-evm.dtb
+dtb-$(CONFIG_SOC_KEYSTONE) += keystone-k2hk-evm.dtb \
+	keystone-k2l-evm.dtb \
+	keystone-k2e-evm.dtb \
+	keystone-k2g-evm.dtb
 
 dtb-$(CONFIG_TARGET_SAMA5D2_XPLAINED) += \
 	at91-sama5d2_xplained.dtb
@@ -321,6 +336,8 @@ dtb-$(CONFIG_ARCH_BCM283X) += \
 	bcm2835-rpi-b.dtb \
 	bcm2836-rpi-2-b.dtb \
 	bcm2837-rpi-3-b.dtb
+
+dtb-$(CONFIG_ARCH_ASPEED) += ast2500-evb.dtb
 
 targets += $(dtb-y)
 

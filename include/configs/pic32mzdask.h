@@ -56,11 +56,6 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_CMD_CLK
 
-/*-------------------------------------------------
- * FLASH configuration
- */
-#define CONFIG_SYS_NO_FLASH
-
 /*------------------------------------------------------------
  * Console Configuration
  */
@@ -88,11 +83,6 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_HOSTNAME
 
-/*-----------------------------------------------------------------------
- * SDHC Configuration
- */
-#define CONFIG_GENERIC_MMC
-
 /*--------------------------------------------------
  * USB Configuration
  */
@@ -102,12 +92,9 @@
  * File System Configuration
  */
 /* FAT FS */
-#define CONFIG_DOS_PARTITION
-#define CONFIG_PARTITION_UUIDS
 #define CONFIG_SUPPORT_VFAT
 #define CONFIG_FS_FAT
 #define CONFIG_FAT_WRITE
-#define CONFIG_CMD_PART
 
 /* EXT4 FS */
 #define CONFIG_FS_EXT4

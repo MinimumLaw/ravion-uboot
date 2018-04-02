@@ -30,7 +30,6 @@
 #define CONFIG_PCI_INDIRECT_BRIDGE 1	/* indirect PCI bridge support */
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 #define CONFIG_FSL_PCIE_RESET	1	/* need PCIe reset errata */
-#define CONFIG_FSL_ELBC		1
 
 /*
  * Multicore config
@@ -337,7 +336,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_EHCI_FSL
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
-#define CONFIG_DOS_PARTITION
 
 /*
  * Command configuration.

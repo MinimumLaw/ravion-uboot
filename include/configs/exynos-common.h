@@ -18,7 +18,6 @@
 
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_SKIP_LOWLEVEL_INIT
-#define CONFIG_BOARD_EARLY_INIT_F
 
 /* Keep L2 Cache Disabled */
 
@@ -38,9 +37,6 @@
 #define CONFIG_BAUDRATE			115200
 
 /* SD/MMC configuration */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_DWMMC
-#define CONFIG_EXYNOS_DWMMC
 #define CONFIG_BOUNCE_BUFFER
 
 /* PWM */
@@ -49,9 +45,6 @@
 /* Command definition*/
 #define CONFIG_FAT_WRITE
 
-#define CONFIG_CMD_PART
-#define CONFIG_PARTITION_UUIDS
-
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE		1024	/* Print Buffer Size */
@@ -59,9 +52,6 @@
 
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-
-/* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
 
 #include <config_distro_defaults.h>
 

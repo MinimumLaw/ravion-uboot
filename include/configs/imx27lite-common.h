@@ -135,13 +135,6 @@
 #define CONFIG_MXC_NAND_HWECC
 
 /*
- * SD/MMC
- */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_MXC_MMC
-#define CONFIG_DOS_PARTITION
-
-/*
  * GPIO
  */
 #define CONFIG_MXC_GPIO

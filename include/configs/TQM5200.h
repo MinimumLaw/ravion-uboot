@@ -51,7 +51,6 @@
 
 #ifdef CONFIG_FO300
 #define CONFIG_SYS_DEVICE_NULLDEV		1	/* enable null device */
-#define CONFIG_BOARD_EARLY_INIT_F	1	/* used to detect S1 switch position */
 #define CONFIG_USB_BIN_FIXUP		1	/* for a buggy USB device */
 #if 0
 #define FO300_SILENT_CONSOLE_WHEN_S1_CLOSED	1	/* silent console on PSC1 when S1 */
@@ -108,9 +107,6 @@
 #endif /* #ifndef CONFIG_TQM5200S */
 
 /* Partitions */
-#define CONFIG_MAC_PARTITION
-#define CONFIG_DOS_PARTITION
-#define CONFIG_ISO_PARTITION
 
 /* USB */
 #if defined(CONFIG_CHARON) || defined(CONFIG_FO300) || \

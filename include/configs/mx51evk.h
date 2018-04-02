@@ -31,8 +31,6 @@
  */
 #define CONFIG_SYS_MALLOC_LEN		(10 * 1024 * 1024)
 
-#define CONFIG_BOARD_LATE_INIT
-
 /*
  * Hardware drivers
  */
@@ -66,9 +64,6 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	MMC_SDHC1_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	2
-
-#define CONFIG_GENERIC_MMC
-#define CONFIG_DOS_PARTITION
 
 /*
  * Eth Configs
@@ -214,8 +209,6 @@
 #define CONFIG_SYS_INIT_RAM_ADDR	(IRAM_BASE_ADDR)
 #define CONFIG_SYS_INIT_RAM_SIZE	(IRAM_SIZE)
 
-#define CONFIG_BOARD_EARLY_INIT_F
-
 #define CONFIG_SYS_INIT_SP_OFFSET \
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_ADDR \
@@ -226,10 +219,8 @@
 #define CONFIG_SYS_MAIN_PWR_ON
 
 /*-----------------------------------------------------------------------
- * FLASH and environment organization
+ * environment organization
  */
-#define CONFIG_SYS_NO_FLASH
-
 #define CONFIG_ENV_OFFSET      (6 * 64 * 1024)
 #define CONFIG_ENV_SIZE        (8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC

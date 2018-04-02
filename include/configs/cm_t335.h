@@ -16,7 +16,6 @@
 
 #include <configs/ti_am335x_common.h>
 
-#undef CONFIG_BOARD_LATE_INIT
 #undef CONFIG_SPI
 #undef CONFIG_OMAP3_SPI
 #undef CONFIG_BOOTCOUNT_LIMIT
@@ -25,7 +24,6 @@
 #undef CONFIG_MAX_RAM_BANK_SIZE
 #define CONFIG_MAX_RAM_BANK_SIZE	(512 << 20)	/* 512MB */
 
-#define MACH_TYPE_CM_T335		4586	/* Until the next sync */
 #define CONFIG_MACH_TYPE		MACH_TYPE_CM_T335
 
 /* Clock Defines */
@@ -153,14 +151,7 @@
 #define GPIO_PIN(_bank, _pin)		((_bank << 5) + _pin)
 
 /* Status LED */
-#define CONFIG_STATUS_LED
-#define CONFIG_GPIO_LED
-#define CONFIG_BOARD_SPECIFIC_LED
-#define STATUS_LED_BIT			GPIO_PIN(2, 0)
 /* Status LED polarity is inversed, so init it in the "off" state */
-#define STATUS_LED_STATE		STATUS_LED_OFF
-#define STATUS_LED_PERIOD		(CONFIG_SYS_HZ / 2)
-#define STATUS_LED_BOOT			0
 
 /* EEPROM */
 #define CONFIG_CMD_EEPROM

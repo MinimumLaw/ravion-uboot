@@ -19,10 +19,6 @@
 /*#define CONFIG_DBG_MONITOR*/
 #define PHYS_SDRAM_SIZE			SZ_512M
 
-#define CONFIG_ARCH_MISC_INIT
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_BOARD_LATE_INIT
-
 #define CONFIG_DISPLAY_BOARDINFO_LATE	/* Calls show_board_info() */
 
 #define CONFIG_ENV_VARS_UBOOT_CONFIG
@@ -155,8 +151,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-/* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
+/* environment organization */
 #define CONFIG_ENV_IS_IN_NAND
 
 #if defined(CONFIG_ENV_IS_IN_MMC)

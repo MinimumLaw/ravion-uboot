@@ -18,7 +18,6 @@
 #include <linux/sizes.h>
 
 #define CONFIG_ARCH_CPU_INIT
-#define CONFIG_BOARD_EARLY_INIT_F
 
 /* Size of malloc() pool before and after relocation */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (80 << 20))
@@ -33,9 +32,6 @@
 
 /* select serial console configuration */
 #define CONFIG_BAUDRATE			115200
-
-/* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
 
 /* Timer input clock frequency */
 #define COUNTER_FREQUENCY		24000000

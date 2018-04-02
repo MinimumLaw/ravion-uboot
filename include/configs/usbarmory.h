@@ -13,9 +13,7 @@
 
 #define CONFIG_MX53
 #define CONFIG_SYS_FSL_CLK
-#define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_MXC_GPIO
-#define CONFIG_SYS_NO_FLASH
 
 #include <asm/arch/imx-regs.h>
 
@@ -43,7 +41,6 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
-#define CONFIG_GENERIC_MMC
 
 /* USB */
 #define CONFIG_USB_EHCI

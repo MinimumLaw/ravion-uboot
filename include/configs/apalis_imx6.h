@@ -36,8 +36,6 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(32 * 1024 * 1024)
 
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_MISC_INIT_R
 
 #define CONFIG_MXC_UART
@@ -69,10 +67,8 @@
 #define CONFIG_SYS_FSL_USDHC_NUM	3
 
 #define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
-#define CONFIG_GENERIC_MMC
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_FAT_WRITE
-#define CONFIG_DOS_PARTITION
 
 #ifdef CONFIG_MX6Q
 #define CONFIG_CMD_SATA
@@ -310,8 +306,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-/* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
+/* environment organization */
 
 #define CONFIG_ENV_SIZE			(8 * 1024)
 

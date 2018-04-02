@@ -29,8 +29,6 @@
 /* Enable iomux-lpsr support */
 #define CONFIG_IOMUX_LPSR
 
-#define CONFIG_ARCH_MISC_INIT
-
 #define CONFIG_LOADADDR                 0x80800000
 #define CONFIG_SYS_TEXT_BASE            0x87800000
 
@@ -38,9 +36,6 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX               1
 #define CONFIG_BAUDRATE                 115200
-
-/* Filesystems and image support */
-#define CONFIG_DOS_PARTITION
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
@@ -60,7 +55,6 @@
 #define CONFIG_MXC_UART
 
 /* MMC */
-#define CONFIG_GENERIC_MMC
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
@@ -74,7 +68,6 @@
 /* Secure boot (HAB) support */
 #ifdef CONFIG_SECURE_BOOT
 #define CONFIG_CSF_SIZE			0x2000
-#define CONFIG_FSL_CAAM
 #define CONFIG_CMD_DEKBLOB
 #endif
 

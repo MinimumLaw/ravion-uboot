@@ -171,7 +171,7 @@ static void prepare_backup_gpt_header(gpt_header *gpt_h)
 	gpt_h->header_crc32 = cpu_to_le32(calc_crc32);
 }
 
-#ifdef CONFIG_EFI_PARTITION
+#if CONFIG_IS_ENABLED(EFI_PARTITION)
 /*
  * Public Functions (include/part.h)
  */
@@ -279,7 +279,7 @@ int part_get_info_efi(struct blk_desc *dev_desc, int part,
 			print_efiname(&gpt_pte[part - 1]));
 	strcpy((char *)info->type, "U-Boot");
 	info->bootable = is_bootable(&gpt_pte[part - 1]);
-#ifdef CONFIG_PARTITION_UUIDS
+#if CONFIG_IS_ENABLED(PARTITION_UUIDS)
 	uuid_bin_to_str(gpt_pte[part - 1].unique_partition_guid.b, info->uuid,
 			UUID_STR_FORMAT_GUID);
 #endif
@@ -324,6 +324,13 @@ static int set_protective_mbr(struct blk_desc *dev_desc)
 		printf("%s: calloc failed!\n", __func__);
 		return -1;
 	}
+
+	/* Read MBR to backup boot code if it exists */
+	if (blk_dread(dev_desc, 0, 1, p_mbr) != 1) {
+		error("** Can't read from device %d **\n", dev_desc->devnum);
+		return -1;
+	}
+
 	/* Append signature */
 	p_mbr->signature = MSDOS_MBR_SIGNATURE;
 	p_mbr->partition_record[0].sys_ind = EFI_PMBR_OSTYPE_EFI_GPT;
@@ -397,7 +404,7 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 			le64_to_cpu(gpt_h->last_usable_lba);
 	int i, k;
 	size_t efiname_len, dosname_len;
-#ifdef CONFIG_PARTITION_UUIDS
+#if CONFIG_IS_ENABLED(PARTITION_UUIDS)
 	char *str_uuid;
 	unsigned char *bin_uuid;
 #endif
@@ -452,7 +459,7 @@ int gpt_fill_pte(gpt_header *gpt_h, gpt_entry *gpt_e,
 			&PARTITION_BASIC_DATA_GUID, 16);
 #endif
 
-#ifdef CONFIG_PARTITION_UUIDS
+#if CONFIG_IS_ENABLED(PARTITION_UUIDS)
 		str_uuid = partitions[i].uuid;
 		bin_uuid = gpt_e[i].unique_partition_guid.b;
 

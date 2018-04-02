@@ -102,20 +102,7 @@
 #define CONFIG_PL01x_PORTS	{(void *)CONFIG_SYS_SERIAL0}
 
 /* Status LED */
-#define CONFIG_STATUS_LED		1 /* Status LED enabled	*/
-#define CONFIG_BOARD_SPECIFIC_LED	1
-#define STATUS_LED_GREEN		0
-#define STATUS_LED_RED			1
-/* Green */
-#define STATUS_LED_BIT			STATUS_LED_GREEN
-#define STATUS_LED_STATE		STATUS_LED_ON
-#define STATUS_LED_PERIOD		(CONFIG_SYS_HZ / 2)
-/* Red */
-#define STATUS_LED_BIT1			STATUS_LED_RED
-#define STATUS_LED_STATE1		STATUS_LED_OFF
-#define STATUS_LED_PERIOD1		(CONFIG_SYS_HZ / 2)
 /* Optional value */
-#define STATUS_LED_BOOT			STATUS_LED_BIT
 
 /* Network hardware configuration */
 #define CONFIG_DRIVER_EP93XX_MAC
@@ -229,24 +216,12 @@
 #define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 
-/* Define to enable MMC on SPI support */
-/* #define CONFIG_EP93XX_SPI_MMC */
-
-#ifdef CONFIG_EP93XX_SPI_MMC
-#define CONFIG_EP93XX_SPI
-#define CONFIG_GENERIC_MMC
-#define CONFIG_MMC_SPI
-#define CONFIG_MMC_SPI_NPOWER_EGPIO	9
-#endif
-
 #define CONFIG_USB_OHCI_NEW
 #define CONFIG_USB_OHCI_EP93XX
 #define CONFIG_SYS_USB_OHCI_CPU_INIT
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	3
 #define CONFIG_SYS_USB_OHCI_SLOT_NAME		"ep93xx-ohci"
 #define CONFIG_SYS_USB_OHCI_REGS_BASE		0x80020000
-
-#define CONFIG_BOARD_EARLY_INIT_F
 
 /* Define to disable flash configuration*/
 /* #define CONFIG_EP93XX_NO_FLASH_CFG */

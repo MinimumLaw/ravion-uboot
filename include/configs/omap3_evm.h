@@ -46,17 +46,11 @@
  * ----------------------------------------------------------------------------
  */
 
-/* MMC */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_OMAP_HSMMC
-
 /* SPL */
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"
 
 /* Partition tables */
-#define CONFIG_EFI_PARTITION
-#define CONFIG_DOS_PARTITION
 
 /* USB
  *
@@ -91,10 +85,6 @@
  */
 #define CONFIG_OMAP			/* This is TI OMAP core */
 #define CONFIG_OMAP_GPIO
-/* Common ARM Erratas */
-#define CONFIG_ARM_ERRATA_454179
-#define CONFIG_ARM_ERRATA_430973
-#define CONFIG_ARM_ERRATA_621766
 
 #define CONFIG_SDRC			/* The chip has SDRC controller */
 
@@ -223,8 +213,6 @@
 
 #ifdef CONFIG_USB_MUSB_HCD
 
-#define CONGIG_CMD_STORAGE
-
 #ifdef CONFIG_USB_KEYBOARD
 #define CONFIG_SYS_USB_EVENT_POLL
 #define CONFIG_PREBOOT			"usb start"
@@ -322,7 +310,6 @@
  * Board specific
  * -----------------------------------------------------------------------------
  */
-#define CONFIG_SYS_NO_FLASH
 
 /* Uncomment to define the board revision statically */
 /* #define CONFIG_STATIC_BOARD_REV	OMAP3EVM_BOARD_GEN_2 */

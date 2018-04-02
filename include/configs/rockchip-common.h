@@ -14,12 +14,11 @@
 /* First try to boot from SD (index 0), then eMMC (index 1 */
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
-	func(MMC, mmc, 1)
+	func(MMC, mmc, 1) \
+	func(PXE, pxe, na) \
+	func(DHCP, dchp, na)
 
- /* Enable gpt partition table */
-#define CONFIG_CMD_GPT
 #define CONFIG_RANDOM_UUID
-#define CONFIG_PARTITION_UUIDS
 #define PARTS_DEFAULT \
 	"uuid_disk=${uuid_gpt_disk};" \
 	"name=loader1,start=32K,size=4000K,uuid=${uuid_gpt_loader1};" \
@@ -30,6 +29,20 @@
 	"name=boot,size=112M,bootable,uuid=${uuid_gpt_boot};" \
 	"name=rootfs,size=-,uuid=${uuid_gpt_rootfs};\0" \
 
+#endif
+
+#ifdef CONFIG_ROCKCHIP_SPL_BACK_TO_BROM
+/* SPL @ 32k for 34k
+ * u-boot directly after @ 68k for 400k or so
+ * ENV @ 992k
+ */
+#define CONFIG_ENV_OFFSET ((1024-32) * 1024)
+#else
+/* SPL @ 32k for ~36k
+ * ENV @ 96k
+ * u-boot @ 128K
+ */
+#define CONFIG_ENV_OFFSET (96 * 1024)
 #endif
 
 #endif /* _ROCKCHIP_COMMON_H_ */

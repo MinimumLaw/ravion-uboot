@@ -79,19 +79,6 @@
 #define CONFIG_I2C_MULTI_BUS
 
 /*
- * Flash
- */
-
-#define CONFIG_SYS_NO_FLASH
-
-/*
- * MMC
- */
-
-#define CONFIG_GENERIC_MMC
-#define CONFIG_OMAP_HSMMC
-
-/*
  * Power
  */
 
@@ -102,13 +89,6 @@
  */
 
 #define CONFIG_TWL6030_INPUT
-
-/*
- * Partitions
- */
-
-#define CONFIG_PARTITION_UUIDS
-#define CONFIG_CMD_PART
 
 /*
  * SPL
@@ -126,8 +106,6 @@
 
 #define CONFIG_SPL_LDSCRIPT		"arch/arm/mach-omap2/u-boot-spl.lds"
 #define CONFIG_SPL_BOARD_INIT
-
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION	2
 
 /*
  * Console

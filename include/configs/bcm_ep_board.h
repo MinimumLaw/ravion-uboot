@@ -51,21 +51,12 @@
 #define CONFIG_ENV_SIZE			0x2000
 #define CONFIG_ENV_IS_NOWHERE
 
-#define CONFIG_SYS_NO_FLASH	/* Not using NAND/NOR unmanaged flash */
-
 /* console configuration */
 #define CONFIG_SYS_CBSIZE		1024	/* Console buffer size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 			sizeof(CONFIG_SYS_PROMPT) + 16)	/* Printbuffer size */
 #define CONFIG_SYS_MAXARGS		64
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-
-/*
- * One partition type must be defined for part.c
- * This is necessary for the fatls command to work on an SD card
- * for example.
- */
-#define CONFIG_DOS_PARTITION
 
 /* version string, parser, etc */
 #define CONFIG_AUTO_COMPLETE

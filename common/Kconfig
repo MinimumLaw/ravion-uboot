@@ -357,12 +357,6 @@ config DEFAULT_FDT_FILE
 	help
 	  This option is used to set the default fdt file to boot OS.
 
-config SYS_NO_FLASH
-	bool "Disable support for parallel NOR flash"
-	default n
-	help
-	  This option is used to disable support for parallel NOR flash.
-
 config VERSION_VARIABLE
 	bool "add U-Boot environment variable vers"
 	default n
@@ -373,9 +367,19 @@ config VERSION_VARIABLE
 	  Any change to this variable will be reverted at the
 	  next reset.
 
+config BOARD_LATE_INIT
+	bool
+	help
+	  Sometimes board require some initialization code that might
+	  require once the actual init done, example saving board specific env,
+	  boot-modes etc. which eventually done at late.
+
+	  So this config enable the late init code with the help of board_late_init
+	  function which should defined on respective boards.
+
 config DISPLAY_CPUINFO
 	bool "Display information about the CPU during start up"
-	default y if ARM || BLACKFIN || NIOS2 || X86 || XTENSA
+	default y if ARM || BLACKFIN || NIOS2 || X86 || XTENSA || MPC5xxx
 	help
 	  Display information about the CPU that U-Boot is running on
 	  when U-Boot starts up. The function print_cpuinfo() is called
@@ -388,5 +392,36 @@ config DISPLAY_BOARDINFO
 	  Display information about the board that U-Boot is running on
 	  when U-Boot starts up. The board function checkboard() is called
 	  to do this.
+
+menu "Start-up hooks"
+
+config ARCH_EARLY_INIT_R
+	bool "Call arch-specific init soon after relocation"
+	default y if X86
+	help
+	  With this option U-Boot will call arch_early_init_r() soon after
+	  relocation. Driver model is running by this point, and the cache
+	  is on. Note that board_early_init_r() is called first, if
+	  enabled. This can be used to set up architecture-specific devices.
+
+config ARCH_MISC_INIT
+	bool "Call arch-specific init after relocation, when console is ready"
+	help
+	  With this option U-Boot will call arch_misc_init() after
+	  relocation to allow miscellaneous arch-dependent initialisation
+	  to be performed. This function should be defined by the board
+	  and will be called after the console is set up, after relocaiton.
+
+config BOARD_EARLY_INIT_F
+	bool "Call board-specific init before relocation"
+	default y if X86
+	help
+	  Some boards need to perform initialisation as soon as possible
+	  after boot. With this option, U-Boot calls board_early_init_f()
+	  after driver model is ready in the pre-relocation init sequence.
+	  Note that the normal serial console is not yet set up, but the
+	  debug UART will be available if enabled.
+
+endmenu
 
 source "common/spl/Kconfig"

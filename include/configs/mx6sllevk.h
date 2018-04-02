@@ -20,9 +20,6 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
 
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_BOARD_LATE_INIT
-
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
@@ -148,5 +145,13 @@
 #define CONFIG_IMX_THERMAL
 
 #define CONFIG_IOMUX_LPSR
+
+/* USB Configs */
+#ifdef CONFIG_CMD_USB
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_USB_ETHER_RTL8152
+#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
+#endif
 
 #endif				/* __CONFIG_H */

@@ -25,7 +25,6 @@
 
 #define CONFIG_4xx_DCACHE		/* enable cache in SDRAM	*/
 
-#define CONFIG_BOARD_EARLY_INIT_F	/* Call board_early_init_f	*/
 #define CONFIG_BOARD_EARLY_INIT_R	/* Call board_early_init_r	*/
 #define CONFIG_BOARD_POSTCLK_INIT	/* Call board_postclk_init	*/
 #define CONFIG_MISC_INIT_R		/* Call misc_init_r		*/
@@ -372,9 +371,6 @@
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET /* re-init HCD after CMD_RESET */
 
 /* Partitions */
-#define CONFIG_MAC_PARTITION
-#define CONFIG_DOS_PARTITION
-#define CONFIG_ISO_PARTITION
 
 /*
  * BOOTP options

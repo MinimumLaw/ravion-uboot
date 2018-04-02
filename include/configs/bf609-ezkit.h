@@ -126,13 +126,11 @@
 /*
  * SDH Settings
  */
-#define CONFIG_GENERIC_MMC
 #define CONFIG_BFIN_SDH
 
 /*
  * Misc Settings
  */
-#define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_UART_CONSOLE	0
 
 #define CONFIG_CMD_SOFTSWITCH

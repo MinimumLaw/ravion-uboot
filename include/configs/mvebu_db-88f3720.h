@@ -11,7 +11,6 @@
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_DISPLAY_BOARDINFO_LATE
-#define CONFIG_ARCH_EARLY_INIT_R
 
 #define	CONFIG_SYS_TEXT_BASE	0x00000000
 
@@ -52,7 +51,6 @@
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_ARCH_CPU_INIT		/* call arch_cpu_init() */
-#define CONFIG_BOARD_EARLY_INIT_F	/* call board_init_f for early inits */
 #define CONFIG_SYS_LOAD_ADDR	0x00800000	/* default load adr- 8M */
 #define CONFIG_SYS_MEMTEST_START 0x00800000	/* 8M */
 #define CONFIG_SYS_MEMTEST_END	0x00ffffff	/*(_16M -1) */
@@ -82,7 +80,6 @@
 #define CONFIG_ENV_SPI_MODE		CONFIG_SF_DEFAULT_MODE
 
 /* Environment in SPI NOR flash */
-#define CONFIG_SYS_NO_FLASH		/* Declare no flash (NOR/SPI) */
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_OFFSET		0x180000 /* as Marvell U-Boot version */
 #define CONFIG_ENV_SIZE			(64 << 10) /* 64KiB */
@@ -129,14 +126,5 @@
 					 CONFIG_SYS_SCSI_MAX_LUN)
 
 #define CONFIG_SUPPORT_VFAT
-
-/* DISK Partition support */
-#define CONFIG_EFI_PARTITION
-#define CONFIG_DOS_PARTITION
-#define CONFIG_MAC_PARTITION
-#define CONFIG_ISO_PARTITION		/* Experimental */
-
-#define CONFIG_CMD_PART
-#define CONFIG_PARTITION_UUIDS
 
 #endif /* _CONFIG_MVEBU_DB_88F3720_H */

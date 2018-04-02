@@ -20,8 +20,6 @@
 #define CONFIG_IODELAY_RECALIBRATION
 #endif
 
-#define CONFIG_BOARD_EARLY_INIT_F
-
 #define CONFIG_NR_DRAM_BANKS		2
 
 #define CONFIG_ENV_SIZE			(64 << 10)
@@ -70,8 +68,6 @@
 #include <configs/ti_omap5_common.h>
 
 /* Enhance our eMMC support / experience. */
-#define CONFIG_CMD_GPT
-#define CONFIG_EFI_PARTITION
 #define CONFIG_RANDOM_UUID
 #define CONFIG_HSMMC2_8BIT
 
@@ -98,7 +94,6 @@
 #define CONFIG_OMAP_USB3PHY1_HOST
 
 /* SATA */
-#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_SCSI
 #define CONFIG_LIBATA
 #define CONFIG_SCSI_AHCI

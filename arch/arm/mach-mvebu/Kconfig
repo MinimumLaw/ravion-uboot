@@ -1,5 +1,9 @@
 if ARCH_MVEBU
 
+config HAVE_MVEBU_EFUSE
+	bool
+	default n
+
 config ARMADA_32BIT
 	bool
 	select CPU_V7
@@ -8,6 +12,8 @@ config ARMADA_32BIT
 	select SPL_DM_SEQ_ALIAS
 	select SPL_OF_CONTROL
 	select SPL_SIMPLE_BUS
+	select BOARD_EARLY_INIT_F
+	select ARCH_MISC_INIT
 
 config ARMADA_64BIT
 	bool
@@ -21,6 +27,7 @@ config ARMADA_375
 config ARMADA_38X
 	bool
 	select ARMADA_32BIT
+	select HAVE_MVEBU_EFUSE
 
 config ARMADA_XP
 	bool
@@ -86,6 +93,7 @@ config TARGET_DB_88F6820_AMC
 config TARGET_MVEBU_ARMADA_8K
 	bool "Support Armada 7k/8k platforms"
 	select ARMADA_8K
+	select BOARD_LATE_INIT
 
 config TARGET_DB_MV784MP_GP
 	bool "Support db-mv784mp-gp"
@@ -101,6 +109,7 @@ config TARGET_MAXBCM
 
 config TARGET_THEADORABLE
 	bool "Support theadorable Armada XP"
+	select BOARD_LATE_INIT if USB
 	select MV78260
 
 endchoice
@@ -141,5 +150,35 @@ config SYS_VENDOR
 
 config SYS_SOC
 	default "mvebu"
+
+config MVEBU_EFUSE
+	bool "Enable eFuse support"
+	default n
+	depends on HAVE_MVEBU_EFUSE
+	help
+	  Enable support for reading and writing eFuses on mvebu SoCs.
+
+config MVEBU_EFUSE_FAKE
+	bool "Fake eFuse access (dry run)"
+	default n
+	depends on MVEBU_EFUSE
+	help
+	  This enables a "dry run" mode where eFuses are not really programmed.
+	  Instead the eFuse accesses are emulated by writing to and reading
+	  from a memory block.
+	  This is can be used for testing prog scripts.
+
+config SECURED_MODE_IMAGE
+	bool "Build image for trusted boot"
+	default false
+	depends on 88F6820
+	help
+	  Build an image that employs the ARMADA SoC's trusted boot framework
+	  for securely booting images.
+
+config SECURED_MODE_CSK_INDEX
+	int "Index of active CSK"
+	default 0
+	depends on SECURED_MODE_IMAGE
 
 endif

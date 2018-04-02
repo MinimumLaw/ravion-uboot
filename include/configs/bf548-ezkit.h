@@ -142,7 +142,6 @@
  * SDH Settings
  */
 #if !defined(__ADSPBF544__)
-#define CONFIG_GENERIC_MMC
 #define CONFIG_BFIN_SDH
 #endif
 
@@ -158,7 +157,6 @@
 /*
  * Misc Settings
  */
-#define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_SIZE_LIMIT $$(( 512 * 1024 ))
 #define CONFIG_RTC_BFIN
 #define CONFIG_UART_CONSOLE	1

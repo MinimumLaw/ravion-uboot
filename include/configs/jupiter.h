@@ -28,7 +28,6 @@
 #define CONFIG_SYS_MPC5XXX_CLKIN	33000000 /* ... running at 33.000000MHz */
 
 #define CONFIG_BOARD_EARLY_INIT_R	1
-#define CONFIG_BOARD_EARLY_INIT_F	1
 
 #define CONFIG_HIGH_BATS	1	/* High BATs supported */
 
@@ -64,9 +63,6 @@
 #define CONFIG_SYS_RX_ETH_BUFFER	8  /* use 8 rx buffer on eepro100  */
 
 /* Partitions */
-#define CONFIG_MAC_PARTITION
-#define CONFIG_DOS_PARTITION
-#define CONFIG_ISO_PARTITION
 
 #define	CONFIG_TIMESTAMP		/* Print image info with timestamp */
 

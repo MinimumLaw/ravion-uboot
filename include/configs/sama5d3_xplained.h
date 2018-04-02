@@ -10,9 +10,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-/* No NOR flash, this definition should put before common header */
-#define CONFIG_SYS_NO_FLASH
-
 #include "at91-sama5_common.h"
 
 /* serial console */
@@ -81,7 +78,6 @@
 /* MMC */
 
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_GENERIC_MMC
 #define CONFIG_GENERIC_ATMEL_MCI
 #define CONFIG_ATMEL_MCI_8BIT
 #endif
@@ -96,7 +92,6 @@
 #define CONFIG_SYS_USB_OHCI_REGS_BASE		ATMEL_BASE_OHCI
 #define CONFIG_SYS_USB_OHCI_SLOT_NAME		"SAMA5D3 Xplained"
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
-#define CONFIG_DOS_PARTITION
 #endif
 
 #if defined(CONFIG_CMD_USB) || defined(CONFIG_CMD_MMC)

@@ -35,7 +35,6 @@
 #define CONFIG_4xx_DCACHE		/* enable dcache        */
 #endif
 
-#define CONFIG_BOARD_EARLY_INIT_F 1	/* Call board_early_init_f */
 #define CONFIG_MISC_INIT_F	1
 #define CONFIG_MISC_INIT_R	1	/* Call misc_init_r     */
 #define CONFIG_BOARD_TYPES	1	/* support board types  */
@@ -259,9 +258,6 @@
 #define USB_2_0_DEVICE
 
 /* Partitions */
-#define CONFIG_MAC_PARTITION
-#define CONFIG_DOS_PARTITION
-#define CONFIG_ISO_PARTITION
 
 #define CONFIG_CMD_BSP
 #define CONFIG_CMD_DATE
@@ -388,7 +384,5 @@
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
 #endif
-
-#define CONFIG_API		1
 
 #endif /* __CONFIG_H */

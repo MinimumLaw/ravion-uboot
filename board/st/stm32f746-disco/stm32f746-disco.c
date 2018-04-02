@@ -10,12 +10,12 @@
 #include <asm/armv7m.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/gpio.h>
-#include <asm/arch/rcc.h>
 #include <asm/arch/fmc.h>
 #include <dm/platdata.h>
 #include <dm/platform_data/serial_stm32x7.h>
 #include <asm/arch/stm32_periph.h>
 #include <asm/arch/stm32_defs.h>
+#include <asm/arch/syscfg.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -114,11 +114,6 @@ out:
 	return rv;
 }
 
-/*
- * STM32 RCC FMC specific definitions
- */
-#define RCC_ENR_FMC	(1 << 0)	/* FMC module clock  */
-
 static inline u32 _ns2clk(u32 ns, u32 freq)
 {
 	u32 tmp = freq/1000000;
@@ -176,7 +171,7 @@ int dram_init(void)
 	if (rv)
 		return rv;
 
-	setbits_le32(RCC_BASE + RCC_AHB3ENR, RCC_ENR_FMC);
+	clock_setup(FMC_CLOCK_CFG);
 
 	/*
 	 * Get frequency for NS2CLK calculation.
@@ -282,6 +277,109 @@ U_BOOT_DEVICE(stm32x7_serials) = {
 	.platdata = &serial_platdata,
 };
 
+#ifdef CONFIG_ETH_DESIGNWARE
+const struct stm32_gpio_ctl gpio_ctl_eth = {
+	.mode = STM32_GPIO_MODE_AF,
+	.otype = STM32_GPIO_OTYPE_PP,
+	.speed = STM32_GPIO_SPEED_100M,
+	.pupd = STM32_GPIO_PUPD_NO,
+	.af = STM32_GPIO_AF11
+};
+
+static const struct stm32_gpio_dsc eth_gpio[] = {
+	{STM32_GPIO_PORT_A, STM32_GPIO_PIN_1},	/* ETH_RMII_REF_CLK */
+	{STM32_GPIO_PORT_A, STM32_GPIO_PIN_2},	/* ETH_MDIO */
+	{STM32_GPIO_PORT_A, STM32_GPIO_PIN_7},	/* ETH_RMII_CRS_DV */
+
+	{STM32_GPIO_PORT_C, STM32_GPIO_PIN_1},	/* ETH_MDC */
+	{STM32_GPIO_PORT_C, STM32_GPIO_PIN_4},	/* ETH_RMII_RXD0 */
+	{STM32_GPIO_PORT_C, STM32_GPIO_PIN_5},	/* ETH_RMII_RXD1 */
+
+	{STM32_GPIO_PORT_G, STM32_GPIO_PIN_11},	/* ETH_RMII_TX_EN */
+	{STM32_GPIO_PORT_G, STM32_GPIO_PIN_13},	/* ETH_RMII_TXD0 */
+	{STM32_GPIO_PORT_G, STM32_GPIO_PIN_14},	/* ETH_RMII_TXD1 */
+};
+
+static int stmmac_setup(void)
+{
+	int res = 0;
+	int i;
+
+	clock_setup(SYSCFG_CLOCK_CFG);
+
+	/* Set >RMII mode */
+	STM32_SYSCFG->pmc |= SYSCFG_PMC_MII_RMII_SEL;
+
+	clock_setup(GPIO_A_CLOCK_CFG);
+	clock_setup(GPIO_C_CLOCK_CFG);
+	clock_setup(GPIO_G_CLOCK_CFG);
+
+	for (i = 0; i < ARRAY_SIZE(eth_gpio); i++) {
+		res = stm32_gpio_config(&eth_gpio[i], &gpio_ctl_eth);
+		if (res)
+			return res;
+	}
+
+	clock_setup(STMMAC_CLOCK_CFG);
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_STM32_QSPI
+const struct stm32_gpio_ctl gpio_ctl_qspi_9 = {
+	.mode = STM32_GPIO_MODE_AF,
+	.otype = STM32_GPIO_OTYPE_PP,
+	.speed = STM32_GPIO_SPEED_100M,
+	.pupd = STM32_GPIO_PUPD_NO,
+	.af = STM32_GPIO_AF9
+};
+
+const struct stm32_gpio_ctl gpio_ctl_qspi_10 = {
+	.mode = STM32_GPIO_MODE_AF,
+	.otype = STM32_GPIO_OTYPE_PP,
+	.speed = STM32_GPIO_SPEED_100M,
+	.pupd = STM32_GPIO_PUPD_NO,
+	.af = STM32_GPIO_AF10
+};
+
+static const struct stm32_gpio_dsc qspi_af9_gpio[] = {
+	{STM32_GPIO_PORT_B, STM32_GPIO_PIN_2},	/* QUADSPI_CLK */
+	{STM32_GPIO_PORT_D, STM32_GPIO_PIN_11},	/* QUADSPI_BK1_IO0 */
+	{STM32_GPIO_PORT_D, STM32_GPIO_PIN_12},	/* QUADSPI_BK1_IO1 */
+	{STM32_GPIO_PORT_D, STM32_GPIO_PIN_13},	/* QUADSPI_BK1_IO3 */
+	{STM32_GPIO_PORT_E, STM32_GPIO_PIN_2},	/* QUADSPI_BK1_IO2 */
+};
+
+static const struct stm32_gpio_dsc qspi_af10_gpio[] = {
+	{STM32_GPIO_PORT_B, STM32_GPIO_PIN_6},	/* QUADSPI_BK1_NCS */
+};
+
+static int qspi_setup(void)
+{
+	int res = 0;
+	int i;
+
+	clock_setup(GPIO_B_CLOCK_CFG);
+	clock_setup(GPIO_D_CLOCK_CFG);
+	clock_setup(GPIO_E_CLOCK_CFG);
+
+	for (i = 0; i < ARRAY_SIZE(qspi_af9_gpio); i++) {
+		res = stm32_gpio_config(&qspi_af9_gpio[i], &gpio_ctl_qspi_9);
+		if (res)
+			return res;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(qspi_af10_gpio); i++) {
+		res = stm32_gpio_config(&qspi_af10_gpio[i], &gpio_ctl_qspi_10);
+		if (res)
+			return res;
+	}
+
+	return 0;
+}
+#endif
+
 u32 get_board_rev(void)
 {
 	return 0;
@@ -295,6 +393,18 @@ int board_early_init_f(void)
 	clock_setup(USART1_CLOCK_CFG);
 	if (res)
 		return res;
+
+#ifdef CONFIG_ETH_DESIGNWARE
+	res = stmmac_setup();
+	if (res)
+		return res;
+#endif
+
+#ifdef CONFIG_STM32_QSPI
+	res = qspi_setup();
+	if (res)
+		return res;
+#endif
 
 	return 0;
 }

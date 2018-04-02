@@ -75,9 +75,6 @@
 #define DATAFLASH_TCSS				(0x1a << 16)
 #define DATAFLASH_TCHS				(0x1 << 24)
 
-/* no NOR flash */
-#define CONFIG_SYS_NO_FLASH
-
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_NAND_ATMEL
@@ -104,7 +101,6 @@
 #ifdef CONFIG_CMD_USB
 #define CONFIG_USB_ATMEL
 #define CONFIG_USB_OHCI_NEW
-#define CONFIG_DOS_PARTITION
 #define CONFIG_SYS_USB_OHCI_CPU_INIT
 #define CONFIG_SYS_USB_OHCI_REGS_BASE		0x00a00000
 #define CONFIG_SYS_USB_OHCI_SLOT_NAME		"at91sam9263"

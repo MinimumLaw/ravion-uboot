@@ -74,12 +74,6 @@
 
 #undef	CONFIG_WATCHDOG			/* watchdog disabled		*/
 
-#ifdef CONFIG_LCD
-# undef	 CONFIG_STATUS_LED		/* disturbs display		*/
-#else
-# define CONFIG_STATUS_LED	1	/* Status LED enabled		*/
-#endif	/* CONFIG_LCD */
-
 #undef	CONFIG_CAN_DRIVER		/* CAN Driver support disabled	*/
 
 /*
@@ -90,9 +84,6 @@
 #define CONFIG_BOOTP_HOSTNAME
 #define CONFIG_BOOTP_BOOTPATH
 #define CONFIG_BOOTP_BOOTFILESIZE
-
-#define CONFIG_MAC_PARTITION
-#define CONFIG_DOS_PARTITION
 
 #define	CONFIG_RTC_MPC8xx		/* use internal RTC of MPC8xx	*/
 

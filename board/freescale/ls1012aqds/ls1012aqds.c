@@ -10,6 +10,9 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
+#ifdef CONFIG_FSL_LS_PPA
+#include <asm/arch/ppa.h>
+#endif
 #include <asm/arch/fdt.h>
 #include <asm/arch/soc.h>
 #include <ahci.h>
@@ -113,12 +116,44 @@ int board_init(void)
 #ifdef CONFIG_ENV_IS_NOWHERE
 	gd->env_addr = (ulong)&default_environment[0];
 #endif
+
+#ifdef CONFIG_FSL_LS_PPA
+	ppa_init();
+#endif
 	return 0;
 }
 
 int board_eth_init(bd_t *bis)
 {
 	return pci_eth_init(bis);
+}
+
+int esdhc_status_fixup(void *blob, const char *compat)
+{
+	char esdhc0_path[] = "/soc/esdhc@1560000";
+	char esdhc1_path[] = "/soc/esdhc@1580000";
+	u8 card_id;
+
+	do_fixup_by_path(blob, esdhc0_path, "status", "okay",
+			 sizeof("okay"), 1);
+
+	/*
+	 * The Presence Detect 2 register detects the installation
+	 * of cards in various PCI Express or SGMII slots.
+	 *
+	 * STAT_PRS2[7:5]: Specifies the type of card installed in the
+	 * SDHC2 Adapter slot. 0b111 indicates no adapter is installed.
+	 */
+	card_id = (QIXIS_READ(present2) & 0xe0) >> 5;
+
+	/* If no adapter is installed in SDHC2, disable SDHC2 */
+	if (card_id == 0x7)
+		do_fixup_by_path(blob, esdhc1_path, "status", "disabled",
+				 sizeof("disabled"), 1);
+	else
+		do_fixup_by_path(blob, esdhc1_path, "status", "okay",
+				 sizeof("okay"), 1);
+	return 0;
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
@@ -131,3 +166,32 @@ int ft_board_setup(void *blob, bd_t *bd)
 	return 0;
 }
 #endif
+
+void dram_init_banksize(void)
+{
+	/*
+	 * gd->arch.secure_ram tracks the location of secure memory.
+	 * It was set as if the memory starts from 0.
+	 * The address needs to add the offset of its bank.
+	 */
+	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	if (gd->ram_size > CONFIG_SYS_DDR_BLOCK1_SIZE) {
+		gd->bd->bi_dram[0].size = CONFIG_SYS_DDR_BLOCK1_SIZE;
+		gd->bd->bi_dram[1].start = CONFIG_SYS_DDR_BLOCK2_BASE;
+		gd->bd->bi_dram[1].size = gd->ram_size -
+			CONFIG_SYS_DDR_BLOCK1_SIZE;
+#ifdef CONFIG_SYS_MEM_RESERVE_SECURE
+		gd->arch.secure_ram = gd->bd->bi_dram[1].start +
+			gd->arch.secure_ram -
+			CONFIG_SYS_DDR_BLOCK1_SIZE;
+		gd->arch.secure_ram |= MEM_RESERVE_SECURE_MAINTAINED;
+#endif
+	} else {
+		gd->bd->bi_dram[0].size = gd->ram_size;
+#ifdef CONFIG_SYS_MEM_RESERVE_SECURE
+		gd->arch.secure_ram = gd->bd->bi_dram[0].start +
+			gd->arch.secure_ram;
+		gd->arch.secure_ram |= MEM_RESERVE_SECURE_MAINTAINED;
+#endif
+	}
+}

@@ -120,7 +120,6 @@
 
 /* Filesystem support (for USB key) */
 #define CONFIG_SUPPORT_VFAT
-#define CONFIG_DOS_PARTITION
 
 
 /*
@@ -140,7 +139,6 @@
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_MISC_INIT_R
-#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_MX_CYCLIC		/* enable mdc/mwc commands      */
 
 #define CONFIG_SYS_MEMTEST_START		0x00800000

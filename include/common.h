@@ -15,10 +15,15 @@ typedef volatile unsigned long	vu_long;
 typedef volatile unsigned short vu_short;
 typedef volatile unsigned char	vu_char;
 
+/* Allow sharing constants with type modifiers between C and assembly. */
+#define _AC(X, Y)       (X##Y)
+
 #include <config.h>
 #include <errno.h>
+#include <time.h>
 #include <asm-offsets.h>
 #include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/stringify.h>
@@ -279,14 +284,7 @@ int mac_read_from_eeprom(void);
 extern u8 __dtb_dt_begin[];	/* embedded device tree blob */
 int set_cpu_clk_info(void);
 int mdm_init(void);
-#if defined(CONFIG_DISPLAY_CPUINFO)
 int print_cpuinfo(void);
-#else
-static inline int print_cpuinfo(void)
-{
-	return 0;
-}
-#endif
 int update_flash_size(int flash_size);
 int arch_early_init_r(void);
 
@@ -347,9 +345,6 @@ int	source (ulong addr, const char *fit_uname);
 extern ulong load_addr;		/* Default Load Address */
 extern ulong save_addr;		/* Default Save Address */
 extern ulong save_size;		/* Default Save Size */
-
-/* common/cmd_doc.c */
-void	doc_probe(unsigned long physadr);
 
 /* common/cmd_net.c */
 int do_tftpb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
@@ -576,12 +571,6 @@ void ddr_enable_ecc(unsigned int dram_size);
 #endif
 #endif
 
-/*
- * Return the current value of a monotonically increasing microsecond timer.
- * Granularity may be larger than 1us if hardware does not support this.
- */
-ulong timer_get_us(void);
-
 /* $(CPU)/cpu.c */
 static inline int cpumask_next(int cpu, unsigned int mask)
 {
@@ -601,7 +590,17 @@ int	cpu_num_dspcores(void);
 u32	cpu_mask      (void);
 u32	cpu_dsp_mask(void);
 int	is_core_valid (unsigned int);
-int	probecpu      (void);
+
+/**
+ * arch_cpu_init() - basic cpu-dependent setup for an architecture
+ *
+ * This is called after early malloc is available. It should handle any
+ * CPU- or SoC- specific init needed to continue the init sequence. See
+ * board_f.c for where it is called. If this is not provided, a default
+ * version (which does nothing) will be used.
+ */
+int arch_cpu_init(void);
+
 int	checkcpu      (void);
 int	checkicache   (void);
 int	checkdcache   (void);
@@ -720,7 +719,6 @@ void	external_interrupt (struct pt_regs *);
 void	irq_install_handler(int, interrupt_handler_t *, void *);
 void	irq_free_handler   (int);
 void	reset_timer	   (void);
-ulong	get_timer	   (ulong base);
 
 /* Return value of monotonic microsecond timer */
 unsigned long timer_get_us(void);
@@ -776,7 +774,6 @@ uint64_t get_ticks(void);
 void	wait_ticks    (unsigned long);
 
 /* arch/$(ARCH)/lib/time.c */
-void	__udelay      (unsigned long);
 ulong	usec2ticks    (unsigned long usec);
 ulong	ticks2usec    (unsigned long ticks);
 int	init_timebase (void);
@@ -832,10 +829,6 @@ int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn);
 void qsort(void *base, size_t nmemb, size_t size,
 	   int(*compar)(const void *, const void *));
 int strcmp_compar(const void *, const void *);
-
-/* lib/time.c */
-void	udelay        (unsigned long);
-void mdelay(unsigned long);
 
 /* lib/uuid.c */
 #include <uuid.h>
@@ -918,7 +911,7 @@ static inline struct in_addr getenv_ip(char *var)
 
 int	pcmcia_init (void);
 
-#ifdef CONFIG_STATUS_LED
+#ifdef CONFIG_LED_STATUS
 # include <status_led.h>
 #endif
 
@@ -936,7 +929,12 @@ int cpu_disable(int nr);
 int cpu_release(int nr, int argc, char * const argv[]);
 #endif
 
-#endif /* __ASSEMBLY__ */
+#else	/* __ASSEMBLY__ */
+
+/* Drop a C type modifier (like in 3UL) for constants used in assembly. */
+#define _AC(X, Y)       X
+
+#endif	/* __ASSEMBLY__ */
 
 #ifdef CONFIG_PPC
 /*
@@ -947,6 +945,9 @@ int cpu_release(int nr, int argc, char * const argv[]);
 #endif
 
 /* Put only stuff here that the assembler can digest */
+
+/* Declare an unsigned long constant digestable both by C and an assembler. */
+#define UL(x)           _AC(x, UL)
 
 #ifdef CONFIG_POST
 #define CONFIG_HAS_POST

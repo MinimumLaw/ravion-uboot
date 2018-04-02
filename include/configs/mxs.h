@@ -42,8 +42,6 @@
  */
 
 /* Startup hooks */
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_ARCH_MISC_INIT
 
 /* SPL */
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
@@ -148,9 +146,7 @@
 
 /* MMC */
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_GENERIC_MMC
 #define CONFIG_BOUNCE_BUFFER
-#define CONFIG_MXS_MMC
 #endif
 
 /* NAND */

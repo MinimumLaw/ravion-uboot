@@ -9,7 +9,6 @@
 #ifndef __CONFIG_AM43XX_EVM_H
 #define __CONFIG_AM43XX_EVM_H
 
-#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_MAX_RAM_BANK_SIZE	(1024 << 21)	/* 2GB */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
@@ -58,9 +57,6 @@
  * we need to call board_early_init_f.  This is taken care of in
  * s_init when we have SPL used.
  */
-#if !defined(CONFIG_SKIP_LOWLEVEL_INIT) && !defined(CONFIG_SPL)
-#define CONFIG_BOARD_EARLY_INIT_F
-#endif
 
 /* Now bring in the rest of the common code. */
 #include <configs/ti_armv7_omap.h>
@@ -167,10 +163,6 @@
 #define CONFIG_SF_DEFAULT_MODE                 SPI_MODE_3
 #define CONFIG_QSPI_QUAD_SUPPORT
 #define CONFIG_TI_EDMA3
-
-/* Enhance our eMMC support / experience. */
-#define CONFIG_CMD_GPT
-#define CONFIG_EFI_PARTITION
 
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_EXTRA_ENV_SETTINGS \

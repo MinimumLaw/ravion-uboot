@@ -21,8 +21,6 @@
 
 #define CONFIG_SUPPORT_RAW_INITRD
 
-#define CONFIG_BOARD_EARLY_INIT_F
-
 /* Physical Memory Map */
 
 /* CONFIG_SYS_TEXT_BASE needs to align with where ATF loads bl33.bin */
@@ -71,15 +69,11 @@
 #define CONFIG_HIKEY_GPIO
 
 /* SD/MMC configuration */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_DWMMC
-#define CONFIG_HIKEY_DWMMC
 #define CONFIG_BOUNCE_BUFFER
 
 #define CONFIG_FS_EXT4
 
 /* Command line configuration */
-#define CONFIG_CMD_UNZIP
 #define CONFIG_CMD_ENV
 
 #define CONFIG_MTD_PARTITIONS
@@ -132,7 +126,5 @@
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_CMDLINE_EDITING
 #define CONFIG_SYS_MAXARGS		64	/* max command args */
-
-#define CONFIG_SYS_NO_FLASH
 
 #endif /* __HIKEY_H */

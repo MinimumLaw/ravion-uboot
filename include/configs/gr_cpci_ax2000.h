@@ -49,9 +49,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200, 230400 }
 
 /* Partitions */
-#define CONFIG_DOS_PARTITION
-#define CONFIG_MAC_PARTITION
-#define CONFIG_ISO_PARTITION
 
 /*
  * Supported commands
@@ -166,7 +163,6 @@
  *               0xFF000000 for 16 MB
  *               0xFF800000 for  8 MB
  */
-/*#define CONFIG_SYS_NO_FLASH		1*/
 #define CONFIG_SYS_FLASH_BASE		0x00000000
 #define CONFIG_SYS_FLASH_SIZE		0x00800000
 

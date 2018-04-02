@@ -9,6 +9,9 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
+#ifdef CONFIG_FSL_LS_PPA
+#include <asm/arch/ppa.h>
+#endif
 #include <asm/arch/soc.h>
 #include <hwconfig.h>
 #include <ahci.h>
@@ -110,6 +113,47 @@ int board_init(void)
 	gd->env_addr = (ulong)&default_environment[0];
 #endif
 
+#ifdef CONFIG_FSL_LS_PPA
+	ppa_init();
+#endif
+	return 0;
+}
+
+int esdhc_status_fixup(void *blob, const char *compat)
+{
+	char esdhc0_path[] = "/soc/esdhc@1560000";
+	char esdhc1_path[] = "/soc/esdhc@1580000";
+	u8 io = 0;
+	u8 mux_sdhc2;
+
+	do_fixup_by_path(blob, esdhc0_path, "status", "okay",
+			 sizeof("okay"), 1);
+
+	i2c_set_bus_num(0);
+
+	/*
+	 * The I2C IO-expander for mux select is used to control the muxing
+	 * of various onboard interfaces.
+	 *
+	 * IO1[3:2] indicates SDHC2 interface demultiplexer select lines.
+	 *	00 - SDIO wifi
+	 *	01 - GPIO (to Arduino)
+	 *	10 - eMMC Memory
+	 *	11 - SPI
+	 */
+	if (i2c_read(I2C_MUX_IO1_ADDR, 0, 1, &io, 1) < 0) {
+		printf("Error reading i2c boot information!\n");
+		return 0; /* Don't want to hang() on this error */
+	}
+
+	mux_sdhc2 = (io & 0x0c) >> 2;
+	/* Enable SDHC2 only when use SDIO wifi and eMMC */
+	if (mux_sdhc2 == 2 || mux_sdhc2 == 0)
+		do_fixup_by_path(blob, esdhc1_path, "status", "okay",
+				 sizeof("okay"), 1);
+	else
+		do_fixup_by_path(blob, esdhc1_path, "status", "disabled",
+				 sizeof("disabled"), 1);
 	return 0;
 }
 
@@ -120,4 +164,33 @@ int ft_board_setup(void *blob, bd_t *bd)
 	ft_cpu_setup(blob, bd);
 
 	return 0;
+}
+
+void dram_init_banksize(void)
+{
+	/*
+	 * gd->secure_ram tracks the location of secure memory.
+	 * It was set as if the memory starts from 0.
+	 * The address needs to add the offset of its bank.
+	 */
+	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	if (gd->ram_size > CONFIG_SYS_DDR_BLOCK1_SIZE) {
+		gd->bd->bi_dram[0].size = CONFIG_SYS_DDR_BLOCK1_SIZE;
+		gd->bd->bi_dram[1].start = CONFIG_SYS_DDR_BLOCK2_BASE;
+		gd->bd->bi_dram[1].size = gd->ram_size -
+			CONFIG_SYS_DDR_BLOCK1_SIZE;
+#ifdef CONFIG_SYS_MEM_RESERVE_SECURE
+		gd->arch.secure_ram = gd->bd->bi_dram[1].start +
+			gd->arch.secure_ram -
+			CONFIG_SYS_DDR_BLOCK1_SIZE;
+		gd->arch.secure_ram |= MEM_RESERVE_SECURE_MAINTAINED;
+#endif
+	} else {
+		gd->bd->bi_dram[0].size = gd->ram_size;
+#ifdef CONFIG_SYS_MEM_RESERVE_SECURE
+		gd->arch.secure_ram = gd->bd->bi_dram[0].start +
+			gd->arch.secure_ram;
+		gd->arch.secure_ram |= MEM_RESERVE_SECURE_MAINTAINED;
+#endif
+	}
 }
