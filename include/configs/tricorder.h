@@ -25,8 +25,6 @@
  */
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 
-#define CONFIG_SDRC			/* The chip has SDRC controller */
-
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
 
@@ -73,18 +71,7 @@
 
 /* Board NAND Info */
 #define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
-#define MTDIDS_DEFAULT			"nand0=omap2-nand.0"
-#define MTDPARTS_DEFAULT		"mtdparts=omap2-nand.0:" \
-						"128k(SPL)," \
-						"1m(u-boot)," \
-						"384k(u-boot-env1)," \
-						"1152k(mtdoops)," \
-						"384k(u-boot-env2)," \
-						"5m(kernel)," \
-						"2m(fdt)," \
-						"-(ubi)"
 
-#define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
 #define CONFIG_SYS_NAND_BASE		NAND_BASE	/* physical address */
@@ -122,8 +109,8 @@
 	"vram=3M\0" \
 	"defaultdisplay=lcd\0" \
 	"kernelopts=mtdoops.mtddev=3\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"mtdids=" MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
 	"commonargs=" \
 		"setenv bootargs console=${console} " \
 		"${mtdparts} " \
@@ -246,7 +233,6 @@
 
 /* Defines for SPL */
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_NAND_SIMPLE
 
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS

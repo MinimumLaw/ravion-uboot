@@ -146,8 +146,6 @@
 #define CONFIG_MXC_USB_PORTSC     (PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_MXC_USB_FLAGS      0
 #define CONFIG_USBD_HS
-#define CONFIG_USB_ETHER
-#define CONFIG_USB_ETH_CDC
 #define CONFIG_NETCONSOLE
 
 /* USB Mass Storage Gadget */
@@ -156,7 +154,6 @@
 /* Framebuffer and LCD */
 #define CONFIG_VIDEO_IPUV3
 #define CONFIG_VIDEO_LOGO
-#define CONFIG_IPUV3_CLK          260000000
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 #define CONFIG_VIDEO_BMP_LOGO
@@ -189,14 +186,6 @@
  */
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#ifdef CONFIG_SPI_FLASH
-#define MTDIDS_DEFAULT    "nor0=nor"
-#define MTDPARTS_DEFAULT  \
-	"mtdparts=nor:512k(uboot),64k(env),2m(kernel),-(rootfs)"
-#else
-#define MTDIDS_DEFAULT    "nand0=nand"
-#define MTDPARTS_DEFAULT  "mtdparts=nand:16m(uboot),1m(env),-(rootfs)"
-#endif
 
 /* Persistent Environment Config */
 #if defined(CONFIG_ENV_IS_IN_MMC)
@@ -234,8 +223,8 @@
 	"hwconfig=_UNKNOWN_\0" \
 	"video=\0" \
 	\
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"mtdids=" MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
 	"disk=0\0" \
 	"part=1\0" \
 	\

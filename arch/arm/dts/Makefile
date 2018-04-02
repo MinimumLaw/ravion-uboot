@@ -41,6 +41,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rk3288-veyron-jerry.dtb \
 	rk3288-veyron-mickey.dtb \
 	rk3288-veyron-minnie.dtb \
+	rk3288-vyasa.dtb \
 	rk3328-evb.dtb \
 	rk3368-lion.dtb \
 	rk3368-sheep.dtb \
@@ -173,9 +174,10 @@ dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_cyclone5_vining_fpga.dtb
 
 dtb-$(CONFIG_TARGET_DRA7XX_EVM) += dra72-evm.dtb dra7-evm.dtb	\
-	dra72-evm-revc.dtb dra71-evm.dtb
+	dra72-evm-revc.dtb dra71-evm.dtb dra76-evm.dtb
 dtb-$(CONFIG_TARGET_AM57XX_EVM) += am57xx-beagle-x15.dtb \
 	am57xx-beagle-x15-revb1.dtb \
+	am57xx-beagle-x15-revc.dtb \
 	am572x-idk.dtb	\
 	am571x-idk.dtb
 dtb-$(CONFIG_TARGET_STV0991) += stv0991.dtb
@@ -187,7 +189,9 @@ dtb-$(CONFIG_ARCH_LS1021A) += ls1021a-qds-duart.dtb \
 dtb-$(CONFIG_FSL_LSCH3) += fsl-ls2080a-qds.dtb \
 	fsl-ls2080a-rdb.dtb \
 	fsl-ls2081a-rdb.dtb \
-	fsl-ls2088a-rdb-qspi.dtb
+	fsl-ls2088a-rdb-qspi.dtb \
+	fsl-ls1088a-rdb.dtb \
+	fsl-ls1088a-qds.dtb
 dtb-$(CONFIG_FSL_LSCH2) += fsl-ls1043a-qds-duart.dtb \
 	fsl-ls1043a-qds-lpuart.dtb \
 	fsl-ls1043a-rdb.dtb \
@@ -202,6 +206,8 @@ dtb-$(CONFIG_ARCH_SNAPDRAGON) += dragonboard410c.dtb
 
 dtb-$(CONFIG_STM32F7) += stm32f746-disco.dtb \
 	stm32f769-disco.dtb
+dtb-$(CONFIG_STM32H7) += stm32h743i-disco.dtb \
+	stm32h743i-eval.dtb
 
 dtb-$(CONFIG_MACH_SUN4I) += \
 	sun4i-a10-a1000.dtb \
@@ -303,12 +309,13 @@ dtb-$(CONFIG_MACH_SUN8I_A33) += \
 	sun8i-a33-olinuxino.dtb \
 	sun8i-a33-q8-tablet.dtb \
 	sun8i-a33-sinlinx-sina33.dtb \
+	sun8i-r16-bananapi-m2m.dtb \
 	sun8i-r16-nintendo-nes-classic-edition.dtb \
 	sun8i-r16-parrot.dtb
 dtb-$(CONFIG_MACH_SUN8I_A83T) += \
 	sun8i-a83t-allwinner-h8homlet-v2.dtb \
-	sun8i-a83t-cubietruck-plus.dtb \
-	sun8i-a83t-sinovoip-bpi-m3.dtb
+	sun8i-a83t-bananapi-m3.dtb \
+	sun8i-a83t-cubietruck-plus.dtb
 dtb-$(CONFIG_MACH_SUN8I_H3) += \
 	sun8i-h2-plus-orangepi-zero.dtb \
 	sun8i-h3-bananapi-m2-plus.dtb \
@@ -416,6 +423,9 @@ dtb-$(CONFIG_TARGET_OMAP3_LOGIC) += \
 
 dtb-$(CONFIG_TARGET_SAMA5D2_XPLAINED) += \
 	at91-sama5d2_xplained.dtb
+
+dtb-$(CONFIG_TARGET_SAMA5D27_SOM1_EK) += \
+	at91-sama5d27_som1_ek.dtb
 
 dtb-$(CONFIG_TARGET_SAMA5D3XEK) += \
 	sama5d31ek.dtb \

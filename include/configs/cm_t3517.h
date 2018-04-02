@@ -23,8 +23,6 @@
  * to be on the safe side once the default is changed.
  */
 
-#define CONFIG_EMIF4	/* The chip has EMIF4 controller */
-
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
 
@@ -93,10 +91,6 @@
 /* commands to include */
 #define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
 #define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT		"nand0=nand"
-#define MTDPARTS_DEFAULT	"mtdparts=nand:512k(x-loader),"\
-				"1920k(u-boot),256k(u-boot-env),"\
-				"4m(kernel),-(fs)"
 
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_OMAP24_I2C_SPEED	400000
@@ -109,7 +103,6 @@
 /*
  * Board NAND Info.
  */
-#define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
 #define CONFIG_SYS_NAND_BASE		NAND_BASE	/* physical address */
@@ -209,17 +202,13 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 2 sectors */
 
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x260000
+#define CONFIG_ENV_ADDR			0x260000
 
 #if defined(CONFIG_CMD_NET)
 #define CONFIG_DRIVER_TI_EMAC
 #define CONFIG_DRIVER_TI_EMAC_USE_RMII
 #define CONFIG_MII
-#define CONFIG_SMC911X
-#define CONFIG_SMC911X_32_BIT
-#define CONFIG_SMC911X_BASE	(0x2C000000 + (16 << 20))
 #define CONFIG_ARP_TIMEOUT		200UL
 #define CONFIG_NET_RETRY_COUNT		5
 #endif /* CONFIG_CMD_NET */

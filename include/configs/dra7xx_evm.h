@@ -51,7 +51,8 @@
 #define PARTS_DEFAULT \
 	/* Linux partitions */ \
 	"uuid_disk=${uuid_gpt_disk};" \
-	"name=rootfs,start=2MiB,size=-,uuid=${uuid_gpt_rootfs}\0" \
+	"name=bootloader,start=384K,size=1792K,uuid=${uuid_gpt_bootloader};" \
+	"name=rootfs,start=2688K,size=-,uuid=${uuid_gpt_rootfs}\0" \
 	/* Android partitions */ \
 	"partitions_android=" \
 	"uuid_disk=${uuid_gpt_disk};" \
@@ -65,6 +66,7 @@
 	"name=recovery,size=10M,uuid=${uuid_gpt_recovery};" \
 	"name=boot,size=10M,uuid=${uuid_gpt_boot};" \
 	"name=system,size=768M,uuid=${uuid_gpt_system};" \
+	"name=vendor,size=256M,uuid=${uuid_gpt_vendor};" \
 	"name=cache,size=256M,uuid=${uuid_gpt_cache};" \
 	"name=ipu1,size=1M,uuid=${uuid_gpt_ipu1};" \
 	"name=ipu2,size=1M,uuid=${uuid_gpt_ipu2};" \
@@ -91,7 +93,6 @@
 #include <configs/ti_omap5_common.h>
 
 /* Enhance our eMMC support / experience. */
-#define CONFIG_RANDOM_UUID
 #define CONFIG_HSMMC2_8BIT
 
 /* CPSW Ethernet */
@@ -161,13 +162,10 @@
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
 #define CONFIG_SYS_NAND_OOBSIZE		64
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(128*1024)
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_PAGE_COUNT	(CONFIG_SYS_NAND_BLOCK_SIZE / \
 					 CONFIG_SYS_NAND_PAGE_SIZE)
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 /* NAND: driver related configs */
-#define CONFIG_NAND_OMAP_GPMC
-#define CONFIG_NAND_OMAP_ELM
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_BCH8_CODE_HW
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS	NAND_LARGE_BADBLOCK_POS
@@ -180,23 +178,8 @@
 					 50, 51, 52, 53, 54, 55, 56, 57, }
 #define CONFIG_SYS_NAND_ECCSIZE		512
 #define CONFIG_SYS_NAND_ECCBYTES	14
-#define MTDIDS_DEFAULT			"nand0=nand.0"
-#define MTDPARTS_DEFAULT		"mtdparts=nand.0:" \
-					"128k(NAND.SPL)," \
-					"128k(NAND.SPL.backup1)," \
-					"128k(NAND.SPL.backup2)," \
-					"128k(NAND.SPL.backup3)," \
-					"256k(NAND.u-boot-spl-os)," \
-					"1m(NAND.u-boot)," \
-					"128k(NAND.u-boot-env)," \
-					"128k(NAND.u-boot-env.backup1)," \
-					"8m(NAND.kernel)," \
-					"-(NAND.file-system)"
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x000c0000
 /* NAND: SPL related configs */
-#ifdef CONFIG_SPL_NAND_SUPPORT
-#define CONFIG_SPL_NAND_AM33XX_BCH
-#endif
 /* NAND: SPL falcon mode configs */
 #ifdef CONFIG_SPL_OS_BOOT
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS	0x00200000 /* kernel offset */
@@ -221,18 +204,6 @@
 /* Reduce SPL size by removing unlikey targets */
 #ifdef CONFIG_NOR_BOOT
 #define CONFIG_ENV_SECT_SIZE		(128 * 1024)	/* 128 KiB */
-#define MTDIDS_DEFAULT			"nor0=physmap-flash.0"
-#define MTDPARTS_DEFAULT		"mtdparts=physmap-flash.0:" \
-					"128k(NOR.SPL)," \
-					"128k(NOR.SPL.backup1)," \
-					"128k(NOR.SPL.backup2)," \
-					"128k(NOR.SPL.backup3)," \
-					"256k(NOR.u-boot-spl-os)," \
-					"1m(NOR.u-boot)," \
-					"128k(NOR.u-boot-env)," \
-					"128k(NOR.u-boot-env.backup1)," \
-					"8m(NOR.kernel)," \
-					"-(NOR.rootfs)"
 #define CONFIG_ENV_OFFSET		0x001c0000
 #define CONFIG_ENV_OFFSET_REDUND	0x001e0000
 #endif

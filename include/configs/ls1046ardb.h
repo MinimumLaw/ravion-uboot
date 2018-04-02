@@ -209,15 +209,6 @@
 #endif
 #endif
 
-/* USB */
-#ifndef SPL_NO_USB
-#define CONFIG_HAS_FSL_XHCI_USB
-#ifdef CONFIG_HAS_FSL_XHCI_USB
-#define CONFIG_USB_XHCI_FSL
-#define CONFIG_USB_MAX_CONTROLLER_COUNT         3
-#endif
-#endif
-
 /* SATA */
 #ifndef SPL_NO_SATA
 #define CONFIG_LIBATA
@@ -236,10 +227,6 @@
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND "run distro_bootcmd; env exists secureboot"	\
 			   "&& esbc_halt; run qspi_bootcmd;"
-#define MTDPARTS_DEFAULT "mtdparts=1550000.quadspi:1m(rcw)," \
-			"15m(u-boot),48m(kernel.itb);" \
-			"7e800000.flash:16m(nand_uboot)," \
-			"48m(nand_kernel),448m(nand_free)"
 #endif
 
 #include <asm/fsl_secure_boot.h>

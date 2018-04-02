@@ -16,8 +16,6 @@
 
 #define CONFIG_SYS_TEXT_BASE 0x80008000
 
-#define CONFIG_EMIF4	/* The chip has EMIF4 controller */
-
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
 
@@ -125,13 +123,11 @@
  */
 
 /* **** PISMO SUPPORT *** */
-#define CONFIG_NAND_OMAP_GPMC
-#define SMNAND_ENV_OFFSET		0x180000 /* environment starts here */
 
 /* Redundant Environment */
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x180000
+#define CONFIG_ENV_ADDR			0x180000
 #define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + \
 						2 * CONFIG_SYS_ENV_SECT_SIZE)
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
@@ -158,7 +154,6 @@
 /* Defines for SPL */
 #define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_CONSOLE
-#define CONFIG_SPL_NAND_SIMPLE
 #define CONFIG_SPL_NAND_SOFTECC
 #define CONFIG_SPL_NAND_WORKSPACE	0x8f07f000 /* below BSS */
 
@@ -189,7 +184,6 @@
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	0x80	/* 64KiB */
 
 /* NAND boot config */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_PAGE_COUNT	64
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
 #define CONFIG_SYS_NAND_OOBSIZE		64
@@ -202,7 +196,6 @@
 #define CONFIG_SYS_NAND_ECCSIZE		256
 #define CONFIG_SYS_NAND_ECCBYTES	3
 #define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_HAM1_CODE_SW
-#define CONFIG_NAND_OMAP_GPMC_PREFETCH
 
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
 
@@ -213,10 +206,6 @@
 #define CONFIG_MTD_DEVICE
 
 /* Setup MTD for NAND on the SOM */
-#define MTDIDS_DEFAULT		"nand0=omap2-nand.0"
-#define MTDPARTS_DEFAULT	"mtdparts=omap2-nand.0:512k(MLO)," \
-				"1m(u-boot),256k(env1)," \
-				"256k(env2),6m(kernel),-(rootfs)"
 
 #define	CONFIG_TAM3517_SETTINGS						\
 	"netdev=eth0\0"							\

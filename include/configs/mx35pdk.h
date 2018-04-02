@@ -85,10 +85,6 @@
 /*
  * Ethernet on the debug board (SMC911)
  */
-#define CONFIG_SMC911X
-#define CONFIG_SMC911X_16_BIT 1
-#define CONFIG_SMC911X_BASE CS5_BASE_ADDR
-
 #define CONFIG_HAS_ETH1
 #define CONFIG_ETHPRIME
 
@@ -139,10 +135,6 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_FLASH_CFI_MTD
 #define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT		"nand0=mxc_nand,nor0=physmap-flash.0"
-#define MTDPARTS_DEFAULT	"mtdparts=mxc_nand:1m(boot),5m(linux),"	\
-				"96m(root),8m(cfg),1938m(user);"	\
-				"physmap-flash.0:512k(b),4m(k),30m(u),28m(r)"
 
 /*
  * FLASH and environment organization
@@ -182,7 +174,6 @@
 /*
  * NAND FLASH driver setup
  */
-#define CONFIG_NAND_MXC
 #define CONFIG_MXC_NAND_REGS_BASE	(NFC_BASE_ADDR)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		(NFC_BASE_ADDR)

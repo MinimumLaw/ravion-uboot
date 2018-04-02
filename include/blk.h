@@ -8,6 +8,8 @@
 #ifndef BLK_H
 #define BLK_H
 
+#include <efi.h>
+
 #ifdef CONFIG_SYS_64BIT_LBA
 typedef uint64_t lbaint_t;
 #define LBAFlength "ll"
@@ -41,6 +43,17 @@ enum if_type {
 #define BLK_REV_SIZE		8
 
 /*
+ * Identifies the partition table type (ie. MBR vs GPT GUID) signature
+ */
+enum sig_type {
+	SIG_TYPE_NONE,
+	SIG_TYPE_MBR,
+	SIG_TYPE_GUID,
+
+	SIG_TYPE_COUNT			/* Number of signature types */
+};
+
+/*
  * With driver model (CONFIG_BLK) this is uclass platform data, accessible
  * with dev_get_uclass_platdata(dev)
  */
@@ -67,6 +80,11 @@ struct blk_desc {
 	char		vendor[BLK_VEN_SIZE + 1]; /* device vendor string */
 	char		product[BLK_PRD_SIZE + 1]; /* device product number */
 	char		revision[BLK_REV_SIZE + 1]; /* firmware revision */
+	enum sig_type	sig_type;	/* Partition table signature type */
+	union {
+		uint32_t mbr_sig;	/* MBR integer signature */
+		efi_guid_t guid_sig;	/* GPT GUID Signature */
+	};
 #if CONFIG_IS_ENABLED(BLK)
 	/*
 	 * For now we have a few functions which take struct blk_desc as a
@@ -315,12 +333,12 @@ int blk_next_device(struct udevice **devp);
  * @devnum:	Device number, specific to the interface type, or -1 to
  *		allocate the next available number
  * @blksz:	Block size of the device in bytes (typically 512)
- * @size:	Total size of the device in bytes
+ * @lba:	Total number of blocks of the device
  * @devp:	the new device (which has not been probed)
  */
 int blk_create_device(struct udevice *parent, const char *drv_name,
 		      const char *name, int if_type, int devnum, int blksz,
-		      lbaint_t size, struct udevice **devp);
+		      lbaint_t lba, struct udevice **devp);
 
 /**
  * blk_create_devicef() - Create a new named block device
@@ -332,12 +350,12 @@ int blk_create_device(struct udevice *parent, const char *drv_name,
  * @devnum:	Device number, specific to the interface type, or -1 to
  *		allocate the next available number
  * @blksz:	Block size of the device in bytes (typically 512)
- * @size:	Total size of the device in bytes
+ * @lba:	Total number of blocks of the device
  * @devp:	the new device (which has not been probed)
  */
 int blk_create_devicef(struct udevice *parent, const char *drv_name,
 		       const char *name, int if_type, int devnum, int blksz,
-		       lbaint_t size, struct udevice **devp);
+		       lbaint_t lba, struct udevice **devp);
 
 /**
  * blk_prepare_device() - Prepare a block device for use

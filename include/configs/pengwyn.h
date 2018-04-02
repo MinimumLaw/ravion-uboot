@@ -82,8 +82,8 @@
 		"tftp ${fdtaddr} ${fdtfile}; " \
 		"run netargs; " \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
-	"mtdids=" MTDIDS_DEFAULT "\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"${optargs} " \
 		"root=${nandroot} " \
@@ -113,8 +113,6 @@
 /* SPL */
 
 /* NAND support */
-#define CONFIG_NAND_OMAP_GPMC
-#define CONFIG_NAND_OMAP_ELM
 
 /* NAND Configuration. */
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
@@ -150,14 +148,7 @@
 /* #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000 */
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x200000
 
-#define MTDIDS_DEFAULT			"nand0=omap2-nand.0"
 /* Size must be a multiple of Nand erase size (524288 b) */
-#define MTDPARTS_DEFAULT		"mtdparts=omap2-nand.0:512k(SPL)," \
-					"512k(SPL.backup1)," \
-					"512k(SPL.backup2)," \
-					"512k(SPL.backup3),1536k(u-boot)," \
-					"512k(u-boot-spl-os)," \
-					"512k(u-boot-env),5m(kernel),-(rootfs)"
 #define CONFIG_ENV_OFFSET		0x260000 /* environment starts here */
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
 /* NAND: SPL falcon mode configs */
@@ -183,9 +174,6 @@
 /* disable host part of MUSB in SPL */
 /* Disable CPSW SPL support so we fit within the 101KiB limit. */
 #endif
-
-/* CPSW ethernet */
-#define CONFIG_NET_MULTI
 
 /* Network */
 #define CONFIG_PHY_RESET	1

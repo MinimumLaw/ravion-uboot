@@ -38,8 +38,8 @@
 
 #ifdef CONFIG_NAND
 #define NANDARGS \
-	"mtdids=" MTDIDS_DEFAULT "\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"${optargs} " \
 		"root=${nandroot} " \
@@ -202,9 +202,6 @@
 #define CONFIG_SYS_NAND_OOBSIZE		64
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(128*1024)
 /* NAND: driver related configs */
-#define CONFIG_NAND_OMAP_GPMC
-#define CONFIG_NAND_OMAP_GPMC_PREFETCH
-#define CONFIG_NAND_OMAP_ELM
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS	NAND_LARGE_BADBLOCK_POS
 #define CONFIG_SYS_NAND_ECCPOS		{ 2, 3, 4, 5, 6, 7, 8, 9, \
 					 10, 11, 12, 13, 14, 15, 16, 17, \
@@ -218,23 +215,8 @@
 #define CONFIG_SYS_NAND_ECCBYTES	14
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_BCH8_CODE_HW
-#define MTDIDS_DEFAULT			"nand0=nand.0"
-#define MTDPARTS_DEFAULT		"mtdparts=nand.0:" \
-					"128k(NAND.SPL)," \
-					"128k(NAND.SPL.backup1)," \
-					"128k(NAND.SPL.backup2)," \
-					"128k(NAND.SPL.backup3)," \
-					"256k(NAND.u-boot-spl-os)," \
-					"1m(NAND.u-boot)," \
-					"128k(NAND.u-boot-env)," \
-					"128k(NAND.u-boot-env.backup1)," \
-					"8m(NAND.kernel)," \
-					"-(NAND.file-system)"
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x000c0000
 /* NAND: SPL related configs */
-#ifdef CONFIG_SPL_NAND_SUPPORT
-#define CONFIG_SPL_NAND_AM33XX_BCH
-#endif
 #ifdef CONFIG_SPL_OS_BOOT
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS	0x00200000 /* kernel offset */
 #endif
@@ -262,12 +244,6 @@
 #define CONFIG_AM335X_USB0_MODE	MUSB_PERIPHERAL
 #define CONFIG_AM335X_USB1
 #define CONFIG_AM335X_USB1_MODE MUSB_HOST
-
-#ifdef CONFIG_USB_MUSB_GADGET
-#define CONFIG_USB_ETHER
-#define CONFIG_USB_ETH_RNDIS
-#define CONFIG_USBNET_HOST_ADDR	"de:ad:be:af:00:00"
-#endif /* CONFIG_USB_MUSB_GADGET */
 
 /*
  * Disable MMC DM for SPL build and can be re-enabled after adding
@@ -313,11 +289,6 @@
 #define CONFIG_ENV_SECT_SIZE		(4 << 10) /* 4 KB sectors */
 #define CONFIG_ENV_OFFSET		(768 << 10) /* 768 KiB in */
 #define CONFIG_ENV_OFFSET_REDUND	(896 << 10) /* 896 KiB in */
-#define MTDIDS_DEFAULT			"nor0=m25p80-flash.0"
-#define MTDPARTS_DEFAULT		"mtdparts=m25p80-flash.0:128k(SPL)," \
-					"512k(u-boot),128k(u-boot-env1)," \
-					"128k(u-boot-env2),3464k(kernel)," \
-					"-(rootfs)"
 #elif defined(CONFIG_EMMC_BOOT)
 #define CONFIG_SYS_MMC_ENV_DEV		1
 #define CONFIG_SYS_MMC_ENV_PART		2
@@ -329,12 +300,6 @@
 #define CONFIG_ENV_SECT_SIZE		(128 << 10)	/* 128 KiB */
 #define CONFIG_ENV_OFFSET		(512 << 10)	/* 512 KiB */
 #define CONFIG_ENV_OFFSET_REDUND	(768 << 10)	/* 768 KiB */
-#define MTDIDS_DEFAULT			"nor0=physmap-flash.0"
-#define MTDPARTS_DEFAULT		"mtdparts=physmap-flash.0:" \
-					"512k(u-boot)," \
-					"128k(u-boot-env1)," \
-					"128k(u-boot-env2)," \
-					"4m(kernel),-(rootfs)"
 #elif defined(CONFIG_ENV_IS_IN_NAND)
 #define CONFIG_ENV_OFFSET		0x001c0000
 #define CONFIG_ENV_OFFSET_REDUND	0x001e0000

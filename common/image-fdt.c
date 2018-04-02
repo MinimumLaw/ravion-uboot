@@ -294,9 +294,6 @@ int boot_get_fdt(int flag, int argc, char * const argv[], uint8_t arch,
 		debug("## Checking for 'FDT'/'FDT Image' at %08lx\n",
 		      fdt_addr);
 
-		/* copy from dataflash if needed */
-		fdt_addr = genimg_get_image(fdt_addr);
-
 		/*
 		 * Check if there is an FDT image at the
 		 * address provided in the second bootm argument
@@ -356,17 +353,16 @@ int boot_get_fdt(int flag, int argc, char * const argv[], uint8_t arch,
 			if (fit_check_format(buf)) {
 				ulong load, len;
 
-				fdt_noffset = fit_image_load(images,
+				fdt_noffset = boot_get_fdt_fit(images,
 					fdt_addr, &fit_uname_fdt,
 					&fit_uname_config,
-					arch, IH_TYPE_FLATDT,
-					BOOTSTAGE_ID_FIT_FDT_START,
-					FIT_LOAD_OPTIONAL, &load, &len);
+					arch, &load, &len);
 
 				images->fit_hdr_fdt = map_sysmem(fdt_addr, 0);
 				images->fit_uname_fdt = fit_uname_fdt;
 				images->fit_noffset_fdt = fdt_noffset;
 				fdt_addr = load;
+
 				break;
 			} else
 #endif

@@ -48,20 +48,12 @@
  */
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_HAM1_CODE_SW
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
 #define CONFIG_SYS_NAND_OOBSIZE		64
 
 #ifdef CONFIG_NAND
 #define CONFIG_MTD_PARTITIONS	/* required for UBI partition support */
-
-#define MTDIDS_DEFAULT			"nand0=omap2-nand.0"
-#define MTDPARTS_DEFAULT		"mtdparts=omap2-nand.0:512k(xloader),"\
-					"1920k(uboot),128k(uboot-env),"\
-					"10m(boot),-(rootfs)"
-#else
-#define MTDPARTS_DEFAULT
 #endif
 
 
@@ -84,7 +76,7 @@
 	"usbtty=cdc_acm\0" \
 	"bootargs_ubi=ubi.mtd=4 ubi.mtd=3 root=ubi0:rootfs rootfstype=ubifs " \
 		"rw rootflags=bulk_read vram=6272K omapfb.vram=0:3000K\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	BOOTENV \
 
 /* memtest works on */
@@ -99,10 +91,9 @@
 /* Monitor at start of flash */
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x260000
+#define CONFIG_ENV_ADDR			0x260000
 
 #endif				/* __CONFIG_H */

@@ -29,7 +29,14 @@
 	"partitions=" PARTS_DEFAULT "\0" \
 	"optargs=\0" \
 	"dofastboot=0\0" \
+	"emmc_linux_boot=" \
+		"echo Trying to boot Linux from eMMC ...; " \
+		"setenv mmcdev 1; " \
+		"setenv bootpart 1:2; " \
+		"setenv mmcroot /dev/mmcblk0p2 rw; " \
+		"run mmcboot;\0" \
 	"emmc_android_boot=" \
+		"echo Trying to boot Android from eMMC ...; " \
 		"setenv eval_bootargs setenv bootargs $bootargs; " \
 		"run eval_bootargs; " \
 		"setenv mmcdev 1; " \
@@ -44,7 +51,6 @@
 		"part size mmc ${mmcdev} ${boot_part} boot_size; " \
 		"mmc read ${fdtaddr} ${fdt_start} ${fdt_size}; " \
 		"mmc read ${loadaddr} ${boot_start} ${boot_size}; " \
-		"echo Booting from eMMC ...; " \
 		"bootm $loadaddr $loadaddr $fdtaddr;\0"
 
 #ifdef CONFIG_OMAP54XX
@@ -61,10 +67,14 @@
 			"setenv fdtfile dra72-evm.dtb; fi;" \
 		"if test $board_name = dra71x; then " \
 			"setenv fdtfile dra71-evm.dtb; fi;" \
+		"if test $board_name = dra76x; then " \
+			"setenv fdtfile dra76-evm.dtb; fi;" \
 		"if test $board_name = beagle_x15; then " \
 			"setenv fdtfile am57xx-beagle-x15.dtb; fi;" \
 		"if test $board_name = beagle_x15_revb1; then " \
 			"setenv fdtfile am57xx-beagle-x15-revb1.dtb; fi;" \
+		"if test $board_name = beagle_x15_revc; then " \
+			"setenv fdtfile am57xx-beagle-x15-revc.dtb; fi;" \
 		"if test $board_name = am572x_idk; then " \
 			"setenv fdtfile am572x-idk.dtb; fi;" \
 		"if test $board_name = am57xx_evm; then " \
@@ -89,10 +99,7 @@
 	"run findfdt; " \
 	"run envboot; " \
 	"run mmcboot;" \
-	"setenv mmcdev 1; " \
-	"setenv bootpart 1:2; " \
-	"setenv mmcroot /dev/mmcblk0p2 rw; " \
-	"run mmcboot;" \
+	"run emmc_linux_boot; " \
 	"run emmc_android_boot; " \
 	""
 

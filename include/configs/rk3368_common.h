@@ -7,6 +7,8 @@
 #ifndef __CONFIG_RK3368_COMMON_H
 #define __CONFIG_RK3368_COMMON_H
 
+#include "rockchip-common.h"
+
 #define CONFIG_SYS_CACHELINE_SIZE	64
 
 #include <asm/arch/hardware.h>
@@ -44,13 +46,10 @@
 	"kernel_addr_r=0x280000\0" \
 	"ramdisk_addr_r=0x5bf0000\0"
 
-#include <config_distro_defaults.h>
-
-#define BOOT_TARGET_DEVICES(func)
-
 #include <config_distro_bootcmd.h>
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	ENV_MEM_LAYOUT_SETTINGS	\
 	BOOTENV
 
 #endif

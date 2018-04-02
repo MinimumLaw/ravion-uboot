@@ -87,17 +87,6 @@
 #define	CONFIG_KERNEL_OFFSET		0x00300000
 #define	CONFIG_ROOTFS_OFFSET		0x00800000
 
-#define CONFIG_MTDMAP			"mxc_nand.0"
-#define MTDIDS_DEFAULT			"nand0=" CONFIG_MTDMAP
-#define MTDPARTS_DEFAULT	"mtdparts=" CONFIG_MTDMAP \
-				":1M(u-boot)ro," \
-				"512K(env)," \
-				"512K(env2)," \
-				"512K(firmware)," \
-				"512K(dtb)," \
-				"5M(kernel)," \
-				"-(rootfs)"
-
 /*
  * U-Boot general configurations
  */
@@ -134,7 +123,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"env_version="		__stringify(CONFIG_ENV_VERSION)		"\0" \
 	"consoledev="		__stringify(ACFG_CONSOLE_DEV)		"\0" \
-	"mtdparts="		MTDPARTS_DEFAULT			"\0" \
+	"mtdparts="	 	CONFIG_MTDPARTS_DEFAULT	"\0" \
 	"partition=nand0,6\0"						\
 	"u-boot_addr="		__stringify(ACFG_MONITOR_OFFSET)	"\0" \
 	"env_addr="		__stringify(CONFIG_ENV_OFFSET)		"\0" \
@@ -192,7 +181,6 @@
 /*
  * NAND
  */
-#define CONFIG_NAND_MXC
 
 #define CONFIG_MXC_NAND_REGS_BASE	0xD8000000
 #define CONFIG_SYS_NAND_BASE		CONFIG_MXC_NAND_REGS_BASE
@@ -200,7 +188,6 @@
 
 #define CONFIG_MXC_NAND_HWECC
 #define CONFIG_SYS_NAND_LARGEPAGE
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
 #define CONFIG_SYS_NAND_PAGE_COUNT	CONFIG_SYS_NAND_BLOCK_SIZE / \

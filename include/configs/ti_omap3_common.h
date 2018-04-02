@@ -21,9 +21,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/omap.h>
 
-/* The chip has SDRC controller */
-#define CONFIG_SDRC
-
 /* Clock Defines */
 #define V_OSCK			26000000	/* Clock output from T2 */
 #define V_SCLK			(V_OSCK >> 1)
@@ -64,7 +61,6 @@
 					 (64 << 20))
 
 #ifdef CONFIG_NAND
-#define CONFIG_SPL_NAND_SIMPLE
 #define CONFIG_SYS_NAND_BASE		0x30000000
 #endif
 

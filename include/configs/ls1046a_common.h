@@ -183,7 +183,7 @@
 #define CONFIG_ENV_SPI_MODE		0x03
 #elif defined(CONFIG_NAND_BOOT)
 #define CONFIG_SYS_QE_FMAN_FW_IN_NAND
-#define CONFIG_SYS_FMAN_FW_ADDR		(72 * CONFIG_SYS_NAND_BLOCK_SIZE)
+#define CONFIG_SYS_FMAN_FW_ADDR		(36 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #else
 #define CONFIG_SYS_QE_FMAN_FW_IN_NOR
 #define CONFIG_SYS_FMAN_FW_ADDR		0x60900000
@@ -228,7 +228,7 @@
 	"kernel_load=0xa0000000\0"		\
 	"kernel_size=0x2800000\0"		\
 	"console=ttyS0,115200\0"                \
-		MTDPARTS_DEFAULT "\0"		\
+	 CONFIG_MTDPARTS_DEFAULT "\0"		\
 	BOOTENV					\
 	"boot_scripts=ls1046ardb_boot.scr\0"    \
 	"boot_script_hdr=hdr_ls1046ardb_bs.out\0"	\

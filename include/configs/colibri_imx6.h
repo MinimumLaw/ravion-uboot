@@ -21,7 +21,6 @@
 
 #ifdef CONFIG_SPL
 #include "imx6_spl.h"
-#define CONFIG_SPL_PAD_TO		0x11000 /* 4k IVT/DCD, 64k SPL */
 #endif
 
 #define CONFIG_CMDLINE_TAG
@@ -103,7 +102,6 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
-#define CONFIG_IPUV3_CLK		260000000
 #define CONFIG_CONSOLE_MUX
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP

@@ -1,29 +1,63 @@
 /*
  * (C) Copyright 2016 Rockchip Electronics Co., Ltd
+ * (C) Copyright 2017 Theobroma Systems Design und Consulting GmbH
  *
  * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <common.h>
-#include <debug_uart.h>
-#include <dm.h>
-#include <ram.h>
-#include <spl.h>
-#include <asm/gpio.h>
-#include <asm/io.h>
+#include <asm/arch/bootrom.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/grf_rk3399.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/periph.h>
-#include <asm/arch/sdram.h>
-#include <asm/arch/timer.h>
+#include <asm/io.h>
+#include <debug_uart.h>
+#include <dm.h>
 #include <dm/pinctrl.h>
-#include <power/regulator.h>
+#include <ram.h>
+#include <spl.h>
+#include <syscon.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
+void board_return_to_bootrom(void)
+{
+	back_to_bootrom();
+}
+
+static const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
+	[BROM_BOOTSOURCE_EMMC] = "/sdhci@fe330000",
+	[BROM_BOOTSOURCE_SPINOR] = "/spi@ff1d0000",
+	[BROM_BOOTSOURCE_SD] = "/dwmmc@fe320000",
+};
+
+const char *board_spl_was_booted_from(void)
+{
+	u32  bootdevice_brom_id = readl(RK3399_BROM_BOOTSOURCE_ID_ADDR);
+	const char *bootdevice_ofpath = NULL;
+
+	if (bootdevice_brom_id < ARRAY_SIZE(boot_devices))
+		bootdevice_ofpath = boot_devices[bootdevice_brom_id];
+
+	if (bootdevice_ofpath)
+		debug("%s: brom_bootdevice_id %x maps to '%s'\n",
+		      __func__, bootdevice_brom_id, bootdevice_ofpath);
+	else
+		debug("%s: failed to resolve brom_bootdevice_id %x\n",
+		      __func__, bootdevice_brom_id);
+
+	return bootdevice_ofpath;
+}
+
 u32 spl_boot_device(void)
 {
-	return BOOT_DEVICE_MMC1;
+	u32 boot_device = BOOT_DEVICE_MMC1;
+
+	if (CONFIG_IS_ENABLED(ROCKCHIP_BACK_TO_BROM))
+		return BOOT_DEVICE_BOOTROM;
+
+	return boot_device;
 }
 
 u32 spl_boot_mode(const u32 boot_device)
@@ -53,7 +87,6 @@ void secure_timer_init(void)
 
 void board_debug_uart_init(void)
 {
-#include <asm/arch/grf_rk3399.h>
 #define GRF_BASE	0xff770000
 	struct rk3399_grf_regs * const grf = (void *)GRF_BASE;
 
@@ -80,13 +113,12 @@ void board_debug_uart_init(void)
 #endif
 }
 
-#define GRF_EMMCCORE_CON11 0xff77f02c
-#define SGRF_DDR_RGN_CON16 0xff330040
-#define SGRF_SLV_SECURE_CON4 0xff33e3d0
 void board_init_f(ulong dummy)
 {
 	struct udevice *pinctrl;
 	struct udevice *dev;
+	struct rk3399_pmusgrf_regs *sgrf;
+	struct rk3399_grf_regs *grf;
 	int ret;
 
 #define EARLY_UART
@@ -103,9 +135,6 @@ void board_init_f(ulong dummy)
 	printascii("U-Boot SPL board init");
 #endif
 
-	/*  Emmc clock generator: disable the clock multipilier */
-	rk_clrreg(GRF_EMMCCORE_CON11, 0x0ff);
-
 	ret = spl_early_init();
 	if (ret) {
 		debug("spl_early_init() failed: %d\n", ret);
@@ -121,8 +150,13 @@ void board_init_f(ulong dummy)
 	 * driver, which tries to DMA from/to the stack (likely)
 	 * located in this range.
 	 */
-	rk_clrsetreg(SGRF_DDR_RGN_CON16, 0x1FF, 0);
-	rk_clrreg(SGRF_SLV_SECURE_CON4, 0x2000);
+	sgrf = syscon_get_first_range(ROCKCHIP_SYSCON_PMUSGRF);
+	rk_clrsetreg(&sgrf->ddr_rgn_con[16], 0x1ff, 0);
+	rk_clrreg(&sgrf->slv_secure_con4, 0x2000);
+
+	/*  eMMC clock generator: disable the clock multipilier */
+	grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
+	rk_clrreg(&grf->emmccore_con[11], 0x0ff);
 
 	secure_timer_init();
 
@@ -137,37 +171,6 @@ void board_init_f(ulong dummy)
 		debug("DRAM init failed: %d\n", ret);
 		return;
 	}
-}
-
-void spl_board_init(void)
-{
-	struct udevice *pinctrl;
-	int ret;
-
-	ret = uclass_get_device(UCLASS_PINCTRL, 0, &pinctrl);
-	if (ret) {
-		debug("%s: Cannot find pinctrl device\n", __func__);
-		goto err;
-	}
-
-	/* Enable debug UART */
-	ret = pinctrl_request_noflags(pinctrl, PERIPH_ID_UART_DBG);
-	if (ret) {
-		debug("%s: Failed to set up console UART\n", __func__);
-		goto err;
-	}
-
-	preloader_console_init();
-#if CONFIG_IS_ENABLED(ROCKCHIP_BACK_TO_BROM)
-	back_to_bootrom();
-#endif
-
-	return;
-err:
-	printf("spl_board_init: Error %d\n", ret);
-
-	/* No way to report error here */
-	hang();
 }
 
 #ifdef CONFIG_SPL_LOAD_FIT

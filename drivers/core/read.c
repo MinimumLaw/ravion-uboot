@@ -57,6 +57,13 @@ fdt_addr_t dev_read_addr(struct udevice *dev)
 	return dev_read_addr_index(dev, 0);
 }
 
+void *dev_read_addr_ptr(struct udevice *dev)
+{
+	fdt_addr_t addr = dev_read_addr(dev);
+
+	return (addr == FDT_ADDR_T_NONE) ? NULL : (void *)addr;
+}
+
 fdt_addr_t dev_read_addr_size(struct udevice *dev, const char *property,
 				fdt_size_t *sizep)
 {
@@ -72,6 +79,17 @@ int dev_read_stringlist_search(struct udevice *dev, const char *property,
 			  const char *string)
 {
 	return ofnode_stringlist_search(dev_ofnode(dev), property, string);
+}
+
+int dev_read_string_index(struct udevice *dev, const char *propname, int index,
+			  const char **outp)
+{
+	return ofnode_read_string_index(dev_ofnode(dev), propname, index, outp);
+}
+
+int dev_read_string_count(struct udevice *dev, const char *propname)
+{
+	return ofnode_read_string_count(dev_ofnode(dev), propname);
 }
 
 int dev_read_phandle_with_args(struct udevice *dev, const char *list_name,

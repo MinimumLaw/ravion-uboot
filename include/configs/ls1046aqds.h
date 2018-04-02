@@ -136,13 +136,6 @@ unsigned long get_board_ddr_clk(void);
 #define CFG_LPUART_EN		0x2
 #endif
 
-/* USB */
-#define CONFIG_HAS_FSL_XHCI_USB
-#ifdef CONFIG_HAS_FSL_XHCI_USB
-#define CONFIG_USB_XHCI_FSL
-#define CONFIG_USB_MAX_CONTROLLER_COUNT         3
-#endif
-
 /* SATA */
 #define CONFIG_LIBATA
 #define CONFIG_SCSI_AHCI
@@ -435,7 +428,7 @@ unsigned long get_board_ddr_clk(void);
 
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_ENV_SIZE			0x2000
-#define CONFIG_ENV_OFFSET		(24 * CONFIG_SYS_NAND_BLOCK_SIZE)
+#define CONFIG_ENV_OFFSET		(12 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #elif defined(CONFIG_SD_BOOT)
 #define CONFIG_ENV_OFFSET		(3 * 1024 * 1024)
 #define CONFIG_SYS_MMC_ENV_DEV		0
@@ -459,23 +452,6 @@ unsigned long get_board_ddr_clk(void);
 #else
 #define CONFIG_BOOTCOMMAND		"cp.b $kernel_start $kernel_load "     \
 					"$kernel_size && bootm $kernel_load"
-#endif
-
-#if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
-#define MTDPARTS_DEFAULT "mtdparts=1550000.quadspi:2m(uboot)," \
-			"14m(free)"
-#else
-#define MTDPARTS_DEFAULT "mtdparts=60000000.nor:" \
-			"2m@0x100000(nor_bank0_uboot),"\
-			"40m@0x1100000(nor_bank0_fit)," \
-			"7m(nor_bank0_user)," \
-			"2m@0x4100000(nor_bank4_uboot)," \
-			"40m@0x5100000(nor_bank4_fit),"\
-			"-(nor_bank4_user);" \
-			"7e800000.flash:" \
-			"4m(nand_uboot),36m(nand_kernel)," \
-			"472m(nand_free);spi0.0:2m(uboot)," \
-			"14m(free)"
 #endif
 
 #include <asm/fsl_secure_boot.h>

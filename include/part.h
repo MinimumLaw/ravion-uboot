@@ -98,6 +98,12 @@ int host_get_dev_err(int dev, struct blk_desc **blk_devp);
 
 /* disk/part.c */
 int part_get_info(struct blk_desc *dev_desc, int part, disk_partition_t *info);
+/**
+ * part_get_info_whole_disk() - get partition info for the special case of
+ * a partition occupying the entire disk.
+ */
+int part_get_info_whole_disk(struct blk_desc *dev_desc, disk_partition_t *info);
+
 void part_print(struct blk_desc *dev_desc);
 void part_init(struct blk_desc *dev_desc);
 void dev_print(struct blk_desc *dev_desc);
@@ -168,6 +174,21 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 			    disk_partition_t *info, int allow_whole_dev);
 
 /**
+ * part_get_info_by_name_type() - Search for a partition by name
+ *                                for only specified partition type
+ *
+ * @param dev_desc - block device descriptor
+ * @param gpt_name - the specified table entry name
+ * @param info - returns the disk partition info
+ * @param part_type - only search in partitions of this type
+ *
+ * @return - the partition number on match (starting on 1), -1 on no match,
+ * otherwise error
+ */
+int part_get_info_by_name_type(struct blk_desc *dev_desc, const char *name,
+			       disk_partition_t *info, int part_type);
+
+/**
  * part_get_info_by_name() - Search for a partition by name
  *                           among all available registered partitions
  *
@@ -203,6 +224,9 @@ static inline struct blk_desc *mg_disk_get_dev(int dev) { return NULL; }
 
 static inline int part_get_info(struct blk_desc *dev_desc, int part,
 				disk_partition_t *info) { return -1; }
+static inline int part_get_info_whole_disk(struct blk_desc *dev_desc,
+					   disk_partition_t *info)
+{ return -1; }
 static inline void part_print(struct blk_desc *dev_desc) {}
 static inline void part_init(struct blk_desc *dev_desc) {}
 static inline void dev_print(struct blk_desc *dev_desc) {}
@@ -271,8 +295,9 @@ struct part_driver {
 #define U_BOOT_PART_TYPE(__name)					\
 	ll_entry_declare(struct part_driver, __name, part_driver)
 
-#if CONFIG_IS_ENABLED(EFI_PARTITION)
 #include <part_efi.h>
+
+#if CONFIG_IS_ENABLED(EFI_PARTITION)
 /* disk/part_efi.c */
 /**
  * write_gpt_table() - Write the GUID Partition Table to disk

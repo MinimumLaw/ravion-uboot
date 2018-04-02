@@ -41,6 +41,9 @@
 #define PPA_SERV_HAL_SETUP_EMIF_FW_REGION   (PPA_HAL_SERVICES_START_INDEX + 26)
 #define PPA_SERV_HAL_LOCK_EMIF_FW           (PPA_HAL_SERVICES_START_INDEX + 27)
 
+/* Offset of header size if image is signed as ISW */
+#define HEADER_SIZE_OFFSET	(0x6D)
+
 int tee_loaded = 0;
 
 /* Argument for PPA_SERV_HAL_TEE_LOAD_MASTER */
@@ -125,6 +128,9 @@ int secure_boot_verify_image(void **image, size_t *size)
 	}
 
 	*size = sig_addr - cert_addr;	/* Subtract out the signature size */
+	/* Subtract header if present */
+	if (strncmp((char *)sig_addr, "CERT_ISW_", 9) == 0)
+		*size = ((u32 *)*image)[HEADER_SIZE_OFFSET];
 	cert_size = *size;
 
 	/* Check if image load address is 32-bit aligned */
@@ -305,12 +311,8 @@ int secure_tee_install(u32 addr)
 
 	if ((hdr->magic != OPTEE_MAGIC) ||
 	    (hdr->version != OPTEE_VERSION) ||
-	    (hdr->init_load_addr_hi != 0) ||
-	    (hdr->init_load_addr_lo < (sec_mem_start + sizeof(struct optee_header))) ||
-	    (tee_file_size > size) ||
-	    ((hdr->init_load_addr_lo + tee_file_size - 1) >
-	     (sec_mem_start + size - 1))) {
-		printf("Error in TEE header. Check load address and sizes\n");
+	    (tee_file_size > size)) {
+		printf("Error in TEE header. Check firewall and TEE sizes\n");
 		unmap_sysmem(hdr);
 		return CMD_RET_FAILURE;
 	}

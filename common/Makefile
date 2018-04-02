@@ -63,7 +63,7 @@ obj-$(CONFIG_CMDLINE) += cli_readline.o cli_simple.o
 
 endif # !CONFIG_SPL_BUILD
 
-obj-$(CONFIG_$(SPL_)BOOTSTAGE) += bootstage.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTSTAGE) += bootstage.o
 
 ifdef CONFIG_SPL_BUILD
 obj-$(CONFIG_SPL_DFU_SUPPORT) += dfu.o
@@ -103,7 +103,7 @@ obj-y += image.o
 obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += image-fdt.o
 obj-$(CONFIG_$(SPL_TPL_)FIT) += image-fit.o
-obj-$(CONFIG_FIT_EMBED) += boot_fit.o common_fit.o
+obj-$(CONFIG_$(SPL_)MULTI_DTB_FIT) += boot_fit.o common_fit.o
 obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += image-sig.o
 obj-$(CONFIG_IO_TRACE) += iotrace.o
 obj-y += memsize.o

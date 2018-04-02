@@ -51,15 +51,6 @@
  *  linux               64 * NAND_BLOCK_SIZE = 8 MiB
  *  rootfs              remainder
  */
-#define MTDIDS_DEFAULT "nand0=omap2-nand.0"
-#define MTDPARTS_DEFAULT "mtdparts=omap2-nand.0:"	\
-	"512k(xloader),"				\
-	"1792k(u-boot),"				\
-	"256k(environ),"				\
-	"8m(linux),"					\
-	"-(rootfs)"
-#else /* CONFIG_NAND */
-#define MTDPARTS_DEFAULT
 #endif /* CONFIG_NAND */
 
 /* Board NAND Info. */
@@ -82,7 +73,7 @@
 	"mmcrootfstype=ext4 rootwait\0" \
 	"nandroot=ubi0:rootfs ubi.mtd=4\0" \
 	"nandrootfstype=ubifs\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"${optargs} " \
 		"mpurate=${mpurate} " \
@@ -175,25 +166,15 @@
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
 #define ONENAND_ENV_OFFSET		0x240000 /* environment starts here */
-#define SMNAND_ENV_OFFSET		0x240000 /* environment starts here */
-
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
-
-/* Configure SMSC9211 ethernet */
-#if defined(CONFIG_CMD_NET)
-#define CONFIG_SMC911X
-#define CONFIG_SMC911X_32_BIT
-#define CONFIG_SMC911X_BASE		0x2C000000
-#endif /* (CONFIG_CMD_NET) */
+#define CONFIG_ENV_OFFSET		0x240000
+#define CONFIG_ENV_ADDR			0x240000
 
 /* Initial RAM setup */
 #define CONFIG_SYS_INIT_RAM_ADDR	0x4020f800
 #define CONFIG_SYS_INIT_RAM_SIZE	0x800
 
 /* NAND boot config */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_MAX_ECCPOS  56
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT	64

@@ -13,7 +13,6 @@ CONFIG_BOARD_EARLY_INIT_F=y
 CONFIG_SYS_PROMPT="u-boot-pm9263> "
 # CONFIG_CMD_BDI is not set
 # CONFIG_CMD_IMI is not set
-# CONFIG_CMD_IMLS is not set
 # CONFIG_CMD_FPGA is not set
 # CONFIG_CMD_LOADS is not set
 CONFIG_CMD_NAND=y
@@ -24,6 +23,8 @@ CONFIG_CMD_DHCP=y
 CONFIG_CMD_PING=y
 CONFIG_CMD_CACHE=y
 CONFIG_CMD_JFFS2=y
+CONFIG_MTDIDS_DEFAULT="nor0=physmap-flash.0,nand0=nand"
+CONFIG_MTDPARTS_DEFAULT="mtdparts=physmap-flash.0:256k(u-boot)ro,64k(u-boot-env)ro,1408k(kernel),-(rootfs);nand:-(nand)"
 CONFIG_OF_CONTROL=y
 CONFIG_ENV_IS_IN_FLASH=y
 CONFIG_DM=y

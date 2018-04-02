@@ -277,7 +277,6 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
-#define CONFIG_IPUV3_CLK 260000000
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
@@ -299,5 +298,20 @@
 #define CONFIG_SYS_I2C_MXC_I2C1
 #define CONFIG_SYS_I2C_MXC_I2C2
 #define CONFIG_SYS_I2C_MXC_I2C3
+
+#define CONFIG_SYS_NUM_I2C_BUSES        9
+#define CONFIG_SYS_I2C_MAX_HOPS         1
+#define CONFIG_SYS_I2C_BUSES	{	{0, {I2C_NULL_HOP} }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 0} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 1} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 2} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 3} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 4} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 5} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 6} } }, \
+					{0, {{I2C_MUX_PCA9547, 0x70, 7} } }, \
+				}
+
+#define CONFIG_BCH
 
 #endif	/* __GE_BX50V3_CONFIG_H */

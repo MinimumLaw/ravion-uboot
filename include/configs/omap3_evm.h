@@ -48,10 +48,8 @@
 
 /* NAND */
 #if defined(CONFIG_NAND)
-#define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_FLASH_BASE		NAND_BASE
 #define CONFIG_SYS_MAX_NAND_DEVICE      1
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT      64
 #define CONFIG_SYS_NAND_PAGE_SIZE       2048
@@ -66,10 +64,9 @@
 #define CONFIG_SYS_NAND_U_BOOT_OFFS     0x80000
 #define CONFIG_ENV_IS_IN_NAND           1
 #define CONFIG_ENV_SIZE                 (128 << 10) /* 128 KiB */
-#define SMNAND_ENV_OFFSET               0x260000    /* environment starts here */
 #define CONFIG_SYS_ENV_SECT_SIZE        (128 << 10) /* 128 KiB */
-#define CONFIG_ENV_OFFSET               SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR                 SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET               0x260000
+#define CONFIG_ENV_ADDR                 0x260000
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_MTD_PARTITIONS           /* required for UBI partition support */
 /* NAND: SPL falcon mode configs */
@@ -82,17 +79,9 @@
 #define CONFIG_USB_OMAP3
 #define CONFIG_USB_MUSB_OMAP2PLUS
 #define CONFIG_USB_MUSB_PIO_ONLY
-#define CONFIG_USB_ETHER
 
 /* USB EHCI */
 #define CONFIG_SYS_USB_FAT_BOOT_PARTITION  1
-
-/* SMSC911x Ethernet */
-#if defined(CONFIG_CMD_NET)
-#define CONFIG_SMC911X
-#define CONFIG_SMC911X_32_BIT
-#define CONFIG_SMC911X_BASE             0x2C000000
-#endif /* CONFIG_CMD_NET */
 
 /* Environment */
 #define CONFIG_PREBOOT                  "usb start"

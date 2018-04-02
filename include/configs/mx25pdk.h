@@ -11,7 +11,6 @@
 
 /* High Level Configuration Options */
 
-#define CONFIG_MX25
 #define CONFIG_SYS_TEXT_BASE		0x81200000
 #define CONFIG_MXC_GPIO
 #define CONFIG_SYS_FSL_CLK
@@ -58,8 +57,6 @@
 #define CONFIG_ENV_SIZE        (8 * 1024)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 
-#define CONFIG_SYS_MMC_ENV_DEV 0
-
 /* U-Boot general configuration */
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE	1024	/* Console I/O Buffer Size  */
@@ -69,6 +66,9 @@
 #define CONFIG_SYS_LONGHELP
 
 /* U-Boot commands */
+
+/* Filesystem support */
+#define CONFIG_FS_EXT4
 
 /* Ethernet */
 #define CONFIG_FEC_MXC
@@ -138,11 +138,11 @@
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
-		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
+		"load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
-	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
-	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
+	"loadimage=load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
+	"loadfdt=load mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \

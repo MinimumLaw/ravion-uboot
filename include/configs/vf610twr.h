@@ -40,14 +40,6 @@
 /* Dynamic MTD partition support */
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_MTD_DEVICE
-#define MTDIDS_DEFAULT			"nand0=fsl_nfc"
-#define MTDPARTS_DEFAULT		"mtdparts=fsl_nfc:"		\
-					"128k(vf-bcb)ro,"		\
-					"1408k(u-boot)ro,"		\
-					"512k(u-boot-env),"		\
-					"4m(kernel),"			\
-					"512k(fdt),"		\
-					"-(rootfs)"
 #endif
 
 #define CONFIG_FSL_ESDHC
@@ -79,8 +71,8 @@
 #define CONFIG_SYS_LOAD_ADDR		0x82000000
 
 /* We boot from the gfxRAM area of the OCRAM. */
-#define CONFIG_SYS_TEXT_BASE		0x3f408000
-#define CONFIG_BOARD_SIZE_LIMIT		524288
+#define CONFIG_SYS_TEXT_BASE		0x3f401000
+#define CONFIG_BOARD_SIZE_LIMIT		520192
 
 /*
  * We do have 128MB of memory on the Vybrid Tower board. Leave the last

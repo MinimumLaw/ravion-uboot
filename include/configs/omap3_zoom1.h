@@ -48,11 +48,6 @@
 #define CONFIG_USBD_MANUFACTURER	"Texas Instruments"
 #define CONFIG_USBD_PRODUCT_NAME	"Zoom1"
 
-#define MTDIDS_DEFAULT			"nand0=nand"
-#define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
-					"1920k(u-boot),128k(u-boot-env),"\
-					"4m(kernel),-(fs)"
-
 #if defined(CONFIG_CMD_NAND)
 /* NAND: SPL falcon mode configs */
 #ifdef CONFIG_SPL_OS_BOOT
@@ -73,7 +68,6 @@
 #define CONFIG_SYS_NAND_BASE		NAND_BASE	/* physical address */
 							/* to access nand at */
 							/* CS0 */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 
 /* Environment information */
 
@@ -149,18 +143,9 @@
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
 #define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
-
-#ifdef CONFIG_CMD_NET
-/* Ethernet (LAN9211 from SMSC9118 family) */
-#define CONFIG_SMC911X
-#define CONFIG_SMC911X_32_BIT
-#define CONFIG_SMC911X_BASE		DEBUG_BASE
-
-#endif
+#define CONFIG_ENV_OFFSET		0x260000
+#define CONFIG_ENV_ADDR			0x260000
 
 #endif				/* __CONFIG_H */

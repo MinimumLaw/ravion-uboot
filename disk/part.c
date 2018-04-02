@@ -21,6 +21,9 @@
 #define PRINTF(fmt,args...)
 #endif
 
+/* Check all partition types */
+#define PART_TYPE_ALL		-1
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef HAVE_BLOCK_DEVICE
@@ -331,6 +334,24 @@ int part_get_info(struct blk_desc *dev_desc, int part,
 	return -1;
 }
 
+int part_get_info_whole_disk(struct blk_desc *dev_desc, disk_partition_t *info)
+{
+	info->start = 0;
+	info->size = dev_desc->lba;
+	info->blksz = dev_desc->blksz;
+	info->bootable = 0;
+	strcpy((char *)info->type, BOOT_PART_TYPE);
+	strcpy((char *)info->name, "Whole Disk");
+#if CONFIG_IS_ENABLED(PARTITION_UUIDS)
+	info->uuid[0] = 0;
+#endif
+#ifdef CONFIG_PARTITION_TYPE_GUID
+	info->type_guid[0] = 0;
+#endif
+
+	return 0;
+}
+
 int blk_get_device_by_str(const char *ifname, const char *dev_hwpart_str,
 			  struct blk_desc **dev_desc)
 {
@@ -523,18 +544,7 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 
 		(*dev_desc)->log2blksz = LOG2((*dev_desc)->blksz);
 
-		info->start = 0;
-		info->size = (*dev_desc)->lba;
-		info->blksz = (*dev_desc)->blksz;
-		info->bootable = 0;
-		strcpy((char *)info->type, BOOT_PART_TYPE);
-		strcpy((char *)info->name, "Whole Disk");
-#if CONFIG_IS_ENABLED(PARTITION_UUIDS)
-		info->uuid[0] = 0;
-#endif
-#ifdef CONFIG_PARTITION_TYPE_GUID
-		info->type_guid[0] = 0;
-#endif
+		part_get_info_whole_disk(*dev_desc, info);
 
 		ret = 0;
 		goto cleanup;
@@ -619,8 +629,8 @@ cleanup:
 	return ret;
 }
 
-int part_get_info_by_name(struct blk_desc *dev_desc, const char *name,
-	disk_partition_t *info)
+int part_get_info_by_name_type(struct blk_desc *dev_desc, const char *name,
+			       disk_partition_t *info, int part_type)
 {
 	struct part_driver *first_drv =
 		ll_entry_start(struct part_driver, part_driver);
@@ -631,6 +641,8 @@ int part_get_info_by_name(struct blk_desc *dev_desc, const char *name,
 		int ret;
 		int i;
 		for (i = 1; i < part_drv->max_entries; i++) {
+			if (part_type >= 0 && part_type != part_drv->part_type)
+				break;
 			ret = part_drv->get_info(dev_desc, i, info);
 			if (ret != 0) {
 				/* no more entries in table */
@@ -643,6 +655,12 @@ int part_get_info_by_name(struct blk_desc *dev_desc, const char *name,
 		}
 	}
 	return -1;
+}
+
+int part_get_info_by_name(struct blk_desc *dev_desc, const char *name,
+			  disk_partition_t *info)
+{
+	return part_get_info_by_name_type(dev_desc, name, info, PART_TYPE_ALL);
 }
 
 void part_set_generic_name(const struct blk_desc *dev_desc,

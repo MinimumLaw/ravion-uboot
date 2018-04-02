@@ -129,14 +129,6 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_FLASH_CFI_MTD
 #define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT		"nand0=mxc_nand,nor0=physmap-flash.0"
-#define MTDPARTS_DEFAULT	"mtdparts=mxc_nand:50m(root1)," \
-				"32m(rootfb)," \
-				"64m(pcache)," \
-				"64m(app1)," \
-				"10m(app2),-(spool);" \
-				"physmap-flash.0:512k(u-boot),64k(env1)," \
-				"64k(env2),3776k(kernel1),3776k(kernel2)"
 
 /*
  * FLASH and environment organization
@@ -171,7 +163,6 @@
 /*
  * NAND FLASH driver setup
  */
-#define CONFIG_NAND_MXC
 #define CONFIG_NAND_MXC_V1_1
 #define CONFIG_MXC_NAND_REGS_BASE	(NFC_BASE_ADDR)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
@@ -179,10 +170,6 @@
 #define CONFIG_MXC_NAND_HWECC
 #define CONFIG_SYS_NAND_LARGEPAGE
 
-#if 0
-#define CONFIG_MTD_DEBUG
-#define CONFIG_MTD_DEBUG_VERBOSE	7
-#endif
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 
 /*

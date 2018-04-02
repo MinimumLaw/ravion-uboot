@@ -94,7 +94,6 @@
 #if defined(CONFIG_CMD_NET) && !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 #define CONFIG_DW_ALTDESCRIPTOR
 #define CONFIG_MII
-#define CONFIG_AUTONEG_TIMEOUT		(15 * CONFIG_SYS_HZ)
 #endif
 
 /*
@@ -142,12 +141,10 @@
  */
 #ifdef CONFIG_NAND_DENALI
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_MAX_CHIPS	1
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_NAND_DENALI_ECC_SIZE	512
 #define CONFIG_SYS_NAND_REGS_BASE	SOCFPGA_NANDREGS_ADDRESS
 #define CONFIG_SYS_NAND_DATA_BASE	SOCFPGA_NANDDATA_ADDRESS
-#define CONFIG_SYS_NAND_BASE		(CONFIG_SYS_NAND_DATA_BASE + 0x10)
 #endif
 
 /*
@@ -182,7 +179,6 @@ unsigned int cm_get_l4_sp_clk_hz(void);
 #define CONFIG_SPI_FLASH_MTD
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT			"nor0=ff705000.spi.0"
 #endif
 /* QSPI reference clock */
 #ifndef __ASSEMBLY__
@@ -262,15 +258,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * 5: rootfs              0x01000000      0x01000000      0
  *
  */
-#if defined(CONFIG_CMD_SF) && !defined(MTDPARTS_DEFAULT)
-#define MTDPARTS_DEFAULT	"mtdparts=ff705000.spi.0:"\
-				"1m(u-boot),"		\
-				"256k(env1),"		\
-				"256k(env2),"		\
-				"14848k(boot),"		\
-				"16m(rootfs),"		\
-				"-@1536k(UBI)\0"
-#endif
 
 /*
  * SPL

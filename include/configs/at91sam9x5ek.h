@@ -9,15 +9,11 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#include <asm/hardware.h>
-
 #define CONFIG_SYS_TEXT_BASE		0x26f00000
 
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
 #define CONFIG_SYS_AT91_MAIN_CLOCK	12000000	/* 12 MHz crystal */
-
-#define CONFIG_AT91SAM9X5EK
 
 #define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -26,16 +22,6 @@
 
 /* general purpose I/O */
 #define CONFIG_ATMEL_LEGACY		/* required until (g)pio is fixed */
-
-/* LCD */
-#define LCD_BPP			LCD_COLOR16
-#define LCD_OUTPUT_BPP		24
-#define CONFIG_LCD_LOGO
-#define CONFIG_LCD_INFO
-#define CONFIG_LCD_INFO_BELOW_LOGO
-#define CONFIG_ATMEL_HLCD
-#define CONFIG_ATMEL_LCD_RGB565
-
 
 /*
  * BOOTP options
@@ -104,7 +90,7 @@
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_SYS_MEMTEST_END		0x26e00000
 
-#ifdef CONFIG_SYS_USE_NANDFLASH
+#ifdef CONFIG_NAND_BOOT
 /* bootstrap + u-boot + env + linux in nandflash */
 #define CONFIG_ENV_OFFSET		0x120000
 #define CONFIG_ENV_OFFSET_REDUND	0x100000
@@ -112,7 +98,7 @@
 #define CONFIG_BOOTCOMMAND	"nand read " \
 				"0x22000000 0x200000 0x300000; " \
 				"bootm 0x22000000"
-#elif defined(CONFIG_SYS_USE_SPIFLASH)
+#elif defined(CONFIG_SPI_BOOT)
 /* bootstrap + u-boot + env + linux in spi flash */
 #define CONFIG_ENV_OFFSET	0x5000
 #define CONFIG_ENV_SIZE		0x3000
@@ -130,7 +116,7 @@
 #define CONFIG_BOOTCOMMAND	"sf probe 0; " \
 				"sf read 0x22000000 0x84000 0x294000; " \
 				"bootm 0x22000000"
-#else /* CONFIG_SYS_USE_MMC */
+#else /* CONFIG_SD_BOOT */
 /* bootstrap + u-boot + env + linux in mmc */
 #define CONFIG_ENV_SIZE		0x4000
 #endif
@@ -162,13 +148,18 @@
 #define CONFIG_SYS_MCKR			0x1301
 #define CONFIG_SYS_MCKR_CSS		0x1302
 
-#ifdef CONFIG_SYS_USE_MMC
+#ifdef CONFIG_SD_BOOT
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
 
-#elif CONFIG_SYS_USE_NANDFLASH
+#elif CONFIG_SPI_BOOT
+#define CONFIG_SPL_SPI_LOAD
+#define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8400
+
+#elif CONFIG_NAND_BOOT
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_BASE
+#endif
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x40000
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_SIZE	0x800
@@ -177,11 +168,5 @@
 #define CONFIG_SYS_NAND_BLOCK_SIZE	0x20000
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS	0x0
 #define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
-
-#elif CONFIG_SYS_USE_SPIFLASH
-#define CONFIG_SPL_SPI_LOAD
-#define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8400
-
-#endif
 
 #endif

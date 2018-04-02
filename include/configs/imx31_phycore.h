@@ -49,10 +49,6 @@
  * Command definition
  ***********************************************************/
 
-
-#define MTDPARTS_DEFAULT	"mtdparts=physmap-flash.0:128k(uboot)ro," \
-					"1536k(kernel),-(root)"
-
 #define CONFIG_NETMASK		255.255.255.0
 #define CONFIG_IPADDR		192.168.23.168
 #define CONFIG_SERVERIP		192.168.23.2
@@ -70,7 +66,7 @@
 	"bootcmd_flash=run bootargs_base bootargs_mtd bootargs_flash;"	\
 		"bootm 0x80000000\0"					\
 	"unlock=yes\0"							\
-	"mtdparts=" MTDPARTS_DEFAULT "\0"				\
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0"				\
 	"prg_uboot=tftpboot 0x80000000 $(uboot);"			\
 		"protect off 0xa0000000 +0x20000;"			\
 		"erase 0xa0000000 +0x20000;"				\
@@ -84,10 +80,6 @@
 	"videomode=video=ctfb:x:240,y:320,depth:16,mode:0,"		\
 		"pclk:185925,le:9,ri:17,up:7,lo:10,hs:1,vs:1,"		\
 		"sync:1241513985,vmode:0\0"
-
-#define CONFIG_SMC911X
-#define CONFIG_SMC911X_BASE	0xa8000000
-#define CONFIG_SMC911X_32_BIT
 
 /*
  * Miscellaneous configurable options

@@ -17,8 +17,6 @@
  * High Level Configuration Options
  */
 
-#define CONFIG_SDRC			/* Has an SDRC controller */
-
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
 
@@ -63,10 +61,6 @@
 
 /* commands to include */
 #define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
-#define MTDIDS_DEFAULT			"nand0=nand"
-#define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
-					"1920k(u-boot),128k(u-boot-env),"\
-					"4m(kernel),-(fs)"
 
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_OMAP24_I2C_SPEED	100000
@@ -81,7 +75,6 @@
 /*
  * Board NAND Info.
  */
-#define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
 #define CONFIG_SYS_NAND_BASE		NAND_BASE	/* physical address */
@@ -90,7 +83,6 @@
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1		/* Max number of NAND */
 							/* devices */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 /* Environment information */
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -192,10 +184,9 @@
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
 #define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x260000
 #define CONFIG_ENV_ADDR			CONFIG_ENV_OFFSET
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
@@ -215,11 +206,8 @@
 /* USB EHCI */
 #define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	162
 
-#define CONFIG_USB_ETHER
-
 /* Defines for SPL */
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_NAND_SIMPLE
 
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"

@@ -71,7 +71,6 @@
 #endif /* CONFIG_SPL_OS_BOOT */
 
 #ifdef CONFIG_NAND
-#define CONFIG_SPL_NAND_AM33XX_BCH	/* OMAP4 and later ELM support */
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS
 #define CONFIG_SPL_NAND_ECC
@@ -84,8 +83,8 @@
 
 #ifdef CONFIG_NAND
 #define NANDARGS \
-	"mtdids=" MTDIDS_DEFAULT "\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"${optargs} " \
 		"${optargs_rot} " \
@@ -184,9 +183,7 @@ MMCARGS
  */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x8000000
-#define CONFIG_NAND_OMAP_GPMC
 /* don't change OMAP_ELM, ECCSCHEME. ROM code only supports this */
-#define CONFIG_NAND_OMAP_ELM
 #define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_BCH8_CODE_HW
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(128*1024)
@@ -209,16 +206,6 @@ MMCARGS
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000
 
-#define MTDIDS_DEFAULT			"nand0=omap2-nand.0"
-#define MTDPARTS_DEFAULT		"mtdparts=omap2-nand.0:" \
-					"128k(MLO)," \
-					"128k(MLO.backup)," \
-					"128k(dtb)," \
-					"128k(u-boot-env)," \
-					"512k(u-boot)," \
-					"4m(kernel),"\
-					"128m(rootfs),"\
-					"-(user)"
 #define CONFIG_NAND_OMAP_GPMC_WSCFG	1
 #endif /* CONFIG_NAND */
 

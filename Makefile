@@ -3,7 +3,7 @@
 #
 
 VERSION = 2017
-PATCHLEVEL = 09
+PATCHLEVEL = 11
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -349,7 +349,7 @@ OBJDUMP		= $(CROSS_COMPILE)objdump
 AWK		= awk
 PERL		= perl
 PYTHON		?= python
-DTC		?= dtc
+DTC		?= $(objtree)/scripts/dtc/dtc
 CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
@@ -360,6 +360,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__ -D__UBOOT__
 KBUILD_CFLAGS   := -Wall -Wstrict-prototypes \
 		   -Wno-format-security \
 		   -fno-builtin -ffreestanding
+KBUILD_CFLAGS	+= -fshort-wchar
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 
 # Read UBOOTRELEASE from include/config/uboot.release (if it exists)
@@ -795,7 +796,7 @@ ALL-$(CONFIG_REMAKE_ELF) += u-boot.elf
 ALL-$(CONFIG_EFI_APP) += u-boot-app.efi
 ALL-$(CONFIG_EFI_STUB) += u-boot-payload.efi
 
-ifneq ($(BUILD_ROM),)
+ifneq ($(BUILD_ROM)$(CONFIG_BUILD_ROM),)
 ALL-$(CONFIG_X86_RESET_VECTOR) += u-boot.rom
 endif
 
@@ -871,13 +872,13 @@ endif
 PHONY += dtbs
 dtbs: dts/dt.dtb
 	@:
-dts/dt.dtb: checkdtc u-boot
+dts/dt.dtb: u-boot
 	$(Q)$(MAKE) $(build)=dts dtbs
 
 quiet_cmd_copy = COPY    $@
       cmd_copy = cp $< $@
 
-ifeq ($(CONFIG_FIT_EMBED),y)
+ifeq ($(CONFIG_MULTI_DTB_FIT),y)
 
 fit-dtb.blob: dts/dt.dtb FORCE
 	$(call if_changed,mkimage)
@@ -1445,12 +1446,6 @@ SYSTEM_MAP = \
 		LC_ALL=C sort
 System.map:	u-boot
 		@$(call SYSTEM_MAP,$<) > $@
-
-checkdtc:
-	@if test $(call dtc-version) -lt 0104; then \
-		echo '*** Your dtc is too old, please upgrade to dtc 1.4 or newer'; \
-		false; \
-	fi
 
 #########################################################################
 

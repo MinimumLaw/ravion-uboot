@@ -16,7 +16,6 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_EMIF4	/* The chip has EMIF4 controller */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
@@ -206,12 +205,9 @@
 /* Monitor at start of flash */
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 
-#define CONFIG_NAND_OMAP_GPMC
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
-
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB sector */
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x260000
+#define CONFIG_ENV_ADDR			0x260000
 
 /*-----------------------------------------------------------------------
  * CFI FLASH driver setup
@@ -237,7 +233,6 @@
 
 /* Defines for SPL */
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_NAND_SIMPLE
 #define CONFIG_SPL_TEXT_BASE		0x40200800
 #define CONFIG_SPL_MAX_SIZE		(SRAM_SCRATCH_SPACE_ADDR - \
 					 CONFIG_SPL_TEXT_BASE)
@@ -253,7 +248,6 @@
 #define CONFIG_SPL_NAND_ECC
 
 /* NAND boot config */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT	64
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048

@@ -22,7 +22,7 @@
 #if (defined(CONFIG_SPL_BUILD) && defined(CONFIG_NAND_BOOT))
 #define SPL_NO_MMC
 #endif
-#if (defined(CONFIG_SPL_BUILD) && defined(CONFIG_SD_BOOT))
+#if (defined(CONFIG_SPL_BUILD) && defined(CONFIG_SD_BOOT_QSPI))
 #define SPL_NO_IFC
 #endif
 
@@ -73,10 +73,10 @@
 #define CONFIG_SPL_STACK		0x1001e000
 #define CONFIG_SPL_PAD_TO		0x1d000
 
-#define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_TEXT_BASE + \
-					CONFIG_SYS_MONITOR_LEN)
+#define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SPL_BSS_START_ADDR + \
+					CONFIG_SPL_BSS_MAX_SIZE)
 #define CONFIG_SYS_SPL_MALLOC_SIZE	0x100000
-#define CONFIG_SPL_BSS_START_ADDR	0x80100000
+#define CONFIG_SPL_BSS_START_ADDR	0x8f000000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000
 
 #ifdef CONFIG_SECURE_BOOT
@@ -165,7 +165,6 @@
 #define CONFIG_PCIE3		/* PCIE controller 3 */
 
 #ifdef CONFIG_PCI
-#define CONFIG_NET_MULTI
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 #endif
@@ -239,23 +238,6 @@
 #define HWCONFIG_BUFFER_SIZE		128
 
 #ifndef SPL_NO_MISC
-#if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
-#define MTDPARTS_DEFAULT "mtdparts=spi0.0:1m(uboot)," \
-			"5m(kernel),1m(dtb),9m(file_system)"
-#else
-#define MTDPARTS_DEFAULT "mtdparts=60000000.nor:" \
-			"2m@0x100000(nor_bank0_uboot),"\
-			"40m@0x1100000(nor_bank0_fit)," \
-			"7m(nor_bank0_user)," \
-			"2m@0x4100000(nor_bank4_uboot)," \
-			"40m@0x5100000(nor_bank4_fit),"\
-			"-(nor_bank4_user);" \
-			"7e800000.flash:" \
-			"1m(nand_uboot),1m(nand_uboot_env)," \
-			"20m(nand_fit);spi0.0:1m(uboot)," \
-			"5m(kernel),1m(dtb),9m(file_system)"
-#endif
-
 #include <config_distro_defaults.h>
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
@@ -280,7 +262,8 @@
 	"load_addr=0xa0000000\0"		\
 	"kernel_size=0x2800000\0"		\
 	"console=ttyS0,115200\0"		\
-	"mtdparts=" MTDPARTS_DEFAULT "\0"	\
+	"boot_os=y\0"				\
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0"	\
 	BOOTENV					\
 	"boot_scripts=ls1043ardb_boot.scr\0"	\
 	"boot_script_hdr=hdr_ls1043ardb_bs.out\0"	\

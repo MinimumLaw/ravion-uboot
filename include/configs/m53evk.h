@@ -75,7 +75,6 @@
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		NFC_BASE_ADDR_AXI
-#define CONFIG_NAND_MXC
 #define CONFIG_MXC_NAND_REGS_BASE	NFC_BASE_ADDR_AXI
 #define CONFIG_MXC_NAND_IP_REGS_BASE	NFC_BASE_ADDR
 #define CONFIG_SYS_NAND_LARGEPAGE
@@ -92,15 +91,6 @@
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
-#define MTDIDS_DEFAULT			"nand0=mxc_nand"
-#define MTDPARTS_DEFAULT			\
-	"mtdparts=mxc_nand:"			\
-		"1024k(u-boot),"		\
-		"512k(env1),"			\
-		"512k(env2),"			\
-		"14m(boot),"			\
-		"240m(data),"			\
-		"-@2048k(UBI)"
 #endif
 
 /*
@@ -172,7 +162,6 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(2 << 20)
-#define CONFIG_IPUV3_CLK		200000000
 #endif
 
 /*

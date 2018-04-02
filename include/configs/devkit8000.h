@@ -67,13 +67,6 @@
 #define CONFIG_TWL4030_LED		1
 
 /* Board NAND Info */
-#define MTDIDS_DEFAULT			"nand0=nand"
-#define MTDPARTS_DEFAULT		"mtdparts=nand:" \
-						"512k(x-loader)," \
-						"1920k(u-boot)," \
-						"128k(u-boot-env)," \
-						"4m(kernel)," \
-						"-(fs)"
 
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
@@ -174,9 +167,8 @@
 					0x01000000) /* 16MB */
 
 /* NAND and environment organization  */
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x260000
 
 /* SRAM config */
 #define CONFIG_SYS_SRAM_START              0x40200000
@@ -188,7 +180,6 @@
 #define CONFIG_SPL_TEXT_BASE		0x40200000 /*CONFIG_SYS_SRAM_START*/
 
 /* NAND boot config */
-#define CONFIG_SYS_NAND_BUSWIDTH_16BIT
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT	64
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048

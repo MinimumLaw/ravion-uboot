@@ -13,6 +13,7 @@
 #include "mx6_common.h"
 
 #include "imx6_spl.h"
+#define CONFIG_DISPLAY_BOARDINFO_LATE
 
 #define CONFIG_MACH_TYPE		MACH_TYPE_WANDBOARD_IMX6
 
@@ -44,6 +45,12 @@
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		100000
 
+/* PMIC */
+#define CONFIG_POWER
+#define CONFIG_POWER_I2C
+#define CONFIG_POWER_PFUZE100
+#define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
+
 /* MMC Configuration */
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
@@ -71,7 +78,6 @@
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
-#define CONFIG_IPUV3_CLK 260000000
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
@@ -103,6 +109,12 @@
 			"fi; "	\
 		"fi\0" \
 	"findfdt="\
+		"if test $board_name = D1 && test $board_rev = MX6QP ; then " \
+			"setenv fdtfile imx6qp-wandboard-revd1.dtb; fi; " \
+		"if test $board_name = D1 && test $board_rev = MX6Q ; then " \
+			"setenv fdtfile imx6q-wandboard-revd1.dtb; fi; " \
+		"if test $board_name = D1 && test $board_rev = MX6DL ; then " \
+			"setenv fdtfile imx6dl-wandboard-revd1.dtb; fi; " \
 		"if test $board_name = C1 && test $board_rev = MX6Q ; then " \
 			"setenv fdtfile imx6q-wandboard.dtb; fi; " \
 		"if test $board_name = C1 && test $board_rev = MX6DL ; then " \
