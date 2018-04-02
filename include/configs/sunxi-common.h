@@ -64,7 +64,6 @@
 #define SDRAM_OFFSET(x) 0x2##x
 #define CONFIG_SYS_SDRAM_BASE		0x20000000
 #define CONFIG_SYS_LOAD_ADDR		0x22000000 /* default load address */
-#define CONFIG_SYS_TEXT_BASE		0x2a000000
 /* Note SPL_STACK_R_ADDR is set through Kconfig, we include it here 
  * since it needs to fit in with the other values. By also #defining it
  * we get warnings if the Kconfig value mismatches. */
@@ -75,11 +74,6 @@
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define CONFIG_SYS_LOAD_ADDR		0x42000000 /* default load address */
 /* V3s do not have enough memory to place code at 0x4a000000 */
-#ifndef CONFIG_MACH_SUN8I_V3S
-#define CONFIG_SYS_TEXT_BASE		0x4a000000
-#else
-#define CONFIG_SYS_TEXT_BASE		0x42e00000
-#endif
 /* Note SPL_STACK_R_ADDR is set through Kconfig, we include it here 
  * since it needs to fit in with the other values. By also #defining it
  * we get warnings if the Kconfig value mismatches. */
@@ -147,6 +141,16 @@
 #endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
+
+#ifdef CONFIG_ARM64
+/*
+ * This is actually (CONFIG_ENV_OFFSET -
+ * (CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)), but the value will be used
+ * directly in a makefile, without the preprocessor expansion.
+ */
+#define CONFIG_BOARD_SIZE_LIMIT		0x7e000
+#endif
+
 #if CONFIG_MMC_SUNXI_SLOT_EXTRA != -1
 /* If we have two devices (most likely eMMC + MMC), favour the eMMC */
 #define CONFIG_SYS_MMC_ENV_DEV		1
@@ -179,8 +183,6 @@
 /* FLASH and environment organization */
 
 #define CONFIG_SYS_MONITOR_LEN		(768 << 10)	/* 768 KiB */
-
-#define CONFIG_SPL_FRAMEWORK
 
 #ifndef CONFIG_ARM64		/* AArch64 FEL support is not ready yet */
 #define CONFIG_SPL_BOARD_LOAD_IMAGE
@@ -302,14 +304,6 @@ extern int soft_i2c_gpio_scl;
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS 1
 #endif
 
-#ifdef CONFIG_USB_MUSB_SUNXI
-#define CONFIG_USB_MUSB_PIO_ONLY
-#endif
-
-#ifdef CONFIG_USB_MUSB_GADGET
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
-#endif
-
 #ifdef CONFIG_USB_FUNCTION_MASS_STORAGE
 #endif
 
@@ -320,7 +314,6 @@ extern int soft_i2c_gpio_scl;
 #define CONFIG_MISC_INIT_R
 
 #ifndef CONFIG_SPL_BUILD
-#include <config_distro_defaults.h>
 
 #ifdef CONFIG_ARM64
 /*

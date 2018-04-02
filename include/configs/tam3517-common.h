@@ -14,8 +14,6 @@
  * High Level Configuration Options
  */
 
-#define CONFIG_SYS_TEXT_BASE 0x80008000
-
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
 
@@ -67,8 +65,6 @@
 #define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	25
 
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	400000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x50		/* base address */
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1		/* bytes of address */
 #define CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW	0x07
@@ -83,14 +79,9 @@
 #define CONFIG_SYS_MAX_NAND_DEVICE	1		/* Max number of */
 							/* NAND devices */
 
-#define CONFIG_AUTO_COMPLETE
-
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
 
 #define CONFIG_SYS_MAXARGS		32	/* max number of command */
@@ -146,13 +137,11 @@
 #define CONFIG_DRIVER_TI_EMAC
 #define CONFIG_DRIVER_TI_EMAC_USE_RMII
 #define CONFIG_MII
-#define CONFIG_BOOTP_DNS
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT 10
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_CONSOLE
 #define CONFIG_SPL_NAND_SOFTECC
 #define CONFIG_SPL_NAND_WORKSPACE	0x8f07f000 /* below BSS */

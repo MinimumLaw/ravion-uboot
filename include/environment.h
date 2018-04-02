@@ -188,6 +188,7 @@ enum env_valid {
 };
 
 enum env_location {
+	ENVL_UNKNOWN,
 	ENVL_EEPROM,
 	ENVL_EXT4,
 	ENVL_FAT,
@@ -202,23 +203,19 @@ enum env_location {
 	ENVL_NOWHERE,
 
 	ENVL_COUNT,
-	ENVL_UNKNOWN,
+};
+
+/* value for the various operations we want to perform on the env */
+enum env_operation {
+	ENVOP_GET_CHAR,	/* we want to call the get_char function */
+	ENVOP_INIT,	/* we want to call the init function */
+	ENVOP_LOAD,	/* we want to call the load function */
+	ENVOP_SAVE,	/* we want to call the save function */
 };
 
 struct env_driver {
 	const char *name;
 	enum env_location location;
-
-	/**
-	 * get_char() - Read a character from the environment
-	 *
-	 * This method is optional. If not provided, a default implementation
-	 * will read from gd->env_addr.
-	 *
-	 * @index: Index of character to read (0=first)
-	 * @return character read, or -ve on error
-	 */
-	int (*get_char)(int index);
 
 	/**
 	 * load() - Load the environment from storage
@@ -289,15 +286,9 @@ int env_export(env_t *env_out);
 
 #ifdef CONFIG_SYS_REDUNDAND_ENVIRONMENT
 /* Select and import one of two redundant environments */
-int env_import_redund(const char *buf1, const char *buf2);
+int env_import_redund(const char *buf1, int buf1_status,
+		      const char *buf2, int buf2_status);
 #endif
-
-/**
- * env_driver_lookup_default() - Look up the default environment driver
- *
- * @return pointer to driver, or NULL if none (which should not happen)
- */
-struct env_driver *env_driver_lookup_default(void);
 
 /**
  * env_get_char() - Get a character from the early environment

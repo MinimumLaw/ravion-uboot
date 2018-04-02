@@ -11,7 +11,6 @@
 
 #include <asm/arch/imx-regs.h>
 
-#include <config_distro_defaults.h>
 #include "mx6_common.h"
 
 /*
@@ -30,16 +29,12 @@
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.imx"
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
-#define CONFIG_SUPPORT_RAW_INITRD	/* bootz raw initrd support */
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_BZIP2
 
@@ -47,8 +42,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(4 * SZ_1M)
 
 /* Bootcounter */
-#define CONFIG_BOOTCOUNT_LIMIT
-#define CONFIG_SYS_BOOTCOUNT_ADDR	IRAM_BASE_ADDR
 #define CONFIG_SYS_BOOTCOUNT_BE
 
 /* FEC ethernet */
@@ -63,9 +56,6 @@
 #ifdef CONFIG_CMD_FUSE
 #define CONFIG_MXC_OCOTP
 #endif
-
-/* GPIO */
-#define CONFIG_MXC_GPIO
 
 /* I2C Configs */
 #define CONFIG_SYS_I2C
@@ -92,7 +82,6 @@
 
 /* SPI Flash Configs */
 #ifdef CONFIG_CMD_SF
-#define CONFIG_MXC_SPI
 #define CONFIG_SF_DEFAULT_BUS		0
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		25000000
@@ -116,8 +105,6 @@
 
 /* USB Gadget (DFU, UMS) */
 #if defined(CONFIG_CMD_DFU) || defined(CONFIG_CMD_USB_MASS_STORAGE)
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
-
 #define CONFIG_SYS_DFU_DATA_BUF_SIZE	(16 * 1024 * 1024)
 #define DFU_DEFAULT_POLL_TIMEOUT	300
 
@@ -135,7 +122,6 @@
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 
-#define CONFIG_SYS_TEXT_BASE		0x17800000
 #define CONFIG_LOADADDR			0x12000000
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 

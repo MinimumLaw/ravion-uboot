@@ -29,7 +29,6 @@
 
 #define CONFIG_MISC_INIT_R
 #define CONFIG_BOARD_LATE_INIT
-#define CONFIG_MXC_GPIO
 #define CONFIG_REVISION_TAG
 
 #define CONFIG_MXC_UART
@@ -39,8 +38,6 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_ESDHC_NUM	2
-
-#define CONFIG_SUPPORT_RAW_INITRD	/* bootz raw initrd support */
 
 /* Eth Configs */
 #define CONFIG_MII
@@ -84,12 +81,10 @@
 #define CONFIG_BAUDRATE			115200
 
 /* Command definition */
-#define CONFIG_SUPPORT_RAW_INITRD
 
 #define CONFIG_ETHPRIME		"FEC0"
 
 #define CONFIG_LOADADDR		0x72000000	/* loadaddr env var */
-#define CONFIG_SYS_TEXT_BASE    0x77800000
 
 #define PPD_CONFIG_NFS \
 	"nfsserver=192.168.252.95\0" \
@@ -176,8 +171,6 @@
 #define CONFIG_ARP_TIMEOUT	200UL
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 
 #define CONFIG_SYS_MAXARGS	48	/* max number of command args */
@@ -187,8 +180,6 @@
 #define CONFIG_SYS_MEMTEST_END         0x70010000
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-
-#define CONFIG_CMDLINE_EDITING
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS	2
@@ -233,8 +224,6 @@
 				}
 
 #define CONFIG_BCH
-
-#define CONFIG_BOOTCOUNT_LIMIT
 
 /* Backlight Control */
 #define CONFIG_PWM_IMX

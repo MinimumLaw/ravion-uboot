@@ -10,7 +10,6 @@
 #include <linux/sizes.h>
 
 /* Physical memory map */
-#define CONFIG_SYS_TEXT_BASE		0x00000000
 
 #define CONFIG_NR_DRAM_BANKS		1
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
@@ -19,9 +18,6 @@
 #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + SZ_2M)
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + SZ_2M)
 #define CONFIG_SYS_MALLOC_LEN		SZ_16M
-
-/* QEMU's PL011 serial port is detected via FDT using the device model */
-#define CONFIG_PL01X_SERIAL
 
 /* QEMU implements a 62.5MHz architected timer */
 /* FIXME: can we rely on CNTFREQ instead of hardcoding this fact here? */
@@ -34,8 +30,6 @@
 
 /* Environment options */
 #define CONFIG_ENV_SIZE				SZ_64K
-
-#include <config_distro_defaults.h>
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(SCSI, scsi, 0)
@@ -52,5 +46,7 @@
 	"kernel_addr_r=0x40400000\0" \
 	"ramdisk_addr_r=0x44000000\0" \
 	BOOTENV
+
+#define CONFIG_SYS_CBSIZE 512
 
 #endif /* __CONFIG_H */

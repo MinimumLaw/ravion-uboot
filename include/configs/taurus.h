@@ -33,8 +33,6 @@
  * hex number here!
  */
 
-#define CONFIG_SYS_TEXT_BASE		0x21000000
-
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768		/* slow clock xtal */
 #define CONFIG_SYS_AT91_MAIN_CLOCK	18432000	/* main clock xtal */
@@ -143,10 +141,6 @@
 #define CONFIG_ENV_SIZE		(SZ_128K)	/* 1 sector = 128 kB */
 #define CONFIG_BOOTCOMMAND	"nand read 0x22000000 0x200000 0x300000; bootm"
 
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
-
 /*
  * Size of malloc() pool
  */
@@ -154,7 +148,6 @@
 	ROUND(3 * CONFIG_ENV_SIZE + SZ_4M, 0x1000)
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x0
 #define CONFIG_SPL_MAX_SIZE		(31 * SZ_512)
 #define	CONFIG_SPL_STACK		(ATMEL_BASE_SRAM1 + SZ_16K)

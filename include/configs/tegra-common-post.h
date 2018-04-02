@@ -11,7 +11,7 @@
 /*
  * Size of malloc() pool
  */
-#ifdef CONFIG_USB_FUNCTION_DFU
+#ifdef CONFIG_DFU_OVER_USB
 #define CONFIG_SYS_MALLOC_LEN	(SZ_4M + \
 					CONFIG_SYS_DFU_DATA_BUF_SIZE + \
 					CONFIG_SYS_DFU_MAX_FILE_SIZE)
@@ -111,11 +111,6 @@
 #undef CONFIG_SYS_I2C_TEGRA
 #endif
 #ifdef CONFIG_CMD_I2C
-#endif
-
-/* remove partitions/filesystems */
-#ifdef CONFIG_FS_EXT4
-#undef CONFIG_FS_EXT4
 #endif
 
 /* remove USB */

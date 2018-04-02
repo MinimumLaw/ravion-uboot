@@ -407,7 +407,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	timer_init();
 #endif
 
-#ifdef CONFIG_SPL_BOARD_INIT
+#if CONFIG_IS_ENABLED(BOARD_INIT)
 	spl_board_init();
 #endif
 
@@ -477,8 +477,10 @@ void preloader_console_init(void)
 
 	gd->have_console = 1;
 
+#ifndef CONFIG_SPL_DISABLE_BANNER_PRINT
 	puts("\nU-Boot SPL " PLAIN_VERSION " (" U_BOOT_DATE " - " \
-			U_BOOT_TIME ")\n");
+			U_BOOT_TIME " " U_BOOT_TZ ")\n");
+#endif
 #ifdef CONFIG_SPL_DISPLAY_PRINT
 	spl_display_print();
 #endif

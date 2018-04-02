@@ -18,10 +18,6 @@
 #define CONFIG_SYS_FORM_3U_VPX	1
 #define CONFIG_BOARD_EARLY_INIT_R	/* Call board_pre_init */
 
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE	0xfff80000
-#endif
-
 #define CONFIG_PCI_SCAN_SHOW	1	/* show pci devices on startup */
 #define CONFIG_PCIE1		1	/* PCIE controller 1 */
 #define CONFIG_PCIE2		1	/* PCIE controller 2 */
@@ -336,10 +332,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
-#define CONFIG_CMDLINE_EDITING	1		/* add command line history	*/
-#define CONFIG_AUTO_COMPLETE	1		/* add autocompletion support */
 #define CONFIG_LOADADDR		0x1000000	/* default location for tftp and bootm */
 #define CONFIG_PREBOOT				/* enable preboot variable */
 #define CONFIG_INTEGRITY			/* support booting INTEGRITY OS */

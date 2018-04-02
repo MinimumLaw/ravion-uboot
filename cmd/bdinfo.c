@@ -377,6 +377,8 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	print_bi_dram(bd);
 
+	print_num("relocaddr", gd->relocaddr);
+	print_num("reloc off", gd->reloc_off);
 #if defined(CONFIG_CMD_NET)
 	print_eth_ip_addr();
 	print_mhz("ethspeed",	    bd->bi_ethspeed);
@@ -409,6 +411,21 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	bd_t *bd = gd->bd;
 
 	print_num("arch_number",	bd->bi_arch_number);
+	print_bi_boot_params(bd);
+	print_bi_dram(bd);
+	print_eth_ip_addr();
+	print_baudrate();
+
+	return 0;
+}
+
+#elif defined(CONFIG_RISCV)
+
+int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	bd_t *bd = gd->bd;
+
+	print_num("arch_number", bd->bi_arch_number);
 	print_bi_boot_params(bd);
 	print_bi_dram(bd);
 	print_eth_ip_addr();

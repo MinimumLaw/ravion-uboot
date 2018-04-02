@@ -10,16 +10,12 @@
 #define __AP_SH4A_4A_H
 
 #define CONFIG_CPU_SH7734	1
-#define CONFIG_AP_SH4A_4A	1
 #define CONFIG_400MHZ_MODE	1
-
-#define CONFIG_SYS_TEXT_BASE 0x8BFC0000
 
 #define CONFIG_DISPLAY_BOARDINFO
 #undef  CONFIG_SHOW_BOOT_PROGRESS
 
 /* Ether */
-#define CONFIG_SH_ETHER 1
 #define CONFIG_SH_ETHER_USE_PORT (0)
 #define CONFIG_SH_ETHER_PHY_ADDR (0x0)
 #define CONFIG_SH_ETHER_PHY_MODE (PHY_INTERFACE_MODE_GMII)
@@ -28,7 +24,6 @@
 #define CONFIG_BITBANGMII_MULTI
 
 /* undef to save memory	*/
-#define CONFIG_SYS_LONGHELP
 /* Monitor Command Prompt */
 /* Buffer size for Console output */
 #define CONFIG_SYS_PBSIZE		256

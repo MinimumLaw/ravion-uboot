@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <malloc.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <dm/device.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
@@ -266,6 +266,17 @@ static int dm_scan_fdt_node(struct udevice *parent, const void *blob,
 	for (offset = fdt_first_subnode(blob, offset);
 	     offset > 0;
 	     offset = fdt_next_subnode(blob, offset)) {
+		/* "chosen" node isn't a device itself but may contain some: */
+		if (!strcmp(fdt_get_name(blob, offset, NULL), "chosen")) {
+			pr_debug("parsing subnodes of \"chosen\"\n");
+
+			err = dm_scan_fdt_node(parent, blob, offset,
+					       pre_reloc_only);
+			if (err && !ret)
+				ret = err;
+			continue;
+		}
+
 		if (pre_reloc_only &&
 		    !dm_fdt_pre_reloc(blob, offset))
 			continue;

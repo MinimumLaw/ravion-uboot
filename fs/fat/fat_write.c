@@ -819,8 +819,7 @@ static dir_entry *find_directory_entry(fsdata *mydata, int startsect,
 				continue;
 			}
 			if ((dentptr->attr & ATTR_VOLUME)) {
-				if (vfat_enabled &&
-				    (dentptr->attr & ATTR_VFAT) &&
+				if ((dentptr->attr & ATTR_VFAT) &&
 				    (dentptr->name[0] & LAST_LONG_ENTRY_MASK)) {
 					get_long_file_name(mydata, curclust,
 						     get_dentfromdir_block,
@@ -842,8 +841,8 @@ static dir_entry *find_directory_entry(fsdata *mydata, int startsect,
 
 			get_name(dentptr, s_name);
 
-			if (strcmp(filename, s_name)
-			    && strcmp(filename, l_name)) {
+			if (strncasecmp(filename, s_name, sizeof(s_name)) &&
+			    strncasecmp(filename, l_name, sizeof(l_name))) {
 				debug("Mismatch: |%s|%s|\n",
 					s_name, l_name);
 				dentptr++;

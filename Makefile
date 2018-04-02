@@ -3,7 +3,7 @@
 #
 
 VERSION = 2018
-PATCHLEVEL = 01
+PATCHLEVEL = 03
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -811,12 +811,16 @@ ifneq ($(CONFIG_BUILD_TARGET),)
 ALL-y += $(CONFIG_BUILD_TARGET:"%"=%)
 endif
 
+ifneq ($(CONFIG_SYS_INIT_SP_BSS_OFFSET),)
+ALL-y += init_sp_bss_offset_check
+endif
+
 LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 
 # Avoid 'Not enough room for program headers' error on binutils 2.28 onwards.
 LDFLAGS_u-boot += $(call ld-option, --no-dynamic-linker)
 
-ifneq ($(CONFIG_SYS_TEXT_BASE),)
+ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
 LDFLAGS_u-boot += -Ttext $(CONFIG_SYS_TEXT_BASE)
 endif
 
@@ -922,6 +926,16 @@ OBJCOPYFLAGS_u-boot.srec := -O srec
 u-boot.hex u-boot.srec: u-boot FORCE
 	$(call if_changed,objcopy)
 
+OBJCOPYFLAGS_u-boot-elf.srec := $(OBJCOPYFLAGS_u-boot.srec)
+
+u-boot-elf.srec: u-boot.elf FORCE
+	$(call if_changed,objcopy)
+
+OBJCOPYFLAGS_u-boot-spl.srec = $(OBJCOPYFLAGS_u-boot.srec)
+
+spl/u-boot-spl.srec: spl/u-boot-spl FORCE
+	$(call if_changed,objcopy)
+
 OBJCOPYFLAGS_u-boot-nodtb.bin := -O binary \
 		$(if $(CONFIG_X86_16BIT_INIT),-R .start16 -R .resetvec)
 
@@ -938,6 +952,33 @@ binary_size_check: u-boot-nodtb.bin FORCE
 			exit 1; \
 		fi \
 	fi
+
+ifneq ($(CONFIG_SYS_INIT_SP_BSS_OFFSET),)
+ifneq ($(CONFIG_SYS_MALLOC_F_LEN),)
+subtract_sys_malloc_f_len = space=$$(($${space} - $(CONFIG_SYS_MALLOC_F_LEN)))
+else
+subtract_sys_malloc_f_len = true
+endif
+# The 1/4 margin below is somewhat arbitrary. The likely initial SP usage is
+# so low that the DTB could probably use 90%+ of the available space, for
+# current values of CONFIG_SYS_INIT_SP_BSS_OFFSET at least. However, let's be
+# safe for now and tweak this later if space becomes tight.
+# A rejected alternative would be to check that some absolute minimum stack
+# space was available. However, since CONFIG_SYS_INIT_SP_BSS_OFFSET is
+# deliberately build-specific, to take account of build-to-build stack usage
+# differences due to different feature sets, there is no common absolute value
+# to check against.
+init_sp_bss_offset_check: u-boot.dtb FORCE
+	@dtb_size=$(shell wc -c u-boot.dtb | awk '{print $$1}') ; \
+	space=$(CONFIG_SYS_INIT_SP_BSS_OFFSET) ; \
+	$(subtract_sys_malloc_f_len) ; \
+	quarter_space=$$(($${space} / 4)) ; \
+	if [ $${dtb_size} -gt $${quarter_space} ]; then \
+		echo "u-boot.dtb is larger than 1 quarter of " >&2 ; \
+		echo "(CONFIG_SYS_INIT_SP_BSS_OFFSET - CONFIG_SYS_MALLOC_F_LEN)" >&2 ; \
+		exit 1 ; \
+	fi
+endif
 
 u-boot-nodtb.bin: u-boot FORCE
 	$(call if_changed,objcopy)
@@ -1022,6 +1063,7 @@ u-boot-dtb.img u-boot.img u-boot.kwb u-boot.pbl u-boot-ivt.img: \
 
 u-boot.itb: u-boot-nodtb.bin dts/dt.dtb $(U_BOOT_ITS) FORCE
 	$(call if_changed,mkfitimage)
+	$(BOARD_SIZE_CHECK)
 
 u-boot-spl.kwb: u-boot.img spl/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
@@ -1262,6 +1304,10 @@ u-boot:	$(u-boot-init) $(u-boot-main) u-boot.lds FORCE
 ifeq ($(CONFIG_KALLSYMS),y)
 	$(call cmd,smap)
 	$(call cmd,u-boot__) common/system_map.o
+endif
+
+ifeq ($(CONFIG_RISCV),y)
+	@tools/prelink-riscv $@ 0
 endif
 
 quiet_cmd_sym ?= SYM     $@

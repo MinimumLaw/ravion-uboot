@@ -12,7 +12,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_PB1X00		1
 #define CONFIG_SOC_AU1X00	1  /* alchemy series cpu */
 
 #ifdef CONFIG_PB1000
@@ -44,7 +43,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define	CONFIG_SYS_LONGHELP				/* undef to save memory      */
 
 #define CONFIG_SYS_MALLOC_LEN		128*1024
 
@@ -133,9 +131,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /*
  * Command line configuration.

@@ -63,8 +63,6 @@
 #define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
 
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 #define CONFIG_I2C_MULTI_BUS
 
 /*
@@ -139,11 +137,8 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 
 /* turn on command-line edit/hist/auto */
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_ALT_MEMTEST		1
 #define CONFIG_SYS_MEMTEST_START	(0x82000000)		/* memtest */
@@ -153,7 +148,6 @@
 
 #define CONFIG_SYS_LOAD_ADDR		(OMAP34XX_SDRC_CS0)	/* default */
 							/* load address */
-#define CONFIG_SYS_TEXT_BASE		0x80008000
 
 /*
  * OMAP3 has 12 GP timers, they can be driven by the system clock
@@ -207,7 +201,6 @@
 #define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	162
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"
@@ -245,7 +238,6 @@
  * older x-loader implementations. And move the BSS area so that it
  * doesn't overlap with TEXT_BASE.
  */
-#define CONFIG_SYS_TEXT_BASE		0x80008000
 #define CONFIG_SPL_BSS_START_ADDR	0x80100000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000		/* 512 KB */
 

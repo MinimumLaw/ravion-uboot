@@ -10,15 +10,11 @@
 #include <common.h>
 #include <dm.h>
 #include <fdtdec.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <malloc.h>
 #include <sdhci.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-#ifndef CONFIG_ZYNQ_SDHCI_MIN_FREQ
-# define CONFIG_ZYNQ_SDHCI_MIN_FREQ	0
-#endif
 
 struct arasan_sdhci_plat {
 	struct mmc_config cfg;

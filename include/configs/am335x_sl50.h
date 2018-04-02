@@ -30,8 +30,6 @@
 
 #ifndef CONFIG_SPL_BUILD
 
-#include <config_distro_defaults.h>
-
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"scriptaddr=0x80000000\0" \
 	"pxefile_addr_r=0x80100000\0" \
@@ -74,11 +72,9 @@
 /* SPL */
 
 /* Bootcount using the RTC block */
-#define CONFIG_BOOTCOUNT_LIMIT
-#define CONFIG_BOOTCOUNT_AM33XX
 #define CONFIG_SYS_BOOTCOUNT_BE
 
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_USBETH_SUPPORT)
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_USB_ETHER)
 /* Remove other SPL modes. */
 /* disable host part of MUSB in SPL */
 #undef CONFIG_MUSB_HOST

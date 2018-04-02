@@ -10,7 +10,6 @@
 #define __MS7722SE_H
 
 #define CONFIG_CPU_SH7722	1
-#define CONFIG_MS7722SE		1
 
 #define CONFIG_DISPLAY_BOARDINFO
 #undef  CONFIG_SHOW_BOOT_PROGRESS
@@ -24,8 +23,6 @@
 #define MS7722SE_FLASH_BASE_1	(0xA0000000)
 #define MS7722SE_FLASH_BANK_SIZE	(8*1024 * 1024)
 
-#define CONFIG_SYS_TEXT_BASE	0x8FFC0000
-#define CONFIG_SYS_LONGHELP				/* undef to save memory	*/
 #define CONFIG_SYS_PBSIZE		256		/* Buffer size for Console output */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 115200 }	/* List of legal baudrate settings for this board */
 

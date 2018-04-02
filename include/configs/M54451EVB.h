@@ -33,9 +33,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /* Network configuration */
 #define CONFIG_MCFFEC
@@ -119,7 +116,6 @@
 #define CONFIG_SYS_IMMR			CONFIG_SYS_MBAR
 
 /* DSPI and Serial Flash */
-#define CONFIG_CF_SPI
 #define CONFIG_CF_DSPI
 #define CONFIG_SERIAL_FLASH
 #define CONFIG_HARD_SPI
@@ -141,8 +137,6 @@
 #define CONFIG_EXTRA_CLOCK
 
 #define CONFIG_PRAM			2048	/* 2048 KB */
-
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size    */
 

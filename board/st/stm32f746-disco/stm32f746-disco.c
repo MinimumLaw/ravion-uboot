@@ -69,24 +69,10 @@ int dram_init_banksize(void)
 	return 0;
 }
 
-#ifdef CONFIG_ETH_DESIGNWARE
-static int stmmac_setup(void)
-{
-	clock_setup(SYSCFG_CLOCK_CFG);
-	/* Set >RMII mode */
-	STM32_SYSCFG->pmc |= SYSCFG_PMC_MII_RMII_SEL;
-	clock_setup(STMMAC_CLOCK_CFG);
-
-	return 0;
-}
-
 int board_early_init_f(void)
 {
-	stmmac_setup();
-
 	return 0;
 }
-#endif
 
 #ifdef CONFIG_SPL_BUILD
 #ifdef CONFIG_SPL_OS_BOOT
@@ -163,5 +149,11 @@ int board_late_init(void)
 int board_init(void)
 {
 	gd->bd->bi_boot_params = gd->bd->bi_dram[0].start + 0x100;
+
+#ifdef CONFIG_ETH_DESIGNWARE
+	/* Set >RMII mode */
+	STM32_SYSCFG->pmc |= SYSCFG_PMC_MII_RMII_SEL;
+#endif
+
 	return 0;
 }

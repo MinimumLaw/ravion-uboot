@@ -10,8 +10,6 @@
 #ifndef __AT91_SAMA5_COMMON_H
 #define __AT91_SAMA5_COMMON_H
 
-#define CONFIG_SYS_TEXT_BASE		0x26f00000
-
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_SLOW_CLOCK      32768
 #define CONFIG_SYS_AT91_MAIN_CLOCK      12000000 /* from 12 MHz crystal */
@@ -21,8 +19,6 @@
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #endif
-
-#define CONFIG_ENV_VARS_UBOOT_CONFIG
 
 /* general purpose I/O */
 #ifndef CONFIG_DM_GPIO
@@ -34,9 +30,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /*
  * Command line configuration.
@@ -83,10 +76,6 @@
 #endif
 
 #endif
-
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)

@@ -8,8 +8,6 @@
 #ifndef _CONFIG_KMP204X_H
 #define _CONFIG_KMP204X_H
 
-#define CONFIG_SYS_TEXT_BASE	0xfff40000
-
 #define CONFIG_KM_DEF_NETDEV	"netdev=eth0\0"
 
 /* an additionnal option is required for UBI as subpage access is
@@ -190,10 +188,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_BR1_PRELIM  CONFIG_SYS_QRIO_BR_PRELIM /* QRIO Base Address */
 #define CONFIG_SYS_OR1_PRELIM  CONFIG_SYS_QRIO_OR_PRELIM /* QRIO Options */
 
-/* bootcounter in QRIO */
-#define CONFIG_BOOTCOUNT_LIMIT
-#define CONFIG_SYS_BOOTCOUNT_ADDR	(CONFIG_SYS_QRIO_BASE + 0x20)
-
 #define CONFIG_BOARD_EARLY_INIT_R	/* call board_early_init_r function */
 #define CONFIG_MISC_INIT_F
 #define CONFIG_MISC_INIT_R
@@ -296,7 +290,6 @@ int get_scl(void);
 #define CONFIG_SYS_PCIE3_IO_SIZE	0x00010000	/* 64k */
 
 /* Qman/Bman */
-#define CONFIG_SYS_DPAA_QBMAN		/* Support Q/Bman */
 #define CONFIG_SYS_BMAN_NUM_PORTALS	10
 #define CONFIG_SYS_BMAN_MEM_BASE	0xf4000000
 #define CONFIG_SYS_BMAN_MEM_PHYS	0xff4000000ull

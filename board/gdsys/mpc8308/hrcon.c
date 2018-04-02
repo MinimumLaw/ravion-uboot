@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2014
- * Dirk Eibach,  Guntermann & Drunck GmbH, eibach@gdsys.de
+ * Dirk Eibach,  Guntermann & Drunck GmbH, dirk.eibach@gdsys.cc
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -9,7 +9,7 @@
 #include <hwconfig.h>
 #include <i2c.h>
 #include <spi.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <pci.h>
 #include <mpc83xx.h>

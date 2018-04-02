@@ -27,8 +27,6 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
 
-#define CONFIG_MXC_GPIO
-
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
@@ -163,5 +161,15 @@
 #define CONFIG_IOMUX_LPSR
 
 #define CONFIG_SOFT_SPI
+
+#ifdef CONFIG_FSL_QSPI
+#define CONFIG_SYS_FSL_QSPI_AHB
+#define CONFIG_SF_DEFAULT_BUS		0
+#define CONFIG_SF_DEFAULT_CS		0
+#define CONFIG_SF_DEFAULT_SPEED	40000000
+#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
+#define FSL_QSPI_FLASH_NUM		1
+#define FSL_QSPI_FLASH_SIZE		SZ_32M
+#endif
 
 #endif

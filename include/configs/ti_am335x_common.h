@@ -30,23 +30,13 @@
 
 #ifndef CONFIG_SPL_BUILD
 /* Network defines. */
-#define CONFIG_BOOTP_DNS		/* Configurable parts of CMD_DHCP */
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_NET_RETRY_COUNT         10
 #define CONFIG_MII			/* Required in net/eth.c */
 #endif
 
 #define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
-/*
- * RTC related defines. To use bootcount you must set bootlimit in the
- * environment to a non-zero value and enable CONFIG_BOOTCOUNT_LIMIT
- * in the board config.
- */
-#define CONFIG_SYS_BOOTCOUNT_ADDR	0x44E3E000
-
 /*
  * SPL related defines.  The Public RAM memory map the ROM defines the
  * area between 0x402F0400 and 0x4030B800 as a download area and

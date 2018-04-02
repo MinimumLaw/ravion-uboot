@@ -10,16 +10,9 @@
 #define __KOELSCH_H
 
 #undef DEBUG
-#define CONFIG_R8A7791
 #define CONFIG_ARCH_RMOBILE_BOARD_STRING "Koelsch"
 
 #include "rcar-gen2-common.h"
-
-#if defined(CONFIG_ARCH_RMOBILE_EXTRAM_BOOT)
-#define CONFIG_SYS_TEXT_BASE	0x70000000
-#else
-#define CONFIG_SYS_TEXT_BASE	0xE6304000
-#endif
 
 /* STACK */
 #if defined(CONFIG_ARCH_RMOBILE_EXTRAM_BOOT)
@@ -41,10 +34,8 @@
 
 /* FLASH */
 #define CONFIG_SPI
-#define CONFIG_SH_QSPI
 
 /* SH Ether */
-#define CONFIG_SH_ETHER
 #define CONFIG_SH_ETHER_USE_PORT	0
 #define CONFIG_SH_ETHER_PHY_ADDR	0x1
 #define CONFIG_SH_ETHER_PHY_MODE PHY_INTERFACE_MODE_RMII

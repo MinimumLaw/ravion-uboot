@@ -26,7 +26,6 @@
 #define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs */
 
 /* Environment */
-#define CONFIG_ENV_VARS_UBOOT_CONFIG
 #define CONFIG_ENV_SIZE			0x2000	/* Total Size Environment */
 
 /*
@@ -50,7 +49,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 /* turn on command-line edit/hist/auto */
-#define CONFIG_CMDLINE_EDITING
 
 /*
  * Increasing the size of the IO buffer as default nfsargs size is more
@@ -78,23 +76,22 @@
 
 #define CONFIG_SYS_BOOTMAPSZ	(256 << 20)	/* 256M */
 
+#ifndef CONFIG_ARM64
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_STACKBASE
 #define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_MALLOC_LEN
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
 						CONFIG_SYS_INIT_RAM_SIZE - \
 						GENERATED_GBL_DATA_SIZE)
+#endif
 
+#ifndef CONFIG_ARM64
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_MAX_FOOTPRINT	(CONFIG_SYS_TEXT_BASE - \
 						CONFIG_SPL_TEXT_BASE)
 #define CONFIG_SYS_SPL_MALLOC_SIZE	0x00010000
+#endif
 
 /* Misc utility code */
 #define CONFIG_BOUNCE_BUFFER
-
-#ifndef CONFIG_SPL_BUILD
-#include <config_distro_defaults.h>
-#endif
 
 #endif /* _TEGRA_COMMON_H_ */

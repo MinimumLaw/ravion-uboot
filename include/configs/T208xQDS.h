@@ -39,7 +39,6 @@
 
 #define CONFIG_SPL_FLUSH_IMAGE
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
-#define CONFIG_SYS_TEXT_BASE		0x00201000
 #define CONFIG_SPL_TEXT_BASE		0xFFFD8000
 #define CONFIG_SPL_PAD_TO		0x40000
 #define CONFIG_SPL_MAX_SIZE		0x28000
@@ -86,7 +85,6 @@
 
 #ifdef CONFIG_SDCARD
 #define	CONFIG_RESET_VECTOR_ADDRESS		0x200FFC
-#define CONFIG_SPL_MMC_MINIMAL
 #define CONFIG_SYS_MMC_U_BOOT_SIZE	(768 << 10)
 #define CONFIG_SYS_MMC_U_BOOT_DST	(0x00200000)
 #define CONFIG_SYS_MMC_U_BOOT_START	(0x00200000)
@@ -112,10 +110,6 @@
 #define CONFIG_SYS_SRIO_PCIE_BOOT_SLAVE_ADDR_PHYS \
 		(0x300000000ull | CONFIG_SYS_SRIO_PCIE_BOOT_SLAVE_ADDR)
 #define CONFIG_RESET_VECTOR_ADDRESS 0xfffffffc
-#endif
-
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE	0xeff40000
 #endif
 
 #ifndef CONFIG_RESET_VECTOR_ADDRESS
@@ -534,7 +528,7 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_PCIE2		/* PCIE controller 2 */
 #define CONFIG_PCIE3		/* PCIE controller 3 */
 #define CONFIG_PCIE4		/* PCIE controller 4 */
-#define CONFIG_FSL_PCIE_RESET
+#define CONFIG_FSL_PCIE_RESET   /* pcie reset fix link width 2x-4x*/
 #define CONFIG_FSL_PCI_INIT	/* Use common FSL init code */
 #define CONFIG_SYS_PCI_64BIT	/* enable 64-bit PCI resources */
 /* controller 1, direct to uli, tgtid 3, Base address 20000 */
@@ -578,13 +572,11 @@ unsigned long get_board_ddr_clk(void);
 
 #ifdef CONFIG_PCI
 #define CONFIG_PCI_INDIRECT_BRIDGE
-#define CONFIG_FSL_PCIE_RESET	   /* need PCIe reset errata */
 #define CONFIG_PCI_SCAN_SHOW	/* show pci devices on startup */
 #endif
 
 /* Qman/Bman */
 #ifndef CONFIG_NOBQFMAN
-#define CONFIG_SYS_DPAA_QBMAN		/* Support Q/Bman */
 #define CONFIG_SYS_BMAN_NUM_PORTALS	18
 #define CONFIG_SYS_BMAN_MEM_BASE	0xf4000000
 #define CONFIG_SYS_BMAN_MEM_PHYS	0xff4000000ull
@@ -727,9 +719,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_CMDLINE_EDITING		/* Command-line editing */
-#define CONFIG_AUTO_COMPLETE		/* add autocompletion support */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000 /* default load address */
 
 /*

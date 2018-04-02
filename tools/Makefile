@@ -57,15 +57,17 @@ mkenvimage-objs := mkenvimage.o os_support.o lib/crc32.o
 hostprogs-y += dumpimage mkimage
 hostprogs-$(CONFIG_FIT_SIGNATURE) += fit_info fit_check_sign
 
+hostprogs-$(CONFIG_CMD_BOOTEFI_SELFTEST) += file2include
+
 FIT_SIG_OBJS-$(CONFIG_FIT_SIGNATURE) := common/image-sig.o
 
 # The following files are synced with upstream DTC.
 # Use synced versions from scripts/dtc/libfdt/.
-LIBFDT_SRCS_SYNCED := fdt.c fdt_wip.c fdt_sw.c fdt_strerror.c fdt_empty_tree.c \
-		      fdt_addresses.c fdt_overlay.c
+LIBFDT_SRCS_SYNCED := fdt.c fdt_wip.c fdt_sw.c fdt_rw.c \
+		fdt_strerror.c fdt_empty_tree.c fdt_addresses.c fdt_overlay.c
 # The following files are locally modified for U-Boot (unfotunately).
 # Use U-Boot own versions from lib/libfdt/.
-LIBFDT_SRCS_UNSYNCED := fdt_ro.c fdt_rw.c fdt_region.c
+LIBFDT_SRCS_UNSYNCED := fdt_ro.c fdt_region.c
 
 LIBFDT_OBJS := $(addprefix libfdt/, $(patsubst %.c, %.o, $(LIBFDT_SRCS_SYNCED))) \
 	       $(addprefix lib/libfdt/, $(patsubst %.c, %.o, $(LIBFDT_SRCS_UNSYNCED)))
@@ -118,6 +120,7 @@ dumpimage-objs := $(dumpimage-mkimage-objs) dumpimage.o
 mkimage-objs   := $(dumpimage-mkimage-objs) mkimage.o
 fit_info-objs   := $(dumpimage-mkimage-objs) fit_info.o
 fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
+file2include-objs := file2include.o
 
 ifneq ($(CONFIG_MX23)$(CONFIG_MX28),)
 # Add CONFIG_MXS into host CFLAGS, so we can check whether or not register
@@ -185,6 +188,7 @@ hostprogs-$(CONFIG_KIRKWOOD) += kwboot
 hostprogs-$(CONFIG_ARCH_MVEBU) += kwboot
 hostprogs-y += proftool
 hostprogs-$(CONFIG_STATIC_RELA) += relocate-rela
+hostprogs-$(CONFIG_RISCV) += prelink-riscv
 
 hostprogs-y += fdtgrep
 fdtgrep-objs += $(LIBFDT_OBJS) fdtgrep.o
@@ -238,9 +242,9 @@ endif # !LOGO_BMP
 # Define __KERNEL_STRICT_NAMES to prevent typedef overlaps
 # Define _GNU_SOURCE to obtain the getline prototype from stdio.h
 #
-HOST_EXTRACFLAGS += -include $(srctree)/include/libfdt_env.h \
+HOST_EXTRACFLAGS += -include $(srctree)/include/compiler.h \
 		$(patsubst -I%,-idirafter%, $(filter -I%, $(UBOOTINCLUDE))) \
-		-I$(srctree)/lib/libfdt \
+		-I$(srctree)/scripts/dtc/libfdt \
 		-I$(srctree)/tools \
 		-DUSE_HOSTCC \
 		-D__KERNEL_STRICT_NAMES \

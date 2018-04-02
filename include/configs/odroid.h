@@ -34,7 +34,6 @@
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5E00000)
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x3E00000)
-#define CONFIG_SYS_TEXT_BASE		0x43e00000
 
 #include <linux/sizes.h>
 
@@ -177,7 +176,6 @@
 
 /* Security subsystem - enable hw_rand() */
 #define CONFIG_EXYNOS_ACE_SHA
-#define CONFIG_LIB_HW_RAND
 
 /* USB */
 #define CONFIG_USB_EHCI_EXYNOS

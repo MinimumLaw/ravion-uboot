@@ -76,7 +76,6 @@
 #define CONFIG_LOADADDR			0x82000000
 
 /* We boot from the gfxRAM area of the OCRAM. */
-#define CONFIG_SYS_TEXT_BASE		0x3f401000
 #define CONFIG_BOARD_SIZE_LIMIT		520192
 
 /* if no target-specific extra environment settings were defined by the
@@ -187,9 +186,6 @@
 		"nand write ${ram_addr} root ${filesize}; fi\0"
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_SYS_MEMTEST_START	0x80010000
 #define CONFIG_SYS_MEMTEST_END		0x87C00000

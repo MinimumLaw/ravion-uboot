@@ -52,7 +52,6 @@
 #define CONFIG_PHY_ATHEROS
 
 #ifdef CONFIG_CMD_SF
-#define CONFIG_MXC_SPI
 #define CONFIG_SF_DEFAULT_BUS		0
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		20000000
@@ -111,7 +110,6 @@
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
-#include <config_distro_defaults.h>
 #include "mx6_common.h"
 
 /* 256M RAM (minimum), 32M uncompressed kernel, 16M compressed kernel, 1M fdt,

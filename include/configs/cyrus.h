@@ -7,8 +7,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_CYRUS
-
 #if !defined(CONFIG_ARCH_P5020) && !defined(CONFIG_ARCH_P5040)
 #error Must call Cyrus CONFIG with a specific CPU enabled.
 #endif
@@ -42,10 +40,6 @@
 #define CONFIG_MP			/* support multiple processors */
 
 #define CONFIG_SYS_MMC_MAX_DEVICE     1
-
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE	0xeff40000
-#endif
 
 #define CONFIG_SYS_FSL_CPC		/* Corenet Platform Cache */
 #define CONFIG_SYS_NUM_CPC		CONFIG_SYS_NUM_DDR_CTLRS
@@ -316,7 +310,6 @@
 #define CONFIG_SYS_PCIE4_IO_SIZE	0x00010000	/* 64k */
 
 /* Qman/Bman */
-#define CONFIG_SYS_DPAA_QBMAN		/* Support Q/Bman */
 #define CONFIG_SYS_BMAN_NUM_PORTALS	10
 #define CONFIG_SYS_BMAN_MEM_BASE	0xf4000000
 #ifdef CONFIG_PHYS_64BIT
@@ -420,9 +413,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
-#define CONFIG_CMDLINE_EDITING			/* Command-line editing */
-#define CONFIG_AUTO_COMPLETE			/* add autocompletion support */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 
 /*

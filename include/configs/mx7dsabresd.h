@@ -197,9 +197,6 @@
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 
 /* DMA stuff, needed for GPMI/MXS NAND support */
-#define CONFIG_APBH_DMA
-#define CONFIG_APBH_DMA_BURST
-#define CONFIG_APBH_DMA_BURST8
 #endif
 
 #define CONFIG_ENV_OFFSET		(12 * SZ_64K)
@@ -219,8 +216,6 @@
 #define CONFIG_IMX_THERMAL
 
 #define CONFIG_USBD_HS
-
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
 
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_MXS

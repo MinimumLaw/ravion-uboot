@@ -16,8 +16,6 @@
 #define CONFIG_MX27
 #define CONFIG_MX27_CLK32	32768		/* OSC32K frequency */
 
-#define CONFIG_SYS_TEXT_BASE		0xc0000000
-
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS	1
 #define CONFIG_INITRD_TAG		1
@@ -132,18 +130,11 @@
 #define CONFIG_MXC_NAND_HWECC
 
 /*
- * GPIO
- */
-#define CONFIG_MXC_GPIO
-
-/*
  * U-Boot general configuration
  */
 #define CONFIG_SYS_CBSIZE	1024	/* Console I/O Buffer Size  */
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_SYS_LONGHELP
 
 #define CONFIG_LOADADDR		0xa0800000	/* loadaddr env var */
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR

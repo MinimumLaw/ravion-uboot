@@ -14,7 +14,6 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_XPEDITE5140	1	/* MPC8641HPCN board specific */
 #define CONFIG_SYS_BOARD_NAME	"XPedite5170"
 #define CONFIG_SYS_FORM_3U_VPX	1
 #define CONFIG_LINUX_RESET_VEC	0x100	/* Reset vector used by Linux */
@@ -22,8 +21,6 @@
 #define CONFIG_BAT_RW		1	/* Use common BAT rw code */
 #define CONFIG_HIGH_BATS	1	/* High BATs supported and enabled */
 #define CONFIG_ALTIVEC		1
-
-#define	CONFIG_SYS_TEXT_BASE	0xfff00000
 
 #define CONFIG_PCI_SCAN_SHOW	1	/* show pci devices on startup */
 #define CONFIG_PCIE1		1	/* PCIE controller 1 */
@@ -483,9 +480,7 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
-#define CONFIG_CMDLINE_EDITING	1		/* Command-line editing */
 #define CONFIG_LOADADDR		0x1000000	/* default location for tftp and bootm */
 #define CONFIG_PREBOOT				/* enable preboot variable */
 #define CONFIG_INTEGRITY			/* support booting INTEGRITY OS */

@@ -147,6 +147,8 @@ dtb-$(CONFIG_ARCH_ZYNQ) += \
 	zynq-zybo.dtb
 dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-ep108.dtb			\
+	zynqmp-mini-emmc.dtb			\
+	zynqmp-mini-nand.dtb			\
 	zynqmp-zcu102-revA.dtb			\
 	zynqmp-zcu102-revB.dtb			\
 	zynqmp-zcu102-rev1.0.dtb		\
@@ -161,7 +163,8 @@ dtb-$(CONFIG_AM33XX) += am335x-boneblack.dtb am335x-bone.dtb \
 	am335x-bonegreen.dtb \
 	am335x-icev2.dtb \
 	am335x-pxm50.dtb \
-	am335x-rut.dtb
+	am335x-rut.dtb \
+	am335x-pdu001.dtb
 dtb-$(CONFIG_AM43XX) += am437x-gp-evm.dtb am437x-sk-evm.dtb	\
 	am43x-epos-evm.dtb \
 	am437x-idk-evm.dtb
@@ -174,6 +177,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_cyclone5_is1.dtb			\
 	socfpga_cyclone5_mcvevk.dtb			\
 	socfpga_cyclone5_socdk.dtb			\
+	socfpga_cyclone5_dbm_soc1.dtb			\
 	socfpga_cyclone5_de0_nano_soc.dtb			\
 	socfpga_cyclone5_de1_soc.dtb			\
 	socfpga_cyclone5_de10_nano.dtb			\
@@ -187,6 +191,7 @@ dtb-$(CONFIG_TARGET_DRA7XX_EVM) += dra72-evm.dtb dra7-evm.dtb	\
 dtb-$(CONFIG_TARGET_AM57XX_EVM) += am57xx-beagle-x15.dtb \
 	am57xx-beagle-x15-revb1.dtb \
 	am57xx-beagle-x15-revc.dtb \
+	am574x-idk.dtb \
 	am572x-idk.dtb	\
 	am571x-idk.dtb
 dtb-$(CONFIG_TARGET_STV0991) += stv0991.dtb
@@ -209,9 +214,15 @@ dtb-$(CONFIG_FSL_LSCH2) += fsl-ls1043a-qds-duart.dtb \
 	fsl-ls1046a-rdb.dtb \
 	fsl-ls1012a-qds.dtb \
 	fsl-ls1012a-rdb.dtb \
+	fsl-ls1012a-2g5rdb.dtb \
 	fsl-ls1012a-frdm.dtb
 
-dtb-$(CONFIG_ARCH_SNAPDRAGON) += dragonboard410c.dtb
+dtb-$(CONFIG_TARGET_DRAGONBOARD410C) += dragonboard410c.dtb
+dtb-$(CONFIG_TARGET_DRAGONBOARD820C) += dragonboard820c.dtb
+
+dtb-$(CONFIG_STM32F4) += stm32f429-disco.dtb \
+	stm32429i-eval.dtb \
+	stm32f469-disco.dtb
 
 dtb-$(CONFIG_STM32F7) += stm32f746-disco.dtb \
 	stm32f769-disco.dtb
@@ -329,6 +340,7 @@ dtb-$(CONFIG_MACH_SUN8I_A83T) += \
 dtb-$(CONFIG_MACH_SUN8I_H3) += \
 	sun8i-h2-plus-orangepi-zero.dtb \
 	sun8i-h3-bananapi-m2-plus.dtb \
+	sun8i-h3-libretech-all-h3-cc.dtb \
 	sun8i-h3-orangepi-2.dtb \
 	sun8i-h3-orangepi-lite.dtb \
 	sun8i-h3-orangepi-one.dtb \
@@ -374,15 +386,17 @@ dtb-$(CONFIG_MX6) += imx6ull-14x14-evk.dtb \
 	imx6sl-evk.dtb \
 	imx6sll-evk.dtb \
 	imx6dl-icore.dtb \
+	imx6dl-icore-mipi.dtb \
 	imx6dl-icore-rqs.dtb \
 	imx6q-cm-fx6.dtb \
 	imx6q-icore.dtb \
+	imx6q-icore-mipi.dtb \
 	imx6q-icore-rqs.dtb \
 	imx6q-logicpd.dtb \
 	imx6sx-sabreauto.dtb \
+	imx6sx-sdb.dtb \
 	imx6ul-geam-kit.dtb \
 	imx6ul-isiot-emmc.dtb \
-	imx6ul-isiot-mmc.dtb \
 	imx6ul-isiot-nand.dtb \
 	imx6ul-opos6uldev.dtb
 
@@ -396,6 +410,7 @@ dtb-$(CONFIG_RCAR_GEN3) += \
 	r8a7795-salvator-x.dtb \
 	r8a7796-m3ulcb.dtb \
 	r8a7796-salvator-x.dtb \
+	r8a77965-salvator-x.dtb \
 	r8a77970-eagle.dtb \
 	r8a77995-draak.dtb
 
@@ -437,6 +452,11 @@ dtb-$(CONFIG_TARGET_OMAP3_LOGIC) += \
 dtb-$(CONFIG_TARGET_OMAP3_EVM) += \
 	omap3-evm-37xx.dtb \
 	omap3-evm.dtb
+
+dtb-$(CONFIG_TARGET_OMAP3_BEAGLE) += \
+	omap3-beagle-xm-ab.dtb \
+	omap3-beagle-xm.dtb \
+	omap3-beagle.dtb
 
 dtb-$(CONFIG_TARGET_SAMA5D2_PTC_EK) += \
 	at91-sama5d2_ptc_ek.dtb

@@ -13,8 +13,8 @@
 #include <efi_loader.h>
 #include <efi_selftest.h>
 #include <errno.h>
-#include <libfdt.h>
-#include <libfdt_env.h>
+#include <linux/libfdt.h>
+#include <linux/libfdt_env.h>
 #include <memalign.h>
 #include <asm/global_data.h>
 #include <asm-generic/sections.h>
@@ -32,6 +32,9 @@ static void efi_init_obj_list(void)
 {
 	efi_obj_list_initalized = 1;
 
+	/* Initialize EFI driver uclass */
+	efi_driver_init();
+
 	efi_console_register();
 #ifdef CONFIG_PARTITIONS
 	efi_disk_register();
@@ -39,7 +42,7 @@ static void efi_init_obj_list(void)
 #if defined(CONFIG_LCD) || defined(CONFIG_DM_VIDEO)
 	efi_gop_register();
 #endif
-#ifdef CONFIG_NET
+#ifdef CONFIG_CMD_NET
 	efi_net_register();
 #endif
 #ifdef CONFIG_GENERATE_SMBIOS_TABLE
@@ -103,11 +106,11 @@ static void *copy_fdt(void *fdt)
 
 	/* Safe fdt location is at 128MB */
 	new_fdt_addr = fdt_ram_start + (128 * 1024 * 1024) + fdt_size;
-	if (efi_allocate_pages(1, EFI_BOOT_SERVICES_DATA, fdt_pages,
+	if (efi_allocate_pages(1, EFI_RUNTIME_SERVICES_DATA, fdt_pages,
 			       &new_fdt_addr) != EFI_SUCCESS) {
 		/* If we can't put it there, put it somewhere */
 		new_fdt_addr = (ulong)memalign(EFI_PAGE_SIZE, fdt_size);
-		if (efi_allocate_pages(1, EFI_BOOT_SERVICES_DATA, fdt_pages,
+		if (efi_allocate_pages(1, EFI_RUNTIME_SERVICES_DATA, fdt_pages,
 				       &new_fdt_addr) != EFI_SUCCESS) {
 			printf("ERROR: Failed to reserve space for FDT\n");
 			return NULL;
@@ -122,9 +125,10 @@ static void *copy_fdt(void *fdt)
 }
 
 static efi_status_t efi_do_enter(
-			void *image_handle, struct efi_system_table *st,
-			asmlinkage ulong (*entry)(void *image_handle,
-						  struct efi_system_table *st))
+			efi_handle_t image_handle, struct efi_system_table *st,
+			EFIAPI efi_status_t (*entry)(
+				efi_handle_t image_handle,
+				struct efi_system_table *st))
 {
 	efi_status_t ret = EFI_LOAD_ERROR;
 
@@ -135,9 +139,9 @@ static efi_status_t efi_do_enter(
 }
 
 #ifdef CONFIG_ARM64
-static efi_status_t efi_run_in_el2(asmlinkage ulong (*entry)(
-			void *image_handle, struct efi_system_table *st),
-			void *image_handle, struct efi_system_table *st)
+static efi_status_t efi_run_in_el2(EFIAPI efi_status_t (*entry)(
+			efi_handle_t image_handle, struct efi_system_table *st),
+			efi_handle_t image_handle, struct efi_system_table *st)
 {
 	/* Enable caches again */
 	dcache_enable();
@@ -159,8 +163,8 @@ static efi_status_t do_bootefi_exec(void *efi, void *fdt,
 	struct efi_device_path *memdp = NULL;
 	ulong ret;
 
-	ulong (*entry)(void *image_handle, struct efi_system_table *st)
-		asmlinkage;
+	EFIAPI efi_status_t (*entry)(efi_handle_t image_handle,
+				     struct efi_system_table *st);
 	ulong fdt_pages, fdt_size, fdt_start, fdt_end;
 	const efi_guid_t fdt_guid = EFI_FDT_GUID;
 	bootm_headers_t img = { 0 };
@@ -369,6 +373,9 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		saddr = argv[1];
 
 		addr = simple_strtoul(saddr, NULL, 16);
+		/* Check that a numeric value was passed */
+		if (!addr && *saddr != '0')
+			return CMD_RET_USAGE;
 
 		if (argc > 2) {
 			sfdt = argv[2];
@@ -404,7 +411,7 @@ static char bootefi_help_text[] =
 	"    Use environment variable efi_selftest to select a single test.\n"
 	"    Use 'setenv efi_selftest list' to enumerate all tests.\n"
 #endif
-	"bootmgr [fdt addr]\n"
+	"bootefi bootmgr [fdt addr]\n"
 	"  - load and boot EFI payload based on BootOrder/BootXXXX variables.\n"
 	"\n"
 	"    If specified, the device tree located at <fdt address> gets\n"
@@ -443,7 +450,7 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path)
 
 		bootefi_device_path = efi_dp_from_part(desc, part);
 	} else {
-#ifdef CONFIG_NET
+#ifdef CONFIG_CMD_NET
 		bootefi_device_path = efi_dp_from_eth();
 #endif
 	}

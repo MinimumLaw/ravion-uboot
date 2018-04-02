@@ -8,8 +8,6 @@
 
 #include <asm/arch/base_addr_ac5.h>
 
-#define CONFIG_HW_WATCHDOG
-
 /* Memory configurations */
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* 1GiB on SR1500 */
 
@@ -31,9 +29,6 @@
 /*
  * Bootcounter
  */
-#define CONFIG_BOOTCOUNT_LIMIT
-/* last 2 lwords in OCRAM */
-#define CONFIG_SYS_BOOTCOUNT_ADDR	0xfffffff8
 #define CONFIG_SYS_BOOTCOUNT_BE
 
 /* Environment setting for SPI flash */

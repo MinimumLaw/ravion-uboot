@@ -9,10 +9,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#ifndef CONFIG_SPL_BUILD
-#include <config_distro_defaults.h>
-#endif
-
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_S32V234
@@ -84,7 +80,6 @@
 #if 0
 
 /* Ethernet config */
-#define CONFIG_CMD_PING
 #define CONFIG_CMD_MII
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
@@ -158,11 +153,8 @@
 #include <config_distro_bootcmd.h>
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_LONGHELP	/* undef to save memory */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"=> "
-#undef CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	(DDR_BASE_ADDR)
@@ -171,15 +163,12 @@
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ				1000
 
-#define CONFIG_SYS_TEXT_BASE		0x3E800000	/* SDRAM */
-
 #ifdef CONFIG_RUN_FROM_IRAM_ONLY
 #define CONFIG_SYS_MALLOC_BASE		(DDR_BASE_ADDR)
 #endif
 
 #if 0
 /* Configure PXE */
-#define CONFIG_BOOTP_PXE
 #define CONFIG_BOOTP_PXE_CLIENTARCH	0x100
 #endif
 
@@ -206,8 +195,5 @@
 
 
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 #endif

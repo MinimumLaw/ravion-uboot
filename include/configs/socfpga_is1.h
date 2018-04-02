@@ -9,8 +9,6 @@
 
 #include <asm/arch/base_addr_ac5.h>
 
-#define CONFIG_HW_WATCHDOG
-
 /* Memory configurations */
 #define PHYS_SDRAM_1_SIZE		0x10000000
 
@@ -32,9 +30,6 @@
 /*
  * Bootcounter
  */
-#define CONFIG_BOOTCOUNT_LIMIT
-/* last 2 lwords in OCRAM */
-#define CONFIG_SYS_BOOTCOUNT_ADDR       0xfffffff8
 #define CONFIG_SYS_BOOTCOUNT_BE
 
 #endif	/* __CONFIG_SOCFPGA_IS1_H__ */

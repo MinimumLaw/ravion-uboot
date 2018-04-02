@@ -162,9 +162,23 @@ config SYS_I2C_OMAP24XX
 	help
 	  Add support for the OMAP2+ I2C driver.
 
+if SYS_I2C_OMAP24XX
+config SYS_OMAP24_I2C_SLAVE
+	int "I2C Slave addr channel 0"
+	default 1
+	help
+	  OMAP24xx I2C Slave address channel 0
+
+config SYS_OMAP24_I2C_SPEED
+	int "I2C Slave channel 0 speed"
+	default 100000
+	help
+	  OMAP24xx Slave speed channel 0
+endif
+
 config SYS_I2C_RCAR_IIC
 	bool "Renesas RCar Gen3 IIC driver"
-	depends on RCAR_GEN3 && DM_I2C
+	depends on (RCAR_GEN3 || RCAR_GEN2) && DM_I2C
 	help
 	  Support for Renesas RCar Gen3 IIC controller.
 
@@ -253,6 +267,44 @@ config SYS_I2C_BUS_MAX
 	default 5 if OMAP54XX
 	help
 	  Define the maximum number of available I2C buses.
+
+config SYS_I2C_ZYNQ
+	bool "Xilinx I2C driver"
+	depends on ARCH_ZYNQMP || ARCH_ZYNQ
+	help
+	  Support for Xilinx I2C controller.
+
+config SYS_I2C_ZYNQ_SLAVE
+	hex "Set slave addr"
+	depends on SYS_I2C_ZYNQ
+	default 0
+	help
+	  Set CONFIG_SYS_I2C_ZYNQ_SLAVE for slave addr.
+
+config SYS_I2C_ZYNQ_SPEED
+	int "Set I2C speed"
+	depends on SYS_I2C_ZYNQ
+	default 100000
+	help
+	  Set CONFIG_SYS_I2C_ZYNQ_SPEED for speed setting.
+
+config ZYNQ_I2C0
+	bool "Xilinx I2C0 controller"
+	depends on SYS_I2C_ZYNQ
+	help
+	  Enable Xilinx I2C0 controller.
+
+config ZYNQ_I2C1
+	bool "Xilinx I2C1 controller"
+	depends on SYS_I2C_ZYNQ
+	help
+	  Enable Xilinx I2C1 controller.
+
+config SYS_I2C_IHS
+        bool "gdsys IHS I2C driver"
+        depends on DM_I2C
+        help
+          Support for gdsys IHS I2C driver on FPGA bus.
 
 source "drivers/i2c/muxes/Kconfig"
 

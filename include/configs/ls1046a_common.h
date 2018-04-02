@@ -35,8 +35,6 @@
 /* Link Definitions */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_FSL_OCRAM_BASE + 0xfff0)
 
-#define CONFIG_SUPPORT_RAW_INITRD
-
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
 #define CONFIG_VERY_BIG_RAM
@@ -63,7 +61,6 @@
 
 /* SD boot SPL */
 #ifdef CONFIG_SD_BOOT
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
@@ -102,7 +99,6 @@
 /* NAND SPL */
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_SPL_PBL_PAD
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
@@ -145,6 +141,18 @@
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 
+/* SATA */
+#ifndef SPL_NO_SATA
+#define CONFIG_SCSI_AHCI_PLAT
+
+#define CONFIG_SYS_SATA				AHCI_BASE_ADDR
+
+#define CONFIG_SYS_SCSI_MAX_SCSI_ID		1
+#define CONFIG_SYS_SCSI_MAX_LUN			1
+#define CONFIG_SYS_SCSI_MAX_DEVICE		(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
+						CONFIG_SYS_SCSI_MAX_LUN)
+#endif
+
 /* Command line configuration */
 
 /* MMC */
@@ -153,10 +161,6 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
 #endif
-#endif
-
-#ifndef SPL_NO_QBMAN
-#define CONFIG_SYS_DPAA_QBMAN		/* Support Q/Bman */
 #endif
 
 /* FMan ucode */
@@ -198,9 +202,9 @@
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		128
 
-#include <config_distro_defaults.h>
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
+	func(SCSI, scsi, 0) \
 	func(MMC, mmc, 0) \
 	func(USB, usb, 0)
 #include <config_distro_bootcmd.h>
@@ -281,9 +285,7 @@
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
-#define CONFIG_SYS_LONGHELP
 
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_MAXARGS		64	/* max command args */
 
 #define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */

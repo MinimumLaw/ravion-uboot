@@ -18,13 +18,6 @@
 #include <configs/ti_omap3_common.h>
 
 #ifdef CONFIG_SPL_BUILD
-/*
- * Disable MMC DM for SPL build and can be re-enabled after adding
- * DM support in SPL
- */
-#undef CONFIG_DM_MMC
-#undef OMAP_HSMMC_USE_GPIO
-
 /* select serial console configuration for SPL */
 #undef CONFIG_CONS_INDEX
 #define CONFIG_CONS_INDEX              1
@@ -38,7 +31,6 @@
  * order to allow for BCH8 to fit in.
  */
 #undef CONFIG_SPL_TEXT_BASE
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x40200000
 
 #define CONFIG_MISC_INIT_R		/* misc_init_r dumps the die id */
@@ -49,17 +41,8 @@
 
 /* Hardware drivers */
 
-#define CONFIG_USB_OMAP3
-
 /* I2C */
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x50	/* EEPROM AT24C64      */
-
-/* USB */
-#define CONFIG_USB_MUSB_OMAP2PLUS
-#define CONFIG_USB_MUSB_PIO_ONLY
-
-/* TWL4030 */
-#define CONFIG_TWL4030_USB
 
 /* Board NAND Info. */
 #ifdef CONFIG_NAND

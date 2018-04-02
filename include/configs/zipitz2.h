@@ -13,7 +13,6 @@
  * High Level Board Configuration Options
  */
 #define	CONFIG_CPU_PXA27X		1	/* Marvell PXA270 CPU */
-#define	CONFIG_SYS_TEXT_BASE		0x0
 
 #undef	CONFIG_SKIP_LOWLEVEL_INIT
 #define	CONFIG_PREBOOT
@@ -38,7 +37,6 @@
 #define	CONFIG_TIMESTAMP
 #define	CONFIG_CMDLINE_TAG
 #define	CONFIG_SETUP_MEMORY_TAGS
-#define	CONFIG_SYS_TEXT_BASE		0x0
 
 /*
  * Serial Console Configuration
@@ -78,8 +76,6 @@ void zipitz2_spi_scl(int);
 unsigned char zipitz2_spi_read(void);
 #endif
 #endif
-
-#define	CONFIG_SYS_LONGHELP				/* undef to save memory	*/
 
 #define	CONFIG_SYS_DEVICE_NULLDEV	1
 

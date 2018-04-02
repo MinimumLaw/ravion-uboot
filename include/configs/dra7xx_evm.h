@@ -14,9 +14,7 @@
 
 #include <environment/ti/dfu.h>
 
-#ifdef CONFIG_SPL_BUILD
 #define CONFIG_IODELAY_RECALIBRATION
-#endif
 
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_NR_DRAM_BANKS		2
@@ -96,11 +94,8 @@
 #define CONFIG_HSMMC2_8BIT
 
 /* CPSW Ethernet */
-#define CONFIG_BOOTP_DNS		/* Configurable parts of CMD_DHCP */
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_NET_RETRY_COUNT		10
 #define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
 #define CONFIG_MII			/* Required in net/eth.c */
@@ -144,7 +139,6 @@
 /* USB xHCI HOST */
 #define CONFIG_USB_XHCI_OMAP
 
-#define CONFIG_OMAP_USB_PHY
 #define CONFIG_OMAP_USB2PHY2_HOST
 
 /* SATA */

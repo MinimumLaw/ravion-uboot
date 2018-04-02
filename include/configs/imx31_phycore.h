@@ -84,14 +84,11 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 
 #define CONFIG_SYS_MEMTEST_START	0  /* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x10000
 
 #define CONFIG_SYS_LOAD_ADDR		0 /* default load address */
-
-#define CONFIG_CMDLINE_EDITING
 
 /*
  * Physical Memory Map
@@ -99,7 +96,6 @@
 #define CONFIG_NR_DRAM_BANKS		1
 #define PHYS_SDRAM_1			0x80000000
 #define PHYS_SDRAM_1_SIZE		(128 * 1024 * 1024)
-#define CONFIG_SYS_TEXT_BASE		0xA0000000
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 #define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
@@ -147,10 +143,7 @@
 
 /* EET platform additions */
 #ifdef CONFIG_TARGET_IMX31_PHYCORE_EET
-#define CONFIG_MXC_GPIO
-
 #define CONFIG_HARD_SPI
-#define CONFIG_MXC_SPI
 
 #define CONFIG_S6E63D6
 

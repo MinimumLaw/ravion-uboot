@@ -8,7 +8,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include <config_distro_defaults.h>
 #include "mx6_common.h"
 
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
@@ -45,7 +44,6 @@
 #define CONFIG_SYS_MEMTEST_START	0x10000000
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 500 * SZ_1M)
 
-#define CONFIG_MXC_SPI
 #define CONFIG_SF_DEFAULT_BUS  2
 #define CONFIG_SF_DEFAULT_CS   0
 #define CONFIG_SF_DEFAULT_SPEED 25000000

@@ -12,13 +12,10 @@
 #define CONFIG_MXC_UART_BASE   UART1_BASE
 #define CONSOLE_DEV            "ttymxc0"
 
-#include <config_distro_defaults.h>
 #include "mx6_common.h"
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN          (10 * SZ_1M)
-
-#define CONFIG_MXC_UART
 
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
@@ -30,7 +27,6 @@
 #define CONFIG_FEC_XCV_TYPE            RMII
 #define CONFIG_ETHPRIME                "FEC"
 #define CONFIG_FEC_MXC_PHYADDR         0
-#define CONFIG_PHY_SMSC
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
@@ -156,9 +152,6 @@
 # define CONFIG_MTD_PARTITIONS
 
 /* DMA stuff, needed for GPMI/MXS NAND support */
-#define CONFIG_APBH_DMA
-#define CONFIG_APBH_DMA_BURST
-#define CONFIG_APBH_DMA_BURST8
 
 /* EEPROM  contains serial no, MAC addr and other Logic PD info */
 #define CONFIG_I2C_EEPROM

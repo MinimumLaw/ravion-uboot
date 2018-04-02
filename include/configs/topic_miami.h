@@ -10,8 +10,6 @@
 #ifndef __CONFIG_TOPIC_MIAMI_H
 #define __CONFIG_TOPIC_MIAMI_H
 
-#define CONFIG_ZYNQ_I2C0
-#define CONFIG_ZYNQ_I2C1
 
 /* Speed up boot time by ignoring the environment which we never used */
 
@@ -132,8 +130,5 @@
 	"if fatload mmc 0 0x1900000 ${bootscript}; then source 0x1900000; " \
 	"fi; fi; run $modeboot"
 #undef CONFIG_DISPLAY_BOARDINFO
-
-/* Further tweaks to reduce image size */
-#undef CONFIG_CMD_NET
 
 #endif /* __CONFIG_TOPIC_MIAMI_H */

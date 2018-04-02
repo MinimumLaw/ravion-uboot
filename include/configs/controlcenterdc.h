@@ -23,7 +23,6 @@
  * for DDR ECC byte filling in the SPL before loading the main
  * U-Boot into it.
  */
-#define	CONFIG_SYS_TEXT_BASE	0x00800000
 
 #define CONFIG_SYS_TCLK		250000000	/* 250MHz */
 
@@ -53,9 +52,6 @@
 #define CONFIG_SYS_SCSI_MAX_LUN		1
 #define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
 					 CONFIG_SYS_SCSI_MAX_LUN)
-
-/* Additional FS support/configuration */
-#define CONFIG_SUPPORT_VFAT
 
 /* USB/EHCI configuration */
 #define CONFIG_EHCI_IS_TDI
@@ -98,7 +94,6 @@
 #define CONFIG_SPL_BOOT_DEVICE		SPL_BOOT_SPI_NOR_FLASH
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_SIZE			(160 << 10)
 
 #if defined(CONFIG_SECURED_MODE_IMAGE)

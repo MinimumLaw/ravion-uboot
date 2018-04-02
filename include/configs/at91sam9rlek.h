@@ -13,13 +13,9 @@
 
 #include <asm/hardware.h>
 
-#define CONFIG_SYS_TEXT_BASE		0x21F00000
-
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768		/* slow clock xtal */
 #define CONFIG_SYS_AT91_MAIN_CLOCK	12000000	/* main clock xtal */
-
-#define CONFIG_AT91SAM9RLEK		1	/* It's an AT91SAM9RLEK Board */
 
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_SKIP_LOWLEVEL_INIT
@@ -106,10 +102,6 @@
 				"fatload mmc 0:1 0x22000000 zImage; " \
 				"bootz 0x22000000 - 0x21000000"
 #endif
-
-#define CONFIG_SYS_LONGHELP		1
-#define CONFIG_CMDLINE_EDITING		1
-#define CONFIG_AUTO_COMPLETE
 
 /*
  * Size of malloc() pool

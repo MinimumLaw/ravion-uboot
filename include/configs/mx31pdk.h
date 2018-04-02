@@ -29,7 +29,6 @@
 #define CONFIG_SPL_MAX_SIZE	2048
 
 #define CONFIG_SPL_TEXT_BASE	0x87dc0000
-#define CONFIG_SYS_TEXT_BASE	0x87e00000
 
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_SKIP_LOWLEVEL_INIT
@@ -46,10 +45,8 @@
 
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE	UART1_BASE
-#define CONFIG_MXC_GPIO
 
 #define CONFIG_HARD_SPI
-#define CONFIG_MXC_SPI
 #define CONFIG_DEFAULT_SPI_BUS	1
 #define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
 
@@ -82,7 +79,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP	/* undef to save memory */
 
 /* memtest works on */
 #define CONFIG_SYS_MEMTEST_START	0x80000000
@@ -90,8 +86,6 @@
 
 /* default load address */
 #define CONFIG_SYS_LOAD_ADDR		0x81000000
-
-#define CONFIG_CMDLINE_EDITING
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map

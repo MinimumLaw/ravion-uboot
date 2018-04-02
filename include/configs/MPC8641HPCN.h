@@ -25,7 +25,6 @@
  * default CCSRBAR is at 0xff700000
  * assume U-Boot is less than 0.5MB
  */
-#define	CONFIG_SYS_TEXT_BASE	0xeff00000
 
 #ifdef RUN_DIAG
 #define CONFIG_SYS_DIAG_ADDR	     CONFIG_SYS_FLASH_BASE
@@ -574,17 +573,12 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 #undef CONFIG_WATCHDOG			/* watchdog disabled */
 
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
-#define CONFIG_CMDLINE_EDITING		/* Command-line editing */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 
 /*

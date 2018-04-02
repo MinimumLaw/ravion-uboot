@@ -504,7 +504,28 @@ config LOG_TEST
 	  in various different ways to test that the logging system works
 	  correctly with varoius settings.
 
+config LOG_ERROR_RETURN
+	bool "Log all functions which return an error"
+	depends on LOG
+	help
+	  When an error is returned in U-Boot it is sometimes difficult to
+	  figure out the root cause. For eaxmple, reading from SPI flash may
+	  fail due to a problem in the SPI controller or due to the flash part
+	  not returning the expected information. This option changes
+	  log_ret() to log any errors it sees. With this option disabled,
+	  log_ret() is a nop.
+
+	  You can add log_ret() to all functions which return an error code.
+
 endmenu
+
+config SUPPORT_RAW_INITRD
+	bool "Enable raw initrd images"
+	help
+	  Note, defining the SUPPORT_RAW_INITRD allows user to supply
+	  kernel with raw initrd images. The syntax is slightly different, the
+	  address of the initrd must be augmented by it's size, in the following
+	  format: "<initrd address>:<initrd size>".
 
 config DEFAULT_FDT_FILE
 	string "Default fdt file"
@@ -533,7 +554,7 @@ config BOARD_LATE_INIT
 
 config DISPLAY_CPUINFO
 	bool "Display information about the CPU during start up"
-	default y if ARM || NIOS2 || X86 || XTENSA
+	default y if ARM || NIOS2 || X86 || XTENSA || M68K
 	help
 	  Display information about the CPU that U-Boot is running on
 	  when U-Boot starts up. The function print_cpuinfo() is called
@@ -585,6 +606,27 @@ config HASH
 	  algorithms (such as SHA1, MD5, CRC32). The API is defined in hash.h
 	  and the algorithms it supports are defined in common/hash.c. See
 	  also CMD_HASH for command-line access.
+
+endmenu
+
+menu "Update support"
+
+config UPDATE_TFTP
+	bool "Auto-update using fitImage via TFTP"
+	depends on FIT
+	help
+	  This option allows performing update of NOR with data in fitImage
+	  sent via TFTP boot.
+
+config UPDATE_TFTP_CNT_MAX
+	int "The number of connection retries during auto-update"
+	default 0
+	depends on UPDATE_TFTP
+
+config UPDATE_TFTP_MSEC_MAX
+	int "Delay in mSec to wait for the TFTP server during auto-update"
+	default 100
+	depends on UPDATE_TFTP
 
 endmenu
 

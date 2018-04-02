@@ -37,8 +37,6 @@
 /* Link Definitions */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_FSL_OCRAM_BASE + 0xfff0)
 
-#define CONFIG_SUPPORT_RAW_INITRD
-
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
 #define CONFIG_VERY_BIG_RAM
@@ -65,7 +63,6 @@
 
 /* SD boot SPL */
 #ifdef CONFIG_SD_BOOT
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
 
 #define CONFIG_SPL_TEXT_BASE		0x10000000
@@ -96,7 +93,6 @@
 /* NAND SPL */
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_SPL_PBL_PAD
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
 #define CONFIG_SPL_TEXT_BASE		0x10000000
 #define CONFIG_SPL_MAX_SIZE		0x1a000
@@ -238,7 +234,6 @@
 #define HWCONFIG_BUFFER_SIZE		128
 
 #ifndef SPL_NO_MISC
-#include <config_distro_defaults.h>
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
@@ -333,15 +328,7 @@
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
-#define CONFIG_SYS_LONGHELP
 
-#ifndef SPL_NO_MISC
-#ifndef CONFIG_CMDLINE_EDITING
-#define CONFIG_CMDLINE_EDITING		1
-#endif
-#endif
-
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_MAXARGS		64	/* max command args */
 
 #define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */

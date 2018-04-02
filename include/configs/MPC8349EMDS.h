@@ -19,9 +19,6 @@
 #define CONFIG_E300		1	/* E300 Family */
 #define CONFIG_MPC834x		1	/* MPC834x family */
 #define CONFIG_MPC8349		1	/* MPC8349 specific */
-#define CONFIG_MPC8349EMDS	1	/* MPC8349EMDS board specific */
-
-#define	CONFIG_SYS_TEXT_BASE	0xFE000000
 
 #define CONFIG_PCI_66M
 #ifdef CONFIG_PCI_66M
@@ -318,9 +315,6 @@
 #define CONFIG_SYS_NS16550_COM1        (CONFIG_SYS_IMMR+0x4500)
 #define CONFIG_SYS_NS16550_COM2        (CONFIG_SYS_IMMR+0x4600)
 
-#define CONFIG_CMDLINE_EDITING	1	/* add command line history	*/
-#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
-
 /* I2C */
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_FSL
@@ -333,7 +327,6 @@
 #define CONFIG_SYS_I2C_NOPROBES		{ {0, 0x69} }
 
 /* SPI */
-#define CONFIG_MPC8XXX_SPI
 #undef CONFIG_SOFT_SPI			/* SPI bit-banged */
 
 /* GPIOs.  Used as SPI chip selects */
@@ -454,9 +447,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /*
  * Command line configuration.
@@ -467,7 +457,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 
 /*

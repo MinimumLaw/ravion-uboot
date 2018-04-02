@@ -71,11 +71,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600,\
 					115200}
 
-/* USB */
-#define CONFIG_USB_OMAP3
-#define CONFIG_USB_MUSB_UDC
-#define CONFIG_TWL4030_USB
-
 /* USB device configuration */
 #define CONFIG_USB_DEVICE
 #define CONFIG_USB_TTY
@@ -85,8 +80,6 @@
 #define CONFIG_MTD_PARTITIONS
 
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x50
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #define CONFIG_SYS_I2C_EEPROM_BUS	0
@@ -163,11 +156,8 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 #define CONFIG_TIMESTAMP
 #define CONFIG_SYS_AUTOLOAD		"no"
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 
 #define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)	/* memtest */
 								/* works on */
@@ -226,7 +216,6 @@
 #define CONFIG_SCF0403_LCD
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"
@@ -264,7 +253,6 @@
  * older x-loader implementations. And move the BSS area so that it
  * doesn't overlap with TEXT_BASE.
  */
-#define CONFIG_SYS_TEXT_BASE		0x80008000
 #define CONFIG_SPL_BSS_START_ADDR	0x80100000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000		/* 512 KB */
 

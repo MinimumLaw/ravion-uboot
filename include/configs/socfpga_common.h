@@ -43,30 +43,19 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
-#define CONFIG_SYS_TEXT_BASE		0x08000040
-#else
-#define CONFIG_SYS_TEXT_BASE		0x01000040
-#endif
 
 /*
  * U-Boot general configurations
  */
-#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O buffer size */
 						/* Print buffer size */
 #define CONFIG_SYS_MAXARGS	32		/* Max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
 						/* Boot argument buffer size */
-#define CONFIG_AUTO_COMPLETE			/* Command auto complete */
-#define CONFIG_CMDLINE_EDITING			/* Command history etc */
 
 #ifndef CONFIG_SYS_HOSTNAME
 #define CONFIG_SYS_HOSTNAME	CONFIG_SYS_BOARD
 #endif
-
-#define CONFIG_CMD_PXE
-#define CONFIG_MENU
 
 /*
  * Cache
@@ -184,8 +173,6 @@ unsigned int cm_get_l4_sp_clk_hz(void);
 unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_CQSPI_REF_CLK		cm_get_qspi_controller_clk_hz()
 #endif
-#define CONFIG_CQSPI_DECODER		0
-#define CONFIG_BOUNCE_BUFFER
 
 /*
  * Designware SPI support
@@ -215,8 +202,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * USB Gadget (DFU, UMS)
  */
 #if defined(CONFIG_CMD_DFU) || defined(CONFIG_CMD_USB_MASS_STORAGE)
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
-
 #define CONFIG_SYS_DFU_DATA_BUF_SIZE	(16 * 1024 * 1024)
 #define DFU_DEFAULT_POLL_TIMEOUT	300
 
@@ -269,7 +254,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * 0xFFFF_zzzz ...... Global Data
  * 0xFFFF_FF00 ...... End of SRAM
  */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		CONFIG_SYS_INIT_RAM_ADDR
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_INIT_RAM_SIZE
 
@@ -304,7 +288,12 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 
 /* Extra Environment */
 #ifndef CONFIG_SPL_BUILD
-#include <config_distro_defaults.h>
+
+#ifdef CONFIG_CMD_DHCP
+#define BOOT_TARGET_DEVICES_DHCP(func) func(DHCP, dhcp, na)
+#else
+#define BOOT_TARGET_DEVICES_DHCP(func)
+#endif
 
 #ifdef CONFIG_CMD_PXE
 #define BOOT_TARGET_DEVICES_PXE(func) func(PXE, pxe, na)
@@ -321,7 +310,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define BOOT_TARGET_DEVICES(func) \
 	BOOT_TARGET_DEVICES_MMC(func) \
 	BOOT_TARGET_DEVICES_PXE(func) \
-	func(DHCP, dhcp, na)
+	BOOT_TARGET_DEVICES_DHCP(func)
 
 #include <config_distro_bootcmd.h>
 

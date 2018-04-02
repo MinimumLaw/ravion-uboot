@@ -11,7 +11,6 @@
 
 #define CONFIG_BOARD_NAME		EL6Q
 
-#include <config_distro_defaults.h>
 #include "mx6_common.h"
 
 #define CONFIG_IMX_THERMAL
@@ -46,7 +45,6 @@
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 
 /* Commands */
-#define CONFIG_MXC_SPI
 #define CONFIG_SF_DEFAULT_BUS		3
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		20000000

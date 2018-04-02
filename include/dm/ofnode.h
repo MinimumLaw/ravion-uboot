@@ -302,12 +302,28 @@ ofnode ofnode_first_subnode(ofnode node);
 ofnode ofnode_next_subnode(ofnode node);
 
 /**
+ * ofnode_get_parent() - get the ofnode's parent (enclosing ofnode)
+ *
+ * @node: valid node to look up
+ * @return ofnode reference of the parent node
+ */
+ofnode ofnode_get_parent(ofnode node);
+
+/**
  * ofnode_get_name() - get the name of a node
  *
  * @node: valid node to look up
  * @return name or node
  */
 const char *ofnode_get_name(ofnode node);
+
+/**
+ * ofnode_get_by_phandle() - get ofnode from phandle
+ *
+ * @phandle:	phandle to look up
+ * @return ofnode reference to the phandle
+ */
+ofnode ofnode_get_by_phandle(uint phandle);
 
 /**
  * ofnode_read_size() - read the size of a property
@@ -652,4 +668,17 @@ int ofnode_read_resource_byname(ofnode node, const char *name,
 	     ofnode_valid(node); \
 	     node = ofnode_next_subnode(node))
 
+/**
+ * ofnode_translate_address() - Tranlate a device-tree address
+ *
+ * Translate an address from the device-tree into a CPU physical address. This
+ * function walks up the tree and applies the various bus mappings along the
+ * way.
+ *
+ * @ofnode: Device tree node giving the context in which to translate the
+ *          address
+ * @in_addr: pointer to the address to translate
+ * @return the translated address; OF_BAD_ADDR on error
+ */
+u64 ofnode_translate_address(ofnode node, const fdt32_t *in_addr);
 #endif

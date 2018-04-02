@@ -12,7 +12,6 @@
 
 #define CONFIG_SYS_FLASH_BASE		0x08000000
 #define CONFIG_SYS_INIT_SP_ADDR		0x24040000
-#define CONFIG_SYS_TEXT_BASE		0x08000000
 
 /*
  * Configuration of the external SDRAM memory
@@ -42,9 +41,6 @@
 /*
  * Command line configuration.
  */
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 #define CONFIG_CMD_CACHE
 #define CONFIG_BOARD_LATE_INIT
 

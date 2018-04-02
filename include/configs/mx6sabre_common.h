@@ -31,7 +31,6 @@
 #define CONFIG_PHY_ATHEROS
 
 #ifdef CONFIG_CMD_SF
-#define CONFIG_MXC_SPI
 #define CONFIG_SF_DEFAULT_BUS		0
 #define CONFIG_SF_DEFAULT_CS		0
 #define CONFIG_SF_DEFAULT_SPEED		20000000
@@ -208,10 +207,6 @@
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
-#ifndef CONFIG_SPL
 #define CONFIG_USBD_HS
-
-#define CONFIG_USB_FUNCTION_MASS_STORAGE
-#endif
 
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */

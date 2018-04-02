@@ -26,9 +26,6 @@
 
 #ifdef CONFIG_SPL_ROCKCHIP_BACK_TO_BROM
 /* Bootrom will load u-boot binary to 0x60000000 once return from SPL */
-#define CONFIG_SYS_TEXT_BASE		0x60000000
-#else
-#define CONFIG_SYS_TEXT_BASE		0x60100000
 #endif
 #define CONFIG_SYS_INIT_SP_ADDR		0x60100000
 #define CONFIG_SYS_LOAD_ADDR		0x60800800
@@ -39,7 +36,6 @@
 #define CONFIG_SPL_TEXT_BASE		0x10080800
 /* spl size 32kb sram - 2kb bootrom */
 #define CONFIG_SPL_MAX_SIZE		(0x8000 - 0x800)
-#define CONFIG_SPL_FRAMEWORK		1
 #define CONFIG_ROCKCHIP_SERIAL		1
 
 #define CONFIG_SPL_STACK		0x10087fff
@@ -58,7 +54,6 @@
 
 #ifndef CONFIG_SPL_BUILD
 /* usb otg */
-#define CONFIG_ROCKCHIP_USB2_PHY
 
 /* usb host support */
 #define ENV_MEM_LAYOUT_SETTINGS \

@@ -15,7 +15,16 @@ config CC_OPTIMIZE_LIBS_FOR_SPEED
 
 	  If unsure, say N.
 
+config DYNAMIC_CRC_TABLE
+	bool "Enable Dynamic tables for CRC"
+	help
+	  Enable this option to calculate entries for CRC tables at runtime.
+	  This can be helpful when reducing the size of the build image
+
 config HAVE_PRIVATE_LIBGCC
+	bool
+
+config LIB_UUID
 	bool
 
 config USE_PRIVATE_LIBGCC
@@ -57,6 +66,7 @@ config PANIC_HANG
 
 config REGEX
 	bool "Enable regular expression support"
+	default n if ARCH_SUNXI
 	default y if NET
 	help
 	  If this variable is defined, U-Boot is linked against the
@@ -64,10 +74,22 @@ config REGEX
 	  regex support to some commands, for example "env grep" and
 	  "setexpr".
 
-config LIB_RAND
-	bool "Pseudo-random library support "
+choice
+	prompt "Pseudo-random library support type"
+	depends on NET_RANDOM_ETHADDR || RANDOM_UUID || CMD_UUID
+	default LIB_RAND
 	help
-	  This library provides pseudo-random number generator functions.
+	  Select the library to provide pseudo-random number generator
+	  functions.  LIB_HW_RAND supports certain hardware engines that
+	  provide this functionality.  If in doubt, select LIB_RAND.
+
+config LIB_RAND
+	bool "Pseudo-random library support"
+
+config LIB_HW_RAND
+	bool "HW Engine for random libray support"
+
+endchoice
 
 config SPL_TINY_MEMSET
 	bool "Use a very small memset() in SPL"

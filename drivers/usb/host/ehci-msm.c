@@ -12,7 +12,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <usb.h>
 #include <usb/ehci-ci.h>
 #include <usb/ulpi.h>
@@ -133,8 +133,7 @@ static int ehci_usb_remove(struct udevice *dev)
 	setbits_le32(&ehci->usbcmd, CMD_RESET);
 
 	/* Wait for reset */
-	if (wait_for_bit(__func__, &ehci->usbcmd, CMD_RESET, false, 30,
-			 false)) {
+	if (wait_for_bit_le32(&ehci->usbcmd, CMD_RESET, false, 30, false)) {
 		printf("Stuck on USB reset.\n");
 		return -ETIMEDOUT;
 	}

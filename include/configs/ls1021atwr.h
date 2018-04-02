@@ -24,26 +24,6 @@
 #define CONFIG_SYS_INIT_RAM_ADDR	OCRAM_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_SIZE	OCRAM_SIZE
 
-/*
- * USB
- */
-
-/*
- * EHCI Support - disbaled by default as
- * there is no signal coming out of soc on
- * this board for this controller. However,
- * the silicon still has this controller,
- * and anyone can use this controller by
- * taking signals out on their board.
- */
-
-/*#define CONFIG_HAS_FSL_DR_USB*/
-
-#ifdef CONFIG_HAS_FSL_DR_USB
-#define CONFIG_USB_EHCI_FSL
-#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
-#endif
-
 #define CONFIG_SYS_CLK_FREQ		100000000
 #define CONFIG_DDR_CLK_FREQ		100000000
 
@@ -86,7 +66,6 @@
 #define CONFIG_SYS_FSL_PBL_RCW	\
 	board/freescale/ls1021atwr/ls102xa_rcw_sd_ifc.cfg
 #endif
-#define CONFIG_SPL_FRAMEWORK
 
 #ifdef CONFIG_SECURE_BOOT
 /*
@@ -100,7 +79,6 @@
 #define CONFIG_SPL_MAX_SIZE		0x1a000
 #define CONFIG_SPL_STACK		0x1001d000
 #define CONFIG_SPL_PAD_TO		0x1c000
-#define CONFIG_SYS_TEXT_BASE		0x82000000
 
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_TEXT_BASE + \
 		CONFIG_SYS_MONITOR_LEN)
@@ -119,14 +97,6 @@
 #else
 #define CONFIG_SYS_MONITOR_LEN		0x100000
 #endif /* ifdef CONFIG_U_BOOT_HDR_SIZE */
-#endif
-
-#ifdef CONFIG_QSPI_BOOT
-#define CONFIG_SYS_TEXT_BASE		0x40100000
-#endif
-
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE		0x60100000
 #endif
 
 #define CONFIG_NR_DRAM_BANKS		1
@@ -353,7 +323,6 @@
 
 #define CONFIG_FSL_DEVICE_DISABLE
 
-#include <config_distro_defaults.h>
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
 	func(USB, usb, 0)
@@ -500,8 +469,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		0x9fffffff

@@ -20,10 +20,9 @@
 /* 1008 MB (the last ~30Mb are secured for TrustZone by ATF*/
 #define PHYS_SDRAM_1_SIZE		0x3da00000
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define CONFIG_SYS_TEXT_BASE		0x80080000
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x7fff0)
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x80000)
-#define CONFIG_SYS_BOOTM_LEN		0x1000000 /* 16MB max kernel size */
+#define CONFIG_SYS_BOOTM_LEN		SZ_64M
 
 /* UART */
 
@@ -42,11 +41,6 @@
 /* Enable that for switching of boot partitions */
 /* Disabled by default as some sub-commands can brick eMMC */
 /*#define CONFIG_SUPPORT_EMMC_BOOT */
-
-/* Partition table support */
-#define HAVE_BLOCK_DEVICE /* Needed for partition commands */
-
-#include <config_distro_defaults.h>
 
 /* BOOTP options */
 #define CONFIG_BOOTP_BOOTFILESIZE
@@ -92,7 +86,7 @@ REFLASH(dragonboard/u-boot.img, 8)\
 	"initrd_high=0xffffffffffffffff\0" \
 	"linux_image=Image\0" \
 	"kernel_addr_r=0x81000000\0"\
-	"fdtfile=apq8016-sbc.dtb\0" \
+	"fdtfile=qcom/apq8016-sbc.dtb\0" \
 	"fdt_addr_r=0x83000000\0"\
 	"ramdisk_addr_r=0x84000000\0"\
 	"scriptaddr=0x90000000\0"\
@@ -101,7 +95,6 @@ REFLASH(dragonboard/u-boot.img, 8)\
 
 #define CONFIG_ENV_SIZE			0x2000
 #define CONFIG_SYS_MMC_ENV_DEV		0	/* mmc0 = emmc, mmc1 = sd */
-#define CONFIG_ENV_VARS_UBOOT_CONFIG
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + SZ_8M)

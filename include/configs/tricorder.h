@@ -23,7 +23,6 @@
  * header. That is 0x800FFFC0--0x80100000 should not be used for any
  * other needs.
  */
-#define CONFIG_SYS_TEXT_BASE		0x80100000
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
@@ -58,8 +57,6 @@
 
 /* I2C */
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
  
 
 /* EEPROM */
@@ -192,9 +189,6 @@
 #endif /* CONFIG_FLASHCARD */
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_CMDLINE_EDITING		/* enable cmdline history */
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0 + 0x00000000)
@@ -231,7 +225,6 @@
 #define CONFIG_SYS_SRAM_SIZE		0x10000
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SPL_NAND_BASE
 #define CONFIG_SPL_NAND_DRIVERS

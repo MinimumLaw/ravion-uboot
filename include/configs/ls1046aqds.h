@@ -9,14 +9,6 @@
 
 #include "ls1046a_common.h"
 
-#if defined(CONFIG_NAND_BOOT) || defined(CONFIG_SD_BOOT)
-#define CONFIG_SYS_TEXT_BASE		0x82000000
-#elif defined(CONFIG_QSPI_BOOT)
-#define CONFIG_SYS_TEXT_BASE		0x40100000
-#else
-#define CONFIG_SYS_TEXT_BASE		0x60100000
-#endif
-
 #ifndef __ASSEMBLY__
 unsigned long get_board_sys_clk(void);
 unsigned long get_board_ddr_clk(void);
@@ -136,9 +128,6 @@ unsigned long get_board_ddr_clk(void);
 #define CFG_LPUART_EN		0x2
 #endif
 
-/* SATA */
-#define CONFIG_SCSI_AHCI_PLAT
-
 /* EEPROM */
 #define CONFIG_ID_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_NXID
@@ -147,13 +136,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		1
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	5
-
-#define CONFIG_SYS_SATA				AHCI_BASE_ADDR
-
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID		1
-#define CONFIG_SYS_SCSI_MAX_LUN			1
-#define CONFIG_SYS_SCSI_MAX_DEVICE		(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-						CONFIG_SYS_SCSI_MAX_LUN)
 
 /*
  * IFC Definitions
@@ -407,8 +389,6 @@ unsigned long get_board_ddr_clk(void);
  * Miscellaneous configurable options
  */
 #define CONFIG_MISC_INIT_R
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		0x9fffffff

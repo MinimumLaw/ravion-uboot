@@ -15,7 +15,6 @@
 
 #define CONFIG_SYS_NS16550_MEM32
 
-#define CONFIG_SYS_TEXT_BASE		0x00200000
 #define CONFIG_SYS_INIT_SP_ADDR		0x00300000
 #define CONFIG_SYS_LOAD_ADDR		0x00800800
 
@@ -23,9 +22,6 @@
 
 /* MMC/SD IP block */
 #define CONFIG_BOUNCE_BUFFER
-
-#define CONFIG_SUPPORT_VFAT
-#define CONFIG_FS_EXT4
 
 /* RAW SD card / eMMC locations. */
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	(128 << 10)

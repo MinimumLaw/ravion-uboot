@@ -24,8 +24,6 @@
  * hex number here!
  */
 
-#define CONFIG_SYS_TEXT_BASE  0x72000000
-
 #define CONFIG_ATMEL_LEGACY		/* required until (g)pio is fixed */
 
 /* ARM asynchronous clock */
@@ -56,9 +54,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /* SDRAM */
 #define CONFIG_NR_DRAM_BANKS		1
@@ -106,10 +101,6 @@
 	"nand read 0x70000000 0x200000 0x300000;"			\
 	"bootm 0x70000000"
 
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
-
 /*
  * Size of malloc() pool
  */
@@ -117,7 +108,6 @@
 				SZ_4M, 0x1000)
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x300000
 #define CONFIG_SPL_MAX_SIZE		(12 * SZ_1K)
 #define CONFIG_SPL_STACK		(SZ_16K)

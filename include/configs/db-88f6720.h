@@ -17,7 +17,6 @@
  * for DDR ECC byte filling in the SPL before loading the main
  * U-Boot into it.
  */
-#define	CONFIG_SYS_TEXT_BASE	0x00800000
 #define CONFIG_SYS_TCLK		200000000	/* 200MHz */
 
 /*
@@ -49,9 +48,6 @@
 
 #define CONFIG_SYS_ALT_MEMTEST
 
-/* Additional FS support/configuration */
-#define CONFIG_SUPPORT_VFAT
-
 /*
  * mv-common.h should be defined after CMD configs since it used them
  * to enable certain macros
@@ -73,7 +69,6 @@
 
 /* SPL */
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x40004030
 #define CONFIG_SPL_MAX_SIZE		((128 << 10) - 0x4030)
 

@@ -28,7 +28,6 @@
 #define CONFIG_SYS_MALLOC_LEN		SZ_1M
 #define CONFIG_SYS_SDRAM_BASE		EMC_DYCS0_BASE
 #define CONFIG_SYS_SDRAM_SIZE		SZ_64M
-#define CONFIG_SYS_TEXT_BASE		0x83F00000
 #define CONFIG_SYS_MEMTEST_START	(CONFIG_SYS_SDRAM_BASE + SZ_32K)
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_TEXT_BASE - SZ_1M)
 
@@ -64,7 +63,6 @@
 /*
  * SSP/SPI
  */
-#define CONFIG_LPC32XX_SSP
 #define CONFIG_LPC32XX_SSP_TIMEOUT	100000
 
 /*
@@ -118,12 +116,8 @@
 /*
  * U-Boot General Configurations
  */
-#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_CBSIZE		1024
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 
 /*
  * Pass open firmware flat tree
@@ -174,7 +168,6 @@
 #define CONFIG_SPL_STACK		0x0000FFF8
 
 /* Use the framework and generic lib */
-#define CONFIG_SPL_FRAMEWORK
 
 /* SPL will use serial */
 

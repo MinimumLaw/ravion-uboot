@@ -37,8 +37,8 @@ void cm_wait_for_lock(u32 mask)
 /* function to poll in the fsm busy bit */
 int cm_wait_for_fsm(void)
 {
-	return wait_for_bit(__func__, (const u32 *)&clock_manager_base->stat,
-			    CLKMGR_STAT_BUSY, false, 20000, false);
+	return wait_for_bit_le32(&clock_manager_base->stat,
+				 CLKMGR_STAT_BUSY, false, 20000, false);
 }
 
 int set_cpu_clk_info(void)
@@ -59,7 +59,8 @@ int set_cpu_clk_info(void)
 	return 0;
 }
 
-int do_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+#ifndef CONFIG_SPL_BUILD
+static int do_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	cm_print_clock_quick_summary();
 	return 0;
@@ -70,3 +71,4 @@ U_BOOT_CMD(
 	"display clocks",
 	""
 );
+#endif

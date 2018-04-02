@@ -143,6 +143,7 @@ Directory Hierarchy:
   /nios2		Files generic to Altera NIOS2 architecture
   /openrisc		Files generic to OpenRISC architecture
   /powerpc		Files generic to PowerPC architecture
+  /riscv		Files generic to RISC-V architecture
   /sandbox		Files generic to HW-independent "sandbox"
   /sh			Files generic to SH architecture
   /x86			Files generic to x86 architecture
@@ -712,22 +713,6 @@ The following options need to be configured:
 		as a convenience, when switching between booting from
 		RAM and NFS.
 
-- Bootcount:
-		CONFIG_BOOTCOUNT_LIMIT
-		Implements a mechanism for detecting a repeating reboot
-		cycle, see:
-		http://www.denx.de/wiki/view/DULG/UBootBootCountLimit
-
-		CONFIG_BOOTCOUNT_ENV
-		If no softreset save registers are found on the hardware
-		"bootcount" is stored in the environment. To prevent a
-		saveenv on all reboots, the environment variable
-		"upgrade_available" is used. If "upgrade_available" is
-		0, "bootcount" is always 0, if "upgrade_available" is
-		1 "bootcount" is incremented in the environment.
-		So the Userspace Applikation must set the "upgrade_available"
-		and "bootcount" variable to 0, if a boot was successfully.
-
 - Pre-Boot Commands:
 		CONFIG_PREBOOT
 
@@ -1202,7 +1187,7 @@ The following options need to be configured:
 		key for the Replay Protection Memory Block partition in eMMC.
 
 - USB Device Firmware Update (DFU) class support:
-		CONFIG_USB_FUNCTION_DFU
+		CONFIG_DFU_OVER_USB
 		This enables the USB portion of the DFU USB class
 
 		CONFIG_DFU_MMC
@@ -1542,14 +1527,8 @@ The following options need to be configured:
 		You can fine tune the DHCP functionality by defining
 		CONFIG_BOOTP_* symbols:
 
-		CONFIG_BOOTP_SUBNETMASK
-		CONFIG_BOOTP_GATEWAY
-		CONFIG_BOOTP_HOSTNAME
 		CONFIG_BOOTP_NISDOMAIN
-		CONFIG_BOOTP_BOOTPATH
 		CONFIG_BOOTP_BOOTFILESIZE
-		CONFIG_BOOTP_DNS
-		CONFIG_BOOTP_DNS2
 		CONFIG_BOOTP_SEND_HOSTNAME
 		CONFIG_BOOTP_NTPSERVER
 		CONFIG_BOOTP_TIMEOFFSET
@@ -1564,15 +1543,6 @@ The following options need to be configured:
 		instead of starting over.  This can be used to fail over
 		to Link-local IP address configuration if the DHCP server
 		is not available.
-
-		CONFIG_BOOTP_DNS2 - If a DHCP client requests the DNS
-		serverip from a DHCP server, it is possible that more
-		than one DNS serverip is offered to the client.
-		If CONFIG_BOOTP_DNS2 is enabled, the secondary DNS
-		serverip will be stored in the additional environment
-		variable "dnsip2". The first DNS serverip is always
-		stored in the variable "dnsip", when CONFIG_BOOTP_DNS
-		is defined.
 
 		CONFIG_BOOTP_SEND_HOSTNAME - Some DHCP servers are capable
 		to do a dynamic update of a DNS server. To do this, they
@@ -2000,11 +1970,6 @@ The following options need to be configured:
 		SPI EEPROM, also an instance works with Crystal A/D and
 		D/As on the SACSng board)
 
-		CONFIG_SH_SPI
-
-		Enables the driver for SPI controller on SuperH. Currently
-		only SH7757 is supported.
-
 		CONFIG_SOFT_SPI
 
 		Enables a software (bit-bang) SPI driver rather than
@@ -2022,11 +1987,6 @@ The following options need to be configured:
 		must define a list of chip-select function pointers.
 		Currently supported on some MPC8xxx processors.	 For an
 		example, see include/configs/mpc8349emds.h.
-
-		CONFIG_MXC_SPI
-
-		Enables the driver for the SPI controllers on i.MX and MXC
-		SoCs. Currently i.MX31/35/51 are supported.
 
 		CONFIG_SYS_SPI_MXC_WAIT
 		Timeout for waiting until spi transfer completed.
@@ -2196,10 +2156,6 @@ The following options need to be configured:
 		#define CONFIG_NFS_TIMEOUT 10000UL
 
 - Command Interpreter:
-		CONFIG_AUTO_COMPLETE
-
-		Enable auto completion of commands using TAB.
-
 		CONFIG_SYS_PROMPT_HUSH_PS2
 
 		This defines the secondary prompt string, which is
@@ -2228,12 +2184,6 @@ The following options need to be configured:
 		symbols.
 
 - Command Line Editing and History:
-		CONFIG_CMDLINE_EDITING
-
-		Enable editing and History functions for interactive
-		command line input operations
-
-- Command Line PS1/PS2 support:
 		CONFIG_CMDLINE_PS_SUPPORT
 
 		Enable support for changing the command prompt string
@@ -2267,20 +2217,6 @@ The following options need to be configured:
 		the environment like the "source" command or the
 		boot command first.
 
-		CONFIG_ENV_VARS_UBOOT_CONFIG
-
-		Define this in order to add variables describing the
-		U-Boot build configuration to the default environment.
-		These will be named arch, cpu, board, vendor, and soc.
-
-		Enabling this option will cause the following to be defined:
-
-		- CONFIG_SYS_ARCH
-		- CONFIG_SYS_CPU
-		- CONFIG_SYS_BOARD
-		- CONFIG_SYS_VENDOR
-		- CONFIG_SYS_SOC
-
 		CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 		Define this in order to add variables describing certain
@@ -2310,18 +2246,6 @@ The following options need to be configured:
 		CONFIG_SF_DEFAULT_MODE 		(see include/spi.h)
 		CONFIG_SF_DEFAULT_SPEED		in Hz
 
-		CONFIG_SYSTEMACE
-
-		Adding this option adds support for Xilinx SystemACE
-		chips attached via some sort of local bus. The address
-		of the chip must also be defined in the
-		CONFIG_SYS_SYSTEMACE_BASE macro. For example:
-
-		#define CONFIG_SYSTEMACE
-		#define CONFIG_SYS_SYSTEMACE_BASE 0xf0000000
-
-		When SystemACE support is added, the "ace" device type
-		becomes available to the fat commands, i.e. fatls.
 
 - TFTP Fixed UDP Port:
 		CONFIG_TFTP_PORT
@@ -2342,32 +2266,6 @@ The following options need to be configured:
 		the remainder of the TFTP transfer to proceed normally.
 		A better solution is to properly configure the firewall,
 		but sometimes that is not allowed.
-
-- bootcount support:
-		CONFIG_BOOTCOUNT_LIMIT
-
-		This enables the bootcounter support, see:
-		http://www.denx.de/wiki/DULG/UBootBootCountLimit
-
-		CONFIG_AT91SAM9XE
-		enable special bootcounter support on at91sam9xe based boards.
-		CONFIG_SOC_DA8XX
-		enable special bootcounter support on da850 based boards.
-		CONFIG_BOOTCOUNT_RAM
-		enable support for the bootcounter in RAM
-		CONFIG_BOOTCOUNT_I2C
-		enable support for the bootcounter on an i2c (like RTC) device.
-			CONFIG_SYS_I2C_RTC_ADDR = i2c chip address
-			CONFIG_SYS_BOOTCOUNT_ADDR = i2c addr which is used for
-						    the bootcounter.
-			CONFIG_BOOTCOUNT_ALEN = address len
-		CONFIG_BOOTCOUNT_EXT
-		enable support for the bootcounter in EXT filesystem
-			CONFIG_SYS_BOOTCOUNT_ADDR = RAM address used for read
-                                                    and write.
-			CONFIG_SYS_BOOTCOUNT_EXT_INTERFACE = interface
-			CONFIG_SYS_BOOTCOUNT_EXT_DEVPART = device and part
-			CONFIG_SYS_BOOTCOUNT_EXT_NAME = filename
 
 - Show boot progress:
 		CONFIG_SHOW_BOOT_PROGRESS
@@ -2724,11 +2622,6 @@ FIT uImage format:
 
 		CONFIG_SYS_SPL_MALLOC_SIZE
 		The size of the malloc pool used in SPL.
-
-		CONFIG_SPL_FRAMEWORK
-		Enable the SPL framework under common/.  This framework
-		supports MMC, NAND and YMODEM loading of U-Boot and NAND
-		NAND loading of the Linux Kernel.
 
 		CONFIG_SPL_OS_BOOT
 		Enable booting directly to an OS from SPL.
@@ -3510,7 +3403,7 @@ Low Level (hardware related) configuration options:
 		globally (CONFIG_CMD_MEMORY).
 
 - CONFIG_SKIP_LOWLEVEL_INIT
-		[ARM, NDS32, MIPS only] If this variable is defined, then certain
+		[ARM, NDS32, MIPS, RISC-V only] If this variable is defined, then certain
 		low level initializations (like setting up the memory
 		controller) are omitted and/or U-Boot does not
 		relocate itself into RAM.
@@ -3718,6 +3611,11 @@ this behavior and build U-Boot to some external directory:
 Note that the command line "O=" setting overrides the KBUILD_OUTPUT environment
 variable.
 
+User specific CPPFLAGS, AFLAGS and CFLAGS can be passed to the compiler by
+setting the according environment variables KCPPFLAGS, KAFLAGS and KCFLAGS.
+For example to treat all compiler warnings as errors:
+
+	make KCFLAGS=-Werror
 
 Please be aware that the Makefiles assume you are using GNU make, so
 for instance on NetBSD you might need to use "gmake" instead of
@@ -4963,6 +4861,22 @@ On NDS32, the following registers are used:
 
 NOTE: DECLARE_GLOBAL_DATA_PTR must be used with file-global scope,
 or current versions of GCC may "optimize" the code too much.
+
+On RISC-V, the following registers are used:
+
+	x0: hard-wired zero (zero)
+	x1: return address (ra)
+	x2:	stack pointer (sp)
+	x3:	global pointer (gp)
+	x4:	thread pointer (tp)
+	x5:	link register (t0)
+	x8:	frame pointer (fp)
+	x10-x11:	arguments/return values (a0-1)
+	x12-x17:	arguments (a2-7)
+	x28-31:	 temporaries (t3-6)
+	pc:	program counter (pc)
+
+    ==> U-Boot will use gp to hold a pointer to the global data
 
 Memory Management:
 ------------------

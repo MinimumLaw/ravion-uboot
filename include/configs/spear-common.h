@@ -12,7 +12,6 @@
  */
 
 /* U-Boot Load Address */
-#define CONFIG_SYS_TEXT_BASE			0x00700000
 
 /* Ethernet driver configuration */
 #define CONFIG_MII
@@ -76,7 +75,6 @@
  * Serial Configuration (PL011)
  * CONFIG_PL01x_PORTS is defined in specific files
  */
-#define CONFIG_PL011_SERIAL
 #define CONFIG_PL011_CLOCK			(48 * 1000 * 1000)
 #define CONFIG_CONS_INDEX			0
 #define CONFIG_SYS_BAUDRATE_TABLE		{ 9600, 19200, 38400, \
@@ -166,8 +164,6 @@
 #define CONFIG_SYS_MEMTEST_START		0x00800000
 #define CONFIG_SYS_MEMTEST_END			0x04000000
 #define CONFIG_SYS_MALLOC_LEN			(1024*1024)
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_CMDLINE_EDITING
 #define CONFIG_SYS_LOAD_ADDR			0x00800000
 
 #define CONFIG_SYS_FLASH_EMPTY_INFO

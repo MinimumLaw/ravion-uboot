@@ -18,7 +18,6 @@
  * for DDR ECC byte filling in the SPL before loading the main
  * U-Boot into it.
  */
-#define	CONFIG_SYS_TEXT_BASE	0x00800000
 #define CONFIG_SYS_TCLK		250000000	/* 250MHz */
 
 /*
@@ -39,11 +38,6 @@
  * SDIO/MMC Card Configuration
  */
 #define CONFIG_SYS_MMC_BASE		MVEBU_SDIO_BASE
-
-/* Partition support */
-
-/* Additional FS support/configuration */
-#define CONFIG_SUPPORT_VFAT
 
 /* USB/EHCI configuration */
 #define CONFIG_EHCI_IS_TDI
@@ -92,7 +86,6 @@
 #define CONFIG_SPL_BOOT_DEVICE		SPL_BOOT_SDIO_MMC_CARD
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_SIZE			(140 << 10)
 #define CONFIG_SPL_TEXT_BASE		0x40000030
 #define CONFIG_SPL_MAX_SIZE		(CONFIG_SPL_SIZE - 0x0030)
@@ -131,7 +124,6 @@
 
 /* Include the common distro boot environment */
 #ifndef CONFIG_SPL_BUILD
-#include <config_distro_defaults.h>
 
 #ifdef CONFIG_MMC
 #define BOOT_TARGET_DEVICES_MMC(func) func(MMC, mmc, 0)

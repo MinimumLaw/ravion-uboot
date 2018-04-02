@@ -8,14 +8,11 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_STM32F4DISCOVERY
-
 #define CONFIG_MISC_INIT_R
 
 #define CONFIG_SYS_FLASH_BASE		0x08000000
 
 #define CONFIG_SYS_INIT_SP_ADDR		0x10010000
-#define CONFIG_SYS_TEXT_BASE		0x08000000
 
 #define CONFIG_SYS_ICACHE_OFF
 #define CONFIG_SYS_DCACHE_OFF
@@ -24,7 +21,6 @@
  * Configuration of the external SDRAM memory
  */
 #define CONFIG_NR_DRAM_BANKS		1
-#define CONFIG_SYS_RAM_SIZE		(8 << 20)
 #define CONFIG_SYS_RAM_CS		1
 #define CONFIG_SYS_RAM_FREQ_DIV		2
 #define CONFIG_SYS_RAM_BASE		0xD0000000
@@ -42,11 +38,7 @@
 #define CONFIG_RED_LED			110
 #define CONFIG_GREEN_LED		109
 
-#define CONFIG_STM32_GPIO
 #define CONFIG_STM32_FLASH
-#define CONFIG_STM32_SERIAL
-
-#define CONFIG_STM32_HSE_HZ		8000000
 
 #define CONFIG_SYS_CLK_FREQ		180000000 /* 180 MHz */
 
@@ -72,8 +64,5 @@
 /*
  * Command line configuration.
  */
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 
 #endif /* __CONFIG_H */

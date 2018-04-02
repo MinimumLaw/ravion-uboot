@@ -13,7 +13,7 @@
 #include <fdt_support.h>
 #include <errno.h>
 #include <image.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <mapmem.h>
 #include <asm/io.h>
 
@@ -452,6 +452,11 @@ error:
 __weak int ft_verify_fdt(void *fdt)
 {
 	return 1;
+}
+
+__weak int arch_fixup_fdt(void *blob)
+{
+	return 0;
 }
 
 int image_setup_libfdt(bootm_headers_t *images, void *blob,

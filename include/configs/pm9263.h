@@ -27,9 +27,7 @@
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768		/* slow clock xtal */
 
 #define CONFIG_SYS_AT91_CPU_NAME	"AT91SAM9263"
-#define CONFIG_PM9263		1	/* on a Ronetix PM9263 Board	*/
 #define CONFIG_ARCH_CPU_INIT
-#define CONFIG_SYS_TEXT_BASE	0
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_PM9263
 
@@ -169,9 +167,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE	1
-#define CONFIG_BOOTP_BOOTPATH		1
-#define CONFIG_BOOTP_GATEWAY		1
-#define CONFIG_BOOTP_HOSTNAME		1
 
 /* SDRAM */
 #define CONFIG_NR_DRAM_BANKS	1
@@ -299,9 +294,6 @@
 #else
 #error "Undefined memory device"
 #endif
-
-#define CONFIG_SYS_LONGHELP		1
-#define CONFIG_CMDLINE_EDITING		1
 
 /*
  * Size of malloc() pool

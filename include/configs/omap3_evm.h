@@ -28,8 +28,6 @@
 #undef CONFIG_SPL_TEXT_BASE
 #define CONFIG_SPL_TEXT_BASE            0x40200000
 
-#define CONFIG_SPL_FRAMEWORK
-
 #define CONFIG_MISC_INIT_R
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -40,9 +38,6 @@
 #undef CONFIG_CONS_INDEX
 #define CONFIG_CONS_INDEX               1
 #define CONFIG_SYS_NS16550_COM1         OMAP34XX_UART1
-#if defined(CONFIG_SPL_BUILD)
-#undef CONFIG_SYS_NS16550_REG_SIZE
-#endif /* CONFIG_SPL_BUILD */
 
 /* NAND */
 #if defined(CONFIG_NAND)
@@ -74,9 +69,6 @@
 #endif /* CONFIG_NAND */
 
 /* MUSB */
-#define CONFIG_USB_OMAP3
-#define CONFIG_USB_MUSB_OMAP2PLUS
-#define CONFIG_USB_MUSB_PIO_ONLY
 
 /* USB EHCI */
 #define CONFIG_SYS_USB_FAT_BOOT_PARTITION  1
@@ -84,40 +76,27 @@
 /* Environment */
 #define CONFIG_PREBOOT                  "usb start"
 
-#include <config_distro_defaults.h>
-
 #define MEM_LAYOUT_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV
 
-#if defined(CONFIG_NAND)
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"bootcmd_" #devtypel #instance "=" \
 	"run nandboot\0"
-
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	#devtypel #instance " "
-#endif /* CONFIG_NAND */
 
-#define BOOTENV_DEV_UIMAGE_MMC(devtypeu, devtypel, instance) \
+#define BOOTENV_DEV_LEGACY_MMC(devtypeu, devtypel, instance) \
 	"bootcmd_" #devtypel #instance "=" \
-		"setenv mmcdev " #instance"; " \
-		"run mmcboot\0"
-
-#define BOOTENV_DEV_NAME_UIMAGE_MMC(devtypeu, devtypel, instance) \
-	#devtypel #instance " "
-
-#define BOOTENV_DEV_ZIMAGE_MMC(devtypeu, devtypel, instance) \
-	"bootcmd_" #devtypel #instance "=" \
-		"setenv mmcdev " #instance"; " \
-		"run mmcbootz\0"
-
-#define BOOTENV_DEV_NAME_ZIMAGE_MMC(devtypeu, devtypel, instance) \
+	"setenv mmcdev " #instance "; " \
+	"setenv bootpart " #instance ":${mmcpart} ; " \
+	"run mmcboot\0"
+#define BOOTENV_DEV_NAME_LEGACY_MMC(devtypeu, devtypel, instance) \
 	#devtypel #instance " "
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
-	func(ZIMAGE_MMC, zimage_mmc, 0) \
-	func(UIMAGE_MMC, uimage_mmc, 0) \
+	func(LEGACY_MMC, legacy_mmc, 0) \
+	func(UBIFS, ubifs, 0) \
 	func(NAND, nand, 0)
 
 #include <config_distro_bootcmd.h>
@@ -128,9 +107,15 @@
 	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
 	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"fdt_high=0xffffffff\0" \
+	"bootdir=/boot\0" \
 	"bootenv=uEnv.txt\0" \
+	"bootfile=zImage\0" \
+	"bootubivol=rootfs\0" \
+	"bootubipart=rootfs\0" \
 	"optargs=\0" \
 	"mmcdev=0\0" \
+	"mmcpart=2\0" \
+	"bootpart=${mmcdev}:${mmcpart}\0" \
 	"console=ttyO0,115200n8\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"${mtdparts} " \
@@ -143,39 +128,37 @@
 		"root=ubi0:rootfs rw ubi.mtd=rootfs noinitrd " \
 		"rootfstype=ubifs rootwait\0" \
 	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} ${bootenv}\0" \
+	"ext4bootenv=ext4load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootenv}\0" \
 	"importbootenv=echo Importing environment from mmc ...; " \
 		"env import -t ${loadaddr} ${filesize}\0" \
-	"mmcbootenv=" \
-		"mmc dev ${mmcdev}; " \
-		"if mmc rescan && run loadbootenv; then " \
-			"run importbootenv; " \
+	"mmcbootenv=mmc dev ${mmcdev}; " \
+		"if mmc rescan; then " \
+			"run loadbootenv && run importbootenv; " \
+			"run ext4bootenv && run importbootenv; " \
 			"if test -n $uenvcmd; then " \
 				"echo Running uenvcmd ...; " \
 				"run uenvcmd; " \
 			"fi; " \
 		"fi\0" \
-	"loaduimage=setenv bootfile uImage; " \
-		"fatload mmc ${mmcdev} ${loadaddr} uImage\0" \
-	"loadzimage=setenv bootfile zImage; " \
-		"fatload mmc ${mmcdev} ${loadaddr} zImage\0" \
-	"loaddtb=fatload mmc ${mmcdev} ${fdtaddr} ${fdtfile}\0" \
+	"loadimage=ext4load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootfile}\0" \
+	"loaddtb=ext4load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}\0" \
 	"mmcboot=run mmcbootenv; " \
-		"if run loaduimage && run loaddtb; then " \
-			"echo Booting ${bootfile} from mmc ...; " \
+		"if run loadimage && run loaddtb; then " \
+			"echo Booting ${bootdir}/${bootfile} from mmc ${bootpart} ...; " \
 			"run mmcargs; " \
+			"if test ${bootfile} = uImage; then " \
+				"bootm ${loadaddr} - ${fdtaddr}; " \
+			"fi; " \
+			"if test ${bootfile} = zImage; then " \
+				"bootz ${loadaddr} - ${fdtaddr}; " \
+			"fi; " \
+		"fi\0" \
+	"nandboot=" \
+		"if nand read ${loadaddr} kernel && nand read ${fdtaddr} dtb; then " \
+			"echo Booting uImage from NAND MTD 'kernel' partition ...; " \
+			"run nandargs; " \
 			"bootm ${loadaddr} - ${fdtaddr}; " \
 		"fi\0" \
-	"mmcbootz=run mmcbootenv; " \
-		"if run loadzimage && run loaddtb; then " \
-			"echo Booting ${bootfile} from mmc ...; " \
-			"run mmcargs; " \
-			"bootz ${loadaddr} - ${fdtaddr};" \
-		"fi\0" \
-	"nandboot=echo Booting uImage from nand ...; " \
-		"run nandargs; " \
-		"nand read ${loadaddr} kernel; " \
-		"nand read ${fdtaddr} dtb; " \
-		"bootm ${loadaddr} - ${fdtaddr}\0" \
 	BOOTENV
 
 #endif /* __CONFIG_H */

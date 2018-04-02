@@ -21,7 +21,6 @@
 #define CONFIG_SYS_FSL_CLK
 
 /* Set TEXT at the beginning of the NOR flash */
-#define CONFIG_SYS_TEXT_BASE	0xA0000000
 
 #define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs */
 #define CONFIG_REVISION_TAG
@@ -41,8 +40,6 @@
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
-#define CONFIG_MXC_SPI
-#define CONFIG_MXC_GPIO
 
 /*
  * PMIC Configs
@@ -73,9 +70,6 @@
 /*
  * Command definition
  */
-#define CONFIG_BOOTP_SUBNETMASK
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_DNS
 
 #define CONFIG_NET_RETRY_COUNT	100
 
@@ -102,10 +96,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP	/* undef to save memory */
-#define CONFIG_CMDLINE_EDITING
-
-#define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_MEMTEST_START	0	/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x10000

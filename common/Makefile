@@ -66,7 +66,9 @@ endif # !CONFIG_SPL_BUILD
 obj-$(CONFIG_$(SPL_TPL_)BOOTSTAGE) += bootstage.o
 
 ifdef CONFIG_SPL_BUILD
-obj-$(CONFIG_SPL_DFU_SUPPORT) += dfu.o
+ifdef CONFIG_SPL_DFU_SUPPORT
+obj-$(CONFIG_DFU_OVER_USB) += dfu.o
+endif
 obj-$(CONFIG_SPL_DFU_SUPPORT) += cli_hush.o
 obj-$(CONFIG_SPL_HASH_SUPPORT) += hash.o
 obj-$(CONFIG_SPL_YMODEM_SUPPORT) += xyzModem.o
@@ -109,6 +111,7 @@ obj-$(CONFIG_IO_TRACE) += iotrace.o
 obj-y += memsize.o
 obj-y += stdio.o
 
+ifndef CONFIG_SPL_BUILD
 # This option is not just y/n - it can have a numeric value
 ifdef CONFIG_FASTBOOT_FLASH
 obj-y += image-sparse.o
@@ -119,6 +122,7 @@ ifdef CONFIG_FASTBOOT_FLASH_NAND_DEV
 obj-y += fb_nand.o
 endif
 endif
+endif
 
 ifdef CONFIG_CMD_EEPROM_LAYOUT
 obj-y += eeprom/eeprom_field.o eeprom/eeprom_layout.o
@@ -126,7 +130,7 @@ endif
 
 obj-y += cli.o
 obj-$(CONFIG_FSL_DDR_INTERACTIVE) += cli_simple.o cli_readline.o
-obj-$(CONFIG_CMD_DFU) += dfu.o
+obj-$(CONFIG_DFU_OVER_USB) += dfu.o
 obj-y += command.o
 obj-$(CONFIG_$(SPL_)LOG) += log.o
 obj-$(CONFIG_$(SPL_)LOG_CONSOLE) += log_console.o

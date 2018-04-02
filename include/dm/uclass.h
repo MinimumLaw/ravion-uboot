@@ -72,11 +72,11 @@ struct udevice;
  * then this will be automatically allocated.
  * @per_child_auto_alloc_size: Each child device (of a parent in this
  * uclass) can hold parent data for the device/uclass. This value is only
- * used as a falback if this member is 0 in the driver.
+ * used as a fallback if this member is 0 in the driver.
  * @per_child_platdata_auto_alloc_size: A bus likes to store information about
  * its children. If non-zero this is the size of this data, to be allocated
  * in the child device's parent_platdata pointer. This value is only used as
- * a falback if this member is 0 in the driver.
+ * a fallback if this member is 0 in the driver.
  * @ops: Uclass operations, providing the consistent interface to devices
  * within the uclass.
  * @flags: Flags for this uclass (DM_UC_...)
@@ -126,6 +126,14 @@ int uclass_get(enum uclass_id key, struct uclass **ucp);
  * @returns the name of the uclass driver for that ID, or NULL if none
  */
 const char *uclass_get_name(enum uclass_id id);
+
+/**
+ * uclass_get_by_name() - Look up a uclass by its driver name
+ *
+ * @name: Name to look up
+ * @returns the associated uclass ID, or UCLASS_INVALID if not found
+ */
+enum uclass_id uclass_get_by_name(const char *name);
 
 /**
  * uclass_get_device() - Get a uclass device based on an ID and index

@@ -6,7 +6,7 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <os.h>
 #include <asm/io.h>
 #include <asm/state.h>
@@ -76,7 +76,7 @@ void *map_physmem(phys_addr_t paddr, unsigned long len, unsigned long flags)
 	if (enable_pci_map && !pci_map_physmem(paddr, &len, &map_dev, &ptr)) {
 		if (plen != len) {
 			printf("%s: Warning: partial map at %x, wanted %lx, got %lx\n",
-			       __func__, paddr, len, plen);
+			       __func__, (uint)paddr, len, plen);
 		}
 		map_len = len;
 		return ptr;

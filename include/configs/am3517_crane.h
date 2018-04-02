@@ -72,8 +72,6 @@
  * Enable CONFIG_USB_MUSB_HCD for Host functionalities MSC, keyboard
  * Enable CONFIG_USB_MUSB_UDC for Device functionalities.
  */
-#define CONFIG_USB_AM35X		1
-#define CONFIG_USB_MUSB_HCD			1
 
 #ifdef CONFIG_USB_AM35X
 
@@ -99,8 +97,6 @@
 #endif /* CONFIG_USB_AM35X */
 
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 
 /*
  * Board NAND Info.
@@ -159,11 +155,9 @@
 		"fi; " \
 	"else run nandboot; fi"
 
-#define CONFIG_AUTO_COMPLETE	1
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
 #define CONFIG_SYS_MAXARGS		32	/* max number of command */
 						/* args */
@@ -232,7 +226,6 @@
 					 GENERATED_GBL_DATA_SIZE)
 
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x40200800
 #define CONFIG_SPL_MAX_SIZE		(SRAM_SCRATCH_SPACE_ADDR - \
 					 CONFIG_SPL_TEXT_BASE)
@@ -268,7 +261,6 @@
  * header. That is 0x800FFFC0--0x80100000 should not be used for any
  * other needs.
  */
-#define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_SPL_MALLOC_START	0x80208000
 #define CONFIG_SYS_SPL_MALLOC_SIZE	0x100000
 

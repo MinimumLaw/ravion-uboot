@@ -10,7 +10,7 @@
 
 #ifdef CONFIG_OF_LIBFDT
 
-#include <libfdt.h>
+#include <linux/libfdt.h>
 
 u32 fdt_getprop_u32_default_node(const void *fdt, int off, int cell,
 				const char *prop, const u32 dflt);
@@ -292,5 +292,8 @@ int fdtdec_get_int(const void *blob, int node, const char *prop_name,
 #endif
 #ifdef CONFIG_FMAN_ENET
 int fdt_update_ethernet_dt(void *blob);
+#endif
+#ifdef CONFIG_FSL_MC_ENET
+void fdt_fixup_board_enet(void *blob);
 #endif
 #endif /* ifndef __FDT_SUPPORT_H */

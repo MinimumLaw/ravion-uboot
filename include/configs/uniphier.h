@@ -48,9 +48,6 @@
 
 /* serial console configuration */
 
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-
-#define CONFIG_CMDLINE_EDITING		/* add command line history	*/
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		(CONFIG_SYS_CBSIZE)
@@ -93,8 +90,6 @@
 #define CONFIG_LOADADDR			0x84000000
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_BOOTM_LEN		(32 << 20)
-
-#define CONFIG_CMDLINE_EDITING		/* add command line history	*/
 
 #if defined(CONFIG_ARM64)
 /* ARM Trusted Firmware */
@@ -215,8 +210,6 @@
 
 #define CONFIG_SYS_SDRAM_BASE		0x80000000
 #define CONFIG_NR_DRAM_BANKS		3
-/* for LD20; the last 64 byte is used for dynamic DDR PHY training */
-#define CONFIG_SYS_MEM_TOP_HIDE		64
 
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE)
 
@@ -229,8 +222,6 @@
 #endif
 
 #define CONFIG_SPL_STACK		(0x00100000)
-
-#define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SYS_NAND_U_BOOT_OFFS		0x20000
 

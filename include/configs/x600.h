@@ -22,7 +22,6 @@
 /* Timer, HZ specific defines */
 #define CONFIG_SYS_HZ_CLOCK			8300000
 
-#define	CONFIG_SYS_TEXT_BASE			0x00800040
 #define CONFIG_SYS_FLASH_BASE			0xf8000000
 /* Reserve 8KiB for SPL */
 #define CONFIG_SPL_PAD_TO			8192	/* decimal for 'dd' */
@@ -38,7 +37,6 @@
 #define CONFIG_SYS_SERIAL1			0xD0080000
 #define CONFIG_PL01x_PORTS			{ (void *)CONFIG_SYS_SERIAL0, \
 						(void *)CONFIG_SYS_SERIAL1 }
-#define CONFIG_PL011_SERIAL
 #define CONFIG_PL011_CLOCK			(48 * 1000 * 1000)
 #define CONFIG_CONS_INDEX			0
 #define CONFIG_SYS_BAUDRATE_TABLE		{ 9600, 19200, 38400, \
@@ -87,18 +85,11 @@
 #define CONFIG_SYS_I2C_RTC_ADDR	0x68
 
 /* FPGA config options */
-#define CONFIG_FPGA
-#define CONFIG_FPGA_XILINX
-#define CONFIG_FPGA_SPARTAN3
 #define CONFIG_FPGA_COUNT	1
 
 /* USB EHCI options */
 #define CONFIG_USB_EHCI_SPEAR
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	2
-
-/* Filesystem support (for USB key) */
-#define CONFIG_SUPPORT_VFAT
-
 
 /*
  * U-Boot Environment placing definitions.
@@ -122,15 +113,7 @@
 #define CONFIG_SYS_MEMTEST_START		0x00800000
 #define CONFIG_SYS_MEMTEST_END			0x04000000
 #define CONFIG_SYS_MALLOC_LEN			(8 << 20)
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_LOAD_ADDR			0x00800000
-
-/* Use last 2 lwords in internal SRAM for bootcounter */
-#define CONFIG_BOOTCOUNT_LIMIT
-#define CONFIG_SYS_BOOTCOUNT_ADDR		(CONFIG_SRAM_BASE + \
-						 CONFIG_SRAM_SIZE)
 
 #define CONFIG_HOSTNAME				x600
 #define CONFIG_UBI_PART				ubi0
@@ -228,8 +211,6 @@
 #define CONFIG_SPL_TEXT_BASE		0xd2800b00
 #define CONFIG_SPL_MAX_SIZE		(CONFIG_SRAM_SIZE - 0xb00)
 #define	CONFIG_SPL_START_S_PATH	"arch/arm/cpu/arm926ejs/spear"
-
-#define CONFIG_SPL_FRAMEWORK
 
 /*
  * Please select/define only one of the following

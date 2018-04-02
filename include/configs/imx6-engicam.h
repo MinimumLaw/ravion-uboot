@@ -161,10 +161,6 @@
 /* MTD device */
 # define CONFIG_MTD_DEVICE
 # define CONFIG_MTD_PARTITIONS
-
-# define CONFIG_APBH_DMA
-# define CONFIG_APBH_DMA_BURST
-# define CONFIG_APBH_DMA_BURST8
 #endif
 
 /* Ethernet */
@@ -208,7 +204,7 @@
 
 /* SPL */
 #ifdef CONFIG_SPL
-# ifdef CONFIG_NAND_MXS
+# ifdef CONFIG_ENV_IS_IN_NAND
 #  define CONFIG_SPL_NAND_SUPPORT
 # else
 #  define CONFIG_SPL_MMC_SUPPORT

@@ -126,7 +126,7 @@ static int initr_reloc_global_data(void)
 {
 #ifdef __ARM__
 	monitor_flash_len = _end - __image_copy_start;
-#elif defined(CONFIG_NDS32)
+#elif defined(CONFIG_NDS32) || defined(CONFIG_RISCV)
 	monitor_flash_len = (ulong)&_end - (ulong)&_start;
 #elif !defined(CONFIG_SANDBOX) && !defined(CONFIG_NIOS2)
 	monitor_flash_len = (ulong)&__init_end - gd->relocaddr;
@@ -157,9 +157,9 @@ static int initr_reloc_global_data(void)
 #endif
 #ifdef CONFIG_OF_EMBED
 	/*
-	* The fdt_blob needs to be moved to new relocation address
-	* incase of FDT blob is embedded with in image
-	*/
+	 * The fdt_blob needs to be moved to new relocation address
+	 * incase of FDT blob is embedded with in image
+	 */
 	gd->fdt_blob += gd->reloc_off;
 #endif
 #ifdef CONFIG_EFI_LOADER
@@ -351,14 +351,16 @@ static int initr_flash(void)
 	print_size(flash_size, "");
 #ifdef CONFIG_SYS_FLASH_CHECKSUM
 	/*
-	* Compute and print flash CRC if flashchecksum is set to 'y'
-	*
-	* NOTE: Maybe we should add some WATCHDOG_RESET()? XXX
-	*/
+	 * Compute and print flash CRC if flashchecksum is set to 'y'
+	 *
+	 * NOTE: Maybe we should add some WATCHDOG_RESET()? XXX
+	 */
 	if (env_get_yesno("flashchecksum") == 1) {
+		const uchar *flash_base = (const uchar *)CONFIG_SYS_FLASH_BASE;
+
 		printf("  CRC: %08X", crc32(0,
-			(const unsigned char *) CONFIG_SYS_FLASH_BASE,
-			flash_size));
+					    flash_base,
+					    flash_size));
 	}
 #endif /* CONFIG_SYS_FLASH_CHECKSUM */
 	putc('\n');
@@ -374,7 +376,6 @@ static int initr_flash(void)
 	/* Make a update of the Memctrl. */
 	update_flash_size(flash_size);
 #endif
-
 
 #if defined(CONFIG_OXC) || defined(CONFIG_RMU)
 	/* flash mapped at end of memory map */
@@ -624,10 +625,8 @@ int initr_mem(void)
 	ulong pram = 0;
 	char memsz[32];
 
-# ifdef CONFIG_PRAM
 	pram = env_get_ulong("pram", 10, CONFIG_PRAM);
-# endif
-	sprintf(memsz, "%ldk", (long int) ((gd->ram_size / 1024) - pram));
+	sprintf(memsz, "%ldk", (long int)((gd->ram_size / 1024) - pram));
 	env_set("mem", memsz);
 
 	return 0;
@@ -665,7 +664,7 @@ static int run_main_loop(void)
 
 /*
  * Over time we hope to remove these functions with code fragments and
- * stub funtcions, and instead call the relevant function directly.
+ * stub functions, and instead call the relevant function directly.
  *
  * We also hope to remove most of the driver-related init and do it if/when
  * the driver is later used.
@@ -680,7 +679,7 @@ static init_fnc_t init_sequence_r[] = {
 	initr_caches,
 	/* Note: For Freescale LS2 SoCs, new MMU table is created in DDR.
 	 *	 A temporary mapping of IFC high region is since removed,
-	 *	 so environmental variables in NOR flash is not availble
+	 *	 so environmental variables in NOR flash is not available
 	 *	 until board_init() is called below to remap IFC to high
 	 *	 region.
 	 */
@@ -704,7 +703,7 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_DM
 	initr_dm,
 #endif
-#if defined(CONFIG_ARM) || defined(CONFIG_NDS32)
+#if defined(CONFIG_ARM) || defined(CONFIG_NDS32) || defined(CONFIG_RISCV)
 	board_init,	/* Setup chipselects */
 #endif
 	/*
@@ -743,7 +742,7 @@ static init_fnc_t init_sequence_r[] = {
 #if defined(CONFIG_PCI) && defined(CONFIG_SYS_EARLY_PCI_INIT)
 	/*
 	 * Do early PCI configuration _before_ the flash gets initialised,
-	 * because PCU ressources are crucial for flash access on some boards.
+	 * because PCU resources are crucial for flash access on some boards.
 	 */
 	initr_pci,
 #endif

@@ -14,8 +14,6 @@
  /* High Level Configuration Options */
 #define CONFIG_MX31		1		/* This is a mx31 */
 
-#define CONFIG_SYS_TEXT_BASE		0xA0000000
-
 #define CONFIG_MACH_TYPE	MACH_TYPE_MX31ADS
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
@@ -35,10 +33,8 @@
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 
 #define CONFIG_HARD_SPI		1
-#define CONFIG_MXC_SPI		1
 #define CONFIG_DEFAULT_SPI_BUS	1
 #define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
-#define CONFIG_MXC_GPIO
 
 /* PMIC Controller */
 #define CONFIG_POWER
@@ -94,14 +90,11 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 
 #define CONFIG_SYS_MEMTEST_START	0		/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x10000
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-
-#define CONFIG_CMDLINE_EDITING	1
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map

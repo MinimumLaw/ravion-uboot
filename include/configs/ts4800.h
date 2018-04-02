@@ -22,7 +22,6 @@
 #define CONFIG_MACH_TYPE	MACH_TYPE_TS48XX
 
 /* text base address used when linking */
-#define CONFIG_SYS_TEXT_BASE	0x90008000
 
 #include <asm/arch/imx-regs.h>
 
@@ -43,13 +42,11 @@
 
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE	UART1_BASE
-#define CONFIG_MXC_GPIO
 
 /*
  * SPI Configs
  * */
 #define CONFIG_HARD_SPI /* puts SPI: ready */
-#define CONFIG_MXC_SPI /* driver for the SPI controllers*/
 
 /*
  * MMC Configs
@@ -120,12 +117,8 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-
-#define CONFIG_CMDLINE_EDITING
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map

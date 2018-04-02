@@ -580,6 +580,11 @@ int board_init(void)
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 	gpmc_init();
 
+	/*
+	 * Call this to initialize *ctrl again
+	 */
+	hw_data_init();
+
 	/* Clear all important bits for DSS errata that may need to be tweaked*/
 	mreqprio_0 = readl(&cdev->mreqprio_0) & MREQPRIO_0_SAB_INIT1_MASK &
 	                   MREQPRIO_0_SAB_INIT0_MASK;
@@ -682,7 +687,7 @@ int usb_gadget_handle_interrupts(int index)
 #endif /* CONFIG_USB_DWC3 */
 
 #if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_OMAP)
-int omap_xhci_board_usb_init(int index, enum usb_init_type init)
+int board_usb_init(int index, enum usb_init_type init)
 {
 	enable_usb_clocks(index);
 #ifdef CONFIG_USB_DWC3
@@ -713,7 +718,7 @@ int omap_xhci_board_usb_init(int index, enum usb_init_type init)
 	return 0;
 }
 
-int omap_xhci_board_usb_cleanup(int index, enum usb_init_type init)
+int board_usb_cleanup(int index, enum usb_init_type init)
 {
 #ifdef CONFIG_USB_DWC3
 	switch (index) {

@@ -70,8 +70,6 @@
 
 /* I2C */
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 
 /*
  * Our platforms make use of SPL to initalize the hardware (primarily
@@ -81,7 +79,6 @@
  * under common/spl/.  Given our generally common memory map, we set a
  * number of related defaults and sizes here.
  */
-#define CONFIG_SPL_FRAMEWORK
 /*
  * Place the image at the start of the ROM defined image space.
  * We limit our size to the ROM-defined downloaded image area, and use the
@@ -93,8 +90,6 @@
  *
  * ----------------------------------------------------------------------------
  */
-#undef  CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE		0x80800000
 #define CONFIG_SPL_BSS_START_ADDR	0x80A00000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000		/* 512 KB */
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SPL_BSS_START_ADDR + \

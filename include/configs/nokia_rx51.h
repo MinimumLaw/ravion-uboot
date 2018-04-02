@@ -31,7 +31,6 @@
  * NOLO loading boot image to random place, so it doesn't really
  * matter what we set this to. We have to copy u-boot to this address
  */
-#define CONFIG_SYS_TEXT_BASE	0x80008000
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
@@ -82,12 +81,6 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_BAUDRATE_TABLE { 4800, 9600, 19200, 38400, 57600, 115200 }
 
-/* USB */
-#define CONFIG_USB_MUSB_UDC
-#define CONFIG_USB_MUSB_HCD
-#define CONFIG_USB_OMAP3
-#define CONFIG_TWL4030_USB
-
 /* USB device configuration */
 #define CONFIG_USB_DEVICE
 #define CONFIG_USBD_VENDORID		0x0421
@@ -97,12 +90,7 @@
 
 /* commands to include */
 
-#define CONFIG_CMDLINE_EDITING		/* add command line history */
-#define CONFIG_AUTO_COMPLETE		/* add autocompletion support */
-
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_OMAP24_I2C_SPEED	100000
-#define CONFIG_SYS_OMAP24_I2C_SLAVE	1
 
 /*
  * TWL4030
@@ -320,7 +308,6 @@ int rx51_kp_getc(struct stdio_dev *sdev);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory */
 
 #define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)
 #define CONFIG_SYS_MEMTEST_END		(OMAP34XX_SDRC_CS0 + 0x01F00000)/*31MB*/

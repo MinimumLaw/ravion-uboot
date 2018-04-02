@@ -61,7 +61,10 @@ static int eeprom_bus_write(unsigned dev_addr, unsigned offset,
 	return rcode;
 }
 
-static int env_eeprom_get_char(int index)
+/** Call this function from overridden env_get_char_spec() if you need
+ * this functionality.
+ */
+int env_eeprom_get_char(int index)
 {
 	uchar c;
 	unsigned int off = CONFIG_ENV_OFFSET;
@@ -181,9 +184,7 @@ static int env_eeprom_load(void)
 	eeprom_bus_read(CONFIG_SYS_DEF_EEPROM_ADDR,
 		off, (uchar *)buf_env, CONFIG_ENV_SIZE);
 
-	env_import(buf_env, 1);
-
-	return 0;
+	return env_import(buf_env, 1);
 }
 
 static int env_eeprom_save(void)
@@ -230,7 +231,6 @@ static int env_eeprom_save(void)
 U_BOOT_ENV_LOCATION(eeprom) = {
 	.location	= ENVL_EEPROM,
 	ENV_NAME("EEPROM")
-	.get_char	= env_eeprom_get_char,
 	.load		= env_eeprom_load,
 	.save		= env_save_ptr(env_eeprom_save),
 };

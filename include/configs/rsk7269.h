@@ -11,13 +11,11 @@
 #define __RSK7269_H
 
 #define CONFIG_CPU_SH7269	1
-#define CONFIG_RSK7269		1
 
 #define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_SYS_BAUDRATE_TABLE	{ CONFIG_BAUDRATE }
 
-#define CONFIG_SYS_LONGHELP		/* undef to save memory	*/
 #define CONFIG_SYS_PBSIZE	256	/* Print Buffer Size */
 
 /* Serial */
@@ -25,7 +23,6 @@
 
 /* Memory */
 /* u-boot relocated to top 256KB of ram */
-#define CONFIG_SYS_TEXT_BASE		0x0DFC0000
 #define CONFIG_SYS_SDRAM_BASE		0x0C000000
 #define CONFIG_SYS_SDRAM_SIZE		(32 * 1024 * 1024)
 

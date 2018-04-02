@@ -51,13 +51,11 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_FSL_PBL_RCW	\
 	board/freescale/ls1021aqds/ls102xa_rcw_sd_ifc.cfg
 #endif
-#define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SPL_TEXT_BASE		0x10000000
 #define CONFIG_SPL_MAX_SIZE		0x1a000
 #define CONFIG_SPL_STACK		0x1001d000
 #define CONFIG_SPL_PAD_TO		0x1c000
-#define CONFIG_SYS_TEXT_BASE		0x82000000
 
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_TEXT_BASE + \
 		CONFIG_SYS_MONITOR_LEN)
@@ -67,19 +65,13 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_MONITOR_LEN		0xc0000
 #endif
 
-#ifdef CONFIG_QSPI_BOOT
-#define CONFIG_SYS_TEXT_BASE		0x40100000
-#endif
-
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_SYS_FSL_PBL_RCW	board/freescale/ls1021aqds/ls102xa_rcw_nand.cfg
-#define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SPL_TEXT_BASE		0x10000000
 #define CONFIG_SPL_MAX_SIZE		0x1a000
 #define CONFIG_SPL_STACK		0x1001d000
 #define CONFIG_SPL_PAD_TO		0x1c000
-#define CONFIG_SYS_TEXT_BASE		0x82000000
 
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	(400 << 10)
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	CONFIG_SPL_PAD_TO
@@ -92,10 +84,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SPL_BSS_START_ADDR	0x80100000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000
 #define CONFIG_SYS_MONITOR_LEN		0x80000
-#endif
-
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE		0x60100000
 #endif
 
 #define CONFIG_NR_DRAM_BANKS		1
@@ -394,17 +382,6 @@ unsigned long get_board_ddr_clk(void);
 #endif
 
 /*
- * USB
- */
-/* EHCI Support - disbaled by default */
-/*#define CONFIG_HAS_FSL_DR_USB*/
-
-#ifdef CONFIG_HAS_FSL_DR_USB
-#define CONFIG_USB_EHCI_FSL
-#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
-#endif
-
-/*
  * Video
  */
 #ifdef CONFIG_VIDEO_FSL_DCU_FB
@@ -470,7 +447,6 @@ unsigned long get_board_ddr_clk(void);
 #endif
 
 #define CONFIG_CMDLINE_TAG
-#define CONFIG_CMDLINE_EDITING
 
 #define CONFIG_PEN_ADDR_BIG_ENDIAN
 #define CONFIG_LAYERSCAPE_NS_ACCESS
@@ -502,8 +478,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		0x9fffffff

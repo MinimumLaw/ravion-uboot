@@ -53,7 +53,7 @@ struct lmb;
 
 #if IMAGE_ENABLE_FIT
 #include <hash.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <fdt_support.h>
 # ifdef CONFIG_SPL_BUILD
 #  ifdef CONFIG_SPL_CRC32_SUPPORT
@@ -190,6 +190,7 @@ enum {
 	IH_ARCH_ARC,			/* Synopsys DesignWare ARC */
 	IH_ARCH_X86_64,			/* AMD x86_64, Intel and Via */
 	IH_ARCH_XTENSA,			/* Xtensa	*/
+	IH_ARCH_RISCV,			/* RISC-V */
 
 	IH_ARCH_COUNT,
 };
@@ -577,7 +578,7 @@ int boot_get_ramdisk(int argc, char * const argv[], bootm_headers_t *images,
  * boot_get_loadable() will take the given FIT configuration, and look
  * for a field named "loadables".  Loadables, is a list of elements in
  * the FIT given as strings.  exe:
- *   loadables = "linux_kernel@1", "fdt@2";
+ *   loadables = "linux_kernel", "fdt-2";
  * this function will attempt to parse each string, and load the
  * corresponding element from the FIT into memory.  Once placed,
  * no aditional actions are taken.
@@ -603,10 +604,10 @@ int boot_get_setup_fit(bootm_headers_t *images, uint8_t arch,
  * @param images	Boot images structure
  * @param addr		Address of FIT in memory
  * @param fit_unamep	On entry this is the requested image name
- *			(e.g. "kernel@1") or NULL to use the default. On exit
+ *			(e.g. "kernel") or NULL to use the default. On exit
  *			points to the selected image name
  * @param fit_uname_configp	On entry this is the requested configuration
- *			name (e.g. "conf@1") or NULL to use the default. On
+ *			name (e.g. "conf-1") or NULL to use the default. On
  *			exit points to the selected configuration name.
  * @param arch		Expected architecture (IH_ARCH_...)
  * @param datap		Returns address of loaded image
@@ -631,10 +632,10 @@ int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
  * @param images	Boot images structure
  * @param addr		Address of FIT in memory
  * @param fit_unamep	On entry this is the requested image name
- *			(e.g. "kernel@1") or NULL to use the default. On exit
+ *			(e.g. "kernel") or NULL to use the default. On exit
  *			points to the selected image name
  * @param fit_uname_configp	On entry this is the requested configuration
- *			name (e.g. "conf@1") or NULL to use the default. On
+ *			name (e.g. "conf-1") or NULL to use the default. On
  *			exit points to the selected configuration name.
  * @param arch		Expected architecture (IH_ARCH_...)
  * @param image_type	Required image type (IH_TYPE_...). If this is
@@ -657,25 +658,25 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 /**
  * fit_get_node_from_config() - Look up an image a FIT by type
  *
- * This looks in the selected conf@ node (images->fit_uname_cfg) for a
+ * This looks in the selected conf- node (images->fit_uname_cfg) for a
  * particular image type (e.g. "kernel") and then finds the image that is
  * referred to.
  *
  * For example, for something like:
  *
  * images {
- *	kernel@1 {
+ *	kernel {
  *		...
  *	};
  * };
  * configurations {
- *	conf@1 {
- *		kernel = "kernel@1";
+ *	conf-1 {
+ *		kernel = "kernel";
  *	};
  * };
  *
  * the function will return the node offset of the kernel@1 node, assuming
- * that conf@1 is the chosen configuration.
+ * that conf-1 is the chosen configuration.
  *
  * @param images	Boot images structure
  * @param prop_name	Property name to look up (FIT_..._PROP)
@@ -870,6 +871,15 @@ int image_setup_linux(bootm_headers_t *images);
  */
 int bootz_setup(ulong image, ulong *start, ulong *end);
 
+/**
+ * Return the correct start address and size of a Linux aarch64 Image.
+ *
+ * @image: Address of image
+ * @start: Returns start address of image
+ * @size : Returns size image
+ * @return 0 if OK, 1 if the image was not recognised
+ */
+int booti_setup(ulong image, ulong *relocated_addr, ulong *size);
 
 /*******************************************************************/
 /* New uImage format specific code (prefixed with fit_) */
@@ -1021,10 +1031,10 @@ int fit_conf_get_node(const void *fit, const char *conf_uname);
  * @noffset:	Offset of conf@xxx node to check
  * @prop_name:	Property to read from the conf node
  *
- * The conf@ nodes contain references to other nodes, using properties
- * like 'kernel = "kernel@1"'. Given such a property name (e.g. "kernel"),
+ * The conf- nodes contain references to other nodes, using properties
+ * like 'kernel = "kernel"'. Given such a property name (e.g. "kernel"),
  * return the offset of the node referred to (e.g. offset of node
- * "/images/kernel@1".
+ * "/images/kernel".
  */
 int fit_conf_get_prop_node(const void *fit, int noffset,
 		const char *prop_name);
@@ -1262,6 +1272,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len);
 int android_image_get_ramdisk(const struct andr_img_hdr *hdr,
 			      ulong *rd_data, ulong *rd_len);
+int android_image_get_second(const struct andr_img_hdr *hdr,
+			      ulong *second_data, ulong *second_len);
 ulong android_image_get_end(const struct andr_img_hdr *hdr);
 ulong android_image_get_kload(const struct andr_img_hdr *hdr);
 void android_print_contents(const struct andr_img_hdr *hdr);

@@ -28,7 +28,6 @@
 #define CONFIG_NS16550_MIN_FUNCTIONS
 #endif
 
-#define CONFIG_SYS_TEXT_BASE	0x00100000 /* CONFIG_SYS_NAND_U_BOOT_DST */
 #define CONFIG_SYS_TEXT_BASE_SPL 0xfff00000
 #define CONFIG_SPL_MAX_SIZE	(4 * 1024)
 #define CONFIG_SPL_PAD_TO	0x4000
@@ -45,10 +44,6 @@
 #endif
 
 #endif /* CONFIG_NAND */
-
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE	0xFE000000
-#endif
 
 #ifndef CONFIG_SYS_MONITOR_BASE
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
@@ -453,21 +448,14 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /*
  * Command line configuration.
  */
 
-#define CONFIG_CMDLINE_EDITING 1
-#define CONFIG_AUTO_COMPLETE	/* add autocompletion support   */
-
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size */
 

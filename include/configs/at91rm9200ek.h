@@ -25,9 +25,6 @@
  */
 #ifdef CONFIG_RAMBOOT
 #define CONFIG_SKIP_LOWLEVEL_INIT
-#define CONFIG_SYS_TEXT_BASE 0x20100000
-#else
-#define CONFIG_SYS_TEXT_BASE 0x10000000
 #endif
 
 /*
@@ -47,7 +44,6 @@
 /* CPU configuration */
 #define CONFIG_AT91RM9200
 #define CONFIG_AT91RM9200EK
-#define CONFIG_CPUAT91
 #define USE_920T_MMU
 
 #include <asm/hardware.h>	/* needed for port definitions */
@@ -171,9 +167,6 @@
 /*
  * Shell Settings
  */
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
 
 /*
  * Size of malloc() pool

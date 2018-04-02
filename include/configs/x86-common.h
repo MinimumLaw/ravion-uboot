@@ -55,17 +55,14 @@
 					 9600, 19200, 38400, 115200}
 #define CONFIG_SYS_NS16550_PORT_MAPPED
 
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
-
-#define CONFIG_SUPPORT_VFAT
-
 /*-----------------------------------------------------------------------
  * Command line configuration.
  */
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	\
 	"ext2load scsi 0:3 01000000 /boot/vmlinuz; zboot 01000000"
+#endif
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE			115200
@@ -74,7 +71,6 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_CBSIZE			512
 
 #define CONFIG_SYS_MEMTEST_START		0x00100000
@@ -113,9 +109,6 @@
 
 #define CONFIG_TFTP_TSIZE
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /* Default environment */
 #define CONFIG_ROOTPATH		"/opt/nfsroot"

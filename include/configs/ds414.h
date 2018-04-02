@@ -17,7 +17,6 @@
  * for DDR ECC byte filling in the SPL before loading the main
  * U-Boot into it.
  */
-#define	CONFIG_SYS_TEXT_BASE	0x00800000
 #define CONFIG_SYS_TCLK		250000000	/* 250MHz */
 
 /*
@@ -68,7 +67,6 @@
 #endif
 
 /* why is this only defined in mv-common.h if CONFIG_DM is undefined? */
-#define CONFIG_SUPPORT_VFAT
 #define CONFIG_SYS_MVFS
 
 /*
@@ -92,7 +90,6 @@
 
 /* SPL */
 /* Defines for SPL */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x40004030
 #define CONFIG_SPL_MAX_SIZE		((128 << 10) - 0x4030)
 
@@ -112,10 +109,6 @@
 
 /* DS414 bus width is 32bits */
 #define CONFIG_DDR_32BIT
-
-/* Use random ethernet address if not configured */
-#define CONFIG_LIB_RAND
-#define CONFIG_NET_RANDOM_ETHADDR
 
 /* Default Environment */
 #define CONFIG_BOOTCOMMAND	"sf read ${loadaddr} 0xd0000 0x700000; bootm"

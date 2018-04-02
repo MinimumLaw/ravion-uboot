@@ -15,8 +15,6 @@
 #include <asm/hardware.h>
 #include <linux/sizes.h>
 
-#define CONFIG_SYS_TEXT_BASE		0x21f00000
-
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_MAIN_CLOCK	18432000 /* External Crystal, in Hz */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
@@ -114,9 +112,6 @@
 #define CONFIG_SYS_LOAD_ADDR		0x23000000
 
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 /* Environment settings */
 #define CONFIG_ENV_OFFSET		(512 << 10)
@@ -124,9 +119,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 /* Console settings */
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_CMDLINE_EDITING
-#define CONFIG_AUTO_COMPLETE
 
 /* U-Boot memory settings */
 #define CONFIG_SYS_MALLOC_LEN		(1 << 20)

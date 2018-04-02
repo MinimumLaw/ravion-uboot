@@ -12,7 +12,6 @@
 
 #include <asm/io.h>
 #include <asm/arch/stm32.h>
-#include <asm/arch/stm32_periph.h>
 #include <asm/arch/stm32_pwr.h>
 
 #include <dt-bindings/mfd/stm32f7-rcc.h>
@@ -60,15 +59,13 @@
 #define RCC_PLLCFGR_PLLSAIP_MASK	GENMASK(17, 16)
 #define RCC_PLLSAICFGR_PLLSAIN_SHIFT	6
 #define RCC_PLLSAICFGR_PLLSAIP_SHIFT	16
-#define RCC_PLLSAICFGR_PLLSAIP_4	BIT(17)
+#define RCC_PLLSAICFGR_PLLSAIP_4	BIT(16)
 #define RCC_PLLSAICFGR_PLLSAIQ_4	BIT(26)
 #define RCC_PLLSAICFGR_PLLSAIR_2	BIT(29)
 
 #define RCC_DCKCFGRX_CK48MSEL		BIT(27)
 #define RCC_DCKCFGRX_SDMMC1SEL		BIT(28)
 #define RCC_DCKCFGR2_SDMMC2SEL		BIT(29)
-
-#define RCC_APB2ENR_SAI1EN		BIT(22)
 
 /*
  * RCC AHB1ENR specific definitions
@@ -87,11 +84,15 @@
  * RCC APB2ENR specific definitions
  */
 #define RCC_APB2ENR_SYSCFGEN		BIT(14)
+#define RCC_APB2ENR_SAI1EN		BIT(22)
 
-struct stm32_clk_info stm32f4_clk_info = {
+enum periph_clock {
+	TIMER2_CLOCK_CFG,
+};
+
+static const struct stm32_clk_info stm32f4_clk_info = {
 	/* 180 MHz */
 	.sys_pll_psc = {
-		.pll_m = 8,
 		.pll_n = 360,
 		.pll_p = 2,
 		.pll_q = 8,
@@ -103,10 +104,9 @@ struct stm32_clk_info stm32f4_clk_info = {
 	.v2 = false,
 };
 
-struct stm32_clk_info stm32f7_clk_info = {
+static const struct stm32_clk_info stm32f7_clk_info = {
 	/* 200 MHz */
 	.sys_pll_psc = {
-		.pll_m = 25,
 		.pll_n = 400,
 		.pll_p = 2,
 		.pll_q = 8,
@@ -121,7 +121,8 @@ struct stm32_clk_info stm32f7_clk_info = {
 struct stm32_clk {
 	struct stm32_rcc_regs *base;
 	struct stm32_pwr_regs *pwr_regs;
-	struct stm32_clk_info *info;
+	struct stm32_clk_info info;
+	unsigned long hse_rate;
 };
 
 static int configure_clocks(struct udevice *dev)
@@ -129,7 +130,7 @@ static int configure_clocks(struct udevice *dev)
 	struct stm32_clk *priv = dev_get_priv(dev);
 	struct stm32_rcc_regs *regs = priv->base;
 	struct stm32_pwr_regs *pwr = priv->pwr_regs;
-	struct pll_psc sys_pll_psc = priv->info->sys_pll_psc;
+	struct pll_psc *sys_pll_psc = &priv->info.sys_pll_psc;
 	u32 pllsaicfgr = 0;
 
 	/* Reset RCC configuration */
@@ -147,20 +148,20 @@ static int configure_clocks(struct udevice *dev)
 		;
 
 	setbits_le32(&regs->cfgr, ((
-		sys_pll_psc.ahb_psc << RCC_CFGR_HPRE_SHIFT)
-		| (sys_pll_psc.apb1_psc << RCC_CFGR_PPRE1_SHIFT)
-		| (sys_pll_psc.apb2_psc << RCC_CFGR_PPRE2_SHIFT)));
+		sys_pll_psc->ahb_psc << RCC_CFGR_HPRE_SHIFT)
+		| (sys_pll_psc->apb1_psc << RCC_CFGR_PPRE1_SHIFT)
+		| (sys_pll_psc->apb2_psc << RCC_CFGR_PPRE2_SHIFT)));
 
 	/* Configure the main PLL */
 	setbits_le32(&regs->pllcfgr, RCC_PLLCFGR_PLLSRC); /* pll source HSE */
 	clrsetbits_le32(&regs->pllcfgr, RCC_PLLCFGR_PLLM_MASK,
-			sys_pll_psc.pll_m << RCC_PLLCFGR_PLLM_SHIFT);
+			sys_pll_psc->pll_m << RCC_PLLCFGR_PLLM_SHIFT);
 	clrsetbits_le32(&regs->pllcfgr, RCC_PLLCFGR_PLLN_MASK,
-			sys_pll_psc.pll_n << RCC_PLLCFGR_PLLN_SHIFT);
+			sys_pll_psc->pll_n << RCC_PLLCFGR_PLLN_SHIFT);
 	clrsetbits_le32(&regs->pllcfgr, RCC_PLLCFGR_PLLP_MASK,
-			((sys_pll_psc.pll_p >> 1) - 1) << RCC_PLLCFGR_PLLP_SHIFT);
+			((sys_pll_psc->pll_p >> 1) - 1) << RCC_PLLCFGR_PLLP_SHIFT);
 	clrsetbits_le32(&regs->pllcfgr, RCC_PLLCFGR_PLLQ_MASK,
-			sys_pll_psc.pll_q << RCC_PLLCFGR_PLLQ_SHIFT);
+			sys_pll_psc->pll_q << RCC_PLLCFGR_PLLQ_SHIFT);
 
 	/* Configure the SAI PLL to get a 48 MHz source */
 	pllsaicfgr = RCC_PLLSAICFGR_PLLSAIR_2 | RCC_PLLSAICFGR_PLLSAIQ_4 |
@@ -173,7 +174,7 @@ static int configure_clocks(struct udevice *dev)
 	while (!(readl(&regs->cr) & RCC_CR_PLLRDY))
 		;
 
-	if (priv->info->v2) { /*stm32f7 case */
+	if (priv->info.v2) { /*stm32f7 case */
 		/* select PLLSAI as 48MHz clock source */
 		setbits_le32(&regs->dckcfgr2, RCC_DCKCFGRX_CK48MSEL);
 
@@ -197,7 +198,7 @@ static int configure_clocks(struct udevice *dev)
 
 	setbits_le32(&regs->apb1enr, RCC_APB1ENR_PWREN);
 
-	if (priv->info->has_overdrive) {
+	if (priv->info.has_overdrive) {
 		/*
 		 * Enable high performance mode
 		 * System frequency up to 200 MHz
@@ -223,6 +224,11 @@ static int configure_clocks(struct udevice *dev)
 	/* gate the SAI clock, needed for MMC 1&2 clocks */
 	setbits_le32(&regs->apb2enr, RCC_APB2ENR_SAI1EN);
 
+#ifdef CONFIG_ETH_DESIGNWARE
+	/* gate the SYSCFG clock, needed to set RMII ethernet interface */
+	setbits_le32(&regs->apb2enr, RCC_APB2ENR_SYSCFGEN);
+#endif
+
 	return 0;
 }
 
@@ -236,7 +242,7 @@ static unsigned long stm32_clk_pll48clk_rate(struct stm32_clk *priv,
 	pllq = (readl(&regs->pllcfgr) & RCC_PLLCFGR_PLLQ_MASK)
 	       >> RCC_PLLCFGR_PLLQ_SHIFT;
 
-	if (priv->info->v2) /*stm32f7 case */
+	if (priv->info.v2) /*stm32f7 case */
 		pllsai = readl(&regs->dckcfgr2) & RCC_DCKCFGRX_CK48MSEL;
 	else
 		pllsai = readl(&regs->dckcfgr) & RCC_DCKCFGRX_CK48MSEL;
@@ -248,7 +254,7 @@ static unsigned long stm32_clk_pll48clk_rate(struct stm32_clk *priv,
 			>> RCC_PLLSAICFGR_PLLSAIN_SHIFT);
 		pllsaip = ((((readl(&regs->pllsaicfgr) & RCC_PLLCFGR_PLLSAIP_MASK)
 			>> RCC_PLLSAICFGR_PLLSAIP_SHIFT) + 1) << 1);
-		return ((CONFIG_STM32_HSE_HZ / pllm) * pllsain) / pllsaip;
+		return ((priv->hse_rate / pllm) * pllsain) / pllsaip;
 	}
 	/* PLL48CLK is selected from PLLQ */
 	return sysclk / pllq;
@@ -276,7 +282,7 @@ static unsigned long stm32_clk_get_rate(struct clk *clk)
 			>> RCC_PLLCFGR_PLLN_SHIFT);
 		pllp = ((((readl(&regs->pllcfgr) & RCC_PLLCFGR_PLLP_MASK)
 			>> RCC_PLLCFGR_PLLP_SHIFT) + 1) << 1);
-		sysclk = ((CONFIG_STM32_HSE_HZ / pllm) * plln) / pllp;
+		sysclk = ((priv->hse_rate / pllm) * plln) / pllp;
 	} else {
 		return -EINVAL;
 	}
@@ -331,6 +337,11 @@ static unsigned long stm32_clk_get_rate(struct clk *clk)
 	}
 }
 
+static ulong stm32_set_rate(struct clk *clk, ulong rate)
+{
+	return 0;
+}
+
 static int stm32_clk_enable(struct clk *clk)
 {
 	struct stm32_clk *priv = dev_get_priv(clk->dev);
@@ -348,16 +359,8 @@ static int stm32_clk_enable(struct clk *clk)
 void clock_setup(int peripheral)
 {
 	switch (peripheral) {
-	case SYSCFG_CLOCK_CFG:
-		setbits_le32(&STM32_RCC->apb2enr, RCC_APB2ENR_SYSCFGEN);
-		break;
 	case TIMER2_CLOCK_CFG:
 		setbits_le32(&STM32_RCC->apb1enr, RCC_APB1ENR_TIM2EN);
-		break;
-	case STMMAC_CLOCK_CFG:
-		setbits_le32(&STM32_RCC->ahb1enr, RCC_AHB1ENR_ETHMAC_EN);
-		setbits_le32(&STM32_RCC->ahb1enr, RCC_AHB1ENR_ETHMAC_RX_EN);
-		setbits_le32(&STM32_RCC->ahb1enr, RCC_AHB1ENR_ETHMAC_TX_EN);
 		break;
 	default:
 		break;
@@ -367,6 +370,8 @@ void clock_setup(int peripheral)
 static int stm32_clk_probe(struct udevice *dev)
 {
 	struct ofnode_phandle_args args;
+	struct udevice *fixed_clock_dev = NULL;
+	struct clk clk;
 	int err;
 
 	debug("%s\n", __func__);
@@ -382,16 +387,51 @@ static int stm32_clk_probe(struct udevice *dev)
 
 	switch (dev_get_driver_data(dev)) {
 	case STM32F4:
-		priv->info = &stm32f4_clk_info;
+		memcpy(&priv->info, &stm32f4_clk_info,
+		       sizeof(struct stm32_clk_info));
 		break;
 	case STM32F7:
-		priv->info = &stm32f7_clk_info;
+		memcpy(&priv->info, &stm32f7_clk_info,
+		       sizeof(struct stm32_clk_info));
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	if (priv->info->has_overdrive) {
+	/* retrieve HSE frequency (external oscillator) */
+	err = uclass_get_device_by_name(UCLASS_CLK, "clk-hse",
+					&fixed_clock_dev);
+
+	if (err) {
+		pr_err("Can't find fixed clock (%d)", err);
+		return err;
+	}
+
+	err = clk_request(fixed_clock_dev, &clk);
+	if (err) {
+		pr_err("Can't request %s clk (%d)", fixed_clock_dev->name,
+		       err);
+		return err;
+	}
+
+	/*
+	 * set pllm factor accordingly to the external oscillator
+	 * frequency (HSE). For STM32F4 and STM32F7, we want VCO
+	 * freq at 1MHz
+	 * if input PLL frequency is 25Mhz, divide it by 25
+	 */
+	clk.id = 0;
+	priv->hse_rate = clk_get_rate(&clk);
+
+	if (priv->hse_rate < 1000000) {
+		pr_err("%s: unexpected HSE clock rate = %ld \"n", __func__,
+		       priv->hse_rate);
+		return -EINVAL;
+	}
+
+	priv->info.sys_pll_psc.pll_m = priv->hse_rate / 1000000;
+
+	if (priv->info.has_overdrive) {
 		err = dev_read_phandle_with_args(dev, "st,syscfg", NULL, 0, 0,
 						 &args);
 		if (err) {
@@ -429,6 +469,7 @@ static struct clk_ops stm32_clk_ops = {
 	.of_xlate	= stm32_clk_of_xlate,
 	.enable		= stm32_clk_enable,
 	.get_rate	= stm32_clk_get_rate,
+	.set_rate	= stm32_set_rate,
 };
 
 U_BOOT_DRIVER(stm32fx_clk) = {

@@ -14,8 +14,6 @@
 
 #define CONFIG_DISPLAY_BOARDINFO_LATE
 
-#define	CONFIG_SYS_TEXT_BASE	0x00000000
-
 /* additions for new ARM relocation support */
 #define CONFIG_SYS_SDRAM_BASE	0x00000000
 
@@ -46,9 +44,6 @@
 /*
  * Other required minimal configurations
  */
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 #define CONFIG_ARCH_CPU_INIT		/* call arch_cpu_init() */
 #define CONFIG_SYS_LOAD_ADDR	0x00800000	/* default load adr- 8M */
 #define CONFIG_SYS_MEMTEST_START 0x00800000	/* 8M */
@@ -64,7 +59,6 @@
 /*
  * SPI Flash configuration
  */
-#define CONFIG_KIRKWOOD_SPI
 #define CONFIG_ENV_SPI_BUS		0
 #define CONFIG_ENV_SPI_CS		0
 
@@ -104,8 +98,6 @@
 #define CONFIG_SYS_SCSI_MAX_LUN		1
 #define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
 					 CONFIG_SYS_SCSI_MAX_LUN)
-
-#define CONFIG_SUPPORT_VFAT
 
 /*
  * PCI configuration

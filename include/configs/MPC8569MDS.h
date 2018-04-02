@@ -39,10 +39,6 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_L2_CACHE				/* toggle L2 cache	*/
 #define CONFIG_BTB				/* toggle branch predition */
 
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE	0xfff80000
-#endif
-
 #ifndef CONFIG_SYS_MONITOR_BASE
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #endif
@@ -439,9 +435,6 @@ extern unsigned long get_clock_freq(void);
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_BOOTPATH
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_HOSTNAME
 
 #undef CONFIG_WATCHDOG			/* watchdog disabled */
 
@@ -454,9 +447,6 @@ extern unsigned long get_clock_freq(void);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
-#define CONFIG_CMDLINE_EDITING			/* Command-line editing */
-#define CONFIG_AUTO_COMPLETE			/* add autocompletion support */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE	2048		/* Console I/O Buffer Size */

@@ -29,7 +29,7 @@
 #include <asm/io.h>
 #include <crc.h>
 #include <environment.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <nand.h>
 #include <net.h>
 #include <spl.h>
@@ -172,6 +172,22 @@ void i2c_init_board(void)
 	sunxi_gpio_set_cfgpin(SUNXI_GPL(1), SUN8I_H3_GPL_R_TWI);
 #endif
 }
+
+#if defined(CONFIG_ENV_IS_IN_MMC) && defined(CONFIG_ENV_IS_IN_FAT)
+enum env_location env_get_location(enum env_operation op, int prio)
+{
+	switch (prio) {
+	case 0:
+		return ENVL_FAT;
+
+	case 1:
+		return ENVL_MMC;
+
+	default:
+		return ENVL_UNKNOWN;
+	}
+}
+#endif
 
 /* add board specific code here */
 int board_init(void)

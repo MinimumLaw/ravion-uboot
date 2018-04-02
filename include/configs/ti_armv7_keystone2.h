@@ -18,9 +18,6 @@
 /* SoC Configuration */
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_SYS_ARCH_TIMER
-#ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE		0x0c000000
-#endif
 #define CONFIG_SPL_TARGET		"u-boot-spi.gph"
 #define CONFIG_SYS_DCACHE_OFF
 
@@ -78,7 +75,6 @@
 #endif
 
 /* SPI Configuration */
-#define CONFIG_DAVINCI_SPI
 #define CONFIG_SYS_SPI_CLK		ks_clk_get_rate(KS2_CLK1_6)
 #define CONFIG_SF_DEFAULT_SPEED		30000000
 #define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
@@ -100,7 +96,6 @@
 #define CONFIG_PHY_MARVELL
 #define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
-#define CONFIG_BOOTP_DNS
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT		32
@@ -266,7 +261,7 @@
 					"${bootdir}/${fit_bootfile}\0"	\
 	"get_uboot_net=dhcp ${loadaddr} ${tftp_root}/${name_uboot}\0"	\
 	"get_uboot_nfs=nfs ${loadaddr} ${nfs_root}/boot/${name_uboot}\0" \
-	"burn_uboot_spi=sf probe; sf erase 0 0x90000; "		\
+	"burn_uboot_spi=sf probe; sf erase 0 0x100000; "		\
 		"sf write ${loadaddr} 0 ${filesize}\0"		\
 	"burn_uboot_nand=nand erase 0 0x100000; "			\
 		"nand write ${loadaddr} 0 ${filesize}\0"		\

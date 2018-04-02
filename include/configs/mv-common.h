@@ -25,9 +25,6 @@
 /*
  * Custom CONFIG_SYS_TEXT_BASE can be done in <board>.h
  */
-#ifndef CONFIG_SYS_TEXT_BASE
-#define	CONFIG_SYS_TEXT_BASE	0x00600000
-#endif /* CONFIG_SYS_TEXT_BASE */
 
 /* additions for new ARM relocation support */
 #define CONFIG_SYS_SDRAM_BASE	0x00000000
@@ -77,9 +74,6 @@
 /*
  * Other required minimal configurations
  */
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 #define CONFIG_ARCH_CPU_INIT	/* call arch_cpu_init() */
 #define CONFIG_SYS_LOAD_ADDR	0x00800000	/* default load adr- 8M */
 #define CONFIG_SYS_MEMTEST_START 0x00800000	/* 8M */
@@ -114,13 +108,6 @@
  */
 #ifdef CONFIG_CMD_SF
 #endif
-
-/*
- * Common USB/EHCI configuration
- */
-#if defined(CONFIG_CMD_USB) && !defined(CONFIG_DM)
-#define CONFIG_SUPPORT_VFAT
-#endif /* CONFIG_CMD_USB */
 
 /*
  * File system

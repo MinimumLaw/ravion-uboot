@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2014
- * Dirk Eibach,  Guntermann & Drunck GmbH, eibach@gdsys.de
+ * Dirk Eibach,  Guntermann & Drunck GmbH, dirk.eibach@gdsys.cc
  *
  *
  * SPDX-License-Identifier:	GPL-2.0+
@@ -17,8 +17,6 @@
 #define CONFIG_MPC830x		1 /* MPC830x family */
 #define CONFIG_MPC8308		1 /* MPC8308 CPU specific */
 #define CONFIG_HRCON		1 /* HRCON board specific */
-
-#define	CONFIG_SYS_TEXT_BASE	0xFE000000
 
 #define CONFIG_BOARD_EARLY_INIT_R
 #define CONFIG_LAST_STAGE_INIT
@@ -510,13 +508,9 @@ void fpga_control_clear(unsigned int bus, int pin);
  * Command line configuration.
  */
 
-#define CONFIG_CMDLINE_EDITING	1	/* add command line history */
-#define CONFIG_AUTO_COMPLETE		/* add autocompletion support */
-
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_LOAD_ADDR		0x2000000 /* default load address */
 #define CONFIG_SYS_HZ		1000	/* decrementer freq: 1ms ticks */
 

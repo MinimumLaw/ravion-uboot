@@ -8,8 +8,6 @@
 #ifndef __M53EVK_CONFIG_H__
 #define __M53EVK_CONFIG_H__
 
-#define CONFIG_MXC_GPIO
-
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_REVISION_TAG
@@ -39,18 +37,13 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#define CONFIG_SYS_TEXT_BASE		0x71000000
-
 /*
  * U-Boot general configurations
  */
-#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O buffer size */
 #define CONFIG_SYS_MAXARGS	32		/* Max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
 						/* Boot argument buffer size */
-#define CONFIG_AUTO_COMPLETE			/* Command auto complete */
-#define CONFIG_CMDLINE_EDITING			/* Command history etc */
 
 /*
  * Serial Driver
@@ -177,7 +170,6 @@
 /*
  * NAND SPL
  */
-#define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TARGET		"u-boot-with-nand-spl.imx"
 #define CONFIG_SPL_TEXT_BASE		0x70008000
 #define CONFIG_SPL_PAD_TO		0x8000

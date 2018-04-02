@@ -19,7 +19,6 @@
 #include <configs/ti_omap3_common.h>
 
 /* Remove SPL boot option - we do not support that on LDP yet */
-#undef CONFIG_SPL_FRAMEWORK
 
 /* Generic NAND definition conflicts with debug_base */
 #undef CONFIG_SYS_NAND_BASE
@@ -33,11 +32,6 @@
 /*
  * Hardware drivers
  */
-
-/* USB */
-#define CONFIG_USB_MUSB_UDC			1
-#define CONFIG_USB_OMAP3		1
-#define CONFIG_TWL4030_USB		1
 
 /* USB device configuration */
 #define CONFIG_USB_DEVICE		1

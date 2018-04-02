@@ -13,19 +13,13 @@
 #include <asm/arch/rmobile.h>
 
 #define CONFIG_REMAKE_ELF
+#define CONFIG_BUILD_TARGET	"u-boot-elf.srec"
 
 /* boot option */
-#define CONFIG_SUPPORT_RAW_INITRD
-
-/* Support File sytems */
-#define CONFIG_SUPPORT_VFAT
-#define CONFIG_FS_EXT4
-#define CONFIG_EXT4_WRITE
 
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
-#define CONFIG_CMDLINE_EDITING
 
 #undef	CONFIG_SHOW_BOOT_PROGRESS
 
@@ -39,16 +33,10 @@
 /* console */
 #define CONFIG_SYS_CBSIZE		2048
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-#define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_MAXARGS		64
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 115200, 38400 }
 
 /* MEMORY */
-#if defined(CONFIG_R8A77970)
-#define CONFIG_SYS_TEXT_BASE		0x58280000
-#else
-#define CONFIG_SYS_TEXT_BASE		0x50000000
-#endif
 #define CONFIG_SYS_INIT_SP_ADDR		CONFIG_SYS_TEXT_BASE
 
 #define DRAM_RSV_SIZE			0x08000000

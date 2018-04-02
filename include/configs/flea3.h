@@ -23,7 +23,6 @@
 #define CONFIG_MACH_TYPE		MACH_TYPE_FLEA3
 
 /* Set TEXT at the beginning of the NOR flash */
-#define CONFIG_SYS_TEXT_BASE	0xA0000000
 
 /* This is required to setup the ESDC controller */
 
@@ -47,8 +46,6 @@
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_SPD_BUS_NUM		2 /* I2C3 */
 #define CONFIG_SYS_MXC_I2C3_SLAVE	0xfe
-#define CONFIG_MXC_SPI
-#define CONFIG_MXC_GPIO
 
 /*
  * UART (console)
@@ -63,9 +60,6 @@
 /*
  * Command definition
  */
-#define CONFIG_BOOTP_SUBNETMASK
-#define CONFIG_BOOTP_GATEWAY
-#define CONFIG_BOOTP_DNS
 
 #define CONFIG_NET_RETRY_COUNT	100
 
@@ -86,10 +80,7 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP	/* undef to save memory */
-#define CONFIG_CMDLINE_EDITING
 
-#define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE	512	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	32	/* max number of command args */

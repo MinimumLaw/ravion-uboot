@@ -71,7 +71,6 @@
 #define CONFIG_SYS_LOAD_ADDR		0x82000000
 
 /* We boot from the gfxRAM area of the OCRAM. */
-#define CONFIG_SYS_TEXT_BASE		0x3f401000
 #define CONFIG_BOARD_SIZE_LIMIT		520192
 
 /*
@@ -179,8 +178,6 @@
 	   "else run netboot; fi"
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#undef CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_MEMTEST_START	0x80010000
 #define CONFIG_SYS_MEMTEST_END		0x87C00000
