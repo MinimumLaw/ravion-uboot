@@ -113,6 +113,16 @@
 #undef CONFIG_CMD_NFS
 #undef CONFIG_CMD_FLASH
 
+#undef CONFIG_BOOTDELAY
+#define CONFIG_BOOTDELAY		5
+
+#define CONFIG_AUTOBOOT_KEYED
+#define CONFIG_AUTOBOOT_PROMPT	\
+	"\nEnter boot password - autoboot in %d seconds...\n", CONFIG_BOOTDELAY
+#define CONFIG_AUTOBOOT_DELAY_STR	"ravion"
+#define CONFIG_BOOT_RETRY_TIME		120
+#define CONFIG_RESET_TO_RETRY
+
 #undef CONFIG_IPADDR
 #define CONFIG_IPADDR			192.168.5.101
 #define CONFIG_NETMASK			255.255.255.0
@@ -129,99 +139,85 @@
 
 #define CONFIG_DRIVE_TYPES CONFIG_DRIVE_MMC
 
-#define DFU_ALT_EMMC_INFO \
-	"u-boot.imx raw 0x2 0x3ff mmcpart 0;" \
-	"boot part 0 1;" \
-	"rootfs part 0 2;" \
-	"uImage fat 0 1;" \
-	"imx6q-colibri-eval-v3.dtb fat 0 1;" \
-	"imx6q-colibri-cam-eval-v3.dtb fat 0 1"
-
-#define EMMC_BOOTCMD \
-	"emmcargs=ip=off root=/dev/mmcblk0p2 rw,noatime rootfstype=ext3 " \
-		"rootwait\0" \
-	"emmcboot=run setup; " \
-		"setenv bootargs ${defargs} ${emmcargs} ${setupargs} " \
-		"${vidargs}; echo Booting from internal eMMC chip...; "	\
-		"run emmcdtbload; load mmc 0:1 ${kernel_addr_r} " \
-		"${boot_file} && run fdt_fixup && " \
-		"bootm ${kernel_addr_r} ${dtbparam}\0" \
-	"emmcdtbload=setenv dtbparam; load mmc 0:1 ${fdt_addr_r} " \
-		"${fdt_file} && setenv dtbparam \" - ${fdt_addr_r}\" && true\0"
-
 #define MEM_LAYOUT_ENV_SETTINGS \
-	"bootm_size=0x10000000\0" \
-	"fdt_addr_r=0x12000000\0" \
-	"fdt_high=0xffffffff\0" \
-	"initrd_high=0xffffffff\0" \
 	"kernel_addr_r=0x11000000\0" \
-	"ramdisk_addr_r=0x12100000\0"
+	"fdt_addr_r=0x12000000\0" \
+	"ramdisk_addr_r=0x12100000\0" \
+	"script_addr_r=0x12300000\0" \
+	"fdt_high=0xffffffff\0" \
+	"initrd_high=0xffffffff\0"
 
-#define NFS_BOOTCMD \
-	"nfsargs=ip=:::::eth0:on root=/dev/nfs rw\0" \
-	"nfsboot=run setup; " \
-		"setenv bootargs ${defargs} ${nfsargs} ${setupargs} " \
-		"${vidargs}; echo Booting via DHCP/TFTP/NFS...; " \
-		"run nfsdtbload; dhcp ${kernel_addr_r} " \
-		"&& run fdt_fixup && bootm ${kernel_addr_r} ${dtbparam}\0" \
-	"nfsdtbload=setenv dtbparam; tftp ${fdt_addr_r} ${fdt_file} " \
-		"&& setenv dtbparam \" - ${fdt_addr_r}\" && true\0"
+#define NEED_CONFIG_DISPLAY \
+	"need_config_display=" \
+	"if test \"${display}\" = \"TX09D200VM0BAA\"; then "\
+		"koe_display_init on; " \
+	"fi;\0" \
 
-#define SD_BOOTCMD						\
-	"sdargs=ip=off root=/dev/mmcblk1p2 rw,noatime rootfstype=ext3 " \
-		"rootwait\0" \
-	"sdboot=run setup; " \
-		"setenv bootargs ${defargs} ${sdargs} ${setupargs} " \
-		"${vidargs}; echo Booting from SD card; " \
-		"run sddtbload; load mmc 1:1 ${kernel_addr_r} " \
-		"${boot_file} && run fdt_fixup && " \
-		"bootm ${kernel_addr_r} ${dtbparam}\0" \
-	"sddtbload=setenv dtbparam; load mmc 1:1 ${fdt_addr_r} " \
-		"${fdt_file} && setenv dtbparam \" - ${fdt_addr_r}\" && true\0"
+#define BLKDEV_BOOTCMD \
+	"blkdevboot=load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
+	"source ${script_addr_r}\0" \
 
 #define USB_BOOTCMD \
-	"usbargs=ip=off root=/dev/sda2 rw,noatime rootfstype=ext3 " \
-		"rootwait\0" \
-	"usbboot=run setup; setenv bootargs ${defargs} ${setupargs} " \
-		"${usbargs} ${vidargs}; echo Booting from USB stick...; " \
-		"usb start && run usbdtbload; load usb 0:1 ${kernel_addr_r} " \
-		"${boot_file} && run fdt_fixup && " \
-		"bootm ${kernel_addr_r} ${dtbparam}\0" \
-	"usbdtbload=setenv dtbparam; load usb 0:1 ${fdt_addr_r} " \
-		"${fdt_file} && setenv dtbparam \" - ${fdt_addr_r}\" && true\0"
+	"usbboot=usb start && " \
+	"setenv blkname usb && " \
+	"setenv blkdev 0:1 && " \
+	"run blkdevboot\0" \
 
-#define FDT_FILE "imx6dl-colibri-eval-v3.dtb"
+#define SD_BOOTCMD \
+	"sdboot=setenv blkname mmc && " \
+	"setenv blkdev 1:1 && " \
+	"run blkdevboot\0" \
+
+#define NFS_BOOTCMD \
+	"nfsboot=nfs ${script_addr_r} " \
+	"${serverip}:${server_path}${boot_script_file} && " \
+	"source ${script_addr_r}\0" \
+
+#define TFTP_BOOTCMD \
+	"tftpboot=tftp ${script_addr_r} ${serverip}:${boot_script_file} && " \
+	"source ${script_addr_r}\0" \
+
+#define EMMC_BOOTCMD \
+	"emmcboot=setenv blkname mmc && " \
+	"setenv blkdev 0:1 && " \
+	"run blkdevboot\0" \
+
+#define UBOOT_UPDATE \
+	"bootcmd_mfg=run usbboot\0" \
+	"ubootupdate=if env exists ethaddr; then; else "\
+	"setenv ethaddr 00:14:2d:00:00:00; fi; " \
+	"tftp ${kernel_addr_r} ${serverip}:u-boot.imx && " \
+	"setexpr blkcnt ${filesize} + 0x1ff && " \
+	"setexpr blkcnt ${blkcnt} / 0x200 && " \
+	"mmc dev 0 1 && " \
+	"mmc write ${kernel_addr_r} 2 ${blkcnt} && " \
+	"mmc bootbus 0 2 0 1 && " \
+	"mmc partconf 0 1 1 0 && " \
+	"mmc rst-function 0 1\0"
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootcmd=run emmcboot ; echo ; echo emmcboot failed ; " \
-		"run nfsboot ; echo ; echo nfsboot failed ; " \
-		"usb start ;" \
-		"setenv stdout serial,vga ; setenv stdin serial,usbkbd\0" \
-	"boot_file=uImage\0" \
-	"console=ttymxc0\0" \
-	"defargs=enable_wait_mode=off galcore.contiguousSize=50331648\0" \
-	"dfu_alt_info=" DFU_ALT_EMMC_INFO "\0" \
-	EMMC_BOOTCMD \
-	"fdt_file=" FDT_FILE "\0" \
-	"fdt_fixup=;\0" \
+	"board=eval\0" \
+	"bootcmd=run need_config_display; " \
+	    "run usbboot; " \
+	    "run sdboot; " \
+	    "run emmcboot; " \
+	    "ums 0 mmc 0\0" \
+	"server_path=/cimc/root/colibri-imx6\0" \
+	"boot_script_file=/boot/bscript.img\0" \
+	"console=ttymxc0 console=tty1\0" \
+	"debug=setenv bootargs \"${bootargs} ${defargs} ${vidargs} " \
+	    "console=tty0 console=${console},${baudrate}n8 \"; " \
+	    "printenv bootargs\0" \
 	MEM_LAYOUT_ENV_SETTINGS \
-	NFS_BOOTCMD \
+	NEED_CONFIG_DISPLAY \
+	BLKDEV_BOOTCMD \
+	USB_BOOTCMD \
 	SD_BOOTCMD \
-	"setethupdate=if env exists ethaddr; then; else setenv ethaddr " \
-		"00:14:2d:00:00:00; fi; tftpboot ${loadaddr} " \
-		"flash_eth.img && source ${loadaddr}\0" \
-	"setsdupdate=setenv interface mmc; setenv drive 1; mmc rescan; load " \
-		"${interface} ${drive}:1 ${loadaddr} flash_blk.img && " \
-		"source ${loadaddr}\0" \
-	"setup=setenv setupargs fec_mac=${ethaddr} " \
-		"consoleblank=0 no_console_suspend=1 console=tty1 " \
-		"console=${console},${baudrate}n8\0 " \
-	"setupdate=run setsdupdate || run setusbupdate || run setethupdate\0" \
-	"setusbupdate=usb start && setenv interface usb; setenv drive 0; " \
-		"load ${interface} ${drive}:1 ${loadaddr} flash_blk.img && " \
-		"source ${loadaddr}\0" \
+	NFS_BOOTCMD \
+	TFTP_BOOTCMD \
+	EMMC_BOOTCMD \
+	UBOOT_UPDATE \
 	"splashpos=m,m\0" \
-	"vidargs=video=mxcfb0:dev=lcd,640x480M@60,if=RGB666 " \
-		"video=mxcfb1:off fbmem=8M\0 "
 
 /* Miscellaneous configurable options */
 #undef CONFIG_SYS_CBSIZE
