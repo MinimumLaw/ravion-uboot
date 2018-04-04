@@ -484,6 +484,13 @@ static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_DISP0_DAT15__IPU1_DISP0_DATA15 | MUX_PAD_CTRL(OUTPUT_RGB),
 	MX6_PAD_DISP0_DAT16__IPU1_DISP0_DATA16 | MUX_PAD_CTRL(OUTPUT_RGB),
 	MX6_PAD_DISP0_DAT17__IPU1_DISP0_DATA17 | MUX_PAD_CTRL(OUTPUT_RGB),
+	/* 24 bit video */
+	MX6_PAD_DISP0_DAT18__IPU1_DISP0_DATA18 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_DISP0_DAT19__IPU1_DISP0_DATA19 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_DISP0_DAT20__IPU1_DISP0_DATA20 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_DISP0_DAT21__IPU1_DISP0_DATA21 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_DISP0_DAT22__IPU1_DISP0_DATA22 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_DISP0_DAT23__IPU1_DISP0_DATA23 | MUX_PAD_CTRL(OUTPUT_RGB),
 };
 
 static void do_enable_hdmi(struct display_info_t const *dev)
@@ -502,8 +509,12 @@ static void enable_rgb(struct display_info_t const *dev)
 
 static int detect_default(struct display_info_t const *dev)
 {
-	(void) dev;
-	return 1;
+	char *display = env_get("display");
+
+	if(display)
+		return (!strcmp(dev->mode.name,display));
+
+	return 0;
 }
 
 struct display_info_t const displays[] = {{
@@ -533,7 +544,7 @@ struct display_info_t const displays[] = {{
 	.detect	= detect_default,
 	.enable	= enable_rgb,
 	.mode	= {
-		.name           = "vga-rgb",
+		.name           = "vga",
 		.refresh        = 60,
 		.xres           = 640,
 		.yres           = 480,
@@ -552,7 +563,7 @@ struct display_info_t const displays[] = {{
 	.pixfmt	= IPU_PIX_FMT_RGB666,
 	.enable	= enable_rgb,
 	.mode	= {
-		.name           = "wvga-rgb",
+		.name           = "wvga",
 		.refresh        = 60,
 		.xres           = 800,
 		.yres           = 480,
@@ -563,6 +574,86 @@ struct display_info_t const displays[] = {{
 		.lower_margin   = 10,
 		.hsync_len      = 128,
 		.vsync_len      = 2,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
+	.bus	= -1,
+	.addr	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
+	.detect	= detect_default,
+	.enable	= enable_rgb,
+	.mode	= {
+		.name           = "AA050MH01-DA1",
+		.refresh        = 60,
+		.xres           = 800,
+		.yres           = 480,
+		.pixclock       = 30770,
+		.left_margin    = 30,
+		.right_margin   = 87,
+		.upper_margin   = 13,
+		.lower_margin   = 30,
+		.hsync_len      = 1,
+		.vsync_len      = 1,
+		.sync           = FB_SYNC_EXT,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
+	.bus	= -1,
+	.addr	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.detect	= detect_default,
+	.enable	= enable_rgb,
+	.mode	= {
+		.name           = "AA070ME11ADA11",
+		.refresh        = 60,
+		.xres           = 800,
+		.yres           = 480,
+		.pixclock       = 30770,
+		.left_margin    = 30,
+		.right_margin   = 87,
+		.upper_margin   = 13,
+		.lower_margin   = 30,
+		.hsync_len      = 1,
+		.vsync_len      = 1,
+		.sync           = FB_SYNC_EXT,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
+	.bus	= -1,
+	.addr	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.detect	= detect_default,
+	.enable	= enable_rgb,
+	.mode	= {
+		.name           = "AA104XF12-DE2",
+		.refresh        = 60,
+		.xres           = 1024,
+		.yres           = 768,
+		.pixclock       = 65000,
+		.left_margin    = 150,
+		.right_margin   = 150,
+		.upper_margin   = 15,
+		.lower_margin   = 15,
+		.hsync_len      = 20,
+		.vsync_len      = 8,
+		.sync           = FB_SYNC_EXT,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
+	.bus	= -1,
+	.addr	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
+	.detect	= detect_default,
+	.enable	= enable_rgb,
+	.mode	= {
+		.name           = "TX09D200VM0BAA",
+		.refresh        = 60,
+		.xres           = 240,
+		.yres           = 320,
+		.pixclock       = 650, /* FixMe: must be 6500, for 6.5MHz, but NOT working */
+		.hsync_len      = 16,
+		.left_margin    = 48,
+		.right_margin   = 16,
+		.vsync_len      = 6,
+		.upper_margin   = 6,
+		.lower_margin   = 6,
 		.sync           = 0,
 		.vmode          = FB_VMODE_NONINTERLACED
 } } };
@@ -705,7 +796,7 @@ int checkboard(void)
 	default:
 		it[0] = 0;
 	};
-	printf("Model: Toradex Colibri iMX6 %s %sMB%s\n",
+	printf("CPU Module: Toradex Colibri iMX6 %s %sMB%s\n",
 	       is_cpu_type(MXC_CPU_MX6DL) ? "DualLite" : "Solo",
 	       (gd->ram_size == 0x20000000) ? "512" : "256", it);
 	return 0;

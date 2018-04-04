@@ -2,4 +2,5 @@
 # SPDX-License-Identifier:      GPL-2.0+
 
 obj-y  := colibri_imx6.o do_fuse.o
+obj-$(CONFIG_RAVION_DISPLAY_KOE) += koe_init.o
 obj-$(CONFIG_RAVION_CMD_IMX_MFGR)  += pf0100.o
