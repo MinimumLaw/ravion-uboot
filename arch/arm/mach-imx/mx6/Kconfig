@@ -384,6 +384,7 @@ config TARGET_RAVION_COLIBRI_IMX6
 
 config TARGET_RAVION_IMX6
 	bool "Ravion iMX6 module"
+	select MX6Q
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select DM
