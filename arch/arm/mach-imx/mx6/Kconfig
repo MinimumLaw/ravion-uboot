@@ -382,6 +382,14 @@ config TARGET_RAVION_COLIBRI_IMX6
 	select DM_SERIAL
 	select DM_THERMAL
 
+config TARGET_RAVION_IMX6
+	bool "Ravion iMX6 module"
+	select BOARD_LATE_INIT
+	select SUPPORT_SPL
+	select DM
+	select DM_SERIAL
+	select DM_THERMAL
+
 config TARGET_SECOMX6
 	bool "secomx6 boards"
 
@@ -494,6 +502,7 @@ source "board/liebherr/display5/Kconfig"
 source "board/liebherr/mccmon6/Kconfig"
 source "board/logicpd/imx6/Kconfig"
 source "board/ravion/colibri_imx6/Kconfig"
+source "board/ravion/ravion_imx6/Kconfig"
 source "board/seco/Kconfig"
 source "board/sks-kinkel/sksimx6/Kconfig"
 source "board/solidrun/mx6cuboxi/Kconfig"
