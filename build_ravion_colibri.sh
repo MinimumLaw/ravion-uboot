@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CROSS_COMPILE=armv7a-hardfloat-linux-gnueabi-
+export CROSS_COMPILE=arm-linux-gnueabihf-
 
 if [ -f .config ]; then
 	make $*
