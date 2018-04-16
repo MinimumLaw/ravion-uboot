@@ -58,7 +58,7 @@
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
-#define CONFIG_SYS_FSL_USDHC_NUM	2
+#define CONFIG_SYS_FSL_USDHC_NUM	3
 
 #define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
 #define CONFIG_BOUNCE_BUFFER
@@ -197,6 +197,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"board=eval\0" \
+	"ethaddr=00:14:2d:00:00:00\0" \
 	"bootcmd=run need_config_display; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
