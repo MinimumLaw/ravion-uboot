@@ -98,22 +98,22 @@ iomux_v3_cfg_t const uart1_pads[] = {
 };
 
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
-/* Ravion I2C */
-struct i2c_pads_info i2c_pad_info1 = {
+/* Extened I2C on soDimm pins 128, 130 */
+struct i2c_pads_info i2c_pad_info_extend = {
 	.scl = {
-		.i2c_mode = MX6_PAD_GPIO_3__I2C3_SCL | PC,
-		.gpio_mode = MX6_PAD_GPIO_3__GPIO1_IO03 | PC,
-		.gp = IMX_GPIO_NR(1, 3)
+		.i2c_mode = MX6_PAD_EIM_D17__I2C3_SCL | PC,
+		.gpio_mode = MX6_PAD_EIM_D17__GPIO3_IO17 | PC,
+		.gp = IMX_GPIO_NR(3, 17)
 	},
 	.sda = {
-		.i2c_mode = MX6_PAD_GPIO_6__I2C3_SDA | PC,
-		.gpio_mode = MX6_PAD_GPIO_6__GPIO1_IO06 | PC,
-		.gp = IMX_GPIO_NR(1, 6)
+		.i2c_mode = MX6_PAD_EIM_D18__I2C3_SDA | PC,
+		.gpio_mode = MX6_PAD_EIM_D18__GPIO3_IO18 | PC,
+		.gp = IMX_GPIO_NR(3, 18)
 	}
 };
 
-/* Ravion local, PMIC, SGTL5000, STMPE811 */
-struct i2c_pads_info i2c_pad_info_loc = {
+/* Compatible I2C on soDimm pins 194, 196 */
+struct i2c_pads_info i2c_pad_info_compat = {
 	.scl = {
 		.i2c_mode = MX6_PAD_EIM_EB2__I2C2_SCL | PC,
 		.gpio_mode = MX6_PAD_EIM_EB2__GPIO2_IO30 | PC,
@@ -123,6 +123,20 @@ struct i2c_pads_info i2c_pad_info_loc = {
 		.i2c_mode = MX6_PAD_EIM_D16__I2C2_SDA | PC,
 		.gpio_mode = MX6_PAD_EIM_D16__GPIO3_IO16 | PC,
 		.gp = IMX_GPIO_NR(3, 16)
+	}
+};
+
+/* Ravion local, PMIC, SGTL5000, etc... */
+struct i2c_pads_info i2c_pad_info_local = {
+	.scl = {
+		.i2c_mode = MX6_PAD_CSI0_DAT9__I2C1_SCL | PC,
+		.gpio_mode = MX6_PAD_CSI0_DAT9__GPIO5_IO27 | PC,
+		.gp = IMX_GPIO_NR(5, 27)
+	},
+	.sda = {
+		.i2c_mode = MX6_PAD_CSI0_DAT8__I2C1_SDA | PC,
+		.gpio_mode = MX6_PAD_CSI0_DAT8__GPIO5_IO26 | PC,
+		.gp = IMX_GPIO_NR(5, 26)
 	}
 };
 
@@ -779,8 +793,9 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
-	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_loc);
+	setup_i2c(3, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_extend);
+	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_compat);
+	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_local);
 
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();
