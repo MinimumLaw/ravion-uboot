@@ -8,3 +8,7 @@ else
 	make ravion_colibri_imx6_nospl_defconfig
 	make $*
 fi
+
+if [ -f u-boot.imx ]; then
+	cp -f u-boot.imx /cimc/exporttftp/u-boot-colibi.imx
+fi

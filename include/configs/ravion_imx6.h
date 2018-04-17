@@ -186,7 +186,7 @@
 	"bootcmd_mfg=run usbboot\0" \
 	"ubootupdate=if env exists ethaddr; then; else "\
 	"setenv ethaddr 00:14:2d:00:00:00; fi; " \
-	"tftp ${kernel_addr_r} ${serverip}:u-boot.imx && " \
+	"tftp ${kernel_addr_r} ${serverip}:u-boot-ravion.imx && " \
 	"setexpr blkcnt ${filesize} + 0x1ff && " \
 	"setexpr blkcnt ${blkcnt} / 0x200 && " \
 	"mmc dev 0 1 && " \
