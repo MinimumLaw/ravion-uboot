@@ -10,14 +10,14 @@
 
 #include "rav-common.h"
 
-struct toradex_hw {
+struct ravion_hw {
 	u16 ver_major;
 	u16 ver_minor;
 	u16 ver_assembly;
 	u16 prodid;
 };
 
-struct toradex_eth_addr {
+struct ravion_eth_addr {
 	u32 oui:24;
 	u32 nic:24;
 } __attribute__((__packed__));
@@ -56,14 +56,15 @@ enum {
 	COLIBRI_IMX7D,
 	APALIS_TK1_2GB,
 	APALIS_IMX6D_IT,
+	RAVION_IMX6QP_IT = 40,
 };
 
-extern const char * const toradex_modules[];
+extern const char * const ravion_modules[];
 extern bool valid_cfgblock;
-extern struct toradex_hw tdx_hw_tag;
-extern struct toradex_eth_addr tdx_eth_addr;
-extern u32 tdx_serial;
+extern struct ravion_hw rav_hw_tag;
+extern struct ravion_eth_addr rav_eth_addr;
+extern u32 rav_serial;
 
-int read_tdx_cfg_block(void);
+int read_rav_cfg_block(void);
 
 #endif /* _RAVION_CFG_BLOCK_H */

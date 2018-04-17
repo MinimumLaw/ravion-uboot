@@ -196,8 +196,8 @@ iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_ENET_TX_EN__ENET_TX_EN		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_GPIO_19__ENET_TX_ER		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	/* GPIO */
-	MX6_PAD_NANDF_CLE__GPIO6_IO07		| MUX_PAD_CTRL(WEAK_PULLUP), /* nPHY_RESET */
-	MX6_PAD_NANDF_ALE__GPIO6_IO08		| MUX_PAD_CTRL(WEAK_PULLUP), /* nPHY_IRQ */
+//	MX6_PAD_NANDF_CLE__GPIO6_IO07		| MUX_PAD_CTRL(WEAK_PULLUP), /* nPHY_RESET */
+//	MX6_PAD_NANDF_ALE__GPIO6_IO08		| MUX_PAD_CTRL(WEAK_PULLUP), /* nPHY_IRQ */
 };
 
 static void setup_iomux_enet(void)
@@ -853,8 +853,12 @@ int checkboard(void)
 		it[0] = 0;
 	};
 	printf("CPU Module: Ravion iMX6 %s %sMB%s\n",
-	       is_cpu_type(MXC_CPU_MX6DL) ? "DualLite" : "Solo",
-	       (gd->ram_size == 0x20000000) ? "512" : "256", it);
+	       is_cpu_type(MXC_CPU_MX6QP) ? "QuadPlus" : \
+			is_cpu_type(MXC_CPU_MX6Q) ? "Quad" : \
+	    		is_cpu_type(MXC_CPU_MX6DL) ? "DualLite" : "Solo",
+	       (gd->ram_size == 0x80000000) ? "2048" : \
+			(gd->ram_size == 0x40000000) ? "1024" : \
+			(gd->ram_size == 0x20000000) ? "512" : "256", it);
 	return 0;
 }
 

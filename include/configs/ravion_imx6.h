@@ -197,7 +197,6 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"board=eval\0" \
-	"ethaddr=00:14:2d:00:00:00\0" \
 	"bootcmd=run need_config_display; " \
 	    "run usbboot; " \
 	    "run sdboot; " \

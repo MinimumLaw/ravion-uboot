@@ -8,7 +8,7 @@
 #include <common.h>
 #include "rav-cfg-block.h"
 
-#if defined(CONFIG_TARGET_COLIBRI_IMX6)
+#if defined(CONFIG_TARGET_RAVION_COLIBRI_IMX6) || defined(CONFIG_TARGET_RAVION_IMX6)
 #include <asm/arch/sys_proto.h>
 #else
 #define is_cpu_type(cpu) (0)
@@ -42,21 +42,21 @@ DECLARE_GLOBAL_DATA_PTR;
 #elif defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_NOR)
 #define RAVION_CFG_BLOCK_MAX_SIZE 64
 #else
-#error Toradex config block location not set
+#error Ravion config block location not set
 #endif
 
-struct toradex_tag {
+struct ravion_tag {
 	u32 len:14;
 	u32 flags:2;
 	u32 id:16;
 };
 
 bool valid_cfgblock;
-struct toradex_hw tdx_hw_tag;
-struct toradex_eth_addr tdx_eth_addr;
-u32 tdx_serial;
+struct ravion_hw rav_hw_tag;
+struct ravion_eth_addr rav_eth_addr;
+u32 rav_serial;
 
-const char * const toradex_modules[] = {
+const char * const ravion_modules[] = {
 	 [0] = "UNKNOWN MODULE",
 	 [1] = "Colibri PXA270 312MHz",
 	 [2] = "Colibri PXA270 520MHz",
@@ -93,10 +93,15 @@ const char * const toradex_modules[] = {
 	[33] = "Colibri iMX7 Dual 512MB",
 	[34] = "Apalis TK1 2GB",
 	[35] = "Apalis iMX6 Dual 1GB IT",
+	[36] = "UNKNOWN MODULE",
+	[37] = "UNKNOWN MODULE",
+	[38] = "UNKNOWN MODULE",
+	[39] = "UNKNOWN MODULE",
+	[40] = "soDimm200 iMX6 QuadPlus 2GB IT",
 };
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC
-static int tdx_cfg_block_mmc_storage(u8 *config_block, int write)
+static int rav_cfg_block_mmc_storage(u8 *config_block, int write)
 {
 	struct mmc *mmc;
 	int dev = CONFIG_RAVION_CFG_BLOCK_DEV;
@@ -148,7 +153,7 @@ out:
 #endif
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_NAND
-static int read_tdx_cfg_block_from_nand(unsigned char *config_block)
+static int read_rav_cfg_block_from_nand(unsigned char *config_block)
 {
 	size_t size = RAVION_CFG_BLOCK_MAX_SIZE;
 
@@ -159,7 +164,7 @@ static int read_tdx_cfg_block_from_nand(unsigned char *config_block)
 				  config_block);
 }
 
-static int write_tdx_cfg_block_to_nand(unsigned char *config_block)
+static int write_rav_cfg_block_to_nand(unsigned char *config_block)
 {
 	size_t size = RAVION_CFG_BLOCK_MAX_SIZE;
 
@@ -172,7 +177,7 @@ static int write_tdx_cfg_block_to_nand(unsigned char *config_block)
 #endif
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_NOR
-static int read_tdx_cfg_block_from_nor(unsigned char *config_block)
+static int read_rav_cfg_block_from_nor(unsigned char *config_block)
 {
 	/* Read production parameter config block from NOR flash */
 	memcpy(config_block, (void *)CONFIG_RAVION_CFG_BLOCK_OFFSET,
@@ -180,7 +185,7 @@ static int read_tdx_cfg_block_from_nor(unsigned char *config_block)
 	return 0;
 }
 
-static int write_tdx_cfg_block_to_nor(unsigned char *config_block)
+static int write_rav_cfg_block_to_nor(unsigned char *config_block)
 {
 	/* Write production parameter config block to NOR flash */
 	return flash_write((void *)config_block, CONFIG_RAVION_CFG_BLOCK_OFFSET,
@@ -188,11 +193,11 @@ static int write_tdx_cfg_block_to_nor(unsigned char *config_block)
 }
 #endif
 
-int read_tdx_cfg_block(void)
+int read_rav_cfg_block(void)
 {
 	int ret = 0;
 	u8 *config_block = NULL;
-	struct toradex_tag *tag;
+	struct ravion_tag *tag;
 	size_t size = RAVION_CFG_BLOCK_MAX_SIZE;
 	int offset;
 
@@ -206,11 +211,11 @@ int read_tdx_cfg_block(void)
 	memset(config_block, 0, size);
 
 #if defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC)
-	ret = tdx_cfg_block_mmc_storage(config_block, 0);
+	ret = rav_cfg_block_mmc_storage(config_block, 0);
 #elif defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_NAND)
-	ret = read_tdx_cfg_block_from_nand(config_block);
+	ret = read_rav_cfg_block_from_nand(config_block);
 #elif defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_NOR)
-	ret = read_tdx_cfg_block_from_nor(config_block);
+	ret = read_rav_cfg_block_from_nor(config_block);
 #else
 	ret = -EINVAL;
 #endif
@@ -218,7 +223,7 @@ int read_tdx_cfg_block(void)
 		goto out;
 
 	/* Expect a valid tag first */
-	tag = (struct toradex_tag *)config_block;
+	tag = (struct ravion_tag *)config_block;
 	if (tag->flags != TAG_FLAG_VALID || tag->id != TAG_VALID) {
 		valid_cfgblock = false;
 		ret = -EINVAL;
@@ -228,7 +233,7 @@ int read_tdx_cfg_block(void)
 	offset = 4;
 
 	while (offset < RAVION_CFG_BLOCK_MAX_SIZE) {
-		tag = (struct toradex_tag *)(config_block + offset);
+		tag = (struct ravion_tag *)(config_block + offset);
 		offset += 4;
 		if (tag->id == TAG_INVALID)
 			break;
@@ -236,14 +241,14 @@ int read_tdx_cfg_block(void)
 		if (tag->flags == TAG_FLAG_VALID) {
 			switch (tag->id) {
 			case TAG_MAC:
-				memcpy(&tdx_eth_addr, config_block + offset,
+				memcpy(&rav_eth_addr, config_block + offset,
 				       6);
 
 				/* NIC part of MAC address is serial number */
-				tdx_serial = ntohl(tdx_eth_addr.nic) >> 8;
+				rav_serial = ntohl(rav_eth_addr.nic) >> 8;
 				break;
 			case TAG_HW:
-				memcpy(&tdx_hw_tag, config_block + offset, 8);
+				memcpy(&rav_hw_tag, config_block + offset, 8);
 				break;
 			}
 		}
@@ -253,9 +258,9 @@ int read_tdx_cfg_block(void)
 	}
 
 	/* Cap product id to avoid issues with a yet unknown one */
-	if (tdx_hw_tag.prodid > (sizeof(toradex_modules) /
-				  sizeof(toradex_modules[0])))
-		tdx_hw_tag.prodid = 0;
+	if (rav_hw_tag.prodid > (sizeof(ravion_modules) /
+				  sizeof(ravion_modules[0])))
+		rav_hw_tag.prodid = 0;
 
 out:
 	free(config_block);
@@ -282,75 +287,78 @@ static int get_cfgblock_interactive(void)
 #ifdef CONFIG_MACH_TYPE
 		if (it == 'y' || it == 'Y')
 			if (is_cpu_type(MXC_CPU_MX6Q))
-				tdx_hw_tag.prodid = APALIS_IMX6Q_IT;
+				rav_hw_tag.prodid = APALIS_IMX6Q_IT;
 			else
-				tdx_hw_tag.prodid = APALIS_IMX6D_IT;
+				rav_hw_tag.prodid = APALIS_IMX6D_IT;
 		else
 			if (is_cpu_type(MXC_CPU_MX6Q))
-				tdx_hw_tag.prodid = APALIS_IMX6Q;
+				rav_hw_tag.prodid = APALIS_IMX6Q;
 			else
-				tdx_hw_tag.prodid = APALIS_IMX6D;
+				rav_hw_tag.prodid = APALIS_IMX6D;
 #else
-		if (it == 'y' || it == 'Y')
-			if (is_cpu_type(MXC_CPU_MX6DL))
-				tdx_hw_tag.prodid = COLIBRI_IMX6DL_IT;
+		if (it == 'y' || it == 'Y') {
+			if (is_cpu_type(MXC_CPU_MX6QP))
+				rav_hw_tag.prodid = RAVION_IMX6QP_IT;
+			else if (is_cpu_type(MXC_CPU_MX6DL))
+				rav_hw_tag.prodid = COLIBRI_IMX6DL_IT;
 			else
-				tdx_hw_tag.prodid = COLIBRI_IMX6S_IT;
-		else
+				rav_hw_tag.prodid = COLIBRI_IMX6S_IT;
+		} else {
 			if (is_cpu_type(MXC_CPU_MX6DL))
-				tdx_hw_tag.prodid = COLIBRI_IMX6DL;
+				rav_hw_tag.prodid = COLIBRI_IMX6DL;
 			else
-				tdx_hw_tag.prodid = COLIBRI_IMX6S;
+				rav_hw_tag.prodid = COLIBRI_IMX6S;
+		}
 #endif /* CONFIG_MACH_TYPE */
 	} else if (!strcmp("imx7d", soc)) {
-		tdx_hw_tag.prodid = COLIBRI_IMX7D;
+		rav_hw_tag.prodid = COLIBRI_IMX7D;
 	} else if (!strcmp("imx7s", soc)) {
-		tdx_hw_tag.prodid = COLIBRI_IMX7S;
+		rav_hw_tag.prodid = COLIBRI_IMX7S;
 	} else if (!strcmp("tegra20", soc)) {
 		if (it == 'y' || it == 'Y')
 			if (gd->ram_size == 0x10000000)
-				tdx_hw_tag.prodid = COLIBRI_T20_256MB_IT;
+				rav_hw_tag.prodid = COLIBRI_T20_256MB_IT;
 			else
-				tdx_hw_tag.prodid = COLIBRI_T20_512MB_IT;
+				rav_hw_tag.prodid = COLIBRI_T20_512MB_IT;
 		else
 			if (gd->ram_size == 0x10000000)
-				tdx_hw_tag.prodid = COLIBRI_T20_256MB;
+				rav_hw_tag.prodid = COLIBRI_T20_256MB;
 			else
-				tdx_hw_tag.prodid = COLIBRI_T20_512MB;
+				rav_hw_tag.prodid = COLIBRI_T20_512MB;
 	} else if (cpu_is_pxa27x()) {
 		if (it == 'y' || it == 'Y')
-			tdx_hw_tag.prodid = COLIBRI_PXA270_312MHZ;
+			rav_hw_tag.prodid = COLIBRI_PXA270_312MHZ;
 		else
-			tdx_hw_tag.prodid = COLIBRI_PXA270_520MHZ;
+			rav_hw_tag.prodid = COLIBRI_PXA270_520MHZ;
 #ifdef CONFIG_MACH_TYPE
 	} else if (!strcmp("tegra30", soc)) {
 		if (CONFIG_MACH_TYPE == MACH_TYPE_APALIS_T30) {
 			if (it == 'y' || it == 'Y')
-				tdx_hw_tag.prodid = APALIS_T30_IT;
+				rav_hw_tag.prodid = APALIS_T30_IT;
 			else
 				if (gd->ram_size == 0x40000000)
-					tdx_hw_tag.prodid = APALIS_T30_1GB;
+					rav_hw_tag.prodid = APALIS_T30_1GB;
 				else
-					tdx_hw_tag.prodid = APALIS_T30_2GB;
+					rav_hw_tag.prodid = APALIS_T30_2GB;
 		} else {
 			if (it == 'y' || it == 'Y')
-				tdx_hw_tag.prodid = COLIBRI_T30_IT;
+				rav_hw_tag.prodid = COLIBRI_T30_IT;
 			else
-				tdx_hw_tag.prodid = COLIBRI_T30;
+				rav_hw_tag.prodid = COLIBRI_T30;
 		}
 #endif /* CONFIG_MACH_TYPE */
 	} else if (!strcmp("tegra124", soc)) {
-		tdx_hw_tag.prodid = APALIS_TK1_2GB;
+		rav_hw_tag.prodid = APALIS_TK1_2GB;
 	} else if (!strcmp("vf500", soc)) {
 		if (it == 'y' || it == 'Y')
-			tdx_hw_tag.prodid = COLIBRI_VF50_IT;
+			rav_hw_tag.prodid = COLIBRI_VF50_IT;
 		else
-			tdx_hw_tag.prodid = COLIBRI_VF50;
+			rav_hw_tag.prodid = COLIBRI_VF50;
 	} else if (!strcmp("vf610", soc)) {
 		if (it == 'y' || it == 'Y')
-			tdx_hw_tag.prodid = COLIBRI_VF61_IT;
+			rav_hw_tag.prodid = COLIBRI_VF61_IT;
 		else
-			tdx_hw_tag.prodid = COLIBRI_VF61;
+			rav_hw_tag.prodid = COLIBRI_VF61;
 	} else {
 		printf("Module type not detectable due to unknown SoC\n");
 		return -1;
@@ -361,12 +369,12 @@ static int get_cfgblock_interactive(void)
 		len = cli_readline(message);
 	}
 
-	tdx_hw_tag.ver_major = console_buffer[0] - '0';
-	tdx_hw_tag.ver_minor = console_buffer[2] - '0';
-	tdx_hw_tag.ver_assembly = console_buffer[3] - 'A';
+	rav_hw_tag.ver_major = console_buffer[0] - '0';
+	rav_hw_tag.ver_minor = console_buffer[2] - '0';
+	rav_hw_tag.ver_assembly = console_buffer[3] - 'A';
 
-	if (cpu_is_pxa27x() && (tdx_hw_tag.ver_major == 1))
-		tdx_hw_tag.prodid -= (COLIBRI_PXA270_312MHZ -
+	if (cpu_is_pxa27x() && (rav_hw_tag.ver_major == 1))
+		rav_hw_tag.prodid -= (COLIBRI_PXA270_312MHZ -
 				       COLIBRI_PXA270_V1_312MHZ);
 
 	while (len < 8) {
@@ -374,7 +382,7 @@ static int get_cfgblock_interactive(void)
 		len = cli_readline(message);
 	}
 
-	tdx_serial = simple_strtoul(console_buffer, NULL, 10);
+	rav_serial = simple_strtoul(console_buffer, NULL, 10);
 
 	return 0;
 }
@@ -387,16 +395,16 @@ static int get_cfgblock_barcode(char *barcode)
 	}
 
 	/* Get hardware information from the first 8 digits */
-	tdx_hw_tag.ver_major = barcode[4] - '0';
-	tdx_hw_tag.ver_minor = barcode[5] - '0';
-	tdx_hw_tag.ver_assembly = barcode[7] - '0';
+	rav_hw_tag.ver_major = barcode[4] - '0';
+	rav_hw_tag.ver_minor = barcode[5] - '0';
+	rav_hw_tag.ver_assembly = barcode[7] - '0';
 
 	barcode[4] = '\0';
-	tdx_hw_tag.prodid = simple_strtoul(barcode, NULL, 10);
+	rav_hw_tag.prodid = simple_strtoul(barcode, NULL, 10);
 
 	/* Parse second part of the barcode (serial number */
 	barcode += 8;
-	tdx_serial = simple_strtoul(barcode, NULL, 10);
+	rav_serial = simple_strtoul(barcode, NULL, 10);
 
 	return 0;
 }
@@ -405,7 +413,7 @@ static int do_cfgblock_create(cmd_tbl_t *cmdtp, int flag, int argc,
 			      char * const argv[])
 {
 	u8 *config_block;
-	struct toradex_tag *tag;
+	struct ravion_tag *tag;
 	size_t size = RAVION_CFG_BLOCK_MAX_SIZE;
 	int offset = 0;
 	int ret = CMD_RET_SUCCESS;
@@ -420,14 +428,14 @@ static int do_cfgblock_create(cmd_tbl_t *cmdtp, int flag, int argc,
 
 	memset(config_block, 0xff, size);
 
-	read_tdx_cfg_block();
+	read_rav_cfg_block();
 	if (valid_cfgblock) {
 #if defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_NAND)
 		/*
 		 * On NAND devices, recreation is only allowed if the page is
 		 * empty (config block invalid...)
 		 */
-		printf("NAND erase block %d need to be erased before creating a Toradex config block\n",
+		printf("NAND erase block %d need to be erased before creating a Ravion config block\n",
 		       CONFIG_RAVION_CFG_BLOCK_OFFSET /
 		       get_nand_dev_by_index(0)->erasesize);
 		goto out;
@@ -436,13 +444,13 @@ static int do_cfgblock_create(cmd_tbl_t *cmdtp, int flag, int argc,
 		 * On NOR devices, recreation is only allowed if the sector is
 		 * empty and write protection is off (config block invalid...)
 		 */
-		printf("NOR sector at offset 0x%02x need to be erased and unprotected before creating a Toradex config block\n",
+		printf("NOR sector at offset 0x%02x need to be erased and unprotected before creating a Ravion config block\n",
 		       CONFIG_RAVION_CFG_BLOCK_OFFSET);
 		goto out;
 #else
 		char message[CONFIG_SYS_CBSIZE];
 		sprintf(message,
-			"A valid Toradex config block is present, still recreate? [y/N] ");
+			"A valid Ravion config block is present, still recreate? [y/N] ");
 
 		if (!cli_readline(message))
 			goto out;
@@ -452,7 +460,7 @@ static int do_cfgblock_create(cmd_tbl_t *cmdtp, int flag, int argc,
 #endif
 	}
 
-	/* Parse new Toradex config block data... */
+	/* Parse new Ravion config block data... */
 	if (argc < 3)
 		err = get_cfgblock_interactive();
 	else
@@ -464,53 +472,53 @@ static int do_cfgblock_create(cmd_tbl_t *cmdtp, int flag, int argc,
 	}
 
 	/* Convert serial number to MAC address (the storage format) */
-	tdx_eth_addr.oui = htonl(0x00142dUL << 8);
-	tdx_eth_addr.nic = htonl(tdx_serial << 8);
+	rav_eth_addr.oui = htonl(0x00142dUL << 8);
+	rav_eth_addr.nic = htonl(rav_serial << 8);
 
 	/* Valid Tag */
-	tag = (struct toradex_tag *)config_block;
+	tag = (struct ravion_tag *)config_block;
 	tag->id = TAG_VALID;
 	tag->flags = TAG_FLAG_VALID;
 	tag->len = 0;
 	offset += 4;
 
 	/* Product Tag */
-	tag = (struct toradex_tag *)(config_block + offset);
+	tag = (struct ravion_tag *)(config_block + offset);
 	tag->id = TAG_HW;
 	tag->flags = TAG_FLAG_VALID;
 	tag->len = 2;
 	offset += 4;
 
-	memcpy(config_block + offset, &tdx_hw_tag, 8);
+	memcpy(config_block + offset, &rav_hw_tag, 8);
 	offset += 8;
 
 	/* MAC Tag */
-	tag = (struct toradex_tag *)(config_block + offset);
+	tag = (struct ravion_tag *)(config_block + offset);
 	tag->id = TAG_MAC;
 	tag->flags = TAG_FLAG_VALID;
 	tag->len = 2;
 	offset += 4;
 
-	memcpy(config_block + offset, &tdx_eth_addr, 6);
+	memcpy(config_block + offset, &rav_eth_addr, 6);
 	offset += 6;
 	memset(config_block + offset, 0, 32 - offset);
 
 #if defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC)
-	err = tdx_cfg_block_mmc_storage(config_block, 1);
+	err = rav_cfg_block_mmc_storage(config_block, 1);
 #elif defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_NAND)
-	err = write_tdx_cfg_block_to_nand(config_block);
+	err = write_rav_cfg_block_to_nand(config_block);
 #elif defined(CONFIG_RAVION_CFG_BLOCK_IS_IN_NOR)
-	err = write_tdx_cfg_block_to_nor(config_block);
+	err = write_rav_cfg_block_to_nor(config_block);
 #else
 	err = -EINVAL;
 #endif
 	if (err) {
-		printf("Failed to write Toradex config block: %d\n", ret);
+		printf("Failed to write Ravion config block: %d\n", ret);
 		ret = CMD_RET_FAILURE;
 		goto out;
 	}
 
-	printf("Toradex config block successfully written\n");
+	printf("Ravion config block successfully written\n");
 
 out:
 	free(config_block);
@@ -528,9 +536,9 @@ static int do_cfgblock(cmd_tbl_t *cmdtp, int flag, int argc,
 	if (!strcmp(argv[1], "create")) {
 		return do_cfgblock_create(cmdtp, flag, argc, argv);
 	} else if (!strcmp(argv[1], "reload")) {
-		ret = read_tdx_cfg_block();
+		ret = read_rav_cfg_block();
 		if (ret) {
-			printf("Failed to reload Toradex config block: %d\n",
+			printf("Failed to reload Ravion config block: %d\n",
 			       ret);
 			return CMD_RET_FAILURE;
 		}
@@ -542,7 +550,7 @@ static int do_cfgblock(cmd_tbl_t *cmdtp, int flag, int argc,
 
 U_BOOT_CMD(
 	cfgblock, 3, 0, do_cfgblock,
-	"Toradex config block handling commands",
-	"create [barcode] - (Re-)create Toradex config block\n"
-	"cfgblock reload - Reload Toradex config block from flash"
+	"Ravion config block handling commands",
+	"create [barcode] - (Re-)create Ravion config block\n"
+	"cfgblock reload - Reload Ravion config block from flash"
 );

@@ -132,10 +132,10 @@ unsigned pmic_init(void)
 
 	switch (programmed) {
 	case 0:
-		printf("PMIC: not programmed\n");
+		printf("PMIC: not programmed\n\n");
 		break;
 	case 3:
-		printf("PMIC: programmed\n");
+		printf("PMIC: programmed\n\n");
 		break;
 	default:
 		printf("PMIC: undefined programming state\n");
