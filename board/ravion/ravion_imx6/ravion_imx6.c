@@ -38,7 +38,7 @@
 #include <mmc.h>
 #include <netdev.h>
 
-#include "../common/tdx-cfg-block.h"
+#include "../common/rav-cfg-block.h"
 #ifdef CONFIG_RAVION_CMD_IMX_MFGR
 #include "pf0100.h"
 #endif
@@ -794,9 +794,9 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
 	/* FixMe: bugfix for debug version Ravion soDimm200 module - swap local and extend i2c */
-	setup_i2c(3, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_local);
+	setup_i2c(3, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_extend);
 	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_compat);
-	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_extend);
+	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_local);
 
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();

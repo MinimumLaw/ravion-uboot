@@ -6,6 +6,6 @@ ifeq ($(CONFIG_SPL_BUILD),y)
 # Necessary to create built-in.o
 obj- := __dummy__.o
 else
-obj-$(CONFIG_RAVION_CFG_BLOCK) += tdx-cfg-block.o
-obj-y += tdx-common.o
+obj-$(CONFIG_RAVION_CFG_BLOCK) += rav-cfg-block.o
+obj-y += rav-common.o
 endif

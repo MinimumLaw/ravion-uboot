@@ -1,4 +1,5 @@
 /*
+ * Modification: Radioavionica Corp
  * Copyright (c) 2016 Toradex, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
@@ -7,7 +8,7 @@
 #ifndef _RAVION_CFG_BLOCK_H
 #define _RAVION_CFG_BLOCK_H
 
-#include "tdx-common.h"
+#include "rav-common.h"
 
 struct toradex_hw {
 	u16 ver_major;

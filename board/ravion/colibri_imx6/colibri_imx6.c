@@ -38,7 +38,7 @@
 #include <mmc.h>
 #include <netdev.h>
 
-#include "../common/tdx-cfg-block.h"
+#include "../common/rav-cfg-block.h"
 #ifdef CONFIG_RAVION_CMD_IMX_MFGR
 #include "pf0100.h"
 #endif

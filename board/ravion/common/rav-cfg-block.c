@@ -1,13 +1,14 @@
 /*
+ * Modification: Radioavionica Corp
  * Copyright (c) 2016 Toradex, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
-#include "tdx-cfg-block.h"
+#include "rav-cfg-block.h"
 
-#if defined(CONFIG_TARGET_APALIS_IMX6) || defined(CONFIG_TARGET_COLIBRI_IMX6)
+#if defined(CONFIG_TARGET_COLIBRI_IMX6)
 #include <asm/arch/sys_proto.h>
 #else
 #define is_cpu_type(cpu) (0)

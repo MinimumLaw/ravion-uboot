@@ -1,4 +1,5 @@
 /*
+ * Modification: Radioavionica Corp
  * Copyright (c) 2016 Toradex, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
@@ -8,9 +9,9 @@
 #include <g_dnl.h>
 #include <linux/libfdt.h>
 
-#include "tdx-cfg-block.h"
+#include "rav-cfg-block.h"
 #include <asm/setup.h>
-#include "tdx-common.h"
+#include "rav-common.h"
 
 #ifdef CONFIG_RAVION_CFG_BLOCK
 static char tdx_serial_str[9];

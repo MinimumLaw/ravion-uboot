@@ -31,7 +31,8 @@ static __maybe_unused iomux_v3_cfg_t const pmic_prog_pads[] = {
 unsigned pmic_init(void)
 {
 	unsigned programmed = 0;
-	uchar bus = 1;
+	/* FixMe: bugfix for debug version Ravion soDimm200 module - swap local and extend i2c */
+	uchar bus = 2;
 	uchar devid, revid, val;
 
 	puts("PMIC: ");
