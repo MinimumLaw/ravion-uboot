@@ -285,8 +285,8 @@ static void setup_iomux_gpio(void)
 
 iomux_v3_cfg_t const usb_pads[] = {
 	/* USB_PE */
-	MX6_PAD_EIM_D31__GPIO3_IO31 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#	define GPIO_USBH_EN IMX_GPIO_NR(3, 31)
+	MX6_PAD_GPIO_0__GPIO1_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#	define GPIO_USBH_EN IMX_GPIO_NR(1, 0)
 };
 
 /*
@@ -504,45 +504,44 @@ static iomux_v3_cfg_t const pwr_intb_pads[] = {
 #if defined(CONFIG_VIDEO_IPUV3)
 
 static iomux_v3_cfg_t const backlight_pads[] = {
-	/* Backlight On */
-	MX6_PAD_EIM_D26__GPIO3_IO26 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define RGB_BACKLIGHT_GP IMX_GPIO_NR(3, 26)
-	/* Backlight PWM, used as GPIO in U-Boot */
-	MX6_PAD_EIM_A22__GPIO2_IO16  | MUX_PAD_CTRL(NO_PULLUP),
-	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* Backlight On: FixMe: Evalution Board ONLY: conflict with CIF_D0 */
+	MX6_PAD_DISP0_DAT9__GPIO4_IO30 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm71 */
+#define RGB_BACKLIGHT_GP IMX_GPIO_NR(4, 30)
+	/* Backlight PWM, used as GPIO in U-Boot: FixMe:  Evalution Board ONLY: conflict with CIF_D7 */
+	MX6_PAD_CSI0_DAT17__GPIO6_IO03 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm59 */
 #define RGB_BACKLIGHTPWM_GP IMX_GPIO_NR(2, 9)
 };
 
 static iomux_v3_cfg_t const rgb_pads[] = {
-	MX6_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DI0_PIN15__IPU1_DI0_PIN15 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DI0_PIN2__IPU1_DI0_PIN02 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DI0_PIN3__IPU1_DI0_PIN03 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT0__IPU1_DISP0_DATA00 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT1__IPU1_DISP0_DATA01 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT2__IPU1_DISP0_DATA02 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT3__IPU1_DISP0_DATA03 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT4__IPU1_DISP0_DATA04 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT5__IPU1_DISP0_DATA05 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT6__IPU1_DISP0_DATA06 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT7__IPU1_DISP0_DATA07 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT8__IPU1_DISP0_DATA08 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT9__IPU1_DISP0_DATA09 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT10__IPU1_DISP0_DATA10 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT11__IPU1_DISP0_DATA11 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT12__IPU1_DISP0_DATA12 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT13__IPU1_DISP0_DATA13 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT14__IPU1_DISP0_DATA14 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT15__IPU1_DISP0_DATA15 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT16__IPU1_DISP0_DATA16 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT17__IPU1_DISP0_DATA17 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_EIM_A16__IPU1_DI1_DISP_CLK | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm56  TFT_PCLK  */
+	MX6_PAD_EIM_DA10__IPU1_DI1_PIN15   | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm44  TFT_DE    */
+	MX6_PAD_EIM_DA11__IPU1_DI1_PIN02   | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm68  TFT_HSYNC */
+	MX6_PAD_EIM_DA12__IPU1_DI1_PIN03   | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm82  TFT_VSYNC */
+	MX6_PAD_EIM_DA9__IPU1_DISP1_DATA00 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm76  TFT_DAT00 */
+	MX6_PAD_EIM_DA8__IPU1_DISP1_DATA01 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm70  TFT_DAT01 */
+	MX6_PAD_EIM_DA7__IPU1_DISP1_DATA02 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm60  TFT_DAT02 */
+	MX6_PAD_EIM_DA6__IPU1_DISP1_DATA03 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm58  TFT_DAT03 */
+	MX6_PAD_EIM_DA5__IPU1_DISP1_DATA04 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm78  TFT_DAT04 */
+	MX6_PAD_EIM_DA4__IPU1_DISP1_DATA05 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm72  TFT_DAT05 */
+	MX6_PAD_EIM_DA3__IPU1_DISP1_DATA06 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm80  TFT_DAT06 */
+	MX6_PAD_EIM_DA2__IPU1_DISP1_DATA07 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm46  TFT_DAT07 */
+	MX6_PAD_EIM_DA1__IPU1_DISP1_DATA08 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm62  TFT_DAT08 */
+	MX6_PAD_EIM_DA0__IPU1_DISP1_DATA09 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm48  TFT_DAT09 */
+	MX6_PAD_EIM_EB1__IPU1_DISP1_DATA10 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm74  TFT_DAT10 */
+	MX6_PAD_EIM_EB0__IPU1_DISP1_DATA11 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm50  TFT_DAT11 */
+	MX6_PAD_EIM_A17__IPU1_DISP1_DATA12 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm52  TFT_DAT12 */
+	MX6_PAD_EIM_A18__IPU1_DISP1_DATA13 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm54  TFT_DAT13 */
+	MX6_PAD_EIM_A19__IPU1_DISP1_DATA14 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm66  TFT_DAT14 */
+	MX6_PAD_EIM_A20__IPU1_DISP1_DATA15 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm64  TFT_DAT15 */
+	MX6_PAD_EIM_A21__IPU1_DISP1_DATA16 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm57  TFT_DAT16 */
+	MX6_PAD_EIM_A22__IPU1_DISP1_DATA17 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm61  TFT_DAT17 */
 	/* 24 bit video */
-	MX6_PAD_DISP0_DAT18__IPU1_DISP0_DATA18 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT19__IPU1_DISP0_DATA19 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT20__IPU1_DISP0_DATA20 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT21__IPU1_DISP0_DATA21 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT22__IPU1_DISP0_DATA22 | MUX_PAD_CTRL(OUTPUT_RGB),
-	MX6_PAD_DISP0_DAT23__IPU1_DISP0_DATA23 | MUX_PAD_CTRL(OUTPUT_RGB),
+	MX6_PAD_EIM_A23__IPU1_DISP1_DATA18 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm136 TFT_DAT18 */
+	MX6_PAD_EIM_A24__IPU1_DISP1_DATA19 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm138 TFT_DAT19 */
+	MX6_PAD_EIM_D31__IPU1_DISP1_DATA20 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm140 TFT_DAT20 */
+	MX6_PAD_EIM_D30__IPU1_DISP1_DATA21 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm142 TFT_DAT21 */
+	MX6_PAD_EIM_D26__IPU1_DISP1_DATA22 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm144 TFT_DAT22 */
+	MX6_PAD_EIM_D27__IPU1_DISP1_DATA23 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm146 TFT_DAT23 */
 };
 
 static void do_enable_hdmi(struct display_info_t const *dev)
@@ -555,6 +554,17 @@ static void enable_rgb(struct display_info_t const *dev)
 	imx_iomux_v3_setup_multiple_pads(
 		rgb_pads,
 		ARRAY_SIZE(rgb_pads));
+	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
+	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
+}
+
+static void enable_lvds(struct display_info_t const *dev)
+{
+	struct iomuxc *iomux = (struct iomuxc *)
+				IOMUXC_BASE_ADDR;
+	u32 reg = readl(&iomux->gpr[2]);
+	reg |= IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT;
+	writel(reg, &iomux->gpr[2]);
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
 }
@@ -572,6 +582,7 @@ static int detect_default(struct display_info_t const *dev)
 struct display_info_t const displays[] = {{
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 0,
 	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= detect_hdmi,
 	.enable	= do_enable_hdmi,
@@ -589,9 +600,31 @@ struct display_info_t const displays[] = {{
 		.vsync_len      = 10,
 		.sync           = FB_SYNC_EXT,
 		.vmode          = FB_VMODE_NONINTERLACED
-} }, {
+} }, {	/* LVDS displays connected to di0 */
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.detect	= detect_default,
+	.enable	= enable_lvds,
+	.mode	= {
+		.name           = "lvds:AA070ME11ADA11",
+		.refresh        = 60,
+		.xres           = 800,
+		.yres           = 480,
+		.pixclock       = 30770,
+		.left_margin    = 30,
+		.right_margin   = 87,
+		.upper_margin   = 13,
+		.lower_margin   = 30,
+		.hsync_len      = 1,
+		.vsync_len      = 1,
+		.sync           = FB_SYNC_EXT,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {	/* TFT displays & VGA modulator connected to di1 */
+	.bus	= -1,
+	.addr	= 0,
+	.di	= 1,
 	.pixfmt	= IPU_PIX_FMT_RGB666,
 	.detect	= detect_default,
 	.enable	= enable_rgb,
@@ -612,6 +645,7 @@ struct display_info_t const displays[] = {{
 } }, {
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 1,
 	.pixfmt	= IPU_PIX_FMT_RGB666,
 	.enable	= enable_rgb,
 	.mode	= {
@@ -631,6 +665,7 @@ struct display_info_t const displays[] = {{
 } }, {
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 1,
 	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= detect_default,
 	.enable	= enable_rgb,
@@ -651,6 +686,7 @@ struct display_info_t const displays[] = {{
 } }, {
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 1,
 	.pixfmt	= IPU_PIX_FMT_RGB666,
 	.detect	= detect_default,
 	.enable	= enable_rgb,
@@ -671,6 +707,7 @@ struct display_info_t const displays[] = {{
 } }, {
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 1,
 	.pixfmt	= IPU_PIX_FMT_RGB666,
 	.detect	= detect_default,
 	.enable	= enable_rgb,
@@ -691,6 +728,7 @@ struct display_info_t const displays[] = {{
 } }, {
 	.bus	= -1,
 	.addr	= 0,
+	.di	= 1,
 	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= detect_default,
 	.enable	= enable_rgb,
