@@ -1,7 +1,7 @@
 if TARGET_RAVION_IMX6
 
 config SYS_BOARD
-	default "ravion_imx6"
+	default "ravion"
 
 config SYS_CONFIG_NAME
 	default "ravion_imx6"

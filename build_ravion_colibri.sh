@@ -10,5 +10,5 @@ else
 fi
 
 if [ -f u-boot.imx ]; then
-	cp -f u-boot.imx /cimc/exporttftp/u-boot-colibi.imx
+	cp -f u-boot.imx /cimc/exporttftp/u-boot-colibri.imx
 fi

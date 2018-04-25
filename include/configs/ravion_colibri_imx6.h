@@ -196,6 +196,7 @@
 	"mmc rst-function 0 1\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	"variant=dl\0" \
 	"board=eval\0" \
 	"bootcmd=run need_config_display; " \
 	    "run usbboot; " \
