@@ -94,7 +94,7 @@ int do_koe_display_init(cmd_tbl_t *cmdtp, int flag, int argc,
 		printf("Turn on koe display\n");
 		spi_cmd(0x3A, 0x70, true);	/* COLMOD */
 		spi_cmd(0x26, 0x00, true);	/* GAMSET */
-		spi_cmd(0x36, 0xC0, true);	/* MADCTL */
+		spi_cmd(0x36, 0x00, true);	/* MADCTL */
 		spi_cmd(0x11, 0x00, false);	/* SLPOUT */
 		mdelay(150); /* more, than 120 ms. */
 		spi_cmd(0x29, 0x00, false);	/* DISON */
@@ -106,7 +106,7 @@ int do_koe_display_init(cmd_tbl_t *cmdtp, int flag, int argc,
 		printf("Refresh koe display\n");
 		spi_cmd(0x3A, 0x70, true);	/* COLMOD */
 		spi_cmd(0x26, 0x00, true);	/* GAMSET */
-		spi_cmd(0x36, 0xC0, true);	/* MADCTL */
+		spi_cmd(0x36, 0x00, true);	/* MADCTL */
 		spi_cmd(0x20, 0x00, false);	/* DISINOFF */
 		spi_cmd(0x29, 0x00, false);	/* DISON */
 		spi_cmd(0x11, 0x00, false);	/* SLPOUT */
