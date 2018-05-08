@@ -549,11 +549,23 @@ static void do_enable_hdmi(struct display_info_t const *dev)
 	imx_enable_hdmi_phy();
 }
 
+#if defined CONFIG_RAVION_DISPLAY_KOE
+/* Defined on common/koe_init.c */
+extern void turn_on_koe_display(void);
+#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+
 static void enable_rgb(struct display_info_t const *dev)
 {
 	imx_iomux_v3_setup_multiple_pads(
 		rgb_pads,
 		ARRAY_SIZE(rgb_pads));
+
+	char *board = env_get("board");
+#if defined CONFIG_RAVION_DISPLAY_KOE
+	if(!strcmp("cimc-lite", board))
+		turn_on_koe_display();
+#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
 }
@@ -568,6 +580,7 @@ static void enable_lvds(struct display_info_t const *dev)
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
 }
+
 
 static int detect_default(struct display_info_t const *dev)
 {

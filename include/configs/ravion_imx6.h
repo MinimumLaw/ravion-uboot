@@ -147,12 +147,6 @@
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0"
 
-#define NEED_CONFIG_DISPLAY \
-	"need_config_display=" \
-	"if test \"${display}\" = \"TX09D200VM0BAA\"; then "\
-		"koe_display_init on; " \
-	"fi;\0" \
-
 #define BLKDEV_BOOTCMD \
 	"blkdevboot=load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
 	"source ${script_addr_r}\0" \
@@ -198,7 +192,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"variant=qp\0" \
 	"board=eval\0" \
-	"bootcmd=run need_config_display; " \
+	"bootcmd=" \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
@@ -210,7 +204,6 @@
 	    "console=tty0 console=${console},${baudrate}n8 \"; " \
 	    "printenv bootargs\0" \
 	MEM_LAYOUT_ENV_SETTINGS \
-	NEED_CONFIG_DISPLAY \
 	BLKDEV_BOOTCMD \
 	USB_BOOTCMD \
 	SD_BOOTCMD \

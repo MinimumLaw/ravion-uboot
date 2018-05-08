@@ -13,15 +13,15 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-iomux_v3_cfg_t const bb_spi_9b_pads[] = {
-	MX6_PAD_NANDF_D0__GPIO2_IO00	| MUX_PAD_CTRL(NO_PAD_CTRL),	/* CS   - soDimm 111 */
-	MX6_PAD_EIM_RW__GPIO2_IO26	| MUX_PAD_CTRL(NO_PAD_CTRL),	/* SCK  - soDimm 112 */
-	MX6_PAD_NANDF_D1__GPIO2_IO01	| MUX_PAD_CTRL(NO_PAD_CTRL),	/* MOSI - soDimm 113 */
-	MX6_PAD_EIM_LBA__GPIO2_IO27	| MUX_PAD_CTRL(NO_PAD_CTRL),	/* MISO - soDimm 114 */
-#	define PIN_CS	IMX_GPIO_NR(2, 0)
-#	define PIN_SCK	IMX_GPIO_NR(2, 26)
-#	define PIN_MOSI	IMX_GPIO_NR(2, 1)
-#	define PIN_MISO	IMX_GPIO_NR(2, 27)
+static iomux_v3_cfg_t const bb_spi_9b_pads[] = {
+	MX6_PAD_EIM_DA0__GPIO3_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* CS   - soDimm 111 */
+	MX6_PAD_EIM_DA9__GPIO3_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* SCK  - soDimm 112 */
+	MX6_PAD_EIM_DA1__GPIO3_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MOSI - soDimm 113 */
+	MX6_PAD_EIM_DA10__GPIO3_IO10| MUX_PAD_CTRL(NO_PAD_CTRL),	/* MISO - soDimm 114 */
+#	define PIN_CS	IMX_GPIO_NR(3, 0)
+#	define PIN_SCK	IMX_GPIO_NR(3, 9)
+#	define PIN_MOSI	IMX_GPIO_NR(3, 1)
+#	define PIN_MISO	IMX_GPIO_NR(3, 10)
 };
 
 static void spi_bitbang_init(void)
@@ -33,10 +33,10 @@ static void spi_bitbang_init(void)
 	gpio_direction_input(PIN_MISO);
 }
 
-void scl(uint8_t val){ gpio_set_value(PIN_SCK, !!val); mdelay(1); }
-void cs(uint8_t val){ gpio_set_value(PIN_CS, !!val); mdelay(1); }
-void mosi(uint8_t val){ gpio_set_value(PIN_MOSI, !!val); mdelay(1); }
-void miso(uint8_t *val){ mdelay(1); *val = gpio_get_value(PIN_MISO); }
+static void scl(uint8_t val){ gpio_set_value(PIN_SCK, !!val); mdelay(1); }
+static void cs(uint8_t val){ gpio_set_value(PIN_CS, !!val); mdelay(1); }
+static void mosi(uint8_t val){ gpio_set_value(PIN_MOSI, !!val); mdelay(1); }
+static void miso(uint8_t *val){ mdelay(1); *val = gpio_get_value(PIN_MISO); }
 
 static uint8_t send_bit(uint8_t bit)
 {
@@ -74,6 +74,23 @@ static void spi_cmd(uint8_t cmd, uint8_t arg, bool is_arg)
 		send_byte(arg);
 	}
 	cs(1);	/* inactive */
+}
+
+/* exported for basic usage */
+void turn_on_koe_display(void)
+{
+	spi_bitbang_init();
+	printf("Turn on koe display\n");
+	spi_cmd(0x10, 0x00, false);	/* SLPIN */
+	mdelay(250);
+	spi_cmd(0x01, 0x00, false);	/* SWRESET */
+	spi_cmd(0x00, 0x00, false);	/* NOP */
+	spi_cmd(0x3A, 0x70, true);	/* COLMOD */
+	spi_cmd(0x26, 0x00, true);	/* GAMSET */
+	spi_cmd(0x36, 0x00, true);	/* MADCTL */
+	spi_cmd(0x11, 0x00, false);	/* SLPOUT */
+	mdelay(150);			/* more, than 120 ms. */
+	spi_cmd(0x29, 0x00, false);	/* DISON */
 }
 
 int do_koe_display_init(cmd_tbl_t *cmdtp, int flag, int argc,
