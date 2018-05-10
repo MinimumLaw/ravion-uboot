@@ -192,6 +192,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"variant=dl\0" \
 	"board=eval\0" \
+	"console=ttymxc0\0" \
 	"bootcmd=" \
 	    "run usbboot; " \
 	    "run sdboot; " \
@@ -199,8 +200,7 @@
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=/boot/bscript.img\0" \
-	"console=ttymxc0 console=tty1\0" \
-	"debug=setenv bootargs \"${bootargs} ${defargs} ${vidargs} " \
+	"debug=setenv bootargs \"${bootargs} ${defargs} " \
 	    "console=tty0 console=${console},${baudrate}n8 \"; " \
 	    "printenv bootargs\0" \
 	MEM_LAYOUT_ENV_SETTINGS \

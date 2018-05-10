@@ -504,11 +504,9 @@ static iomux_v3_cfg_t const pwr_intb_pads[] = {
 #if defined(CONFIG_VIDEO_IPUV3)
 
 static iomux_v3_cfg_t const backlight_pads[] = {
-	/* Backlight On: FixMe: Evalution Board ONLY: conflict with CIF_D0 */
-	MX6_PAD_DISP0_DAT9__GPIO4_IO30 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm71 */
-#define RGB_BACKLIGHT_GP IMX_GPIO_NR(4, 30)
-	/* Backlight PWM, used as GPIO in U-Boot: FixMe:  Evalution Board ONLY: conflict with CIF_D7 */
-	MX6_PAD_CSI0_DAT17__GPIO6_IO03 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm59 */
+	MX6_PAD_NANDF_D4__GPIO2_IO04 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm119 */
+#define RGB_BACKLIGHT_GP IMX_GPIO_NR(2, 4)
+	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm28 */
 #define RGB_BACKLIGHTPWM_GP IMX_GPIO_NR(2, 9)
 };
 
@@ -560,8 +558,8 @@ static void enable_rgb(struct display_info_t const *dev)
 		rgb_pads,
 		ARRAY_SIZE(rgb_pads));
 
-	char *board = env_get("board");
 #if defined CONFIG_RAVION_DISPLAY_KOE
+	char *board = env_get("board");
 	if(!strcmp("cimc-lite", board))
 		turn_on_koe_display();
 #endif /* defined CONFIG_RAVION_DISPLAY_KOE */
@@ -621,7 +619,7 @@ struct display_info_t const displays[] = {{
 	.detect	= detect_default,
 	.enable	= enable_lvds,
 	.mode	= {
-		.name           = "lvds:AA070ME11ADA11",
+		.name           = "lvds-AA070ME11ADA11",
 		.refresh        = 60,
 		.xres           = 800,
 		.yres           = 480,
@@ -632,6 +630,27 @@ struct display_info_t const displays[] = {{
 		.lower_margin   = 30,
 		.hsync_len      = 1,
 		.vsync_len      = 1,
+		.sync           = FB_SYNC_EXT,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
+	.bus	= -1,
+	.addr	= 0,
+	.di	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.detect	= detect_default,
+	.enable	= enable_lvds,
+	.mode	= {
+		.name           = "lvds-AA104XF12-DE2",
+		.refresh        = 60,
+		.xres           = 1024,
+		.yres           = 768,
+		.pixclock       = 65000,
+		.left_margin    = 150,
+		.right_margin   = 150,
+		.upper_margin   = 15,
+		.lower_margin   = 15,
+		.hsync_len      = 20,
+		.vsync_len      = 8,
 		.sync           = FB_SYNC_EXT,
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {	/* TFT displays & VGA modulator connected to di1 */
