@@ -8,5 +8,6 @@ obj- := __dummy__.o
 else
 obj-$(CONFIG_RAVION_CFG_BLOCK) += rav-cfg-block.o
 obj-$(CONFIG_RAVION_DISPLAY_KOE) += koe_init.o
+obj-$(CONFIG_RAVION_NEED_RECOVERY) += recovery.o
 obj-y += rav-common.o
 endif

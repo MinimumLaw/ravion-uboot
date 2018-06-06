@@ -519,9 +519,29 @@ static void enable_rgb(struct display_info_t const *dev)
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
 }
 
+static iomux_v3_cfg_t const led_pads[] = {
+	/* Backlight On */
+	MX6_PAD_NANDF_D1__GPIO2_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#define BLUE_LED_GP IMX_GPIO_NR(2, 1)
+};
+
+static void turn_on_blue_led(void)
+{
+	imx_iomux_v3_setup_multiple_pads(
+		led_pads,
+		ARRAY_SIZE(led_pads));
+	gpio_direction_output(BLUE_LED_GP, 0);
+}
+
 static int detect_default(struct display_info_t const *dev)
 {
 	char *display = env_get("display");
+	char *board = env_get("board");
+
+	/* FixMe: here ??? */
+	if(!strcmp("router", board)) {
+		turn_on_blue_led();
+	};
 
 	if(display)
 		return (!strcmp(dev->mode.name,display));

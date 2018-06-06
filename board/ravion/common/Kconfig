@@ -28,6 +28,12 @@ config RAVION_DISPLAY_KOE
 	  (SCL - 69,MOSI 63, MISO - 69, CS - 77)
 	default y
 
+config RAVION_NEED_RECOVERY
+	bool "Check for recovery boot on ravion board"
+	help
+	  Build uboot command for check recovery boot mode.
+	default y
+
 if RAVION_CFG_BLOCK
 
 config RAVION_CFG_BLOCK_IS_IN_MMC

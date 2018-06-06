@@ -189,11 +189,21 @@
 	"mmc partconf 0 1 1 0 && " \
 	"mmc rst-function 0 1\0"
 
+#ifdef CONFIG_RAVION_NEED_RECOVERY
+#define RECOVERY_BOOTCMD \
+	"recovery=echo Place recovery mode command here!\0" \
+	"check_recovery=need_recovery || run recovery\0"
+#else
+#define RECOVERY_BOOTCMD \
+	"check_recovery=echo Boot into recovery mode disabled\0"
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"variant=dl\0" \
 	"board=eval\0" \
 	"console=ttymxc0\0" \
 	"bootcmd=" \
+	    "run check_recovery; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
@@ -211,6 +221,7 @@
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
 	UBOOT_UPDATE \
+	RECOVERY_BOOTCMD \
 	"splashpos=m,m\0" \
 
 /* Miscellaneous configurable options */
