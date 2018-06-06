@@ -883,6 +883,10 @@ int board_init(void)
 
 #ifdef CONFIG_USB
 	usb_init();
+# ifdef CONFIG_USB_STORAGE
+	/* try to recognize storage devices immediately */
+	usb_stor_scan(1);
+# endif
 #endif
 
 	return 0;
