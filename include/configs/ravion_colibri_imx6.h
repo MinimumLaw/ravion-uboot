@@ -152,8 +152,7 @@
 	"source ${script_addr_r}\0" \
 
 #define USB_BOOTCMD \
-	"usbboot=usb start && " \
-	"setenv blkname usb && " \
+	"usbboot=setenv blkname usb && " \
 	"setenv blkdev 0:1 && " \
 	"run blkdevboot\0" \
 

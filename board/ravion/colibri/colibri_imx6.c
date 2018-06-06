@@ -36,6 +36,7 @@
 #include <micrel.h>
 #include <miiphy.h>
 #include <mmc.h>
+#include <usb.h>
 #include <netdev.h>
 
 #include "../common/rav-cfg-block.h"
@@ -788,6 +789,9 @@ int board_init(void)
 
 	setup_iomux_gpio();
 
+#ifdef CONFIG_USB
+	usb_init();
+#endif
 	return 0;
 }
 
