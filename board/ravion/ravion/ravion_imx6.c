@@ -37,6 +37,7 @@
 #include <miiphy.h>
 #include <mmc.h>
 #include <usb.h>
+#include <usb/ehci-ci.h>
 #include <netdev.h>
 
 #include "../common/rav-cfg-block.h"
@@ -272,8 +273,6 @@ iomux_v3_cfg_t const gpio_pads[] = {
 	MX6_PAD_GPIO_8__GPIO1_IO08	| MUX_PAD_CTRL(WEAK_PULLUP),
 	/* USBH_OC */
 	MX6_PAD_EIM_D30__GPIO3_IO30	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* USBC_ID */
-	MX6_PAD_NANDF_D2__GPIO2_IO02	| MUX_PAD_CTRL(WEAK_PULLUP),
 	/* USBC_DET */
 	MX6_PAD_GPIO_17__GPIO7_IO12	| MUX_PAD_CTRL(WEAK_PULLUP),
 #endif
@@ -284,10 +283,14 @@ static void setup_iomux_gpio(void)
 	imx_iomux_v3_setup_multiple_pads(gpio_pads, ARRAY_SIZE(gpio_pads));
 }
 
+/* FixMe: need to be checked */
 iomux_v3_cfg_t const usb_pads[] = {
-	/* USB_PE */
+	/* USB OTG PEN */
 	MX6_PAD_GPIO_0__GPIO1_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#	define GPIO_USBH_EN IMX_GPIO_NR(1, 0)
+#	define GPIO_USB_OTG_PEN IMX_GPIO_NR(1, 0)
+	/* USB OTG ID */
+	MX6_PAD_GPIO_1__GPIO1_IO01| MUX_PAD_CTRL(NO_PAD_CTRL),
+#	define GPIO_USB_OTG_ID IMX_GPIO_NR(1, 1)
 };
 
 /*
@@ -314,27 +317,39 @@ static void setup_iomux_uart(void)
 int board_ehci_hcd_init(int port)
 {
 	imx_iomux_v3_setup_multiple_pads(usb_pads, ARRAY_SIZE(usb_pads));
+	gpio_direction_input(GPIO_USB_OTG_ID);
 	return 0;
 }
 
 int board_ehci_power(int port, int on)
 {
 	switch (port) {
-	case 0:
-		/* control OTG power */
+	case 0:	/* control OTG power */
 		/* No special PE for USBC, always on when ID pin signals
 		   host mode */
-		break;
-	case 1:
-		/* Control MXM USBH */
-		/* Set MXM USBH power enable, '0' means on */
-		gpio_direction_output(GPIO_USBH_EN, !on);
+		gpio_direction_output(GPIO_USB_OTG_PEN, !!on);
 		mdelay(100);
+		break;
+	case 1:	/* Control MXM USBH */
+		/* No special PE for USB Host */
 		break;
 	default:
 		break;
 	}
 	return 0;
+}
+
+int board_usb_phy_mode(int port)
+{
+	switch (port) {
+	case 0: /* OTG port mode - check ID pin */
+		if (!gpio_get_value(GPIO_USB_OTG_ID))
+		    return USB_INIT_DEVICE;
+		break;
+	case 1: /* HOST port */
+		break;
+	}
+	return USB_INIT_HOST;
 }
 #endif
 
