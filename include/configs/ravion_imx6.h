@@ -190,7 +190,7 @@
 
 #ifdef CONFIG_RAVION_NEED_RECOVERY
 #define RECOVERY_BOOTCMD \
-	"recovery=echo Place recovery mode command here!\0" \
+	"recovery=setenv boot_script_file /boot/rescue.bscript.img\0" \
 	"check_recovery=need_recovery || run recovery\0"
 #else
 #define RECOVERY_BOOTCMD \
