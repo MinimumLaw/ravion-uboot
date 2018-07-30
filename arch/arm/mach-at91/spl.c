@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Atmel Corporation
  *		      Bo Shen <voice.shen@atmel.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -12,9 +11,7 @@
 #include <asm/arch/clk.h>
 #include <spl.h>
 
-#if defined(CONFIG_AT91SAM9_WATCHDOG)
-void at91_disable_wdt(void) { }
-#else
+#if !defined(CONFIG_AT91SAM9_WATCHDOG)
 void at91_disable_wdt(void)
 {
 	struct at91_wdt *wdt = (struct at91_wdt *)ATMEL_BASE_WDT;

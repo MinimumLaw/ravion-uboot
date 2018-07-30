@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2007 Wind River Systems <www.windriver.com>
  * Copyright 2007 Embedded Specialties, Inc.
@@ -6,8 +7,6 @@
  * Copyright 2006 Freescale Semiconductor.
  *
  * Srikanth Srinivasan (srikanth.srinivasan@freescale.com)
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -44,7 +43,6 @@
 #define CONFIG_FSL_PCI_INIT	1	/* Use common FSL init code */
 #define CONFIG_PCI_INDIRECT_BRIDGE 1	/* indirect PCI bridge support */
 
-#define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_BAT_RW		1	/* Use common BAT rw code */
@@ -232,7 +230,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(1024 * 1024)   /* Reserved for malloc */
 
 /* Serial Port */
-#define CONFIG_CONS_INDEX     1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE    1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -481,7 +478,7 @@
 
 #define CONFIG_IPADDR		192.168.0.50
 
-#define CONFIG_HOSTNAME		sbc8641d
+#define CONFIG_HOSTNAME		"sbc8641d"
 #define CONFIG_ROOTPATH		"/opt/eldk/ppc_74xx"
 #define CONFIG_BOOTFILE		"uImage"
 

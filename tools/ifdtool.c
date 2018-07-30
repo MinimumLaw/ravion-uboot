@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ifdtool - Manage Intel Firmware Descriptor information
  *
  * Copyright 2014 Google, Inc
- *
- * SPDX-License-Identifier:	GPL-2.0
  *
  * From Coreboot project, but it got a serious code clean-up
  * and a few new features
@@ -758,7 +757,7 @@ static void print_version(void)
 {
 	printf("ifdtool v%s -- ", IFDTOOL_VERSION);
 	printf("Copyright (C) 2014 Google Inc.\n\n");
-	printf("SPDX-License-Identifier:	GPL-2.0+\n");
+	printf("SPDX-License-Identifier: GPL-2.0+\n");
 }
 
 static void print_usage(const char *name)

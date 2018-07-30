@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __MX6_COMMON_H
@@ -16,7 +15,6 @@
 #define CONFIG_SYS_PL310_BASE	L2_PL310_BASE
 #endif
 
-#define CONFIG_MP
 #endif
 #define CONFIG_BOARD_POSTCLK_INIT
 #define CONFIG_MXC_GPT_HCLK
@@ -51,9 +49,6 @@
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX       1
-
-/* Filesystems and image support */
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_CBSIZE	512
@@ -61,7 +56,6 @@
 
 /* MMC */
 #define CONFIG_BOUNCE_BUFFER
-#define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 
 /* Fuses */

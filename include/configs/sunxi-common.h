@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2012-2012 Henrik Nordstrom <henrik@henriknordstrom.net>
  *
@@ -6,8 +7,6 @@
  * Tom Cubie <tangliang@allwinnertech.com>
  *
  * Configuration settings for the Allwinner sunxi series of boards.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _SUNXI_COMMON_CONFIG_H
@@ -288,12 +287,10 @@ extern int soft_i2c_gpio_scl;
 
 /* Ethernet support */
 #ifdef CONFIG_SUN4I_EMAC
-#define CONFIG_PHY_ADDR		1
 #define CONFIG_MII			/* MII PHY management		*/
 #endif
 
 #ifdef CONFIG_SUN7I_GMAC
-#define CONFIG_PHY_ADDR		1
 #define CONFIG_MII			/* MII PHY management		*/
 #define CONFIG_PHY_REALTEK
 #endif

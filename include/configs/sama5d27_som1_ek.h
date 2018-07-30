@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuration file for the SAMA5D27 SOM1 EK Board.
  *
  * Copyright (C) 2017 Microchip Corporation
  *		      Wenyou Yang <wenyou.yang@microchip.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -82,7 +81,6 @@
 #endif
 
 #ifdef CONFIG_QSPI_BOOT
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x10000
 #endif
 

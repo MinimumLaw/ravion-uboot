@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuration settings for CompuLab CL-SOM-AM57x board
  *
  * (C) Copyright 2016 CompuLab, Ltd. http://compulab.co.il/
  *
  * Author: Dmitry Lifshitz <lifshitz@compulab.co.il>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_CL_SOM_AM57X_H
@@ -15,9 +14,10 @@
 
 #define CONSOLEDEV			"ttyO2"
 #define CONFIG_SYS_NS16550_COM3		UART3_BASE	/* UART3 */
-#define CONFIG_CONS_INDEX		3
 
 #define CONFIG_SYS_OMAP_ABE_SYSCK
+
+#define PARTS_DEFAULT
 
 #include <configs/ti_omap5_common.h>
 
@@ -37,8 +37,6 @@
 /* Offsets: 0K - SPL1, 64K - SPL2, 128K - SPL3, 192K - SPL4, 256K - U-Boot */
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	(256 * 1024)
 #define CONFIG_SPL_SPI_SUPPORT
-#define CONFIG_SPL_SPI_FLASH_SUPPORT
-#define CONFIG_SPL_SPI_LOAD
 
 /* SD/MMC RAW/FS boot */
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME "u-boot.img"
@@ -46,7 +44,6 @@
 
 /* Environment */
 #define CONFIG_ENV_SIZE			(16 << 10) /* 16 KiB env size */
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
 #define CONFIG_ENV_OFFSET		(768 * 1024)
@@ -82,7 +79,6 @@
 /* USB Networking options */
 
 /* CPSW Ethernet */
-#define CONFIG_DRIVER_TI_CPSW
 #define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_SEND_HOSTNAME

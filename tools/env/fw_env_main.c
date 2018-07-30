@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2000-2008
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -239,7 +238,7 @@ int main(int argc, char *argv[])
 	argv += optind;
 
 	if (env_opts.lockname) {
-		lockname = malloc(sizeof(env_opts.lockname) +
+		lockname = malloc(strlen(env_opts.lockname) +
 				sizeof(CMD_PRINTENV) + 10);
 		if (!lockname) {
 			fprintf(stderr, "Unable allocate memory");

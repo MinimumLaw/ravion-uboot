@@ -1,7 +1,5 @@
-#
+# SPDX-License-Identifier: GPL-2.0+
 # Copyright (c) 2014 Google, Inc
-#
-# SPDX-License-Identifier:      GPL-2.0+
 #
 
 from optparse import OptionParser
@@ -94,6 +92,8 @@ def ParseArgs():
           default=None, help='Number of builder threads to use')
     parser.add_option('-u', '--show_unknown', action='store_true',
           default=False, help='Show boards with unknown build result')
+    parser.add_option('-U', '--show-environment', action='store_true',
+          default=False, help='Show environment changes in summary')
     parser.add_option('-v', '--verbose', action='store_true',
           default=False, help='Show build results while the build progresses')
     parser.add_option('-V', '--verbose-build', action='store_true',

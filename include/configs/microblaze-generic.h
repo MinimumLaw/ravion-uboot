@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2007-2010 Michal Simek
  *
  * Michal SIMEK <monstr@monstr.eu>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -108,7 +107,6 @@
 
 #ifdef SPIFLASH
 # define CONFIG_SYS_SPI_BASE		XILINX_SPI_FLASH_BASEADDR
-# define CONFIG_SPI			1
 # define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
 # define CONFIG_SF_DEFAULT_SPEED	XILINX_SPI_FLASH_MAX_FREQ
 # define CONFIG_SF_DEFAULT_CS		XILINX_SPI_FLASH_CS
@@ -179,7 +177,7 @@
 /* default load address */
 #define	CONFIG_SYS_LOAD_ADDR	0
 
-#define	CONFIG_HOSTNAME		XILINX_BOARD_NAME
+#define	CONFIG_HOSTNAME		"microblaze-generic"
 #define	CONFIG_BOOTCOMMAND	"base 0;tftp 11000000 image.img;bootm"
 
 /* architecture dependent code */

@@ -1,16 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <command.h>
 #include <stdio_dev.h>
 #include <net.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_NETCONSOLE_BUFFER_SIZE
 #define CONFIG_NETCONSOLE_BUFFER_SIZE 512

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2006-2008
  * Texas Instruments.
@@ -8,8 +9,6 @@
  * Frederik Kriewitz <frederik@kriewitz.eu>
  *
  * Configuration settings for the DevKit8000 board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -57,11 +56,6 @@
 #define CONFIG_DM9000_NO_SROM		1
 #undef	CONFIG_DM9000_DEBUG
 
-/* SPI */
-#undef CONFIG_SPI
-
-/* I2C */
-
 /* TWL4030 */
 #define CONFIG_TWL4030_LED		1
 
@@ -82,7 +76,6 @@
 #define CONFIG_BOOTP_BOOTFILESIZE
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
-#define CONFIG_BOOTP_NTPSERVER
 #define CONFIG_BOOTP_TIMEOFFSET
 #undef CONFIG_BOOTP_VENDOREX
 

@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuation settings for the sh7753evb board
  *
  * Copyright (C) 2012 Renesas Solutions Corp.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __SH7753EVB_H
@@ -27,7 +26,6 @@
 #define CONFIG_SYS_MEMTEST_START	(SH7753EVB_SDRAM_BASE)
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + \
 					 480 * 1024 * 1024)
-#undef	CONFIG_SYS_ALT_MEMTEST
 #undef	CONFIG_SYS_MEMTEST_SCRATCH
 #undef	CONFIG_SYS_LOADS_BAUD_CHANGE
 
@@ -61,7 +59,6 @@
 #define CONFIG_SH_SPI_BASE		0xfe002000
 
 /* MMCIF */
-#define CONFIG_SH_MMCIF			1
 #define CONFIG_SH_MMCIF_ADDR		0xffcb0000
 #define CONFIG_SH_MMCIF_CLK		48000000
 

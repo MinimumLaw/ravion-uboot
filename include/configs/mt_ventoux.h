@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2011
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
@@ -6,8 +7,6 @@
  * Configuration settings for the Teejet mt_ventoux board.
  *
  * Copyright (C) 2009 TechNexion Ltd.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -23,7 +22,7 @@
 
 #define CONFIG_BOOTFILE		"uImage"
 
-#define CONFIG_HOSTNAME mt_ventoux
+#define CONFIG_HOSTNAME "mt_ventoux"
 
 /*
  * Set its own mtdparts, different from common

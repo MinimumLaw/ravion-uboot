@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
  * Copyright (c) 2016, NVIDIA CORPORATION.
  * Copyright (c) 2018, Theobroma Systems Design und Consulting GmbH
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -102,6 +101,39 @@ static int clk_get_by_indexed_prop(struct udevice *dev, const char *prop_name,
 int clk_get_by_index(struct udevice *dev, int index, struct clk *clk)
 {
 	return clk_get_by_indexed_prop(dev, "clocks", index, clk);
+}
+
+int clk_get_bulk(struct udevice *dev, struct clk_bulk *bulk)
+{
+	int i, ret, err, count;
+	
+	bulk->count = 0;
+
+	count = dev_count_phandle_with_args(dev, "clocks", "#clock-cells");
+	if (count < 1)
+		return count;
+
+	bulk->clks = devm_kcalloc(dev, count, sizeof(struct clk), GFP_KERNEL);
+	if (!bulk->clks)
+		return -ENOMEM;
+
+	for (i = 0; i < count; i++) {
+		ret = clk_get_by_index(dev, i, &bulk->clks[i]);
+		if (ret < 0)
+			goto bulk_get_err;
+
+		++bulk->count;
+	}
+
+	return 0;
+
+bulk_get_err:
+	err = clk_release_all(bulk->clks, bulk->count);
+	if (err)
+		debug("%s: could release all clocks for %p\n",
+		      __func__, dev);
+
+	return ret;
 }
 
 static int clk_set_default_parents(struct udevice *dev)
@@ -336,6 +368,19 @@ int clk_enable(struct clk *clk)
 	return ops->enable(clk);
 }
 
+int clk_enable_bulk(struct clk_bulk *bulk)
+{
+	int i, ret;
+
+	for (i = 0; i < bulk->count; i++) {
+		ret = clk_enable(&bulk->clks[i]);
+		if (ret < 0 && ret != -ENOSYS)
+			return ret;
+	}
+
+	return 0;
+}
+
 int clk_disable(struct clk *clk)
 {
 	const struct clk_ops *ops = clk_dev_ops(clk->dev);
@@ -346,6 +391,19 @@ int clk_disable(struct clk *clk)
 		return -ENOSYS;
 
 	return ops->disable(clk);
+}
+
+int clk_disable_bulk(struct clk_bulk *bulk)
+{
+	int i, ret;
+
+	for (i = 0; i < bulk->count; i++) {
+		ret = clk_disable(&bulk->clks[i]);
+		if (ret < 0 && ret != -ENOSYS)
+			return ret;
+	}
+
+	return 0;
 }
 
 UCLASS_DRIVER(clk) = {

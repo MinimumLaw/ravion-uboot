@@ -69,8 +69,6 @@
 #define NANDARGS ""
 #endif
 
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV \
@@ -231,11 +229,6 @@
 /* SPL */
 #ifndef CONFIG_NOR_BOOT
 
-/* USB gadget RNDIS */
-
-/* General network SPL, both CPSW and USB gadget RNDIS */
-#define CONFIG_SPL_NET_VCI_STRING	"AM335x U-Boot SPL"*/
-
 #ifdef CONFIG_NAND
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT	(CONFIG_SYS_NAND_BLOCK_SIZE / \
@@ -273,16 +266,7 @@
 #define CONFIG_AM335X_USB1
 #define CONFIG_AM335X_USB1_MODE MUSB_OTG
 
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_USB_ETHER)
-/* disable host part of MUSB in SPL */
-/* disable EFI partitions and partition UUID support */
-/*
- * Disable CPSW SPL support so we fit within the 101KiB limit.
- */
-#endif
-
 /* Network. */
-#define CONFIG_PHY_ADDR			0
 #define CONFIG_PHY_SMSC
 #define CONFIG_MII
 #define CONFIG_PHY_ATHEROS

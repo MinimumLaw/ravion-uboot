@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Logging support
  *
  * Copyright (c) 2017 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __LOG_H
@@ -46,7 +45,7 @@ enum log_category_t {
 	LOGC_CORE,
 	LOGC_DM,	/* Core driver-model */
 	LOGC_DT,	/* Device-tree */
-	LOGL_EFI,	/* EFI implementation */
+	LOGC_EFI,	/* EFI implementation */
 
 	LOGC_COUNT,
 	LOGC_END,
@@ -275,7 +274,8 @@ struct log_filter {
  * log_get_cat_name() - Get the name of a category
  *
  * @cat: Category to look up
- * @return category name (which may be a uclass driver name)
+ * @return category name (which may be a uclass driver name) if found, or
+ *	 "<invalid>" if invalid, or "<missing>" if not found
  */
 const char *log_get_cat_name(enum log_category_t cat);
 

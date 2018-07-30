@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2010
  * Vipin Kumar, ST Micoelectronics, vipin.kumar@st.com.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -22,8 +21,6 @@
 #include <asm/io.h>
 #include <power/regulator.h>
 #include "designware.h"
-
-DECLARE_GLOBAL_DATA_PTR;
 
 static int dw_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
 {
@@ -282,6 +279,15 @@ int designware_eth_init(struct dw_eth_dev *priv, u8 *enetaddr)
 	int ret;
 
 	writel(readl(&dma_p->busmode) | DMAMAC_SRST, &dma_p->busmode);
+
+	/*
+	 * When a MII PHY is used, we must set the PS bit for the DMA
+	 * reset to succeed.
+	 */
+	if (priv->phydev->interface == PHY_INTERFACE_MODE_MII)
+		writel(readl(&mac_p->conf) | MII_PORTSELECT, &mac_p->conf);
+	else
+		writel(readl(&mac_p->conf) & ~MII_PORTSELECT, &mac_p->conf);
 
 	start = get_timer(0);
 	while (readl(&dma_p->busmode) & DMAMAC_SRST) {

@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015
  * Kamil Lulko, <kamil.lulko@gmail.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -23,10 +22,10 @@
 #define CONFIG_NR_DRAM_BANKS		1
 #define CONFIG_SYS_RAM_CS		1
 #define CONFIG_SYS_RAM_FREQ_DIV		2
-#define CONFIG_SYS_RAM_BASE		0xD0000000
+#define CONFIG_SYS_RAM_BASE		0x90000000
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_RAM_BASE
-#define CONFIG_SYS_LOAD_ADDR		0xD0400000
-#define CONFIG_LOADADDR			0xD0400000
+#define CONFIG_SYS_LOAD_ADDR		0x90400000
+#define CONFIG_LOADADDR			0x90400000
 
 #define CONFIG_SYS_MAX_FLASH_SECT	12
 #define CONFIG_SYS_MAX_FLASH_BANKS	2

@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2008 Semihalf
  *
  * (C) Copyright 2000-2005
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  ********************************************************************
  * NOTE: This header file defines an interface to U-Boot. Including
  * this (unmodified) header file in another file is considered normal
@@ -18,9 +17,11 @@
 
 #include "compiler.h"
 #include <asm/byteorder.h>
+#include <stdbool.h>
 
 /* Define this to avoid #ifdefs later on */
 struct lmb;
+struct fdt_region;
 
 #ifdef USE_HOSTCC
 #include <sys/types.h>
@@ -153,6 +154,7 @@ enum {
 	IH_OS_PLAN9,			/* Plan 9	*/
 	IH_OS_OPENRTOS,		/* OpenRTOS	*/
 	IH_OS_ARM_TRUSTED_FIRMWARE,     /* ARM Trusted Firmware */
+	IH_OS_TEE,			/* Trusted Execution Environment */
 
 	IH_OS_COUNT,
 };
@@ -258,7 +260,7 @@ enum {
 	IH_TYPE_MXSIMAGE,		/* Freescale MXSBoot Image	*/
 	IH_TYPE_GPIMAGE,		/* TI Keystone GPHeader Image	*/
 	IH_TYPE_ATMELIMAGE,		/* ATMEL ROM bootable Image	*/
-	IH_TYPE_SOCFPGAIMAGE,		/* Altera SOCFPGA Preloader	*/
+	IH_TYPE_SOCFPGAIMAGE,		/* Altera SOCFPGA CV/AV Preloader */
 	IH_TYPE_X86_SETUP,		/* x86 setup.bin Image		*/
 	IH_TYPE_LPC32XXIMAGE,		/* x86 setup.bin Image		*/
 	IH_TYPE_LOADABLE,		/* A list of typeless images	*/
@@ -267,11 +269,14 @@ enum {
 	IH_TYPE_RKSPI,			/* Rockchip SPI image		*/
 	IH_TYPE_ZYNQIMAGE,		/* Xilinx Zynq Boot Image */
 	IH_TYPE_ZYNQMPIMAGE,		/* Xilinx ZynqMP Boot Image */
+	IH_TYPE_ZYNQMPBIF,		/* Xilinx ZynqMP Boot Image (bif) */
 	IH_TYPE_FPGA,			/* FPGA Image */
 	IH_TYPE_VYBRIDIMAGE,	/* VYBRID .vyb Image */
 	IH_TYPE_TEE,            /* Trusted Execution Environment OS Image */
 	IH_TYPE_FIRMWARE_IVT,		/* Firmware Image with HABv4 IVT */
 	IH_TYPE_PMMC,            /* TI Power Management Micro-Controller Firmware */
+	IH_TYPE_STM32IMAGE,		/* STMicroelectronics STM32 Image */
+	IH_TYPE_SOCFPGAIMAGE_V1,	/* Altera SOCFPGA A10 Preloader	*/
 
 	IH_TYPE_COUNT,			/* Number of image types */
 };
@@ -877,9 +882,11 @@ int bootz_setup(ulong image, ulong *start, ulong *end);
  * @image: Address of image
  * @start: Returns start address of image
  * @size : Returns size image
+ * @force_reloc: Ignore image->ep field, always place image to RAM start
  * @return 0 if OK, 1 if the image was not recognised
  */
-int booti_setup(ulong image, ulong *relocated_addr, ulong *size);
+int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
+		bool force_reloc);
 
 /*******************************************************************/
 /* New uImage format specific code (prefixed with fit_) */
@@ -917,6 +924,8 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size);
 #define FIT_DEFAULT_PROP	"default"
 #define FIT_SETUP_PROP		"setup"
 #define FIT_FPGA_PROP		"fpga"
+#define FIT_FIRMWARE_PROP	"firmware"
+#define FIT_STANDALONE_PROP	"standalone"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
@@ -982,6 +991,8 @@ int fit_image_get_data_offset(const void *fit, int noffset, int *data_offset);
 int fit_image_get_data_position(const void *fit, int noffset,
 				int *data_position);
 int fit_image_get_data_size(const void *fit, int noffset, int *data_size);
+int fit_image_get_data_and_size(const void *fit, int noffset,
+				const void **data, size_t *size);
 
 int fit_image_hash_get_algo(const void *fit, int noffset, char **algo);
 int fit_image_hash_get_value(const void *fit, int noffset, uint8_t **value,
@@ -1013,6 +1024,8 @@ int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
 			      const char *comment, int require_keys,
 			      const char *engine_id);
 
+int fit_image_verify_with_data(const void *fit, int image_noffset,
+			       const void *data, size_t size);
 int fit_image_verify(const void *fit, int noffset);
 int fit_config_verify(const void *fit, int conf_noffset);
 int fit_all_image_verify(const void *fit);
@@ -1038,8 +1051,6 @@ int fit_conf_get_node(const void *fit, const char *conf_uname);
  */
 int fit_conf_get_prop_node(const void *fit, int noffset,
 		const char *prop_name);
-
-void fit_conf_print(const void *fit, int noffset, const char *p);
 
 int fit_check_ramdisk(const void *fit, int os_noffset,
 		uint8_t arch, int verify);

@@ -1,14 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Guntermann & Drunck, GmbH
  *
  * Written by Dirk Eibach <dirk.eibach@gdsys.cc>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <dm.h>
-#include <tpm.h>
+#include <tpm-v1.h>
 #include <i2c.h>
 #include <asm/unaligned.h>
 

@@ -55,9 +55,12 @@ Maintainers List (try to look for most precise areas first)
 		-----------------------------------
 ARC
 M:	Alexey Brodkin <alexey.brodkin@synopsys.com>
+M:	Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
 S:	Maintained
+L:	uboot-snps-arc@synopsys.com
 T:	git git://git.denx.de/u-boot-arc.git
 F:	arch/arc/
+F:	board/synopsys/
 
 ARC HSDK CGU CLOCK
 M:	Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
@@ -111,7 +114,6 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-imx.git
 F:	arch/arm/cpu/arm1136/mx*/
 F:	arch/arm/cpu/arm926ejs/mx*/
-F:	arch/arm/cpu/armv7/mx*/
 F:	arch/arm/cpu/armv7/vf610/
 F:	arch/arm/mach-imx/
 F:	arch/arm/include/asm/arch-imx/
@@ -124,7 +126,7 @@ ARM HISILICON
 M:	Peter Griffin <peter.griffin@linaro.org>
 S:	Maintained
 F:	arch/arm/cpu/armv8/hisilicon
-F:	arm/include/asm/arch-hi6220/
+F:	arch/arm/include/asm/arch-hi6220/
 
 ARM MARVELL KIRKWOOD ARMADA-XP ARMADA-38X
 M:	Prafulla Wadaskar <prafulla@marvell.com>
@@ -134,6 +136,7 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-marvell.git
 F:	arch/arm/mach-kirkwood/
 F:	arch/arm/mach-mvebu/
+F:	drivers/ata/ahci_mvebu.c
 
 ARM MARVELL PXA
 M:	Marek Vasut <marex@denx.de>
@@ -160,6 +163,8 @@ F:	board/rockchip/
 F:	drivers/clk/rockchip/
 F:	drivers/gpio/rk_gpio.c
 F:	drivers/misc/rockchip-efuse.c
+F:	drivers/mmc/rockchip_sdhci.c
+F:	drivers/mmc/rockchip_dw_mmc.c
 F:	drivers/pinctrl/rockchip/
 F:	drivers/ram/rockchip/
 F:	drivers/sysreset/sysreset_rockchip.c
@@ -174,14 +179,12 @@ ARM SAMSUNG
 M:	Minkyu Kang <mk7.kang@samsung.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-samsung.git
-F:	arch/arm/cpu/arm920t/s3c24x0/
 F:	arch/arm/mach-exynos/
 F:	arch/arm/mach-s5pc1xx/
 F:	arch/arm/cpu/armv7/s5p-common/
-F:	arch/arm/include/asm/arch-s3c24x0/
 
 ARM SNAPDRAGON
-M:	Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
+M:	Ramon Fried <ramon.fried@gmail.com>
 S:	Maintained
 F:	arch/arm/mach-snapdragon/
 
@@ -197,6 +200,14 @@ S:	Orphaned (Since 2016-02)
 T:	git git://git.denx.de/u-boot-stm.git
 F:	arch/arm/cpu/arm926ejs/spear/
 F:	arch/arm/include/asm/arch-spear/
+
+ARM STM STM32MP
+M:	Patrick Delaunay <patrick.delaunay@st.com>
+S:	Maintained
+F:	arch/arm/mach-stm32mp
+F:	drivers/clk/clk_stm32mp1.c
+F:	drivers/misc/stm32mp_fuse.c
+F:	drivers/ram/stm32mp1/
 
 ARM STM STV0991
 M:	Vikas Manocha <vikas.manocha@st.com>
@@ -227,8 +238,6 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-ti.git
 F:	arch/arm/mach-davinci/
 F:	arch/arm/mach-keystone/
-F:	arch/arm/cpu/arm926ejs/omap/
-F:	arch/arm/cpu/armv7/omap*/
 F:	arch/arm/include/asm/arch-omap*/
 F:	arch/arm/include/asm/ti-common/
 
@@ -243,14 +252,57 @@ N:	uniphier
 ARM ZYNQ
 M:	Michal Simek <monstr@monstr.eu>
 S:	Maintained
-F:	arch/arm/cpu/armv7/zynq/
-F:	arch/arm/include/asm/arch-zynq/
+T:	git git://git.denx.de/u-boot-microblaze.git
+F:	arch/arm/mach-zynq/
+F:	drivers/clk/clk_zynq.c
+F:	drivers/fpga/zynqpl.c
+F:	drivers/gpio/zynq_gpio.c
+F:	drivers/i2c/i2c-cdns.c
+F:	drivers/i2c/muxes/pca954x.c
+F:	drivers/i2c/zynq_i2c.c
+F:	drivers/mmc/zynq_sdhci.c
+F:	drivers/mtd/nand/zynq_nand.c
+F:	drivers/net/phy/xilinx_phy.c
+F:	drivers/net/zynq_gem.c
+F:	drivers/serial/serial_zynq.c
+F:	drivers/spi/zynq_qspi.c
+F:	drivers/spi/zynq_spi.c
+F:	drivers/usb/host/ehci-zynq.c
+F:	drivers/watchdog/cdns_wdt.c
+F:	include/zynqpl.h
+F:	tools/zynqimage.c
+N:	zynq
 
 ARM ZYNQMP
 M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
+T:	git git://git.denx.de/u-boot-microblaze.git
 F:	arch/arm/cpu/armv8/zynqmp/
-F:	arch/arm/include/asm/arch-zynqmp/
+F:	drivers/clk/clk_zynqmp.c
+F:	drivers/fpga/zynqpl.c
+F:	drivers/gpio/zynq_gpio.c
+F:	drivers/i2c/i2c-cdns.c
+F:	drivers/i2c/muxes/pca954x.c
+F:	drivers/i2c/zynq_i2c.c
+F:	drivers/mmc/zynq_sdhci.c
+F:	drivers/mtd/nand/zynq_nand.c
+F:	drivers/net/phy/xilinx_phy.c
+F:	drivers/net/zynq_gem.c
+F:	drivers/serial/serial_zynq.c
+F:	drivers/spi/zynq_qspi.c
+F:	drivers/spi/zynq_spi.c
+F:	drivers/timer/cadence-ttc.c
+F:	drivers/usb/host/ehci-zynq.c
+F:	drivers/watchdog/cdns_wdt.c
+F:	include/zynqmppl.h
+F:	tools/zynqmp*
+N:	zynqmp
+
+ARM ZYNQMP R5
+M:	Michal Simek <michal.simek@xilinx.com>
+S:	Maintained
+T:	git git://git.denx.de/u-boot-microblaze.git
+F:	arch/arm/mach-zynqmp-r5/
 
 BUILDMAN
 M:	Simon Glass <sjg@chromium.org>
@@ -265,7 +317,7 @@ F:	drivers/mtd/cfi_flash.c
 F:	drivers/mtd/jedec_flash.c
 
 COLDFIRE
-M:	Huan Wang <alison.wang@freescale.com>
+M:	Huan Wang <alison.wang@nxp.com>
 M:	Angelo Dureghello <angelo@sysam.it>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-coldfire.git
@@ -290,7 +342,8 @@ EFI PAYLOAD
 M:	Alexander Graf <agraf@suse.de>
 S:	Maintained
 T:	git git://github.com/agraf/u-boot.git
-F:	doc/README.efi
+F:	doc/DocBook/efi.tmpl
+F:	doc/README.uefi
 F:	doc/README.iscsi
 F:	include/efi*
 F:	include/pe.h
@@ -307,7 +360,7 @@ T:	git git://git.denx.de/u-boot-fdt.git
 F:	lib/fdtdec*
 F:	lib/libfdt/
 F:	include/fdt*
-F:	include/libfdt*
+F:	include/linux/libfdt*
 F:	cmd/fdt.c
 F:	common/fdt_support.c
 
@@ -341,6 +394,14 @@ M:	Michal Simek <monstr@monstr.eu>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-microblaze.git
 F:	arch/microblaze/
+F:	cmd/mfsl.c
+F:	drivers/gpio/xilinx_gpio.c
+F:	drivers/net/xilinx_axi_emac.c
+F:	drivers/net/xilinx_emaclite.c
+F:	drivers/serial/serial_xuartlite.c
+F:	drivers/spi/xilinx_spi.c
+F:	drivers/watchdog/xilinx_tb_wdt.c
+N:	xilinx
 
 MIPS
 M:	Daniel Schwierzeck <daniel.schwierzeck@gmail.com>
@@ -426,12 +487,6 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-mpc86xx.git
 F:	arch/powerpc/cpu/mpc86xx/
 
-POWERPC PPC4XX
-M:	Stefan Roese <sr@denx.de>
-S:	Maintained
-T:	git git://git.denx.de/u-boot-ppc4xx.git
-F:	arch/powerpc/cpu/ppc4xx/
-
 RISC-V
 M:	Rick Chen <rick@andestech.com>
 S:	Maintained
@@ -475,7 +530,6 @@ TI SYSTEM SECURITY
 M:	Andrew F. Davis <afd@ti.com>
 S:	Supported
 F:	arch/arm/mach-omap2/omap5/sec_entry_cpu1.S
-F:	arch/arm/mach-omap2/omap5/sec-fxns.c
 F:	arch/arm/mach-omap2/sec-common.c
 F:	arch/arm/mach-omap2/config_secure.mk
 F:	configs/am335x_hs_evm_defconfig
@@ -486,6 +540,7 @@ F:	configs/dra7xx_hs_evm_defconfig
 F:	configs/k2hk_hs_evm_defconfig
 F:	configs/k2e_hs_evm_defconfig
 F:	configs/k2g_hs_evm_defconfig
+F:	configs/k2l_hs_evm_defconfig
 
 TQ GROUP
 #M:	Martin Krause <martin.krause@tq-systems.de>

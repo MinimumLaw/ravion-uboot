@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2016 Rockchip Electronics Co., Ltd
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 #ifndef __CONFIG_RV1108_COMMON_H
 #define __CONFIG_RV1108_COMMON_H
@@ -17,9 +16,6 @@
 /* TIMER1,initialized by ddr initialize code */
 #define CONFIG_SYS_TIMER_BASE		0x10350020
 #define CONFIG_SYS_TIMER_COUNTER	(CONFIG_SYS_TIMER_BASE + 8)
-
-#define CONFIG_SYS_NS16550
-#define CONFIG_SYS_NS16550_MEM32
 
 #define CONFIG_SYS_SDRAM_BASE		0x60000000
 #define CONFIG_NR_DRAM_BANKS		1

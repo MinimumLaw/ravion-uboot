@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2009
  * Vipin Kumar, STMicroelectronics, <vipin.kumar@st.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _SPEAR_COMMON_H
@@ -76,7 +75,6 @@
  * CONFIG_PL01x_PORTS is defined in specific files
  */
 #define CONFIG_PL011_CLOCK			(48 * 1000 * 1000)
-#define CONFIG_CONS_INDEX			0
 #define CONFIG_SYS_BAUDRATE_TABLE		{ 9600, 19200, 38400, \
 						57600, 115200 }
 

@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * efi_selftest_devicepath
  *
  * Copyright (c) 2017 Heinrich Schuchardt <xypron.glpk@gmx.de>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  *
  * This unit test checks the following protocol services:
  * DevicePathToText
@@ -52,7 +51,7 @@ struct efi_device_path_to_text_protocol *device_path_to_text;
  * Setup unit test.
  *
  * Create three handles. Install a new protocol on two of them and
- * provice device paths.
+ * provide device paths.
  *
  * handle1
  *   guid interface

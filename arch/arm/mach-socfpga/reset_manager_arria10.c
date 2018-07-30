@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2016-2017 Intel Corporation
- *
- * SPDX-License-Identifier:    GPL-2.0
  */
 
 #include <asm/io.h>
@@ -317,13 +316,6 @@ void socfpga_per_reset_all(void)
 	setbits_le32(&reset_manager_base->per0modrst, mask_ecc_ocp);
 }
 
-#if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
-int socfpga_bridges_reset(void)
-{
-	/* For SoCFPGA-VT, this is NOP. */
-	return 0;
-}
-#else
 int socfpga_bridges_reset(void)
 {
 	int ret;
@@ -380,4 +372,3 @@ int socfpga_bridges_reset(void)
 
 	return 0;
 }
-#endif

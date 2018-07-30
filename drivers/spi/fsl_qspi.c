@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2013-2015 Freescale Semiconductor, Inc.
  *
  * Freescale Quad Serial Peripheral Interface (QSPI) driver
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -154,6 +153,25 @@ static void qspi_write32(u32 flags, u32 *addr, u32 val)
 {
 	flags & QSPI_FLAG_REGMAP_ENDIAN_BIG ?
 		out_be32(addr, val) : out_le32(addr, val);
+}
+
+static inline int is_controller_busy(const struct fsl_qspi_priv *priv)
+{
+	u32 val;
+	const u32 mask = QSPI_SR_BUSY_MASK | QSPI_SR_AHB_ACC_MASK |
+			 QSPI_SR_IP_ACC_MASK;
+	unsigned int retry = 5;
+
+	do {
+		val = qspi_read32(priv->flags, &priv->regs->sr);
+
+		if ((~val & mask) == mask)
+			return 0;
+
+		udelay(1);
+	} while (--retry);
+
+	return -ETIMEDOUT;
 }
 
 /* QSPI support swapping the flash read/write data
@@ -389,7 +407,7 @@ static inline void qspi_ahb_read(struct fsl_qspi_priv *priv, u8 *rxbuf, int len)
 {
 	struct fsl_qspi_regs *regs = priv->regs;
 	u32 mcr_reg;
-	void *rx_addr = NULL;
+	void *rx_addr;
 
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 
@@ -1018,11 +1036,7 @@ static int fsl_qspi_probe(struct udevice *bus)
 	priv->num_chipselect = plat->num_chipselect;
 
 	/* make sure controller is not busy anywhere */
-	ret = wait_for_bit_le32(&priv->regs->sr,
-				QSPI_SR_BUSY_MASK |
-				QSPI_SR_AHB_ACC_MASK |
-				QSPI_SR_IP_ACC_MASK,
-				false, 100, false);
+	ret = is_controller_busy(priv);
 
 	if (ret) {
 		debug("ERROR : The controller is busy\n");
@@ -1185,11 +1199,7 @@ static int fsl_qspi_claim_bus(struct udevice *dev)
 	priv = dev_get_priv(bus);
 
 	/* make sure controller is not busy anywhere */
-	ret = wait_for_bit_le32(&priv->regs->sr,
-				QSPI_SR_BUSY_MASK |
-				QSPI_SR_AHB_ACC_MASK |
-				QSPI_SR_IP_ACC_MASK,
-				false, 100, false);
+	ret = is_controller_busy(priv);
 
 	if (ret) {
 		debug("ERROR : The controller is busy\n");

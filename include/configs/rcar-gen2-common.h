@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * include/configs/rcar-gen2-common.h
  *
  * Copyright (C) 2013,2014 Renesas Electronics Corporation
- *
- * SPDX-License-Identifier: GPL-2.0
  */
 
 #ifndef __RCAR_GEN2_COMMON_H
@@ -34,7 +33,8 @@
 
 #define CONFIG_SYS_SDRAM_BASE		(RCAR_GEN2_SDRAM_BASE)
 #define CONFIG_SYS_SDRAM_SIZE		(RCAR_GEN2_UBOOT_SDRAM_SIZE)
-#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x7fc0)
+#define CONFIG_SYS_LOAD_ADDR		0x50000000
+#define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR
 #define CONFIG_NR_DRAM_BANKS		1
 
 #define CONFIG_SYS_MONITOR_BASE		0x00000000
@@ -51,5 +51,13 @@
 #define CONFIG_ENV_OFFSET	(CONFIG_ENV_ADDR)
 #define CONFIG_ENV_SIZE		(CONFIG_ENV_SECT_SIZE)
 #define CONFIG_ENV_SIZE_REDUND	(CONFIG_SYS_MONITOR_LEN)
+
+/* SF MTD */
+#if defined(CONFIG_SPI_FLASH_MTD) && !defined(CONFIG_SPL_BUILD)
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#else
+#undef CONFIG_SPI_FLASH_MTD
+#endif
 
 #endif	/* __RCAR_GEN2_COMMON_H */

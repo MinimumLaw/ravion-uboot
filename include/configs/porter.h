@@ -1,18 +1,14 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * include/configs/porter.h
  *     This file is Porter board configuration.
  *
  * Copyright (C) 2015 Renesas Electronics Corporation
  * Copyright (C) 2015 Cogent Embedded, Inc.
- *
- * SPDX-License-Identifier: GPL-2.0
  */
 
 #ifndef __PORTER_H
 #define __PORTER_H
-
-#undef DEBUG
-#define CONFIG_ARCH_RMOBILE_BOARD_STRING "Porter"
 
 #include "rcar-gen2-common.h"
 
@@ -26,10 +22,7 @@
 #define RCAR_GEN2_SDRAM_SIZE		(2048u * 1024 * 1024)
 #define RCAR_GEN2_UBOOT_SDRAM_SIZE	(1024u * 1024 * 1024)
 
-/* SCIF */
-
 /* FLASH */
-#define CONFIG_SPI
 #define CONFIG_SPI_FLASH_QUAD
 
 /* SH Ether */
@@ -54,10 +47,13 @@
 	"initrd_high=0xffffffff\0"
 
 /* SPL support */
-#define CONFIG_SPL_TEXT_BASE		0xe6304000
+#define CONFIG_SPL_TEXT_BASE		0xe6300000
 #define CONFIG_SPL_STACK		0xe6340000
-#define CONFIG_SPL_MAX_SIZE		0x40000
-#define CONFIG_SPL_SPI_LOAD
+#define CONFIG_SPL_MAX_SIZE		0x4000
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x140000
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_CONS_SCIF0
+#define CONFIG_SH_SCIF_CLK_FREQ		65000000
+#endif
 
 #endif /* __PORTER_H */

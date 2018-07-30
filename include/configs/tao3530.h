@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuration settings for the TechNexion TAO-3530 SOM
  * equipped on Thunder baseboard.
@@ -6,8 +7,6 @@
  * Tapani Utriainen <linuxfae@technexion.com>
  *
  * Copyright (C) 2013 Stefan Roese <sr@denx.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -53,7 +52,6 @@
 /*
  * select serial console configuration
  */
-#define CONFIG_CONS_INDEX		3
 #define CONFIG_SYS_NS16550_COM3		OMAP34XX_UART3
 
 /* allow to overwrite serial and ethaddr */
@@ -140,7 +138,6 @@
 
 /* turn on command-line edit/hist/auto */
 
-#define CONFIG_SYS_ALT_MEMTEST		1
 #define CONFIG_SYS_MEMTEST_START	(0x82000000)		/* memtest */
 								/* defaults */
 #define CONFIG_SYS_MEMTEST_END		(0x83FFFFFF)		/* 64MB */

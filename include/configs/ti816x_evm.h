@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * ti816x_evm.h
  *
  * Copyright (C) 2013, Adeneo Embedded <www.adeneo-embedded.com>
  * Antoine Tenart, <atenart@adeneo-embedded.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_TI816X_EVM_H
@@ -56,7 +55,6 @@
 #define CONFIG_SERIAL1
 #define CONFIG_SERIAL2
 #define CONFIG_SERIAL3
-#define CONFIG_CONS_INDEX	1
 
 /*
  * GPMC NAND block.  We support 1 device and the physical address to

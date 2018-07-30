@@ -1,15 +1,14 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Sysam AMCORE board configuration
  *
  * (C) Copyright 2016  Angelo Dureghello <angelo@sysam.it>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __AMCORE_CONFIG_H
 #define __AMCORE_CONFIG_H
 
-#define CONFIG_HOSTNAME			AMCORE
+#define CONFIG_HOSTNAME			"AMCORE"
 
 #define CONFIG_MCFTMR
 #define CONFIG_MCFUART

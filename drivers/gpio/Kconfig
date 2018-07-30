@@ -109,7 +109,7 @@ config MSM_GPIO
 	  - MSM8916
 
 config MXC_GPIO
-	bool "Freescale/NXP MXC UART driver"
+	bool "Freescale/NXP MXC GPIO driver"
 	help
 	  Support GPIO controllers on various i.MX platforms
 
@@ -234,7 +234,7 @@ config PIC32_GPIO
 
 config STM32F7_GPIO
 	bool "ST STM32 GPIO driver"
-	depends on DM_GPIO && STM32
+	depends on DM_GPIO && (STM32 || ARCH_STM32MP)
 	default y
 	help
 	  Device model driver support for STM32 GPIO controller. It should be

@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Convert a file image to a C define
  *
  * Copyright (c) 2017 Heinrich Schuchardt <xypron.glpk@gmx.de>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  *
  * For testing EFI disk management we need an in memory image of
  * a disk.
@@ -63,12 +62,11 @@ int main(int argc, char *argv[])
 	count = fread(buf, 1, count, file);
 
 	/* Generate output */
+	printf("/* SPDX-License-Identifier: GPL-2.0+ */\n");
 	printf("/*\n");
 	printf(" *  Non-zero %u byte strings of a disk image\n", BLOCK_SIZE);
 	printf(" *\n");
 	printf(" *  Generated with tools/file2include\n");
-	printf(" *\n");
-	printf(" *  SPDX-License-Identifier:	GPL-2.0+\n");
 	printf(" */\n\n");
 	printf("#define EFI_ST_DISK_IMG { 0x%08zx, { \\\n", count);
 
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
 			printf("\\x%02x", buf[j]);
 		printf("\"}, /* ");
 		for (j = i; j < i + BLOCK_SIZE && j < count; ++j) {
-			if (buf[j] >= 0x20 && buf[j] <= 0x7e)
+			if (buf[j] != '*' && buf[j] >= 0x20 && buf[j] <= 0x7e)
 				printf("%c", buf[j]);
 			else
 				printf(".");

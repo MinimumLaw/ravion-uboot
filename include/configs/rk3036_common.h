@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015 Rockchip Electronics Co., Ltd
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 #ifndef __CONFIG_RK3036_COMMON_H
 #define __CONFIG_RK3036_COMMON_H
@@ -17,9 +16,6 @@
 #define CONFIG_SYS_TIMER_RATE		(24 * 1000 * 1000)
 #define CONFIG_SYS_TIMER_BASE		0x200440a0 /* TIMER5 */
 #define CONFIG_SYS_TIMER_COUNTER	(CONFIG_SYS_TIMER_BASE + 8)
-
-#define CONFIG_SYS_NS16550
-#define CONFIG_SYS_NS16550_MEM32
 
 #define CONFIG_SYS_INIT_SP_ADDR		0x60100000
 #define CONFIG_SYS_LOAD_ADDR		0x60800800
@@ -38,7 +34,6 @@
 #define SDRAM_MAX_SIZE                  (CONFIG_NR_DRAM_BANKS * SDRAM_BANK_SIZE)
 
 #define CONFIG_SPI_FLASH
-#define CONFIG_SPI
 #define CONFIG_SPI_FLASH_GIGADEVICE
 #define CONFIG_SF_DEFAULT_SPEED 20000000
 

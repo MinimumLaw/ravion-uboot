@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - http://www.ti.com/
  *
  * Based on davinci_dvevm.h. Original Copyrights follow:
  *
  * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -41,7 +40,6 @@
 
 #ifdef CONFIG_DIRECT_NOR_BOOT
 #define CONFIG_ARCH_CPU_INIT
-#define CONFIG_DA8XX_GPIO
 #define CONFIG_SYS_DV_NOR_BOOT_CFG	(0x11)
 #endif
 
@@ -126,9 +124,7 @@
 #define CONFIG_SYS_NS16550_COM1	DAVINCI_UART2_BASE /* Base address of UART2 */
 #endif
 #define CONFIG_SYS_NS16550_CLK	clk_get(DAVINCI_UART2_CLKID)
-#define CONFIG_CONS_INDEX	1		/* use UART0 for console */
 
-#define CONFIG_SPI
 #define CONFIG_SYS_SPI_CLK		clk_get(DAVINCI_SPI1_CLKID)
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_SPI_BASE		DAVINCI_SPI1_BASE
@@ -137,7 +133,6 @@
 #endif
 
 #ifdef CONFIG_USE_SPIFLASH
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8000
 #define CONFIG_SYS_SPI_U_BOOT_SIZE	0x40000
 #endif
@@ -231,6 +226,7 @@
 #define CONFIG_MTD_PARTITIONS		/* required for UBI partition support */
 #endif
 
+#define CONFIG_DA8XX_GPIO
 /*
  * U-Boot general configuration
  */
@@ -293,7 +289,6 @@
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_TEXT_BASE - \
 						CONFIG_SYS_MALLOC_LEN)
 #define CONFIG_SYS_SPL_MALLOC_SIZE	CONFIG_SYS_MALLOC_LEN
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SPL_STACK	0x8001ff00
 #define CONFIG_SPL_TEXT_BASE	0x80000000
 #define CONFIG_SPL_MAX_FOOTPRINT	32768
@@ -301,9 +296,6 @@
 #endif
 
 /* Load U-Boot Image From MMC */
-#ifdef CONFIG_SPL_MMC_LOAD
-#undef CONFIG_SPL_SPI_LOAD
-#endif
 
 /* additions for new relocation code, must added to all boards */
 #define CONFIG_SYS_SDRAM_BASE		0xc0000000

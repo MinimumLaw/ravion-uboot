@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Timesys Corporation
  * Copyright (C) 2016 Advantech Corporation
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __ADVANTECH_DMSBA16_CONFIG_H
@@ -44,10 +43,8 @@
 #define CONFIG_LBA48
 
 /* MMC Configs */
-#define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
-#define CONFIG_BOUNCE_BUFFER
 
 /* USB Configs */
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
@@ -76,7 +73,6 @@
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX	1
 
 #define CONFIG_LOADADDR	0x12000000
 

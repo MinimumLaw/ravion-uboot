@@ -14,8 +14,9 @@ endif
 config TARGET_QEMU_ARM_32BIT
 	bool "Support qemu_arm"
 	depends on ARCH_QEMU
-	select CPU_V7
+	select CPU_V7A
 	select ARCH_SUPPORT_PSCI
+	select SYS_ARCH_TIMER
 
 config TARGET_QEMU_ARM_64BIT
 	bool "Support qemu_arm64"

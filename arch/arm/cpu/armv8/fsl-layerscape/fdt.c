@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -415,8 +414,8 @@ void ft_cpu_setup(void *blob, bd_t *bd)
 		ccsr_sec_t __iomem *sec;
 
 #ifdef CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT
-		if (fdt_fixup_kaslr(blob))
-			fdt_fixup_remove_jr(blob);
+		fdt_fixup_remove_jr(blob);
+		fdt_fixup_kaslr(blob);
 #endif
 
 		sec = (void __iomem *)CONFIG_SYS_FSL_SEC_ADDR;

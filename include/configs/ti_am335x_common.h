@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * ti_am335x_common.h
  *
  * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
- *
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * For more details, please see the technical documents listed at
  * http://www.ti.com/product/am3359#technicaldocuments
@@ -15,7 +14,6 @@
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_MAX_RAM_BANK_SIZE	(1024 << 20)	/* 1GB */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
-#define CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC
 
 #include <asm/arch/omap.h>
 
@@ -36,7 +34,6 @@
 #define CONFIG_MII			/* Required in net/eth.c */
 #endif
 
-#define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
 /*
  * SPL related defines.  The Public RAM memory map the ROM defines the
  * area between 0x402F0400 and 0x4030B800 as a download area and

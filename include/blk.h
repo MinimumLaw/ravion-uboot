@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2000-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef BLK_H
@@ -112,7 +111,7 @@ struct blk_desc {
 #define PAD_TO_BLOCKSIZE(size, blk_desc) \
 	(PAD_SIZE(size, blk_desc->blksz))
 
-#ifdef CONFIG_BLOCK_CACHE
+#if CONFIG_IS_ENABLED(BLOCK_CACHE)
 /**
  * blkcache_read() - attempt to read a set of blocks from cache
  *

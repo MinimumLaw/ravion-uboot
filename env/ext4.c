@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (c) Copyright 2016 by VRT Technology
  *
@@ -15,8 +16,6 @@
  * EXT4 filesystem implementation in Uboot by
  * Uma Shankar <uma.shankar@samsung.com>
  * Manjunatha C Achar <a.manjunatha@samsung.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -30,8 +29,6 @@
 #include <errno.h>
 #include <ext4fs.h>
 #include <mmc.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_CMD_SAVEENV
 static int env_ext4_save(void)
@@ -87,8 +84,10 @@ static int env_ext4_load(void)
 	int err;
 	loff_t off;
 
+#ifdef CONFIG_MMC
 	if (!strcmp(CONFIG_ENV_EXT4_INTERFACE, "mmc"))
 		mmc_initialize(NULL);
+#endif
 
 	part = blk_get_device_part_str(CONFIG_ENV_EXT4_INTERFACE,
 				       CONFIG_ENV_EXT4_DEVICE_AND_PART,

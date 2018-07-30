@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2017 NXP
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <i2c.h>
@@ -31,6 +30,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int board_early_init_f(void)
 {
+#if defined(CONFIG_SYS_I2C_EARLY_INIT) && defined(CONFIG_TARGET_LS1088AQDS)
+	i2c_early_init_f();
+#endif
 	fsl_lsch3_early_init_f();
 	return 0;
 }
@@ -168,6 +170,7 @@ int checkboard(void)
 
 	return 0;
 }
+#endif
 
 bool if_board_diff_clk(void)
 {
@@ -221,7 +224,6 @@ unsigned long get_board_ddr_clk(void)
 
 	return 66666666;
 }
-#endif
 
 int select_i2c_ch_pca9547(u8 ch)
 {

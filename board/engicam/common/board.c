@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Amarula Solutions B.V.
  * Copyright (C) 2016 Engicam S.r.l.
  * Author: Jagan Teki <jagan@amarulasolutions.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -51,8 +50,8 @@ static void setenv_fdt_file(void)
 			env_set("fdt_file", "imx6q-icore-rqs.dtb");
 		else if (is_mx6dl() || is_mx6solo())
 			env_set("fdt_file", "imx6dl-icore-rqs.dtb");
-	} else if (!strcmp(cmp_dtb, "imx6ul-geam-kit"))
-		env_set("fdt_file", "imx6ul-geam-kit.dtb");
+	} else if (!strcmp(cmp_dtb, "imx6ul-geam"))
+		env_set("fdt_file", "imx6ul-geam.dtb");
 	else if (!strcmp(cmp_dtb, "imx6ul-isiot-mmc"))
 		env_set("fdt_file", "imx6ul-isiot-emmc.dtb");
 	else if (!strcmp(cmp_dtb, "imx6ul-isiot-emmc"))

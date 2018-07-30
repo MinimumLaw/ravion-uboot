@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * DHCOM DH-iMX6 PDK board configuration
  *
  * Copyright (C) 2017 Marek Vasut <marex@denx.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __DH_IMX6_CONFIG_H
@@ -25,7 +24,6 @@
 /* SPL */
 #include "imx6_spl.h"			/* common IMX6 SPL configuration */
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x11400
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.imx"
 
 /* Miscellaneous configurable options */
@@ -35,7 +33,6 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
-#define CONFIG_BOUNCE_BUFFER
 #define CONFIG_BZIP2
 
 /* Size of malloc() pool */
@@ -66,7 +63,6 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 
 /* MMC Configs */
-#define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_USDHC_NUM	3
@@ -91,7 +87,6 @@
 /* UART */
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE
-#define CONFIG_CONS_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
 /* USB Configs */

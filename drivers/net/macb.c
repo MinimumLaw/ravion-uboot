@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2005-2006 Atmel Corporation
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <clk.h>
@@ -915,7 +914,7 @@ static int macb_recv(struct eth_device *netdev)
 		if (length >= 0) {
 			net_process_received_packet(packet, length);
 			reclaim_rx_buffers(macb, macb->next_rx_tail);
-		} else if (length < 0) {
+		} else {
 			return length;
 		}
 	}

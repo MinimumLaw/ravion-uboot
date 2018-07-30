@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuation settings for the Freescale MCF52277 EVB board.
  *
  * Copyright (C) 2004-2007 Freescale Semiconductor, Inc.
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -31,7 +30,7 @@
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
 
-#define CONFIG_HOSTNAME			M52277EVB
+#define CONFIG_HOSTNAME			"M52277EVB"
 #define CONFIG_SYS_UBOOT_END		0x3FFFF
 #define	CONFIG_SYS_LOAD_ADDR2		0x40010007
 #ifdef CONFIG_SYS_STMICRO_BOOT

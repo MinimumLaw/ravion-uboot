@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * iPAQ h2200 board configuration
  *
  * Copyright (C) 2012 Lukasz Dalek <luk0104@gmail.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -100,7 +99,6 @@
  * Serial port
  */
 #define CONFIG_FFUART
-#define CONFIG_CONS_INDEX		3
 
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 38400, 115200 }
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
  * (C) Copyright 2002-2006
@@ -6,8 +7,6 @@
  * (C) Copyright 2002
  * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Marius Groeger <mgroeger@sysgo.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -23,10 +22,6 @@
 #include <fdtdec.h>
 #include <ide.h>
 #include <initcall.h>
-#include <init_helpers.h>
-#ifdef CONFIG_PS2KBD
-#include <keyboard.h>
-#endif
 #if defined(CONFIG_CMD_KGDB)
 #include <kgdb.h>
 #endif
@@ -390,8 +385,8 @@ static int initr_flash(void)
 #if defined(CONFIG_PPC) && !defined(CONFIG_DM_SPI)
 static int initr_spi(void)
 {
-	/* PPC does this here */
-#ifdef CONFIG_SPI
+	/* MPC8xx does this here */
+#ifdef CONFIG_MPC8XX_SPI
 #if !defined(CONFIG_ENV_IS_IN_EEPROM)
 	spi_init_f();
 #endif
@@ -601,7 +596,7 @@ static int initr_pcmcia(void)
 }
 #endif
 
-#if defined(CONFIG_IDE)
+#if defined(CONFIG_IDE) && !defined(CONFIG_BLK)
 static int initr_ide(void)
 {
 	puts("IDE:   ");
@@ -638,15 +633,6 @@ static int initr_bedbug(void)
 {
 	bedbug_init();
 
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_PS2KBD
-static int initr_kbd(void)
-{
-	puts("PS/2:  ");
-	kbd_init();
 	return 0;
 }
 #endif
@@ -840,7 +826,7 @@ static init_fnc_t init_sequence_r[] = {
 #if defined(CONFIG_CMD_PCMCIA) && !defined(CONFIG_IDE)
 	initr_pcmcia,
 #endif
-#if defined(CONFIG_IDE)
+#if defined(CONFIG_IDE) && !defined(CONFIG_BLK)
 	initr_ide,
 #endif
 #ifdef CONFIG_LAST_STAGE_INIT
@@ -858,9 +844,6 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #if defined(CONFIG_PRAM)
 	initr_mem,
-#endif
-#ifdef CONFIG_PS2KBD
-	initr_kbd,
 #endif
 	run_main_loop,
 };

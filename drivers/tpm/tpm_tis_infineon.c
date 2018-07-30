@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2011 Infineon Technologies
  *
@@ -16,15 +17,13 @@
  * Dorn, Dave Safford, Reiner Sailer, and Kyleen Hall.
  *
  * Version: 2.1.1
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
 #include <dm.h>
 #include <fdtdec.h>
 #include <i2c.h>
-#include <tpm.h>
+#include <tpm-v1.h>
 #include <linux/errno.h>
 #include <linux/compiler.h>
 #include <linux/types.h>
@@ -32,8 +31,6 @@
 
 #include "tpm_tis.h"
 #include "tpm_internal.h"
-
-DECLARE_GLOBAL_DATA_PTR;
 
 enum i2c_chip_type {
 	SLB9635,

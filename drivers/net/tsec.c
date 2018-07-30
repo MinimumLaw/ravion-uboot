@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Freescale Three Speed Ethernet Controller driver
  *
  * Copyright 2004-2011, 2013 Freescale Semiconductor, Inc.
  * (C) Copyright 2003, Motorola, Inc.
  * author Andy Fleming
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <config.h>
@@ -797,8 +796,9 @@ int tsec_probe(struct udevice *dev)
 
 	parent = ofnode_get_parent(phandle_args.node);
 	if (ofnode_valid(parent)) {
-		int reg = ofnode_read_u32_default(parent, "reg", 0);
-		priv->phyregs_sgmii = (struct tsec_mii_mng *)(reg + 0x520);
+		int reg = ofnode_get_addr_index(parent, 0);
+
+		priv->phyregs_sgmii = (struct tsec_mii_mng *)reg;
 	} else {
 		debug("No parent node for PHY?\n");
 		return -ENOENT;

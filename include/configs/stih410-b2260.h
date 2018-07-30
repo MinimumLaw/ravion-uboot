@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
  * Author(s): Patrice Chotard, <patrice.chotard@st.com> for STMicroelectronics.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -32,6 +31,7 @@
 			"fdtfile=stih410-b2260.dtb\0"		\
 			"fdt_addr_r=0x47000000\0"		\
 			"scriptaddr=0x50000000\0"		\
+			"pxefile_addr_r=0x50100000\0"		\
 			"fdt_high=0xffffffffffffffff\0"		\
 			"initrd_high=0xffffffffffffffff\0"	\
 			"ramdisk_addr_r=0x48000000\0"		\

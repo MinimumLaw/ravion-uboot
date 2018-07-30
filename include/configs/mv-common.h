@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2010
  * Marvell Semiconductor <www.marvell.com>
  * Written-by: Prafulla Wadaskar <prafulla@marvell.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -30,10 +29,6 @@
 #define CONFIG_SYS_SDRAM_BASE	0x00000000
 
 /*
- * CLKs configurations
- */
-
-/*
  * NS16550 Configuration
  */
 #define CONFIG_SYS_NS16550_SERIAL
@@ -49,7 +44,6 @@
  * for your console driver.
  */
 
-#define CONFIG_CONS_INDEX	1	/*Console on UART0 */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, \
 					  115200,230400, 460800, 921600 }
 /* auto boot */
@@ -101,20 +95,6 @@
  */
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE     1
-#endif
-
-/*
- * Common SPI Flash configuration
- */
-#ifdef CONFIG_CMD_SF
-#endif
-
-/*
- * File system
- */
-#ifdef CONFIG_SYS_MVFS
-#define CONFIG_MTD_DEVICE               /* needed for mtdparts commands */
-#define CONFIG_MTD_PARTITIONS
 #endif
 
 #endif /* _MV_COMMON_H */

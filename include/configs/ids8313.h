@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2013
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
@@ -5,8 +6,6 @@
  * Based on:
  * Copyright (c) 2011 IDS GmbH, Germany
  * Sergej Stepanov <ste@ids.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -162,7 +161,6 @@
  */
 #define CONFIG_TSEC1
 #define CONFIG_TSEC2
-#define CONFIG_TSEC_ENET
 #define CONFIG_HARD_SPI
 
 /*
@@ -315,7 +313,6 @@
 /*
  * Serial Port
  */
-#define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 
@@ -428,7 +425,7 @@
 #define CONFIG_ENV_SIZE_REDUND	(CONFIG_ENV_SIZE)
 
 #define CONFIG_NETDEV			eth1
-#define CONFIG_HOSTNAME		ids8313
+#define CONFIG_HOSTNAME		"ids8313"
 #define CONFIG_ROOTPATH		"/opt/eldk-4.2/ppc_6xx"
 #define CONFIG_BOOTFILE		"ids8313/uImage"
 #define CONFIG_UBOOTPATH		"ids8313/u-boot.bin"
@@ -507,7 +504,5 @@
 
 /* UBI Support */
 #define CONFIG_MTD_PARTITIONS
-
-#define CONFIG_IMAGE_FORMAT_LEGACY
 
 #endif	/* __CONFIG_H */

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2009
  * Marvell Semiconductor <www.marvell.com>
@@ -8,8 +9,6 @@
  *
  * (C) Copyright 2010-2011
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -69,7 +68,7 @@
 		" boardid=0x${IVM_BoardId} hwkey=0x${IVM_HWKey}"
 
 #define CONFIG_KM_DEF_ENV_CPU						\
-	"u-boot="__stringify(CONFIG_HOSTNAME) "/u-boot.kwb\0"		\
+	"u-boot="CONFIG_HOSTNAME "/u-boot.kwb\0"		\
 	CONFIG_KM_UPDATE_UBOOT						\
 	"set_fdthigh=setenv fdt_high ${kernelmem}\0"			\
 	"checkfdt="							\
@@ -97,8 +96,6 @@
  * The following definitions let you select what serial you want to use
  * for your console driver.
  */
-
-#define CONFIG_CONS_INDEX	1	/* Console on UART0 */
 
 /*
  * For booting Linux, the board info and command line data
@@ -136,7 +133,6 @@
  */
 #define CONFIG_NETCONSOLE	/* include NetConsole support   */
 #define CONFIG_MII		/* expose smi ove miiphy interface */
-#define CONFIG_MVGBE		/* Enable Marvell Gbe Controller Driver */
 #define CONFIG_SYS_FAULT_ECHO_LINK_DOWN	/* detect link using phy */
 #define CONFIG_MVGBE_PORTS	{1, 0}	/* enable port 0 only */
 #define CONFIG_PHY_BASE_ADR	0

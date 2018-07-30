@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2017 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -227,13 +226,16 @@ fdt_addr_t ofnode_get_addr_index(ofnode node, int index)
 		uint flags;
 		u64 size;
 		int na;
+		int ns;
 
 		prop_val = of_get_address(ofnode_to_np(node), index, &size,
 					  &flags);
 		if (!prop_val)
 			return FDT_ADDR_T_NONE;
 
-		if (IS_ENABLED(CONFIG_OF_TRANSLATE)) {
+		ns = of_n_size_cells(ofnode_to_np(node));
+
+		if (IS_ENABLED(CONFIG_OF_TRANSLATE) && ns > 0) {
 			return of_translate_address(ofnode_to_np(node), prop_val);
 		} else {
 			na = of_n_addr_cells(ofnode_to_np(node));
@@ -683,4 +685,15 @@ u64 ofnode_translate_address(ofnode node, const fdt32_t *in_addr)
 		return of_translate_address(ofnode_to_np(node), in_addr);
 	else
 		return fdt_translate_address(gd->fdt_blob, ofnode_to_offset(node), in_addr);
+}
+
+int ofnode_device_is_compatible(ofnode node, const char *compat)
+{
+	if (ofnode_is_np(node))
+		return of_device_is_compatible(ofnode_to_np(node), compat,
+					       NULL, NULL);
+	else
+		return !fdt_node_check_compatible(gd->fdt_blob,
+						  ofnode_to_offset(node),
+						  compat);
 }

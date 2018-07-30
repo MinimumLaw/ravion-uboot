@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2000-2010
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Andreas Heppel <aheppel@sysgo.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -227,6 +226,7 @@ void env_relocate(void)
 {
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
 	env_reloc();
+	env_fix_drivers();
 	env_htab.change_ok += gd->reloc_off;
 #endif
 	if (gd->env_valid == ENV_INVALID) {

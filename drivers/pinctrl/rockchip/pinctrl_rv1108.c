@@ -1,7 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2016 Rockchip Electronics Co., Ltd
  * Author: Andy Yan <andy.yan@rock-chips.com>
- * SPDX-License-Identifier:     GPL-2.0+
  */
 #include <common.h>
 #include <dm.h>
@@ -13,8 +13,6 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/periph.h>
 #include <dm/pinctrl.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 struct rv1108_pinctrl_priv {
 	struct rv1108_grf *grf;

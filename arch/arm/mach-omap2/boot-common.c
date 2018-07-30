@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * boot-common.c
  *
  * Common bootmode functions for omap based boards
  *
  * Copyright (C) 2011, Texas Instruments, Incorporated - http://www.ti.com/
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -196,9 +195,10 @@ u32 spl_boot_mode(const u32 boot_device)
 
 void spl_board_init(void)
 {
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	/* Prepare console output */
 	preloader_console_init();
-
+#endif
 #if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_SPL_ONENAND_SUPPORT)
 	gpmc_init();
 #endif
@@ -234,15 +234,5 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 void arch_preboot_os(void)
 {
 	ahci_reset((void __iomem *)DWC_AHSATA_BASE);
-}
-#endif
-
-#if defined(CONFIG_USB_FUNCTION_FASTBOOT) && !defined(CONFIG_ENV_IS_NOWHERE)
-int fb_set_reboot_flag(void)
-{
-	printf("Setting reboot to fastboot flag ...\n");
-	env_set("dofastboot", "1");
-	env_save();
-	return 0;
 }
 #endif

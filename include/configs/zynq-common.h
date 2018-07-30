@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2012 Michal Simek <monstr@monstr.eu>
  * (C) Copyright 2013 - 2018 Xilinx, Inc.
  *
  * Common configuration options for all Zynq boards.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_ZYNQ_COMMON_H
@@ -127,7 +126,9 @@
 #endif
 
 /* Total Size of Environment Sector */
-#define CONFIG_ENV_SIZE			(128 << 10)
+#ifndef CONFIG_ENV_SIZE
+# define CONFIG_ENV_SIZE			(128 << 10)
+#endif
 
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -135,7 +136,9 @@
 /* Environment */
 #ifndef CONFIG_ENV_IS_NOWHERE
 # define CONFIG_ENV_SECT_SIZE		CONFIG_ENV_SIZE
-# define CONFIG_ENV_OFFSET		0xE0000
+# ifndef CONFIG_ENV_OFFSET
+#  define CONFIG_ENV_OFFSET		0xE0000
+# endif
 #endif
 
 /* enable preboot to be loaded before CONFIG_BOOTDELAY */
@@ -162,7 +165,7 @@
 #define BOOT_TARGET_DEVICES_USB(func)
 #endif
 
-#if defined(CONFIG_CMD_PXE)
+#if defined(CONFIG_CMD_PXE) && defined(CONFIG_CMD_DHCP)
 #define BOOT_TARGET_DEVICES_PXE(func) func(PXE, pxe, na)
 #else
 #define BOOT_TARGET_DEVICES_PXE(func)
@@ -259,9 +262,6 @@
 					GENERATED_GBL_DATA_SIZE)
 
 
-/* FIT support */
-#define CONFIG_IMAGE_FORMAT_LEGACY /* enable also legacy image format */
-
 /* Extend size of kernel image for uncompression */
 #define CONFIG_SYS_BOOTM_LEN	(60 * 1024 * 1024)
 
@@ -298,7 +298,6 @@
 
 /* qspi mode is working fine */
 #ifdef CONFIG_ZYNQ_QSPI
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x100000
 #define CONFIG_SYS_SPI_ARGS_OFFS	0x200000
 #define CONFIG_SYS_SPI_ARGS_SIZE	0x80000

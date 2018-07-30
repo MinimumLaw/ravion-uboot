@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2008-2011 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /* #define DEBUG */
@@ -158,7 +157,7 @@ static const char *init_mmc_for_env(struct mmc *mmc)
 	if (!mmc)
 		return "!No MMC card found";
 
-#ifdef CONFIG_BLK
+#if CONFIG_IS_ENABLED(BLK)
 	struct udevice *dev;
 
 	if (blk_get_from_parent(mmc->dev, &dev))

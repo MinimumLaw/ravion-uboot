@@ -1,17 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2017 NXP
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __LS1088A_RDB_H
 #define __LS1088A_RDB_H
 
 #include "ls1088a_common.h"
-
-#ifndef SPL_NO_BOARDINFO
-#define CONFIG_DISPLAY_BOARDINFO_LATE
-#endif
 
 #define CONFIG_MISC_INIT_R
 
@@ -292,7 +287,6 @@
 #endif
 
 #define CONFIG_CMD_MEMINFO
-#define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
@@ -457,7 +451,6 @@
 
 /*  MMC  */
 #ifdef CONFIG_MMC
-#define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
 #endif
 

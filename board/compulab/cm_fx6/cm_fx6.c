@@ -1,17 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Board functions for Compulab CM-FX6 board
  *
  * Copyright (C) 2014, Compulab Ltd - http://compulab.co.il/
  *
  * Author: Nikita Kiryanov <nikita@compulab.co.il>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <ahci.h>
 #include <dm.h>
 #include <dwc_ahsata.h>
+#include <environment.h>
 #include <fsl_esdhc.h>
 #include <miiphy.h>
 #include <mtd_node.h>

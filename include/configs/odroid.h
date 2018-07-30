@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2014 Samsung Electronics
  * Sanghee Kim <sh0130.kim@samsung.com>
@@ -5,8 +6,6 @@
  * Przemyslaw Marczak <p.marczak@samsung.com>
  *
  * Configuation settings for the Odroid-U3 (EXYNOS4412) board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_ODROID_U3_H
@@ -185,7 +184,6 @@
  * TODO: Add Odroid X support
  */
 #define CONFIG_MISC_COMMON
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_BOARD_TYPES
 #define CONFIG_MISC_INIT_R
 

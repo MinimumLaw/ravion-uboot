@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2010
  * Texas Instruments, <www.ti.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _SYS_PROTO_H_
@@ -15,8 +14,6 @@
 #include <linux/mtd/omap_gpmc.h>
 #include <asm/arch/clock.h>
 #include <asm/ti-common/sys_proto.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * Structure for Iodelay configuration registers.

@@ -1,8 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) Copyright 2017 Rockchip Electronics Co., Ltd
  * Author: Andy Yan <andy.yan@rock-chips.com>
  * (C) Copyright 2017 Theobroma Systems Design und Consulting GmbH
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
@@ -19,8 +19,6 @@
 #include <asm/io.h>
 #include <dm/lists.h>
 #include <dt-bindings/clock/rk3368-cru.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 struct rk3368_clk_plat {

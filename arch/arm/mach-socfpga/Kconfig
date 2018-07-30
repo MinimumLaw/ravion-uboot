@@ -1,35 +1,5 @@
 if ARCH_SOCFPGA
 
-config SPL_LIBCOMMON_SUPPORT
-	default y
-
-config SPL_LIBDISK_SUPPORT
-	default y
-
-config SPL_LIBGENERIC_SUPPORT
-	default y
-
-config SPL_MMC_SUPPORT
-	default y if DM_MMC
-
-config SPL_NAND_SUPPORT
-	default y if SPL_NAND_DENALI
-
-config SPL_SERIAL_SUPPORT
-	default y
-
-config SPL_SPI_FLASH_SUPPORT
-	default y if SPL_SPI_SUPPORT
-
-config SPL_SPI_SUPPORT
-	default y if DM_SPI
-
-config SPL_WATCHDOG_SUPPORT
-	default y
-
-config SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION_TYPE
-	default y
-
 config SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION_TYPE
 	default 0xa2
 
@@ -40,6 +10,7 @@ config TARGET_SOCFPGA_ARRIA5
 config TARGET_SOCFPGA_ARRIA10
 	bool
 	select SPL_BOARD_INIT if SPL
+	select ALTERA_SDRAM
 
 config TARGET_SOCFPGA_CYCLONE5
 	bool
@@ -63,10 +34,6 @@ config TARGET_SOCFPGA_ARRIA5_SOCDK
 
 config TARGET_SOCFPGA_CYCLONE5_SOCDK
 	bool "Altera SOCFPGA SoCDK (Cyclone V)"
-	select TARGET_SOCFPGA_CYCLONE5
-
-config TARGET_SOCFPGA_ARIES_MCVEVK
-	bool "Aries MCVEVK (Cyclone V)"
 	select TARGET_SOCFPGA_CYCLONE5
 
 config TARGET_SOCFPGA_DEVBOARDS_DBM_SOC1
@@ -117,7 +84,6 @@ config SYS_BOARD
 	default "de1-soc" if TARGET_SOCFPGA_TERASIC_DE1_SOC
 	default "de10-nano" if TARGET_SOCFPGA_TERASIC_DE10_NANO
 	default "is1" if TARGET_SOCFPGA_IS1
-	default "mcvevk" if TARGET_SOCFPGA_ARIES_MCVEVK
 	default "sockit" if TARGET_SOCFPGA_TERASIC_SOCKIT
 	default "socrates" if TARGET_SOCFPGA_EBV_SOCRATES
 	default "sr1500" if TARGET_SOCFPGA_SR1500
@@ -127,7 +93,6 @@ config SYS_VENDOR
 	default "altera" if TARGET_SOCFPGA_ARRIA5_SOCDK
 	default "altera" if TARGET_SOCFPGA_ARRIA10_SOCDK
 	default "altera" if TARGET_SOCFPGA_CYCLONE5_SOCDK
-	default "aries" if TARGET_SOCFPGA_ARIES_MCVEVK
 	default "devboards" if TARGET_SOCFPGA_DEVBOARDS_DBM_SOC1
 	default "ebv" if TARGET_SOCFPGA_EBV_SOCRATES
 	default "samtec" if TARGET_SOCFPGA_SAMTEC_VINING_FPGA
@@ -148,7 +113,6 @@ config SYS_CONFIG_NAME
 	default "socfpga_de1_soc" if TARGET_SOCFPGA_TERASIC_DE1_SOC
 	default "socfpga_de10_nano" if TARGET_SOCFPGA_TERASIC_DE10_NANO
 	default "socfpga_is1" if TARGET_SOCFPGA_IS1
-	default "socfpga_mcvevk" if TARGET_SOCFPGA_ARIES_MCVEVK
 	default "socfpga_sockit" if TARGET_SOCFPGA_TERASIC_SOCKIT
 	default "socfpga_socrates" if TARGET_SOCFPGA_EBV_SOCRATES
 	default "socfpga_sr1500" if TARGET_SOCFPGA_SR1500

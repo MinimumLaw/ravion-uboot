@@ -424,6 +424,7 @@ menu "Logging"
 
 config LOG
 	bool "Enable logging support"
+	select DM
 	help
 	  This enables support for logging of status and debug messages. These
 	  can be displayed on the console, recorded in a memory buffer, or
@@ -561,12 +562,19 @@ config DISPLAY_CPUINFO
 	  to do this.
 
 config DISPLAY_BOARDINFO
-	bool "Display information about the board during start up"
+	bool "Display information about the board during early start up"
 	default y if ARM || M68K || MIPS || PPC || SANDBOX || XTENSA
 	help
 	  Display information about the board that U-Boot is running on
 	  when U-Boot starts up. The board function checkboard() is called
 	  to do this.
+
+config DISPLAY_BOARDINFO_LATE
+	bool "Display information about the board during late start up"
+	help
+	  Display information about the board that U-Boot is running on after
+	  the relocation phase. The board function checkboard() is called to do
+	  this.
 
 menu "Start-up hooks"
 
@@ -594,6 +602,22 @@ config BOARD_EARLY_INIT_F
 	  after driver model is ready in the pre-relocation init sequence.
 	  Note that the normal serial console is not yet set up, but the
 	  debug UART will be available if enabled.
+
+config BOARD_EARLY_INIT_R
+	bool "Call board-specific init after relocation"
+	help
+	  Some boards need to perform initialisation as directly after
+	  relocation. With this option, U-Boot calls board_early_init_r()
+	  in the post-relocation init sequence.
+
+config LAST_STAGE_INIT
+	bool "Call board-specific as last setup step"
+	help
+	  Some boards need to perform initialisation immediately before control
+	  is passed to the command-line interpreter (e.g. for initializations
+	  that depend on later phases in the init sequence). With this option,
+	  U-Boot calls last_stage_init() before the command-line interpreter is
+	  started.
 
 endmenu
 

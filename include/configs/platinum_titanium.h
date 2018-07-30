@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2014, Barco (www.barco.com)
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __PLATINUM_TITANIUM_CONFIG_H__
@@ -21,7 +20,7 @@
 
 #define CONFIG_PHY_RESET_DELAY			1000
 
-#define CONFIG_HOSTNAME				titanium
+#define CONFIG_HOSTNAME				"titanium"
 
 #define CONFIG_PLATFORM_ENV_SETTINGS		"\0"
 

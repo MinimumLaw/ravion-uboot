@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Common part of configuration settings for the AT91 SAMA5 board.
  *
  * Copyright (C) 2015 Atmel Corporation
  *		      Josh Wu <josh.wu@atmel.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __AT91_SAMA5_COMMON_H
@@ -58,7 +57,7 @@
 
 #ifdef CONFIG_NAND_BOOT
 /* u-boot env in nand flash */
-#define CONFIG_ENV_OFFSET		0xc0000
+#define CONFIG_ENV_OFFSET		0x140000
 #define CONFIG_ENV_OFFSET_REDUND	0x100000
 #define CONFIG_ENV_SIZE			0x20000
 #define CONFIG_BOOTCOMMAND		"nand read 0x21000000 0x180000 0x80000;"	\

@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2017 Tuomas Tynkkynen
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -19,11 +18,8 @@
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + SZ_2M)
 #define CONFIG_SYS_MALLOC_LEN		SZ_16M
 
-/* QEMU implements a 62.5MHz architected timer */
-/* FIXME: can we rely on CNTFREQ instead of hardcoding this fact here? */
-#define CONFIG_SYS_ARCH_TIMER
+/* For timer, QEMU emulates an ARMv7/ARMv8 architected timer */
 #define CONFIG_SYS_HZ                       1000
-#define CONFIG_SYS_HZ_CLOCK                 62500000
 
 /* For block devices, QEMU emulates an ICH9 AHCI controller over PCI */
 #define CONFIG_SYS_SCSI_MAX_SCSI_ID 6

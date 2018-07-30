@@ -1,16 +1,16 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * board/renesas/porter/porter.c
  *
  * Copyright (C) 2015 Renesas Electronics Corporation
  * Copyright (C) 2015 Cogent Embedded, Inc.
- *
- * SPDX-License-Identifier: GPL-2.0
  */
 
 #include <common.h>
 #include <malloc.h>
 #include <dm.h>
 #include <dm/platform_data/serial_sh.h>
+#include <environment.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
@@ -110,10 +110,6 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 
-const struct rmobile_sysinfo sysinfo = {
-	CONFIG_ARCH_RMOBILE_BOARD_STRING
-};
-
 void reset_cpu(ulong addr)
 {
 	struct udevice *dev;
@@ -137,24 +133,17 @@ void reset_cpu(ulong addr)
 		hang();
 }
 
-#ifdef CONFIG_SPL_BUILD
-#include <spl.h>
-void board_init_f(ulong dummy)
+enum env_location env_get_location(enum env_operation op, int prio)
 {
-	board_early_init_f();
-}
+	const u32 load_magic = 0xb33fc0de;
 
-void spl_board_init(void)
-{
-	/* UART clocks enabled and gd valid - init serial console */
-	preloader_console_init();
-}
+	/* Block environment access if loaded using JTAG */
+	if ((readl(CONFIG_SPL_TEXT_BASE + 0x24) == load_magic) &&
+	    (op != ENVOP_INIT))
+		return ENVL_UNKNOWN;
 
-void board_boot_order(u32 *spl_boot_list)
-{
-	/* Boot from SPI NOR with YMODEM UART fallback. */
-	spl_boot_list[0] = BOOT_DEVICE_SPI;
-	spl_boot_list[1] = BOOT_DEVICE_UART;
-	spl_boot_list[2] = BOOT_DEVICE_NONE;
+	if (prio)
+		return ENVL_UNKNOWN;
+
+	return ENVL_SPI_FLASH;
 }
-#endif

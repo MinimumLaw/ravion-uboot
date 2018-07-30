@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <config.h>
@@ -264,6 +263,19 @@ static struct fstype_info *fs_get_info(int fstype)
 
 	/* Return the 'unsupported' sentinel */
 	return info;
+}
+
+/**
+ * fs_get_type_name() - Get type of current filesystem
+ *
+ * Return: Pointer to filesystem name
+ *
+ * Returns a string describing the current filesystem, or the sentinel
+ * "unsupported" for any unrecognised filesystem.
+ */
+const char *fs_get_type_name(void)
+{
+	return fs_get_info(fs_type)->name;
 }
 
 int fs_set_blk_dev(const char *ifname, const char *dev_part_str, int fstype)

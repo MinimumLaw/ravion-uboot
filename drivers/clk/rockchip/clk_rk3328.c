@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) Copyright 2017 Rockchip Electronics Co., Ltd
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
@@ -17,8 +16,6 @@
 #include <asm/io.h>
 #include <dm/lists.h>
 #include <dt-bindings/clock/rk3328-cru.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 struct pll_div {
 	u32 refdiv;
@@ -767,7 +764,7 @@ static int rk3328_clk_ofdata_to_platdata(struct udevice *dev)
 {
 	struct rk3328_clk_priv *priv = dev_get_priv(dev);
 
-	priv->cru = (struct rk3328_cru *)devfdt_get_addr(dev);
+	priv->cru = dev_read_addr_ptr(dev);
 
 	return 0;
 }

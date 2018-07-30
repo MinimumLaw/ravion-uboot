@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Marek Vasut <marek.vasut@gmail.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -176,6 +175,7 @@ static const struct udevice_id rcar_gpio_ids[] = {
 	{ .compatible = "renesas,gpio-r8a7796" },
 	{ .compatible = "renesas,gpio-r8a77965" },
 	{ .compatible = "renesas,gpio-r8a77970" },
+	{ .compatible = "renesas,gpio-r8a77990" },
 	{ .compatible = "renesas,gpio-r8a77995" },
 	{ .compatible = "renesas,rcar-gen2-gpio" },
 	{ .compatible = "renesas,rcar-gen3-gpio" },

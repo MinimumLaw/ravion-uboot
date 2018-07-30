@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2016 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __LS1012ARDB_H__
@@ -15,7 +14,6 @@
 #define CONFIG_NR_DRAM_BANKS		2
 #define CONFIG_SYS_SDRAM_SIZE		0x40000000
 #define CONFIG_CMD_MEMINFO
-#define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
@@ -25,6 +23,7 @@
  */
 
 #define I2C_MUX_IO_ADDR		0x24
+#define I2C_MUX_IO2_ADDR	0x25
 #define I2C_MUX_IO_0		0
 #define I2C_MUX_IO_1		1
 #define SW_BOOT_MASK		0x03
@@ -39,10 +38,12 @@
 #define SW_REV_C2		0xD8
 #define SW_REV_D		0xD0
 #define SW_REV_E		0xC8
+#define __PHY_MASK		0xF9
+#define __PHY_ETH2_MASK		0xFB
+#define __PHY_ETH1_MASK		0xFD
 
 /*  MMC  */
 #ifdef CONFIG_MMC
-#define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
 #endif
 
@@ -52,7 +53,6 @@
 #define CONFIG_PCI_SCAN_SHOW
 
 #define CONFIG_CMD_MEMINFO
-#define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	0x80000000
 #define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
@@ -113,7 +113,7 @@
 		"bootm $load_addr#$board\0"
 
 #undef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND "run distro_bootcmd; run qspi_bootcmd; "	\
+#define CONFIG_BOOTCOMMAND "pfe stop; run distro_bootcmd; run qspi_bootcmd; "\
 			   "env exists secureboot && esbc_halt;"
 
 #include <asm/fsl_secure_boot.h>

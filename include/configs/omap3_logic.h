@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2011 Logic Product Development <www.logicpd.com>
  *	Peter Barada <peter.barada@logicpd.com>
  *
  * Configuration settings for the Logic OMAP35x/DM37x SOM LV/Torpedo
  * reference boards.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -19,8 +18,6 @@
 
 #ifdef CONFIG_SPL_BUILD
 /* select serial console configuration for SPL */
-#undef CONFIG_CONS_INDEX
-#define CONFIG_CONS_INDEX              1
 #define CONFIG_SYS_NS16550_COM1                OMAP34XX_UART1
 #endif
 
@@ -155,10 +152,10 @@
 		"run loadramdisk\0" \
 	"mmcramboot=setenv bootfile uImage; " \
 		"run mmcrambootcommon; " \
-		"bootm ${loadaddr} ${rdaddr} ${fdtimage}\0" \
+		"bootm ${loadaddr} ${rdaddr} ${fdtaddr}\0" \
 	"mmcrambootz=setenv bootfile zImage; " \
 		"run mmcrambootcommon; " \
-		"bootz ${loadaddr} ${rdaddr} ${fdtimage}\0" \
+		"bootz ${loadaddr} ${rdaddr} ${fdtaddr}\0" \
 	"tftpboot=echo 'Booting kernel/ramdisk rootfs from tftp...'; " \
 		"run ramargs; " \
 		"run common_bootargs; " \

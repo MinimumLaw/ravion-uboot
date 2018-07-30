@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * STMicroelectronics TPM ST33ZP24 SPI UBOOT driver
  *
@@ -9,15 +10,13 @@
  * This device driver implements the TPM interface as defined in
  * the TCG TPM Interface Spec version 1.21, revision 1.0 and the
  * STMicroelectronics Protocol Stack Specification version 1.2.0.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <dm.h>
 #include <fdtdec.h>
 #include <spi.h>
-#include <tpm.h>
+#include <tpm-v1.h>
 #include <errno.h>
 #include <linux/types.h>
 #include <asm/unaligned.h>

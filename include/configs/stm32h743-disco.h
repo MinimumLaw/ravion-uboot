@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
  * Author(s): Patrice Chotard, <patrice.chotard@st.com> for STMicroelectronics.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -24,8 +23,7 @@
 
 #define CONFIG_ENV_SIZE			(8 << 10)
 
-#define CONFIG_SYS_ARCH_TIMER
-#define CONFIG_SYS_HZ_CLOCK		250000000
+#define CONFIG_SYS_HZ_CLOCK		1000000
 
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS

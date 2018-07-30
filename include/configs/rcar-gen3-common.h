@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * include/configs/rcar-gen3-common.h
  *	This file is R-Car Gen3 common configuration file.
  *
  * Copyright (C) 2015-2017 Renesas Electronics Corporation
- *
- * SPDX-License-Identifier: GPL-2.0+
  */
 
 #ifndef __RCAR_GEN3_COMMON_H
@@ -43,7 +42,8 @@
 #define CONFIG_NR_DRAM_BANKS		4
 #define CONFIG_SYS_SDRAM_BASE		(0x40000000 + DRAM_RSV_SIZE)
 #define CONFIG_SYS_SDRAM_SIZE		(0x80000000u - DRAM_RSV_SIZE)
-#define CONFIG_SYS_LOAD_ADDR		0x48080000
+#define CONFIG_SYS_LOAD_ADDR		0x58000000
+#define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
 
@@ -51,6 +51,7 @@
 #define CONFIG_SYS_MONITOR_LEN		(256 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
 #define CONFIG_SYS_BOOTMAPSZ		(8 * 1024 * 1024)
+#define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
 /* ENV setting */
 #define CONFIG_ENV_OVERWRITE

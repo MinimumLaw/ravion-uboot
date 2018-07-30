@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (c) 2011 Graf-Syteco, Matthias Weisser
  * <weisserm@arcor.de>
  *
  * Configuation settings for the zmx25 board
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -40,7 +39,6 @@
  */
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE	UART2_BASE
-#define CONFIG_CONS_INDEX	1	/* use UART2 for console */
 
 /*
  * Ethernet

@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2011 Ilya Yanok, Emcraft Systems
  *
  * Based on omap3_evm_config.h
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -60,7 +59,6 @@
 /*
  * select serial console configuration
  */
-#define CONFIG_CONS_INDEX		3
 #define CONFIG_SYS_NS16550_COM3		OMAP34XX_UART3
 #define CONFIG_SERIAL3			3	/* UART3 */
 
@@ -107,7 +105,7 @@
 
 /* Setup MTD for NAND on the SOM */
 
-#define CONFIG_HOSTNAME mcx
+#define CONFIG_HOSTNAME "mcx"
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"adddbg=setenv bootargs ${bootargs} trace_buf_size=64M\0"	\
 	"adddebug=setenv bootargs ${bootargs} earlyprintk=serial\0"	\
@@ -126,13 +124,13 @@
 	"addmtd=setenv bootargs ${bootargs} ${mtdparts}\0"		\
 	"baudrate=115200\0"						\
 	"consoledev=ttyO2\0"						\
-	"hostname=" __stringify(CONFIG_HOSTNAME) "\0"			\
+	"hostname=" CONFIG_HOSTNAME "\0"			\
 	"loadaddr=0x82000000\0"						\
 	"load=tftp ${loadaddr} ${u-boot}\0"				\
 	"load_k=tftp ${loadaddr} ${bootfile}\0"				\
 	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0"			\
 	"loadmlo=tftp ${loadaddr} ${mlo}\0"				\
-	"mlo=" __stringify(CONFIG_HOSTNAME) "/MLO\0"			\
+	"mlo=" CONFIG_HOSTNAME "/MLO\0"			\
 	"mmcargs=root=/dev/mmcblk0p2 rw "				\
 		"rootfstype=ext3 rootwait\0"				\
 	"mmcboot=echo Booting from mmc ...; "				\
@@ -146,7 +144,7 @@
 		"bootm ${loadaddr}\0"					\
 	"nfsargs=setenv bootargs root=/dev/nfs rw "			\
 		"nfsroot=${serverip}:${rootpath}\0"			\
-	"u-boot=" __stringify(CONFIG_HOSTNAME) "/u-boot.img\0"		\
+	"u-boot=" CONFIG_HOSTNAME "/u-boot.img\0"		\
 	"uboot_addr=0x80000\0"						\
 	"update=nandecc sw;nand erase ${uboot_addr} 100000;"		\
 		"nand write ${loadaddr} ${uboot_addr} 80000\0"		\

@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * cm_t43.h
  *
  * Copyright (C) 2015 Compulab, Ltd.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_CM_T43_H
@@ -45,7 +44,6 @@
 					 50, 51, 52, 53, 54, 55, 56, 57, }
 
 /* CPSW Ethernet support */
-#define CONFIG_DRIVER_TI_CPSW
 #define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_SEND_HOSTNAME
@@ -84,7 +82,6 @@
 #undef CONFIG_SYS_MONITOR_LEN
 
 #define CONFIG_ENV_SIZE			(16 * 1024)
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
@@ -128,14 +125,11 @@
 		"run emmcboot; " \
 	"fi;"
 
-#define CONFIG_CONS_INDEX		1
-
 /* SPL defines. */
 #define CONFIG_SPL_TEXT_BASE		0x40300350
 #define CONFIG_SYS_SPL_ARGS_ADDR	(CONFIG_SYS_SDRAM_BASE + (128 << 20))
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	(256 * 1024)
 #define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
-#define CONFIG_SPL_SPI_LOAD
 
 /* EEPROM */
 #define CONFIG_ENV_EEPROM_IS_ON_I2C

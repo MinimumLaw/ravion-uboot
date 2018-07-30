@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2013 Atmel Corporation.
  * Josh Wu <josh.wu@atmel.com>
  *
  * Configuation settings for the AT91SAM9N12-EK boards.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __AT91SAM9N12_CONFIG_H_
@@ -111,7 +110,7 @@
 #elif defined(CONFIG_NAND_BOOT)
 
 /* bootstrap + u-boot + env + linux in nandflash */
-#define CONFIG_ENV_OFFSET		0x120000
+#define CONFIG_ENV_OFFSET		0x140000
 #define CONFIG_ENV_OFFSET_REDUND	0x100000
 #define CONFIG_ENV_SIZE			0x20000		/* 1 sector = 128 kB */
 #define CONFIG_BOOTCOMMAND						\
@@ -170,7 +169,6 @@
 
 #elif CONFIG_SYS_USE_NANDFLASH
 #elif CONFIG_SPI_BOOT
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8400
 
 #elif CONFIG_NAND_BOOT

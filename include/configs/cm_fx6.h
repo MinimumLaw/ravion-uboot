@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Config file for Compulab CM-FX6 board
  *
  * Copyright (C) 2014, Compulab Ltd - http://compulab.co.il/
  *
  * Author: Nikita Kiryanov <nikita@compulab.co.il>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_CM_FX6_H
@@ -63,7 +62,6 @@
 #define CONFIG_ENV_OFFSET		(768 * 1024)
 
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
@@ -169,9 +167,6 @@
 #define CONFIG_EXTRA_ENV_SETTINGS
 #endif
 
-/* SPI */
-#define CONFIG_SPI
-
 /* NAND */
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_SYS_NAND_BASE		0x40000000
@@ -228,7 +223,6 @@
 /* SPL */
 #include "imx6_spl.h"
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	(64 * 1024)
-#define CONFIG_SPL_SPI_LOAD
 
 /* Display */
 #define CONFIG_VIDEO_IPUV3
