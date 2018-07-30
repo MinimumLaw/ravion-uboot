@@ -783,6 +783,7 @@ int sprintf(char *buf, const char *fmt, ...)
 	return i;
 }
 
+#if CONFIG_IS_ENABLED(PRINTF)
 int printf(const char *fmt, ...)
 {
 	va_list args;
@@ -824,15 +825,7 @@ int vprintf(const char *fmt, va_list args)
 	puts(printbuffer);
 	return i;
 }
-
-
-void __assert_fail(const char *assertion, const char *file, unsigned line,
-		   const char *function)
-{
-	/* This will not return */
-	panic("%s:%u: %s: Assertion `%s' failed.", file, line, function,
-	      assertion);
-}
+#endif
 
 char *simple_itoa(ulong i)
 {

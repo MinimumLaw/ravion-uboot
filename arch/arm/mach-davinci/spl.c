@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2011
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <config.h>
@@ -15,8 +14,6 @@
 #include <malloc.h>
 #include <spi_flash.h>
 #include <mmc.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_SPL_LIBCOMMON_SUPPORT
 void puts(const char *str)

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Heiko Schocher, DENX Software Engineering, hs@denx.de.
  * Based on:
@@ -8,8 +9,6 @@
  * Based on davinci_dvevm.h. Original Copyrights follow:
  *
  * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -114,7 +113,6 @@
 #define CONFIG_SYS_NS16550_REG_SIZE	-4	/* NS16550 register size */
 #define CONFIG_SYS_NS16550_COM1	DAVINCI_UART0_BASE /* Base address of UART0 */
 #define CONFIG_SYS_NS16550_CLK	clk_get(DAVINCI_UART2_CLKID)
-#define CONFIG_CONS_INDEX	1		/* use UART0 for console */
 
 /*
  * Flash & Environment

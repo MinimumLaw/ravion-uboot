@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2017 Rockchip Electronics Co., Ltd
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <common.h>
@@ -21,8 +20,6 @@ u32 spl_boot_device(void)
 {
 	return BOOT_DEVICE_MMC1;
 }
-DECLARE_GLOBAL_DATA_PTR;
-
 #define GRF_BASE	0x11000000
 #define SGRF_BASE	0x10140000
 
@@ -95,7 +92,7 @@ void board_init_f(ulong dummy)
 
 	/* Disable the ddr secure region setting to make it non-secure */
 	rk_clrreg(SGRF_DDR_CON0, 0x4000);
-#if defined(CONFIG_ROCKCHIP_SPL_BACK_TO_BROM) && !defined(CONFIG_SPL_BOARD_INIT)
+#if defined(CONFIG_SPL_ROCKCHIP_BACK_TO_BROM) && !defined(CONFIG_SPL_BOARD_INIT)
 	back_to_bootrom(BROM_BOOT_NEXTSTAGE);
 #endif
 }

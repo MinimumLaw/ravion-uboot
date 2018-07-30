@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2016 Rockchip Electronics Co., Ltd
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __CONFIG_RK3399_COMMON_H
@@ -13,9 +12,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(32 << 20)
 #define CONFIG_SYS_CBSIZE		1024
 #define CONFIG_SKIP_LOWLEVEL_INIT
-#if defined(CONFIG_SPL_SPI_SUPPORT)
-#define CONFIG_SPL_SPI_LOAD
-#endif
 
 #define COUNTER_FREQUENCY               24000000
 
@@ -53,12 +49,13 @@
 	"scriptaddr=0x00500000\0" \
 	"pxefile_addr_r=0x00600000\0" \
 	"fdt_addr_r=0x01f00000\0" \
-	"kernel_addr_r=0x02000000\0" \
+	"kernel_addr_r=0x02080000\0" \
 	"ramdisk_addr_r=0x04000000\0"
 
 #include <config_distro_bootcmd.h>
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	ENV_MEM_LAYOUT_SETTINGS \
+	"fdtfile=rockchip/" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
 	"partitions=" PARTS_DEFAULT \
 	BOOTENV
 

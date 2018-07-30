@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * EFI hello world
  *
  * Copyright (c) 2016 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  *
  * This program demonstrates calling a boottime service.
  * It writes a greeting and the load options to the console.
@@ -46,8 +45,26 @@ efi_status_t EFIAPI efi_main(efi_handle_t handle,
 	struct efi_loaded_image *loaded_image;
 	efi_status_t ret;
 	efi_uintn_t i;
+	u16 rev[] = L"0.0.0";
 
 	con_out->output_string(con_out, L"Hello, world!\n");
+
+	/* Print the revision number */
+	rev[0] = (systable->hdr.revision >> 16) + '0';
+	rev[4] = systable->hdr.revision & 0xffff;
+	for (; rev[4] >= 10;) {
+		rev[4] -= 10;
+		++rev[2];
+	}
+	/* Third digit is only to be shown if non-zero */
+	if (rev[4])
+		rev[4] += '0';
+	else
+		rev[3] = 0;
+
+	con_out->output_string(con_out, L"Running on UEFI ");
+	con_out->output_string(con_out, rev);
+	con_out->output_string(con_out, L"\n");
 
 	/* Get the loaded image protocol */
 	ret = boottime->handle_protocol(handle, &loaded_image_guid,

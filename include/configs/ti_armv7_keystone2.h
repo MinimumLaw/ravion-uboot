@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Common configuration header file for all Keystone II EVM platforms
  *
  * (C) Copyright 2012-2014
  *     Texas Instruments Incorporated, <www.ti.com>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __CONFIG_KS2_EVM_H
@@ -17,7 +16,6 @@
 
 /* SoC Configuration */
 #define CONFIG_ARCH_CPU_INIT
-#define CONFIG_SYS_ARCH_TIMER
 #define CONFIG_SPL_TARGET		"u-boot-spi.gph"
 #define CONFIG_SYS_DCACHE_OFF
 
@@ -48,7 +46,6 @@
 					CONFIG_SYS_SPL_MALLOC_SIZE + \
 					SPL_MALLOC_F_SIZE + \
 					KEYSTONE_SPL_STACK_SIZE - 4)
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	CONFIG_SPL_PAD_TO
 
 /* SRAM scratch space entries  */
@@ -66,7 +63,6 @@
 #endif
 #define CONFIG_SYS_NS16550_COM1		KS2_UART0_BASE
 #define CONFIG_SYS_NS16550_COM2		KS2_UART1_BASE
-#define CONFIG_CONS_INDEX		1
 
 #ifndef CONFIG_SOC_K2G
 #define CONFIG_SYS_NS16550_CLK		ks_clk_get_rate(KS2_CLK1_6)

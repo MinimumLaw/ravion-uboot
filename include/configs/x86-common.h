@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
  * (C) Copyright 2008
  * Graeme Russ, graeme.russ@gmail.com.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <asm/ibmpc.h>
@@ -17,8 +16,6 @@
  */
 #define CONFIG_SHOW_BOOT_PROGRESS
 #define CONFIG_PHYSMEM
-#define CONFIG_DISPLAY_BOARDINFO_LATE
-#define CONFIG_LAST_STAGE_INIT
 #define CONFIG_NR_DRAM_BANKS		8
 
 #define CONFIG_LMB
@@ -89,11 +86,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 /*-----------------------------------------------------------------------
- * FLASH configuration
- */
-#define CONFIG_SPI
-
-/*-----------------------------------------------------------------------
  * Environment configuration
  */
 #define CONFIG_ENV_SIZE			0x01000
@@ -112,7 +104,7 @@
 
 /* Default environment */
 #define CONFIG_ROOTPATH		"/opt/nfsroot"
-#define CONFIG_HOSTNAME		x86
+#define CONFIG_HOSTNAME		"x86"
 #define CONFIG_BOOTFILE		"bzImage"
 #define CONFIG_LOADADDR		0x1000000
 #define CONFIG_RAMDISK_ADDR	0x4000000

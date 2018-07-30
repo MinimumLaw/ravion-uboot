@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Freescale i.MX6Q SabreSD board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __MX6QSABRE_COMMON_CONFIG_H
@@ -56,8 +55,6 @@
 #else
 #define EMMC_ENV ""
 #endif
-
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \

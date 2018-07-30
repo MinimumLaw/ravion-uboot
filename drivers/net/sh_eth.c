@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * sh_eth.c - Driver for Renesas ethernet controller.
  *
@@ -5,12 +6,11 @@
  * Copyright (c) 2008, 2011, 2014 2014 Nobuhiro Iwamatsu
  * Copyright (c) 2007 Carlos Munoz <carlos@kenati.com>
  * Copyright (C) 2013, 2014 Renesas Electronics Corporation
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <config.h>
 #include <common.h>
+#include <environment.h>
 #include <malloc.h>
 #include <net.h>
 #include <netdev.h>
@@ -905,7 +905,10 @@ int sh_ether_ofdata_to_platdata(struct udevice *dev)
 }
 
 static const struct udevice_id sh_ether_ids[] = {
+	{ .compatible = "renesas,ether-r8a7790" },
 	{ .compatible = "renesas,ether-r8a7791" },
+	{ .compatible = "renesas,ether-r8a7793" },
+	{ .compatible = "renesas,ether-r8a7794" },
 	{ }
 };
 

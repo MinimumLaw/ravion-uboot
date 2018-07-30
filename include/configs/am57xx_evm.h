@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2014
  * Texas Instruments Incorporated.
@@ -5,8 +6,6 @@
  *
  * Configuration settings for the TI Beagle x15 board.
  * See ti_omap5_common.h for omap5 common settings.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_AM57XX_EVM_H
@@ -78,7 +77,6 @@
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT		10
-#define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
 #define CONFIG_MII			/* Required in net/eth.c */
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs longer aneg time at 1G */
 
@@ -112,7 +110,6 @@
 
 /* SPI SPL */
 #define CONFIG_TI_EDMA3
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS     0x40000
 
 /* SPI */

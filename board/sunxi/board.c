@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2012-2013 Henrik Nordstrom <henrik@henriknordstrom.net>
  * (C) Copyright 2013 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
@@ -7,8 +8,6 @@
  * Tom Cubie <tangliang@allwinnertech.com>
  *
  * Some board init for the Allwinner A10-evb board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -286,10 +285,9 @@ static void nand_clock_setup(void)
 		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
 
 	setbits_le32(&ccm->ahb_gate0, (CLK_GATE_OPEN << AHB_GATE_OFFSET_NAND0));
-#ifdef CONFIG_MACH_SUN9I
-	setbits_le32(&ccm->ahb_gate1, (1 << AHB_GATE_OFFSET_DMA));
-#else
-	setbits_le32(&ccm->ahb_gate0, (1 << AHB_GATE_OFFSET_DMA));
+#if defined CONFIG_MACH_SUN6I || defined CONFIG_MACH_SUN8I || \
+    defined CONFIG_MACH_SUN9I || defined CONFIG_MACH_SUN50I
+	setbits_le32(&ccm->ahb_reset0_cfg, (1 << AHB_GATE_OFFSET_NAND0));
 #endif
 	setbits_le32(&ccm->nand0_clk_cfg, CCM_NAND_CTRL_ENABLE | AHB_DIV_1);
 }

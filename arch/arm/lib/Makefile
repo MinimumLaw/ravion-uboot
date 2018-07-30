@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2002-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
 
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += ashldi3.o ashrdi3.o lshrdi3.o \
 				    lib1funcs.o uldivmod.o div0.o \
@@ -41,8 +39,8 @@ obj-$(CONFIG_SPL_FRAMEWORK) += spl.o
 obj-$(CONFIG_SPL_FRAMEWORK) += zimage.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
 endif
-obj-$(CONFIG_$(SPL_)USE_ARCH_MEMSET) += memset.o
-obj-$(CONFIG_$(SPL_)USE_ARCH_MEMCPY) += memcpy.o
+obj-$(CONFIG_$(SPL_TPL_)USE_ARCH_MEMSET) += memset.o
+obj-$(CONFIG_$(SPL_TPL_)USE_ARCH_MEMCPY) += memcpy.o
 obj-$(CONFIG_SEMIHOSTING) += semihosting.o
 
 obj-y	+= sections.o

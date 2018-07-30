@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2014 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -876,6 +875,9 @@ static int decode_regions(struct pci_controller *hose, ofnode parent_node,
 #ifdef CONFIG_NR_DRAM_BANKS
 	bd_t *bd = gd->bd;
 
+	if (!bd)
+		return 0;
+
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
 		if (bd->bi_dram[i].size) {
 			pci_set_region(hose->regions + hose->region_count++,
@@ -894,8 +896,9 @@ static int decode_regions(struct pci_controller *hose, ofnode parent_node,
 #endif
 	if (gd->pci_ram_top && gd->pci_ram_top < base + size)
 		size = gd->pci_ram_top - base;
-	pci_set_region(hose->regions + hose->region_count++, base, base,
-		       size, PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
+	if (size)
+		pci_set_region(hose->regions + hose->region_count++, base,
+			base, size, PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
 #endif
 
 	return 0;

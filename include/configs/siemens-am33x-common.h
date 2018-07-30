@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * siemens am33x common board options
  * (C) Copyright 2013 Siemens Schweiz AG
@@ -7,8 +8,6 @@
  * U-Boot file:/include/configs/am335x_evm.h
  *
  * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_SIEMENS_AM33X_COMMON_H
@@ -62,7 +61,6 @@
 
 #define CONFIG_SYS_LOAD_ADDR		0x81000000 /* Default load address */
 
-#define CONFIG_SPI
 #define CONFIG_MTD_DEVICE
 #define CONFIG_SF_DEFAULT_SPEED		(75000000)
 
@@ -87,7 +85,6 @@
 #define CONFIG_SYS_NS16550_COM4		0x481a6000
 
 #define CONFIG_SERIAL1                  1
-#define CONFIG_CONS_INDEX               1
 
 /* I2C Configuration */
 #define CONFIG_I2C
@@ -104,7 +101,6 @@
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"
 
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 
 #define CONFIG_SPL_NAND_BASE
@@ -193,7 +189,6 @@
 # define CONFIG_ENV_SECT_SIZE		(4 << 10) /* 4 KB sectors */
 #endif /* SPI support */
 
-#define CONFIG_DRIVER_TI_CPSW
 #define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_DNS2

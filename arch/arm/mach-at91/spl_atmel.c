@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Atmel Corporation
  *		      Bo Shen <voice.shen@atmel.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -14,8 +13,6 @@
 #include <asm/arch/at91_wdt.h>
 #include <asm/arch/clk.h>
 #include <spl.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 static void switch_to_main_crystal_osc(void)
 {

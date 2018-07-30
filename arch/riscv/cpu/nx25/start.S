@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Startup Code for RISC-V Core
  *
@@ -6,8 +7,6 @@
  *
  * Copyright (C) 2017 Andes Technology Corporation
  * Rick Chen, Andes Technology Corporation <rick@andestech.com>
- *
- * SPDX-License-Identifier: GPL-2.0+
  */
 
 #include <asm-offsets.h>
@@ -45,6 +44,8 @@ trap_vector:
 
 .global trap_entry
 handle_reset:
+	li t0, CONFIG_SYS_SDRAM_BASE
+	SREG a2, 0(t0)
 	la t0, trap_entry
 	csrw mtvec, t0
 	csrwi mstatus, 0

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
  * (C) Copyright 2002-2006
@@ -6,8 +7,6 @@
  * (C) Copyright 2002
  * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Marius Groeger <mgroeger@sysgo.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -18,7 +17,6 @@
 #include <fs.h>
 #include <i2c.h>
 #include <initcall.h>
-#include <init_helpers.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <os.h>
@@ -489,7 +487,7 @@ static int reserve_bootstage(void)
 	return 0;
 }
 
-int arch_reserve_stacks(void)
+__weak int arch_reserve_stacks(void)
 {
 	return 0;
 }
@@ -901,7 +899,8 @@ void board_init_f(ulong boot_flags)
 		hang();
 
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
-		!defined(CONFIG_EFI_APP) && !CONFIG_IS_ENABLED(X86_64)
+		!defined(CONFIG_EFI_APP) && !CONFIG_IS_ENABLED(X86_64) && \
+		!defined(CONFIG_ARC)
 	/* NOTREACHED - jump_to_copy() does not return */
 	hang();
 #endif

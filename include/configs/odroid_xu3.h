@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2013 Samsung Electronics
  * Hyungwon Hwang <human.hwang@samsung.com>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __CONFIG_ODROID_XU3_H
@@ -88,7 +87,6 @@
 #define CONFIG_SET_DFU_ALT_BUF_LEN	(SZ_1K)
 
 /* Set soc_rev, soc_id, board_rev, boardname, fdtfile */
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_ODROID_REV_AIN			9
 #define CONFIG_REVISION_TAG
 #define CONFIG_BOARD_TYPES

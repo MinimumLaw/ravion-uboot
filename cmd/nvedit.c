@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2000-2013
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
@@ -6,8 +7,6 @@
  * Andreas Heppel <aheppel@sysgo.de>
  *
  * Copyright 2011 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -339,6 +338,36 @@ ulong env_get_hex(const char *varname, ulong default_val)
 		return default_val;
 
 	return value;
+}
+
+void eth_parse_enetaddr(const char *addr, uint8_t *enetaddr)
+{
+	char *end;
+	int i;
+
+	for (i = 0; i < 6; ++i) {
+		enetaddr[i] = addr ? simple_strtoul(addr, &end, 16) : 0;
+		if (addr)
+			addr = (*end) ? end + 1 : end;
+	}
+}
+
+int eth_env_get_enetaddr(const char *name, uint8_t *enetaddr)
+{
+	eth_parse_enetaddr(env_get(name), enetaddr);
+	return is_valid_ethaddr(enetaddr);
+}
+
+int eth_env_set_enetaddr(const char *name, const uint8_t *enetaddr)
+{
+	char buf[ARP_HLEN_ASCII + 1];
+
+	if (eth_env_get_enetaddr(name, (uint8_t *)buf))
+		return -EEXIST;
+
+	sprintf(buf, "%pM", enetaddr);
+
+	return env_set(name, buf);
 }
 
 #ifndef CONFIG_SPL_BUILD

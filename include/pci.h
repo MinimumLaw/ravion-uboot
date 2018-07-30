@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Andreas Heppel <aheppel@sysgo.de>
  *
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _PCI_H
@@ -585,8 +584,6 @@ struct pci_controller {
 	/* Used by auto config */
 	struct pci_region *pci_mem, *pci_io, *pci_prefetch;
 
-	/* Used by ppc405 autoconfig*/
-	struct pci_region *pci_fb;
 #ifndef CONFIG_DM_PCI
 	int current_busno;
 

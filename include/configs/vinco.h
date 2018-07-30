@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuration settings for the VInCo platform.
  *
@@ -6,8 +7,6 @@
  *		      Bo Shen <voice.shen@atmel.com>
  * Copyright (C) 2015 Free Electrons
  *		      Gregory CLEMENT gregory.clement@free-electrons.com
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -38,7 +37,6 @@
 /* SerialFlash */
 
 #ifdef CONFIG_CMD_SF
-#define CONFIG_ATMEL_SPI
 #define CONFIG_ATMEL_SPI0
 #define CONFIG_SPI_FLASH_STMICRO
 #define CONFIG_SF_DEFAULT_BUS		0

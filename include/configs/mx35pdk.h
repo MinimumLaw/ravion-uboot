@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2010, Stefano Babic <sbabic@denx.de>
  *
@@ -6,8 +7,6 @@
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
  * Configuration for the MX35pdk Freescale board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -65,7 +64,6 @@
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX	1
 
 /*
  * Command definition
@@ -181,7 +179,6 @@
 #define CONFIG_MXC_USB_PORTSC	(MXC_EHCI_UTMI_16BIT | MXC_EHCI_MODE_UTMI)
 
 /* mmc driver */
-#define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
@@ -209,9 +206,9 @@
 	"addmisc=setenv bootargs ${bootargs} ${misc}\0"			\
 	"loadaddr=80800000\0"						\
 	"kernel_addr_r=80800000\0"					\
-	"hostname=" __stringify(CONFIG_HOSTNAME) "\0"			\
-	"bootfile=" __stringify(CONFIG_HOSTNAME) "/uImage\0"		\
-	"ramdisk_file=" __stringify(CONFIG_HOSTNAME) "/uRamdisk\0"	\
+	"hostname=" CONFIG_HOSTNAME "\0"			\
+	"bootfile=" CONFIG_HOSTNAME "/uImage\0"		\
+	"ramdisk_file=" CONFIG_HOSTNAME "/uRamdisk\0"	\
 	"flash_self=run ramargs addip addtty addmtd addmisc;"		\
 		"bootm ${kernel_addr} ${ramdisk_addr}\0"		\
 	"flash_nfs=run nfsargs addip addtty addmtd addmisc;"		\
@@ -221,7 +218,7 @@
 		"bootm ${kernel_addr_r}\0"				\
 	"net_self_load=tftp ${kernel_addr_r} ${bootfile};"		\
 		"tftp ${ramdisk_addr_r} ${ramdisk_file};\0"		\
-	"u-boot=" __stringify(CONFIG_HOSTNAME) "/u-boot.bin\0"		\
+	"u-boot=" CONFIG_HOSTNAME "/u-boot.bin\0"		\
 	"load=tftp ${loadaddr} ${u-boot}\0"				\
 	"uboot_addr=" __stringify(CONFIG_SYS_MONITOR_BASE) "\0"		\
 	"update=protect off ${uboot_addr} +80000;"			\

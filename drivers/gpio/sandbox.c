@@ -1,6 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -10,8 +10,6 @@
 #include <asm/gpio.h>
 #include <dm/of.h>
 #include <dt-bindings/gpio/gpio.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /* Flags for each GPIO */
 #define GPIOF_OUTPUT	(1 << 0)	/* Currently set as an output */

@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) Copyright 2015 Google, Inc
  * Copyright 2014 Rockchip Inc.
- *
- * SPDX-License-Identifier:     GPL-2.0
  *
  * Adapted from coreboot.
  */
@@ -26,8 +25,6 @@
 #include <linux/err.h>
 #include <power/regulator.h>
 #include <power/rk8xx_pmic.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 struct chan_info {
 	struct rk3288_ddr_pctl *pctl;

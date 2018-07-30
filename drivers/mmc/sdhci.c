@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2011, Marvell Semiconductor Inc.
  * Lei Wen <leiwen@marvell.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * Back ported to the 8xx platform (from the 8260 platform) by
  * Murray.Jensen@cmst.csiro.au, 27-Jan-01.
@@ -462,7 +461,8 @@ static int sdhci_set_ios(struct mmc *mmc)
 	else
 		ctrl &= ~SDHCI_CTRL_HISPD;
 
-	if (host->quirks & SDHCI_QUIRK_NO_HISPD_BIT)
+	if ((host->quirks & SDHCI_QUIRK_NO_HISPD_BIT) ||
+	    (host->quirks & SDHCI_QUIRK_BROKEN_HISPD_MODE))
 		ctrl &= ~SDHCI_CTRL_HISPD;
 
 	sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
@@ -600,6 +600,11 @@ int sdhci_setup_cfg(struct mmc_config *cfg, struct sdhci_host *host,
 	if (SDHCI_GET_VERSION(host) >= SDHCI_SPEC_300) {
 		if (!(caps & SDHCI_CAN_DO_8BIT))
 			cfg->host_caps &= ~MMC_MODE_8BIT;
+	}
+
+	if (host->quirks & SDHCI_QUIRK_BROKEN_HISPD_MODE) {
+		cfg->host_caps &= ~MMC_MODE_HS;
+		cfg->host_caps &= ~MMC_MODE_HS_52MHz;
 	}
 
 	if (host->host_caps)

@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2009-2015
  * Marvell Semiconductor <www.marvell.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CONFIG_MARVELL_PLUG_H
@@ -44,7 +43,5 @@
 #ifdef CONFIG_CMD_DATE
 #define CONFIG_RTC_MV
 #endif /* CONFIG_CMD_DATE */
-
-#define CONFIG_SYS_ALT_MEMTEST
 
 #endif /* _CONFIG_MARVELL_PLUG_H */

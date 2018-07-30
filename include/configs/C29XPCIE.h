@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2013 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -89,7 +88,6 @@
 #define CONFIG_PCI_SCAN_SHOW		/* show pci devices on startup */
 #endif
 
-#define CONFIG_TSEC_ENET
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_DDR_CLK_FREQ	100000000
@@ -283,8 +281,6 @@
 #define CONFIG_SYS_EXTRA_ENV_RELOC
 #endif
 
-#define CONFIG_BOARD_EARLY_INIT_R
-
 #define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xffd00000
 #define CONFIG_SYS_INIT_RAM_SIZE	0x00004000
@@ -334,7 +330,6 @@
 #endif
 
 /* Serial Port */
-#define CONFIG_CONS_INDEX	1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)

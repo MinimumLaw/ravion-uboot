@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuation settings for the WB50N CPU Module.
- *
- * SPDX-License-Identifier: GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -22,9 +21,6 @@
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #endif
-
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-#define CONFIG_IMAGE_FORMAT_LEGACY
 
 /* general purpose I/O */
 #define CONFIG_AT91_GPIO
@@ -53,7 +49,6 @@
 
 #define CONFIG_SYS_MEMTEST_START    0x21000000
 #define CONFIG_SYS_MEMTEST_END      0x22000000
-#define CONFIG_SYS_ALT_MEMTEST
 
 /* NAND flash */
 #define CONFIG_NAND_ATMEL

@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2008
  * Benjamin Warren, biggerbadderben@gmail.com
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -39,8 +38,6 @@ int dm9000_initialize(bd_t *bis);
 int dnet_eth_initialize(int id, void *regs, unsigned int phy_addr);
 int e1000_initialize(bd_t *bis);
 int eepro100_initialize(bd_t *bis);
-int enc28j60_initialize(unsigned int bus, unsigned int cs,
-	unsigned int max_hz, unsigned int mode);
 int ep93xx_eth_initialize(u8 dev_num, int base_addr);
 int eth_3com_initialize (bd_t * bis);
 int ethoc_initialize(u8 dev_num, int base_addr);
@@ -119,11 +116,7 @@ static inline int pci_eth_init(bd_t *bis)
 	return num;
 }
 
-#ifdef CONFIG_DM_ETH
-struct mii_dev *fec_get_miibus(struct udevice *dev, int dev_id);
-#else
-struct mii_dev *fec_get_miibus(uint32_t base_addr, int dev_id);
-#endif
+struct mii_dev *fec_get_miibus(ulong base_addr, int dev_id);
 
 #ifdef CONFIG_PHYLIB
 struct phy_device;

@@ -205,7 +205,6 @@
 /*
  * Serial Port
  */
-#define CONFIG_CONS_INDEX	1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -449,7 +448,7 @@
 
 #define CONFIG_NETDEV		"eth1"
 
-#define CONFIG_HOSTNAME		mpc8323erdb
+#define CONFIG_HOSTNAME		"mpc8323erdb"
 #define CONFIG_ROOTPATH		"/nfsroot"
 #define CONFIG_BOOTFILE		"uImage"
 				/* U-Boot image on TFTP server */

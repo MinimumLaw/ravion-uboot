@@ -152,7 +152,6 @@ config ENV_IS_IN_MMC
 	bool "Environment in an MMC device"
 	depends on !CHAIN_OF_TRUST
 	depends on MMC
-	default y if ARCH_SUNXI
 	default y if ARCH_EXYNOS4
 	default y if MX6SX || MX7D
 	default y if TEGRA30 || TEGRA124
@@ -360,12 +359,6 @@ config ENV_IS_IN_UBI
 	  the environment in.  This will enable redundant environments in UBI.
 	  It is assumed that both volumes are in the same MTD partition.
 
-	  - CONFIG_UBI_SILENCE_MSG
-	  - CONFIG_UBIFS_SILENCE_MSG
-
-	  You will probably want to define these to avoid a really noisy system
-	  when storing the env in UBI.
-
 config ENV_FAT_INTERFACE
 	string "Name of the block device for the environment"
 	depends on ENV_IS_IN_FAT
@@ -485,5 +478,30 @@ config ENV_SIZE
 	  Size of the environment storage area
 
 endif
+
+config USE_DEFAULT_ENV_FILE
+	bool "Create default environment from file"
+	help
+	  Normally, the default environment is automatically generated
+	  based on the settings of various CONFIG_* options, as well
+	  as the CONFIG_EXTRA_ENV_SETTINGS. By selecting this option,
+	  you can instead define the entire default environment in an
+	  external file.
+
+config DEFAULT_ENV_FILE
+	string "Path to default environment file"
+	depends on USE_DEFAULT_ENV_FILE
+	help
+	  The path containing the default environment. The format is
+	  the same as accepted by the mkenvimage tool: lines
+	  containing key=value pairs, blank lines and lines beginning
+	  with # are ignored.
+
+config ENV_VARS_UBOOT_RUNTIME_CONFIG
+	bool "Add run-time information to the environment"
+	help
+	  Enable this in order to add variables describing certain
+	  run-time determined information about the hardware to the
+	  environment.  These will be named board_name, board_rev.
 
 endmenu

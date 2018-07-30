@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2015 Technexion Ltd.
  *
  * Configuration settings for the Technexion PICO-IMX6UL-EMMC board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef __PICO_IMX6UL_CONFIG_H
 #define __PICO_IMX6UL_CONFIG_H
@@ -30,7 +29,6 @@
 
 /* MMC Configs */
 #define CONFIG_FSL_USDHC
-#define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC1_BASE_ADDR
 #define CONFIG_SUPPORT_EMMC_BOOT
 

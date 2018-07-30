@@ -1,13 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Display driver for Allwinner SoCs.
  *
  * (C) Copyright 2013-2014 Luc Verhaegen <libv@skynet.be>
  * (C) Copyright 2014-2015 Hans de Goede <hdegoede@redhat.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
+#include <efi_loader.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/display.h>
@@ -1206,6 +1206,13 @@ void *video_hw_init(void)
 	gd->fb_base = gd->bd->bi_dram[0].start +
 		      gd->bd->bi_dram[0].size - sunxi_display.fb_size;
 	sunxi_engines_init();
+
+#ifdef CONFIG_EFI_LOADER
+	efi_add_memory_map(gd->fb_base,
+			   ALIGN(sunxi_display.fb_size, EFI_PAGE_SIZE) >>
+			   EFI_PAGE_SHIFT,
+			   EFI_RESERVED_MEMORY_TYPE, false);
+#endif
 
 	fb_dma_addr = gd->fb_base - CONFIG_SYS_SDRAM_BASE;
 	sunxi_display.fb_addr = gd->fb_base;

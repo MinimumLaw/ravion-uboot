@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Jagan Teki <jteki@openedev.com>
  *		      Christophe Ricard <christophe.ricard@gmail.com>
@@ -13,8 +14,6 @@
  * Copyright (C) 2005, 2006 Nokia Corporation
  *
  * Modified by Ruslan Araslanov <ruslan.araslanov@vitecmm.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -456,9 +455,6 @@ static void _omap3_spi_claim_bus(struct omap3_spi_priv *priv)
 	conf |= OMAP3_MCSPI_MODULCTRL_SINGLE;
 
 	writel(conf, &priv->regs->modulctrl);
-
-	_omap3_spi_set_mode(priv);
-	_omap3_spi_set_speed(priv);
 }
 
 #ifndef CONFIG_DM_SPI
@@ -594,8 +590,6 @@ static int omap3_spi_claim_bus(struct udevice *dev)
 	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
 
 	priv->cs = slave_plat->cs;
-	priv->mode = slave_plat->mode;
-	priv->freq = slave_plat->max_hz;
 	_omap3_spi_claim_bus(priv);
 
 	return 0;
@@ -635,8 +629,10 @@ static int omap3_spi_probe(struct udevice *dev)
 		(struct omap2_mcspi_platform_config*)dev_get_driver_data(dev);
 
 	priv->regs = (struct mcspi *)(devfdt_get_addr(dev) + data->regs_offset);
-	priv->pin_dir = fdtdec_get_uint(blob, node, "ti,pindir-d0-out-d1-in",
-					    MCSPI_PINDIR_D0_IN_D1_OUT);
+	if (fdtdec_get_bool(blob, node, "ti,pindir-d0-out-d1-in"))
+		priv->pin_dir = MCSPI_PINDIR_D0_OUT_D1_IN;
+	else
+		priv->pin_dir = MCSPI_PINDIR_D0_IN_D1_OUT;
 	priv->wordlen = SPI_DEFAULT_WORDLEN;
 	return 0;
 }
@@ -650,13 +646,29 @@ static int omap3_spi_xfer(struct udevice *dev, unsigned int bitlen,
 	return _spi_xfer(priv, bitlen, dout, din, flags);
 }
 
-static int omap3_spi_set_speed(struct udevice *bus, unsigned int speed)
+static int omap3_spi_set_speed(struct udevice *dev, unsigned int speed)
 {
+	struct udevice *bus = dev->parent;
+	struct omap3_spi_priv *priv = dev_get_priv(bus);
+	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
+
+	priv->cs = slave_plat->cs;
+	priv->freq = slave_plat->max_hz;
+	_omap3_spi_set_speed(priv);
+
 	return 0;
 }
 
-static int omap3_spi_set_mode(struct udevice *bus, uint mode)
+static int omap3_spi_set_mode(struct udevice *dev, uint mode)
 {
+	struct udevice *bus = dev->parent;
+	struct omap3_spi_priv *priv = dev_get_priv(bus);
+	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
+
+	priv->cs = slave_plat->cs;
+	priv->mode = slave_plat->mode;
+	_omap3_spi_set_mode(priv);
+
 	return 0;
 }
 

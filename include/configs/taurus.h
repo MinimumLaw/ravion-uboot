@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Common board functions for Siemens TAURUS (AT91SAM9G20) based boards
  * (C) Copyright 2013 Siemens AG
@@ -8,8 +9,6 @@
  * (C) Copyright 2007-2008
  * Stelian Pop <stelian@popies.net>
  * Lead Tech Design <www.leadtechdesign.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -117,14 +116,11 @@
 #endif
 
 /* SPI EEPROM */
-#define CONFIG_SPI
-#define CONFIG_ATMEL_SPI
 #define TAURUS_SPI_MASK (1 << 4)
 #define TAURUS_SPI_CS_PIN	AT91_PIN_PA3
 
 #if defined(CONFIG_SPL_BUILD)
 /* SPL related */
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 
 #define CONFIG_SF_DEFAULT_BUS 0

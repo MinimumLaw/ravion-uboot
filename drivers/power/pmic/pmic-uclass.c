@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2014-2015 Samsung Electronics
  * Przemyslaw Marczak <p.marczak@samsung.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -15,8 +14,6 @@
 #include <dm/uclass-internal.h>
 #include <power/pmic.h>
 #include <linux/ctype.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #if CONFIG_IS_ENABLED(PMIC_CHILDREN)
 int pmic_bind_children(struct udevice *pmic, ofnode parent,

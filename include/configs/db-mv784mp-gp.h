@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2014-2015 Stefan Roese <sr@denx.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CONFIG_DB_MV7846MP_GP_H
@@ -11,8 +10,6 @@
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_DB_784MP_GP		/* Board target name for DDR training */
-
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 
 /*
  * TEXT_BASE needs to be below 16MiB, since this area is scrubbed
@@ -43,8 +40,6 @@
 
 #define CONFIG_PHY_MARVELL		/* there is a marvell phy */
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs a longer aneg time */
-
-#define CONFIG_SYS_ALT_MEMTEST
 
 /* SATA support */
 #define CONFIG_SYS_SATA_MAX_DEVICE	2
@@ -95,7 +90,6 @@
 #define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
 
 /* SPL related SPI defines */
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 #define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
 

@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2016 Xilinx, Inc.
  *
  * Xilinx Zynq NAND Flash Controller Driver
  * This driver is based on plat_nand.c and mxc_nand.c drivers
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -1006,7 +1005,7 @@ static int zynq_nand_device_ready(struct mtd_info *mtd)
 	return 0;
 }
 
-int zynq_nand_init(struct nand_chip *nand_chip, int devnum)
+static int zynq_nand_init(struct nand_chip *nand_chip, int devnum)
 {
 	struct zynq_nand_info *xnand;
 	struct mtd_info *mtd;
@@ -1025,7 +1024,7 @@ int zynq_nand_init(struct nand_chip *nand_chip, int devnum)
 	}
 
 	xnand->nand_base = (void __iomem *)ZYNQ_NAND_BASEADDR;
-	mtd = get_nand_dev_by_index(0);
+	mtd = nand_to_mtd(nand_chip);
 
 	nand_chip->priv = xnand;
 	mtd->priv = nand_chip;
@@ -1192,14 +1191,12 @@ fail:
 	return err;
 }
 
-#ifdef CONFIG_SYS_NAND_SELF_INIT
 static struct nand_chip nand_chip[CONFIG_SYS_MAX_NAND_DEVICE];
 
-void __weak board_nand_init(void)
+void board_nand_init(void)
 {
 	struct nand_chip *nand = &nand_chip[0];
 
 	if (zynq_nand_init(nand, 0))
 		puts("ZYNQ NAND init failed\n");
 }
-#endif

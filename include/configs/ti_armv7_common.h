@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * ti_armv7_common.h
  *
  * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
- *
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * The various ARMv7 SoCs from TI all share a number of IP blocks when
  * implementing a given feature.  Rather than define these in every
@@ -97,11 +96,6 @@
  */
 #define CONFIG_DM_I2C_COMPAT
 #endif
-
-/* McSPI IP block */
-#define CONFIG_SPI
-
-/* GPIO block */
 
 /*
  * The following are general good-enough settings for U-Boot.  We set a

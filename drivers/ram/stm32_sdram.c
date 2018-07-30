@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
  * Author(s): Vikas Manocha, <vikas.manocha@st.com> for STMicroelectronics.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -13,8 +12,6 @@
 
 #define MEM_MODE_MASK	GENMASK(2, 0)
 #define NOT_FOUND	0xff
-
-DECLARE_GLOBAL_DATA_PTR;
 
 struct stm32_fmc_regs {
 	/* 0x0 */

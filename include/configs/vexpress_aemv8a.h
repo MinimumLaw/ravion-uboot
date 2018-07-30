@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuration for Versatile Express. Parts were derived from other ARM
  *   configurations.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __VEXPRESS_AEMV8A_H
@@ -105,7 +104,6 @@
 #endif
 
 /* PL011 Serial Configuration */
-#define CONFIG_CONS_INDEX		0
 #ifdef CONFIG_TARGET_VEXPRESS64_JUNO
 #define CONFIG_PL011_CLOCK		7273800
 #else

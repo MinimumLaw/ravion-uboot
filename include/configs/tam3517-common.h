@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2011
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
  *
  * Copyright (C) 2009 TechNexion Ltd.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __TAM3517_H
@@ -53,7 +52,6 @@
 /*
  * select serial console configuration
  */
-#define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_COM1		OMAP34XX_UART1
 #define CONFIG_SERIAL1			/* UART1 */
 
@@ -215,8 +213,8 @@
 	"addmisc=setenv bootargs ${bootargs} ${misc}\0"			\
 	"loadaddr=82000000\0"						\
 	"kernel_addr_r=82000000\0"					\
-	"hostname=" __stringify(CONFIG_HOSTNAME) "\0"			\
-	"bootfile=" __stringify(CONFIG_HOSTNAME) "/uImage\0"		\
+	"hostname=" CONFIG_HOSTNAME "\0"			\
+	"bootfile=" CONFIG_HOSTNAME "/uImage\0"		\
 	"flash_self=run ramargs addip addtty addmtd addmisc;"		\
 		"bootm ${kernel_addr} ${ramdisk_addr}\0"		\
 	"flash_nfs=run nfsargs addip addtty addmtd addmisc;"		\
@@ -231,10 +229,10 @@
 		"run ramargs addip addtty addmtd addmisc;"		\
 		"bootm ${kernel_addr_r} ${ramdisk_addr_r};"		\
 		"else echo Images not loades;fi\0"			\
-	"u-boot=" __stringify(CONFIG_HOSTNAME) "/u-boot.img\0"		\
+	"u-boot=" CONFIG_HOSTNAME "/u-boot.img\0"		\
 	"load=tftp ${loadaddr} ${u-boot}\0"				\
 	"loadmlo=tftp ${loadaddr} ${mlo}\0"				\
-	"mlo=" __stringify(CONFIG_HOSTNAME) "/MLO\0"			\
+	"mlo=" CONFIG_HOSTNAME "/MLO\0"			\
 	"uboot_addr=0x80000\0"						\
 	"update=nandecc sw;nand erase ${uboot_addr} 100000;"		\
 		"nand write ${loadaddr} ${uboot_addr} 80000\0"		\

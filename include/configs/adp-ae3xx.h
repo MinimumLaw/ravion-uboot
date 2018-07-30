@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2011 Andes Technology Corporation
  * Shawn Lin, Andes Technology Corporation <nobuhiro@andestech.com>
  * Macpaul Lin, Andes Technology Corporation <macpaul@andestech.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -73,19 +72,12 @@
  */
 
 /* FTUART is a high speed NS 16C550A compatible UART, addr: 0x99600000 */
-#define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_COM1		CONFIG_FTUART010_02_BASE
 #ifndef CONFIG_DM_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	-4
 #endif
 #define CONFIG_SYS_NS16550_CLK		((18432000 * 20) / 25)	/* AG101P */
-
-/*
- * SD (MMC) controller
- */
-#define CONFIG_FTSDC010_NUMBER		1
-#define CONFIG_FTSDC010_SDIO
 
 /*
  * Miscellaneous configurable options

@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Bluewater Systems Snapper 9G45 module
  *
  * (C) Copyright 2011 Bluewater Systems
  *   Author: Andre Renaud <andre@bluewatersys.com>
  *   Author: Ryan Mallon <ryan@bluewatersys.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -63,8 +62,6 @@
 /* LCD */
 #define CONFIG_ATMEL_LCD
 #define CONFIG_GURNARD_SPLASH
-
-#define CONFIG_ATMEL_SPI
 
 /* GPIOs and IO expander */
 #define CONFIG_ATMEL_LEGACY

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2011 Freescale Semiconductor, Inc.
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
@@ -5,8 +6,6 @@
  * Based on m28evk.h:
  * Copyright (C) 2011 Marek Vasut <marek.vasut@gmail.com>
  * on behalf of DENX Software Engineering GmbH
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef __CONFIGS_MX28EVK_H__
 #define __CONFIGS_MX28EVK_H__
@@ -65,6 +64,7 @@
 /* FEC Ethernet on SoC */
 #ifdef	CONFIG_CMD_NET
 #define CONFIG_FEC_MXC
+#define CONFIG_FEC_MXC_MDIO_BASE MXS_ENET0_BASE
 #define CONFIG_MX28_FEC_MAC_IN_OCOTP
 #endif
 

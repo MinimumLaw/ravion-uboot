@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2016-2017 Intel Corporation
- *
- * SPDX-License-Identifier:    GPL-2.0
  */
 
 #include <common.h>
@@ -9,8 +8,6 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <asm/arch/clock_manager.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 static u32 eosc1_hz;
 static u32 cb_intosc_hz;

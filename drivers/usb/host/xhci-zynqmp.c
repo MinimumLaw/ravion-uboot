@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2015 Xilinx, Inc.
  *
@@ -6,8 +7,6 @@
  * Author: Siva Durga Prasad Paladugu<sivadur@xilinx.com>
  *
  * This file was reused from Freescale USB xHCI
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -19,8 +18,6 @@
 #include "xhci.h"
 
 /* Declare global data pointer */
-DECLARE_GLOBAL_DATA_PTR;
-
 /* Default to the ZYNQMP XHCI defines */
 #define USB3_PWRCTL_CLK_CMD_MASK	0x3FE000
 #define USB3_PWRCTL_CLK_FREQ_MASK	0xFFC

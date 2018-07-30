@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2014 Stefan Roese <sr@denx.de>
  * Copyright (C) 2016 Mario Six <mario.six@gdsys.cc>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CONFIG_CONTROLCENTERDC_H
@@ -14,9 +13,7 @@
 #define CONFIG_CUSTOMER_BOARD_SUPPORT
 
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 #define CONFIG_BOARD_LATE_INIT
-#define CONFIG_LAST_STAGE_INIT
 
 /*
  * TEXT_BASE needs to be below 16MiB, since this area is scrubbed
@@ -73,8 +70,6 @@
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 
-#define CONFIG_SYS_ALT_MEMTEST
-
 /*
  * Software (bit-bang) MII driver configuration
  */
@@ -116,12 +111,10 @@
 
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 #define CONFIG_SPL_LIBGENERIC_SUPPORT
-#define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_I2C_SUPPORT
 
 #if CONFIG_SPL_BOOT_DEVICE == SPL_BOOT_SPI_NOR_FLASH
 /* SPL related SPI defines */
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x30000
 #define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
 #endif
@@ -145,7 +138,7 @@
 
 #define CONFIG_BAUDRATE 115200
 
-#define CONFIG_HOSTNAME		ccdc
+#define CONFIG_HOSTNAME		"ccdc"
 #define CONFIG_ROOTPATH		"/opt/nfsroot"
 #define CONFIG_BOOTFILE		"ccdc.img"
 

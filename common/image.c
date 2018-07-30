@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2008 Semihalf
  *
  * (C) Copyright 2000-2006
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef USE_HOSTCC
@@ -86,6 +85,7 @@ static const table_entry_t uimage_arch[] = {
 	{	IH_ARCH_ARC,		"arc",		"ARC",		},
 	{	IH_ARCH_X86_64,		"x86_64",	"AMD x86_64",	},
 	{	IH_ARCH_XTENSA,		"xtensa",	"Xtensa",	},
+	{	IH_ARCH_RISCV,		"riscv",	"RISC-V",	},
 	{	-1,			"",		"",		},
 };
 
@@ -100,6 +100,7 @@ static const table_entry_t uimage_os[] = {
 	{	IH_OS_OSE,	"ose",		"Enea OSE",		},
 	{	IH_OS_PLAN9,	"plan9",	"Plan 9",		},
 	{	IH_OS_RTEMS,	"rtems",	"RTEMS",		},
+	{	IH_OS_TEE,	"tee",		"Trusted Execution Environment" },
 	{	IH_OS_U_BOOT,	"u-boot",	"U-Boot",		},
 	{	IH_OS_VXWORKS,	"vxworks",	"VxWorks",		},
 #if defined(CONFIG_CMD_ELF) || defined(USE_HOSTCC)
@@ -161,6 +162,7 @@ static const table_entry_t uimage_type[] = {
 	{       IH_TYPE_TEE,        "tee",        "Trusted Execution Environment Image",},
 	{	IH_TYPE_FIRMWARE_IVT, "firmware_ivt", "Firmware with HABv4 IVT" },
 	{       IH_TYPE_PMMC,        "pmmc",        "TI Power Management Micro-Controller Firmware",},
+	{	IH_TYPE_STM32IMAGE, "stm32image", "STMicroelectronics STM32 Image" },
 	{	-1,		    "",		  "",			},
 };
 

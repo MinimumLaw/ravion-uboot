@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2011, Marvell Semiconductor Inc.
  * Lei Wen <leiwen@marvell.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * Back ported to the 8xx platform (from the 8260 platform) by
  * Murray.Jensen@cmst.csiro.au, 27-Jan-01.
@@ -213,6 +212,12 @@
 #define SDHCI_QUIRK_BROKEN_R1B		(1 << 2)
 #define SDHCI_QUIRK_NO_HISPD_BIT	(1 << 3)
 #define SDHCI_QUIRK_BROKEN_VOLTAGE	(1 << 4)
+/*
+ * SDHCI_QUIRK_BROKEN_HISPD_MODE
+ * the hardware cannot operate correctly in high-speed mode,
+ * this quirk forces the sdhci host-controller to non high-speed mode
+ */
+#define SDHCI_QUIRK_BROKEN_HISPD_MODE	BIT(5)
 #define SDHCI_QUIRK_WAIT_SEND_CMD	(1 << 6)
 #define SDHCI_QUIRK_USE_WIDE8		(1 << 8)
 

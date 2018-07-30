@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015-2016 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:     GPL-2.0+
  *
  * Configuration settings for the Freescale S32V234 EVB board.
  */
@@ -12,7 +11,6 @@
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_S32V234
-#define CONFIG_DM
 
 /* Config GIC */
 #define CONFIG_GICV2
@@ -58,8 +56,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
 #endif
 
-#define CONFIG_DM_SERIAL
-#define CONFIG_FSL_LINFLEXUART
 #define LINFLEXUART_BASE		LINFLEXD0_BASE_ADDR
 
 #define CONFIG_DEBUG_UART_LINFLEXUART
@@ -69,7 +65,6 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_UART_PORT		(1)
 
-#define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
@@ -156,7 +151,6 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"=> "
 
-#define CONFIG_CMD_MEMTEST
 #define CONFIG_SYS_MEMTEST_START	(DDR_BASE_ADDR)
 #define CONFIG_SYS_MEMTEST_END		(DDR_BASE_ADDR + 0x7C00000)
 

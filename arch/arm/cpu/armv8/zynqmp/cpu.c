@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2014 - 2015 Xilinx, Inc.
  * Michal Simek <michal.simek@xilinx.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -185,7 +184,7 @@ void zynqmp_pmufw_version(void)
 	       pm_api_version >> ZYNQMP_PM_VERSION_MAJOR_SHIFT,
 	       pm_api_version & ZYNQMP_PM_VERSION_MINOR_MASK);
 
-	if (pm_api_version != ZYNQMP_PM_VERSION)
+	if (pm_api_version < ZYNQMP_PM_VERSION)
 		panic("PMUFW version error. Expected: v%d.%d\n",
 		      ZYNQMP_PM_VERSION_MAJOR, ZYNQMP_PM_VERSION_MINOR);
 }

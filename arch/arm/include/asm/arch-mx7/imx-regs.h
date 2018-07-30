@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc. All Rights Reserved.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __ASM_ARCH_MX7_IMX_REGS_H__
@@ -263,6 +262,8 @@ struct src {
 	u32 reserved5[985];
 	u32 ddrc_rcr;
 };
+
+#define src_base ((struct src *)SRC_BASE_ADDR)
 
 #define SRC_M4_REG_OFFSET		0xC
 #define SRC_M4C_NON_SCLR_RST_OFFSET	0

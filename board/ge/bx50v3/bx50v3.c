@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2015 Timesys Corporation
  * Copyright 2015 General Electric Company
  * Copyright 2012 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <asm/arch/clock.h>
@@ -786,23 +785,6 @@ int board_late_init(void)
 	add_board_boot_modes(board_boot_modes);
 #endif
 
-#ifdef CONFIG_VIDEO_IPUV3
-	/* We need at least 200ms between power on and backlight on
-	 * as per specifications from CHI MEI */
-	mdelay(250);
-
-	/* enable backlight PWM 1 */
-	pwm_init(0, 0, 0);
-
-	/* duty cycle 5000000ns, period: 5000000ns */
-	pwm_config(0, 5000000, 5000000);
-
-	/* Backlight Power */
-	gpio_direction_output(LVDS_BACKLIGHT_GP, 1);
-
-	pwm_enable(0);
-#endif
-
 	/* board specific pmic init */
 	pmic_init();
 
@@ -843,3 +825,31 @@ int checkboard(void)
 	printf("BOARD: %s\n", CONFIG_BOARD_NAME);
 	return 0;
 }
+
+static int do_backlight_enable(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+#ifdef CONFIG_VIDEO_IPUV3
+	/* We need at least 200ms between power on and backlight on
+	 * as per specifications from CHI MEI */
+	mdelay(250);
+
+	/* enable backlight PWM 1 */
+	pwm_init(0, 0, 0);
+
+	/* duty cycle 5000000ns, period: 5000000ns */
+	pwm_config(0, 5000000, 5000000);
+
+	/* Backlight Power */
+	gpio_direction_output(LVDS_BACKLIGHT_GP, 1);
+
+	pwm_enable(0);
+#endif
+
+	return 0;
+}
+
+U_BOOT_CMD(
+       bx50_backlight_enable, 1,      1,      do_backlight_enable,
+       "enable Bx50 backlight",
+       ""
+);

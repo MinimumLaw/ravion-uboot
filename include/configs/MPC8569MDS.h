@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2009-2011 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -48,7 +47,6 @@ extern unsigned long get_clock_freq(void);
  */
 #define CONFIG_ENABLE_36BIT_PHYS	1
 
-#define CONFIG_BOARD_EARLY_INIT_R	1
 #define CONFIG_HWCONFIG
 
 #define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest works on */
@@ -214,7 +212,6 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_MALLOC_LEN	(512 * 1024)	/* Reserved for malloc */
 
 /* Serial Port */
-#define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE    1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -439,7 +436,6 @@ extern unsigned long get_clock_freq(void);
 #undef CONFIG_WATCHDOG			/* watchdog disabled */
 
 #ifdef CONFIG_MMC
-#define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_ESDHC_PIN_MUX
 #define CONFIG_SYS_FSL_ESDHC_ADDR	CONFIG_SYS_MPC85xx_ESDHC_ADDR
 #endif
@@ -472,7 +468,7 @@ extern unsigned long get_clock_freq(void);
 /*
  * Environment Configuration
  */
-#define CONFIG_HOSTNAME mpc8569mds
+#define CONFIG_HOSTNAME "mpc8569mds"
 #define CONFIG_ROOTPATH  "/nfsroot"
 #define CONFIG_BOOTFILE  "your.uImage"
 

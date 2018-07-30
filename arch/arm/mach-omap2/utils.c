@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2011 Linaro Limited
  * Aneesh V <aneesh@ti.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
+#include <environment.h>
 #include <asm/setup.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/omap_common.h>
+
 static void do_cancel_out(u32 *num, u32 *den, u32 factor)
 {
 	while (1) {

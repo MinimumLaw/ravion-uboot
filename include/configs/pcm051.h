@@ -25,7 +25,6 @@
 #define CONFIG_MACH_TYPE		MACH_TYPE_PCM051
 
 /* set to negative value for no autoboot */
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x80007fc0\0" \
 	"fdtaddr=0x80000000\0" \
@@ -98,7 +97,6 @@
 
 #define CONFIG_SF_DEFAULT_SPEED		24000000
 
-#define CONFIG_CONS_INDEX		1
 /* NS16550 Configuration */
 #define CONFIG_SYS_NS16550_COM1		0x44e09000	/* Base EVM has UART0 */
 #define CONFIG_SYS_NS16550_COM2		0x48022000	/* UART1 */
@@ -118,7 +116,6 @@
 /* CPU */
 
 #ifdef CONFIG_SPI_BOOT
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 #define CONFIG_SYS_SPI_U_BOOT_SIZE	0x40000
 #endif

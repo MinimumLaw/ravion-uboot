@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2014 Topic Embedded Products
  *
  * Configuration for Zynq Evaluation and Development Board - Miami
  * See zynq-common.h for Zynq common configs
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_TOPIC_MIAMI_H
@@ -43,7 +42,6 @@
 /* FPGA commands that we don't use */
 
 /* Extras */
-#define CONFIG_CMD_MEMTEST
 #undef CONFIG_SYS_MEMTEST_START
 #define CONFIG_SYS_MEMTEST_START	0
 #undef CONFIG_SYS_MEMTEST_END

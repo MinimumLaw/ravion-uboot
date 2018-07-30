@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2016 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -55,11 +54,6 @@ int dram_init(void)
 #endif
 
 	return 0;
-}
-
-int board_eth_init(bd_t *bis)
-{
-	return pci_eth_init(bis);
 }
 
 int board_early_init_f(void)

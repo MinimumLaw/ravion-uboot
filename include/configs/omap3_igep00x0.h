@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Common configuration settings for IGEP technology based boards
  *
  * (C) Copyright 2012
  * ISEE 2007 SL, <www.iseebcn.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __IGEP00X0_H
@@ -136,8 +135,6 @@
 #define CONFIG_ENV_UBI_PART		"UBI"
 #define CONFIG_ENV_UBI_VOLUME		"config"
 #define CONFIG_ENV_UBI_VOLUME_REDUND	"config_r"
-#define CONFIG_UBI_SILENCE_MSG		1
-#define CONFIG_UBIFS_SILENCE_MSG	1
 #define CONFIG_ENV_SIZE			(32*1024)
 
 #endif /* __IGEP00X0_H */

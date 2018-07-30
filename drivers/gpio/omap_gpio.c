@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2009 Wind River Systems, Inc.
  * Tom Rix <Tom.Rix@windriver.com>
- *
- * SPDX-License-Identifier:	GPL-2.0
  *
  * This work is derived from the linux 2.6.27 kernel source
  * To fetch, use the kernel repository
@@ -345,6 +344,7 @@ U_BOOT_DRIVER(gpio_omap) = {
 	.bind	= omap_gpio_bind,
 	.probe	= omap_gpio_probe,
 	.priv_auto_alloc_size = sizeof(struct gpio_bank),
+	.flags = DM_FLAG_PRE_RELOC,
 };
 
 #endif /* CONFIG_DM_GPIO */

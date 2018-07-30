@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2004-2011
  * Texas Instruments, <www.ti.com>
@@ -10,8 +11,6 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <khasim@ti.com>
  *
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <dm.h>
@@ -520,6 +519,14 @@ int misc_init_r(void)
 
 	if (generate_fake_mac)
 		omap_die_id_usbethaddr();
+
+#if defined(CONFIG_MTDIDS_DEFAULT) && defined(CONFIG_MTDPARTS_DEFAULT)
+	if (strlen(CONFIG_MTDIDS_DEFAULT))
+		env_set("mtdids", CONFIG_MTDIDS_DEFAULT);
+
+	if (strlen(CONFIG_MTDPARTS_DEFAULT))
+		env_set("mtdparts", CONFIG_MTDPARTS_DEFAULT);
+#endif
 
 	return 0;
 }

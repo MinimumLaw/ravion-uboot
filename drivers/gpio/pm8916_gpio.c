@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Qualcomm pm8916 pmic gpio driver - part of Qualcomm PM8916 PMIC
  *
  * (C) Copyright 2015 Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -13,8 +12,6 @@
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <linux/bitops.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /* Register offset for each gpio */
 #define REG_OFFSET(x)          ((x) * 0x100)

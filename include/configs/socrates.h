@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2008
  * Sergei Poselenov, Emcraft Systems, sposelenov@emcraft.com.
@@ -6,8 +7,6 @@
  * Copyright 2004 Freescale Semiconductor.
  * (C) Copyright 2002,2003 Motorola,Inc.
  * Xianghua Xiao <X.Xiao@motorola.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -22,10 +21,7 @@
 
 #define CONFIG_PCI_INDIRECT_BRIDGE
 
-#define CONFIG_TSEC_ENET		/* tsec ethernet support	*/
-
 #define CONFIG_MISC_INIT_R	1	/* Call misc_init_r		*/
-#define CONFIG_BOARD_EARLY_INIT_R 1	/* Call board_early_init_r	*/
 
 /*
  * Only possible on E500 Version 2 or newer cores.
@@ -174,7 +170,6 @@
 
 /* Serial Port */
 
-#define CONFIG_CONS_INDEX     1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)

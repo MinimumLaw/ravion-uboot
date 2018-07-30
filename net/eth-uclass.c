@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2001-2015
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  * Joe Hershberger, National Instruments
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -336,7 +335,7 @@ int eth_send(void *packet, int length)
 	if (!current)
 		return -ENODEV;
 
-	if (!device_active(current))
+	if (!eth_is_active(current))
 		return -EINVAL;
 
 	ret = eth_get_ops(current)->send(current, packet, length);
@@ -359,7 +358,7 @@ int eth_rx(void)
 	if (!current)
 		return -ENODEV;
 
-	if (!device_active(current))
+	if (!eth_is_active(current))
 		return -EINVAL;
 
 	/* Process up to 32 packets at one time */

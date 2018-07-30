@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2010
  * Texas Instruments, <www.ti.com>
  *
  * Aneesh V <aneesh@ti.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -127,8 +126,14 @@ void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 	ulong u_boot_pos = binman_sym(ulong, u_boot_any, pos);
 
 	spl_image->size = CONFIG_SYS_MONITOR_LEN;
-	if (u_boot_pos != BINMAN_SYM_MISSING) {
-		/* biman does not support separate entry addresses at present */
+
+	/*
+	 * Binman error cases: address of the end of the previous region or the
+	 * start of the image's entry area (usually 0) if there is no previous
+	 * region.
+	 */
+	if (u_boot_pos && u_boot_pos != BINMAN_SYM_MISSING) {
+		/* Binman does not support separated entry addresses */
 		spl_image->entry_point = u_boot_pos;
 		spl_image->load_addr = u_boot_pos;
 	} else {
@@ -465,6 +470,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	jump_to_image_no_args(&spl_image);
 }
 
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
 /*
  * This requires UART clocks to be enabled.  In order for this to work the
  * caller must ensure that the gd pointer is valid.
@@ -485,6 +491,7 @@ void preloader_console_init(void)
 	spl_display_print();
 #endif
 }
+#endif
 
 /**
  * spl_relocate_stack_gd() - Relocate stack ready for board_init_r() execution

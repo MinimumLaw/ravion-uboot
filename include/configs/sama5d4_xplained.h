@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuration settings for the SAMA5D4 Xplained ultra board.
  *
  * Copyright (C) 2014 Atmel
  *		      Bo Shen <voice.shen@atmel.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -63,7 +62,6 @@
 
 #elif CONFIG_SYS_USE_NANDFLASH
 #elif CONFIG_SPI_BOOT
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x10000
 
 #elif CONFIG_NAND_BOOT

@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2015 Google, Inc
- *
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * EFI information obtained here:
  * http://wiki.phoenix.com/wiki/index.php/EFI_BOOT_SERVICES
@@ -20,8 +19,6 @@
 #include <asm/io.h>
 #include <linux/err.h>
 #include <linux/types.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_X86
 /*
@@ -182,7 +179,7 @@ static int get_codeseg32(void)
 				<< 16;
 		base <<= 12;	/* 4KB granularity */
 		limit <<= 12;
-		if ((desc & GDT_PRESENT) && (desc && GDT_NOTSYS) &&
+		if ((desc & GDT_PRESENT) && (desc & GDT_NOTSYS) &&
 		    !(desc & GDT_LONG) && (desc & GDT_4KB) &&
 		    (desc & GDT_32BIT) && (desc & GDT_CODE) &&
 		    CONFIG_SYS_TEXT_BASE > base &&

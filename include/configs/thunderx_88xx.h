@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /**
  * (C) Copyright 2014, Cavium Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
 **/
 
 #ifndef __THUNDERX_88XX_H__
@@ -35,7 +34,6 @@
 /* PL011 Serial Configuration */
 
 #define CONFIG_PL011_CLOCK		24000000
-#define CONFIG_CONS_INDEX		1
 
 /* Generic Interrupt Controller Definitions */
 #define GICD_BASE			(0x801000000000)

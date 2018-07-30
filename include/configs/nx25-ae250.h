@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2017 Andes Technology Corporation
  * Rick Chen, Andes Technology Corporation <rick@andestech.com>
- *
- * SPDX-License-Identifier: GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -11,17 +10,8 @@
 /*
  * CPU and Board Configuration Options
  */
-#define CONFIG_SKIP_LOWLEVEL_INIT
-
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_BOOTP_SERVERIP
-
-#ifdef CONFIG_SKIP_LOWLEVEL_INIT
-#ifdef CONFIG_OF_CONTROL
-#undef CONFIG_OF_SEPARATE
-#define CONFIG_OF_EMBED
-#endif
-#endif
 
 /*
  * Miscellaneous configurable options
@@ -50,6 +40,9 @@
  */
 #define CONFIG_SYS_MALLOC_LEN   (512 << 10)
 
+/* DT blob (fdt) address */
+#define CONFIG_SYS_FDT_BASE		0x000f0000
+
 /*
  * Physical Memory Map
  */
@@ -64,18 +57,11 @@
 /*
  * Serial console configuration
  */
-#define CONFIG_CONS_INDEX		1
 #define CONFIG_SYS_NS16550_SERIAL
 #ifndef CONFIG_DM_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	-4
 #endif
 #define CONFIG_SYS_NS16550_CLK		19660800
-
-/*
- * SD (MMC) controller
- */
-#define CONFIG_FTSDC010_NUMBER		1
-#define CONFIG_FTSDC010_SDIO
 
 /* Init Stack Pointer */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x1000000 - \

@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * board/renesas/blanche/blanche.c
  *     This file is blanche board support.
  *
  * Copyright (C) 2016 Renesas Electronics Corporation
- *
- * SPDX-License-Identifier: GPL-2.0
  */
 
 #include <common.h>
@@ -12,6 +11,7 @@
 #include <netdev.h>
 #include <dm.h>
 #include <dm/platform_data/serial_sh.h>
+#include <environment.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
@@ -466,10 +466,6 @@ int dram_init(void)
 
 	return 0;
 }
-
-const struct rmobile_sysinfo sysinfo = {
-	CONFIG_RMOBILE_BOARD_STRING
-};
 
 void reset_cpu(ulong addr)
 {

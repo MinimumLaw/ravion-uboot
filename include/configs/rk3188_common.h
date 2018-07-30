@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2015 Google, Inc
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __CONFIG_RK3188_COMMON_H
@@ -16,11 +15,6 @@
 #define CONFIG_NR_DRAM_BANKS		1
 #define CONFIG_SYS_MALLOC_LEN		(32 << 20)
 #define CONFIG_SYS_CBSIZE		1024
-
-#define CONFIG_SYS_TIMER_RATE		(24 * 1000 * 1000)
-#define CONFIG_SYS_TIMER_BASE		0x2000e000 /* TIMER3 */
-#define CONFIG_SYS_TIMER_COUNTER	(CONFIG_SYS_TIMER_BASE + 8)
-#define CONFIG_SYS_TIMER_COUNTS_DOWN
 
 #define CONFIG_SYS_NS16550_MEM32
 
@@ -49,7 +43,6 @@
 #define SDRAM_MAX_SIZE			0x80000000
 
 #define CONFIG_SPI_FLASH
-#define CONFIG_SPI
 #define CONFIG_SF_DEFAULT_SPEED 20000000
 
 #ifndef CONFIG_SPL_BUILD

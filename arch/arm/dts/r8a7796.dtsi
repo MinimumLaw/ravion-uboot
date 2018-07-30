@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Device Tree Source for the r8a7796 SoC
  *
  * Copyright (C) 2016 Renesas Electronics Corp.
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <dt-bindings/clock/r8a7796-cpg-mssr.h>
@@ -1347,6 +1346,14 @@
 			power-domains = <&sysc R8A7796_PD_ALWAYS_ON>;
 			resets = <&cpg 702>;
 			#phy-cells = <0>;
+			status = "disabled";
+		};
+
+		rpc: rpc@0xee200000 {
+			compatible = "renesas,rpc-r8a7796", "renesas,rpc";
+			reg = <0 0xee200000 0 0x100>, <0 0x08000000 0 0>;
+			clocks = <&cpg CPG_MOD 917>;
+			bank-width = <2>;
 			status = "disabled";
 		};
 

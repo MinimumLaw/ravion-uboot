@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2000 - 2013
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
 
 Summary:
 ========
@@ -812,14 +810,6 @@ The following options need to be configured:
 		CONFIG_AT91_HW_WDT_TIMEOUT
 		specify the timeout in seconds. default 2 seconds.
 
-- U-Boot Version:
-		CONFIG_VERSION_VARIABLE
-		If this variable is defined, an environment variable
-		named "ver" is created by U-Boot showing the U-Boot
-		version as printed by the "version" command.
-		Any change to this variable will be reverted at the
-		next reset.
-
 - Real-Time Clock:
 
 		When CONFIG_CMD_DATE is selected, the type of the RTC
@@ -1420,10 +1410,6 @@ The following options need to be configured:
 		be at least 4MB.
 
 - MII/PHY support:
-		CONFIG_PHY_ADDR
-
-		The address of PHY on MII bus.
-
 		CONFIG_PHY_CLOCK_FREQ (ppc4xx)
 
 		The clock frequency of the MII bus
@@ -2217,12 +2203,6 @@ The following options need to be configured:
 		the environment like the "source" command or the
 		boot command first.
 
-		CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-
-		Define this in order to add variables describing certain
-		run-time determined information about the hardware to the
-		environment.  These will be named board_name, board_rev.
-
 		CONFIG_DELAY_ENVIRONMENT
 
 		Normally the environment is loaded when the board is
@@ -2431,19 +2411,6 @@ FIT uImage format:
  -150	common/cmd_nand.c	Incorrect FIT image format
   151	common/cmd_nand.c	FIT image format OK
 
-- legacy image format:
-		CONFIG_IMAGE_FORMAT_LEGACY
-		enables the legacy image format support in U-Boot.
-
-		Default:
-		enabled if CONFIG_FIT_SIGNATURE is not defined.
-
-		CONFIG_DISABLE_IMAGE_LEGACY
-		disable the legacy image format
-
-		This define is introduced, as the legacy image format is
-		enabled per default for backward compatibility.
-
 - Standalone program support:
 		CONFIG_STANDALONE_LOAD_ADDR
 
@@ -2486,12 +2453,6 @@ FIT uImage format:
 		kernel. Needed for UBI support.
 
 - UBI support
-		CONFIG_UBI_SILENCE_MSG
-
-		Make the verbose messages from UBI stop printing.  This leaves
-		warnings and errors enabled.
-
-
 		CONFIG_MTD_UBI_WL_THRESHOLD
 		This parameter defines the maximum difference between the highest
 		erase counter value and the lowest erase counter value of eraseblocks
@@ -2552,12 +2513,6 @@ FIT uImage format:
 		CONFIG_MTD_UBI_FM_DEBUG
 		Enable UBI fastmap debug
 		default: 0
-
-- UBIFS support
-		CONFIG_UBIFS_SILENCE_MSG
-
-		Make the verbose messages from UBIFS stop printing.  This leaves
-		warnings and errors enabled.
 
 - SPL framework
 		CONFIG_SPL
@@ -2817,9 +2772,6 @@ Configuration Settings:
 - CONFIG_SYS_MEMTEST_START, CONFIG_SYS_MEMTEST_END:
 		Begin and End addresses of the area used by the
 		simple memory test.
-
-- CONFIG_SYS_ALT_MEMTEST:
-		Enable an alternate, more extensive memory test.
 
 - CONFIG_SYS_MEMTEST_SCRATCH:
 		Scratch address used by the alternate memory test
@@ -3445,9 +3397,6 @@ Low Level (hardware related) configuration options:
 - CONFIG_X86_RESET_VECTOR
 		If defined, the x86 reset vector code is included. This is not
 		needed when U-Boot is running from Coreboot.
-
-- CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC:
-		Enables the RTC32K OSC on AM33xx based plattforms
 
 - CONFIG_SYS_NAND_NO_SUBPAGE_WRITE
 		Option to disable subpage write in NAND driver

@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2016
  *
  * Michael Kurz, <michi.kurz@gmail.com>
  *
  * STM32 QSPI driver
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -16,7 +15,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <asm/arch/stm32.h>
-#include <asm/arch/stm32_defs.h>
 #include <clk.h>
 
 DECLARE_GLOBAL_DATA_PTR;

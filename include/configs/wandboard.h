@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the Wandboard.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -12,7 +11,6 @@
 #include "mx6_common.h"
 
 #include "imx6_spl.h"
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 
 #define CONFIG_MACH_TYPE		MACH_TYPE_WANDBOARD_IMX6
 
@@ -79,7 +77,6 @@
 #define CONFIG_IMX_VIDEO_SKIP
 #endif
 
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"console=ttymxc0,115200\0" \
 	"splashpos=m,m\0" \

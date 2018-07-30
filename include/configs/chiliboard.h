@@ -1,15 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2017 Grinn - http://grinn-global.com/
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_CHILIBOARD_H
 #define __CONFIG_CHILIBOARD_H
 
 #include <configs/ti_am335x_common.h>
-
-#define CONFIG_CONS_INDEX		1
 
 #ifndef CONFIG_SPL_BUILD
 # define CONFIG_TIMESTAMP

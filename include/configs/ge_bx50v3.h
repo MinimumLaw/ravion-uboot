@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2015 Timesys Corporation
  * Copyright (C) 2015 General Electric Company
@@ -5,8 +6,6 @@
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
  *
  * Configuration settings for the GE MX6Q Bx50v3 boards.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __GE_BX50V3_CONFIG_H
@@ -48,8 +47,6 @@
 #define CONFIG_IMX_WATCHDOG
 #define CONFIG_WATCHDOG_TIMEOUT_MSECS 6000
 
-#define CONFIG_LAST_STAGE_INIT
-
 #define CONFIG_MXC_UART
 
 #define CONFIG_MXC_OCOTP
@@ -63,7 +60,6 @@
 #endif
 
 /* MMC Configs */
-#define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
 #define CONFIG_BOUNCE_BUFFER
@@ -100,7 +96,6 @@
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX	1
 
 #define CONFIG_LOADADDR	0x12000000
 
@@ -128,6 +123,7 @@
 	"swappartitions=" \
 		"setexpr partnum 3 - ${partnum}\0" \
 	"failbootcmd=" \
+		"bx50_backlight_enable; " \
 		"msg=\"Monitor failed to start.  Try again, or contact GE Service for support.\"; " \
 		"echo $msg; " \
 		"setenv stdout vga; " \

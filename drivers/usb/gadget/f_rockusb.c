@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2017
  *
  * Eddie Cai <eddie.cai.linux@gmail.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <config.h>
 #include <common.h>
@@ -552,7 +551,6 @@ static void cb_reboot(struct usb_ep *ep, struct usb_request *req)
 				 sizeof(struct fsg_bulk_cb_wrap));
 	struct f_rockusb *f_rkusb = get_rkusb();
 
-	f_rkusb->reboot_flag = 0;
 	memcpy((char *)cbw, req->buf, USB_BULK_CB_WRAP_LEN);
 	f_rkusb->reboot_flag = cbw->CDB[1];
 	rockusb_func->in_req->complete = compl_do_reset;

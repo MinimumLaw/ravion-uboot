@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Amarula Solutions B.V.
  * Copyright (C) 2016 Engicam S.r.l.
  * Author: Jagan Teki <jagan@amarulasolutions.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -22,8 +21,6 @@
 
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/mach-imx/video.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |             \
         PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |               \

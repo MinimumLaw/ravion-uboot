@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2010-2011 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -180,7 +179,6 @@
 #define CONFIG_PCI_SCAN_SHOW		/* show pci devices on startup */
 #endif
 
-#define CONFIG_TSEC_ENET
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_DDR_CLK_FREQ	66666666 /* DDRCLK on P1010 RDB */
@@ -478,8 +476,6 @@ extern unsigned long get_sdram_size(void);
 #endif
 #endif
 
-#define CONFIG_BOARD_EARLY_INIT_R
-
 #define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xffd00000 /* stack in RAM */
 #define CONFIG_SYS_INIT_RAM_SIZE	0x00004000 /* End of used area in RAM */
@@ -529,7 +525,6 @@ extern unsigned long get_sdram_size(void);
 #endif
 
 /* Serial Port */
-#define CONFIG_CONS_INDEX	1
 #undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -637,7 +632,6 @@ extern unsigned long get_sdram_size(void);
 #endif /* #ifdef CONFIG_FSL_SATA  */
 
 #ifdef CONFIG_MMC
-#define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	CONFIG_SYS_MPC85xx_ESDHC_ADDR
 #endif
 

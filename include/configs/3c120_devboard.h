@@ -1,9 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2005, Psyent Corporation <www.psyent.com>
  * Scott McNutt <smcnutt@psyent.com>
  * (C) Copyright 2010, Thomas Chou <thomas@wytron.com.tw>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -12,7 +11,6 @@
 /*
  * BOARD/CPU
  */
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 
 /*
  * SERIAL

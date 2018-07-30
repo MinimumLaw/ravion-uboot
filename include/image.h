@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2008 Semihalf
  *
  * (C) Copyright 2000-2005
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  ********************************************************************
  * NOTE: This header file defines an interface to U-Boot. Including
  * this (unmodified) header file in another file is considered normal
@@ -21,6 +20,7 @@
 
 /* Define this to avoid #ifdefs later on */
 struct lmb;
+struct fdt_region;
 
 #ifdef USE_HOSTCC
 #include <sys/types.h>
@@ -153,6 +153,7 @@ enum {
 	IH_OS_PLAN9,			/* Plan 9	*/
 	IH_OS_OPENRTOS,		/* OpenRTOS	*/
 	IH_OS_ARM_TRUSTED_FIRMWARE,     /* ARM Trusted Firmware */
+	IH_OS_TEE,			/* Trusted Execution Environment */
 
 	IH_OS_COUNT,
 };
@@ -272,6 +273,7 @@ enum {
 	IH_TYPE_TEE,            /* Trusted Execution Environment OS Image */
 	IH_TYPE_FIRMWARE_IVT,		/* Firmware Image with HABv4 IVT */
 	IH_TYPE_PMMC,            /* TI Power Management Micro-Controller Firmware */
+	IH_TYPE_STM32IMAGE,		/* STMicroelectronics STM32 Image */
 
 	IH_TYPE_COUNT,			/* Number of image types */
 };
@@ -917,6 +919,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size);
 #define FIT_DEFAULT_PROP	"default"
 #define FIT_SETUP_PROP		"setup"
 #define FIT_FPGA_PROP		"fpga"
+#define FIT_FIRMWARE_PROP	"firmware"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
 
@@ -1013,6 +1016,8 @@ int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
 			      const char *comment, int require_keys,
 			      const char *engine_id);
 
+int fit_image_verify_with_data(const void *fit, int image_noffset,
+			       const void *data, size_t size);
 int fit_image_verify(const void *fit, int noffset);
 int fit_config_verify(const void *fit, int conf_noffset);
 int fit_all_image_verify(const void *fit);

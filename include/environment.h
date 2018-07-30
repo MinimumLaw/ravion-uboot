@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _ENVIRONMENT_H_
@@ -313,6 +312,15 @@ int env_load(void);
  * @return 0 if OK, -ve on error
  */
 int env_save(void);
+
+/**
+ * env_fix_drivers() - Updates envdriver as per relocation
+ */
+void env_fix_drivers(void);
+
+void eth_parse_enetaddr(const char *addr, uint8_t *enetaddr);
+int eth_env_get_enetaddr(const char *name, uint8_t *enetaddr);
+int eth_env_set_enetaddr(const char *name, const uint8_t *enetaddr);
 
 #endif /* DO_DEPS_ONLY */
 

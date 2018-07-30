@@ -56,8 +56,6 @@
 #define NANDARGS ""
 #endif
 
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-
 #define BOOTENV_DEV_LEGACY_MMC(devtypeu, devtypel, instance) \
 	"bootcmd_" #devtypel #instance "=" \
 	"setenv mmcdev " #instance"; "\
@@ -74,14 +72,26 @@
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	#devtypel #instance " "
 
+#if CONFIG_IS_ENABLED(CMD_PXE)
+# define BOOT_TARGET_PXE(func) func(PXE, pxe, na)
+#else
+# define BOOT_TARGET_PXE(func)
+#endif
+
+#if CONFIG_IS_ENABLED(CMD_DHCP)
+# define BOOT_TARGET_DHCP(func) func(DHCP, dhcp, na)
+#else
+# define BOOT_TARGET_DHCP(func)
+#endif
+
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
 	func(LEGACY_MMC, legacy_mmc, 0) \
 	func(MMC, mmc, 1) \
 	func(LEGACY_MMC, legacy_mmc, 1) \
 	func(NAND, nand, 0) \
-	func(PXE, pxe, na) \
-	func(DHCP, dhcp, na)
+	BOOT_TARGET_PXE(func) \
+	BOOT_TARGET_DHCP(func)
 
 #include <config_distro_bootcmd.h>
 
@@ -133,6 +143,8 @@
 			"setenv fdtfile am335x-bone.dtb; fi; " \
 		"if test $board_name = A335BNLT; then " \
 			"setenv fdtfile am335x-boneblack.dtb; fi; " \
+		"if test $board_name = A335PBGL; then " \
+			"setenv fdtfile am335x-pocketbeagle.dtb; fi; " \
 		"if test $board_name = BBBW; then " \
 			"setenv fdtfile am335x-boneblack-wireless.dtb; fi; " \
 		"if test $board_name = BBG1; then " \
@@ -268,7 +280,6 @@
  */
 #if defined(CONFIG_SPI_BOOT)
 /* SPL related */
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT

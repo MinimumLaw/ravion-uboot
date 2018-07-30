@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2011 Samsung Electronics
  * Heungjun Kim <riverful.kim@samsung.com>
  *
  * Configuation settings for the SAMSUNG TRATS (EXYNOS4210) board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_TRATS_H
@@ -56,8 +55,6 @@
 #define CONFIG_ENV_OFFSET		((32 - 4) << 10) /* 32KiB - 4KiB */
 
 #define CONFIG_ENV_OVERWRITE
-
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 /* Tizen - partitions definitions */
 #define PARTS_CSA		"csa-mmc"

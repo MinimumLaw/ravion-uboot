@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * Configuation settings for the SAMSUNG Universal (s5pc100) board.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __CONFIG_H
@@ -103,7 +102,6 @@
 #define CONFIG_MISC_INIT_R
 
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
 	"updatek=" \

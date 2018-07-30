@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2008
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
 
 obj-$(CONFIG_AT91SAM9_WATCHDOG) += at91sam9_wdt.o
 obj-$(CONFIG_FTWDT010_WATCHDOG) += ftwdt010_wdt.o
@@ -22,3 +20,5 @@ obj-$(CONFIG_WDT_ASPEED) += ast_wdt.o
 obj-$(CONFIG_WDT_BCM6345) += bcm6345_wdt.o
 obj-$(CONFIG_BCM2835_WDT)       += bcm2835_wdt.o
 obj-$(CONFIG_WDT_ORION) += orion_wdt.o
+obj-$(CONFIG_WDT_CDNS) += cdns_wdt.o
+obj-$(CONFIG_MPC8xx_WATCHDOG) += mpc8xx_wdt.o

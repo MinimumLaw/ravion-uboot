@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - http://www.ti.com/
  *
  * Based on davinci_dvevm.h. Original Copyrights follow:
  *
  * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __CONFIG_H
@@ -19,6 +18,14 @@
 #undef	CONFIG_SYS_USE_NOR
 #define	CONFIG_USE_NAND
 
+/*
+* Disable DM_* for SPL build and can be re-enabled after adding
+* DM support in SPL
+*/
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_DM_I2C
+#undef CONFIG_DM_I2C_COMPAT
+#endif
 /*
  * SoC Configuration
  */
@@ -57,7 +64,8 @@
  * PLL configuration
  */
 
-#define CONFIG_SYS_DA850_PLL0_PLLM     37
+/* Requires CONFIG_SYS_DA850_PLL0_POSTDIV=0, set in Kconfig */
+#define CONFIG_SYS_DA850_PLL0_PLLM     18
 #define CONFIG_SYS_DA850_PLL1_PLLM     21
 
 /*
@@ -104,21 +112,21 @@
 /*
  * Serial Driver info
  */
+#define CONFIG_SYS_NS16550_CLK	clk_get(DAVINCI_UART2_CLKID)
+#if !defined(CONFIG_DM_SERIAL)
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	-4	/* NS16550 register size */
 #define CONFIG_SYS_NS16550_COM1	DAVINCI_UART2_BASE /* Base address of UART2 */
 #define CONFIG_SYS_NS16550_CLK	clk_get(DAVINCI_UART2_CLKID)
-#define CONFIG_CONS_INDEX	1		/* use UART0 for console */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+#endif
 
-#define CONFIG_SPI
 #define CONFIG_SYS_SPI_BASE		DAVINCI_SPI1_BASE
 #define CONFIG_SYS_SPI_CLK		clk_get(DAVINCI_SPI1_CLKID)
 #define CONFIG_SF_DEFAULT_SPEED		30000000
 #define CONFIG_ENV_SPI_MAX_HZ	CONFIG_SF_DEFAULT_SPEED
 
 #ifdef CONFIG_USE_SPIFLASH
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8000
 #define CONFIG_SYS_SPI_U_BOOT_SIZE	0x30000
 #endif
@@ -126,7 +134,6 @@
 /*
  * I2C Configuration
  */
-#define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_DAVINCI
 #define CONFIG_SYS_DAVINCI_I2C_SPEED	25000
 #define CONFIG_SYS_DAVINCI_I2C_SLAVE	10 /* Bogus, master-only in U-Boot */

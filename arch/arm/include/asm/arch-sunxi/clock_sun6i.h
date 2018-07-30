@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * sun6i clock register definitions
  *
  * (C) Copyright 2007-2011
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  * Tom Cubie <tangliang@allwinnertech.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _SUNXI_CLOCK_SUN6I_H
@@ -192,6 +191,7 @@ struct sunxi_ccm_reg {
 #define ATB_DIV_1			0
 #define ATB_DIV_2			1
 #define ATB_DIV_4			2
+#define AHB_DIV_1			0
 #define CPU_CLK_SRC_OSC24M		1
 #define CPU_CLK_SRC_PLL1		2
 
@@ -316,6 +316,11 @@ struct sunxi_ccm_reg {
 #define AHB_GATE_OFFSET_LCD1		4
 #define AHB_GATE_OFFSET_LCD0		3
 #endif
+
+#define CCM_NAND_CTRL_M(x)		((x) - 1)
+#define CCM_NAND_CTRL_N(x)		((x) << 16)
+#define CCM_NAND_CTRL_PLL6		(0x1 << 24)
+#define CCM_NAND_CTRL_ENABLE		(0x1 << 31)
 
 #define CCM_MMC_CTRL_M(x)		((x) - 1)
 #define CCM_MMC_CTRL_OCLK_DLY(x)	((x) << 8)

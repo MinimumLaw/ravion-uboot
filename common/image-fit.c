@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2013, Google Inc.
  *
@@ -5,8 +6,6 @@
  *
  * (C) Copyright 2000-2006
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifdef USE_HOSTCC
@@ -419,7 +418,8 @@ void fit_image_print(const void *fit, int image_noffset, const char *p)
 		printf("%s  Architecture: %s\n", p, genimg_get_arch_name(arch));
 	}
 
-	if ((type == IH_TYPE_KERNEL) || (type == IH_TYPE_RAMDISK)) {
+	if ((type == IH_TYPE_KERNEL) || (type == IH_TYPE_RAMDISK) ||
+	    (type == IH_TYPE_FIRMWARE)) {
 		fit_image_get_os(fit, image_noffset, &os);
 		printf("%s  OS:           %s\n", p, genimg_get_os_name(os));
 	}
@@ -1068,33 +1068,13 @@ static int fit_image_check_hash(const void *fit, int noffset, const void *data,
 	return 0;
 }
 
-/**
- * fit_image_verify - verify data integrity
- * @fit: pointer to the FIT format image header
- * @image_noffset: component image node offset
- *
- * fit_image_verify() goes over component image hash nodes,
- * re-calculates each data hash and compares with the value stored in hash
- * node.
- *
- * returns:
- *     1, if all hashes are valid
- *     0, otherwise (or on error)
- */
-int fit_image_verify(const void *fit, int image_noffset)
+int fit_image_verify_with_data(const void *fit, int image_noffset,
+			       const void *data, size_t size)
 {
-	const void	*data;
-	size_t		size;
 	int		noffset = 0;
 	char		*err_msg = "";
 	int verify_all = 1;
 	int ret;
-
-	/* Get image data and data length */
-	if (fit_image_get_data(fit, image_noffset, &data, &size)) {
-		err_msg = "Can't get image data/size";
-		goto error;
-	}
 
 	/* Verify all required signatures */
 	if (IMAGE_ENABLE_VERIFY &&
@@ -1150,6 +1130,38 @@ error:
 	       err_msg, fit_get_name(fit, noffset, NULL),
 	       fit_get_name(fit, image_noffset, NULL));
 	return 0;
+}
+
+/**
+ * fit_image_verify - verify data integrity
+ * @fit: pointer to the FIT format image header
+ * @image_noffset: component image node offset
+ *
+ * fit_image_verify() goes over component image hash nodes,
+ * re-calculates each data hash and compares with the value stored in hash
+ * node.
+ *
+ * returns:
+ *     1, if all hashes are valid
+ *     0, otherwise (or on error)
+ */
+int fit_image_verify(const void *fit, int image_noffset)
+{
+	const void	*data;
+	size_t		size;
+	int		noffset = 0;
+	char		*err_msg = "";
+
+	/* Get image data and data length */
+	if (fit_image_get_data(fit, image_noffset, &data, &size)) {
+		err_msg = "Can't get image data/size";
+		printf("error!\n%s for '%s' hash node in '%s' image node\n",
+		       err_msg, fit_get_name(fit, noffset, NULL),
+		       fit_get_name(fit, image_noffset, NULL));
+		return 0;
+	}
+
+	return fit_image_verify_with_data(fit, image_noffset, data, size);
 }
 
 /**
@@ -1597,6 +1609,10 @@ void fit_conf_print(const void *fit, int noffset, const char *p)
 	uname = fdt_getprop(fit, noffset, FIT_RAMDISK_PROP, NULL);
 	if (uname)
 		printf("%s  Init Ramdisk: %s\n", p, uname);
+
+	uname = fdt_getprop(fit, noffset, FIT_FIRMWARE_PROP, NULL);
+	if (uname)
+		printf("%s  Firmware:     %s\n", p, uname);
 
 	for (fdt_index = 0;
 	     uname = fdt_stringlist_get(fit, noffset, FIT_FDT_PROP,

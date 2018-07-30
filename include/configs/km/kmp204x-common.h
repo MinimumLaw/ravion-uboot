@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2013 Keymile AG
  * Valentin Longchamp <valentin.longchamp@keymile.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CONFIG_KMP204X_H
@@ -188,10 +187,8 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_BR1_PRELIM  CONFIG_SYS_QRIO_BR_PRELIM /* QRIO Base Address */
 #define CONFIG_SYS_OR1_PRELIM  CONFIG_SYS_QRIO_OR_PRELIM /* QRIO Options */
 
-#define CONFIG_BOARD_EARLY_INIT_R	/* call board_early_init_r function */
 #define CONFIG_MISC_INIT_F
 #define CONFIG_MISC_INIT_R
-#define CONFIG_LAST_STAGE_INIT
 
 #define CONFIG_HWCONFIG
 
@@ -219,7 +216,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
  * open - index 2
  * shorted - index 1
  */
-#define CONFIG_CONS_INDEX	1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		(get_bus_freq(0)/2)
@@ -394,7 +390,7 @@ int get_scl(void);
 		"cramfsload ${fdt_addr_r} "				\
 		"fdt_0x${IVM_BoardId}_0x${IVM_HWKey}.dtb\0"		\
 	"fdt_addr_r=" __stringify(CONFIG_KM_FDT_ADDR) "\0"		\
-	"u-boot="__stringify(CONFIG_HOSTNAME) "/u-boot.pbl\0"		\
+	"u-boot="CONFIG_HOSTNAME "/u-boot.pbl\0"		\
 	"update="							\
 		"sf probe 0;sf erase 0 +${filesize};"			\
 		"sf write ${load_addr_r} 0 ${filesize};\0"		\

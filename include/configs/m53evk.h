@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Aries M53 configuration
  * Copyright (C) 2012-2013 Marek Vasut <marex@denx.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __M53EVK_CONFIG_H__
@@ -50,13 +49,11 @@
  */
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART2_BASE
-#define CONFIG_CONS_INDEX		1
 
 /*
  * MMC Driver
  */
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_FSL_ESDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 #endif
@@ -186,7 +183,7 @@
  * Extra Environments
  */
 #define CONFIG_PREBOOT		"run try_bootscript"
-#define CONFIG_HOSTNAME		m53evk
+#define CONFIG_HOSTNAME		"m53evk"
 
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	"consdev=ttymxc1\0"						\

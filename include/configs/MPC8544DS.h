@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2007, 2010-2011 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -20,7 +19,6 @@
 #define CONFIG_FSL_PCIE_RESET	1	/* need PCIe reset errata */
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 
-#define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_INTERRUPTS		/* enable pci, srio, ddr interrupts */
 
@@ -175,7 +173,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
  * open - index 2
  * shorted - index 1
  */
-#define CONFIG_CONS_INDEX	1
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -372,7 +369,7 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 
 #define CONFIG_IPADDR	192.168.1.251
 
-#define CONFIG_HOSTNAME	8544ds_unknown
+#define CONFIG_HOSTNAME	"8544ds_unknown"
 #define CONFIG_ROOTPATH	"/nfs/mpc85xx"
 #define CONFIG_BOOTFILE	"8544ds/uImage.uboot"
 #define CONFIG_UBOOTPATH	8544ds/u-boot.bin	/* TFTP server */

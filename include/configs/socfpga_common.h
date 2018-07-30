@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2012 Altera Corporation <www.altera.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef __CONFIG_SOCFPGA_COMMON_H__
 #define __CONFIG_SOCFPGA_COMMON_H__
@@ -12,7 +11,6 @@
 /*
  * High level configuration
  */
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 #define CONFIG_CLOCKS
 
 #define CONFIG_SYS_BOOTMAPSZ		(64 * 1024 * 1024)
@@ -138,6 +136,7 @@
 /*
  * I2C support
  */
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_BASE		SOCFPGA_I2C0_ADDRESS
 #define CONFIG_SYS_I2C_BASE1		SOCFPGA_I2C1_ADDRESS
@@ -158,6 +157,7 @@
 unsigned int cm_get_l4_sp_clk_hz(void);
 #define IC_CLK				(cm_get_l4_sp_clk_hz() / 1000000)
 #endif
+#endif /* CONFIG_DM_I2C */
 
 /*
  * QSPI support
@@ -192,7 +192,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_SYS_NS16550_COM1        SOCFPGA_UART1_ADDRESS
 #define CONFIG_SYS_NS16550_CLK		50000000
 #endif
-#define CONFIG_CONS_INDEX		1
 
 /*
  * USB
@@ -271,7 +270,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 
 /* SPL QSPI boot support */
 #ifdef CONFIG_SPL_SPI_SUPPORT
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x40000
 #endif
 
@@ -295,7 +293,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define BOOT_TARGET_DEVICES_DHCP(func)
 #endif
 
-#ifdef CONFIG_CMD_PXE
+#if defined(CONFIG_CMD_PXE) && defined(CONFIG_CMD_DHCP)
 #define BOOT_TARGET_DEVICES_PXE(func) func(PXE, pxe, na)
 #else
 #define BOOT_TARGET_DEVICES_PXE(func)

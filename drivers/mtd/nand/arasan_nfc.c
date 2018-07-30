@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Arasan NAND Flash Controller Driver
  *
  * Copyright (C) 2014 - 2015 Xilinx, Inc.
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <common.h>
@@ -795,10 +794,11 @@ static int arasan_nand_erase(struct arasan_nand_command_format *curr_cmd,
 
 	writel(reg_val, &arasan_nand_base->cmd_reg);
 
-	page = (page_addr << ARASAN_NAND_MEM_ADDR1_PAGE_SHIFT) &
-		ARASAN_NAND_MEM_ADDR1_PAGE_MASK;
+	page = (page_addr >> ARASAN_NAND_MEM_ADDR1_PAGE_SHIFT) &
+		ARASAN_NAND_MEM_ADDR1_COL_MASK;
 	column = page_addr & ARASAN_NAND_MEM_ADDR1_COL_MASK;
-	writel(page | column, &arasan_nand_base->memadr_reg1);
+	writel(column | (page << ARASAN_NAND_MEM_ADDR1_PAGE_SHIFT),
+	       &arasan_nand_base->memadr_reg1);
 
 	reg_val = readl(&arasan_nand_base->memadr_reg2);
 	reg_val &= ~ARASAN_NAND_MEM_ADDR2_PAGE_MASK;

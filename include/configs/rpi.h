@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * (C) Copyright 2012-2016 Stephen Warren
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __CONFIG_H
@@ -86,7 +85,6 @@
 #define CONFIG_INITRD_TAG
 
 /* Environment */
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define ENV_DEVICE_SETTINGS \
 	"stdin=serial,usbkbd\0" \
 	"stdout=serial,vidconsole\0" \

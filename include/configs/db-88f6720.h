@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Stefan Roese <sr@denx.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CONFIG_DB_88F6720_H
@@ -10,7 +9,6 @@
 /*
  * High Level Configuration Options (easy to change)
  */
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 
 /*
  * TEXT_BASE needs to be below 16MiB, since this area is scrubbed
@@ -45,8 +43,6 @@
 
 #define CONFIG_PHY_MARVELL		/* there is a marvell phy */
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs a longer aneg time */
-
-#define CONFIG_SYS_ALT_MEMTEST
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -83,7 +79,6 @@
 #define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
 
 /* SPL related SPI defines */
-#define CONFIG_SPL_SPI_LOAD
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 #define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
 

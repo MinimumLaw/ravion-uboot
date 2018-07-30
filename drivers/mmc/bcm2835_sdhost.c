@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * bcm2835 sdhost driver.
  *
@@ -27,14 +28,13 @@
  *  sdhci-bcm2708.c by Broadcom
  *  sdhci-bcm2835.c by Stephen Warren and Oleksandr Tymoshenko
  *  sdhci.c and sdhci-pci.c by Pierre Ossman
- *
- * SPDX-License-Identifier:    GPL-2.0
  */
 #include <clk.h>
 #include <common.h>
 #include <dm.h>
 #include <mmc.h>
 #include <asm/arch/msg.h>
+#include <asm/arch/mbox.h>
 #include <asm/unaligned.h>
 #include <linux/compat.h>
 #include <linux/io.h>
@@ -42,8 +42,6 @@
 #include <linux/sizes.h>
 #include <mach/gpio.h>
 #include <power/regulator.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #define msleep(a) udelay(a * 1000)
 
@@ -941,7 +939,7 @@ static int bcm2835_probe(struct udevice *dev)
 	if (!host->ioaddr)
 		return -ENOMEM;
 
-	host->max_clk = bcm2835_get_mmc_clock();
+	host->max_clk = bcm2835_get_mmc_clock(BCM2835_MBOX_CLOCK_ID_CORE);
 
 	bcm2835_add_host(host);
 

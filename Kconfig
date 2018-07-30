@@ -59,32 +59,29 @@ config CC_OPTIMIZE_FOR_SIZE
 
 	  This option is enabled by default for U-Boot.
 
+config CC_COVERAGE
+	bool "Enable code coverage analysis"
+	depends on SANDBOX
+	help
+	  Enabling this option will pass "--coverage" to gcc to compile
+	  and link code instrumented for coverage analysis.
+
 config DISTRO_DEFAULTS
 	bool "Select defaults suitable for booting general purpose Linux distributions"
-	default y if ARCH_SUNXI || TEGRA
-	default y if ARCH_LS2080A
-	default y if ARCH_MESON
-	default y if ARCH_ROCKCHIP
-	default n
 	imply USE_BOOTCOMMAND
 	select CMD_BOOTZ if ARM && !ARM64
 	select CMD_BOOTI if ARM64
-	select CMD_DHCP if NET && CMD_NET
-	select CMD_PXE if NET && CMD_NET
+	select CMD_DHCP if CMD_NET
+	select CMD_PING if CMD_NET
+	select CMD_PXE if NET
+	select CMD_ENV_EXISTS
 	select CMD_EXT2
 	select CMD_EXT4
 	select CMD_FAT
 	select CMD_FS_GENERIC
 	imply CMD_MII if NET
-	select CMD_PING if NET
 	select CMD_PART if PARTITIONS
 	select HUSH_PARSER
-	select BOOTP_BOOTPATH if NET && CMD_NET
-	select BOOTP_DNS if NET && CMD_NET
-	select BOOTP_GATEWAY if NET && CMD_NET
-	select BOOTP_HOSTNAME if NET && CMD_NET
-	select BOOTP_PXE if NET && CMD_NET
-	select BOOTP_SUBNETMASK if NET && CMD_NET
 	select CMDLINE_EDITING
 	select AUTO_COMPLETE
 	select SYS_LONGHELP
@@ -131,6 +128,7 @@ config SYS_MALLOC_F
 config SYS_MALLOC_F_LEN
 	hex "Size of malloc() pool before relocation"
 	depends on SYS_MALLOC_F
+	default 0x1000 if AM33XX
 	default 0x400
 	help
 	  Before relocation, memory is very limited on many platforms. Still,
@@ -255,6 +253,7 @@ config FIT_SIGNATURE
 	bool "Enable signature verification of FIT uImages"
 	depends on DM
 	select RSA
+	select HASH
 	help
 	  This option enables signature verification of FIT uImages,
 	  using a hash signed and verified using RSA. If
@@ -359,6 +358,16 @@ endif # SPL
 
 endif # FIT
 
+config IMAGE_FORMAT_LEGACY
+	bool "Enable support for the legacy image format"
+	default y if !FIT_SIGNATURE
+	help
+	  This option enables the legacy image format. It is enabled by
+	  default for backward compatibility, unless FIT_SIGNATURE is
+	  set where it is disabled so that unsigned images cannot be
+	  loaded. If a board needs the legacy image format support in this
+	  case, enable it here.
+
 config OF_BOARD_SETUP
 	bool "Set up board-specific details in device tree before boot"
 	depends on OF_LIBFDT
@@ -405,6 +414,9 @@ config SYS_TEXT_BASE
 	depends on !NIOS2 && !XTENSA
 	depends on !EFI_APP
 	default 0x80800000 if ARCH_OMAP2PLUS
+	default 0x4a000000 if ARCH_SUNXI && !MACH_SUN9I && !MACH_SUN8I_V3S
+	default 0x2a000000 if ARCH_SUNXI && MACH_SUN9I
+	default 0x42e00000 if ARCH_SUNXI && MACH_SUN8I_V3S
 	hex "Text Base"
 	help
 	  The address in memory that U-Boot will be running from, initially.

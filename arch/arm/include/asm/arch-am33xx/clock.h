@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * clock.h
  *
  * clock header
  *
  * Copyright (C) 2011, Texas Instruments Incorporated - http://www.ti.com/
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CLOCKS_H_
@@ -122,6 +121,12 @@ void scale_vcores(void);
 void do_setup_dpll(const struct dpll_regs *, const struct dpll_params *);
 void prcm_init(void);
 void enable_basic_clocks(void);
+
+void rtc_only_update_board_type(u32 btype);
+u32 rtc_only_get_board_type(void);
+void rtc_only_prcm_init(void);
+void rtc_only_enable_basic_clocks(void);
+
 void do_enable_clocks(u32 *const *, u32 *const *, u8);
 void do_disable_clocks(u32 *const *, u32 *const *, u8);
 

@@ -1,6 +1,4 @@
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
+# SPDX-License-Identifier: GPL-2.0+
 
 dtb-$(CONFIG_AT91FAMILY) += at91sam9260-smartweb.dtb \
 	at91sam9g20-taurus.dtb \
@@ -143,17 +141,25 @@ dtb-$(CONFIG_ARCH_ZYNQ) += \
 	zynq-zc770-xm012.dtb \
 	zynq-zc770-xm013.dtb \
 	zynq-zed.dtb \
-	zynq-zturn-myir.dtb \
+	zynq-zturn.dtb \
 	zynq-zybo.dtb
 dtb-$(CONFIG_ARCH_ZYNQMP) += \
-	zynqmp-ep108.dtb			\
 	zynqmp-mini-emmc.dtb			\
 	zynqmp-mini-nand.dtb			\
+	zynqmp-zcu100-revC.dtb			\
 	zynqmp-zcu102-revA.dtb			\
 	zynqmp-zcu102-revB.dtb			\
 	zynqmp-zcu102-rev1.0.dtb		\
+	zynqmp-zcu104-revA.dtb			\
+	zynqmp-zcu104-revC.dtb			\
+	zynqmp-zcu106-revA.dtb			\
+	zynqmp-zcu111-revA.dtb			\
+	zynqmp-zc1232-revA.dtb			\
+	zynqmp-zc1254-revA.dtb			\
+	zynqmp-zc1275-revA.dtb			\
 	zynqmp-zc1751-xm015-dc1.dtb		\
 	zynqmp-zc1751-xm016-dc2.dtb		\
+	zynqmp-zc1751-xm017-dc3.dtb		\
 	zynqmp-zc1751-xm018-dc4.dtb		\
 	zynqmp-zc1751-xm019-dc5.dtb
 dtb-$(CONFIG_AM33XX) += am335x-boneblack.dtb am335x-bone.dtb \
@@ -167,7 +173,8 @@ dtb-$(CONFIG_AM33XX) += am335x-boneblack.dtb am335x-bone.dtb \
 	am335x-pdu001.dtb
 dtb-$(CONFIG_AM43XX) += am437x-gp-evm.dtb am437x-sk-evm.dtb	\
 	am43x-epos-evm.dtb \
-	am437x-idk-evm.dtb
+	am437x-idk-evm.dtb \
+	am4372-generic.dtb
 dtb-$(CONFIG_TI816X) += dm8168-evm.dtb
 dtb-$(CONFIG_THUNDERX) += thunderx-88xx.dtb
 
@@ -184,6 +191,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_cyclone5_sockit.dtb			\
 	socfpga_cyclone5_socrates.dtb			\
 	socfpga_cyclone5_sr1500.dtb			\
+	socfpga_stratix10_socdk.dtb			\
 	socfpga_cyclone5_vining_fpga.dtb
 
 dtb-$(CONFIG_TARGET_DRA7XX_EVM) += dra72-evm.dtb dra7-evm.dtb	\
@@ -225,7 +233,8 @@ dtb-$(CONFIG_STM32F4) += stm32f429-disco.dtb \
 	stm32f469-disco.dtb
 
 dtb-$(CONFIG_STM32F7) += stm32f746-disco.dtb \
-	stm32f769-disco.dtb
+	stm32f769-disco.dtb \
+	stm32746g-eval.dtb
 dtb-$(CONFIG_STM32H7) += stm32h743i-disco.dtb \
 	stm32h743i-eval.dtb
 
@@ -304,6 +313,8 @@ dtb-$(CONFIG_MACH_SUN7I) += \
 	sun7i-a20-m5.dtb \
 	sun7i-a20-mk808c.dtb \
 	sun7i-a20-olimex-som-evb.dtb \
+	sun7i-a20-olimex-som204-evb.dtb \
+	sun7i-a20-olimex-som204-evb-emmc.dtb \
 	sun7i-a20-olinuxino-lime.dtb \
 	sun7i-a20-olinuxino-lime2.dtb \
 	sun7i-a20-olinuxino-lime2-emmc.dtb \
@@ -478,11 +489,17 @@ dtb-$(CONFIG_TARGET_SAMA5D3XEK) += \
 dtb-$(CONFIG_TARGET_SAMA5D3_XPLAINED) += \
 	at91-sama5d3_xplained.dtb
 
+dtb-$(CONFIG_TARGET_MA5D4EK) += \
+	at91-sama5d4_ma5d4evk.dts.dtb
+
 dtb-$(CONFIG_TARGET_SAMA5D4EK) += \
 	at91-sama5d4ek.dtb
 
 dtb-$(CONFIG_TARGET_SAMA5D4_XPLAINED) += \
 	at91-sama5d4_xplained.dtb
+
+dtb-$(CONFIG_TARGET_VINCO) += \
+	at91-vinco.dtb
 
 dtb-$(CONFIG_ARCH_BCM283X) += \
 	bcm2835-rpi-a-plus.dtb \
@@ -496,6 +513,9 @@ dtb-$(CONFIG_ARCH_BCM283X) += \
 dtb-$(CONFIG_ARCH_ASPEED) += ast2500-evb.dtb
 
 dtb-$(CONFIG_ARCH_STI) += stih410-b2260.dtb
+
+dtb-$(CONFIG_TARGET_STM32MP1) += \
+	stm32mp157c-ed1.dtb
 
 targets += $(dtb-y)
 

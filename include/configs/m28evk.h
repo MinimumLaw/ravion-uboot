@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2011 Marek Vasut <marek.vasut@gmail.com>
  * on behalf of DENX Software Engineering GmbH
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef __CONFIGS_M28EVK_H__
 #define __CONFIGS_M28EVK_H__
@@ -97,7 +96,7 @@
 
 /* Extra Environment */
 #define CONFIG_PREBOOT		"run try_bootscript"
-#define CONFIG_HOSTNAME		m28evk
+#define CONFIG_HOSTNAME		"m28evk"
 
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	"consdev=ttyAMA0\0"						\

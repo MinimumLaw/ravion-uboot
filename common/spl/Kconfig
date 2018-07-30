@@ -568,6 +568,15 @@ config SPL_POST_MEM_SUPPORT
 	  performed before booting. This enables the drivers in post/drivers
 	  as part of an SPL build.
 
+config SPL_RESET_SUPPORT
+	bool "Support reset drivers"
+	depends on SPL
+	help
+	  Enable support for reset control in SPL.
+	  That can be useful in SPL to handle IP reset in driver, as in U-Boot,
+	  by using the generic reset API provided by driver model.
+	  This enables the drivers in drivers/reset as part of an SPL build.
+
 config SPL_POWER_SUPPORT
 	bool "Support power drivers"
 	help
@@ -617,6 +626,8 @@ config SPL_SATA_SUPPORT
 
 config SPL_SERIAL_SUPPORT
 	bool "Support serial"
+	select SPL_PRINTF
+	select SPL_STRTO
 	help
 	  Enable support for serial in SPL. This allows use of a serial UART
 	  for displaying messages while SPL is running. It also brings in
@@ -633,6 +644,13 @@ config SPL_SPI_FLASH_SUPPORT
 	  but fast bidirectional 4-wire bus (clock, chip select and two data
 	  lines). This enables the drivers in drivers/mtd/spi as part of an
 	  SPL build. This normally requires SPL_SPI_SUPPORT.
+
+config SPL_SPI_LOAD
+	bool "Support loading from SPI flash"
+	depends on SPL_SPI_FLASH_SUPPORT
+	help
+	  Enable support for loading next stage, U-Boot or otherwise, from
+	  SPI NOR in U-Boot SPL.
 
 config SPL_SPI_SUPPORT
 	bool "Support SPI drivers"
@@ -735,6 +753,7 @@ config SPL_WATCHDOG_SUPPORT
 
 config SPL_YMODEM_SUPPORT
 	bool "Support loading using Ymodem"
+	depends on SPL_SERIAL_SUPPORT
 	help
 	  While loading from serial is slow it can be a useful backup when
 	  there is no other option. The Ymodem protocol provides a reliable
@@ -762,6 +781,13 @@ config SPL_ATF_NO_PLATFORM_PARAM
 	  always pass NULL for the platform parameter.
 
 	  If your ATF is affected, say Y.
+
+config SPL_AM33XX_ENABLE_RTC32K_OSC
+	bool "Enable the RTC32K OSC on AM33xx based platforms"
+	default y if AM33XX
+	help
+	  Enable access to the AM33xx RTC and select the external 32kHz clock
+	  source.
 
 config TPL
 	bool
@@ -887,8 +913,24 @@ config TPL_NAND_SUPPORT
 	help
 	  Enable support for NAND in TPL. See SPL_NAND_SUPPORT for details.
 
+config TPL_RAM_SUPPORT
+	bool "Support booting from RAM"
+	help
+	  Enable booting of an image in RAM. The image can be preloaded or
+	  it can be loaded by TPL directly into RAM (e.g. using USB).
+
+config TPL_RAM_DEVICE
+	bool "Support booting from preloaded image in RAM"
+	depends on TPL_RAM_SUPPORT
+	help
+	  Enable booting of an image already loaded in RAM. The image has to
+	  be already in memory when TPL takes over, e.g. loaded by the boot
+	  ROM.
+
 config TPL_SERIAL_SUPPORT
 	bool "Support serial"
+	select TPL_PRINTF
+	select TPL_STRTO
 	help
 	  Enable support for serial in TPL. See SPL_SERIAL_SUPPORT for
 	  details.
@@ -899,11 +941,27 @@ config TPL_SPI_FLASH_SUPPORT
 	  Enable support for using SPI flash in TPL. See SPL_SPI_FLASH_SUPPORT
 	  for details.
 
+config TPL_SPI_LOAD
+	bool "Support loading from SPI flash"
+	depends on TPL_SPI_FLASH_SUPPORT
+	help
+	  Enable support for loading next stage, U-Boot or otherwise, from
+	  SPI NOR in U-Boot TPL.
+
 config TPL_SPI_SUPPORT
 	bool "Support SPI drivers"
 	help
 	  Enable support for using SPI in TPL. See SPL_SPI_SUPPORT for
 	  details.
+
+config TPL_YMODEM_SUPPORT
+	bool "Support loading using Ymodem"
+	depends on TPL_SERIAL_SUPPORT
+	help
+	  While loading from serial is slow it can be a useful backup when
+	  there is no other option. The Ymodem protocol provides a reliable
+	  means of transmitting U-Boot over a serial line for using in TPL,
+	  with a checksum to ensure correctness.
 
 endif # TPL
 

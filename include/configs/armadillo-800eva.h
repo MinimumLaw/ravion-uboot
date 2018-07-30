@@ -1,16 +1,13 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Configuation settings for the bonito board
  *
  * Copyright (C) 2012 Renesas Solutions Corp.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __ARMADILLO_800EVA_H
 #define __ARMADILLO_800EVA_H
 
-#undef DEBUG
-#define CONFIG_ARCH_RMOBILE_BOARD_STRING "Armadillo-800EVA Board\n"
 #define CONFIG_SH_GPIO_PFC
 
 #include <asm/arch/rmobile.h>
@@ -47,7 +44,6 @@
 #define CONFIG_SYS_MEMTEST_START	(ARMADILLO_800EVA_SDRAM_BASE)
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + \
 					 504 * 1024 * 1024)
-#undef	CONFIG_SYS_ALT_MEMTEST
 #undef	CONFIG_SYS_MEMTEST_SCRATCH
 #undef	CONFIG_SYS_LOADS_BAUD_CHANGE
 

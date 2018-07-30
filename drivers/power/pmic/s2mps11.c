@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Copyright (C) 2015 Samsung Electronics
  *  Przemyslaw Marczak  <p.marczak@samsung.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -12,8 +11,6 @@
 #include <i2c.h>
 #include <power/pmic.h>
 #include <power/s2mps11.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 static const struct pmic_child_info pmic_children_info[] = {
 	{ .prefix = S2MPS11_OF_LDO_PREFIX, .driver = S2MPS11_LDO_DRIVER },

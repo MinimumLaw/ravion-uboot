@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2010 Heiko Schocher <hs@denx.de>
  *
  * based on:
  * Copyright (C) 2009 Ilya Yanok <yanok@emcraft.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __IMX27LITE_COMMON_CONFIG_H
@@ -82,7 +81,6 @@
  */
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE	UART1_BASE
-#define CONFIG_CONS_INDEX	1		/* use UART0 for console */
 
 /*
  * Flash & Environment
@@ -151,9 +149,9 @@
 		" console=ttymxc0,${baudrate}\0"			\
 	"addmtd=setenv bootargs ${bootargs} ${mtdparts}\0"		\
 	"addmisc=setenv bootargs ${bootargs}\0"				\
-	"u-boot=" __stringify(CONFIG_HOSTNAME) "/u-boot.bin\0"		\
+	"u-boot=" CONFIG_HOSTNAME "/u-boot.bin\0"		\
 	"kernel_addr_r=a0800000\0"					\
-	"bootfile=" __stringify(CONFIG_HOSTNAME) "/uImage\0"		\
+	"bootfile=" CONFIG_HOSTNAME "/uImage\0"		\
 	"rootpath=/opt/eldk-4.2-arm/arm\0"				\
 	"net_nfs=tftp ${kernel_addr_r} ${bootfile};"			\
 		"run nfsargs addip addtty addmtd addmisc;"		\

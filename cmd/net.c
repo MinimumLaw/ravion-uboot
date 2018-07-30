@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2000
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -14,6 +13,7 @@
 
 static int netboot_common(enum proto_t, cmd_tbl_t *, int, char * const []);
 
+#ifdef CONFIG_CMD_BOOTP
 static int do_bootp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	return netboot_common(BOOTP, cmdtp, argc, argv);
@@ -24,7 +24,9 @@ U_BOOT_CMD(
 	"boot image via network using BOOTP/TFTP protocol",
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
 );
+#endif
 
+#ifdef CONFIG_CMD_TFTPBOOT
 int do_tftpb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
@@ -40,6 +42,7 @@ U_BOOT_CMD(
 	"boot image via network using TFTP protocol",
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
 );
+#endif
 
 #ifdef CONFIG_CMD_TFTPPUT
 static int do_tftpput(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])

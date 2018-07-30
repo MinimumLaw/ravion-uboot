@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
  *
@@ -10,8 +11,6 @@
  *
  * Derived from EDM_CF_IMX6 code by TechNexion,Inc
  * Ported to SolidRun microSOM by Rabeeh Khoury <rabeeh@solid-run.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <asm/arch/clock.h>
@@ -428,7 +427,7 @@ static const struct mx6dq_iomux_ddr_regs mx6q_ddr_ioregs = {
 	.dram_sdclk_1 =  0x00020030,
 	.dram_cas =  0x00020030,
 	.dram_ras =  0x00020030,
-	.dram_reset =  0x00020030,
+	.dram_reset =  0x000c0030,
 	.dram_sdcke0 =  0x00003000,
 	.dram_sdcke1 =  0x00003000,
 	.dram_sdba2 =  0x00000000,
@@ -584,7 +583,6 @@ static struct mx6_ddr3_cfg mem_ddr_2g = {
 	.trcd      = 1375,
 	.trcmin    = 4875,
 	.trasmin   = 3500,
-	.SRT       = 1,
 };
 
 static struct mx6_ddr3_cfg mem_ddr_4g = {

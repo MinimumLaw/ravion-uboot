@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2014 - 2017 Xilinx, Inc. Michal Simek
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <debug_uart.h>
@@ -12,8 +11,6 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/ps7_init_gpl.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 void board_init_f(ulong dummy)
 {

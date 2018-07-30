@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Device Tree Source for the r8a7795 SoC
  *
  * Copyright (C) 2015 Renesas Electronics Corp.
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <dt-bindings/clock/r8a7795-cpg-mssr.h>
@@ -1523,6 +1522,14 @@
 			resets = <&cpg 329>;
 			#dma-cells = <1>;
 			dma-channels = <2>;
+		};
+
+		rpc: rpc@0xee200000 {
+			compatible = "renesas,rpc-r8a7795", "renesas,rpc";
+			reg = <0 0xee200000 0 0x100>, <0 0x08000000 0 0>;
+			clocks = <&cpg CPG_MOD 917>;
+			bank-width = <2>;
+			status = "disabled";
 		};
 
 		sdhi0: sd@ee100000 {

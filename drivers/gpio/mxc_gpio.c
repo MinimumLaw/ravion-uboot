@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2009
  * Guennadi Liakhovetski, DENX Software Engineering, <lg@denx.de>
  *
  * Copyright (C) 2011
  * Stefano Babic, DENX Software Engineering, <sbabic@denx.de>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
 #include <errno.h>
@@ -158,8 +157,6 @@ int gpio_direction_output(unsigned gpio, int value)
 
 #ifdef CONFIG_DM_GPIO
 #include <fdtdec.h>
-DECLARE_GLOBAL_DATA_PTR;
-
 static int mxc_gpio_is_output(struct gpio_regs *regs, int offset)
 {
 	u32 val;

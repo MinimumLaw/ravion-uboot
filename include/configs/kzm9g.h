@@ -1,17 +1,13 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2012 Nobuhiro Iwamatsu <nobuhiro.iwamatsu.yj@renesas.com>
  * Copyright (C) 2012 Renesas Solutions Corp.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef __KZM9G_H
 #define __KZM9G_H
 
-#undef DEBUG
-
 #define CONFIG_SH73A0
-#define CONFIG_ARCH_RMOBILE_BOARD_STRING	"KMC KZM-A9-GT"
 #define CONFIG_MACH_TYPE MACH_TYPE_KZM9G
 
 #include <asm/arch/rmobile.h>
@@ -47,7 +43,6 @@
 #define CONFIG_SYS_MEMTEST_START	(KZM_SDRAM_BASE)
 #define CONFIG_SYS_MEMTEST_END \
 	(CONFIG_SYS_MEMTEST_START + (60 * 1024 * 1024))
-#undef  CONFIG_SYS_ALT_MEMTEST
 #undef  CONFIG_SYS_MEMTEST_SCRATCH
 #undef  CONFIG_SYS_LOADS_BAUD_CHANGE
 

@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Michal Simek <michals@xilinx.com>
  * Copyright (C) 2015 Nathan Rossi <nathan@nathanrossi.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * The following Boot Header format/structures and values are defined in the
  * following documents:
@@ -178,7 +177,7 @@ static void zynqmpimage_print_header(const void *ptr)
 	struct zynqmp_header *zynqhdr = (struct zynqmp_header *)ptr;
 	int i;
 
-	printf("Image Type   : Xilinx Zynq Boot Image support\n");
+	printf("Image Type   : Xilinx ZynqMP Boot Image support\n");
 	printf("Image Offset : 0x%08x\n", le32_to_cpu(zynqhdr->image_offset));
 	printf("Image Size   : %lu bytes (%lu bytes packed)\n",
 	       (unsigned long)le32_to_cpu(zynqhdr->image_size),

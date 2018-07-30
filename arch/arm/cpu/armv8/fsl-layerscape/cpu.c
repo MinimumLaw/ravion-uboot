@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2017 NXP
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -644,6 +643,7 @@ void __efi_runtime EFIAPI efi_reset_system(
 	switch (reset_type) {
 	case EFI_RESET_COLD:
 	case EFI_RESET_WARM:
+	case EFI_RESET_PLATFORM_SPECIFIC:
 		reset_cpu(0);
 		break;
 	case EFI_RESET_SHUTDOWN:
@@ -654,9 +654,9 @@ void __efi_runtime EFIAPI efi_reset_system(
 	while (1) { }
 }
 
-void efi_reset_system_init(void)
+efi_status_t efi_reset_system_init(void)
 {
-       efi_add_runtime_mmio(&rstcr, sizeof(*rstcr));
+	return efi_add_runtime_mmio(&rstcr, sizeof(*rstcr));
 }
 
 #endif

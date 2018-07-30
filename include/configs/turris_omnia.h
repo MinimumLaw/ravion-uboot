@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2017 Marek Behun <marek.behun@nic.cz>
  * Copyright (C) 2016 Tomas Hlavacek <tomas.hlavacek@nic.cz>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _CONFIG_TURRIS_OMNIA_H
@@ -13,7 +12,6 @@
  */
 
 #define CONFIG_MISC_INIT_R
-#define CONFIG_DISPLAY_BOARDINFO_LATE
 
 /*
  * TEXT_BASE needs to be below 16MiB, since this area is scrubbed
@@ -75,8 +73,6 @@
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 
-#define CONFIG_SYS_ALT_MEMTEST
-
 /* Keep device tree and initrd in lower memory so the kernel can access them */
 #define RELOCATION_LIMITS_ENV_SETTINGS	\
 	"fdt_high=0x10000000\0"		\
@@ -100,7 +96,6 @@
 
 #ifdef CONFIG_TURRIS_OMNIA_SPL_BOOT_DEVICE_SPI
 /* SPL related SPI defines */
-# define CONFIG_SPL_SPI_LOAD
 # define CONFIG_SYS_SPI_U_BOOT_OFFS	0x24000
 # define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
 #endif

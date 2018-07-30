@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * bur_am335x_common.h
  *
@@ -5,8 +6,6 @@
  *
  * Copyright (C) 2016 Hannes Schmelzer <oe5hpm@oevsv.at> -
  * Bernecker & Rainer Industrieelektronik GmbH - http://www.br-automation.com
- *
- * SPDX-License-Identifier:        GPL-2.0+
  */
 
 #ifndef __BUR_AM335X_COMMON_H__
@@ -17,7 +16,6 @@
 /* Timer information */
 #define CONFIG_SYS_PTV			2	/* Divisor: 2^(PTV+1) => 8 */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
-#define CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC	/* enable 32kHz OSC at bootime */
 #define CONFIG_POWER_TPS65217
 
 #include <asm/arch/omap.h>
@@ -29,7 +27,6 @@
 #define CONFIG_SYS_NS16550_COM1		0x44e09000	/* UART0 */
 
 /* Network defines */
-#define CONFIG_DRIVER_TI_CPSW		/* Driver for IP block */
 #define CONFIG_MII			/* Required in net/eth.c */
 #define CONFIG_PHY_NATSEMI
 

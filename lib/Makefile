@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
 
 ifndef CONFIG_SPL_BUILD
 
@@ -18,6 +16,7 @@ obj-$(CONFIG_FIT) += libfdt/
 obj-$(CONFIG_OF_LIVE) += of_live.o
 obj-$(CONFIG_CMD_DHRYSTONE) += dhry/
 obj-$(CONFIG_ARCH_AT91) += at91/
+obj-$(CONFIG_OPTEE) += optee/
 
 obj-$(CONFIG_AES) += aes.o
 obj-y += charset.o
@@ -87,22 +86,19 @@ obj-y += time.o
 obj-$(CONFIG_TRACE) += trace.o
 obj-$(CONFIG_LIB_UUID) += uuid.o
 obj-$(CONFIG_LIB_RAND) += rand.o
+obj-y += panic.o
 
-ifdef CONFIG_SPL_BUILD
-ifdef CONFIG_TPL_BUILD
-SERIAL_SUPPORT := $(CONFIG_TPL_SERIAL_SUPPORT)
-else
-SERIAL_SUPPORT := $(CONFIG_SPL_SERIAL_SUPPORT)
-endif
+ifeq ($(CONFIG_$(SPL_TPL_)BUILD),y)
 # SPL U-Boot may use full-printf, tiny-printf or none at all
 ifdef CONFIG_USE_TINY_PRINTF
-obj-$(SERIAL_SUPPORT) += tiny-printf.o panic.o strto.o
+obj-$(CONFIG_$(SPL_TPL_)SPRINTF) += tiny-printf.o
 else
-obj-$(SERIAL_SUPPORT) += vsprintf.o panic.o strto.o strmhz.o
+obj-$(CONFIG_$(SPL_TPL_)SPRINTF) += vsprintf.o strmhz.o
 endif
+obj-$(CONFIG_$(SPL_TPL_)STRTO) += strto.o
 else
 # Main U-Boot always uses the full printf support
-obj-y += vsprintf.o panic.o strto.o strmhz.o
+obj-y += vsprintf.o strto.o strmhz.o
 endif
 
 subdir-ccflags-$(CONFIG_CC_OPTIMIZE_LIBS_FOR_SPEED) += -O2

@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2010
  * Vipin Kumar, ST Micoelectronics, vipin.kumar@st.com.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -22,8 +21,6 @@
 #include <asm/io.h>
 #include <power/regulator.h>
 #include "designware.h"
-
-DECLARE_GLOBAL_DATA_PTR;
 
 static int dw_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
 {

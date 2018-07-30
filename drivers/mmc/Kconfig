@@ -266,14 +266,29 @@ config SH_SDHI
 	help
 	  Support for the on-chip SDHI host controller on SuperH/Renesas ARM SoCs platform
 
+config SH_MMCIF
+	bool "SuperH/Renesas ARM SoCs on-chip MMCIF host controller support"
+	depends on ARCH_RMOBILE || SH
+	help
+	  Support for the on-chip MMCIF host controller on SuperH/Renesas ARM SoCs platform
+
 config MMC_UNIPHIER
-	bool "UniPhier/RCar SD/MMC Host Controller support"
-	depends on ARCH_UNIPHIER || ARCH_RMOBILE
+	bool "UniPhier SD/MMC Host Controller support"
+	depends on ARCH_UNIPHIER
 	depends on BLK && DM_MMC
 	depends on OF_CONTROL
 	help
 	  This selects support for the Matsushita SD/MMC Host Controller on
-	  SocioNext UniPhier and Renesas RCar SoCs.
+	  SocioNext UniPhier SoCs.
+
+config RENESAS_SDHI
+	bool "Renesas R-Car SD/MMC Host Controller support"
+	depends on ARCH_RMOBILE
+	depends on BLK && DM_MMC
+	depends on OF_CONTROL
+	help
+	  This selects support for the Matsushita SD/MMC Host Controller on
+	  Renesas R-Car SoCs.
 
 config MMC_BCM2835
 	bool "BCM2835 family custom SD/MMC Host Controller support"
@@ -523,17 +538,17 @@ config STM32_SDMMC2
 	  If you have a board based on such a SoC and with a SD/MMC slot,
 	  say Y or M here.
 
-config MMC_NDS32
-	bool "Andestech SD/MMC controller support"
-	depends on DM_MMC && OF_CONTROL && BLK && FTSDC010
-	help
-	  This enables support for the Andestech SD/MMM controller, which is
-	  based on Faraday IP.
-
 config FTSDC010
 	bool "Ftsdc010 SD/MMC controller Support"
 	help
 	  This SD/MMC controller is present in Andestech SoCs which is based on Faraday IP.
+
+config FTSDC010_SDIO
+	bool "Support ftsdc010 sdio"
+	default n
+	depends on FTSDC010
+	help
+		This can enable ftsdc010 sdio function.
 
 endif
 
@@ -547,6 +562,12 @@ config TEGRA124_MMC_DISABLE_EXT_LOOPBACK
 
 	  TODO(marcel.ziswiler@toradex.com): Move to device tree controlled
 	  approach once proper kernel integration made it mainline.
+
+config FSL_ESDHC
+	bool "Freescale/NXP eSDHC controller support"
+	help
+	  This selects support for the eSDHC (enhanced secure digital host
+	  controller) found on numerous Freescale/NXP SoCs.
 
 endmenu
 

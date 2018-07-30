@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2016-17 Microsemi Corporation.
  * Padmarao Begari, Microsemi Corporation <padmarao.begari@microsemi.com>
  *
  * Copyright (C) 2017 Andes Technology Corporation
  * Rick Chen, Andes Technology Corporation <rick@andestech.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -63,7 +62,7 @@ __attribute__((weak)) void timer_interrupt(struct pt_regs *regs)
 
 static void _exit_trap(int code, uint epc, struct pt_regs *regs)
 {
-	static const char *exception_code[] = {
+	static const char * const exception_code[] = {
 		"Instruction address misaligned",
 		"Instruction access fault",
 		"Illegal instruction",

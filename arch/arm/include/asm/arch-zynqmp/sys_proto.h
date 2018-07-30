@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2014 - 2015 Xilinx, Inc.
  * Michal Simek <michal.simek@xilinx.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _ASM_ARCH_SYS_PROTO_H
@@ -11,6 +10,10 @@
 #define PAYLOAD_ARG_CNT		5
 
 #define ZYNQMP_CSU_SILICON_VER_MASK	0xF
+#define ZYNQMP_SIP_SVC_PM_SECURE_IMG_LOAD	0xC200002D
+#define KEY_PTR_LEN	32
+
+#define ZYNQMP_FPGA_BIT_NS		5
 
 enum {
 	IDCODE,

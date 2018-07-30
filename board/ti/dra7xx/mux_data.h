@@ -1,11 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2013
  * Texas Instruments Incorporated, <www.ti.com>
  *
  * Sricharan R	<r.sricharan@ti.com>
  * Nishant Kamat <nskamat@ti.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef _MUX_DATA_DRA7XX_H_
 #define _MUX_DATA_DRA7XX_H_
@@ -372,13 +371,10 @@ const struct pad_conf_entry dra71x_core_padconf_array[] = {
 };
 
 const struct pad_conf_entry early_padconf[] = {
-#if (CONFIG_CONS_INDEX == 1)
 	{UART1_RXD, (PIN_INPUT_SLEW | M0)}, /* UART1_RXD */
 	{UART1_TXD, (PIN_INPUT_SLEW | M0)}, /* UART1_TXD */
-#elif (CONFIG_CONS_INDEX == 3)
 	{UART3_RXD, (PIN_INPUT_SLEW | M0)}, /* UART3_RXD */
 	{UART3_TXD, (PIN_INPUT_SLEW | M0)}, /* UART3_TXD */
-#endif
 	{I2C1_SDA, (PIN_INPUT | M0)},	/* I2C1_SDA */
 	{I2C1_SCL, (PIN_INPUT | M0)},	/* I2C1_SCL */
 };

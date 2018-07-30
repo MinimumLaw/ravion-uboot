@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Álvaro Fernández Rojas <noltari@gmail.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <dt-bindings/clock/bcm6348-clock.h>
@@ -131,6 +130,26 @@
 			resets = <&periph_rst BCM6348_RST_SPI>;
 			spi-max-frequency = <20000000>;
 			num-cs = <4>;
+
+			status = "disabled";
+		};
+
+		ohci: usb-controller@fffe1b00 {
+			compatible = "brcm,bcm6348-ohci", "generic-ohci";
+			reg = <0xfffe1b00 0x100>;
+			phys = <&usbh>;
+			big-endian;
+
+			status = "disabled";
+		};
+
+		usbh: usb-phy@fffe1c00 {
+			compatible = "brcm,bcm6348-usbh";
+			reg = <0xfffe1c00 0x4>;
+			#phy-cells = <0>;
+			clocks = <&periph_clk BCM6348_CLK_USBH>;
+			clock-names = "usbh";
+			resets = <&periph_rst BCM6348_RST_USBH>;
 
 			status = "disabled";
 		};
