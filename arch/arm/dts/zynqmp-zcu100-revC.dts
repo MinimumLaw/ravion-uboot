@@ -48,8 +48,6 @@
 
 	gpio-keys {
 		compatible = "gpio-keys";
-		#address-cells = <1>;
-		#size-cells = <0>;
 		autorepeat;
 		sw4 {
 			label = "sw4";
@@ -252,7 +250,6 @@
 &sdhci0 {
 	status = "okay";
 	no-1-8-v;
-	broken-cd; /* CD has to be enabled by default */
 	disable-wp;
 	xlnx,mio_bank = <0>;
 };
@@ -332,6 +329,7 @@
 
 &watchdog0 {
 	status = "okay";
+	reset-on-timeout;
 };
 
 &xilinx_ams {

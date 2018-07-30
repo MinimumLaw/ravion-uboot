@@ -214,15 +214,15 @@ struct efi_runtime_services {
 			uint32_t descriptor_version,
 			struct efi_mem_desc *virtmap);
 	efi_status_t (*convert_pointer)(unsigned long dbg, void **address);
-	efi_status_t (EFIAPI *get_variable)(s16 *variable_name,
-			efi_guid_t *vendor, u32 *attributes,
-			unsigned long *data_size, void *data);
-	efi_status_t (EFIAPI *get_next_variable)(
-			unsigned long *variable_name_size,
-			s16 *variable_name, efi_guid_t *vendor);
-	efi_status_t (EFIAPI *set_variable)(s16 *variable_name,
-			efi_guid_t *vendor, u32 attributes,
-			unsigned long data_size, void *data);
+	efi_status_t (EFIAPI *get_variable)(u16 *variable_name,
+					    efi_guid_t *vendor, u32 *attributes,
+					    efi_uintn_t *data_size, void *data);
+	efi_status_t (EFIAPI *get_next_variable_name)(
+			efi_uintn_t *variable_name_size,
+			u16 *variable_name, efi_guid_t *vendor);
+	efi_status_t (EFIAPI *set_variable)(u16 *variable_name,
+					    efi_guid_t *vendor, u32 attributes,
+					    efi_uintn_t data_size, void *data);
 	efi_status_t (EFIAPI *get_next_high_mono_count)(
 			uint32_t *high_count);
 	void (EFIAPI *reset_system)(enum efi_reset_type reset_type,
@@ -239,9 +239,9 @@ struct efi_runtime_services {
 			u32 reset_type);
 	efi_status_t (EFIAPI *query_variable_info)(
 			u32 attributes,
-			u64 maximum_variable_storage_size,
-			u64 remaining_variable_storage_size,
-			u64 maximum_variable_size);
+			u64 *maximum_variable_storage_size,
+			u64 *remaining_variable_storage_size,
+			u64 *maximum_variable_size);
 };
 
 /* EFI event group GUID definitions */
@@ -281,6 +281,10 @@ struct efi_runtime_services {
 #define EFI_FDT_GUID \
 	EFI_GUID(0xb1b621d5, 0xf19c, 0x41a5, \
 		 0x83, 0x0b, 0xd9, 0x15, 0x2c, 0x69, 0xaa, 0xe0)
+
+#define EFI_ACPI_TABLE_GUID \
+	EFI_GUID(0x8868e871, 0xe4f1, 0x11d3, \
+		 0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81)
 
 #define SMBIOS_TABLE_GUID \
 	EFI_GUID(0xeb9d2d31, 0x2d88, 0x11d3,  \

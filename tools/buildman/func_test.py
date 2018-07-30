@@ -327,6 +327,9 @@ class TestFunctional(unittest.TestCase):
     def _HandleCommandObjdump(self, args):
         return command.CommandResult(return_code=0)
 
+    def _HandleCommandObjcopy(self, args):
+        return command.CommandResult(return_code=0)
+
     def _HandleCommandSize(self, args):
         return command.CommandResult(return_code=0)
 
@@ -359,6 +362,8 @@ class TestFunctional(unittest.TestCase):
             return self._HandleCommandNm(args)
         elif cmd.endswith('objdump'):
             return self._HandleCommandObjdump(args)
+        elif cmd.endswith('objcopy'):
+            return self._HandleCommandObjcopy(args)
         elif cmd.endswith( 'size'):
             return self._HandleCommandSize(args)
 
@@ -519,3 +524,12 @@ class TestFunctional(unittest.TestCase):
         self._RunControl('-b', self._test_branch, clean_dir=False)
         self.assertEqual(self._builder.count, self._total_builds)
         self.assertEqual(self._builder.fail, 0)
+
+    def testBadOutputDir(self):
+        """Test building with an output dir the same as out current dir"""
+        self._test_branch = '/__dev/__testbranch'
+        with self.assertRaises(SystemExit):
+            self._RunControl('-b', self._test_branch, '-o', os.getcwd())
+        with self.assertRaises(SystemExit):
+            self._RunControl('-b', self._test_branch, '-o',
+                             os.path.join(os.getcwd(), 'test'))

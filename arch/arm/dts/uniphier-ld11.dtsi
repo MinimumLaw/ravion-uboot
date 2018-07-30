@@ -124,7 +124,6 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart0>;
 			clocks = <&peri_clk 0>;
-			clock-frequency = <58820000>;
 			resets = <&peri_rst 0>;
 		};
 
@@ -136,7 +135,6 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart1>;
 			clocks = <&peri_clk 1>;
-			clock-frequency = <58820000>;
 			resets = <&peri_rst 1>;
 		};
 
@@ -148,7 +146,6 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart2>;
 			clocks = <&peri_clk 2>;
-			clock-frequency = <58820000>;
 			resets = <&peri_rst 2>;
 		};
 
@@ -160,7 +157,6 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart3>;
 			clocks = <&peri_clk 3>;
-			clock-frequency = <58820000>;
 			resets = <&peri_rst 3>;
 		};
 
@@ -418,7 +414,7 @@
 			mmc-ddr-1_8v;
 			mmc-hs200-1_8v;
 			mmc-pwrseq = <&emmc_pwrseq>;
-			cdns,phy-input-delay-legacy = <4>;
+			cdns,phy-input-delay-legacy = <9>;
 			cdns,phy-input-delay-mmc-highspeed = <2>;
 			cdns,phy-input-delay-mmc-ddr = <3>;
 			cdns,phy-dll-delay-sdclk = <21>;
@@ -553,10 +549,13 @@
 			status = "disabled";
 			reg = <0x65000000 0x8500>;
 			interrupts = <0 66 4>;
+			clock-names = "ether";
 			clocks = <&sys_clk 6>;
+			reset-names = "ether";
 			resets = <&sys_rst 6>;
-			phy-mode = "rmii";
+			phy-mode = "internal";
 			local-mac-address = [00 00 00 00 00 00];
+			socionext,syscon-phy-mode = <&soc_glue 0>;
 
 			mdio: mdio {
 				#address-cells = <1>;

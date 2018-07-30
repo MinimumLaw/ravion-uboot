@@ -60,6 +60,7 @@ S:	Maintained
 L:	uboot-snps-arc@synopsys.com
 T:	git git://git.denx.de/u-boot-arc.git
 F:	arch/arc/
+F:	board/synopsys/
 
 ARC HSDK CGU CLOCK
 M:	Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
@@ -135,6 +136,7 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-marvell.git
 F:	arch/arm/mach-kirkwood/
 F:	arch/arm/mach-mvebu/
+F:	drivers/ata/ahci_mvebu.c
 
 ARM MARVELL PXA
 M:	Marek Vasut <marex@denx.de>
@@ -182,7 +184,7 @@ F:	arch/arm/mach-s5pc1xx/
 F:	arch/arm/cpu/armv7/s5p-common/
 
 ARM SNAPDRAGON
-M:	Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
+M:	Ramon Fried <ramon.fried@gmail.com>
 S:	Maintained
 F:	arch/arm/mach-snapdragon/
 
@@ -204,6 +206,7 @@ M:	Patrick Delaunay <patrick.delaunay@st.com>
 S:	Maintained
 F:	arch/arm/mach-stm32mp
 F:	drivers/clk/clk_stm32mp1.c
+F:	drivers/misc/stm32mp_fuse.c
 F:	drivers/ram/stm32mp1/
 
 ARM STM STV0991
@@ -274,7 +277,7 @@ ARM ZYNQMP
 M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-microblaze.git
-F:	arch/arm/mach-zynq/
+F:	arch/arm/cpu/armv8/zynqmp/
 F:	drivers/clk/clk_zynqmp.c
 F:	drivers/fpga/zynqpl.c
 F:	drivers/gpio/zynq_gpio.c
@@ -288,11 +291,18 @@ F:	drivers/net/zynq_gem.c
 F:	drivers/serial/serial_zynq.c
 F:	drivers/spi/zynq_qspi.c
 F:	drivers/spi/zynq_spi.c
+F:	drivers/timer/cadence-ttc.c
 F:	drivers/usb/host/ehci-zynq.c
 F:	drivers/watchdog/cdns_wdt.c
 F:	include/zynqmppl.h
-F:	tools/zynqimage.c
+F:	tools/zynqmp*
 N:	zynqmp
+
+ARM ZYNQMP R5
+M:	Michal Simek <michal.simek@xilinx.com>
+S:	Maintained
+T:	git git://git.denx.de/u-boot-microblaze.git
+F:	arch/arm/mach-zynqmp-r5/
 
 BUILDMAN
 M:	Simon Glass <sjg@chromium.org>
@@ -332,6 +342,7 @@ EFI PAYLOAD
 M:	Alexander Graf <agraf@suse.de>
 S:	Maintained
 T:	git git://github.com/agraf/u-boot.git
+F:	doc/DocBook/efi.tmpl
 F:	doc/README.uefi
 F:	doc/README.iscsi
 F:	include/efi*

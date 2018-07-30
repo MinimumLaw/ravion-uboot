@@ -59,7 +59,6 @@
  * SPI Flash configuration
  */
 #ifdef CONFIG_CMD_SF
-#define CONFIG_HARD_SPI			1
 #ifndef CONFIG_ENV_SPI_BUS
 # define CONFIG_ENV_SPI_BUS		0
 #endif
@@ -77,7 +76,6 @@
 #ifdef CONFIG_CMD_NET
 #define CONFIG_NETCONSOLE	/* include NetConsole support   */
 #define CONFIG_MII		/* expose smi ove miiphy interface */
-#define CONFIG_MVGBE		/* Enable Marvell Gbe Controller Driver */
 #define CONFIG_SYS_FAULT_ECHO_LINK_DOWN	/* detect link using phy */
 #define CONFIG_ENV_OVERWRITE	/* ethaddr can be reprogrammed */
 #define CONFIG_RESET_PHY_R	/* use reset_phy() to init mv8831116 PHY */
@@ -117,7 +115,7 @@
 /*
  * I2C related stuff
  */
-#ifdef CONFIG_CMD_I2C
+#if defined(CONFIG_CMD_I2C) && !defined(CONFIG_DM_I2C)
 #ifndef CONFIG_SYS_I2C_SOFT
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MVTWSI

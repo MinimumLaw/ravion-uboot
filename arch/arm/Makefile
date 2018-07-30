@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 ifeq ($(CONFIG_SPL_BUILD)$(CONFIG_TEGRA),yy)
-CONFIG_CPU_V7=
+CONFIG_CPU_V7A=
 CONFIG_CPU_ARM720T=y
 endif
 
@@ -14,8 +14,10 @@ arch-$(CONFIG_CPU_SA1100)	=-march=armv4
 arch-$(CONFIG_CPU_PXA)		=
 arch-$(CONFIG_CPU_ARM1136)	=-march=armv5
 arch-$(CONFIG_CPU_ARM1176)	=-march=armv5t
-arch-$(CONFIG_CPU_V7)		=$(call cc-option, -march=armv7-a, \
+arch-$(CONFIG_CPU_V7A)		=$(call cc-option, -march=armv7-a, \
 				 $(call cc-option, -march=armv7, -march=armv5))
+arch-$(CONFIG_CPU_V7M)		=-march=armv7-m
+arch-$(CONFIG_CPU_V7R)		=-march=armv7-r
 arch-$(CONFIG_ARM64)		=-march=armv8-a
 
 # On Tegra systems we must build SPL for the armv4 core on the device
@@ -38,7 +40,8 @@ tune-$(CONFIG_CPU_SA1100)	=-mtune=strongarm1100
 tune-$(CONFIG_CPU_PXA)		=-mcpu=xscale
 tune-$(CONFIG_CPU_ARM1136)	=
 tune-$(CONFIG_CPU_ARM1176)	=
-tune-$(CONFIG_CPU_V7)		=
+tune-$(CONFIG_CPU_V7A)		=
+tune-$(CONFIG_CPU_V7R)		=
 tune-$(CONFIG_ARM64)		=
 
 # Evaluate tune cc-option calls now
@@ -74,6 +77,7 @@ machine-$(CONFIG_ARCH_STM32MP)		+= stm32mp
 machine-$(CONFIG_TEGRA)			+= tegra
 machine-$(CONFIG_ARCH_UNIPHIER)		+= uniphier
 machine-$(CONFIG_ARCH_ZYNQ)		+= zynq
+machine-$(CONFIG_ARCH_ZYNQMP_R5)	+= zynqmp-r5
 
 machdirs := $(patsubst %,arch/arm/mach-%/,$(machine-y))
 

@@ -27,10 +27,10 @@
 		testfdt3 = "/b-test";
 		testfdt5 = "/some-bus/c-test@5";
 		testfdt8 = "/a-test";
-		fdt_dummy0 = "/translation-test@8000/dev@0,0";
-		fdt_dummy1 = "/translation-test@8000/dev@1,100";
-		fdt_dummy2 = "/translation-test@8000/dev@2,200";
-		fdt_dummy3 = "/translation-test@8000/noxlatebus@3,300/dev@42";
+		fdt-dummy0 = "/translation-test@8000/dev@0,0";
+		fdt-dummy1 = "/translation-test@8000/dev@1,100";
+		fdt-dummy2 = "/translation-test@8000/dev@2,200";
+		fdt-dummy3 = "/translation-test@8000/noxlatebus@3,300/dev@42";
 		usb0 = &usb_0;
 		usb1 = &usb_1;
 		usb2 = &usb_2;
@@ -227,6 +227,10 @@
 		sandbox_pmic: sandbox_pmic {
 			reg = <0x40>;
 		};
+
+		mc34708: pmic@41 {
+			reg = <0x41>;
+		};
 	};
 
 	adc@0 {
@@ -253,6 +257,18 @@
 		martinet {
 			gpios = <&gpio_a 2 0>;
 			label = "sandbox:green";
+		};
+
+		default_on {
+			gpios = <&gpio_a 5 0>;
+			label = "sandbox:default_on";
+			default-state = "on";
+		};
+
+		default_off {
+			gpios = <&gpio_a 6 0>;
+			label = "sandbox:default_off";
+			default-state = "off";
 		};
 	};
 
@@ -393,9 +409,21 @@
 			0x38 8>;
 	};
 
+	syscon@2 {
+		compatible = "simple-mfd", "syscon";
+		reg = <0x40 5
+			0x48 6
+			0x50 7
+			0x58 8>;
+	};
+
 	timer {
 		compatible = "sandbox,timer";
 		clock-frequency = <1000000>;
+	};
+
+	tpm2 {
+		compatible = "sandbox,tpm2";
 	};
 
 	uart0: serial {

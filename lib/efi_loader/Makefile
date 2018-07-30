@@ -1,7 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2016 Alexander Graf
-#
-#  SPDX-License-Identifier:     GPL-2.0+
 #
 
 # This file only gets included with CONFIG_EFI_LOADER set, so all
@@ -23,4 +22,5 @@ obj-$(CONFIG_LCD) += efi_gop.o
 obj-$(CONFIG_DM_VIDEO) += efi_gop.o
 obj-$(CONFIG_PARTITIONS) += efi_disk.o
 obj-$(CONFIG_NET) += efi_net.o
+obj-$(CONFIG_GENERATE_ACPI_TABLE) += efi_acpi.o
 obj-$(CONFIG_GENERATE_SMBIOS_TABLE) += efi_smbios.o

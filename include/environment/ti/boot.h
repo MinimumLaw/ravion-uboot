@@ -13,8 +13,55 @@
 #define CONSOLEDEV "ttyO2"
 #endif
 
+#define VBMETA_PART_SIZE		(64 * 1024)
+
+#if defined(CONFIG_LIBAVB)
+#define VBMETA_PART \
+	"name=vbmeta,size=" __stringify(VBMETA_PART_SIZE) \
+	",uuid=${uuid_gpt_vbmeta};"
+#else
+#define VBMETA_PART			""
+#endif
+
 #ifndef PARTS_DEFAULT
-#define PARTS_DEFAULT
+/* Define the default GPT table for eMMC */
+#define PARTS_DEFAULT \
+	/* Linux partitions */ \
+	"uuid_disk=${uuid_gpt_disk};" \
+	"name=bootloader,start=384K,size=1792K,uuid=${uuid_gpt_bootloader};" \
+	"name=rootfs,start=2688K,size=-,uuid=${uuid_gpt_rootfs}\0" \
+	/* Android partitions */ \
+	"partitions_android=" \
+	"uuid_disk=${uuid_gpt_disk};" \
+	"name=xloader,start=128K,size=256K,uuid=${uuid_gpt_xloader};" \
+	"name=bootloader,size=1792K,uuid=${uuid_gpt_bootloader};" \
+	"name=environment,size=128K,uuid=${uuid_gpt_environment};" \
+	"name=misc,size=128K,uuid=${uuid_gpt_misc};" \
+	"name=reserved,size=256K,uuid=${uuid_gpt_reserved};" \
+	"name=efs,size=16M,uuid=${uuid_gpt_efs};" \
+	"name=crypto,size=16K,uuid=${uuid_gpt_crypto};" \
+	"name=recovery,size=40M,uuid=${uuid_gpt_recovery};" \
+	"name=boot,size=10M,uuid=${uuid_gpt_boot};" \
+	"name=system,size=768M,uuid=${uuid_gpt_system};" \
+	"name=vendor,size=256M,uuid=${uuid_gpt_vendor};" \
+	"name=cache,size=256M,uuid=${uuid_gpt_cache};" \
+	"name=ipu1,size=1M,uuid=${uuid_gpt_ipu1};" \
+	"name=ipu2,size=1M,uuid=${uuid_gpt_ipu2};" \
+	VBMETA_PART \
+	"name=userdata,size=-,uuid=${uuid_gpt_userdata}"
+#endif /* PARTS_DEFAULT */
+
+#if defined(CONFIG_CMD_AVB)
+#define AVB_VERIFY_CHECK "if run avb_verify; then " \
+				"echo AVB verification OK.;" \
+				"set bootargs $bootargs $avb_bootargs;" \
+			"else " \
+				"echo AVB verification failed.;" \
+			"exit; fi;"
+#define AVB_VERIFY_CMD "avb_verify=avb init 1; avb verify;\0"
+#else
+#define AVB_VERIFY_CHECK ""
+#define AVB_VERIFY_CMD ""
 #endif
 
 #define DEFAULT_COMMON_BOOT_TI_ARGS \
@@ -25,6 +72,7 @@
 	"bootfile=zImage\0" \
 	"usbtty=cdc_acm\0" \
 	"vram=16M\0" \
+	AVB_VERIFY_CMD \
 	"partitions=" PARTS_DEFAULT "\0" \
 	"optargs=\0" \
 	"dofastboot=0\0" \
@@ -36,19 +84,21 @@
 		"run mmcboot;\0" \
 	"emmc_android_boot=" \
 		"echo Trying to boot Android from eMMC ...; " \
+		"run update_to_fit; " \
 		"setenv eval_bootargs setenv bootargs $bootargs; " \
 		"run eval_bootargs; " \
 		"setenv mmcdev 1; " \
 		"setenv machid fe6; " \
 		"mmc dev $mmcdev; " \
 		"mmc rescan; " \
+		AVB_VERIFY_CHECK \
 		"part start mmc ${mmcdev} environment fdt_start; " \
 		"part size mmc ${mmcdev} environment fdt_size; " \
 		"part start mmc ${mmcdev} boot boot_start; " \
 		"part size mmc ${mmcdev} boot boot_size; " \
 		"mmc read ${fdtaddr} ${fdt_start} ${fdt_size}; " \
 		"mmc read ${loadaddr} ${boot_start} ${boot_size}; " \
-		"bootm $loadaddr $loadaddr $fdtaddr;\0"
+		"bootm ${loadaddr}#${fdtfile};\0 "
 
 #ifdef CONFIG_OMAP54XX
 

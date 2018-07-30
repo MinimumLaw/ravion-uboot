@@ -45,8 +45,6 @@
 
 	gpio-keys {
 		compatible = "gpio-keys";
-		#address-cells = <1>;
-		#size-cells = <0>;
 		autorepeat;
 		sw19 {
 			label = "sw19";
@@ -500,6 +498,7 @@
 &sdhci1 {
 	status = "okay";
 	no-1-8-v;
+	disable-wp;
 	xlnx,mio_bank = <1>;
 };
 

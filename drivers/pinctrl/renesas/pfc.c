@@ -29,6 +29,7 @@ enum sh_pfc_model {
 	SH_PFC_R8A7795,
 	SH_PFC_R8A7796,
 	SH_PFC_R8A77970,
+	SH_PFC_R8A77990,
 	SH_PFC_R8A77995,
 };
 
@@ -118,12 +119,12 @@ void sh_pfc_write_raw_reg(void __iomem *mapped_reg, unsigned int reg_width,
 	BUG();
 }
 
-u32 sh_pfc_read_reg(struct sh_pfc *pfc, u32 reg, unsigned int width)
+u32 sh_pfc_read(struct sh_pfc *pfc, u32 reg)
 {
-	return sh_pfc_read_raw_reg(pfc->regs + reg, width);
+	return sh_pfc_read_raw_reg((void __iomem *)(uintptr_t)reg, 32);
 }
 
-void sh_pfc_write_reg(struct sh_pfc *pfc, u32 reg, unsigned int width, u32 data)
+void sh_pfc_write(struct sh_pfc *pfc, u32 reg, u32 data)
 {
 	void __iomem *unlock_reg =
 		(void __iomem *)(uintptr_t)pfc->info->unlock_reg;
@@ -131,7 +132,7 @@ void sh_pfc_write_reg(struct sh_pfc *pfc, u32 reg, unsigned int width, u32 data)
 	if (pfc->info->unlock_reg)
 		sh_pfc_write_raw_reg(unlock_reg, 32, ~data);
 
-	sh_pfc_write_raw_reg(pfc->regs + reg, width, data);
+	sh_pfc_write_raw_reg((void __iomem *)(uintptr_t)reg, 32, data);
 }
 
 static void sh_pfc_config_reg_helper(struct sh_pfc *pfc,
@@ -333,17 +334,22 @@ int sh_pfc_config_mux(struct sh_pfc *pfc, unsigned mark, int pinmux_type)
 	return 0;
 }
 
-const struct sh_pfc_bias_info *
-sh_pfc_pin_to_bias_info(const struct sh_pfc_bias_info *info,
-			unsigned int num, unsigned int pin)
+const struct pinmux_bias_reg *
+sh_pfc_pin_to_bias_reg(const struct sh_pfc *pfc, unsigned int pin,
+		       unsigned int *bit)
 {
-	unsigned int i;
+	unsigned int i, j;
 
-	for (i = 0; i < num; i++)
-		if (info[i].pin == pin)
-			return &info[i];
+	for (i = 0; pfc->info->bias_regs[i].puen; i++) {
+		for (j = 0; j < ARRAY_SIZE(pfc->info->bias_regs[i].pins); j++) {
+			if (pfc->info->bias_regs[i].pins[j] == pin) {
+				*bit = j;
+				return &pfc->info->bias_regs[i];
+			}
+		}
+	}
 
-	printf("Pin %u is not in bias info list\n", pin);
+	WARN_ONCE(1, "Pin %u is not in bias info list\n", pin);
 
 	return NULL;
 }
@@ -806,6 +812,10 @@ static int sh_pfc_pinctrl_probe(struct udevice *dev)
 	if (model == SH_PFC_R8A77970)
 		priv->pfc.info = &r8a77970_pinmux_info;
 #endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77990
+	if (model == SH_PFC_R8A77990)
+		priv->pfc.info = &r8a77990_pinmux_info;
+#endif
 #ifdef CONFIG_PINCTRL_PFC_R8A77995
 	if (model == SH_PFC_R8A77995)
 		priv->pfc.info = &r8a77995_pinmux_info;
@@ -868,6 +878,12 @@ static const struct udevice_id sh_pfc_pinctrl_ids[] = {
 	{
 		.compatible = "renesas,pfc-r8a77970",
 		.data = SH_PFC_R8A77970,
+	},
+#endif
+#ifdef CONFIG_PINCTRL_PFC_R8A77990
+	{
+		.compatible = "renesas,pfc-r8a77990",
+		.data = SH_PFC_R8A77990,
 	},
 #endif
 #ifdef CONFIG_PINCTRL_PFC_R8A77995

@@ -128,6 +128,7 @@ static int clean_bar(struct spi_flash *flash)
 	if (flash->bank_curr == 0)
 		return 0;
 	cmd = flash->bank_write_cmd;
+	flash->bank_curr = 0;
 
 	return spi_flash_write_common(flash, &cmd, 1, &bank_sel, 1);
 }
@@ -1202,14 +1203,15 @@ int spi_flash_scan(struct spi_flash *flash)
 	flash->shift = (flash->dual_flash & SF_DUAL_PARALLEL_FLASH) ? 1 : 0;
 	flash->page_size = info->page_size;
 	/*
-	 * The Spansion S25FL032P and S25FL064P have 256b pages, yet use the
-	 * 0x4d00 Extended JEDEC code. The rest of the Spansion flashes with
-	 * the 0x4d00 Extended JEDEC code have 512b pages. All of the others
-	 * have 256b pages.
+	 * The Spansion S25FS512S, S25FL032P and S25FL064P have 256b pages,
+	 * yet use the 0x4d00 Extended JEDEC code. The rest of the Spansion
+	 * flashes with the 0x4d00 Extended JEDEC code have 512b pages.
+	 * All of the others have 256b pages.
 	 */
 	if (JEDEC_EXT(info) == 0x4d00) {
 		if ((JEDEC_ID(info) != 0x0215) &&
-		    (JEDEC_ID(info) != 0x0216))
+		    (JEDEC_ID(info) != 0x0216) &&
+		    (JEDEC_ID(info) != 0x0220))
 			flash->page_size = 512;
 	}
 	flash->page_size <<= flash->shift;

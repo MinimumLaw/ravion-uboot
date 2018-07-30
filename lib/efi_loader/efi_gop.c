@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  EFI application disk support
  *
  *  Copyright (c) 2016 Alexander Graf
- *
- *  SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <common.h>
@@ -473,7 +472,7 @@ efi_status_t efi_gop_register(void)
 	gopobj->info.version = 0;
 	gopobj->info.width = col;
 	gopobj->info.height = row;
-	gopobj->info.pixel_format = EFI_GOT_RGBA8;
+	gopobj->info.pixel_format = EFI_GOT_BGRA8;
 	gopobj->info.pixels_per_scanline = col;
 
 	gopobj->bpix = bpix;

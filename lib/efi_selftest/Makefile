@@ -1,8 +1,6 @@
-:
+# SPDX-License-Identifier: GPL-2.0+
+#
 # (C) Copyright 2017, Heinrich Schuchardt <xypron.glpk@gmx.de>
-#
-#  SPDX-License-Identifier:     GPL-2.0+
-#
 
 # This file only gets included with CONFIG_EFI_LOADER set, so all
 # object inclusion implicitly depends on it
@@ -30,7 +28,12 @@ efi_selftest_textinput.o \
 efi_selftest_textoutput.o \
 efi_selftest_tpl.o \
 efi_selftest_util.o \
+efi_selftest_variables.o \
 efi_selftest_watchdog.o
+
+ifeq ($(CONFIG_CMD_BOOTEFI_SELFTEST),y)
+obj-$(CONFIG_CPU_V7) += efi_selftest_unaligned.o
+endif
 
 ifeq ($(CONFIG_BLK)$(CONFIG_PARTITIONS),yy)
 obj-$(CONFIG_CMD_BOOTEFI_SELFTEST) += efi_selftest_block_device.o

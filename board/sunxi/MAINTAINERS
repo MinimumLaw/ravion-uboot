@@ -116,6 +116,12 @@ M:	Paul Kocialkowski <contact@paulk.fr>
 S:	Maintained
 F:	configs/Ainol_AW1_defconfig
 
+AMARULA A64-RELIC
+M:	Jagan Teki <jagan@amarulasolutions.com>
+S:	Maintained
+F:	configs/amarula_a64_relic_defconfig
+F:	arch/arm/dts/sun50i-a64-amarula-relic.dts
+
 AMPE A76 BOARD
 M:	Paul Kocialkowski <contact@paulk.fr>
 S:	Maintained
@@ -125,6 +131,11 @@ BANANAPI M1 PLUS
 M:	Jagan Teki <jagan@amarulasolutions.com>
 S:	Maintained
 F:	configs/bananapi_m1_plus_defconfig
+
+BANANAPI M2 BERRY
+M:	Jagan Teki <jagan@amarulasolutions.com>
+S:	Maintained
+F:	configs/bananapi_m2_berry_defconfig
 
 BANANAPI M2 ULTRA BOARD
 M:	Chen-Yu Tsai <wens@csie.org>
@@ -266,10 +277,12 @@ M:	Siarhei Siamashka <siarhei.siamashka@gmail.com>
 S:	Maintained
 F:	configs/MSI_Primo81_defconfig
 
-LIBRETECH ALL-H3-CC H3 BOARD
+LIBRETECH ALL-H3-CC BOARDS
 M:	Chen-Yu Tsai <wens@csie.org>
 S:	Maintained
+F:	configs/libretech_all_h3_cc_h2_plus_defconfig
 F:	configs/libretech_all_h3_cc_h3_defconfig
+F:	configs/libretech_all_h3_cc_h5_defconfig
 
 NANOPI-M1 BOARD
 M:	Mylène Josserand <mylene.josserand@free-electrons.com>
@@ -327,6 +340,11 @@ M:	Icenowy Zheng <icenowy@aosc.xyz>
 S:	Maintained
 F:	configs/orangepi_zero_defconfig
 
+ORANGEPI ZERO PLUS BOARD
+M:	Hauke Mehrtens <hauke@hauke-m.de>
+S:	Maintained
+F:	configs/orangepi_zero_plus_defconfig
+
 ORANGEPI ZERO PLUS 2 BOARD
 M:	Jagan Teki <jagan@amarulasolutions.com>
 S:	Maintained
@@ -341,6 +359,11 @@ ORANGEPI PRIME BOARD
 M:	Jagan Teki <jagan@amarulasolutions.com>
 S:	Maintained
 F:	configs/orangepi_prime_defconfig
+
+ORANGEPI R1 BOARD
+M:	Hauke Mehrtens <hauke@hauke-m.de>
+S:	Maintained
+F:	configs/orangepi_r1_defconfig
 
 PINE64 BOARDS
 M:	Andre Przywara <andre.przywara@arm.com>

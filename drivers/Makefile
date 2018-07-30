@@ -18,6 +18,7 @@ obj-$(CONFIG_$(SPL_TPL_)TIMER) += timer/
 ifndef CONFIG_TPL_BUILD
 ifdef CONFIG_SPL_BUILD
 
+obj-$(CONFIG_SPL_BOOTCOUNT_LIMIT) += bootcount/
 obj-$(CONFIG_SPL_CPU_SUPPORT) += cpu/
 obj-$(CONFIG_SPL_CRYPTO_SUPPORT) += crypto/
 obj-$(CONFIG_SPL_GPIO_SUPPORT) += gpio/
@@ -70,6 +71,7 @@ obj-y += block/
 obj-$(CONFIG_BOOTCOUNT_LIMIT) += bootcount/
 obj-$(CONFIG_CPU) += cpu/
 obj-y += crypto/
+obj-$(CONFIG_FASTBOOT) += fastboot/
 obj-y += firmware/
 obj-$(CONFIG_FPGA) += fpga/
 obj-y += misc/
@@ -78,6 +80,7 @@ obj-$(CONFIG_NVME) += nvme/
 obj-y += pcmcia/
 obj-y += dfu/
 obj-$(CONFIG_X86) += pch/
+obj-y += phy/allwinner/
 obj-y += phy/marvell/
 obj-y += rtc/
 obj-y += scsi/

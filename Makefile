@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2018
-PATCHLEVEL = 05
+PATCHLEVEL = 07
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -258,6 +258,16 @@ HOSTCFLAGS   = -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer \
 		$(if $(CONFIG_TOOLS_DEBUG),-g)
 HOSTCXXFLAGS = -O2
 
+# With the move to GCC 6, we have implicitly upgraded our language
+# standard to GNU11 (see https://gcc.gnu.org/gcc-5/porting_to.html).
+# Some Linux distributions (including RHEL7, SLES13, Debian 8) still
+# have older compilers as their default, so we make it explicit for
+# these that our host tools are GNU11 (i.e. C11 w/ GNU extensions).
+CSTD_FLAG := -std=gnu11
+ifeq ($(HOSTOS),linux)
+HOSTCFLAGS += $(CSTD_FLAG)
+endif
+
 ifeq ($(HOSTOS),cygwin)
 HOSTCFLAGS	+= -ansi
 endif
@@ -344,9 +354,13 @@ LDR		= $(CROSS_COMPILE)ldr
 STRIP		= $(CROSS_COMPILE)strip
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 OBJDUMP		= $(CROSS_COMPILE)objdump
+LEX		= flex
+YACC		= bison
 AWK		= awk
 PERL		= perl
 PYTHON		?= python
+PYTHON2		= python2
+PYTHON3		= python3
 DTC		?= $(objtree)/scripts/dtc/dtc
 CHECK		= sparse
 
@@ -357,7 +371,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__ -D__UBOOT__
 
 KBUILD_CFLAGS   := -Wall -Wstrict-prototypes \
 		   -Wno-format-security \
-		   -fno-builtin -ffreestanding
+		   -fno-builtin -ffreestanding $(CSTD_FLAG)
 KBUILD_CFLAGS	+= -fshort-wchar
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 
@@ -369,7 +383,7 @@ export VERSION PATCHLEVEL SUBLEVEL UBOOTRELEASE UBOOTVERSION
 export ARCH CPU BOARD VENDOR SOC CPUDIR BOARDDIR
 export CONFIG_SHELL HOSTCC HOSTCFLAGS HOSTLDFLAGS CROSS_COMPILE AS LD CC
 export CPP AR NM LDR STRIP OBJCOPY OBJDUMP
-export MAKE AWK PERL PYTHON
+export MAKE LEX YACC AWK PERL PYTHON PYTHON2 PYTHON3
 export HOSTCXX HOSTCXXFLAGS CHECK CHECKFLAGS DTC DTC_FLAGS
 
 export KBUILD_CPPFLAGS NOSTDINC_FLAGS UBOOTINCLUDE OBJCOPYFLAGS LDFLAGS
@@ -505,7 +519,7 @@ $(KCONFIG_CONFIG) include/config/auto.conf.cmd: ;
 # if auto.conf.cmd is missing then we are probably in a cleaned tree so
 # we execute the config step to be sure to catch updated Kconfig files
 include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
-	$(Q)$(MAKE) -f $(srctree)/Makefile silentoldconfig
+	$(Q)$(MAKE) -f $(srctree)/Makefile syncconfig
 	@# If the following part fails, include/config/auto.conf should be
 	@# deleted so "make silentoldconfig" will be re-run on the next build.
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.autoconf || \
@@ -1608,10 +1622,12 @@ clean: $(clean-dirs)
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '*.ko.*' -o -name '*.su' -o -name '*.cfgtmp' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
+		-o -name '*.lex.c' -o -name '*.tab.[ch]' \
 		-o -name '*.symtypes' -o -name 'modules.order' \
 		-o -name modules.builtin -o -name '.tmp_*.o.*' \
 		-o -name 'dsdt.aml' -o -name 'dsdt.asl.tmp' -o -name 'dsdt.c' \
-		-o -name '*.gcno' \) -type f -print | xargs rm -f
+		-o -name '*.efi' -o -name '*.gcno' -o -name '*.so' \) \
+		-type f -print | xargs rm -f
 
 # mrproper - Delete all generated files, including .config
 #

@@ -6,6 +6,7 @@ import errno
 import glob
 import os
 import shutil
+import sys
 import threading
 
 import command
@@ -26,6 +27,9 @@ def Mkdir(dirname, parents = False):
             os.mkdir(dirname)
     except OSError as err:
         if err.errno == errno.EEXIST:
+            if os.path.realpath('.') == os.path.realpath(dirname):
+                print "Cannot create the current working directory '%s'!" % dirname
+                sys.exit(1)
             pass
         else:
             raise
@@ -346,6 +350,16 @@ class BuilderThread(threading.Thread):
                 if size_result.stdout:
                     lines.append(size_result.stdout.splitlines()[1] + ' ' +
                                  rodata_size)
+
+            # Extract the environment from U-Boot and dump it out
+            cmd = ['%sobjcopy' % self.toolchain.cross, '-O', 'binary',
+                   '-j', '.rodata.default_environment',
+                   'env/built-in.o', 'uboot.env']
+            command.RunPipe([cmd], capture=True,
+                            capture_stderr=True, cwd=result.out_dir,
+                            raise_on_error=False, env=env)
+            ubootenv = os.path.join(result.out_dir, 'uboot.env')
+            self.CopyFiles(result.out_dir, build_dir, '', ['uboot.env'])
 
             # Write out the image sizes file. This is similar to the output
             # of binutil's 'size' utility, but it omits the header line and

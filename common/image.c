@@ -145,7 +145,8 @@ static const table_entry_t uimage_type[] = {
 	{	IH_TYPE_PBLIMAGE,   "pblimage",   "Freescale PBL Boot Image",},
 	{	IH_TYPE_RAMDISK,    "ramdisk",	  "RAMDisk Image",	},
 	{	IH_TYPE_SCRIPT,     "script",	  "Script",		},
-	{	IH_TYPE_SOCFPGAIMAGE, "socfpgaimage", "Altera SOCFPGA preloader",},
+	{	IH_TYPE_SOCFPGAIMAGE, "socfpgaimage", "Altera SoCFPGA CV/AV preloader",},
+	{	IH_TYPE_SOCFPGAIMAGE_V1, "socfpgaimage_v1", "Altera SoCFPGA A10 preloader",},
 	{	IH_TYPE_STANDALONE, "standalone", "Standalone Program", },
 	{	IH_TYPE_UBLIMAGE,   "ublimage",   "Davinci UBL image",},
 	{	IH_TYPE_MXSIMAGE,   "mxsimage",   "Freescale MXS Boot Image",},
@@ -158,6 +159,7 @@ static const table_entry_t uimage_type[] = {
 	{	IH_TYPE_VYBRIDIMAGE, "vybridimage",  "Vybrid Boot Image", },
 	{	IH_TYPE_ZYNQIMAGE,  "zynqimage",  "Xilinx Zynq Boot Image" },
 	{	IH_TYPE_ZYNQMPIMAGE, "zynqmpimage", "Xilinx ZynqMP Boot Image" },
+	{	IH_TYPE_ZYNQMPBIF,  "zynqmpbif",  "Xilinx ZynqMP Boot Image (bif)" },
 	{	IH_TYPE_FPGA,       "fpga",       "FPGA Image" },
 	{       IH_TYPE_TEE,        "tee",        "Trusted Execution Environment Image",},
 	{	IH_TYPE_FIRMWARE_IVT, "firmware_ivt", "Firmware with HABv4 IVT" },
@@ -1411,7 +1413,7 @@ int boot_get_loadable(int argc, char * const argv[], bootm_headers_t *images,
  * @cmd_end: pointer to a ulong variable, will hold cmdline end
  *
  * boot_get_cmdline() allocates space for kernel command line below
- * BOOTMAPSZ + env_get_bootm_low() address. If "bootargs" U-Boot environemnt
+ * BOOTMAPSZ + env_get_bootm_low() address. If "bootargs" U-Boot environment
  * variable is present its contents is copied to allocated kernel
  * command line.
  *

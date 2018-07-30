@@ -136,7 +136,6 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS_MIPI_DSI,	/* Exynos mipi dsi */
 	COMPAT_SAMSUNG_EXYNOS_DWMMC,	/* Exynos DWMMC controller */
 	COMPAT_SAMSUNG_EXYNOS_MMC,	/* Exynos MMC controller */
-	COMPAT_MAXIM_MAX77686_PMIC,	/* MAX77686 PMIC */
 	COMPAT_GENERIC_SPI_FLASH,	/* Generic SPI Flash chip */
 	COMPAT_MAXIM_98095_CODEC,	/* MAX98095 Codec */
 	COMPAT_SAMSUNG_EXYNOS5_I2C,	/* Exynos5 High Speed I2C Controller */
@@ -161,6 +160,7 @@ enum fdt_compat_id {
 	COMPAT_ALTERA_SOCFPGA_F2SDR2,           /* SoCFPGA fpga2SDRAM2 bridge */
 	COMPAT_ALTERA_SOCFPGA_FPGA0,		/* SOCFPGA FPGA manager */
 	COMPAT_ALTERA_SOCFPGA_NOC,		/* SOCFPGA Arria 10 NOC */
+	COMPAT_ALTERA_SOCFPGA_CLK_INIT,		/* SOCFPGA Arria 10 clk init */
 
 	COMPAT_COUNT,
 };

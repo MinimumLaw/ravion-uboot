@@ -9,11 +9,14 @@
 #include <ahci.h>
 #include <scsi.h>
 #include <malloc.h>
+#include <wdt.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/psu_init_gpl.h>
 #include <asm/io.h>
+#include <dm/device.h>
+#include <dm/uclass.h>
 #include <usb.h>
 #include <dwc3-uboot.h>
 #include <zynqmppl.h>
@@ -21,6 +24,10 @@
 #include <g_dnl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_WDT)
+static struct udevice *watchdog_dev;
+#endif
 
 #if defined(CONFIG_FPGA) && defined(CONFIG_FPGA_ZYNQMPPL) && \
     !defined(CONFIG_SPL_BUILD)
@@ -281,6 +288,11 @@ int board_early_init_f(void)
 	ret = psu_init();
 #endif
 
+#if defined(CONFIG_WDT) && !defined(CONFIG_SPL_BUILD)
+	/* bss is not cleared at time when watchdog_reset() is called */
+	watchdog_dev = NULL;
+#endif
+
 	return ret;
 }
 
@@ -299,8 +311,39 @@ int board_init(void)
 	}
 #endif
 
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_WDT)
+	if (uclass_get_device(UCLASS_WDT, 0, &watchdog_dev)) {
+		puts("Watchdog: Not found!\n");
+	} else {
+		wdt_start(watchdog_dev, 0, 0);
+		puts("Watchdog: Started\n");
+	}
+#endif
+
 	return 0;
 }
+
+#ifdef CONFIG_WATCHDOG
+/* Called by macro WATCHDOG_RESET */
+void watchdog_reset(void)
+{
+# if !defined(CONFIG_SPL_BUILD)
+	static ulong next_reset;
+	ulong now;
+
+	if (!watchdog_dev)
+		return;
+
+	now = timer_get_us();
+
+	/* Do not reset the watchdog too often */
+	if (now > next_reset) {
+		wdt_reset(watchdog_dev);
+		next_reset = now + 1000;
+	}
+# endif
+}
+#endif
 
 int board_early_init_r(void)
 {
@@ -363,7 +406,15 @@ unsigned long do_go_exec(ulong (*entry)(int, char * const []), int argc,
 #if !defined(CONFIG_SYS_SDRAM_BASE) && !defined(CONFIG_SYS_SDRAM_SIZE)
 int dram_init_banksize(void)
 {
-	return fdtdec_setup_memory_banksize();
+	int ret;
+
+	ret = fdtdec_setup_memory_banksize();
+	if (ret)
+		return ret;
+
+	mem_map_fill();
+
+	return 0;
 }
 
 int dram_init(void)
@@ -374,6 +425,18 @@ int dram_init(void)
 	return 0;
 }
 #else
+int dram_init_banksize(void)
+{
+#if defined(CONFIG_NR_DRAM_BANKS)
+	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_dram[0].size = get_effective_memsize();
+#endif
+
+	mem_map_fill();
+
+	return 0;
+}
+
 int dram_init(void)
 {
 	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
@@ -387,10 +450,55 @@ void reset_cpu(ulong addr)
 {
 }
 
+static const struct {
+	u32 bit;
+	const char *name;
+} reset_reasons[] = {
+	{ RESET_REASON_DEBUG_SYS, "DEBUG" },
+	{ RESET_REASON_SOFT, "SOFT" },
+	{ RESET_REASON_SRST, "SRST" },
+	{ RESET_REASON_PSONLY, "PS-ONLY" },
+	{ RESET_REASON_PMU, "PMU" },
+	{ RESET_REASON_INTERNAL, "INTERNAL" },
+	{ RESET_REASON_EXTERNAL, "EXTERNAL" },
+	{}
+};
+
+static u32 reset_reason(void)
+{
+	u32 ret;
+	int i;
+	const char *reason = NULL;
+
+	ret = readl(&crlapb_base->reset_reason);
+
+	puts("Reset reason:\t");
+
+	for (i = 0; i < ARRAY_SIZE(reset_reasons); i++) {
+		if (ret & reset_reasons[i].bit) {
+			reason = reset_reasons[i].name;
+			printf("%s ", reset_reasons[i].name);
+			break;
+		}
+	}
+
+	puts("\n");
+
+	env_set("reset_reason", reason);
+
+	writel(~0, &crlapb_base->reset_reason);
+
+	return ret;
+}
+
 int board_late_init(void)
 {
 	u32 reg = 0;
 	u8 bootmode;
+	struct udevice *dev;
+	int bootseq = -1;
+	int bootseq_len = 0;
+	int env_targets_len = 0;
 	const char *mode;
 	char *new_targets;
 	char *env_targets;
@@ -435,7 +543,15 @@ int board_late_init(void)
 		break;
 	case SD_MODE:
 		puts("SD_MODE\n");
-		mode = "mmc0";
+		if (uclass_get_device_by_name(UCLASS_MMC,
+					      "sdhci@ff160000", &dev)) {
+			puts("Boot from SD0 but without SD0 enabled!\n");
+			return -1;
+		}
+		debug("mmc0 device found at %p, seq %d\n", dev, dev->seq);
+
+		mode = "mmc";
+		bootseq = dev->seq;
 		env_set("modeboot", "sdboot");
 		break;
 	case SD1_LSHFT_MODE:
@@ -443,12 +559,15 @@ int board_late_init(void)
 		/* fall through */
 	case SD_MODE1:
 		puts("SD_MODE1\n");
-#if defined(CONFIG_ZYNQ_SDHCI0) && defined(CONFIG_ZYNQ_SDHCI1)
-		mode = "mmc1";
-		env_set("sdbootdev", "1");
-#else
-		mode = "mmc0";
-#endif
+		if (uclass_get_device_by_name(UCLASS_MMC,
+					      "sdhci@ff170000", &dev)) {
+			puts("Boot from SD1 but without SD1 enabled!\n");
+			return -1;
+		}
+		debug("mmc1 device found at %p, seq %d\n", dev, dev->seq);
+
+		mode = "mmc";
+		bootseq = dev->seq;
 		env_set("modeboot", "sdboot");
 		break;
 	case NAND_MODE:
@@ -462,21 +581,34 @@ int board_late_init(void)
 		break;
 	}
 
+	if (bootseq >= 0) {
+		bootseq_len = snprintf(NULL, 0, "%i", bootseq);
+		debug("Bootseq len: %x\n", bootseq_len);
+	}
+
 	/*
 	 * One terminating char + one byte for space between mode
 	 * and default boot_targets
 	 */
 	env_targets = env_get("boot_targets");
-	if (env_targets) {
-		new_targets = calloc(1, strlen(mode) +
-				     strlen(env_targets) + 2);
-		sprintf(new_targets, "%s %s", mode, env_targets);
-	} else {
-		new_targets = calloc(1, strlen(mode) + 2);
-		sprintf(new_targets, "%s", mode);
-	}
+	if (env_targets)
+		env_targets_len = strlen(env_targets);
+
+	new_targets = calloc(1, strlen(mode) + env_targets_len + 2 +
+			     bootseq_len);
+	if (!new_targets)
+		return -ENOMEM;
+
+	if (bootseq >= 0)
+		sprintf(new_targets, "%s%x %s", mode, bootseq,
+			env_targets ? env_targets : "");
+	else
+		sprintf(new_targets, "%s %s", mode,
+			env_targets ? env_targets : "");
 
 	env_set("boot_targets", new_targets);
+
+	reset_reason();
 
 	return 0;
 }
@@ -486,49 +618,3 @@ int checkboard(void)
 	puts("Board: Xilinx ZynqMP\n");
 	return 0;
 }
-
-#ifdef CONFIG_USB_DWC3
-static struct dwc3_device dwc3_device_data0 = {
-	.maximum_speed = USB_SPEED_HIGH,
-	.base = ZYNQMP_USB0_XHCI_BASEADDR,
-	.dr_mode = USB_DR_MODE_PERIPHERAL,
-	.index = 0,
-};
-
-static struct dwc3_device dwc3_device_data1 = {
-	.maximum_speed = USB_SPEED_HIGH,
-	.base = ZYNQMP_USB1_XHCI_BASEADDR,
-	.dr_mode = USB_DR_MODE_PERIPHERAL,
-	.index = 1,
-};
-
-int usb_gadget_handle_interrupts(int index)
-{
-	dwc3_uboot_handle_interrupt(index);
-	return 0;
-}
-
-int board_usb_init(int index, enum usb_init_type init)
-{
-	debug("%s: index %x\n", __func__, index);
-
-#if defined(CONFIG_USB_GADGET_DOWNLOAD)
-	g_dnl_set_serialnumber(CONFIG_SYS_CONFIG_NAME);
-#endif
-
-	switch (index) {
-	case 0:
-		return dwc3_uboot_init(&dwc3_device_data0);
-	case 1:
-		return dwc3_uboot_init(&dwc3_device_data1);
-	};
-
-	return -1;
-}
-
-int board_usb_cleanup(int index, enum usb_init_type init)
-{
-	dwc3_uboot_exit(index);
-	return 0;
-}
-#endif

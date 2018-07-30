@@ -12,6 +12,7 @@ obj-y += version.o
 
 # command
 obj-$(CONFIG_CMD_AES) += aes.o
+obj-$(CONFIG_CMD_ADC) += adc.o
 obj-$(CONFIG_CMD_ARMFLASH) += armflash.o
 obj-y += blk_common.o
 obj-$(CONFIG_SOURCE) += source.o
@@ -21,6 +22,7 @@ obj-$(CONFIG_CMD_BEDBUG) += bedbug.o
 obj-$(CONFIG_CMD_BINOP) += binop.o
 obj-$(CONFIG_CMD_BLOCK_CACHE) += blkcache.o
 obj-$(CONFIG_CMD_BMP) += bmp.o
+obj-$(CONFIG_CMD_BOOTCOUNT) += bootcount.o
 obj-$(CONFIG_CMD_BOOTEFI) += bootefi.o
 obj-$(CONFIG_CMD_BOOTMENU) += bootmenu.o
 obj-$(CONFIG_CMD_BOOTSTAGE) += bootstage.o
@@ -60,6 +62,7 @@ obj-$(CONFIG_CMD_FS_GENERIC) += fs.o
 obj-$(CONFIG_CMD_FUSE) += fuse.o
 obj-$(CONFIG_CMD_GETTIME) += gettime.o
 obj-$(CONFIG_CMD_GPIO) += gpio.o
+obj-$(CONFIG_CMD_HVC) += smccc.o
 obj-$(CONFIG_CMD_I2C) += i2c.o
 obj-$(CONFIG_CMD_IOTRACE) += iotrace.o
 obj-$(CONFIG_CMD_HASH) += hash.o
@@ -97,6 +100,7 @@ obj-$(CONFIG_CMD_PCI) += pci.o
 endif
 obj-y += pcmcia.o
 obj-$(CONFIG_CMD_PXE) += pxe.o
+obj-$(CONFIG_CMD_WOL) += wol.o
 obj-$(CONFIG_CMD_QFW) += qfw.o
 obj-$(CONFIG_CMD_READ) += read.o
 obj-$(CONFIG_CMD_REGINFO) += reginfo.o
@@ -112,12 +116,15 @@ obj-$(CONFIG_CMD_SHA1SUM) += sha1sum.o
 obj-$(CONFIG_CMD_SETEXPR) += setexpr.o
 obj-$(CONFIG_CMD_SPI) += spi.o
 obj-$(CONFIG_CMD_STRINGS) += strings.o
+obj-$(CONFIG_CMD_SMC) += smccc.o
 obj-$(CONFIG_CMD_TERMINAL) += terminal.o
 obj-$(CONFIG_CMD_TIME) += time.o
 obj-$(CONFIG_CMD_TRACE) += trace.o
 obj-$(CONFIG_HUSH_PARSER) += test.o
-obj-$(CONFIG_CMD_TPM) += tpm.o
+obj-$(CONFIG_CMD_TPM) += tpm-common.o
+obj-$(CONFIG_CMD_TPM_V1) += tpm-v1.o
 obj-$(CONFIG_CMD_TPM_TEST) += tpm_test.o
+obj-$(CONFIG_CMD_TPM_V2) += tpm-v2.o
 obj-$(CONFIG_CMD_CROS_EC) += cros_ec.o
 obj-$(CONFIG_CMD_TSI148) += tsi148.o
 obj-$(CONFIG_CMD_UBI) += ubi.o
@@ -148,6 +155,9 @@ obj-$(CONFIG_CMD_PMIC) += pmic.o
 obj-$(CONFIG_CMD_REGULATOR) += regulator.o
 
 obj-$(CONFIG_CMD_BLOB) += blob.o
+
+# Android Verified Boot 2.0
+obj-$(CONFIG_CMD_AVB) += avb.o
 
 obj-$(CONFIG_X86) += x86/
 endif # !CONFIG_SPL_BUILD

@@ -178,6 +178,13 @@ config FTMAC100
 	help
 	  This MAC is present in Andestech SoCs.
 
+config MVGBE
+	bool "Marvell Orion5x/Kirkwood network interface support"
+	depends on KIRKWOOD || ORION5X
+	help
+	  This driver supports the network interface units in the
+	  Marvell Orion5x and Kirkwood SoCs
+
 config MVNETA
 	bool "Marvell Armada XP/385/3700 network interface support"
 	depends on ARMADA_XP || ARMADA_38X || ARMADA_3700
@@ -354,6 +361,16 @@ config MPC8XX_FEC
 	help
 	  This driver implements support for the Fast Ethernet Controller
 	  on MPC8XX
+
+config SNI_AVE
+	bool "Socionext AVE Ethernet support"
+	depends on DM_ETH && ARCH_UNIPHIER
+	select PHYLIB
+	select SYSCON
+	select REGMAP
+	help
+	  This driver implements support for the Socionext AVE Ethernet
+	  controller, as found on the Socionext UniPhier family.
 
 config ETHER_ON_FEC1
 	bool "FEC1"

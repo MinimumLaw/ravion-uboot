@@ -74,6 +74,28 @@ config ARM_ASM_UNIFIED
 config THUMB2_KERNEL
 	bool
 
+config SYS_ARM_CACHE_CP15
+	bool "CP15 based cache enabling support"
+	help
+	  Select this if your processor suports enabling caches by using
+	  CP15 registers.
+
+config SYS_ARM_MMU
+	bool "MMU-based Paged Memory Management Support"
+	select SYS_ARM_CACHE_CP15
+	help
+	  Select if you want MMU-based virtualised addressing space
+	  support by paged memory management.
+
+config SYS_ARM_MPU
+	bool 'Use the ARM v7 PMSA Compliant MPU'
+	help
+	  Some ARM systems without an MMU have instead a Memory Protection
+	  Unit (MPU) that defines the type and permissions for regions of
+	  memory.
+	  If your CPU has an MPU then you should choose 'y' here unless you
+	  know that you do not want to use the MPU.
+
 # If set, the workarounds for these ARM errata are applied early during U-Boot
 # startup. Note that in general these options force the workarounds to be
 # applied; no CPU-type/version detection exists, unlike the similar options in
@@ -86,6 +108,9 @@ config THUMB2_KERNEL
 # CONFIG_ARM_ERRATA_621766
 # CONFIG_ARM_ERRATA_798870
 # CONFIG_ARM_ERRATA_801819
+# CONFIG_ARM_CORTEX_A8_CVE_2017_5715
+# CONFIG_ARM_CORTEX_A15_CVE_2017_5715
+
 config ARM_ERRATA_430973
 	bool
 
@@ -155,50 +180,74 @@ config ARM_ERRATA_852423
 config ARM_ERRATA_855873
 	bool
 
+config ARM_CORTEX_A8_CVE_2017_5715
+	bool
+
+config ARM_CORTEX_A15_CVE_2017_5715
+	bool
+
 config CPU_ARM720T
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config CPU_ARM920T
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config CPU_ARM926EJS
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config CPU_ARM946ES
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config CPU_ARM1136
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config CPU_ARM1176
 	bool
 	select HAS_VBAR
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
-config CPU_V7
+config CPU_V7A
 	bool
 	select HAS_VBAR
 	select HAS_THUMB2
 	select SYS_CACHE_SHIFT_6
+	imply SYS_ARM_MMU
 
 config CPU_V7M
 	bool
 	select HAS_THUMB2
 	select THUMB2_KERNEL
 	select SYS_CACHE_SHIFT_5
+	select SYS_ARM_MPU
+	select SYS_THUMB_BUILD
+
+config CPU_V7R
+	bool
+	select HAS_THUMB2
+	select SYS_CACHE_SHIFT_6
+	select SYS_ARM_MPU
+	select SYS_ARM_CACHE_CP15
 
 config CPU_PXA
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config CPU_SA1100
 	bool
 	select SYS_CACHE_SHIFT_5
+	imply SYS_ARM_MMU
 
 config SYS_CPU
 	default "arm720t" if CPU_ARM720T
@@ -207,7 +256,8 @@ config SYS_CPU
 	default "arm946es" if CPU_ARM946ES
 	default "arm1136" if CPU_ARM1136
 	default "arm1176" if CPU_ARM1176
-	default "armv7" if CPU_V7
+	default "armv7" if CPU_V7A
+	default "armv7" if CPU_V7R
 	default "armv7m" if CPU_V7M
 	default "pxa" if CPU_PXA
 	default "sa1100" if CPU_SA1100
@@ -221,8 +271,9 @@ config SYS_ARM_ARCH
 	default 5 if CPU_ARM946ES
 	default 6 if CPU_ARM1136
 	default 6 if CPU_ARM1176
-	default 7 if CPU_V7
+	default 7 if CPU_V7A
 	default 7 if CPU_V7M
+	default 7 if CPU_V7R
 	default 5 if CPU_PXA
 	default 4 if CPU_SA1100
 	default 8 if ARM64
@@ -244,7 +295,7 @@ config SYS_CACHELINE_SIZE
 
 config SYS_ARCH_TIMER
 	bool "ARM Generic Timer support"
-	depends on CPU_V7 || ARM64
+	depends on CPU_V7A || ARM64
 	default y if ARM64
 	help
 	  The ARM Generic Timer (aka arch-timer) provides an architected
@@ -254,7 +305,7 @@ config SYS_ARCH_TIMER
 
 config ARM_SMCCC
 	bool "Support for ARM SMC Calling Convention (SMCCC)"
-	depends on CPU_V7 || ARM64
+	depends on CPU_V7A || ARM64
 	select ARM_PSCI_FW
 	help
 	  Say Y here if you want to enable ARM SMC Calling Convention.
@@ -352,7 +403,7 @@ choice
 
 config ARCH_AT91
 	bool "Atmel AT91"
-	select SPL_BOARD_INIT if SPL
+	select SPL_BOARD_INIT if SPL && !TARGET_SMARTWEB
 
 config TARGET_EDB93XX
 	bool "Support edb93xx"
@@ -440,7 +491,7 @@ config TARGET_SPEAR600
 
 config TARGET_STV0991
 	bool "Support stv0991"
-	select CPU_V7
+	select CPU_V7A
 	select DM
 	select DM_SERIAL
 	select DM_SPI
@@ -455,13 +506,6 @@ config TARGET_X600
 	select CPU_ARM926EJS
 	select SUPPORT_SPL
 	select PL011_SERIAL
-
-config TARGET_MX31PDK
-	bool "Support mx31pdk"
-	select BOARD_LATE_INIT
-	select CPU_ARM1136
-	select SUPPORT_SPL
-	select BOARD_EARLY_INIT_F
 
 config TARGET_WOODBURN
 	bool "Support woodburn"
@@ -493,36 +537,36 @@ config ARCH_BCM283X
 
 config TARGET_VEXPRESS_CA15_TC2
 	bool "Support vexpress_ca15_tc2"
-	select CPU_V7
+	select CPU_V7A
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
 	select PL011_SERIAL
 
 config TARGET_VEXPRESS_CA5X2
 	bool "Support vexpress_ca5x2"
-	select CPU_V7
+	select CPU_V7A
 	select PL011_SERIAL
 
 config TARGET_VEXPRESS_CA9X4
 	bool "Support vexpress_ca9x4"
-	select CPU_V7
+	select CPU_V7A
 	select PL011_SERIAL
 
 config TARGET_BCM23550_W1D
 	bool "Support bcm23550_w1d"
-	select CPU_V7
+	select CPU_V7A
 	imply CRC32_VERIFY
 	imply FAT_WRITE
 
 config TARGET_BCM28155_AP
 	bool "Support bcm28155_ap"
-	select CPU_V7
+	select CPU_V7A
 	imply CRC32_VERIFY
 	imply FAT_WRITE
 
 config TARGET_BCMCYGNUS
 	bool "Support bcmcygnus"
-	select CPU_V7
+	select CPU_V7A
 	imply CRC32_VERIFY
 	imply CMD_HASH
 	imply FAT_WRITE
@@ -533,7 +577,7 @@ config TARGET_BCMCYGNUS
 
 config TARGET_BCMNSP
 	bool "Support bcmnsp"
-	select CPU_V7
+	select CPU_V7A
 
 config TARGET_BCMNS2
 	bool "Support Broadcom Northstar2"
@@ -557,7 +601,7 @@ config ARCH_EXYNOS
 
 config ARCH_S5PC1XX
 	bool "Samsung S5PC1XX"
-	select CPU_V7
+	select CPU_V7A
 	select DM
 	select DM_SERIAL
 	select DM_GPIO
@@ -565,7 +609,7 @@ config ARCH_S5PC1XX
 
 config ARCH_HIGHBANK
 	bool "Calxeda Highbank"
-	select CPU_V7
+	select CPU_V7A
 	select PL011_SERIAL
 
 config ARCH_INTEGRATOR
@@ -576,7 +620,7 @@ config ARCH_INTEGRATOR
 
 config ARCH_KEYSTONE
 	bool "TI Keystone"
-	select CPU_V7
+	select CPU_V7A
 	select SUPPORT_SPL
 	select SYS_THUMB_BUILD
 	select CMD_POWEROFF
@@ -587,7 +631,7 @@ config ARCH_KEYSTONE
 
 config ARCH_OMAP2PLUS
 	bool "TI OMAP2+"
-	select CPU_V7
+	select CPU_V7A
 	select SPL_BOARD_INIT if SPL
 	select SPL_STACK_R if SPL
 	select SUPPORT_SPL
@@ -624,15 +668,19 @@ config ARCH_MX28
 	select PL011_SERIAL
 	select SUPPORT_SPL
 
+config ARCH_MX31
+	bool "NXP i.MX31 family"
+	select CPU_ARM1136
+
 config ARCH_MX7ULP
         bool "NXP MX7ULP"
-        select CPU_V7
+	select CPU_V7A
 	select ROM_UNIFIED_SECTIONS
 	imply MXC_GPIO
 
 config ARCH_MX7
 	bool "Freescale MX7"
-	select CPU_V7
+	select CPU_V7A
 	select SYS_FSL_HAS_SEC if SECURE_BOOT
 	select SYS_FSL_SEC_COMPAT_4
 	select SYS_FSL_SEC_LE
@@ -642,7 +690,7 @@ config ARCH_MX7
 
 config ARCH_MX6
 	bool "Freescale MX6"
-	select CPU_V7
+	select CPU_V7A
 	select SYS_FSL_HAS_SEC if SECURE_BOOT
 	select SYS_FSL_SEC_COMPAT_4
 	select SYS_FSL_SEC_LE
@@ -656,7 +704,7 @@ endif
 
 config ARCH_MX5
 	bool "Freescale MX5"
-	select CPU_V7
+	select CPU_V7A
 	select BOARD_EARLY_INIT_F
 	imply MXC_GPIO
 
@@ -692,14 +740,27 @@ config ARCH_SNAPDRAGON
 
 config ARCH_SOCFPGA
 	bool "Altera SOCFPGA family"
-	select CPU_V7
-	select SUPPORT_SPL
-	select OF_CONTROL
-	select SPL_OF_CONTROL
-	select DM
-	select ENABLE_ARM_SOC_BOOT0_HOOK
 	select ARCH_EARLY_INIT_R
 	select ARCH_MISC_INIT
+	select CPU_V7A
+	select DM
+	select DM_SERIAL
+	select ENABLE_ARM_SOC_BOOT0_HOOK
+	select OF_CONTROL
+	select SPL_LIBCOMMON_SUPPORT
+	select SPL_LIBDISK_SUPPORT
+	select SPL_LIBGENERIC_SUPPORT
+	select SPL_MMC_SUPPORT if DM_MMC
+	select SPL_NAND_SUPPORT if SPL_NAND_DENALI
+	select SPL_OF_CONTROL
+	select SPL_SERIAL_SUPPORT
+	select SPL_DM_SERIAL
+	select SPL_SPI_FLASH_SUPPORT if SPL_SPI_SUPPORT
+	select SPL_SPI_SUPPORT if DM_SPI
+	select SPL_WATCHDOG_SUPPORT
+	select SUPPORT_SPL
+	select SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION_TYPE
+	select SYS_NS16550
 	select SYS_THUMB_BUILD
 	imply CMD_MTDPARTS
 	imply CRC32_VERIFY
@@ -750,7 +811,7 @@ config ARCH_SUNXI
 
 config ARCH_VF610
 	bool "Freescale Vybrid"
-	select CPU_V7
+	select CPU_V7A
 	select SYS_FSL_ERRATUM_ESDHC111
 	imply CMD_MTDPARTS
 	imply NAND
@@ -758,7 +819,7 @@ config ARCH_VF610
 config ARCH_ZYNQ
 	bool "Xilinx Zynq based platform"
 	select BOARD_LATE_INIT
-	select CPU_V7
+	select CPU_V7A
 	select SUPPORT_SPL
 	select OF_CONTROL
 	select SPL_BOARD_INIT if SPL
@@ -780,6 +841,15 @@ config ARCH_ZYNQ
 	imply CMD_CLK
 	imply FAT_WRITE
 	imply CMD_SPL
+	imply ARCH_EARLY_INIT_R
+
+config ARCH_ZYNQMP_R5
+	bool "Xilinx ZynqMP R5 based platform"
+	select CPU_V7R
+	select OF_CONTROL
+	select DM
+	select DM_SERIAL
+	select CLK
 
 config ARCH_ZYNQMP
 	bool "Xilinx ZynqMP based platform"
@@ -973,6 +1043,19 @@ config TARGET_LS1012A2G5RDB
 	  development platform that supports the QorIQ LS1012A
 	  Layerscape Architecture processor.
 
+config TARGET_LS1012AFRWY
+	bool "Support ls1012afrwy"
+	select ARCH_LS1012A
+	select BOARD_LATE_INIT
+	select ARM64
+	imply SCSI
+	imply SCSI_AHCI
+	help
+	 Support for Freescale LS1012AFRWY platform.
+	 The LS1012A FRWY board (FRWY) is a high-performance
+	 development platform that supports the QorIQ LS1012A
+	 Layerscape Architecture processor.
+
 config TARGET_LS1012AFRDM
 	bool "Support ls1012afrdm"
 	select ARCH_LS1012A
@@ -1000,7 +1083,7 @@ config TARGET_LS1088ARDB
 config TARGET_LS1021AQDS
 	bool "Support ls1021aqds"
 	select BOARD_LATE_INIT
-	select CPU_V7
+	select CPU_V7A
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
 	select SUPPORT_SPL
@@ -1014,7 +1097,7 @@ config TARGET_LS1021AQDS
 config TARGET_LS1021ATWR
 	bool "Support ls1021atwr"
 	select BOARD_LATE_INIT
-	select CPU_V7
+	select CPU_V7A
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
 	select SUPPORT_SPL
@@ -1027,7 +1110,7 @@ config TARGET_LS1021ATWR
 config TARGET_LS1021AIOT
 	bool "Support ls1021aiot"
 	select BOARD_LATE_INIT
-	select CPU_V7
+	select CPU_V7A
 	select CPU_V7_HAS_NONSEC
 	select CPU_V7_HAS_VIRT
 	select SUPPORT_SPL
@@ -1143,7 +1226,7 @@ config STM32
 
 config ARCH_STI
 	bool "Support STMicrolectronics SoCs"
-	select CPU_V7
+	select CPU_V7A
 	select DM
 	select DM_SERIAL
 	select BLK
@@ -1164,6 +1247,7 @@ config ARCH_STM32MP
 	select DM_SERIAL
 	select OF_CONTROL
 	select OF_LIBFDT
+	select MISC
 	select PINCTRL
 	select REGMAP
 	select SUPPORT_SPL
@@ -1196,9 +1280,7 @@ config ARCH_ROCKCHIP
 	select DM_REGULATOR
 	select ENABLE_ARM_SOC_BOOT0_HOOK
 	select SPI
-	imply CMD_FASTBOOT
 	imply DISTRO_DEFAULTS
-	imply FASTBOOT
 	imply FAT_WRITE
 	imply USB_FUNCTION_FASTBOOT
 	imply SPL_SYSRESET
@@ -1255,6 +1337,8 @@ source "arch/arm/cpu/armv7/ls102xa/Kconfig"
 
 source "arch/arm/mach-imx/mx2/Kconfig"
 
+source "arch/arm/mach-imx/mx3/Kconfig"
+
 source "arch/arm/mach-imx/mx5/Kconfig"
 
 source "arch/arm/mach-imx/mx6/Kconfig"
@@ -1303,6 +1387,8 @@ source "arch/arm/cpu/armv7/vf610/Kconfig"
 
 source "arch/arm/mach-zynq/Kconfig"
 
+source "arch/arm/mach-zynqmp-r5/Kconfig"
+
 source "arch/arm/cpu/armv7/Kconfig"
 
 source "arch/arm/cpu/armv8/zynqmp/Kconfig"
@@ -1340,7 +1426,6 @@ source "board/freescale/ls1046ardb/Kconfig"
 source "board/freescale/ls1012aqds/Kconfig"
 source "board/freescale/ls1012ardb/Kconfig"
 source "board/freescale/ls1012afrdm/Kconfig"
-source "board/freescale/mx31pdk/Kconfig"
 source "board/freescale/mx35pdk/Kconfig"
 source "board/freescale/s32v234evb/Kconfig"
 source "board/gdsys/a38x/Kconfig"

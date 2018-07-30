@@ -1,9 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *	LiMon Monitor (LiMon) - Network.
  *
  *	Copyright 1994 - 2000 Neil Russell.
  *	(See License)
- *	SPDX-License-Identifier:	GPL-2.0
  *
  * History
  *	9/16/00	  bor  adapted to TQM823L/STK8xxL board, RARP/TFTP boot added
@@ -344,6 +344,7 @@ struct vlan_ethernet_hdr {
 
 #define PROT_IP		0x0800		/* IP protocol			*/
 #define PROT_ARP	0x0806		/* IP ARP protocol		*/
+#define PROT_WOL	0x0842		/* ether-wake WoL protocol	*/
 #define PROT_RARP	0x8035		/* IP ARP protocol		*/
 #define PROT_VLAN	0x8100		/* IEEE 802.1q protocol		*/
 #define PROT_IPV6	0x86dd		/* IPv6 over bluebook		*/
@@ -535,10 +536,12 @@ extern int		net_restart_wrap;	/* Tried all network devices */
 
 enum proto_t {
 	BOOTP, RARP, ARP, TFTPGET, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP,
-	TFTPSRV, TFTPPUT, LINKLOCAL
+	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL
 };
 
 extern char	net_boot_file_name[1024];/* Boot File name */
+/* Indicates whether the file name was specified on the command line */
+extern bool	net_boot_file_name_explicit;
 /* The actual transferred size of the bootfile (in bytes) */
 extern u32	net_boot_file_size;
 /* Boot file size in blocks as reported by the DHCP server */
