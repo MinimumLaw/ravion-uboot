@@ -519,6 +519,37 @@ static void do_enable_hdmi(struct display_info_t const *dev)
 	imx_enable_hdmi_phy();
 }
 
+static iomux_v3_cfg_t const disp_ctrl_pads[] = {
+    MX6_PAD_EIM_DA15__GPIO3_IO15 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#define MTU_DISP_EN_GP IMX_GPIO_NR(3, 15)
+    MX6_PAD_KEY_COL2__GPIO4_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#define MTU_DISP_SD_GP IMX_GPIO_NR(4, 10)
+};
+
+static void mtu_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(MTU_DISP_SD_GP, 1);
+	gpio_direction_output(MTU_DISP_EN_GP, 1);
+}
+
+static void pkk_m7_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(MTU_DISP_SD_GP, 1);
+	gpio_direction_output(MTU_DISP_EN_GP, 1);
+}
+
+static void pkk_m10_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(MTU_DISP_SD_GP, 1);
+	gpio_direction_output(MTU_DISP_EN_GP, 1);
+}
+
 #if defined CONFIG_RAVION_DISPLAY_KOE
 /* Defined on common/koe_init.c */
 extern void turn_on_koe_display(void);
@@ -532,9 +563,11 @@ static void enable_rgb(struct display_info_t const *dev)
 
 	char *board = env_get("board");
 #if defined CONFIG_RAVION_DISPLAY_KOE
-	if(!strcmp("cimc-lite", board))
-		turn_on_koe_display();
+	if(!strcmp("cimc-lite", board))	turn_on_koe_display();
 #endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+	if(!strcmp("mtu", board)) mtu_display_init();
+	if(!strcmp("pkk-m7", board)) pkk_m7_display_init();
+	if(!strcmp("pkk-m10", board)) pkk_m10_display_init();
 
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
