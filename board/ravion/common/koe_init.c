@@ -24,15 +24,14 @@ static iomux_v3_cfg_t const bb_spi_9b_pads[] = {
 #	define PIN_MOSI	IMX_GPIO_NR(3, 1)
 #	define PIN_MISO	IMX_GPIO_NR(3, 10)
 #elif defined CONFIG_TARGET_RAVION_IMX6
-#warning I need real pins here
-	MX6_PAD_EIM_DA0__GPIO3_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* CS   - soDimm 111 */
-	MX6_PAD_EIM_DA9__GPIO3_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* SCK  - soDimm 112 */
-	MX6_PAD_EIM_DA1__GPIO3_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MOSI - soDimm 113 */
-	MX6_PAD_EIM_DA10__GPIO3_IO10| MUX_PAD_CTRL(NO_PAD_CTRL),	/* MISO - soDimm 114 */
-#	define PIN_CS	IMX_GPIO_NR(3, 0)
-#	define PIN_SCK	IMX_GPIO_NR(3, 9)
-#	define PIN_MOSI	IMX_GPIO_NR(3, 1)
-#	define PIN_MISO	IMX_GPIO_NR(3, 10)
+	MX6_PAD_NANDF_D0__GPIO2_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* CS   - soDimm 111 */
+	MX6_PAD_EIM_RW__GPIO2_IO26   | MUX_PAD_CTRL(NO_PAD_CTRL),	/* SCK  - soDimm 112 */
+	MX6_PAD_NANDF_D1__GPIO2_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MOSI - soDimm 113 */
+	MX6_PAD_EIM_LBA__GPIO2_IO27  | MUX_PAD_CTRL(NO_PAD_CTRL),	/* MISO - soDimm 114 */
+#	define PIN_CS	IMX_GPIO_NR(2, 0)
+#	define PIN_SCK	IMX_GPIO_NR(2, 26)
+#	define PIN_MOSI	IMX_GPIO_NR(2, 1)
+#	define PIN_MISO	IMX_GPIO_NR(2, 27)
 #else
 #error Command koe_display_init support only on ravion imx6 and ravion colibri imx6 boards
 #endif
