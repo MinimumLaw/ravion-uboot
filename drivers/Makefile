@@ -28,7 +28,8 @@ obj-$(CONFIG_ARMADA_XP) += ddr/marvell/axp/
 obj-$(CONFIG_ALTERA_SDRAM) += ddr/altera/
 obj-$(CONFIG_SPL_POWER_SUPPORT) += power/ power/pmic/
 obj-$(CONFIG_SPL_POWER_SUPPORT) += power/regulator/
-obj-$(CONFIG_SPL_RESET_SUPPORT) += reset/
+obj-$(CONFIG_SPL_POWER_DOMAIN) += power/domain/
+obj-$(CONFIG_SPL_DM_RESET) += reset/
 obj-$(CONFIG_SPL_MTD_SUPPORT) += mtd/
 obj-$(CONFIG_SPL_ONENAND_SUPPORT) += mtd/onenand/
 obj-$(CONFIG_SPL_UBI) += mtd/ubispl/
@@ -98,9 +99,11 @@ obj-y += pwm/
 obj-y += reset/
 obj-y += input/
 # SOC specific infrastructure drivers.
+obj-y += smem/
 obj-y += soc/
 obj-$(CONFIG_REMOTEPROC) += remoteproc/
 obj-y += thermal/
+obj-y += axi/
 
 obj-$(CONFIG_MACH_PIC32) += ddr/microchip/
 endif

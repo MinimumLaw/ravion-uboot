@@ -152,8 +152,8 @@ config CMD_BDI
 
 config CMD_CONFIG
 	bool "config"
-	select BUILD_BIN2C
 	default SANDBOX
+	select BUILD_BIN2C
 	help
 	  Print ".config" contents.
 
@@ -253,6 +253,14 @@ config CMD_BOOTMENU
 	select MENU
 	help
 	  Add an ANSI terminal boot menu command.
+
+config CMD_DTIMG
+	bool "dtimg"
+	help
+	  Android DTB/DTBO image manipulation commands. Read dtb/dtbo files from
+	  image into RAM, dump image structure information, etc. Those dtb/dtbo
+	  files should be merged in one dtb further, which needs to be passed to
+	  the kernel, as part of a boot process.
 
 config CMD_ELF
 	bool "bootelf, bootvx"
@@ -429,8 +437,8 @@ config CMD_BINOP
 
 config CMD_CRC32
 	bool "crc32"
-	select HASH
 	default y
+	select HASH
 	help
 	  Compute CRC32.
 
@@ -607,6 +615,15 @@ config CMD_ADC
 	  Shows ADC device info and permit printing one-shot analog converted
 	  data from a named Analog to Digital Converter.
 
+config CMD_BIND
+	bool "bind/unbind - Bind or unbind a device to/from a driver"
+	depends on DM
+	help
+	  Bind or unbind a device to/from a driver from the command line.
+	  This is useful in situations where a device may be handled by several
+	  drivers. For example, this can be used to bind a UDC to the usb ether
+	  gadget driver from the command line.
+
 config CMD_CLK
 	bool "clk - Show clock frequencies"
 	help
@@ -640,7 +657,6 @@ config CMD_DFU
 config CMD_DM
 	bool "dm - Access to driver model information"
 	depends on DM
-	default y
 	help
 	  Provides access to driver model data structures and information,
 	  such as a list of devices, list of uclasses and the state of each
@@ -737,9 +753,9 @@ config CMD_GPIO
 
 config CMD_GPT
 	bool "GPT (GUID Partition Table) command"
-	select PARTITION_UUIDS
 	select EFI_PARTITION
 	select HAVE_BLOCK_DEVICE
+	select PARTITION_UUIDS
 	imply RANDOM_UUID
 	help
 	  Enable the 'gpt' command to ready and write GPT style partition
@@ -899,8 +915,8 @@ config CMD_ONENAND
 
 config CMD_PART
 	bool "part"
-	select PARTITION_UUIDS
 	select HAVE_BLOCK_DEVICE
+	select PARTITION_UUIDS
 	help
 	  Read and display information about the partition table on
 	  various media.
@@ -1012,11 +1028,12 @@ config CMD_USB_SDP
 	help
 	  Enables the command "sdp" which is used to have U-Boot emulating the
 	  Serial Download Protocol (SDP) via USB.
+
 config CMD_ROCKUSB
 	bool "rockusb"
 	depends on USB_FUNCTION_ROCKUSB
 	help
-          Rockusb protocol is widely used by Rockchip SoC based devices. It can
+	  Rockusb protocol is widely used by Rockchip SoC based devices. It can
 	  read/write info, image to/from devices. This enable rockusb command
 	  support to communication with rockusb device. for more detail about
 	  this command, please read doc/README.rockusb.
@@ -1027,6 +1044,14 @@ config CMD_USB_MASS_STORAGE
 	help
 	  USB mass storage support
 
+config CMD_AXI
+	bool "axi"
+	depends on AXI
+	help
+	  Enable the command "axi" for accessing AXI (Advanced eXtensible
+	  Interface) busses, a on-chip interconnect specification for managing
+	  functional blocks in SoC designs, which is also often used in designs
+	  involving FPGAs (e.g.  communication with IP cores in Xilinx FPGAs).
 endmenu
 
 
@@ -1066,6 +1091,7 @@ if NET
 menuconfig CMD_NET
 	bool "Network commands"
 	default y
+	imply NETDEVICES
 
 if CMD_NET
 
@@ -1356,6 +1382,13 @@ config CMD_MISC
 	help
 	  Delay execution for some time
 
+config MP
+	bool "support for multiprocessor"
+	help
+	  This provides an option to brinup
+	  different processors in multiprocessor
+	  cases.
+
 config CMD_TIMER
 	bool "timer"
 	help
@@ -1482,7 +1515,7 @@ config CMD_BLOB
 	  the original data.
 
 	  Sub-commands:
-            blob enc - encapsulating data as a cryptgraphic blob
+	    blob enc - encapsulating data as a cryptgraphic blob
 	    blob dec - decapsulating cryptgraphic blob to get the data
 
 	  Syntax:
@@ -1537,6 +1570,7 @@ config CMD_TPM_V1
 
 config CMD_TPM_V2
 	bool
+	select CMD_LOG
 
 config CMD_TPM
 	bool "Enable the 'tpm' command"
@@ -1657,6 +1691,7 @@ config CMD_JFFS2
 
 config CMD_MTDPARTS
 	bool "MTD partition support"
+	select MTD_DEVICE if (CMD_NAND || NAND)
 	help
 	  MTD partition support
 
@@ -1771,7 +1806,7 @@ config CMD_TRACE
 
 config CMD_AVB
 	bool "avb - Android Verified Boot 2.0 operations"
-	depends on LIBAVB
+	depends on AVB_VERIFY
 	default n
 	help
 	  Enables a "avb" command to perform verification of partitions using
@@ -1789,10 +1824,9 @@ endmenu
 
 config CMD_UBI
 	tristate "Enable UBI - Unsorted block images commands"
+	select CMD_MTDPARTS
 	select CRC32
 	select MTD_UBI
-	select CMD_MTDPARTS
-	default y if NAND_SUNXI
 	help
 	  UBI is a software layer above MTD layer which admits use of LVM-like
 	  logical volumes on top of MTD devices, hides some complexities of
@@ -1804,9 +1838,9 @@ config CMD_UBI
 config CMD_UBIFS
 	tristate "Enable UBIFS - Unsorted block images filesystem commands"
 	depends on CMD_UBI
+	default y if CMD_UBI
 	select CRC32
 	select LZO
-	default y if CMD_UBI
 	help
 	  UBIFS is a file system for flash devices which works on top of UBI.
 

@@ -281,12 +281,8 @@ unsigned long get_board_sys_clk(void);
 
 /* SPI */
 #if defined(CONFIG_FSL_QSPI) || defined(CONFIG_FSL_DSPI)
-#define CONFIG_SPI_FLASH
 #ifdef CONFIG_FSL_DSPI
 #define CONFIG_SPI_FLASH_STMICRO
-#endif
-#ifdef CONFIG_FSL_QSPI
-#define CONFIG_SPI_FLASH_SPANSION
 #endif
 #define FSL_QSPI_FLASH_SIZE		SZ_64M	/* 64MB */
 #define FSL_QSPI_FLASH_NUM		2
@@ -323,8 +319,6 @@ unsigned long get_board_sys_clk(void);
 #ifdef CONFIG_MMC
 #define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
 #endif
-
-#define CONFIG_MISC_INIT_R
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(USB, usb, 0) \
@@ -483,7 +477,6 @@ unsigned long get_board_sys_clk(void);
 #define AQ_PHY_ADDR4		0x03
 #define AQR405_IRQ_MASK		0x36
 
-#define CONFIG_MII
 #define CONFIG_ETHPRIME		"DPMAC1@xgmii"
 #define CONFIG_PHY_AQUANTIA
 #endif

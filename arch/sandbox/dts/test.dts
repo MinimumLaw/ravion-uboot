@@ -14,7 +14,9 @@
 		i2c0 = "/i2c@0";
 		mmc0 = "/mmc0";
 		mmc1 = "/mmc1";
-		pci0 = &pci;
+		pci0 = &pci0;
+		pci1 = &pci1;
+		pci2 = &pci2;
 		remoteproc1 = &rproc_1;
 		remoteproc2 = &rproc_2;
 		rtc0 = &rtc_0;
@@ -34,6 +36,7 @@
 		usb0 = &usb_0;
 		usb1 = &usb_1;
 		usb2 = &usb_2;
+		axi0 = &axi;
 	};
 
 	a-test {
@@ -56,6 +59,17 @@
 
 	no-compatible {
 		reg = <2 1>;
+	};
+
+	bind-test {
+		bind-test-child1 {
+			compatible = "sandbox,phy";
+			#phy-cells = <1>;
+		};
+
+		bind-test-child2 {
+			compatible = "simple-bus";
+		};
 	};
 
 	b-test {
@@ -155,25 +169,25 @@
 	eth@10002000 {
 		compatible = "sandbox,eth";
 		reg = <0x10002000 0x1000>;
-		fake-host-hwaddr = <0x00 0x00 0x66 0x44 0x22 0x00>;
+		fake-host-hwaddr = [00 00 66 44 22 00];
 	};
 
 	eth_5: eth@10003000 {
 		compatible = "sandbox,eth";
 		reg = <0x10003000 0x1000>;
-		fake-host-hwaddr = <0x00 0x00 0x66 0x44 0x22 0x11>;
+		fake-host-hwaddr = [00 00 66 44 22 11];
 	};
 
 	eth_3: sbe5 {
 		compatible = "sandbox,eth";
 		reg = <0x10005000 0x1000>;
-		fake-host-hwaddr = <0x00 0x00 0x66 0x44 0x22 0x33>;
+		fake-host-hwaddr = [00 00 66 44 22 33];
 	};
 
 	eth@10004000 {
 		compatible = "sandbox,eth";
 		reg = <0x10004000 0x1000>;
-		fake-host-hwaddr = <0x00 0x00 0x66 0x44 0x22 0x22>;
+		fake-host-hwaddr = [00 00 66 44 22 22];
 	};
 
 	gpio_a: base-gpios {
@@ -283,6 +297,10 @@
 		mbox-names = "other", "test";
 	};
 
+	misc-test {
+		compatible = "sandbox,misc_sandbox";
+	};
+
 	mmc2 {
 		compatible = "sandbox,mmc";
 	};
@@ -295,13 +313,48 @@
 		compatible = "sandbox,mmc";
 	};
 
-	pci: pci-controller {
+	pci0: pci-controller0 {
 		compatible = "sandbox,pci";
 		device_type = "pci";
 		#address-cells = <3>;
 		#size-cells = <2>;
 		ranges = <0x02000000 0 0x10000000 0x10000000 0 0x2000
 				0x01000000 0 0x20000000 0x20000000 0 0x2000>;
+		pci@0,0 {
+			compatible = "pci-generic";
+			reg = <0x0000 0 0 0 0>;
+			emul@0,0 {
+				compatible = "sandbox,swap-case";
+			};
+		};
+		pci@1f,0 {
+			compatible = "pci-generic";
+			reg = <0xf800 0 0 0 0>;
+			emul@1f,0 {
+				compatible = "sandbox,swap-case";
+			};
+		};
+	};
+
+	pci1: pci-controller1 {
+		compatible = "sandbox,pci";
+		device_type = "pci";
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges = <0x02000000 0 0x30000000 0x30000000 0 0x2000
+				0x01000000 0 0x40000000 0x40000000 0 0x2000>;
+		sandbox,dev-info = <0x08 0x00 0x1234 0x5678
+				    0x0c 0x00 0x1234 0x5678>;
+	};
+
+	pci2: pci-controller2 {
+		compatible = "sandbox,pci";
+		device_type = "pci";
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges = <0x02000000 0 0x50000000 0x50000000 0 0x2000
+				0x01000000 0 0x60000000 0x60000000 0 0x2000>;
+		sandbox,dev-info = <0x08 0x00 0x1234 0x5678>;
 		pci@1f,0 {
 			compatible = "pci-generic";
 			reg = <0xf800 0 0 0 0>;
@@ -380,6 +433,10 @@
 		compatible = "sandbox,test-processor";
 		internal-memory-mapped;
 		remoteproc-name = "remoteproc-test-dev2";
+	};
+
+	smem@0 {
+		compatible = "sandbox,smem";
 	};
 
 	spi@0 {
@@ -509,6 +566,16 @@
 
 	wdt0: wdt@0 {
 		compatible = "sandbox,wdt";
+	};
+
+	axi: axi@0 {
+		compatible = "sandbox,axi";
+		#address-cells = <0x1>;
+		#size-cells = <0x1>;
+		store@0 {
+			compatible = "sandbox,sandbox_store";
+			reg = <0x0 0x400>;
+		};
 	};
 
 	chosen {

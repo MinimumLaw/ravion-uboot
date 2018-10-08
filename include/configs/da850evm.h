@@ -13,7 +13,6 @@
 /*
  * Board
  */
-#define CONFIG_DRIVER_TI_EMAC
 /* check if direct NOR boot config is used */
 #ifndef CONFIG_DIRECT_NOR_BOOT
 #define CONFIG_USE_SPIFLASH
@@ -56,8 +55,6 @@
 
 /* memtest will be run on 16MB */
 #define CONFIG_SYS_MEMTEST_END 	(PHYS_SDRAM_1 + 0x2000000 + 16*1024*1024)
-
-#define CONFIG_NR_DRAM_BANKS	1 /* we have 1 bank of DRAM */
 
 #define CONFIG_SYS_DA850_SYSCFG_SUSPSRC (	\
 	DAVINCI_SYSCFG_SUSPSRC_TIMER0 |		\
@@ -141,15 +138,13 @@
  * I2C Configuration
  */
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_SYS_I2C_DAVINCI
 #define CONFIG_SYS_I2C_EXPANDER_ADDR   0x20
 #endif
 
 /*
  * Flash & Environment
  */
-#ifdef CONFIG_USE_NAND
-#define CONFIG_NAND_DAVINCI
+#ifdef CONFIG_NAND
 #define CONFIG_ENV_OFFSET		0x0 /* Block 0--not used by bootcode */
 #define CONFIG_ENV_SIZE			(128 << 10)
 #define	CONFIG_SYS_NAND_USE_FLASH_BBT
@@ -194,7 +189,6 @@
  * Network & Ethernet Configuration
  */
 #ifdef CONFIG_DRIVER_TI_EMAC
-#define CONFIG_MII
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT	10
@@ -222,15 +216,11 @@
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_SPI_FLASH_MTD
 #endif
-#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
-#define CONFIG_MTD_PARTITIONS		/* required for UBI partition support */
 #endif
 
-#define CONFIG_DA8XX_GPIO
 /*
  * U-Boot general configuration
  */
-#define CONFIG_MISC_INIT_R
 #define CONFIG_BOOTFILE		"uImage" /* Boot file name */
 #define CONFIG_SYS_CBSIZE	1024 /* Console I/O Buffer Size	*/
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE /* Boot Args Buffer Size */
@@ -273,12 +263,7 @@
 #define CONFIG_CLOCKS
 #endif
 
-#ifdef CONFIG_USE_NAND
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
-#endif
-
-#if !defined(CONFIG_USE_NAND) && \
+#if !defined(CONFIG_NAND) && \
 	!defined(CONFIG_USE_NOR) && \
 	!defined(CONFIG_USE_SPIFLASH)
 #define CONFIG_ENV_SIZE		(16 << 10)

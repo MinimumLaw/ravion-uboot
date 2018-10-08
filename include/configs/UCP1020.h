@@ -38,8 +38,6 @@
 #define CONFIG_NETMASK		255.255.252.0
 #define CONFIG_ETHPRIME		"eTSEC3"
 
-#ifndef CONFIG_SPI_FLASH
-#endif
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 
 #define CONFIG_SYS_L2_SIZE	(256 << 10)
@@ -99,8 +97,6 @@
 #ifndef CONFIG_SYS_MONITOR_BASE
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #endif
-
-#define CONFIG_MP
 
 #define CONFIG_ENV_OVERWRITE
 
@@ -446,7 +442,6 @@
 
 #define CONFIG_BOOTP_SERVERIP
 
-#define CONFIG_MII		/* MII PHY management */
 #define CONFIG_TSEC1_NAME	"eTSEC1"
 #define CONFIG_TSEC2_NAME	"eTSEC2"
 #define CONFIG_TSEC3_NAME	"eTSEC3"

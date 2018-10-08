@@ -64,9 +64,6 @@
  * initial stack pointer in our SRAM. Otherwise, we can define
  * CONFIG_NR_DRAM_BANKS before including this file.
  */
-#ifndef CONFIG_NR_DRAM_BANKS
-#define CONFIG_NR_DRAM_BANKS		1
-#endif
 #define CONFIG_SYS_SDRAM_BASE		0x80000000
 
 #ifndef CONFIG_SYS_INIT_SP_ADDR
@@ -124,9 +121,6 @@
  * mtdparts, both for ease of use in U-Boot and for passing information
  * on to the Linux kernel.
  */
-#if defined(CONFIG_SPI_BOOT) || defined(CONFIG_NOR) || defined(CONFIG_NAND) || defined(CONFIG_NAND_DAVINCI)
-#define CONFIG_MTD_DEVICE		/* Required for mtdparts */
-#endif
 
 /*
  * Our platforms make use of SPL to initalize the hardware (primarily

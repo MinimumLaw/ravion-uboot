@@ -23,9 +23,6 @@
 # define CONFIG_SYS_MEMTEST_SCRATCH	0x10800000
 #endif
 
-#ifndef CONFIG_NR_DRAM_BANKS
-# define CONFIG_NR_DRAM_BANKS		2
-#endif
 #define CONFIG_SYS_MEMTEST_START	0
 #define CONFIG_SYS_MEMTEST_END		1000
 
@@ -46,9 +43,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{ 4800, 9600, 19200, 38400, 57600, 115200 }
 
-/* Command line configuration */
-#define CONFIG_MP
-
 /* BOOTP options */
 #define CONFIG_BOOTP_BOOTFILESIZE
 #define CONFIG_BOOTP_MAY_FAIL
@@ -60,7 +54,6 @@
 #ifdef CONFIG_NAND_ARASAN
 # define CONFIG_SYS_MAX_NAND_DEVICE	1
 # define CONFIG_SYS_NAND_ONFI_DETECTION
-# define CONFIG_MTD_DEVICE
 #endif
 
 #if defined(CONFIG_SPL_BUILD)
@@ -102,9 +95,6 @@
 # define PARTS_DEFAULT
 #endif
 
-/* Do not preserve environment */
-#define CONFIG_ENV_SIZE			0x8000
-
 /* Monitor Command Prompt */
 /* Console I/O Buffer Size */
 #define CONFIG_SYS_CBSIZE		2048
@@ -114,7 +104,6 @@
 
 /* Ethernet driver */
 #if defined(CONFIG_ZYNQ_GEM)
-# define CONFIG_MII
 # define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 # define PHY_ANEG_TIMEOUT       20000
 #endif

@@ -41,8 +41,6 @@
 #define CONFIG_BOOTP_BOOTFILESIZE
 
 /* UBI Support for all Keymile boards */
-#define CONFIG_MTD_PARTITIONS
-#define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_CONCAT
 
 #ifndef CONFIG_KM_DEF_ENV_BOOTPARAMS
@@ -196,7 +194,6 @@
 		"setenv altbootcmd \'setenv boot_bank ${backup_bank}; "	\
 			"run ${subbootcmds}; reset\' && "		\
 		"saveenv && saveenv && boot\0"				\
-	"bootlimit=3\0"							\
 	"cramfsloadfdt="						\
 		"cramfsload ${fdt_addr_r} "				\
 		"fdt_0x${IVM_BoardId}_0x${IVM_HWKey}.dtb\0"		\

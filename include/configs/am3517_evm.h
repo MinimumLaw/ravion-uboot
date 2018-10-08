@@ -12,8 +12,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_NR_DRAM_BANKS	2	/* CS1 may or may not be populated */
-
 /*
  * 1MB into the SDRAM to allow for SPL's bss at the beginning of SDRAM
  * 64 bytes before this address should be set aside for u-boot.img's
@@ -27,7 +25,6 @@
 #include <configs/ti_omap3_common.h>
 #undef CONFIG_SDRC	/* Disable SDRC since we have EMIF4 */
 
-#define CONFIG_MISC_INIT_R
 #define CONFIG_REVISION_TAG
 
 /* Hardware drivers */
@@ -56,9 +53,7 @@
 /* I2C */
 
 /* Ethernet */
-#define CONFIG_DRIVER_TI_EMAC
 #define CONFIG_DRIVER_TI_EMAC_USE_RMII
-#define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
@@ -66,8 +61,6 @@
 
 /* Board NAND Info. */
 #ifdef CONFIG_NAND
-#define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
-							/* to access nand */
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
 #define CONFIG_SYS_NAND_PAGE_COUNT	64
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
@@ -88,8 +81,6 @@
 #define CONFIG_SYS_NAND_MAX_ECCPOS	56
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000
-#define CONFIG_MTD_PARTITIONS		/* required for UBI partition support */
-#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
 /* NAND block size is 128 KiB.  Synchronize these values with
  * corresponding Device Tree entries in Linux:
  *  MLO(SPL)             4 * NAND_BLOCK_SIZE = 512 KiB  @ 0x000000

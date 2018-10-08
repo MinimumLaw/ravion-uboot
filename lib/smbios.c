@@ -116,7 +116,7 @@ static int smbios_write_type1(ulong *current, int handle)
 	t->manufacturer = smbios_add_string(t->eos, CONFIG_SMBIOS_MANUFACTURER);
 	t->product_name = smbios_add_string(t->eos, CONFIG_SMBIOS_PRODUCT_NAME);
 	if (serial_str) {
-		strncpy((char*)t->uuid, serial_str, sizeof(t->uuid));
+		strncpy((char *)t->uuid, serial_str, sizeof(t->uuid));
 		t->serial_number = smbios_add_string(t->eos, serial_str);
 	}
 
@@ -278,6 +278,7 @@ ulong write_smbios_table(ulong addr)
 	/* populate minimum required tables */
 	for (i = 0; i < ARRAY_SIZE(smbios_write_funcs); i++) {
 		int tmp = smbios_write_funcs[i]((ulong *)&addr, handle++);
+
 		max_struct_size = max(max_struct_size, tmp);
 		len += tmp;
 	}

@@ -125,6 +125,7 @@ config NOR_BOOT
 config NAND_BOOT
 	bool "Support for booting from NAND flash"
 	default n
+	imply NAND
 	help
 	  Enabling this will make a U-Boot binary that is capable of being
 	  booted via NAND flash. This is not a must, some SoCs need this,
@@ -133,6 +134,7 @@ config NAND_BOOT
 config ONENAND_BOOT
 	bool "Support for booting from ONENAND"
 	default n
+	imply NAND
 	help
 	  Enabling this will make a U-Boot binary that is capable of being
 	  booted via ONENAND. This is not a must, some SoCs need this,
@@ -181,6 +183,10 @@ config BOOTDELAY
 	  set to 0 to autoboot with no delay, but you can stop it by key input.
 	  set to -1 to disable autoboot.
 	  set to -2 to autoboot with no delay and not check for abort
+
+	  If this value is >= 0 then it is also used for the default delay
+	  before starting the default entry in bootmenu. If it is < 0 then
+	  a default value of 10s is used.
 
 	  See doc/README.autoboot for details.
 
@@ -424,7 +430,7 @@ menu "Logging"
 
 config LOG
 	bool "Enable logging support"
-	select DM
+	depends on DM
 	help
 	  This enables support for logging of status and debug messages. These
 	  can be displayed on the console, recorded in a memory buffer, or
@@ -533,6 +539,13 @@ config DEFAULT_FDT_FILE
 	help
 	  This option is used to set the default fdt file to boot OS.
 
+config MISC_INIT_R
+	bool "Execute Misc Init"
+	default y if ARCH_KEYSTONE || ARCH_SUNXI || MPC85xx
+	default y if ARCH_OMAP2PLUS && !AM33XX
+	help
+	  Enabling this option calls 'misc_init_r' function
+
 config VERSION_VARIABLE
 	bool "add U-Boot environment variable vers"
 	default n
@@ -630,6 +643,17 @@ config HASH
 	  algorithms (such as SHA1, MD5, CRC32). The API is defined in hash.h
 	  and the algorithms it supports are defined in common/hash.c. See
 	  also CMD_HASH for command-line access.
+
+config AVB_VERIFY
+	bool "Build Android Verified Boot operations"
+	depends on LIBAVB && FASTBOOT
+	depends on PARTITION_UUIDS
+	help
+	  This option enables compilation of bootloader-dependent operations,
+	  used by Android Verified Boot 2.0 library (libavb). Includes:
+	    * Helpers to process strings in order to build OS bootargs.
+	    * Helpers to access MMC, similar to drivers/fastboot/fb_mmc.c.
+	    * Helpers to alloc/init/free avb ops.
 
 endmenu
 

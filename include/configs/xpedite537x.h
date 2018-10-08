@@ -27,7 +27,6 @@
 /*
  * Multicore config
  */
-#define CONFIG_MP
 #define CONFIG_BPTR_VIRT_ADDR	0xee000000	/* virt boot page address */
 #define CONFIG_MPC8xxx_DISABLE_BPTR		/* Don't leave BPTR enabled */
 
@@ -296,7 +295,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
  * Networking options
  */
 #define CONFIG_TSEC_TBI
-#define CONFIG_MII		1	/* MII PHY management */
 #define CONFIG_MII_DEFAULT_TSEC	1	/* Allow unregistered phys */
 #define CONFIG_ETHPRIME		"eTSEC2"
 

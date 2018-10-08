@@ -10,8 +10,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_MISC_INIT_R
-
 #ifdef CONFIG_SDCARD
 #define CONFIG_RAMBOOT_SDCARD
 #define CONFIG_SYS_RAMBOOT
@@ -95,8 +93,6 @@
 #define CONFIG_SYS_CLK_FREQ	100000000
 #define CONFIG_DDR_CLK_FREQ	133000000
 #endif
-
-#define CONFIG_MP
 
 #define CONFIG_HWCONFIG
 /*
@@ -424,7 +420,6 @@ combinations. this should be removed later
 
 #if defined(CONFIG_TSEC_ENET)
 
-#define CONFIG_MII			/* MII PHY management */
 #define CONFIG_MII_DEFAULT_TSEC	1	/* Allow unregistered phys */
 #define CONFIG_TSEC1	1
 #define CONFIG_TSEC1_NAME	"eTSEC1"
@@ -514,8 +509,6 @@ combinations. this should be removed later
  * Dynamic MTD Partition support with mtdparts
  */
 #ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 #define CONFIG_FLASH_CFI_MTD
 #endif
 /*

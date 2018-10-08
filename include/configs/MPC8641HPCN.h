@@ -16,7 +16,6 @@
 #define __CONFIG_H
 
 /* High Level Configuration Options */
-#define CONFIG_MP		1	/* support multiple processors */
 #define CONFIG_LINUX_RESET_VEC	0x100	/* Reset vector used by Linux */
 #define CONFIG_ADDR_MAP		1	/* Use addr map */
 
@@ -380,9 +379,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #endif	/* CONFIG_PCI */
 
 #if defined(CONFIG_TSEC_ENET)
-
-#define CONFIG_MII		1	/* MII PHY management */
-
 #define CONFIG_TSEC1		1
 #define CONFIG_TSEC1_NAME	"eTSEC1"
 #define CONFIG_TSEC2		1
