@@ -14,8 +14,6 @@
 #undef CONFIG_DISPLAY_BOARDINFO
 #define CONFIG_DISPLAY_BOARDINFO_LATE	/* Calls show_board_info() */
 
-#define CONFIG_SYS_GENERIC_BOARD
-
 #include <asm/arch/imx-regs.h>
 #include <asm/mach-imx/gpio.h>
 
@@ -237,7 +235,6 @@
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
 /* Physical Memory Map */
-#define CONFIG_NR_DRAM_BANKS		1
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
