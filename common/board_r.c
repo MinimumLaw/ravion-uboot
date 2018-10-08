@@ -454,7 +454,7 @@ static int initr_env(void)
 	if (should_load_env())
 		env_relocate();
 	else
-		set_default_env(NULL);
+		set_default_env(NULL, 0);
 #ifdef CONFIG_OF_CONTROL
 	env_set_addr("fdtcontroladdr", gd->fdt_blob);
 #endif
@@ -553,6 +553,7 @@ static int initr_scsi(void)
 {
 	puts("SCSI:  ");
 	scsi_init();
+	puts("\n");
 
 	return 0;
 }
@@ -689,7 +690,8 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_DM
 	initr_dm,
 #endif
-#if defined(CONFIG_ARM) || defined(CONFIG_NDS32) || defined(CONFIG_RISCV)
+#if defined(CONFIG_ARM) || defined(CONFIG_NDS32) || defined(CONFIG_RISCV) || \
+	defined(CONFIG_SANDBOX)
 	board_init,	/* Setup chipselects */
 #endif
 	/*

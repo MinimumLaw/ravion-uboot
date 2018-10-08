@@ -33,7 +33,6 @@
 				GENERATED_GBL_DATA_SIZE)
 
 /* 128MB SDRAM in 1 bank */
-#define CONFIG_NR_DRAM_BANKS		1
 #define CONFIG_SYS_SDRAM_BASE		0x20000000
 #define CONFIG_SYS_SDRAM_SIZE		(128 << 20)
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_SDRAM_BASE
@@ -58,15 +57,11 @@
 #define CONFIG_ENV_SECT_SIZE	CONFIG_ENV_SIZE
 #define CONFIG_ENV_SPI_MAX_HZ	15000000
 
-#ifndef MINIMAL_LOADER
-#endif
-
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x40000000
 #define CONFIG_SYS_NAND_DBW_8
-#define CONFIG_NAND_ATMEL
 /* our ALE is AD21 */
 #define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
 /* our CLE is AD22 */
@@ -145,8 +140,6 @@
 #endif
 
 /* File systems */
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 
 /* Boot command */
 #define CONFIG_CMDLINE_TAG

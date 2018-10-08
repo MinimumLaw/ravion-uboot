@@ -28,7 +28,6 @@
 /* High Level Configuration Options */
 #define CONFIG_SYS_BOOK3E_HV		/* Category E.HV supported */
 #define CONFIG_FSL_CORENET		/* Freescale CoreNet platform */
-#define CONFIG_MP			/* support multiple processors */
 
 #define CONFIG_SYS_FSL_CPC		/* Corenet Platform Cache */
 #define CONFIG_SYS_NUM_CPC		CONFIG_SYS_NUM_DDR_CTLRS
@@ -188,7 +187,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_OR1_PRELIM  CONFIG_SYS_QRIO_OR_PRELIM /* QRIO Options */
 
 #define CONFIG_MISC_INIT_F
-#define CONFIG_MISC_INIT_R
 
 #define CONFIG_HWCONFIG
 

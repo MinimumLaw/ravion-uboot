@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2018
-PATCHLEVEL = 07
+PATCHLEVEL = 09
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -374,6 +374,10 @@ KBUILD_CFLAGS   := -Wall -Wstrict-prototypes \
 		   -fno-builtin -ffreestanding $(CSTD_FLAG)
 KBUILD_CFLAGS	+= -fshort-wchar
 KBUILD_AFLAGS   := -D__ASSEMBLY__
+
+# Don't generate position independent code
+KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
+KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
 
 # Read UBOOTRELEASE from include/config/uboot.release (if it exists)
 UBOOTRELEASE = $(shell cat include/config/uboot.release 2> /dev/null)
@@ -1053,11 +1057,6 @@ ifndef CONFIG_SYS_UBOOT_START
 CONFIG_SYS_UBOOT_START := 0
 endif
 
-# Create a file containing the configuration options the image was built with
-quiet_cmd_cpp_cfg = CFG     $@
-cmd_cpp_cfg = $(CPP) -Wp,-MD,$(depfile) $(cpp_flags) $(LDPPFLAGS) -ansi \
-	-DDO_DEPS_ONLY -D__ASSEMBLY__ -x assembler-with-cpp -P -dM -E -o $@ $<
-
 # Boards with more complex image requirments can provide an .its source file
 # or a generator script
 ifneq ($(CONFIG_SPL_FIT_SOURCE),"")
@@ -1116,8 +1115,8 @@ u-boot.sha1:	u-boot.bin
 u-boot.dis:	u-boot
 		$(OBJDUMP) -d $< > $@
 
-ifdef CONFIG_TPL
-SPL_PAYLOAD := tpl/u-boot-with-tpl.bin
+ifneq ($(CONFIG_SPL_PAYLOAD),)
+SPL_PAYLOAD := $(CONFIG_SPL_PAYLOAD:"%"=%)
 else
 SPL_PAYLOAD := u-boot.bin
 endif
@@ -1239,8 +1238,9 @@ endif
 
 ifneq ($(CONFIG_TEGRA),)
 ifneq ($(CONFIG_BINMAN),)
-u-boot-dtb-tegra.bin u-boot-tegra.bin u-boot-nodtb-tegra.bin: \
-		spl/u-boot-spl u-boot.bin FORCE
+# Makes u-boot-dtb-tegra.bin u-boot-tegra.bin u-boot-nodtb-tegra.bin
+%-dtb-tegra.bin %-tegra.bin %-nodtb-tegra.bin: \
+		spl/%-spl %.bin FORCE
 	$(call if_changed,binman)
 else
 OBJCOPYFLAGS_u-boot-nodtb-tegra.bin = -O binary --pad-to=$(CONFIG_SYS_TEXT_BASE)
@@ -1608,19 +1608,18 @@ clean: rm-files := $(CLEAN_FILES)
 
 clean-dirs	:= $(foreach f,$(u-boot-alldirs),$(if $(wildcard $(srctree)/$f/Makefile),$f))
 
-clean-dirs      := $(addprefix _clean_, $(clean-dirs) doc/DocBook)
+clean-dirs      := $(addprefix _clean_, $(clean-dirs))
 
 PHONY += $(clean-dirs) clean archclean
 $(clean-dirs):
 	$(Q)$(MAKE) $(clean)=$(patsubst _clean_%,%,$@)
 
-# TODO: Do not use *.cfgtmp
 clean: $(clean-dirs)
 	$(call cmd,rmdirs)
 	$(call cmd,rmfiles)
 	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
-		-o -name '*.ko.*' -o -name '*.su' -o -name '*.cfgtmp' \
+		-o -name '*.ko.*' -o -name '*.su' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
 		-o -name '*.lex.c' -o -name '*.tab.[ch]' \
 		-o -name '*.symtypes' -o -name 'modules.order' \
@@ -1691,7 +1690,7 @@ help:
 	@echo  '  coccicheck      - Execute static code analysis with Coccinelle'
 	@echo  ''
 	@echo  'Documentation targets:'
-	@$(MAKE) -f $(srctree)/doc/DocBook/Makefile dochelp
+	@$(MAKE) -f $(srctree)/Documentation/Makefile dochelp
 	@echo  ''
 	@echo  '  make V=0|1 [targets] 0 => quiet build (default), 1 => verbose build'
 	@echo  '  make V=2   [targets] 2 => give reason for rebuild of target'
@@ -1713,9 +1712,11 @@ tests:
 
 # Documentation targets
 # ---------------------------------------------------------------------------
-%docs: scripts_basic FORCE
-	$(Q)$(MAKE) $(build)=scripts build_docproc
-	$(Q)$(MAKE) $(build)=doc/DocBook $@
+DOC_TARGETS := xmldocs latexdocs pdfdocs htmldocs epubdocs cleandocs \
+	       linkcheckdocs dochelp refcheckdocs
+PHONY += $(DOC_TARGETS)
+$(DOC_TARGETS): scripts_basic FORCE
+	$(Q)$(MAKE) $(build)=Documentation $@
 
 endif #ifeq ($(config-targets),1)
 endif #ifeq ($(mixed-targets),1)

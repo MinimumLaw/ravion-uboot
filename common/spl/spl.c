@@ -34,7 +34,7 @@ DECLARE_GLOBAL_DATA_PTR;
 u32 *boot_params_ptr = NULL;
 
 /* See spl.h for information about this */
-binman_sym_declare(ulong, u_boot_any, pos);
+binman_sym_declare(ulong, u_boot_any, image_pos);
 
 /* Define board data structure */
 static bd_t bdata __attribute__ ((section(".data")));
@@ -80,6 +80,11 @@ int __weak bootz_setup(ulong image, ulong *start, ulong *end)
 }
 #endif
 
+/* Weak default function for arch/board-specific fixups to the spl_image_info */
+void __weak spl_perform_fixups(struct spl_image_info *spl_image)
+{
+}
+
 void spl_fixup_fdt(void)
 {
 #if defined(CONFIG_SPL_OF_LIBFDT) && defined(CONFIG_SYS_SPL_ARGS_ADDR)
@@ -124,7 +129,7 @@ __weak void spl_board_prepare_for_boot(void)
 
 void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 {
-	ulong u_boot_pos = binman_sym(ulong, u_boot_any, pos);
+	ulong u_boot_pos = binman_sym(ulong, u_boot_any, image_pos);
 
 	spl_image->size = CONFIG_SYS_MONITOR_LEN;
 
@@ -312,8 +317,6 @@ static int spl_common_init(bool setup_malloc)
 {
 	int ret;
 
-	debug("spl_early_init()\n");
-
 #if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (setup_malloc) {
 #ifdef CONFIG_MALLOC_F_ADDR
@@ -361,6 +364,8 @@ int spl_early_init(void)
 {
 	int ret;
 
+	debug("%s\n", __func__);
+
 	ret = spl_common_init(true);
 	if (ret)
 		return ret;
@@ -374,6 +379,8 @@ int spl_init(void)
 	int ret;
 	bool setup_malloc = !(IS_ENABLED(CONFIG_SPL_STACK_R) &&
 			IS_ENABLED(CONFIG_SPL_SYS_MALLOC_SIMPLE));
+
+	debug("%s\n", __func__);
 
 	if (!(gd->flags & GD_FLG_SPL_EARLY_INIT)) {
 		ret = spl_common_init(setup_malloc);
@@ -445,8 +452,10 @@ static int boot_from_devices(struct spl_image_info *spl_image,
 		else
 			puts("SPL: Unsupported Boot Device!\n");
 #endif
-		if (loader && !spl_load_image(spl_image, loader))
+		if (loader && !spl_load_image(spl_image, loader)) {
+			spl_image->boot_device = spl_boot_list[i];
 			return 0;
+		}
 	}
 
 	return -ENODEV;
@@ -498,6 +507,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #ifdef CONFIG_SYS_SPL_ARGS_ADDR
 	spl_image.arg = (void *)CONFIG_SYS_SPL_ARGS_ADDR;
 #endif
+	spl_image.boot_device = BOOT_DEVICE_NONE;
 	board_boot_order(spl_boot_list);
 
 	if (boot_from_devices(&spl_image, spl_boot_list,
@@ -505,6 +515,8 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		puts("SPL: failed to boot from all boot devices\n");
 		hang();
 	}
+
+	spl_perform_fixups(&spl_image);
 
 #ifdef CONFIG_CPU_V7M
 	spl_image.entry_point |= 0x1;

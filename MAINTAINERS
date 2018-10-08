@@ -74,6 +74,7 @@ ARC HSDK CREG GPIO
 M:	Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
 S:	Maintained
 L:	uboot-snps-arc@synopsys.com
+F:	doc/device-tree-bindings/gpio/snps,creg-gpio.txt
 F:	drivers/gpio/hsdk-creg-gpio.c
 
 ARM
@@ -106,6 +107,16 @@ F:	drivers/serial/serial_bcm283x_pl011.c
 F:	drivers/video/bcm2835.c
 F:	include/dm/platform_data/serial_bcm283x_mu.h
 F:	drivers/pinctrl/broadcom/
+
+ARM BROADCOM BCMSTB
+M:	Thomas Fitzsimmons <fitzsim@fitzsim.org>
+S:	Maintained
+F:	arch/arm/mach-bcmstb/
+F:	board/broadcom/bcmstb/
+F:	configs/bcm7445_defconfig
+F:	doc/README.bcm7xxx
+F:	drivers/mmc/bcmstb_sdhci.c
+F:	drivers/spi/bcmstb_spi.c
 
 ARM FREESCALE IMX
 M:	Stefano Babic <sbabic@denx.de>
@@ -144,6 +155,15 @@ S:	Maintained
 T:	git git://git.denx.de/u-boot-pxa.git
 F:	arch/arm/cpu/pxa/
 F:	arch/arm/include/asm/arch-pxa/
+
+ARM OWL
+M:	Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
+S:	Maintained
+F:	arch/arm/include/asm/arch-owl/
+F:	arch/arm/mach-owl/
+F:	board/ucRobotics/
+F:	drivers/clk/owl/
+F:	drivers/serial/serial_owl.c
 
 ARM RENESAS RMOBILE/R-CAR
 M:	Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
@@ -187,6 +207,11 @@ ARM SNAPDRAGON
 M:	Ramon Fried <ramon.fried@gmail.com>
 S:	Maintained
 F:	arch/arm/mach-snapdragon/
+F:	drivers/gpio/msm_gpio.c
+F:	drivers/mmc/msm_sdhci.c
+F:	drivers/serial/serial_msm.c
+F:	drivers/smem/msm_smem.c
+F:	drivers/usb/host/ehci-msm.c
 
 ARM STI
 M:	Patrice Chotard <patrice.chotard@st.com>
@@ -203,11 +228,21 @@ F:	arch/arm/include/asm/arch-spear/
 
 ARM STM STM32MP
 M:	Patrick Delaunay <patrick.delaunay@st.com>
+M:	Christophe Kerello <christophe.kerello@st.com>
+M:	Patrice Chotard <patrice.chotard@st.com>
 S:	Maintained
 F:	arch/arm/mach-stm32mp
 F:	drivers/clk/clk_stm32mp1.c
+F:	drivers/i2c/stm32f7_i2c.c
 F:	drivers/misc/stm32mp_fuse.c
+F:	drivers/mmc/stm32_sdmmc2.c
+F:	drivers/phy/phy-stm32-usbphyc.c
+F:	drivers/pinctrl/pinctrl_stm32.c
+F:	drivers/power/regulator/stm32-vrefbuf.c
 F:	drivers/ram/stm32mp1/
+F:	drivers/misc/stm32_rcc.c
+F:	drivers/reset/stm32-reset.c
+F:	drivers/spi/stm32_qspi.c
 
 ARM STM STV0991
 M:	Vikas Manocha <vikas.manocha@st.com>
@@ -296,6 +331,7 @@ F:	drivers/usb/host/ehci-zynq.c
 F:	drivers/watchdog/cdns_wdt.c
 F:	include/zynqmppl.h
 F:	tools/zynqmp*
+N:	ultra96
 N:	zynqmp
 
 ARM ZYNQMP R5
@@ -342,12 +378,13 @@ EFI PAYLOAD
 M:	Alexander Graf <agraf@suse.de>
 S:	Maintained
 T:	git git://github.com/agraf/u-boot.git
-F:	doc/DocBook/efi.tmpl
 F:	doc/README.uefi
 F:	doc/README.iscsi
+F:	Documentation/efi.rst
 F:	include/efi*
 F:	include/pe.h
 F:	include/asm-generic/pe.h
+F:	lib/charset.c
 F:	lib/efi*/
 F:	test/py/tests/test_efi*
 F:	cmd/bootefi.c
@@ -400,6 +437,7 @@ F:	drivers/net/xilinx_axi_emac.c
 F:	drivers/net/xilinx_emaclite.c
 F:	drivers/serial/serial_xuartlite.c
 F:	drivers/spi/xilinx_spi.c
+F:	drivers/sysreset/sysreset_gpio.c
 F:	drivers/watchdog/xilinx_tb_wdt.c
 N:	xilinx
 
@@ -416,8 +454,8 @@ T:	git git://git.denx.de/u-boot-mmc.git
 F:	drivers/mmc/
 
 NAND FLASH
-M:	Scott Wood <oss@buserror.net>
-S:	Maintained
+#M:	Scott Wood <oss@buserror.net>
+S:	Orphaned (Since 2018-07)
 T:	git git://git.denx.de/u-boot-nand-flash.git
 F:	drivers/mtd/nand/
 

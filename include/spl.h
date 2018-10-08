@@ -29,6 +29,7 @@ struct spl_image_info {
 #if CONFIG_IS_ENABLED(LOAD_FIT)
 	void *fdt_addr;
 #endif
+	u32 boot_device;
 	u32 size;
 	u32 flags;
 	void *arg;
@@ -59,7 +60,7 @@ struct spl_load_info {
  * image is found. For * example if u-boot.img is used we don't check that
  * spl_parse_image_header() can parse a valid header.
  */
-binman_sym_extern(ulong, u_boot_any, pos);
+binman_sym_extern(ulong, u_boot_any, image_pos);
 
 /**
  * spl_load_simple_fit() - Loads a fit image from a device.
@@ -296,4 +297,10 @@ void spl_invoke_atf(struct spl_image_info *spl_image);
  * can implement 'board_return_to_bootrom'.
  */
 void board_return_to_bootrom(void);
+
+/**
+ * spl_perform_fixups() - arch/board-specific callback before processing
+ *                        the boot-payload
+ */
+void spl_perform_fixups(struct spl_image_info *spl_image);
 #endif

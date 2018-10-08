@@ -234,7 +234,6 @@ extern unsigned long get_sdram_size(void);
 
 #if defined(CONFIG_TSEC_ENET)
 
-#define CONFIG_MII			/* MII PHY management */
 #define CONFIG_MII_DEFAULT_TSEC	1	/* Allow unregistered phys */
 #define CONFIG_TSEC1	1
 #define CONFIG_TSEC1_NAME	"eTSEC1"
@@ -312,8 +311,6 @@ extern unsigned long get_sdram_size(void);
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 
 /*
  * Environment Configuration

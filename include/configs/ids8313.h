@@ -19,8 +19,6 @@
 
 #define CONFIG_FSL_ELBC
 
-#define CONFIG_MISC_INIT_R
-
 #define CONFIG_BOOT_RETRY_TIME		900
 #define CONFIG_BOOT_RETRY_MIN		30
 #define CONFIG_RESET_TO_RETRY
@@ -446,7 +444,6 @@
 #define CONFIG_SYS_MEMTEST_END		0x00C00000
 
 #define CONFIG_SYS_LOAD_ADDR		0x100000
-#define CONFIG_MII
 #define CONFIG_LOADS_ECHO
 #define CONFIG_TIMESTAMP
 #define CONFIG_PREBOOT			"echo;" \
@@ -460,7 +457,6 @@
 
 /* mtdparts command line support */
 #define CONFIG_FLASH_CFI_MTD
-#define CONFIG_MTD_DEVICE
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"netdev=" __stringify(CONFIG_NETDEV) "\0"			\
@@ -503,6 +499,5 @@
 	"bootm ${loadaddr} - ${fdtaddr}"
 
 /* UBI Support */
-#define CONFIG_MTD_PARTITIONS
 
 #endif	/* __CONFIG_H */

@@ -181,7 +181,6 @@
 /*
  * TSEC
  */
-#define CONFIG_MII
 
 #define CONFIG_SYS_TSEC1_OFFSET	0x24000
 #define CONFIG_SYS_TSEC1	(CONFIG_SYS_IMMR + CONFIG_SYS_TSEC1_OFFSET)
@@ -475,7 +474,6 @@
  * JFFS2 partitions
  */
 /* mtdparts command line support */
-#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
 #define CONFIG_FLASH_CFI_MTD
 
 /* default mtd partition table */

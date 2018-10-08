@@ -36,7 +36,6 @@
 
 /* High Level Configuration Options */
 #define CONFIG_SYS_BOOK3E_HV		/* Category E.HV supported */
-#define CONFIG_MP			/* support multiple processors */
 
 /* support deep sleep */
 #define CONFIG_DEEP_SLEEP
@@ -338,8 +337,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_RAMBOOT
 #endif
 
-#define CONFIG_MISC_INIT_R
-
 #define CONFIG_HWCONFIG
 
 /* define to use L1 as initial stack */
@@ -602,7 +599,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_FM1_DTSEC3_RISER_PHY_ADDR    0x1e
 #define CONFIG_SYS_FM1_DTSEC4_RISER_PHY_ADDR    0x1f
 
-#define CONFIG_MII		/* MII PHY management */
 #define CONFIG_ETHPRIME		"FM1@DTSEC1"
 #endif
 
@@ -615,8 +611,6 @@ unsigned long get_board_ddr_clk(void);
  * Dynamic MTD Partition support with mtdparts
  */
 #ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 #define CONFIG_FLASH_CFI_MTD
 #endif
 

@@ -48,7 +48,6 @@
 /* Network configuration */
 #define CONFIG_MCFFEC
 #ifdef CONFIG_MCFFEC
-#define CONFIG_MII			1
 #define CONFIG_MII_INIT		1
 #define CONFIG_SYS_DISCOVER_PHY
 #define CONFIG_SYS_RX_ETH_BUFFER	2
@@ -284,14 +283,9 @@
 #ifdef CONFIG_CMD_JFFS2
 #define CONFIG_JFFS2_DEV		"nand0"
 #define CONFIG_JFFS2_PART_OFFSET	(0x800000)
-#define CONFIG_MTD_DEVICE
 
 #endif
 
-#ifdef CONFIG_CMD_UBI
-#define CONFIG_MTD_DEVICE	/* needed for mtdparts command */
-#define CONFIG_MTD_PARTITIONS	/* mtdparts and UBI support */
-#endif
 /* Cache Configuration */
 #define CONFIG_SYS_CACHELINE_SIZE	16
 #define ICACHE_STATUS			(CONFIG_SYS_INIT_RAM_ADDR + \

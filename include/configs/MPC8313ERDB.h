@@ -51,8 +51,6 @@
 #define CONFIG_PCI_INDIRECT_BRIDGE
 #define CONFIG_FSL_ELBC 1
 
-#define CONFIG_MISC_INIT_R
-
 /*
  * On-board devices
  *
@@ -249,7 +247,6 @@
 #define CONFIG_SYS_NAND_BASE		0xE2800000
 #endif
 
-#define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITION
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1

@@ -228,7 +228,6 @@
 #define CONFIG_SYS_NAND_BASE		0xE0600000
 #endif
 
-#define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITION
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
@@ -370,7 +369,6 @@
 /*
  * TSEC ethernet configuration
  */
-#define CONFIG_MII		1 /* MII PHY management */
 #define CONFIG_TSEC1		1
 #define CONFIG_TSEC1_NAME	"eTSEC0"
 #define CONFIG_TSEC2		1

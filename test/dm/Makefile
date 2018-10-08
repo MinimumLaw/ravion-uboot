@@ -33,6 +33,7 @@ obj-$(CONFIG_DM_RESET) += reset.o
 obj-$(CONFIG_SYSRESET) += sysreset.o
 obj-$(CONFIG_DM_RTC) += rtc.o
 obj-$(CONFIG_DM_SPI_FLASH) += sf.o
+obj-$(CONFIG_SMEM) += smem.o
 obj-$(CONFIG_DM_SPI) += spi.o
 obj-y += syscon.o
 obj-$(CONFIG_DM_USB) += usb.o
@@ -43,4 +44,6 @@ obj-$(CONFIG_DM_VIDEO) += video.o
 obj-$(CONFIG_ADC) += adc.o
 obj-$(CONFIG_SPMI) += spmi.o
 obj-$(CONFIG_WDT) += wdt.o
+obj-$(CONFIG_AXI) += axi.o
+obj-$(CONFIG_MISC) += misc.o
 endif

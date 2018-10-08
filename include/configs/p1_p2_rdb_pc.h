@@ -69,8 +69,6 @@
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 #define CONFIG_FLASH_CFI_MTD
 #endif
 
@@ -91,8 +89,6 @@
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 #define CONFIG_FLASH_CFI_MTD
 #endif
 
@@ -138,8 +134,6 @@
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
 #define CONFIG_FLASH_CFI_MTD
 #endif
 
@@ -222,8 +216,6 @@
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #endif
 #endif
-
-#define CONFIG_MP
 
 #define CONFIG_PCIE1	/* PCIE controller 1 (slot 1) */
 #define CONFIG_PCIE2	/* PCIE controller 2 (slot 2) */
@@ -519,7 +511,6 @@
 #define CONFIG_SPL_RELOC_TEXT_BASE	0xf8f81000
 #define CONFIG_SPL_GD_ADDR		(CONFIG_SYS_INIT_L2_ADDR + 112 * 1024)
 #define CONFIG_SPL_RELOC_STACK		(CONFIG_SYS_INIT_L2_ADDR + 116 * 1024)
-#define CONFIG_SPL_RELOC_STACK_SIZE	(32 << 10)
 #define CONFIG_SPL_RELOC_MALLOC_ADDR	(CONFIG_SYS_INIT_L2_ADDR + 148 * 1024)
 #if defined(CONFIG_TARGET_P2020RDB)
 #define CONFIG_SPL_RELOC_MALLOC_SIZE	(364 << 10)
@@ -651,7 +642,6 @@
 #endif /* CONFIG_PCI */
 
 #if defined(CONFIG_TSEC_ENET)
-#define CONFIG_MII		/* MII PHY management */
 #define CONFIG_TSEC1
 #define CONFIG_TSEC1_NAME	"eTSEC1"
 #define CONFIG_TSEC2
@@ -766,7 +756,6 @@
 #ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
 #define CONFIG_USB_EHCI_FSL
-#define CONFIG_EHCI_DESC_BIG_ENDIAN
 #endif
 #endif
 

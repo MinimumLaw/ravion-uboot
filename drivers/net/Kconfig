@@ -7,8 +7,8 @@ config DM_ETH
 	help
 	  Enable driver model for Ethernet.
 
-	  The eth_*() interface will be implemented by the UC_ETH class
-	  This is currently implemented in net/eth.c
+	  The eth_*() interface will be implemented by the UCLASS_ETH class
+	  This is currently implemented in net/eth-uclass.c
 	  Look in include/net.h for details.
 
 config DRIVER_TI_CPSW
@@ -150,6 +150,14 @@ config ETH_DESIGNWARE
 	  100Mbit and 1 Gbit operation. You must enable CONFIG_PHYLIB to
 	  provide the PHY (physical media interface).
 
+config ETH_DESIGNWARE_SOCFPGA
+	bool "Altera SoCFPGA extras for Synopsys Designware Ethernet MAC"
+	depends on DM_ETH && ETH_DESIGNWARE
+	help
+	  The Altera SoCFPGA requires additional configuration of the
+	  Altera system manager to correctly interface with the PHY.
+	  This code handles those SoC specifics.
+
 config ETHOC
 	bool "OpenCores 10/100 Mbps Ethernet MAC"
 	help
@@ -181,6 +189,7 @@ config FTMAC100
 config MVGBE
 	bool "Marvell Orion5x/Kirkwood network interface support"
 	depends on KIRKWOOD || ORION5X
+	select PHYLIB if DM_ETH
 	help
 	  This driver supports the network interface units in the
 	  Marvell Orion5x and Kirkwood SoCs
@@ -231,6 +240,11 @@ config RGMII
 	help
 	  Enable the support of the Reduced Gigabit Media-Independent
 	  Interface (RGMII).
+
+config MII
+	bool "Enable MII"
+	help
+	  Enable support of the Media-Independent Interface (MII)
 
 config RTL8139
 	bool "Realtek 8139 series Ethernet controller driver"
@@ -307,6 +321,11 @@ config SH_ETHER
 	select PHYLIB
 	help
 	  This driver supports the Ethernet for Renesas SH and ARM SoCs.
+
+config DRIVER_TI_EMAC
+	bool "TI Davinci EMAC"
+	help
+	   Support for davinci emac
 
 config XILINX_AXIEMAC
 	depends on DM_ETH && (MICROBLAZE || ARCH_ZYNQ || ARCH_ZYNQMP)

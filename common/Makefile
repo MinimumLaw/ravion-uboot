@@ -108,6 +108,8 @@ obj-$(CONFIG_IO_TRACE) += iotrace.o
 obj-y += memsize.o
 obj-y += stdio.o
 
+obj-$(CONFIG_CMD_DTIMG) += image-android-dt.o
+
 ifdef CONFIG_CMD_EEPROM_LAYOUT
 obj-y += eeprom/eeprom_field.o eeprom/eeprom_layout.o
 endif
@@ -121,4 +123,4 @@ obj-$(CONFIG_$(SPL_)LOG_CONSOLE) += log_console.o
 obj-y += s_record.o
 obj-y += xyzModem.o
 
-obj-$(CONFIG_LIBAVB) += avb_verify.o
+obj-$(CONFIG_AVB_VERIFY) += avb_verify.o

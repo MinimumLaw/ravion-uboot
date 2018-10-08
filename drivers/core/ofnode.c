@@ -55,6 +55,38 @@ int ofnode_read_s32_default(ofnode node, const char *propname, s32 def)
 	return def;
 }
 
+int ofnode_read_u64(ofnode node, const char *propname, u64 *outp)
+{
+	const fdt64_t *cell;
+	int len;
+
+	assert(ofnode_valid(node));
+	debug("%s: %s: ", __func__, propname);
+
+	if (ofnode_is_np(node))
+		return of_read_u64(ofnode_to_np(node), propname, outp);
+
+	cell = fdt_getprop(gd->fdt_blob, ofnode_to_offset(node), propname,
+			   &len);
+	if (!cell || len < sizeof(*cell)) {
+		debug("(not found)\n");
+		return -EINVAL;
+	}
+	*outp = fdt64_to_cpu(cell[0]);
+	debug("%#llx (%lld)\n", (unsigned long long)*outp,
+	      (unsigned long long)*outp);
+
+	return 0;
+}
+
+int ofnode_read_u64_default(ofnode node, const char *propname, u64 def)
+{
+	assert(ofnode_valid(node));
+	ofnode_read_u64(node, propname, &def);
+
+	return def;
+}
+
 bool ofnode_read_bool(ofnode node, const char *propname)
 {
 	const void *prop;
@@ -591,6 +623,42 @@ fail:
 	return ret;
 }
 
+int ofnode_read_pci_vendev(ofnode node, u16 *vendor, u16 *device)
+{
+	const char *list, *end;
+	int len;
+
+	list = ofnode_get_property(node, "compatible", &len);
+	if (!list)
+		return -ENOENT;
+
+	end = list + len;
+	while (list < end) {
+		len = strlen(list);
+		if (len >= strlen("pciVVVV,DDDD")) {
+			char *s = strstr(list, "pci");
+
+			/*
+			 * check if the string is something like pciVVVV,DDDD.RR
+			 * or just pciVVVV,DDDD
+			 */
+			if (s && s[7] == ',' &&
+			    (s[12] == '.' || s[12] == 0)) {
+				s += 3;
+				*vendor = simple_strtol(s, NULL, 16);
+
+				s += 5;
+				*device = simple_strtol(s, NULL, 16);
+
+				return 0;
+			}
+		}
+		list += (len + 1);
+	}
+
+	return -ENOENT;
+}
+
 int ofnode_read_addr_cells(ofnode node)
 {
 	if (ofnode_is_np(node))
@@ -696,4 +764,16 @@ int ofnode_device_is_compatible(ofnode node, const char *compat)
 		return !fdt_node_check_compatible(gd->fdt_blob,
 						  ofnode_to_offset(node),
 						  compat);
+}
+
+ofnode ofnode_by_compatible(ofnode from, const char *compat)
+{
+	if (of_live_active()) {
+		return np_to_ofnode(of_find_compatible_node(
+			(struct device_node *)ofnode_to_np(from), NULL,
+			compat));
+	} else {
+		return offset_to_ofnode(fdt_node_offset_by_compatible(
+				gd->fdt_blob, ofnode_to_offset(from), compat));
+	}
 }

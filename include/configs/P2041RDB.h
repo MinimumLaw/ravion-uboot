@@ -27,7 +27,6 @@
 
 /* High Level Configuration Options */
 #define CONFIG_SYS_BOOK3E_HV		/* Category E.HV supported */
-#define CONFIG_MP			/* support multiple processors */
 
 #ifndef CONFIG_RESET_VECTOR_ADDRESS
 #define CONFIG_RESET_VECTOR_ADDRESS	0xeffffffc
@@ -256,8 +255,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_FLASH_EMPTY_INFO
 #define CONFIG_SYS_FLASH_AMD_CHECK_DQ7
 #define CONFIG_SYS_FLASH_BANKS_LIST	{CONFIG_SYS_FLASH_BASE_PHYS + 0x8000000}
-
-#define CONFIG_MISC_INIT_R
 
 #define CONFIG_HWCONFIG
 
@@ -543,7 +540,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_FM1_10GEC1_PHY_ADDR	0
 
 #define CONFIG_SYS_TBIPA_VALUE	8
-#define CONFIG_MII		/* MII PHY management */
 #define CONFIG_ETHPRIME		"FM1@DTSEC1"
 #endif
 

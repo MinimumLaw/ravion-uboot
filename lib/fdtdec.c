@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <fdt_support.h>
+#include <inttypes.h>
 #include <linux/libfdt.h>
 #include <serial.h>
 #include <asm/sections.h>
@@ -1154,7 +1155,7 @@ int fdtdec_decode_display_timing(const void *blob, int parent, int index,
 	return ret;
 }
 
-int fdtdec_setup_memory_size(void)
+int fdtdec_setup_mem_size_base(void)
 {
 	int ret, mem;
 	struct fdt_resource res;
@@ -1172,6 +1173,7 @@ int fdtdec_setup_memory_size(void)
 	}
 
 	gd->ram_size = (phys_size_t)(res.end - res.start + 1);
+	gd->ram_base = (unsigned long)res.start;
 	debug("%s: Initial DRAM size %llx\n", __func__,
 	      (unsigned long long)gd->ram_size);
 
@@ -1179,13 +1181,23 @@ int fdtdec_setup_memory_size(void)
 }
 
 #if defined(CONFIG_NR_DRAM_BANKS)
+
+static int get_next_memory_node(const void *blob, int mem)
+{
+	do {
+		mem = fdt_node_offset_by_prop_value(gd->fdt_blob, mem,
+						    "device_type", "memory", 7);
+	} while (!fdtdec_get_is_enabled(blob, mem));
+
+	return mem;
+}
+
 int fdtdec_setup_memory_banksize(void)
 {
 	int bank, ret, mem, reg = 0;
 	struct fdt_resource res;
 
-	mem = fdt_node_offset_by_prop_value(gd->fdt_blob, -1, "device_type",
-					    "memory", 7);
+	mem = get_next_memory_node(gd->fdt_blob, -1);
 	if (mem < 0) {
 		debug("%s: Missing /memory node\n", __func__);
 		return -EINVAL;
@@ -1195,9 +1207,7 @@ int fdtdec_setup_memory_banksize(void)
 		ret = fdt_get_resource(gd->fdt_blob, mem, "reg", reg++, &res);
 		if (ret == -FDT_ERR_NOTFOUND) {
 			reg = 0;
-			mem = fdt_node_offset_by_prop_value(gd->fdt_blob, mem,
-							    "device_type",
-							    "memory", 7);
+			mem = get_next_memory_node(gd->fdt_blob, mem);
 			if (mem == -FDT_ERR_NOTFOUND)
 				break;
 
@@ -1323,8 +1333,12 @@ int fdtdec_setup(void)
 # endif
 # ifndef CONFIG_SPL_BUILD
 	/* Allow the early environment to override the fdt address */
+#  if CONFIG_IS_ENABLED(OF_PRIOR_STAGE)
+	gd->fdt_blob = (void *)prior_stage_fdt_address;
+#  else
 	gd->fdt_blob = (void *)env_get_ulong("fdtcontroladdr", 16,
 						(uintptr_t)gd->fdt_blob);
+#  endif
 # endif
 
 # if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
@@ -1349,5 +1363,113 @@ int fdtdec_setup(void)
 
 	return fdtdec_prepare_fdt();
 }
+
+#ifdef CONFIG_NR_DRAM_BANKS
+int fdtdec_decode_ram_size(const void *blob, const char *area, int board_id,
+			   phys_addr_t *basep, phys_size_t *sizep, bd_t *bd)
+{
+	int addr_cells, size_cells;
+	const u32 *cell, *end;
+	u64 total_size, size, addr;
+	int node, child;
+	bool auto_size;
+	int bank;
+	int len;
+
+	debug("%s: board_id=%d\n", __func__, board_id);
+	if (!area)
+		area = "/memory";
+	node = fdt_path_offset(blob, area);
+	if (node < 0) {
+		debug("No %s node found\n", area);
+		return -ENOENT;
+	}
+
+	cell = fdt_getprop(blob, node, "reg", &len);
+	if (!cell) {
+		debug("No reg property found\n");
+		return -ENOENT;
+	}
+
+	addr_cells = fdt_address_cells(blob, node);
+	size_cells = fdt_size_cells(blob, node);
+
+	/* Check the board id and mask */
+	for (child = fdt_first_subnode(blob, node);
+	     child >= 0;
+	     child = fdt_next_subnode(blob, child)) {
+		int match_mask, match_value;
+
+		match_mask = fdtdec_get_int(blob, child, "match-mask", -1);
+		match_value = fdtdec_get_int(blob, child, "match-value", -1);
+
+		if (match_value >= 0 &&
+		    ((board_id & match_mask) == match_value)) {
+			/* Found matching mask */
+			debug("Found matching mask %d\n", match_mask);
+			node = child;
+			cell = fdt_getprop(blob, node, "reg", &len);
+			if (!cell) {
+				debug("No memory-banks property found\n");
+				return -EINVAL;
+			}
+			break;
+		}
+	}
+	/* Note: if no matching subnode was found we use the parent node */
+
+	if (bd) {
+		memset(bd->bi_dram, '\0', sizeof(bd->bi_dram[0]) *
+						CONFIG_NR_DRAM_BANKS);
+	}
+
+	auto_size = fdtdec_get_bool(blob, node, "auto-size");
+
+	total_size = 0;
+	end = cell + len / 4 - addr_cells - size_cells;
+	debug("cell at %p, end %p\n", cell, end);
+	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
+		if (cell > end)
+			break;
+		addr = 0;
+		if (addr_cells == 2)
+			addr += (u64)fdt32_to_cpu(*cell++) << 32UL;
+		addr += fdt32_to_cpu(*cell++);
+		if (bd)
+			bd->bi_dram[bank].start = addr;
+		if (basep && !bank)
+			*basep = (phys_addr_t)addr;
+
+		size = 0;
+		if (size_cells == 2)
+			size += (u64)fdt32_to_cpu(*cell++) << 32UL;
+		size += fdt32_to_cpu(*cell++);
+
+		if (auto_size) {
+			u64 new_size;
+
+			debug("Auto-sizing %" PRIx64 ", size %" PRIx64 ": ",
+			      addr, size);
+			new_size = get_ram_size((long *)(uintptr_t)addr, size);
+			if (new_size == size) {
+				debug("OK\n");
+			} else {
+				debug("sized to %" PRIx64 "\n", new_size);
+				size = new_size;
+			}
+		}
+
+		if (bd)
+			bd->bi_dram[bank].size = size;
+		total_size += size;
+	}
+
+	debug("Memory size %" PRIu64 "\n", total_size);
+	if (sizep)
+		*sizep = (phys_size_t)total_size;
+
+	return 0;
+}
+#endif /* CONFIG_NR_DRAM_BANKS */
 
 #endif /* !USE_HOSTCC */

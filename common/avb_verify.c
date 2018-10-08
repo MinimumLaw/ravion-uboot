@@ -5,12 +5,13 @@
  */
 
 #include <avb_verify.h>
+#include <blk.h>
 #include <fastboot.h>
 #include <image.h>
 #include <malloc.h>
 #include <part.h>
 
-const unsigned char avb_root_pub[1032] = {
+static const unsigned char avb_root_pub[1032] = {
 	0x0, 0x0, 0x10, 0x0, 0x55, 0xd9, 0x4, 0xad, 0xd8, 0x4,
 	0xaf, 0xe3, 0xd3, 0x84, 0x6c, 0x7e, 0xd, 0x89, 0x3d, 0xc2,
 	0x8c, 0xd3, 0x12, 0x55, 0xe9, 0x62, 0xc9, 0xf1, 0xf, 0x5e,
@@ -175,7 +176,7 @@ static int avb_find_dm_args(char **args, char *str)
 	if (!str)
 		return -1;
 
-	for (i = 0; i < AVB_MAX_ARGS, args[i]; ++i) {
+	for (i = 0; i < AVB_MAX_ARGS && args[i]; ++i) {
 		if (strstr(args[i], str))
 			return i;
 	}
@@ -288,8 +289,8 @@ static unsigned long mmc_read_and_flush(struct mmc_part *part,
 		tmp_buf = buffer;
 	}
 
-	blks = part->mmc->block_dev.block_read(part->mmc_blk,
-				start, sectors, tmp_buf);
+	blks = blk_dread(part->mmc_blk,
+			 start, sectors, tmp_buf);
 	/* flush cache after read */
 	flush_cache((ulong)tmp_buf, sectors * part->info.blksz);
 
@@ -327,8 +328,8 @@ static unsigned long mmc_write(struct mmc_part *part, lbaint_t start,
 		tmp_buf = buffer;
 	}
 
-	return part->mmc->block_dev.block_write(part->mmc_blk,
-				start, sectors, tmp_buf);
+	return blk_dwrite(part->mmc_blk,
+			  start, sectors, tmp_buf);
 }
 
 static struct mmc_part *get_partition(AvbOps *ops, const char *partition)
@@ -347,34 +348,37 @@ static struct mmc_part *get_partition(AvbOps *ops, const char *partition)
 	part->mmc = find_mmc_device(dev_num);
 	if (!part->mmc) {
 		printf("No MMC device at slot %x\n", dev_num);
-		return NULL;
+		goto err;
 	}
 
 	if (mmc_init(part->mmc)) {
 		printf("MMC initialization failed\n");
-		return NULL;
+		goto err;
 	}
 
 	ret = mmc_switch_part(part->mmc, part_num);
 	if (ret)
-		return NULL;
+		goto err;
 
 	mmc_blk = mmc_get_blk_desc(part->mmc);
 	if (!mmc_blk) {
 		printf("Error - failed to obtain block descriptor\n");
-		return NULL;
+		goto err;
 	}
 
 	ret = part_get_info_by_name(mmc_blk, partition, &part->info);
 	if (!ret) {
 		printf("Can't find partition '%s'\n", partition);
-		return NULL;
+		goto err;
 	}
 
 	part->dev_num = dev_num;
 	part->mmc_blk = mmc_blk;
 
 	return part;
+err:
+	free(part);
+	return NULL;
 }
 
 static AvbIOResult mmc_byte_io(AvbOps *ops,
@@ -397,6 +401,9 @@ static AvbIOResult mmc_byte_io(AvbOps *ops,
 	part = get_partition(ops, partition);
 	if (!part)
 		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
+
+	if (!part->info.blksz)
+		return AVB_IO_RESULT_ERROR_IO;
 
 	start_offset = calc_offset(part, offset);
 	while (num_bytes) {
@@ -699,6 +706,37 @@ static AvbIOResult get_unique_guid_for_partition(AvbOps *ops,
 }
 
 /**
+ * get_size_of_partition() - gets the size of a partition identified
+ * by a string name
+ *
+ * @ops: contains AVB ops handlers
+ * @partition: partition name (NUL-terminated UTF-8 string)
+ * @out_size_num_bytes: returns the value of a partition size
+ *
+ * @return:
+ *      AVB_IO_RESULT_OK, on success (GUID found)
+ *      AVB_IO_RESULT_ERROR_INSUFFICIENT_SPACE, out_size_num_bytes is NULL
+ *      AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION, if partition was not found
+ */
+static AvbIOResult get_size_of_partition(AvbOps *ops,
+					 const char *partition,
+					 u64 *out_size_num_bytes)
+{
+	struct mmc_part *part;
+
+	if (!out_size_num_bytes)
+		return AVB_IO_RESULT_ERROR_INSUFFICIENT_SPACE;
+
+	part = get_partition(ops, partition);
+	if (!part)
+		return AVB_IO_RESULT_ERROR_NO_SUCH_PARTITION;
+
+	*out_size_num_bytes = part->info.blksz * part->info.size;
+
+	return AVB_IO_RESULT_OK;
+}
+
+/**
  * ============================================================================
  * AVB2.0 AvbOps alloc/initialisation/free
  * ============================================================================
@@ -721,7 +759,7 @@ AvbOps *avb_ops_alloc(int boot_device)
 	ops_data->ops.read_is_device_unlocked = read_is_device_unlocked;
 	ops_data->ops.get_unique_guid_for_partition =
 		get_unique_guid_for_partition;
-
+	ops_data->ops.get_size_of_partition = get_size_of_partition;
 	ops_data->mmc_dev = boot_device;
 
 	return &ops_data->ops;
@@ -731,7 +769,7 @@ void avb_ops_free(AvbOps *ops)
 {
 	struct AvbOpsData *ops_data;
 
-	if (ops)
+	if (!ops)
 		return;
 
 	ops_data = ops->user_data;

@@ -256,7 +256,7 @@ config SPL_SHA256_SUPPORT
 config SPL_FIT_IMAGE_TINY
 	bool "Remove functionality from SPL FIT loading to reduce size"
 	depends on SPL_FIT
-	default y if MACH_SUN50I || MACH_SUN50I_H5
+	default y if MACH_SUN50I || MACH_SUN50I_H5 || MACH_SUN50I_H6
 	help
 	  Enable this to reduce the size of the FIT image loading code
 	  in SPL, if space for the SPL binary is very tight.
@@ -409,7 +409,7 @@ config SPL_LIBCOMMON_SUPPORT
 	  an SPL build.
 
 config SPL_LIBDISK_SUPPORT
-	bool "Support disk paritions"
+	bool "Support disk partitions"
 	help
 	  Enable support for disk partitions within SPL. 'Disk' is something
 	  of a misnomer as it includes non-spinning media such as flash (as
@@ -553,6 +553,16 @@ config SYS_OS_BASE
 
 endif # SPL_OS_BOOT
 
+config SPL_PAYLOAD
+	string "SPL payload"
+	default "tpl/u-boot-with-tpl.bin" if TPL
+	default "u-boot.bin"
+	help
+	  Payload for SPL boot. For backward compability, default to
+	  u-boot.bin, i.e. RAW image without any header. In case of
+	  TPL, tpl/u-boot-with-tpl.bin. For new boards, suggest to
+	  use u-boot.img.
+
 config SPL_PCI_SUPPORT
 	bool "Support PCI drivers"
 	help
@@ -578,7 +588,7 @@ config SPL_POST_MEM_SUPPORT
 	  performed before booting. This enables the drivers in post/drivers
 	  as part of an SPL build.
 
-config SPL_RESET_SUPPORT
+config SPL_DM_RESET
 	bool "Support reset drivers"
 	depends on SPL
 	help
@@ -598,6 +608,15 @@ config SPL_POWER_SUPPORT
 	  so that the clock speed can be increased. This enables the drivers
 	  in drivers/power, drivers/power/pmic and drivers/power/regulator
 	  as part of an SPL build.
+
+config SPL_POWER_DOMAIN
+	bool "Support power domain drivers"
+	help
+	  Enable support for power domain control in SPL. Many SoCs allow
+	  power to be applied to or removed from portions of the SoC (power
+	  domains). This may be used to save power. This API provides the
+	  means to control such power management hardware. This enables
+	  the drivers in drivers/power/domain as part of a SPL build.
 
 config SPL_RAM_SUPPORT
 	bool "Support booting from RAM"
@@ -719,12 +738,12 @@ config SPL_USB_ETHER
 	  See also SPL_NET_SUPPORT and SPL_ETH_SUPPORT.
 
 config SPL_DFU_SUPPORT
-	bool "Support DFU (Device Firmware Upgarde)"
+	bool "Support DFU (Device Firmware Upgrade)"
 	select SPL_HASH_SUPPORT
 	select SPL_DFU_NO_RESET
 	depends on SPL_RAM_SUPPORT
 	help
-	  This feature enables the DFU (Device Firmware Upgarde) in SPL with
+	  This feature enables the DFU (Device Firmware Upgrade) in SPL with
 	  RAM memory device support. The ROM code will load and execute
 	  the SPL built with dfu. The user can load binaries (u-boot/kernel) to
 	  selected device partition from host-pc using dfu-utils.

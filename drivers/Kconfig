@@ -8,6 +8,8 @@ source "drivers/adc/Kconfig"
 
 source "drivers/ata/Kconfig"
 
+source "drivers/axi/Kconfig"
+
 source "drivers/block/Kconfig"
 
 source "drivers/bootcount/Kconfig"
@@ -83,6 +85,8 @@ source "drivers/rtc/Kconfig"
 source "drivers/scsi/Kconfig"
 
 source "drivers/serial/Kconfig"
+
+source "drivers/smem/Kconfig"
 
 source "drivers/sound/Kconfig"
 
