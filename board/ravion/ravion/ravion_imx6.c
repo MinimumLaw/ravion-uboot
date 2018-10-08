@@ -578,6 +578,8 @@ static void enable_rgb(struct display_info_t const *dev)
 	char *board = env_get("board");
 	if(!strcmp("cimc-lite", board))
 		turn_on_koe_display();
+	if(!strcmp("cimc-i", board)) /* FixMe: LVDS display here */
+		turn_on_koe_display();
 #endif /* defined CONFIG_RAVION_DISPLAY_KOE */
 
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
@@ -588,6 +590,15 @@ static void enable_lvds(struct display_info_t const *dev)
 {
 	struct iomuxc *iomux = (struct iomuxc *)
 				IOMUXC_BASE_ADDR;
+
+#if defined CONFIG_RAVION_DISPLAY_KOE
+	char *board = env_get("board");
+	if(!strcmp("cimc-lite", board)) /* FixMe: TFT display here */
+		turn_on_koe_display();
+	if(!strcmp("cimc-i", board))
+		turn_on_koe_display();
+#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+
 	u32 reg = readl(&iomux->gpr[2]);
 	reg |= IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT;
 	writel(reg, &iomux->gpr[2]);
@@ -628,6 +639,27 @@ struct display_info_t const displays[] = {{
 		.sync           = FB_SYNC_EXT,
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {	/* LVDS displays connected to di0 */
+	.bus	= -1,
+	.addr	= 0,
+	.di	= 0,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
+	.detect	= detect_default,
+	.enable	= enable_lvds,
+	.mode	= {
+		.name           = "lvds-TX09D200VM0BAA",
+		.refresh        = 60,
+		.xres           = 240,
+		.yres           = 320,
+		.pixclock       = 0, /* FixMe: 7ps => 7Mhz */
+		.hsync_len      = 16,
+		.left_margin    = 24,
+		.right_margin   = 16,
+		.vsync_len      = 6,
+		.upper_margin   = 6,
+		.lower_margin   = 6,
+		.sync           = 0,
+		.vmode          = FB_VMODE_NONINTERLACED
+} }, {
 	.bus	= -1,
 	.addr	= 0,
 	.di	= 0,

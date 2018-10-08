@@ -198,6 +198,7 @@
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	"ethaddr=00:14:2d:00:00:00\0" \
 	"variant=qp\0" \
 	"board=eval\0" \
 	"console=ttymxc0\0" \
