@@ -538,7 +538,7 @@ static void pkk_m7_display_init(void)
 {
 	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
 		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 1);
+	gpio_direction_output(MTU_DISP_SD_GP, 0);
 	gpio_direction_output(MTU_DISP_EN_GP, 1);
 }
 
@@ -546,7 +546,7 @@ static void pkk_m10_display_init(void)
 {
 	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
 		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 1);
+	gpio_direction_output(MTU_DISP_SD_GP, 0);
 	gpio_direction_output(MTU_DISP_EN_GP, 1);
 }
 
