@@ -680,7 +680,7 @@ struct display_info_t const displays[] = {{
 		.lower_margin   = 30,
 		.hsync_len      = 1,
 		.vsync_len      = 1,
-		.sync           = FB_SYNC_EXT,
+		.sync           = 0,
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {
 	.bus	= -1,
@@ -700,7 +700,7 @@ struct display_info_t const displays[] = {{
 		.lower_margin   = 30,
 		.hsync_len      = 1,
 		.vsync_len      = 1,
-		.sync           = FB_SYNC_EXT,
+		.sync           = 0,
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {
 	.bus	= -1,
@@ -720,7 +720,7 @@ struct display_info_t const displays[] = {{
 		.lower_margin   = 15,
 		.hsync_len      = 20,
 		.vsync_len      = 8,
-		.sync           = FB_SYNC_EXT,
+		.sync           = 0,
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {
 	.bus	= -1,
