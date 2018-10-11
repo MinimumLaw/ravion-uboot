@@ -39,6 +39,10 @@
 #define CONFIG_VERSION_VARIABLE		/* ver environment variable */
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
+/* Serail ATA */
+#define CONFIG_SYS_SATA_MAX_DEVICE	1
+#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
+
 /* I2C Configs */
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC
