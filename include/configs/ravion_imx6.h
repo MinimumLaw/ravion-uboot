@@ -39,10 +39,19 @@
 #define CONFIG_VERSION_VARIABLE		/* ver environment variable */
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
-/* Serail ATA */
+/* PCI */
+#ifdef CONFIG_CMD_PCI
+#define CONFIG_PCI_SCAN_SHOW
+#define CONFIG_PCIE_IMX
+/* #define CONFIG_PCIE_IMX_PERST_GPIO	IMX_GPIO_NR(7, 12) */
+#endif
+
+/* SATA */
+#ifdef CONFIG_CMD_SATA
 #define CONFIG_SYS_SATA_MAX_DEVICE	1
-#define CONFIG_LBA48
 #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
+#define CONFIG_LBA48
+#endif
 
 /* I2C Configs */
 #define CONFIG_SYS_I2C
