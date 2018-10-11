@@ -8,6 +8,7 @@
 #include <common.h>
 #include <g_dnl.h>
 #include <linux/libfdt.h>
+#include <environment.h>
 
 #include "rav-cfg-block.h"
 #include <asm/setup.h>
