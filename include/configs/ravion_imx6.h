@@ -41,6 +41,7 @@
 
 /* Serail ATA */
 #define CONFIG_SYS_SATA_MAX_DEVICE	1
+#define CONFIG_LBA48
 #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 
 /* I2C Configs */

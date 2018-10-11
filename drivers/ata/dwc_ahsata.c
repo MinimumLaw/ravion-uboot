@@ -783,7 +783,7 @@ static int dwc_ahsata_scan_common(struct ahci_uc_priv *uc_priv,
 
 	/* Check if support LBA48 */
 	if (ata_id_has_lba48(id)) {
-		pdev->lba = 1;
+		pdev->lba48 = 1;
 		debug("Device support LBA48\n\r");
 	}
 
@@ -814,7 +814,7 @@ static ulong sata_read_common(struct ahci_uc_priv *uc_priv,
 {
 	u32 rc;
 
-	if (desc->lba)
+	if (desc->lba48)
 		rc = ata_low_level_rw_lba48(uc_priv, blknr, blkcnt, buffer,
 					    READ_CMD);
 	else
@@ -831,7 +831,7 @@ static ulong sata_write_common(struct ahci_uc_priv *uc_priv,
 	u32 rc;
 	u32 flags = uc_priv->flags;
 
-	if (desc->lba) {
+	if (desc->lba48) {
 		rc = ata_low_level_rw_lba48(uc_priv, blknr, blkcnt, buffer,
 					    WRITE_CMD);
 		if ((flags & SATA_FLAG_WCACHE) && (flags & SATA_FLAG_FLUSH_EXT))
