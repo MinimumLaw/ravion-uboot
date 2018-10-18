@@ -102,7 +102,6 @@
 /* Miscellaneous commands */
 
 /* Framebuffer and LCD */
-#define CONFIG_VIDEO_IPUV3
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 #define CONFIG_VIDEO_BMP_RLE8

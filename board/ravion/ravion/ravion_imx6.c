@@ -560,6 +560,7 @@ static iomux_v3_cfg_t const rgb_pads[] = {
 
 static void do_enable_hdmi(struct display_info_t const *dev)
 {
+	imx_setup_hdmi();
 	imx_enable_hdmi_phy();
 }
 
@@ -588,8 +589,36 @@ static void enable_rgb(struct display_info_t const *dev)
 
 static void enable_lvds(struct display_info_t const *dev)
 {
-	struct iomuxc *iomux = (struct iomuxc *)
-				IOMUXC_BASE_ADDR;
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+
+	/*
+	 * Select LDB clock from PLL5, PLL2_PFD0, PLL2_PFD2, MMDC_CH1 or
+	 * PLL3_SW source (can be divided to 3.5 or 7 with ccm)
+	 *
+	 * FixMe (WTF!!! Now I can use LVDS interface???):
+	 *	PLL5:      630MHz => LDB_CLK 630/7 = 90MHz (disabled)
+	 *	PLL2_PFD0: 352MHz => LDB_CLK 352/7 = 50.286MHz
+	 *	PLL2_PFD2: 396MHz => LDB_CLK 396/7 = 56.571MHz
+	 *	MMDC_CH1:  528MHz => LDB_CLK 528/7 = 75.428MHz
+	 *	PLL3_SW:   480MHz => LDB_CLK 480/7 = 68.571MHz
+	 */
+	select_ldb_di_clock_source(MXC_MMDC_CH1_CLK);
+
+	/* Configure IOMUXC GPR2 and GRP3 registers */
+	setbits_le32(&iomux->gpr[2],
+	      IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
+	     |IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG
+	     |IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT
+	     |IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0
+		/* LVDS1 config */
+	     |IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW
+	     |IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG
+	     |IOMUXC_GPR2_DATA_WIDTH_CH1_24BIT
+	     |IOMUXC_GPR2_LVDS_CH1_MODE_DISABLED);
+
+	clrsetbits_le32(&iomux->gpr[3],
+	    IOMUXC_GPR3_LVDS0_MUX_CTL_MASK | IOMUXC_GPR3_HDMI_MUX_CTL_MASK,
+	    IOMUXC_GPR3_MUX_SRC_IPU2_DI0 << IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
 
 #if defined CONFIG_RAVION_DISPLAY_KOE
 	char *board = env_get("board");
@@ -599,9 +628,6 @@ static void enable_lvds(struct display_info_t const *dev)
 		turn_on_koe_display();
 #endif /* defined CONFIG_RAVION_DISPLAY_KOE */
 
-	u32 reg = readl(&iomux->gpr[2]);
-	reg |= IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT;
-	writel(reg, &iomux->gpr[2]);
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
 }
@@ -617,7 +643,8 @@ static int detect_default(struct display_info_t const *dev)
 	return 0;
 }
 
-struct display_info_t const displays[] = {{
+struct display_info_t const displays[] =
+{{ /* HDMI display connected to DI0 */
 	.bus	= -1,
 	.addr	= 0,
 	.di	= 0,
@@ -831,58 +858,11 @@ size_t display_count = ARRAY_SIZE(displays);
 
 static void setup_display(void)
 {
-	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
-	int reg;
-
 	enable_ipu_clock();
-	imx_setup_hdmi();
-	/* Turn on LDB0,IPU,IPU DI0 clocks */
-	reg = __raw_readl(&mxc_ccm->CCGR3);
-	reg |= MXC_CCM_CCGR3_LDB_DI0_MASK;
-	writel(reg, &mxc_ccm->CCGR3);
-
-	/* set LDB0, LDB1 clk select to 011/011 */
-	reg = readl(&mxc_ccm->cs2cdr);
-	reg &= ~(MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_MASK
-		 |MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK);
-	reg |= (3<<MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_OFFSET)
-	      |(3<<MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET);
-	writel(reg, &mxc_ccm->cs2cdr);
-
-	reg = readl(&mxc_ccm->cscmr2);
-	reg |= MXC_CCM_CSCMR2_LDB_DI0_IPU_DIV;
-	writel(reg, &mxc_ccm->cscmr2);
-
-	reg = readl(&mxc_ccm->chsccdr);
-	reg |= (CHSCCDR_CLK_SEL_LDB_DI0
-		<<MXC_CCM_CHSCCDR_IPU1_DI0_CLK_SEL_OFFSET);
-	writel(reg, &mxc_ccm->chsccdr);
-
-	reg = IOMUXC_GPR2_BGREF_RRMODE_EXTERNAL_RES
-	     |IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_HIGH
-	     |IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
-	     |IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG
-	     |IOMUXC_GPR2_DATA_WIDTH_CH1_18BIT
-	     |IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG
-	     |IOMUXC_GPR2_DATA_WIDTH_CH0_18BIT
-	     |IOMUXC_GPR2_LVDS_CH1_MODE_DISABLED
-	     |IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0;
-	writel(reg, &iomux->gpr[2]);
-
-	reg = readl(&iomux->gpr[3]);
-	reg = (reg & ~(IOMUXC_GPR3_LVDS0_MUX_CTL_MASK
-			|IOMUXC_GPR3_HDMI_MUX_CTL_MASK))
-	    | (IOMUXC_GPR3_MUX_SRC_IPU1_DI0
-	       <<IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
-	writel(reg, &iomux->gpr[3]);
 
 	/* backlight unconditionally on for now */
 	imx_iomux_v3_setup_multiple_pads(backlight_pads,
 					 ARRAY_SIZE(backlight_pads));
-	/* use 0 for EDT 7", use 1 for LG fullHD panel */
-	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
-	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 }
 #endif /* defined(CONFIG_VIDEO_IPUV3) */
 
