@@ -589,20 +589,39 @@ static void enable_rgb(struct display_info_t const *dev)
 
 static void enable_lvds(struct display_info_t const *dev)
 {
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	unsigned char MMDC_DIV = 8;
 
 	/*
 	 * Select LDB clock from PLL5, PLL2_PFD0, PLL2_PFD2, MMDC_CH1 or
 	 * PLL3_SW source (can be divided to 3.5 or 7 with ccm)
 	 *
-	 * FixMe (WTF!!! Now I can use LVDS interface???):
+	 * Default clock rates is:
 	 *	PLL5:      630MHz => LDB_CLK 630/7 = 90MHz (disabled)
 	 *	PLL2_PFD0: 352MHz => LDB_CLK 352/7 = 50.286MHz
 	 *	PLL2_PFD2: 396MHz => LDB_CLK 396/7 = 56.571MHz
 	 *	MMDC_CH1:  528MHz => LDB_CLK 528/7 = 75.428MHz
 	 *	PLL3_SW:   480MHz => LDB_CLK 480/7 = 68.571MHz
+	 *
+	 * But only MMDC_CH1 clock may be changed on-the-fly, by set
+	 * divider form 1 to 8, and clock one from:
+	 * 		75.428, 37.714, 25.142, 18.857,
+	 * 		15.086, 12.571, 10.775, 9.442 MHz.
+	 * Any of them may be used as IPU pixelclock.
 	 */
+
+	/* disble MMDC_CH1 clock */
+	clrbits_le32(&mxc_ccm->ccdr, MXC_CCM_CCDR_MMDC_CH1_AXI_ROOT_CG);
+	/* configure MMDC_CH1 clock divider */
+	clrsetbits_le32(&mxc_ccm->cbcdr,
+	    MXC_CCM_CBCDR_MMDC_CH1_PODF_MASK,
+	    (MMDC_DIV - 1) << MXC_CCM_CBCDR_MMDC_CH1_PODF_OFFSET);
+	/* allow handshake with mmdc_ch1 module */
+	clrbits_le32(&mxc_ccm->ccdr, MXC_CCM_CCDR_MMDC_CH1_MASK);
 	select_ldb_di_clock_source(MXC_MMDC_CH1_CLK);
+	/* reenable MMDC_CH1 clock */
+	setbits_le32(&mxc_ccm->ccdr, MXC_CCM_CCDR_MMDC_CH1_AXI_ROOT_CG);
 
 	/* Configure IOMUXC GPR2 and GRP3 registers */
 	setbits_le32(&iomux->gpr[2],
