@@ -619,25 +619,30 @@ static void enable_lvds(struct display_info_t const *dev)
 	    (MMDC_DIV - 1) << MXC_CCM_CBCDR_MMDC_CH1_PODF_OFFSET);
 	/* allow handshake with mmdc_ch1 module */
 	clrbits_le32(&mxc_ccm->ccdr, MXC_CCM_CCDR_MMDC_CH1_MASK);
-	select_ldb_di_clock_source(MXC_MMDC_CH1_CLK);
 	/* reenable MMDC_CH1 clock */
 	setbits_le32(&mxc_ccm->ccdr, MXC_CCM_CCDR_MMDC_CH1_AXI_ROOT_CG);
 
+	/* then select MMDC_CH1 as LDB clock source */
+	select_ldb_di_clock_source(MXC_MMDC_CH1_CLK);
+
 	/* Configure IOMUXC GPR2 and GRP3 registers */
-	setbits_le32(&iomux->gpr[2],
-	      IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
-	     |IOMUXC_GPR2_BIT_MAPPING_CH0_SPWG
-	     |IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT
-	     |IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI0
+	clrsetbits_le32(&iomux->gpr[2],
+		IOMUXC_GPR2_SPLIT_MODE_EN_MASK,
+		 IOMUXC_GPR2_BGREF_RRMODE_EXTERNAL_RES
+		|IOMUXC_GPR2_DI0_VS_POLARITY_ACTIVE_LOW
+		|IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW
+		/* LVDS0 config */
+		|IOMUXC_GPR2_BIT_MAPPING_CH0_JEIDA
+		|IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT
+		|IOMUXC_GPR2_LVDS_CH0_MODE_ENABLED_DI1
 		/* LVDS1 config */
-	     |IOMUXC_GPR2_DI1_VS_POLARITY_ACTIVE_LOW
-	     |IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG
-	     |IOMUXC_GPR2_DATA_WIDTH_CH1_24BIT
-	     |IOMUXC_GPR2_LVDS_CH1_MODE_DISABLED);
+		|IOMUXC_GPR2_BIT_MAPPING_CH1_SPWG
+		|IOMUXC_GPR2_DATA_WIDTH_CH1_24BIT
+		|IOMUXC_GPR2_LVDS_CH1_MODE_DISABLED);
 
 	clrsetbits_le32(&iomux->gpr[3],
 	    IOMUXC_GPR3_LVDS0_MUX_CTL_MASK | IOMUXC_GPR3_HDMI_MUX_CTL_MASK,
-	    IOMUXC_GPR3_MUX_SRC_IPU2_DI0 << IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
+	    IOMUXC_GPR3_MUX_SRC_IPU1_DI0 << IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
 
 #if defined CONFIG_RAVION_DISPLAY_KOE
 	char *board = env_get("board");
@@ -703,7 +708,7 @@ struct display_info_t const displays[] =
 		.vsync_len      = 6,
 		.upper_margin   = 6,
 		.lower_margin   = 6,
-		.sync           = 0,
+		.sync           = FB_SYNC_EXT, /* LDB_DI0_IPU */
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {
 	.bus	= -1,
