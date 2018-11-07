@@ -591,6 +591,7 @@ static void enable_lvds(struct display_info_t const *dev)
 {
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	uint32_t pclk_khz = PICOS2KHZ(dev->mode.pixclock);
 	unsigned char MMDC_DIV = 8;
 
 	/*
@@ -610,6 +611,19 @@ static void enable_lvds(struct display_info_t const *dev)
 	 * 		15.086, 12.571, 10.775, 9.442 MHz.
 	 * Any of them may be used as IPU pixelclock.
 	 */
+
+	if (pclk_khz >= 75428) MMDC_DIV = 1; else
+	if (pclk_khz >= 37714) MMDC_DIV = 2; else
+	if (pclk_khz >= 25142) MMDC_DIV = 3; else
+	if (pclk_khz >= 18875) MMDC_DIV = 4; else
+	if (pclk_khz >= 15086) MMDC_DIV = 5; else
+	if (pclk_khz >= 12571) MMDC_DIV = 6; else
+	MMDC_DIV = 7; /* (pclk_khz >=  9442) */
+
+	debug("Request PCLK=%dKHz, div=%d, result PCLK=%dKHz\n",
+		pclk_khz, MMDC_DIV, 528000/7/MMDC_DIV);
+
+	ipu_set_ldb_clock(528000000L / MMDC_DIV);
 
 	/* disble MMDC_CH1 clock */
 	clrbits_le32(&mxc_ccm->ccdr, MXC_CCM_CCDR_MMDC_CH1_AXI_ROOT_CG);
@@ -667,6 +681,16 @@ static int detect_default(struct display_info_t const *dev)
 	return 0;
 }
 
+/*
+ * Supported PCLK for LVDS displays only from list:
+ * 75428, 37714, 25142, 18857, 15086, 12571, 10775, 9442KHz.
+ * This is fundamental limit for I.MX LDB IP Block clocking
+ * see comment in enable_lvds function bellow.
+ * Allow IPU (and parallel display output) clocking from
+ * any sources, but make display sync signal (PCLK) equivalent
+ * to LDB_CLK dividev by 7
+ * FixMe: This time I don't know how remove this limit
+ */
 struct display_info_t const displays[] =
 { {	/* LVDS displays connected to di0 */
 	.bus	= -1,
@@ -680,20 +704,20 @@ struct display_info_t const displays[] =
 		.refresh        = 60,
 		.xres           = 240,
 		.yres           = 320,
-		.pixclock       = KHZ2PICOS(6500),
+		.pixclock       = KHZ2PICOS(9442), /* 6500 */
 		.hsync_len      = 16,
 		.left_margin    = 48,
 		.right_margin   = 16,
 		.vsync_len      = 6,
 		.upper_margin   = 6,
 		.lower_margin   = 6,
-		.sync           = FB_SYNC_EXT, /* LDB_DI0_IPU */
+		.sync           = 0,
 		.vmode          = FB_VMODE_NONINTERLACED
 } }, {
 	.bus	= -1,
 	.addr	= 0,
 	.di	= 0,
-	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= detect_default,
 	.enable	= enable_lvds,
 	.mode	= {
@@ -701,7 +725,7 @@ struct display_info_t const displays[] =
 		.refresh        = 60,
 		.xres           = 800,
 		.yres           = 480,
-		.pixclock       = KHZ2PICOS(30770),
+		.pixclock       = KHZ2PICOS(25142), /* 30770 */
 		.left_margin    = 30,
 		.right_margin   = 87,
 		.upper_margin   = 13,
@@ -714,7 +738,7 @@ struct display_info_t const displays[] =
 	.bus	= -1,
 	.addr	= 0,
 	.di	= 0,
-	.pixfmt	= IPU_PIX_FMT_RGB666,
+	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= detect_default,
 	.enable	= enable_lvds,
 	.mode	= {
@@ -722,7 +746,7 @@ struct display_info_t const displays[] =
 		.refresh        = 60,
 		.xres           = 1024,
 		.yres           = 768,
-		.pixclock       = KHZ2PICOS(65000),
+		.pixclock       = KHZ2PICOS(37714), /* 65000 */
 		.left_margin    = 150,
 		.right_margin   = 150,
 		.upper_margin   = 15,
