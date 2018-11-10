@@ -2,6 +2,8 @@
  * Copyright 2007, 2010-2011 Freescale Semiconductor, Inc
  * Andy Fleming
  *
+ * Copyright 2017 NXP
+ *
  * Based vaguely on the pxa mmc code:
  * (C) Copyright 2003
  * Kyle Harris, Nexus Technologies, Inc. kharris@nexus-tech.net
@@ -22,6 +24,8 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <asm-generic/gpio.h>
+#include <power/regulator.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -104,6 +108,7 @@ struct fsl_esdhc_priv {
 	struct udevice *dev;
 	int non_removable;
 	int wp_enable;
+	int vs18_enable;
 #ifdef CONFIG_DM_GPIO
 	struct gpio_desc cd_gpio;
 	struct gpio_desc wp_gpio;
@@ -257,6 +262,13 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 				printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
 				return -ETIMEDOUT;
 			}
+		} else {
+#ifdef CONFIG_DM_GPIO
+			if (dm_gpio_is_valid(&priv->wp_gpio) && dm_gpio_get_value(&priv->wp_gpio)) { 
+				printf("\nThe SD card is locked. Can not write to a locked card.\n\n");
+				return -ETIMEDOUT;
+			}
+#endif
 		}
 
 		esdhc_clrsetbits32(&regs->wml, WML_WR_WML_MASK,
@@ -640,7 +652,10 @@ static int esdhc_init(struct mmc *mmc)
 	esdhc_write32(&regs->clktunectrlstatus, 0x0);
 
 	/* Put VEND_SPEC to default value */
-	esdhc_write32(&regs->vendorspec, VENDORSPEC_INIT);
+	if (priv->vs18_enable)
+		esdhc_write32(&regs->vendorspec, (VENDORSPEC_INIT | ESDHC_VENDORSPEC_VSELECT));
+	else
+		esdhc_write32(&regs->vendorspec, VENDORSPEC_INIT);
 
 	/* Disable DLL_CTRL delay line */
 	esdhc_write32(&regs->dllctrl, 0x0);
@@ -668,10 +683,6 @@ static int esdhc_init(struct mmc *mmc)
 
 	/* Set timout to the maximum value */
 	esdhc_clrsetbits32(&regs->sysctl, SYSCTL_TIMEOUT_MASK, 14 << 16);
-
-#ifdef CONFIG_SYS_FSL_ESDHC_FORCE_VSELECT
-	esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
-#endif
 
 	return 0;
 }
@@ -733,6 +744,7 @@ static int fsl_esdhc_cfg_to_priv(struct fsl_esdhc_cfg *cfg,
 	priv->bus_width = cfg->max_bus_width;
 	priv->sdhc_clk = cfg->sdhc_clk;
 	priv->wp_enable  = cfg->wp_enable;
+	priv->vs18_enable  = cfg->vs18_enable;
 
 	return 0;
 };
@@ -758,6 +770,8 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv)
 	esdhc_setbits32(&regs->vendorspec, VENDORSPEC_PEREN |
 			VENDORSPEC_HCKEN | VENDORSPEC_IPGEN | VENDORSPEC_CKEN);
 #endif
+	if (priv->vs18_enable)
+		esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
 
 	writel(SDHCI_IRQ_EN_BITS, &regs->irqstaten);
 	memset(&priv->cfg, 0, sizeof(priv->cfg));
@@ -851,6 +865,14 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		free(priv);
 		return ret;
 	}
+
+#ifdef CONFIG_MX6
+	if (mx6_esdhc_fused(cfg->esdhc_base)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", cfg->esdhc_base);
+		free(priv);
+		return -ENODEV;
+	}
+#endif
 
 	ret = fsl_esdhc_init(priv);
 	if (ret) {
@@ -949,6 +971,10 @@ void fdt_fixup_esdhc(void *blob, bd_t *bd)
 
 #ifdef CONFIG_DM_MMC
 #include <asm/arch/clock.h>
+__weak void init_clk_usdhc(u32 index)
+{
+}
+
 static int fsl_esdhc_probe(struct udevice *dev)
 {
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
@@ -958,10 +984,18 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	fdt_addr_t addr;
 	unsigned int val;
 	int ret;
+	struct udevice *vqmmc_dev;
 
 	addr = dev_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
+
+#ifdef CONFIG_MX6
+	if (mx6_esdhc_fused(addr)) {
+		printf("ESDHC@0x%lx is fused, disable it\n", addr);
+		return -ENODEV;
+	}
+#endif
 
 	priv->esdhc_regs = (struct fsl_esdhc *)addr;
 	priv->dev = dev;
@@ -984,14 +1018,28 @@ static int fsl_esdhc_probe(struct udevice *dev)
 #endif
 	}
 
-	priv->wp_enable = 1;
-
-#ifdef CONFIG_DM_GPIO
-	ret = gpio_request_by_name_nodev(fdt, node, "wp-gpios", 0,
-					 &priv->wp_gpio, GPIOD_IS_IN);
-	if (ret)
+	if (fdt_get_property(fdt, node, "fsl,wp-controller", NULL)) {
+		priv->wp_enable = 1;
+	} else {
 		priv->wp_enable = 0;
+#ifdef CONFIG_DM_GPIO
+		gpio_request_by_name_nodev(fdt, node, "wp-gpios", 0,
+					 &priv->wp_gpio, GPIOD_IS_IN);
 #endif
+	}
+
+	priv->vs18_enable = 0;
+
+#ifdef CONFIG_DM_REGULATOR
+	ret = device_get_supply_regulator(dev, "vqmmc-supply", &vqmmc_dev);
+	if (ret) {
+		dev_dbg(dev, "no vqmmc supply\n");
+	} else {
+		if (regulator_get_value(vqmmc_dev) == 1800000)
+			priv->vs18_enable = 1;
+	}
+#endif
+
 	/*
 	 * TODO:
 	 * Because lack of clk driver, if SDHC clk is not enabled,
@@ -1011,6 +1059,9 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	 * correctly get the seq as 2 and 3, then let mxc_get_clock
 	 * work as expected.
 	 */
+
+	init_clk_usdhc(dev->seq);
+
 	priv->sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK + dev->seq);
 	if (priv->sdhc_clk <= 0) {
 		dev_err(dev, "Unable to get clk for %s\n", dev->name);
@@ -1035,6 +1086,7 @@ static const struct udevice_id fsl_esdhc_ids[] = {
 	{ .compatible = "fsl,imx6sl-usdhc", },
 	{ .compatible = "fsl,imx6q-usdhc", },
 	{ .compatible = "fsl,imx7d-usdhc", },
+	{ .compatible = "fsl,imx7ulp-usdhc", },
 	{ .compatible = "fsl,esdhc", },
 	{ /* sentinel */ }
 };

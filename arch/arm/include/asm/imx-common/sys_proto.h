@@ -2,12 +2,15 @@
  * (C) Copyright 2009
  * Stefano Babic, DENX Software Engineering, sbabic@denx.de.
  *
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _SYS_PROTO_H_
 #define _SYS_PROTO_H_
 
+#include <asm/io.h>
 #include <asm/imx-common/regs-common.h>
 #include <common.h>
 #include "../arch-imx/cpu.h"
@@ -38,6 +41,60 @@
 #define is_mx6ull() (is_cpu_type(MXC_CPU_MX6ULL))
 #define is_mx6sll() (is_cpu_type(MXC_CPU_MX6SLL))
 
+#define is_mx7ulp() (is_cpu_type(MXC_CPU_MX7ULP))
+
+#ifdef CONFIG_MX6
+#define IMX6_SRC_GPR10_BMODE		BIT(28)
+
+#define IMX6_BMODE_MASK			GENMASK(7, 0)
+#define	IMX6_BMODE_SHIFT		4
+#define IMX6_BMODE_EMI_MASK		BIT(3)
+#define IMX6_BMODE_EMI_SHIFT		3
+#define IMX6_BMODE_SERIAL_ROM_MASK	GENMASK(26, 24)
+#define IMX6_BMODE_SERIAL_ROM_SHIFT	24
+
+enum imx6_bmode_serial_rom {
+	IMX6_BMODE_ECSPI1,
+	IMX6_BMODE_ECSPI2,
+	IMX6_BMODE_ECSPI3,
+	IMX6_BMODE_ECSPI4,
+	IMX6_BMODE_ECSPI5,
+	IMX6_BMODE_I2C1,
+	IMX6_BMODE_I2C2,
+	IMX6_BMODE_I2C3,
+};
+
+enum imx6_bmode_emi {
+	IMX6_BMODE_ONENAND,
+	IMX6_BMODE_NOR,
+};
+
+enum imx6_bmode {
+	IMX6_BMODE_EMI,
+#if defined(CONFIG_MX6UL) || defined(CONFIG_MX6ULL)
+	IMX6_BMODE_QSPI,
+	IMX6_BMODE_RESERVED,
+#else
+	IMX6_BMODE_RESERVED,
+	IMX6_BMODE_SATA,
+#endif
+	IMX6_BMODE_SERIAL_ROM,
+	IMX6_BMODE_SD,
+	IMX6_BMODE_ESD,
+	IMX6_BMODE_MMC,
+	IMX6_BMODE_EMMC,
+	IMX6_BMODE_NAND_MIN,
+	IMX6_BMODE_NAND_MAX = 0xf,
+};
+
+static inline u8 imx6_is_bmode_from_gpr9(void)
+{
+	return readl(&src_base->gpr10) & IMX6_SRC_GPR10_BMODE;
+}
+
+u32 imx6_src_get_boot_mode(void);
+#endif /* CONFIG_MX6 */
+
 u32 get_nr_cpus(void);
 u32 get_cpu_rev(void);
 u32 get_cpu_speed_grade_hz(void);
@@ -64,4 +121,15 @@ void lcdif_power_down(void);
 int mxs_reset_block(struct mxs_register_32 *reg);
 int mxs_wait_mask_set(struct mxs_register_32 *reg, u32 mask, u32 timeout);
 int mxs_wait_mask_clr(struct mxs_register_32 *reg, u32 mask, u32 timeout);
+
+int mmc_get_env_dev(void);
+void board_late_mmc_env_init(void);
+
+void vadc_power_up(void);
+void vadc_power_down(void);
+
+void pcie_power_up(void);
+void pcie_power_off(void);
+int arch_auxiliary_core_up(u32 core_id, u32 boot_private_data);
+int arch_auxiliary_core_check_up(u32 core_id);
 #endif

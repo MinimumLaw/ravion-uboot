@@ -22,6 +22,10 @@
 #include <dm.h>
 #include <imx_thermal.h>
 #include <mmc.h>
+#if defined(CONFIG_FSL_FASTBOOT) && defined(CONFIG_ANDROID_RECOVERY)
+#include <recovery.h>
+#endif
+
 
 enum ldo_reg {
 	LDO_ARM,
@@ -114,6 +118,12 @@ u32 get_cpu_rev(void)
 #define OCOTP_CFG3_SPEED_528MHZ 1
 #define OCOTP_CFG3_SPEED_696MHZ 2
 
+/*
+ * For i.MX6ULL
+ */
+#define OCOTP_CFG3_SPEED_792MHZ 2
+#define OCOTP_CFG3_SPEED_900MHZ 3
+
 u32 get_cpu_speed_grade_hz(void)
 {
 	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
@@ -126,11 +136,22 @@ u32 get_cpu_speed_grade_hz(void)
 	val >>= OCOTP_CFG3_SPEED_SHIFT;
 	val &= 0x3;
 
-	if (is_mx6ul() || is_mx6ull()) {
+	if (is_mx6ul()) {
 		if (val == OCOTP_CFG3_SPEED_528MHZ)
 			return 528000000;
 		else if (val == OCOTP_CFG3_SPEED_696MHZ)
-			return 69600000;
+			return 696000000;
+		else
+			return 0;
+	}
+
+	if (is_mx6ull()) {
+		if (val == OCOTP_CFG3_SPEED_528MHZ)
+			return 528000000;
+		else if (val == OCOTP_CFG3_SPEED_792MHZ)
+			return 792000000;
+		else if (val == OCOTP_CFG3_SPEED_900MHZ)
+			return 900000000;
 		else
 			return 0;
 	}
@@ -234,6 +255,10 @@ static int set_ldo_voltage(enum ldo_reg ldo, u32 mv)
 	u32 val, step, old, reg = readl(&anatop->reg_core);
 	u8 shift;
 
+	/* No LDO_SOC/PU/ARM */
+	if (is_mx6sll())
+		return 0;
+
 	if (mv < 725)
 		val = 0x00;	/* Power gated off */
 	else if (mv > 1450)
@@ -293,7 +318,7 @@ static void clear_mmdc_ch_mask(void)
 	reg = readl(&mxc_ccm->ccdr);
 
 	/* Clear MMDC channel mask */
-	if (is_mx6sx() || is_mx6ul() || is_mx6ull() || is_mx6sl())
+	if (is_mx6sx() || is_mx6ul() || is_mx6ull() || is_mx6sl() || is_mx6sll())
 		reg &= ~(MXC_CCM_CCDR_MMDC_CH1_HS_MASK);
 	else
 		reg &= ~(MXC_CCM_CCDR_MMDC_CH1_HS_MASK | MXC_CCM_CCDR_MMDC_CH0_HS_MASK);
@@ -344,6 +369,7 @@ static void init_bandgap(void)
 	}
 }
 
+
 #ifdef CONFIG_MX6SL
 static void set_preclk_from_osc(void)
 {
@@ -356,8 +382,137 @@ static void set_preclk_from_osc(void)
 }
 #endif
 
+#ifdef CONFIG_MX6SX
+void vadc_power_up(void)
+{
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	u32 val;
+
+	/* csi0 */
+	val = readl(&iomux->gpr[5]);
+	val &= ~IMX6SX_GPR5_CSI1_MUX_CTRL_MASK,
+	val |= IMX6SX_GPR5_CSI1_MUX_CTRL_CVD;
+	writel(val, &iomux->gpr[5]);
+
+	/* Power on vadc analog
+	 * Power down vadc ext power */
+	val = readl(GPC_BASE_ADDR + 0);
+	val &= ~0x60000;
+	writel(val, GPC_BASE_ADDR + 0);
+
+	/* software reset afe  */
+	val = readl(&iomux->gpr[1]);
+	writel(val | 0x80000, &iomux->gpr[1]);
+
+	udelay(10*1000);
+
+	/* Release reset bit  */
+	writel(val & ~0x80000, &iomux->gpr[1]);
+
+	/* Power on vadc ext power */
+	val = readl(GPC_BASE_ADDR + 0);
+	val |= 0x40000;
+	writel(val, GPC_BASE_ADDR + 0);
+}
+
+void vadc_power_down(void)
+{
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	u32 val;
+
+	/* Power down vadc ext power
+	 * Power off vadc analog */
+	val = readl(GPC_BASE_ADDR + 0);
+	val &= ~0x40000;
+	val |= 0x20000;
+	writel(val, GPC_BASE_ADDR + 0);
+
+	/* clean csi0 connect to vadc  */
+	val = readl(&iomux->gpr[5]);
+	val &= ~IMX6SX_GPR5_CSI1_MUX_CTRL_MASK,
+	writel(val, &iomux->gpr[5]);
+}
+
+void pcie_power_up(void)
+{
+	set_ldo_voltage(LDO_PU, 1100);	/* Set VDDPU to 1.1V */
+}
+
+void pcie_power_off(void)
+{
+	set_ldo_voltage(LDO_PU, 0);	/* Set VDDPU to 1.1V */
+}
+#endif
+
+static void set_uart_from_osc(void)
+{
+	u32 reg;
+
+	/* set uart clk to OSC */
+	reg = readl(CCM_BASE_ADDR + 0x24);
+	reg |= MXC_CCM_CSCDR1_UART_CLK_SEL;
+	writel(reg, CCM_BASE_ADDR + 0x24);
+}
+
+static void imx_set_vddpu_power_down(void)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	u32 val;
+
+	/* need to power down xPU in GPC before turn off PU LDO */
+	val = readl(GPC_BASE_ADDR + 0x260);
+	writel(val | 0x1, GPC_BASE_ADDR + 0x260);
+
+	val = readl(GPC_BASE_ADDR + 0x0);
+	writel(val | 0x1, GPC_BASE_ADDR + 0x0);
+	while (readl(GPC_BASE_ADDR + 0x0) & 0x1)
+		;
+
+	/* disable VDDPU */
+	val = 0x3e00;
+	writel(val, &anatop->reg_core_clr);
+}
+
+static void imx_set_pcie_phy_power_down(void)
+{
+	u32 val;
+
+	if (!is_cpu_type(MXC_CPU_MX6SX)) {
+		val = readl(IOMUXC_BASE_ADDR + 0x4);
+		val |= 0x1 << 18;
+		writel(val, IOMUXC_BASE_ADDR + 0x4);
+	} else {
+		val = readl(IOMUXC_GPR_BASE_ADDR + 0x30);
+		val |= 0x1 << 30;
+		writel(val, IOMUXC_GPR_BASE_ADDR + 0x30);
+	}
+}
+
 int arch_cpu_init(void)
 {
+	if (!is_mx6sl() && !is_mx6sx()
+		&& !is_mx6ul() && !is_mx6ull() 
+		&& !is_mx6sll()) {
+		/*
+		 * imx6sl doesn't have pcie at all.
+		 * this bit is not used by imx6sx anymore
+		 */
+		u32 val;
+
+		/*
+		 * There are about 0.02% percentage, random pcie link down
+		 * when warm-reset is used.
+		 * clear the ref_ssp_en bit16 of gpr1 to workaround it.
+		 * then warm-reset imx6q/dl/solo again.
+		 */
+		val = readl(IOMUXC_BASE_ADDR + 0x4);
+		if (val & (0x1 << 16)) {
+			val &= ~(0x1 << 16);
+			writel(val, IOMUXC_BASE_ADDR + 0x4);
+			reset_cpu(0);
+		}
+	}
+
 	init_aips();
 
 	/* Need to clear MMDC_CHx_MASK to make warm reset work. */
@@ -425,7 +580,18 @@ int arch_cpu_init(void)
 	set_preclk_from_osc();
 #endif
 
+	if (is_mx6sx())
+		set_uart_from_osc();
+
 	imx_set_wdog_powerdown(false); /* Disable PDE bit of WMCR register */
+
+	if (!is_mx6sl() && !is_mx6ul() &&
+		!is_mx6ull() && !is_mx6sll())
+		imx_set_pcie_phy_power_down();
+
+	if (!is_mx6dqp() && !is_mx6ul() &&
+		!is_mx6ull() && !is_mx6sll())
+		imx_set_vddpu_power_down();
 
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
@@ -433,6 +599,9 @@ int arch_cpu_init(void)
 #endif
 
 	init_src();
+
+	if (is_mx6dqp())
+		writel(0x80000201, 0xbb0608);
 
 	return 0;
 }
@@ -500,10 +669,27 @@ uint mmc_get_env_part(struct mmc *mmc)
 
 int board_postclk_init(void)
 {
+	/* NO LDO SOC on i.MX6SLL */
+	if (is_mx6sll())
+		return 0;
+
 	set_ldo_voltage(LDO_SOC, 1175);	/* Set VDDSOC to 1.175V */
 
 	return 0;
 }
+
+#ifdef CONFIG_SERIAL_TAG
+void get_board_serial(struct tag_serialnr *serialnr)
+{
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse =
+		(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	serialnr->low = fuse->uid_low;
+	serialnr->high = fuse->uid_high;
+}
+#endif
 
 #if defined(CONFIG_FEC_MXC)
 void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
@@ -523,7 +709,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 		value = readl(&fuse->mac_addr1);
 		mac[4] = value >> 24 ;
 		mac[5] = value >> 16 ;
-		
+
 	} else {
 		u32 value = readl(&fuse->mac_addr1);
 		mac[0] = (value >> 8);
@@ -535,7 +721,6 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 		mac[4] = value >> 8 ;
 		mac[5] = value ;
 	}
-
 }
 #endif
 
@@ -548,7 +733,7 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 const struct boot_mode soc_boot_modes[] = {
 	{"normal",	MAKE_CFGVAL(0x00, 0x00, 0x00, 0x00)},
 	/* reserved value should start rom usb */
-	{"usb",		MAKE_CFGVAL(0x10, 0x00, 0x00, 0x00)},
+	{"usb",		MAKE_CFGVAL(0x01, 0x00, 0x00, 0x00)},
 	{"sata",	MAKE_CFGVAL(0x20, 0x00, 0x00, 0x00)},
 	{"ecspi1:0",	MAKE_CFGVAL(0x30, 0x00, 0x00, 0x08)},
 	{"ecspi1:1",	MAKE_CFGVAL(0x30, 0x00, 0x00, 0x18)},
@@ -561,6 +746,71 @@ const struct boot_mode soc_boot_modes[] = {
 	{"esdhc4",	MAKE_CFGVAL(0x40, 0x38, 0x00, 0x00)},
 	{NULL,		0},
 };
+
+enum boot_device get_boot_device(void)
+{
+	enum boot_device boot_dev = UNKNOWN_BOOT;
+	uint soc_sbmr = readl(SRC_BASE_ADDR + 0x4);
+	uint bt_mem_ctl = (soc_sbmr & 0x000000FF) >> 4 ;
+	uint bt_mem_type = (soc_sbmr & 0x00000008) >> 3;
+	uint bt_dev_port = (soc_sbmr & 0x00001800) >> 11;
+
+	switch (bt_mem_ctl) {
+	case 0x0:
+		if (bt_mem_type)
+			boot_dev = ONE_NAND_BOOT;
+		else
+			boot_dev = WEIM_NOR_BOOT;
+		break;
+	case 0x2:
+			boot_dev = SATA_BOOT;
+		break;
+	case 0x3:
+		if (bt_mem_type)
+			boot_dev = I2C_BOOT;
+		else
+			boot_dev = SPI_NOR_BOOT;
+		break;
+	case 0x4:
+	case 0x5:
+		boot_dev = bt_dev_port + SD1_BOOT;
+		break;
+	case 0x6:
+	case 0x7:
+		boot_dev = bt_dev_port + MMC1_BOOT;
+		break;
+	case 0x8 ... 0xf:
+		boot_dev = NAND_BOOT;
+		break;
+	default:
+		boot_dev = UNKNOWN_BOOT;
+		break;
+	}
+
+    return boot_dev;
+}
+
+void set_wdog_reset(struct wdog_regs *wdog)
+{
+	u32 reg = readw(&wdog->wcr);
+	/*
+	 * use WDOG_B mode to reset external pmic because it's risky for the
+	 * following watchdog reboot in case of cpu freq at lowest 400Mhz with
+	 * ldo-bypass mode. Because boot frequency maybe higher 800Mhz i.e. So
+	 * in ldo-bypass mode watchdog reset will only triger POR reset, not
+	 * WDOG reset. But below code depends on hardware design, if HW didn't
+	 * connect WDOG_B pin to external pmic such as i.mx6slevk, we can skip
+	 * these code since it assumed boot from 400Mhz always.
+	 */
+	reg = readw(&wdog->wcr);
+	reg |= 1 << 3;
+	/*
+	 * WDZST bit is write-once only bit. Align this bit in kernel,
+	 * otherwise kernel code will have no chance to set this bit.
+	 */
+	reg |= 1 << 0;
+	writew(reg, &wdog->wcr);
+}
 
 void reset_misc(void)
 {
@@ -577,7 +827,11 @@ void s_init(void)
 	u32 mask528;
 	u32 reg, periph1, periph2;
 
-	if (is_mx6sx() || is_mx6ul() || is_mx6ull())
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x020cc038);
+#endif
+	if (is_mx6sx() || is_mx6ul() || is_mx6ull() || is_mx6sll())
 		return;
 
 	/* Due to hardware limitation, on MX6Q we need to gate/ungate all PFDs
@@ -702,3 +956,123 @@ int arch_auxiliary_core_check_up(u32 core_id)
 	return 1;
 }
 #endif
+
+#ifdef CONFIG_LDO_BYPASS_CHECK
+DECLARE_GLOBAL_DATA_PTR;
+static int ldo_bypass;
+
+int check_ldo_bypass(void)
+{
+	const int *ldo_mode;
+	int node;
+
+	/* get the right fdt_blob from the global working_fdt */
+	gd->fdt_blob = working_fdt;
+	/* Get the node from FDT for anatop ldo-bypass */
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1,
+		"fsl,imx6q-gpc");
+	if (node < 0) {
+		printf("No gpc device node %d, force to ldo-enable.\n", node);
+		return 0;
+	}
+	ldo_mode = fdt_getprop(gd->fdt_blob, node, "fsl,ldo-bypass", NULL);
+	/*
+	 * return 1 if "fsl,ldo-bypass = <1>", else return 0 if
+	 * "fsl,ldo-bypass = <0>" or no "fsl,ldo-bypass" property
+	 */
+	ldo_bypass = fdt32_to_cpu(*ldo_mode) == 1 ? 1 : 0;
+
+	return ldo_bypass;
+}
+
+int check_1_2G(void)
+{
+	u32 reg;
+	int result = 0;
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[0];
+	struct fuse_bank0_regs *fuse_bank0 =
+			(struct fuse_bank0_regs *)bank->fuse_regs;
+
+	reg = readl(&fuse_bank0->cfg3);
+	if (((reg >> 16) & 0x3) == 0x3) {
+		if (ldo_bypass) {
+			printf("Wrong dtb file used! i.MX6Q@1.2Ghz only "
+				"works with ldo-enable mode!\n");
+			/*
+			 * Currently, only imx6q-sabresd board might be here,
+			 * since only i.MX6Q support 1.2G and only Sabresd board
+			 * support ldo-bypass mode. So hardcode here.
+			 * You can also modify your board(i.MX6Q) dtb name if it
+			 * supports both ldo-bypass and ldo-enable mode.
+			 */
+			printf("Please use imx6q-sabresd-ldo.dtb!\n");
+			hang();
+		}
+		result = 1;
+	}
+
+	return result;
+}
+
+static int arm_orig_podf;
+void set_arm_freq_400M(bool is_400M)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	if (is_400M)
+		writel(0x1, &mxc_ccm->cacrr);
+	else
+		writel(arm_orig_podf, &mxc_ccm->cacrr);
+}
+
+void prep_anatop_bypass(void)
+{
+	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+
+	arm_orig_podf = readl(&mxc_ccm->cacrr);
+	/*
+	 * Downgrade ARM speed to 400Mhz as half of boot 800Mhz before ldo
+	 * bypassed, also downgrade internal vddarm ldo to 0.975V.
+	 * VDDARM_IN 0.975V + 125mV = 1.1V < Max(1.3V)
+	 * otherwise at 800Mhz(i.mx6dl):
+	 * VDDARM_IN 1.175V + 125mV = 1.3V = Max(1.3V)
+	 * We need provide enough gap in this case.
+	 * skip if boot from 400M.
+	 */
+	if (!arm_orig_podf)
+		set_arm_freq_400M(true);
+
+	if (!is_mx6dl() && !is_mx6sx())
+		set_ldo_voltage(LDO_ARM, 975);
+	else
+		set_ldo_voltage(LDO_ARM, 1150);
+}
+
+int set_anatop_bypass(int wdog_reset_pin)
+{
+	struct anatop_regs *anatop = (struct anatop_regs *)ANATOP_BASE_ADDR;
+	struct wdog_regs *wdog;
+	u32 reg = readl(&anatop->reg_core);
+
+	/* bypass VDDARM/VDDSOC */
+	reg = reg | (0x1F << 18) | 0x1F;
+	writel(reg, &anatop->reg_core);
+
+	if (wdog_reset_pin == 2)
+		wdog = (struct wdog_regs *) WDOG2_BASE_ADDR;
+	else if (wdog_reset_pin == 1)
+		wdog = (struct wdog_regs *) WDOG1_BASE_ADDR;
+	else
+		return arm_orig_podf;
+	set_wdog_reset(wdog);
+	return arm_orig_podf;
+}
+
+void finish_anatop_bypass(void)
+{
+	if (!arm_orig_podf)
+		set_arm_freq_400M(false);
+}
+#endif
+

@@ -4,6 +4,7 @@
  * (C) Copyright 2008 Armadeus Systems nc
  * (C) Copyright 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  * (C) Copyright 2007 Pengutronix, Juergen Beisert <j.beisert@pengutronix.de>
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -24,6 +25,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/imx-common/sys_proto.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -563,7 +565,7 @@ static int fec_init(struct eth_device *dev, bd_t *bd)
 	writel(0x00000000, &fec->eth->gaddr2);
 
 	/* Do not access reserved register for i.MX6UL */
-	if (!is_mx6ul()) {
+	if (!is_mx6ul() && !is_mx6ull()) {
 		/* clear MIB RAM */
 		for (i = mib_ptr; i <= mib_ptr + 0xfc; i += 4)
 			writel(0, i);
@@ -1023,6 +1025,7 @@ static int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
 	struct eth_device *edev;
 	struct fec_priv *fec;
 	unsigned char ethaddr[6];
+	char mac[16];
 	uint32_t start;
 	int ret = 0;
 
@@ -1085,12 +1088,18 @@ static int fec_probe(bd_t *bd, int dev_id, uint32_t base_addr,
 	fec->phy_id = phy_id;
 #endif
 	eth_register(edev);
+	/* only support one eth device, the index number pointed by dev_id */
+	edev->index = fec->dev_id;
 
-	if (fec_get_hwaddr(dev_id, ethaddr) == 0) {
-		debug("got MAC%d address from fuse: %pM\n", dev_id, ethaddr);
+	if (fec_get_hwaddr(fec->dev_id, ethaddr) == 0) {
+		printf("got MAC%d address from fuse: %pM\n", fec->dev_id, ethaddr);
 		memcpy(edev->enetaddr, ethaddr, 6);
-		if (!getenv("ethaddr"))
-			eth_setenv_enetaddr("ethaddr", ethaddr);
+		if (fec->dev_id)
+			sprintf(mac, "eth%daddr", fec->dev_id);
+		else
+			strcpy(mac, "ethaddr");
+		if (!getenv(mac))
+			eth_setenv_enetaddr(mac, ethaddr);
 	}
 	return ret;
 err4:
@@ -1112,6 +1121,13 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 #endif
 	int ret;
 
+#ifdef CONFIG_MX6
+	if (mx6_enet_fused(addr)) {
+		printf("Ethernet@0x%x is fused, disable it\n", addr);
+		return -2;
+	}
+#endif
+
 #ifdef CONFIG_MX28
 	/*
 	 * The i.MX28 has two ethernet interfaces, but they are not equal.
@@ -1119,7 +1135,11 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	 */
 	base_mii = MXS_ENET0_BASE;
 #else
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	base_mii = CONFIG_FEC_MXC_MDIO_BASE;
+#else
 	base_mii = addr;
+#endif
 #endif
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
 	bus = fec_get_miibus(base_mii, dev_id);
@@ -1208,15 +1228,24 @@ static int fecmxc_probe(struct udevice *dev)
 	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct fec_priv *priv = dev_get_priv(dev);
 	struct mii_dev *bus = NULL;
-	int dev_id = -1;
 	uint32_t start;
 	int ret;
 
+#ifdef CONFIG_MX6
+	if (mx6_enet_fused((uint32_t)priv->eth)) {
+		printf("Ethernet@0x%x is fused, disable it\n", (uint32_t)priv->eth);
+		return -ENODEV;
+	}
+#endif
 	ret = fec_alloc_descs(priv);
 	if (ret)
 		return ret;
 
-	bus = fec_get_miibus((uint32_t)priv->eth, dev_id);
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+	bus = fec_get_miibus((uint32_t)CONFIG_FEC_MXC_MDIO_BASE, dev->seq);
+#else
+	bus = fec_get_miibus((uint32_t)priv->eth, dev->seq);
+#endif
 	if (!bus)
 		goto err_mii;
 
@@ -1240,7 +1269,7 @@ static int fecmxc_probe(struct udevice *dev)
 	}
 
 	fec_reg_setup(priv);
-	priv->dev_id = (dev_id == -1) ? 0 : dev_id;
+	priv->dev_id = dev->seq;
 
 	return 0;
 
@@ -1295,6 +1324,9 @@ static int fecmxc_ofdata_to_platdata(struct udevice *dev)
 
 static const struct udevice_id fecmxc_ids[] = {
 	{ .compatible = "fsl,imx6q-fec" },
+	{ .compatible = "fsl,imx6sl-fec" },
+	{ .compatible = "fsl,imx6sx-fec" },
+	{ .compatible = "fsl,imx7d-fec" },
 	{ }
 };
 

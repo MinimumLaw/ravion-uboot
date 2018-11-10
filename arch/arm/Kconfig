@@ -85,6 +85,9 @@ config ARM_ERRATA_833069
 config ARM_ERRATA_833471
 	bool
 
+config ARM_ERRATA_845369
+	bool
+
 config CPU_ARM720T
 	bool
 	select SYS_CACHE_SHIFT_5
@@ -576,6 +579,11 @@ config ARCH_MESON
 	  Support for the Meson SoC family developed by Amlogic Inc.,
 	  targeted at media players and tablet computers. We currently
 	  support the S905 (GXBaby) 64-bit SoC.
+
+config ARCH_MX7ULP
+        bool "NXP MX7ULP"
+        select CPU_V7
+	select ROM_UNIFIED_SECTIONS
 
 config ARCH_MX7
 	bool "Freescale MX7"
@@ -1142,6 +1150,8 @@ source "arch/arm/mach-kirkwood/Kconfig"
 source "arch/arm/mach-mvebu/Kconfig"
 
 source "arch/arm/cpu/armv7/ls102xa/Kconfig"
+
+source "arch/arm/cpu/armv7/mx7ulp/Kconfig"
 
 source "arch/arm/cpu/armv7/mx7/Kconfig"
 

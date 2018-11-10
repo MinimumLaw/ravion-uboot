@@ -62,5 +62,12 @@ obj-$(CONFIG_AM335X_LCD) += am335x-fb.o
 obj-${CONFIG_VIDEO_TEGRA124} += tegra124/
 obj-${CONFIG_EXYNOS_FB} += exynos/
 obj-${CONFIG_VIDEO_ROCKCHIP} += rockchip/
+obj-$(CONFIG_MXC_EPDC) += mxc_epdc_fb.o
+obj-$(CONFIG_VIDEO_VADC) += mxc_vadc.o
+obj-$(CONFIG_VIDEO_CSI) += mxc_csi.o
+obj-$(CONFIG_VIDEO_PXP) += mxc_pxp.o
+obj-$(CONFIG_VIDEO_GIS) += mxc_gis.o
+obj-$(CONFIG_MXC_MIPI_DSI_NORTHWEST) += mipi_dsi_northwest.o
+obj-$(CONFIG_HX8363) += hx8363_wvga.o
 
 obj-y += bridge/

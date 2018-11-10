@@ -115,7 +115,7 @@ fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
 # Build a libfdt Python module if swig is available
 # Use 'sudo apt-get install swig libpython-dev' to enable this
 hostprogs-y += \
-	$(if $(shell which swig 2> /dev/null),_libfdt.so)
+	$(if $(shell which swig 2> /dev/null), $(if $(wildcard /usr/include/python*/Python.h),_libfdt.so))
 _libfdt.so-sharedobjs += $(LIBFDT_OBJS)
 libfdt:
 
@@ -262,7 +262,7 @@ $(LOGO_DATA_H):	$(obj)/bmp_logo $(LOGO_BMP)
 subdir- += env
 
 ifneq ($(CROSS_BUILD_TOOLS),)
-HOSTCC = $(CC)
+override HOSTCC = $(CC)
 
 quiet_cmd_crosstools_strip = STRIP   $^
       cmd_crosstools_strip = $(STRIP) $^; touch $@

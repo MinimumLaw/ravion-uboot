@@ -3,10 +3,6 @@ if ARCH_MX6
 config MX6
 	bool
 	default y
-	select ARM_ERRATA_743622 if !MX6UL
-	select ARM_ERRATA_751472 if !MX6UL
-	select ARM_ERRATA_761320 if !MX6UL
-	select ARM_ERRATA_794072 if !MX6UL
 
 config MX6D
 	bool
@@ -18,6 +14,9 @@ config MX6Q
 	bool
 
 config MX6QDL
+	bool
+
+config MX6QP
 	bool
 
 config MX6S
@@ -57,6 +56,27 @@ config MX6_DDRCAL
 	help
 	  Say "Y" if your board uses dynamic (per-boot) DDR calibration.
 	  If unsure, say N.
+
+config LDO_BYPASS_CHECK
+	bool "Enable the LDO bypass checking and setting"
+	help
+	  This feature searches the gpc node in loaded DTB and checking the
+	  "fsl,ldo-bypass" property. When the property is set, board relevant 
+	  PMIC settings are called to adjust for LDO bypass. 
+
+config CMD_BEE
+	bool "Enable commands for Bus Encryption Engine(BEE)"
+	depends on MX6UL
+	help
+	  Set "Y" to enable the bee commands 
+
+config MODULE_FUSE
+	bool "Enable the module disable fuse checking on i.MX6"
+	default n
+	select OF_SYSTEM_SETUP
+	help
+	  Once the module is checked as fused to disable, this module driver
+	  won't be called. And it will be modified to disable in kernel DTB.
 
 choice
 	prompt "MX6 board select"
@@ -147,6 +167,10 @@ config TARGET_MX6CUBOXI
 
 config TARGET_MX6QARM2
 	bool "mx6qarm2"
+	select DM
+	select DM_THERMAL
+	select BOARD_LATE_INIT
+	select BOARD_EARLY_INIT_F
 
 config TARGET_MX6Q_ICORE
 	bool "Support Engicam i.Core"
@@ -190,6 +214,10 @@ config TARGET_MX6SABRESD
 config TARGET_MX6SLEVK
 	bool "mx6slevk"
 	select SUPPORT_SPL
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
 
 config TARGET_MX6SLLEVK
         bool "mx6sll evk"
@@ -198,6 +226,13 @@ config TARGET_MX6SLLEVK
         select DM
         select DM_THERMAL
 
+config TARGET_MX6SLL_ARM2
+	bool "mx6sll arm2"
+	select BOARD_LATE_INIT
+	select MX6SLL
+	select DM
+	select DM_THERMAL
+
 config TARGET_MX6SXSABRESD
 	bool "mx6sxsabresd"
 	select MX6SX
@@ -205,6 +240,7 @@ config TARGET_MX6SXSABRESD
 	select DM
 	select DM_THERMAL
 	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
 
 config TARGET_MX6SXSABREAUTO
         bool "mx6sxsabreauto"
@@ -213,6 +249,30 @@ config TARGET_MX6SXSABREAUTO
         select DM
         select DM_THERMAL
 	select BOARD_EARLY_INIT_F
+
+config TARGET_MX6SX_14X14_ARM2
+	bool "mx6sx_14x14_arm2"
+	select MX6SX
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+
+config TARGET_MX6SX_17X17_ARM2
+	bool "mx6sx_17x17_arm2"
+	select MX6SX
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+
+config TARGET_MX6SX_19X19_ARM2
+	bool "mx6sx_19x19_arm2"
+	select MX6SX
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
 
 config TARGET_MX6UL_9X9_EVK
 	bool "mx6ul_9x9_evk"
@@ -230,6 +290,26 @@ config TARGET_MX6UL_14X14_EVK
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+config TARGET_MX6UL_NXPU_IOPB
+	bool "Support mx6ul_nxpu_iopb"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX6UL_14X14_DDR3_ARM2
+	bool "mx6ul_14x14_ddr3_arm2"
+	select BOARD_LATE_INIT
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX6UL_14X14_LPDDR2_ARM2
+	bool "mx6ul_14x14_lpddr2_arm2"
+	select BOARD_LATE_INIT
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
 config TARGET_MX6UL_GEAM
 	bool "Support Engicam GEAM6UL"
 	select MX6UL
@@ -242,12 +322,55 @@ config TARGET_MX6UL_GEAM
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+config TARGET_MX6ULL_DDR3_ARM2
+	bool "Support mx6ull_ddr3_arm2"
+	select BOARD_LATE_INIT
+	select MX6ULL
+	select DM
+	select DM_THERMAL
+
 config TARGET_MX6ULL_14X14_EVK
 	bool "Support mx6ull_14x14_evk"
 	select BOARD_LATE_INIT
 	select MX6ULL
 	select DM
 	select DM_THERMAL
+
+config TARGET_MX6ULL_9X9_EVK
+	bool "Support mx6ull_9x9_evk"
+	select BOARD_LATE_INIT
+	select MX6ULL
+	select DM
+	select DM_THERMAL
+
+config TARGET_PICOSOM_IMX6UL
+	bool "Support picosom-imx6ul"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX6UL_AQUILA
+	bool "Support mx6ul_aquila"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX6UL_VAR_DART
+	bool "mx6ul_var_dart"
+	select BOARD_LATE_INIT
+	select SUPPORT_SPL
+	select MX6UL
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+
+config TARGET_MX6VAR_SOM
+	bool "mx6var_som"
+	select BOARD_LATE_INIT
+	select SUPPORT_SPL
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
 
 config TARGET_NITROGEN6X
 	bool "nitrogen6x"
@@ -342,6 +465,21 @@ config TARGET_ZC5601
 	select DM
 	select DM_THERMAL
 
+config TARGET_MX6DQSCM
+	bool "mx6dqscm"
+	select BOARD_LATE_INIT
+	select DM
+	select DM_THERMAL
+	select BOARD_EARLY_INIT_F
+
+config TARGET_MX6SXSCM
+        bool "mx6sxscm"
+	select BOARD_LATE_INIT
+        select MX6SX
+        select DM
+        select DM_THERMAL
+        select BOARD_EARLY_INIT_F
+
 endchoice
 
 config SYS_SOC
@@ -366,11 +504,18 @@ source "board/freescale/mx6qarm2/Kconfig"
 source "board/freescale/mx6qsabreauto/Kconfig"
 source "board/freescale/mx6sabresd/Kconfig"
 source "board/freescale/mx6slevk/Kconfig"
+source "board/freescale/mx6sll_arm2/Kconfig"
 source "board/freescale/mx6sllevk/Kconfig"
 source "board/freescale/mx6sxsabresd/Kconfig"
 source "board/freescale/mx6sxsabreauto/Kconfig"
+source "board/freescale/mx6sx_17x17_arm2/Kconfig"
+source "board/freescale/mx6sx_19x19_arm2/Kconfig"
+source "board/freescale/mx6ul_nxpu_iopb/Kconfig"
 source "board/freescale/mx6ul_14x14_evk/Kconfig"
+source "board/freescale/mx6ul_14x14_ddr3_arm2/Kconfig"
+source "board/freescale/mx6ul_14x14_lpddr2_arm2/Kconfig"
 source "board/freescale/mx6ullevk/Kconfig"
+source "board/freescale/mx6ull_ddr3_arm2/Kconfig"
 source "board/grinn/liteboard/Kconfig"
 source "board/phytec/pcm058/Kconfig"
 source "board/gateworks/gw_ventana/Kconfig"
@@ -379,14 +524,19 @@ source "board/samtec/vining_2000/Kconfig"
 source "board/liebherr/mccmon6/Kconfig"
 source "board/seco/Kconfig"
 source "board/solidrun/mx6cuboxi/Kconfig"
-source "board/technexion/pico-imx6ul/Kconfig"
+source "board/freescale/picosom-imx6ul/Kconfig"
+source "board/freescale/mx6ul_aquila/Kconfig"
 source "board/tbs/tbs2910/Kconfig"
 source "board/tqc/tqma6/Kconfig"
 source "board/toradex/apalis_imx6/Kconfig"
 source "board/toradex/colibri_imx6/Kconfig"
 source "board/udoo/Kconfig"
 source "board/udoo/neo/Kconfig"
+source "board/variscite/mx6ul_var_dart/Kconfig"
+source "board/variscite/mx6var_som/Kconfig"
 source "board/wandboard/Kconfig"
 source "board/warp/Kconfig"
+source "board/freescale/mx6dqscm/Kconfig"
+source "board/freescale/mx6sxscm/Kconfig"
 
 endif

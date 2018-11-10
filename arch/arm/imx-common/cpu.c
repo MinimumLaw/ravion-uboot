@@ -2,7 +2,7 @@
  * (C) Copyright 2007
  * Sascha Hauer, Pengutronix
  *
- * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * (C) Copyright 2009-2016 Freescale Semiconductor, Inc.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -17,15 +17,18 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/crm_regs.h>
 #include <imx_thermal.h>
-#include <ipu_pixfmt.h>
 #include <thermal.h>
 #include <sata.h>
+
+#ifdef CONFIG_VIDEO_GIS
+#include <gis.h>
+#endif
 
 #ifdef CONFIG_FSL_ESDHC
 #include <fsl_esdhc.h>
 #endif
 
-#if defined(CONFIG_DISPLAY_CPUINFO)
+#if defined(CONFIG_DISPLAY_CPUINFO) && !defined(CONFIG_SPL_BUILD)
 static u32 reset_cause = -1;
 
 static char *get_reset_cause(void)
@@ -132,7 +135,7 @@ unsigned imx_ddr_size(void)
 }
 #endif
 
-#if defined(CONFIG_DISPLAY_CPUINFO)
+#if defined(CONFIG_DISPLAY_CPUINFO) && !defined(CONFIG_SPL_BUILD)
 
 const char *get_imx_type(u32 imxtype)
 {
@@ -176,6 +179,10 @@ int print_cpuinfo(void)
 {
 	u32 cpurev;
 	__maybe_unused u32 max_freq;
+#if defined(CONFIG_DBG_MONITOR)
+	struct dbg_monitor_regs *dbg =
+		(struct dbg_monitor_regs *)DEBUG_MONITOR_BASE_ADDR;
+#endif
 
 	cpurev = get_cpu_rev();
 
@@ -224,12 +231,21 @@ int print_cpuinfo(void)
 		ret = thermal_get_temp(thermal_dev, &cpu_tmp);
 
 		if (!ret)
-			printf(" at %dC\n", cpu_tmp);
+			printf(" at %dC", cpu_tmp);
 		else
-			debug(" - invalid sensor data\n");
+			debug(" - invalid sensor data");
 	} else {
-		debug(" - invalid sensor device\n");
+		debug(" - invalid sensor device");
 	}
+	printf("\n");
+#endif
+
+#if defined(CONFIG_DBG_MONITOR)
+	if (readl(&dbg->snvs_addr))
+		printf("DBG snvs regs addr 0x%x, data 0x%x, info 0x%x\n",
+		       readl(&dbg->snvs_addr),
+		       readl(&dbg->snvs_data),
+		       readl(&dbg->snvs_info));
 #endif
 
 	printf("Reset cause: %s\n", get_reset_cause());
@@ -281,9 +297,12 @@ void arch_preboot_os(void)
 	disable_sata_clock();
 #endif
 #endif
-#if defined(CONFIG_VIDEO_IPUV3)
-	/* disable video before launching O/S */
-	ipuv3_fb_shutdown();
+#if defined(CONFIG_LDO_BYPASS_CHECK)
+	ldo_mode_set(check_ldo_bypass());
+#endif
+#ifdef CONFIG_VIDEO_GIS
+	/* Entry for GIS */
+	mxc_disable_gis();
 #endif
 #if defined(CONFIG_VIDEO_MXS)
 	lcdif_power_down();

@@ -3,6 +3,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  * Joe Hershberger, National Instruments
  *
+ * Copyright 2017 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -40,8 +42,12 @@ static int eth_errno;
 static struct eth_uclass_priv *eth_get_uclass_priv(void)
 {
 	struct uclass *uc;
+	int ret;
 
-	uclass_get(UCLASS_ETH, &uc);
+	ret = uclass_get(UCLASS_ETH, &uc);
+	if (ret)
+		return NULL;
+
 	assert(uc);
 	return uc->priv;
 }
@@ -102,6 +108,7 @@ struct udevice *eth_get_dev_by_name(const char *devname)
 	struct udevice *it;
 	struct uclass *uc;
 	int len = strlen("eth");
+	int ret;
 
 	/* Must be longer than 3 to be an alias */
 	if (!strncmp(devname, "eth", len) && strlen(devname) > len) {
@@ -109,7 +116,10 @@ struct udevice *eth_get_dev_by_name(const char *devname)
 		seq = simple_strtoul(startp, &endp, 10);
 	}
 
-	uclass_get(UCLASS_ETH, &uc);
+	ret = uclass_get(UCLASS_ETH, &uc);
+	if (ret)
+		return NULL;
+
 	uclass_foreach_dev(it, uc) {
 		/*
 		 * We need the seq to be valid, so try to probe it.
@@ -491,8 +501,10 @@ static int eth_post_probe(struct udevice *dev)
 	priv->state = ETH_STATE_INIT;
 
 	/* Check if the device has a MAC address in ROM */
-	if (eth_get_ops(dev)->read_rom_hwaddr)
+	if (eth_get_ops(dev)->read_rom_hwaddr) {
 		eth_get_ops(dev)->read_rom_hwaddr(dev);
+		printf("\n%s MAC address in ROM is %pM", dev->name, pdata->enetaddr);
+	}
 
 	eth_getenv_enetaddr_by_index("eth", dev->seq, env_enetaddr);
 	if (!is_zero_ethaddr(env_enetaddr)) {
@@ -500,10 +512,11 @@ static int eth_post_probe(struct udevice *dev)
 		    memcmp(pdata->enetaddr, env_enetaddr, ARP_HLEN)) {
 			printf("\nWarning: %s MAC addresses don't match:\n",
 			       dev->name);
-			printf("Address in ROM is          %pM\n",
-			       pdata->enetaddr);
-			printf("Address in environment is  %pM\n",
+			printf("Address in environment is               %pM\n",
 			       env_enetaddr);
+		} else {
+			if (eth_get_ops(dev)->read_rom_hwaddr)
+				puts("\n");
 		}
 
 		/* Override the ROM MAC address */

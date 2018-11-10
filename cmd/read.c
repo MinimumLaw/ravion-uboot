@@ -12,7 +12,7 @@
 #include <command.h>
 #include <part.h>
 
-int do_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_raw_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *ep;
 	struct blk_desc *dev_desc = NULL;
@@ -66,7 +66,7 @@ int do_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return 1;
 	}
 
-	if (blk_read(dev_desc, offset + blk, cnt, addr) < 0) {
+	if (blk_dread(dev_desc, offset + blk, cnt, addr) < 0) {
 		printf("Error reading blocks\n");
 		return 1;
 	}
@@ -75,7 +75,7 @@ int do_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 U_BOOT_CMD(
-	read,	6,	0,	do_read,
+	read,	6,	0,	do_raw_read,
 	"Load binary data from a partition",
 	"<interface> <dev[:part]> addr blk# cnt"
 );

@@ -309,16 +309,84 @@ dtb-$(CONFIG_VF610) += vf500-colibri.dtb \
 
 dtb-$(CONFIG_MX53) += imx53-cx9020.dtb
 
-dtb-$(CONFIG_MX6) += imx6ull-14x14-evk.dtb \
+dtb-$(CONFIG_MX6) += imx6ul-14x14-ddr3-arm2.dtb \
+	imx6ul-14x14-ddr3-arm2-emmc.dtb \
+	imx6ul-14x14-ddr3-arm2-gpmi-weim.dtb \
+	imx6ul-14x14-lpddr2-arm2.dtb \
+	imx6ul-14x14-evk.dtb \
+	imx6ul-14x14-evk-emmc.dtb \
+	imx6ul-14x14-evk-gpmi-weim.dtb \
+	imx6ull-14x14-ddr3-arm2.dtb \
+	imx6ull-14x14-ddr3-arm2-epdc.dtb \
+	imx6ull-14x14-ddr3-arm2-emmc.dtb \
+	imx6ull-14x14-ddr3-arm2-gpmi-weim.dtb \
+	imx6ull-14x14-ddr3-arm2-tsc.dtb \
+	imx6ull-14x14-evk.dtb \
+	imx6ull-14x14-evk-emmc.dtb \
+	imx6ull-14x14-evk-gpmi-weim.dtb \
+	imx6ul-9x9-evk.dtb \
+	imx6ull-9x9-evk.dtb \
+	imx6sll-lpddr2-arm2.dtb \
+	imx6sll-lpddr3-arm2.dtb \
+	imx6sll-lpddr3-arm2-ecspi.dtb \
 	imx6sll-evk.dtb \
+	imx6dl-arm2.dtb \
 	imx6dl-icore.dtb \
 	imx6dl-icore-rqs.dtb \
+	imx6dl-sabreauto.dtb \
+	imx6dl-sabreauto-ecspi.dtb \
+	imx6dl-sabreauto-gpmi-weim.dtb \
+	imx6dl-sabresd.dtb \
+	imx6q-arm2.dtb \
+	imx6q-pop-arm2.dtb \
 	imx6q-icore.dtb \
 	imx6q-icore-rqs.dtb \
+	imx6q-sabreauto.dtb \
+	imx6q-sabreauto-ecspi.dtb \
+	imx6q-sabreauto-gpmi-weim.dtb \
+	imx6qp-sabreauto.dtb \
+	imx6qp-sabreauto-ecspi.dtb \
+	imx6qp-sabreauto-gpmi-weim.dtb \
+	imx6sl-evk.dtb \
+	imx6sx-14x14-arm2.dtb \
+	imx6sx-17x17-arm2.dtb \
+	imx6sx-17x17-arm2-ecspi.dtb \
+	imx6sx-17x17-arm2-gpmi-weim.dtb \
+	imx6sx-19x19-arm2.dtb \
+	imx6sx-19x19-arm2-gpmi-weim.dtb \
 	imx6sx-sabreauto.dtb \
-	imx6ul-geam-kit.dtb
+	imx6sx-sdb.dtb \
+	imx6sx-sdb-emmc.dtb \
+	imx6q-sabresd.dtb \
+	imx6qp-sabresd.dtb \
+	imx6ul-geam-kit.dtb \
+	imx6dqscm-1gb-qwks-rev2-fix-ldo.dtb \
+	imx6dqscm-1gb-qwks-rev3-fix-ldo.dtb \
+	imx6dqscm-1gb-qwks-rev2-interleave-android-ldo.dtb \
+	imx6dqscm-1gb-qwks-rev3-interleave-android-ldo.dtb \
+	imx6sxscm-1gb-evb-ldo.dtb
 
-dtb-$(CONFIG_MX7) += imx7-colibri.dtb
+dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
+		imx7d-sdb.dtb \
+		imx7d-sdb-epdc.dtb \
+		imx7d-sdb-gpmi-weim.dtb \
+		imx7d-sdb-qspi.dtb \
+		imx7d-sdb-reva.dtb \
+		imx7d-var-som-emmc.dtb \
+		imx7d-var-som-nand.dtb \
+		imx7d-12x12-lpddr3-arm2.dtb \
+		imx7d-12x12-lpddr3-arm2-ecspi.dtb \
+		imx7d-12x12-lpddr3-arm2-qspi.dtb \
+		imx7d-12x12-ddr3-arm2.dtb \
+		imx7d-19x19-ddr3-arm2.dtb \
+		imx7d-19x19-lpddr2-arm2.dtb \
+		imx7d-19x19-lpddr3-arm2.dtb
+
+dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb \
+		imx7ulp-evk-emmc.dtb \
+		imx7ulp-evk-qspi.dtb \
+		imx7ulp-10x10-arm2.dtb \
+		imx7ulp-14x14-arm2.dtb
 
 dtb-$(CONFIG_SOC_KEYSTONE) += keystone-k2hk-evm.dtb \
 	keystone-k2l-evm.dtb \

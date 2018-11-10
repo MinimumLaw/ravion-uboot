@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2011 Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  *
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
@@ -9,10 +12,18 @@
 #include <android_image.h>
 #include <malloc.h>
 #include <errno.h>
+#include <asm/bootm.h>
+#include <asm/imx-common/boot_mode.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
 static char andr_tmp_str[ANDR_BOOT_ARGS_SIZE + 1];
+
+#ifdef CONFIG_FSL_BOOTCTL
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include "../drivers/usb/gadget/bootctrl.h"
+#endif
 
 static ulong android_image_get_kernel_addr(const struct andr_img_hdr *hdr)
 {
@@ -66,31 +77,78 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	printf("Kernel load addr 0x%08x size %u KiB\n",
 	       kernel_addr, DIV_ROUND_UP(hdr->kernel_size, 1024));
 
-	int len = 0;
-	if (*hdr->cmdline) {
-		printf("Kernel command line: %s\n", hdr->cmdline);
-		len += strlen(hdr->cmdline);
-	}
-
+	char newbootargs[512] = {0};
+	char commandline[1024] = {0};
 	char *bootargs = getenv("bootargs");
-	if (bootargs)
-		len += strlen(bootargs);
-
-	char *newbootargs = malloc(len + 2);
-	if (!newbootargs) {
-		puts("Error: malloc in android_image_get_kernel failed!\n");
-		return -ENOMEM;
-	}
-	*newbootargs = '\0';
 
 	if (bootargs) {
-		strcpy(newbootargs, bootargs);
-		strcat(newbootargs, " ");
+		strcpy(commandline, bootargs);
+	} else if (*hdr->cmdline) {
+		strcat(commandline, hdr->cmdline);
 	}
-	if (*hdr->cmdline)
-		strcat(newbootargs, hdr->cmdline);
 
-	setenv("bootargs", newbootargs);
+#ifdef CONFIG_SERIAL_TAG
+	struct tag_serialnr serialnr;
+	get_board_serial(&serialnr);
+
+	sprintf(newbootargs,
+					" androidboot.serialno=%08x%08x",
+					serialnr.high,
+					serialnr.low);
+	strcat(commandline, newbootargs);
+#endif
+
+	/* append soc type into bootargs */
+	char *soc_type = getenv("soc_type");
+	if (soc_type) {
+		sprintf(newbootargs,
+			" androidboot.soc_type=%s",
+			soc_type);
+		strcat(commandline, newbootargs);
+	}
+
+	int bootdev = get_boot_device();
+	if (bootdev == SD1_BOOT || bootdev == SD2_BOOT ||
+		bootdev == SD3_BOOT || bootdev == SD4_BOOT) {
+		sprintf(newbootargs,
+			" androidboot.storage_type=sd gpt");
+	} else if (bootdev == MMC1_BOOT || bootdev == MMC2_BOOT ||
+		bootdev == MMC3_BOOT || bootdev == MMC4_BOOT) {
+		sprintf(newbootargs,
+			" androidboot.storage_type=emmc gpt");
+	} else if (bootdev == NAND_BOOT) {
+		sprintf(newbootargs,
+			" androidboot.storage_type=emmc gpt");
+	} else
+		printf("boot device type is incorrect.\n");
+	strcat(commandline, newbootargs);
+
+#ifdef CONFIG_FSL_BOOTCTL
+	sprintf(newbootargs, " androidboot.slot_suffix=%s", get_slot_suffix());
+	strcat(commandline, newbootargs);
+#endif
+#ifdef CONFIG_AVB_SUPPORT
+	/* secondary cmdline added by avb */
+	char *bootargs_sec = getenv("bootargs_sec");
+	if (bootargs_sec) {
+		strcat(commandline, " ");
+		strcat(commandline, bootargs_sec);
+	}
+#endif
+#ifdef CONFIG_SYSTEM_RAMDISK_SUPPORT
+	/* Normal boot:
+	 * cmdline to bypass ramdisk in boot.img, but use the system.img
+	 * Recovery boot:
+	 * Use the ramdisk in boot.img
+	 */
+	char *bootargs_3rd = getenv("bootargs_3rd");
+	if (bootargs_3rd) {
+		strcat(commandline, " ");
+		strcat(commandline, bootargs_3rd);
+	}
+#endif
+	printf("Kernel command line: %s\n", commandline);
+	setenv("bootargs", commandline);
 
 	if (os_data) {
 		*os_data = (ulong)hdr;
@@ -174,3 +232,33 @@ void android_print_contents(const struct andr_img_hdr *hdr)
 	printf("%scmdline:          %s\n", p, hdr->cmdline);
 }
 #endif
+
+int android_image_get_fdt(const struct andr_img_hdr *hdr,
+			      ulong *fdt_data, ulong *fdt_len)
+{
+	if (!hdr->second_size)
+		return -1;
+
+	printf("FDT load addr 0x%08x size %u KiB\n",
+	       hdr->second_addr, DIV_ROUND_UP(hdr->second_size, 1024));
+
+	*fdt_data = (unsigned long)hdr;
+	*fdt_data += hdr->page_size;
+	*fdt_data += ALIGN(hdr->kernel_size, hdr->page_size);
+	*fdt_data += ALIGN(hdr->ramdisk_size, hdr->page_size);
+
+	*fdt_len = hdr->second_size;
+	return 0;
+}
+
+#define ARM64_IMAGE_MAGIC	0x644d5241
+bool image_arm64(void *images)
+{
+	struct header_image *ih;
+
+	ih = (struct header_image *)images;
+	debug("image magic: %x\n", ih->magic);
+	if (ih->magic == le32_to_cpu(ARM64_IMAGE_MAGIC))
+		return true;
+	return false;
+}

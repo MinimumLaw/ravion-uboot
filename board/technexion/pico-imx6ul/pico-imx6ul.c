@@ -190,6 +190,16 @@ static struct fsl_esdhc_cfg usdhc_cfg[1] = {
 	{USDHC1_BASE_ADDR},
 };
 
+int board_mmc_get_env_dev(int devno)
+{
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int dev_no)
+{
+	return dev_no;
+}
+
 int board_mmc_getcd(struct mmc *mmc)
 {
 	return 1;
@@ -244,6 +254,36 @@ int power_init_board(void)
 
 	return 0;
 }
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+	unsigned int value;
+	u32 vddarm;
+	struct pmic *p = pfuze;
+	if (!p) {
+		printf("No PMIC found!\n");
+		return;
+	}
+
+	/* switch to ldo_bypass mode */
+	if (ldo_bypass) {
+		prep_anatop_bypass();
+		/* decrease VDDARM to 1.275V */
+		pmic_reg_read(pfuze, PFUZE3000_SW1BVOLT, &value);
+		value &= ~0x1f;
+		value |= PFUZE3000_SW1AB_SETP(1275);
+		pmic_reg_write(pfuze, PFUZE3000_SW1BVOLT, value);
+		set_anatop_bypass(1);
+		vddarm = PFUZE3000_SW1AB_SETP(1175);
+		pmic_reg_read(pfuze, PFUZE3000_SW1BVOLT, &value);
+		value &= ~0x1f;
+		value |= vddarm;
+		pmic_reg_write(pfuze, PFUZE3000_SW1BVOLT, value);
+		finish_anatop_bypass();
+		printf("switch to ldo_bypass mode!\n");
+	}
+}
+#endif
 #endif
 
 int board_usb_phy_mode(int port)
@@ -291,3 +331,11 @@ int checkboard(void)
 
 	return 0;
 }
+#ifdef CONFIG_FSL_FASTBOOT
+#ifdef CONFIG_ANDROID_RECOVERY
+int is_recovery_key_pressing(void)
+{
+	return 0;
+}
+#endif
+#endif

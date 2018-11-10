@@ -15,11 +15,12 @@
 #include <errno.h>
 #include <watchdog.h>
 #include "fsl_qspi.h"
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #define RX_BUFFER_SIZE		0x80
-#ifdef CONFIG_MX6SX
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL) || defined(CONFIG_MX7D)
 #define TX_BUFFER_SIZE		0x200
 #else
 #define TX_BUFFER_SIZE		0x40
@@ -267,7 +268,7 @@ static void qspi_set_lut(struct fsl_qspi_priv *priv)
 			     INSTR0(LUT_CMD) | OPRND1(ADDR32BIT) |
 			     PAD1(LUT_PAD1) | INSTR1(LUT_ADDR));
 #endif
-#ifdef CONFIG_MX6SX
+#if defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL) || defined(CONFIG_MX7D)
 	/*
 	 * To MX6SX, OPRND0(TX_BUFFER_SIZE) can not work correctly.
 	 * So, Use IDATSZ in IPCR to determine the size and here set 0.
@@ -392,7 +393,7 @@ static inline void qspi_ahb_read(struct fsl_qspi_priv *priv, u8 *rxbuf, int len)
 
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 
 	rx_addr = (void *)(uintptr_t)(priv->cur_amba_base + priv->sf_addr);
 	/* Read out the data directly from the AHB buffer. */
@@ -401,6 +402,7 @@ static inline void qspi_ahb_read(struct fsl_qspi_priv *priv, u8 *rxbuf, int len)
 	qspi_write32(priv->flags, &regs->mcr, mcr_reg);
 }
 
+#ifndef CONFIG_MX7ULP
 static void qspi_enable_ddr_mode(struct fsl_qspi_priv *priv)
 {
 	u32 reg, reg2;
@@ -422,7 +424,14 @@ static void qspi_enable_ddr_mode(struct fsl_qspi_priv *priv)
 	reg |= BIT(29);
 
 	qspi_write32(priv->flags, &regs->mcr, reg);
+
+	/* Enable the TDH to 1 for i.mx6ul and mx7d, it is reserved on other platforms */
+	reg = qspi_read32(priv->flags, &regs->flshcr);
+	reg &= ~(BIT(17));
+	reg |= BIT(16);
+	qspi_write32(priv->flags, &regs->flshcr, reg);
 }
+#endif
 
 /*
  * There are two different ways to read out the data from the flash:
@@ -445,8 +454,13 @@ static void qspi_init_ahb_read(struct fsl_qspi_priv *priv)
 	qspi_write32(priv->flags, &regs->buf0cr, QSPI_BUFXCR_INVALID_MSTRID);
 	qspi_write32(priv->flags, &regs->buf1cr, QSPI_BUFXCR_INVALID_MSTRID);
 	qspi_write32(priv->flags, &regs->buf2cr, QSPI_BUFXCR_INVALID_MSTRID);
+#ifdef CONFIG_MX7ULP
+	qspi_write32(priv->flags, &regs->buf3cr, QSPI_BUF3CR_ALLMST_MASK |
+		     (0x10 << QSPI_BUF3CR_ADATSZ_SHIFT));
+#else
 	qspi_write32(priv->flags, &regs->buf3cr, QSPI_BUF3CR_ALLMST_MASK |
 		     (0x80 << QSPI_BUF3CR_ADATSZ_SHIFT));
+#endif
 
 	/* We only use the buffer3 */
 	qspi_write32(priv->flags, &regs->buf0ind, 0);
@@ -460,8 +474,10 @@ static void qspi_init_ahb_read(struct fsl_qspi_priv *priv)
 	qspi_write32(priv->flags, &regs->bfgencr,
 		     SEQID_FAST_READ << QSPI_BFGENCR_SEQID_SHIFT);
 
+#ifndef CONFIG_MX7ULP
 	/*Enable DDR Mode*/
 	qspi_enable_ddr_mode(priv);
+#endif
 }
 #endif
 
@@ -475,7 +491,7 @@ static void qspi_op_rdbank(struct fsl_qspi_priv *priv, u8 *rxbuf, u32 len)
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
 
 	qspi_write32(priv->flags, &regs->sfar, priv->cur_amba_base);
@@ -518,7 +534,7 @@ static void qspi_op_rdid(struct fsl_qspi_priv *priv, u32 *rxbuf, u32 len)
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
 
 	qspi_write32(priv->flags, &regs->sfar, priv->cur_amba_base);
@@ -562,7 +578,7 @@ static void qspi_op_read(struct fsl_qspi_priv *priv, u32 *rxbuf, u32 len)
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
 
 	to_or_from = priv->sf_addr + priv->cur_amba_base;
@@ -610,11 +626,12 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 	u32 mcr_reg, data, reg, status_reg, seqid;
 	int i, size, tx_size;
 	u32 to_or_from = 0;
+	u32 total;
 
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
 
 	status_reg = 0;
@@ -660,6 +677,7 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 		TX_BUFFER_SIZE : len;
 
 	size = tx_size / 4;
+	total = size;
 	for (i = 0; i < size; i++) {
 		memcpy(&data, txbuf, 4);
 		data = qspi_endian_xchg(data);
@@ -673,7 +691,14 @@ static void qspi_op_write(struct fsl_qspi_priv *priv, u8 *txbuf, u32 len)
 		memcpy(&data, txbuf, size);
 		data = qspi_endian_xchg(data);
 		qspi_write32(priv->flags, &regs->tbdr, data);
+		total += 1;
 	}
+
+#if defined(CONFIG_MX7D) || defined(CONFIG_MX6UL) || defined(CONFIG_MX7ULP)
+	/* iMX7D and MX6UL TXFIFO must be at least 16 bytes*/
+	for (; total < 4; total++)
+		qspi_write32(priv->flags, &regs->tbdr, 0);
+#endif
 
 	qspi_write32(priv->flags, &regs->ipcr,
 		     (seqid << QSPI_IPCR_SEQID_SHIFT) | tx_size);
@@ -691,7 +716,7 @@ static void qspi_op_rdsr(struct fsl_qspi_priv *priv, void *rxbuf, u32 len)
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
 
 	qspi_write32(priv->flags, &regs->sfar, priv->cur_amba_base);
@@ -726,7 +751,7 @@ static void qspi_op_erase(struct fsl_qspi_priv *priv)
 	mcr_reg = qspi_read32(priv->flags, &regs->mcr);
 	qspi_write32(priv->flags, &regs->mcr,
 		     QSPI_MCR_CLR_RXF_MASK | QSPI_MCR_CLR_TXF_MASK |
-		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_END_CFD_LE);
+		     mcr_reg);
 	qspi_write32(priv->flags, &regs->rbct, QSPI_RBCT_RXBRD_USEIPS);
 
 	to_or_from = priv->sf_addr + priv->cur_amba_base;
@@ -873,6 +898,13 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (bus >= ARRAY_SIZE(spi_bases))
 		return NULL;
 
+#ifdef CONFIG_MX6
+	if (mx6_qspi_fused(spi_bases[bus])) {
+		printf("QSPI@0x%lx is fused, disable it\n", spi_bases[bus]);
+		return NULL;
+	}
+#endif
+
 	if (cs >= FSL_QSPI_FLASH_NUM)
 		return NULL;
 
@@ -898,6 +930,11 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	qspi->slave.max_write_size = TX_BUFFER_SIZE;
 
 	mcr_val = qspi_read32(qspi->priv.flags, &regs->mcr);
+
+	/* Set endianness to LE for i.mx */
+	if (is_mx7() || is_mx6() || is_mx7ulp())
+		mcr_val = QSPI_MCR_END_CFD_LE;
+
 	qspi_write32(qspi->priv.flags, &regs->mcr,
 		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_MDIS_MASK |
 		     (mcr_val & QSPI_MCR_END_CFD_MASK));
@@ -907,6 +944,18 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		      QSPI_SMPR_FSPHS_MASK | QSPI_SMPR_HSENA_MASK), 0);
 
 	total_size = FSL_QSPI_FLASH_SIZE * FSL_QSPI_FLASH_NUM;
+
+#if defined(CONFIG_MX7ULP)
+	/*
+	 * mx7ulp QSPI controller does not support parallel mode, it only has port A.
+	 * To support dual die flash and single die flash, we set flash 1 size to CS0 area,
+	 * set flash2 size to CS1 area.
+	*/
+	qspi_write32(qspi->priv.flags, &regs->sfa1ad,
+		     FSL_QSPI_FLASH_SIZE | amba_bases[bus]);
+	qspi_write32(qspi->priv.flags, &regs->sfa2ad,
+		     total_size | amba_bases[bus]);
+#else
 	/*
 	 * Any read access to non-implemented addresses will provide
 	 * undefined results.
@@ -925,6 +974,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		     total_size | amba_bases[bus]);
 	qspi_write32(qspi->priv.flags, &regs->sfb2ad,
 		     total_size | amba_bases[bus]);
+#endif
 
 	qspi_set_lut(&qspi->priv);
 
@@ -985,6 +1035,14 @@ static int fsl_qspi_probe(struct udevice *bus)
 	struct dm_spi_bus *dm_spi_bus;
 	int i;
 
+#ifdef CONFIG_MX6
+	if (mx6_qspi_fused(plat->reg_base)) {
+		printf("QSPI@0x%lx is fused, disable it\n", plat->reg_base);
+		return -ENODEV;
+	}
+#endif	
+
+
 	dm_spi_bus = bus->uclass_priv;
 
 	dm_spi_bus->max_hz = plat->speed_hz;
@@ -1004,6 +1062,11 @@ static int fsl_qspi_probe(struct udevice *bus)
 	priv->num_chipselect = plat->num_chipselect;
 
 	mcr_val = qspi_read32(priv->flags, &priv->regs->mcr);
+
+	/* Set endianness to LE for i.mx */
+	if (is_mx7() || is_mx6() || is_mx7ulp())
+		mcr_val = QSPI_MCR_END_CFD_LE;
+
 	qspi_write32(priv->flags, &priv->regs->mcr,
 		     QSPI_MCR_RESERVED_MASK | QSPI_MCR_MDIS_MASK |
 		     (mcr_val & QSPI_MCR_END_CFD_MASK));
@@ -1056,7 +1119,7 @@ static int fsl_qspi_probe(struct udevice *bus)
 			     priv->amba_base[3] + amba_size_per_chip);
 		break;
 	default:
-		debug("Error: Unsupported chipselect number %u!\n",
+		printf("Error: Unsupported chipselect number %u!\n",
 		      priv->num_chipselect);
 		qspi_module_disable(priv, 1);
 		return -EINVAL;
@@ -1192,8 +1255,12 @@ static const struct dm_spi_ops fsl_qspi_ops = {
 static const struct udevice_id fsl_qspi_ids[] = {
 	{ .compatible = "fsl,vf610-qspi" },
 	{ .compatible = "fsl,imx6sx-qspi" },
+	{ .compatible = "fsl,imx6ul-qspi" },
+	{ .compatible = "fsl,imx7d-qspi" },
+	{ .compatible = "fsl,imx7ulp-qspi" },
 	{ }
 };
+
 
 U_BOOT_DRIVER(fsl_qspi) = {
 	.name	= "fsl_qspi",

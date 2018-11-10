@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -17,6 +18,10 @@
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
 #include <imx_thermal.h>
+#include <fsl_wdog.h>
+#if defined(CONFIG_FSL_FASTBOOT) && defined(CONFIG_ANDROID_RECOVERY)
+#include <recovery.h>
+#endif
 
 #if defined(CONFIG_IMX_THERMAL)
 static const struct imx_thermal_plat imx7_thermal_plat = {
@@ -227,6 +232,35 @@ static void imx_enet_mdio_fixup(void)
 	}
 }
 
+static void set_epdc_qos(void)
+{
+#define REGS_QOS_BASE     QOSC_IPS_BASE_ADDR
+#define REGS_QOS_EPDC     (QOSC_IPS_BASE_ADDR + 0x3400)
+#define REGS_QOS_PXP0     (QOSC_IPS_BASE_ADDR + 0x2C00)
+#define REGS_QOS_PXP1     (QOSC_IPS_BASE_ADDR + 0x3C00)
+
+	writel(0, REGS_QOS_BASE);  /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_BASE + 0x60);  /*  Enable all masters */
+	writel(0, REGS_QOS_EPDC);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP0);   /*  Disable clkgate & soft_reset */
+	writel(0, REGS_QOS_PXP1);   /*  Disable clkgate & soft_reset */
+
+	writel(0x0f020722, REGS_QOS_EPDC + 0xd0);   /*  WR, init = 7 with red flag */
+	writel(0x0f020722, REGS_QOS_EPDC + 0xe0);   /*  RD,  init = 7 with red flag */
+
+	writel(1, REGS_QOS_PXP0);   /*  OT_CTRL_EN =1 */
+	writel(1, REGS_QOS_PXP1);   /*  OT_CTRL_EN =1 */
+
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x50);   /*  WR,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP0 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020222, REGS_QOS_PXP1 + 0x60);   /*  rD,  init = 2 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP0 + 0x70);   /*  tOTAL,  init = 4 with red flag */
+	writel(0x0f020422, REGS_QOS_PXP1 + 0x70);   /*  TOTAL,  init = 4 with red flag */
+
+	writel(0xe080, IOMUXC_GPR_BASE_ADDR + 0x0034); /* EPDC AW/AR CACHE ENABLE */
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
@@ -237,13 +271,16 @@ int arch_cpu_init(void)
 
 	imx_enet_mdio_fixup();
 
+	set_epdc_qos();
+
 #ifdef CONFIG_APBH_DMA
 	/* Start APBH DMA */
 	mxs_dma_init();
 #endif
 
-	if (IS_ENABLED(CONFIG_IMX_RDC))
-		isolate_resource();
+#ifdef CONFIG_IMX_RDC
+	isolate_resource();
+#endif
 
 	return 0;
 }
@@ -443,16 +480,13 @@ int mmc_get_env_dev(void)
 
 void s_init(void)
 {
-#if !defined CONFIG_SPL_BUILD
-	/* Enable SMP mode for CPU0, by setting bit 6 of Auxiliary Ctl reg */
-	asm volatile(
-			"mrc p15, 0, r0, c1, c0, 1\n"
-			"orr r0, r0, #1 << 6\n"
-			"mcr p15, 0, r0, c1, c0, 1\n");
-#endif
 	/* clock configuration. */
 	clock_init();
 
+#if defined(CONFIG_ANDROID_SUPPORT)
+        /* Enable RTC */
+        writel(0x21, 0x30370038);
+#endif
 	return;
 }
 
@@ -461,5 +495,19 @@ void reset_misc(void)
 #ifdef CONFIG_VIDEO_MXS
 	lcdif_power_down();
 #endif
+}
+
+void reset_cpu(ulong addr)
+{
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((WCR_WDE | WCR_SRS), &wdog->wcr);
+
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	}
 }
 

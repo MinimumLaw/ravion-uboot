@@ -7,7 +7,8 @@
  * which is based on Freescale's
  * http://git.freescale.com/git/cgit.cgi/imx/uboot-imx.git/tree/drivers/misc/imx_otp.c?h=imx_v2009.08_1.1.0&id=9aa74e6,
  * which is:
- * Copyright (C) 2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2011-2016 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -29,6 +30,12 @@
 #ifdef CONFIG_MX7
 #define BM_CTRL_ADDR                    0x0000000f
 #define BM_CTRL_RELOAD                  0x00000400
+#elif defined(CONFIG_MX7ULP)
+#define BM_CTRL_ADDR                    0x000000FF
+#define BM_CTRL_RELOAD                  0x00000400
+#define BM_OUT_STATUS_DED				0x00000400
+#define BM_OUT_STATUS_LOCKED			0x00000800
+#define BM_OUT_STATUS_PROGFAIL			0x00001000
 #else
 #define BM_CTRL_ADDR			0x0000007f
 #endif
@@ -70,6 +77,9 @@
 #elif defined CONFIG_MX7
 #define FUSE_BANK_SIZE	0x40
 #define FUSE_BANKS	16
+#elif defined(CONFIG_MX7ULP)
+#define FUSE_BANK_SIZE	0x80
+#define FUSE_BANKS	31
 #else
 #error "Unsupported architecture\n"
 #endif
@@ -98,7 +108,7 @@ u32 fuse_bank_physical(int index)
 {
 	u32 phy_index;
 
-	if (is_mx6sl()) {
+	if (is_mx6sl() || is_mx7ulp()) {
 		phy_index = index;
 	} else if (is_mx6ul() || is_mx6ull() || is_mx6sll()) {
 		if ((is_mx6ull() || is_mx6sll()) && index == 8)
@@ -187,6 +197,10 @@ static int finish_access(struct ocotp_regs *regs, const char *caller)
 	err = !!(readl(&regs->ctrl) & BM_CTRL_ERROR);
 	clear_error(regs);
 
+#ifdef CONFIG_MX7ULP
+	/* Need to power down the OTP memory */
+	writel(1, &regs->pdn);
+#endif
 	if (err) {
 		printf("mxc_ocotp %s(): Access protect error\n", caller);
 		return -EIO;
@@ -217,6 +231,13 @@ int fuse_read(u32 bank, u32 word, u32 *val)
 
 	*val = readl(&regs->bank[phy_bank].fuse_regs[phy_word << 2]);
 
+#ifdef CONFIG_MX7ULP
+	if (readl(&regs->out_status) & BM_OUT_STATUS_DED) {
+		writel(BM_OUT_STATUS_DED, &regs->out_status_clr);
+		printf("mxc_ocotp %s(): fuse read wrong\n", __func__);
+		return -EIO;
+	}
+#endif
 	return finish_access(regs, __func__);
 }
 
@@ -238,6 +259,12 @@ static void set_timing(struct ocotp_regs *regs)
 	clrsetbits_le32(&regs->timing, BM_TIMING_FSOURCE | BM_TIMING_PROG,
 			timing);
 }
+#elif defined(CONFIG_MX7ULP)
+static void set_timing(struct ocotp_regs *regs)
+{
+	/* No timing set for MX7ULP */
+}
+
 #else
 static void set_timing(struct ocotp_regs *regs)
 {
@@ -302,12 +329,37 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 	*val = readl(&regs->read_fuse_data);
 #endif
 
+#ifdef CONFIG_MX7ULP
+	if (readl(&regs->out_status) & BM_OUT_STATUS_DED) {
+		writel(BM_OUT_STATUS_DED, &regs->out_status_clr);
+		printf("mxc_ocotp %s(): fuse read wrong\n", __func__);
+		return -EIO;
+	}
+#endif
+
 	return finish_access(regs, __func__);
 }
 
 static int prepare_write(struct ocotp_regs **regs, u32 bank, u32 word,
 				const char *caller)
 {
+#ifdef CONFIG_MX7ULP
+	u32 val;
+	int ret;
+
+	/* Only bank 0 and 1 are redundancy mode, others are ECC mode */
+	if (bank != 0 && bank != 1) {
+		ret = fuse_sense(bank, word, &val);
+		if (ret)
+			return ret;
+
+		if (val != 0) {
+			printf("mxc_ocotp: The word has been programmed, no more write\n");
+			return -EPERM;
+		}
+	}
+#endif
+
 	return prepare_access(regs, bank, word, true, caller);
 }
 
@@ -355,6 +407,14 @@ int fuse_prog(u32 bank, u32 word, u32 val)
 #endif
 	udelay(WRITE_POSTAMBLE_US);
 
+#ifdef CONFIG_MX7ULP
+	if (readl(&regs->out_status) & (BM_OUT_STATUS_PROGFAIL | BM_OUT_STATUS_LOCKED)) {
+		writel((BM_OUT_STATUS_PROGFAIL | BM_OUT_STATUS_LOCKED), &regs->out_status_clr);
+		printf("mxc_ocotp %s(): fuse write is failed\n", __func__);
+		return -EIO;
+	}
+#endif
+
 	return finish_access(regs, __func__);
 }
 
@@ -373,6 +433,14 @@ int fuse_override(u32 bank, u32 word, u32 val)
 	phy_word = fuse_word_physical(bank, word);
 
 	writel(val, &regs->bank[phy_bank].fuse_regs[phy_word << 2]);
+
+#ifdef CONFIG_MX7ULP
+	if (readl(&regs->out_status) & (BM_OUT_STATUS_PROGFAIL | BM_OUT_STATUS_LOCKED)) {
+		writel((BM_OUT_STATUS_PROGFAIL | BM_OUT_STATUS_LOCKED), &regs->out_status_clr);
+		printf("mxc_ocotp %s(): fuse write is failed\n", __func__);
+		return -EIO;
+	}
+#endif
 
 	return finish_access(regs, __func__);
 }

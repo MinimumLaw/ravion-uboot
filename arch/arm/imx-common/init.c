@@ -78,7 +78,7 @@ void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog1->wmcr);
 	writew(enable, &wdog2->wmcr);
 
-	if (is_mx6sx() || is_mx6ul() || is_mx7())
+	if (is_mx6sx() || is_mx6ul() || is_mx6ull() || is_mx7())
 		writew(enable, &wdog3->wmcr);
 #ifdef CONFIG_MX7D
 	writew(enable, &wdog4->wmcr);
@@ -113,5 +113,15 @@ void boot_mode_apply(unsigned cfg_val)
 	else
 		reg &= ~(1 << 28);
 	writel(reg, &psrc->gpr10);
+}
+#endif
+
+#if defined(CONFIG_MX6)
+u32 imx6_src_get_boot_mode(void)
+{
+	if (imx6_is_bmode_from_gpr9())
+		return readl(&src_base->gpr9);
+	else
+		return readl(&src_base->sbmr1);
 }
 #endif
