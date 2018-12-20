@@ -509,14 +509,6 @@ int board_eth_init(bd_t *bis)
 	return 0;
 }
 
-static iomux_v3_cfg_t const pwr_intb_pads[] = {
-	/*
-	 * the bootrom sets the iomux to vselect, potentially connecting
-	 * two outputs. Set this back to GPIO
-	 */
-	MX6_PAD_GPIO_18__GPIO7_IO13 | MUX_PAD_CTRL(NO_PAD_CTRL)
-};
-
 #if defined(CONFIG_VIDEO_IPUV3)
 
 static iomux_v3_cfg_t const backlight_pads[] = {
@@ -914,10 +906,21 @@ static void setup_display(void)
 }
 #endif /* defined(CONFIG_VIDEO_IPUV3) */
 
+static iomux_v3_cfg_t const pwr_intb_pads[] = {
+#define EXT_NRESETOUTPUT_GP IMX_GPIO_NR(5, 7)
+	MX6_PAD_DISP0_DAT13__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
 int board_early_init_f(void)
 {
 	imx_iomux_v3_setup_multiple_pads(pwr_intb_pads,
 					 ARRAY_SIZE(pwr_intb_pads));
+	/*
+	 * Bang nRESETOUT to 100mS, then set them into ACTIVE state
+	 */
+	gpio_direction_output(EXT_NRESETOUTPUT_GP, 0);
+	mdelay(100); /* ext reset delay */
+	gpio_direction_output(EXT_NRESETOUTPUT_GP, 1);
 	setup_iomux_uart();
 
 	return 0;
