@@ -915,11 +915,7 @@ int board_early_init_f(void)
 {
 	imx_iomux_v3_setup_multiple_pads(pwr_intb_pads,
 					 ARRAY_SIZE(pwr_intb_pads));
-	/*
-	 * Bang nRESETOUT to 100mS, then set them into ACTIVE state
-	 */
-	gpio_direction_output(EXT_NRESETOUTPUT_GP, 0);
-	mdelay(100); /* ext reset delay */
+	/* Set nRESETOUT to 100mS, then set them into ACTIVE state */
 	gpio_direction_output(EXT_NRESETOUTPUT_GP, 1);
 	setup_iomux_uart();
 
