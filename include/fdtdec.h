@@ -803,23 +803,6 @@ const u8 *fdtdec_locate_byte_array(const void *blob, int node,
 			     const char *prop_name, int count);
 
 /**
- * Look up a property in a node which contains a memory region address and
- * size. Then return a pointer to this address.
- *
- * The property must hold one address with a length. This is only tested on
- * 32-bit machines.
- *
- * @param blob		FDT blob
- * @param node		node to examine
- * @param prop_name	name of property to find
- * @param basep		Returns base address of region
- * @param size		Returns size of region
- * @return 0 if ok, -1 on error (property not found)
- */
-int fdtdec_decode_region(const void *blob, int node, const char *prop_name,
-			 fdt_addr_t *basep, fdt_size_t *sizep);
-
-/**
  * Obtain an indexed resource from a device property.
  *
  * @param fdt		FDT blob
@@ -848,34 +831,6 @@ int fdt_get_resource(const void *fdt, int node, const char *property,
 int fdt_get_named_resource(const void *fdt, int node, const char *property,
 			   const char *prop_names, const char *name,
 			   struct fdt_resource *res);
-
-/**
- * Decode a named region within a memory bank of a given type.
- *
- * This function handles selection of a memory region. The region is
- * specified as an offset/size within a particular type of memory.
- *
- * The properties used are:
- *
- *	<mem_type>-memory<suffix> for the name of the memory bank
- *	<mem_type>-offset<suffix> for the offset in that bank
- *
- * The property value must have an offset and a size. The function checks
- * that the region is entirely within the memory bank.5
- *
- * @param blob		FDT blob
- * @param node		Node containing the properties (-1 for /config)
- * @param mem_type	Type of memory to use, which is a name, such as
- *			"u-boot" or "kernel".
- * @param suffix	String to append to the memory/offset
- *			property names
- * @param basep		Returns base of region
- * @param sizep		Returns size of region
- * @return 0 if OK, -ive on error
- */
-int fdtdec_decode_memory_region(const void *blob, int node,
-				const char *mem_type, const char *suffix,
-				fdt_addr_t *basep, fdt_size_t *sizep);
 
 /* Display timings from linux include/video/display_timing.h */
 enum display_flags {
@@ -996,11 +951,33 @@ int fdtdec_setup_memory_banksize(void);
  */
 int fdtdec_setup(void);
 
+#if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
+/**
+ * fdtdec_resetup()  - Set up the device tree again
+ *
+ * The main difference with fdtdec_setup() is that it returns if the fdt has
+ * changed because a better match has been found.
+ * This is typically used for boards that rely on a DM driver to detect the
+ * board type. This function sould be called by the board code after the stuff
+ * needed by board_fit_config_name_match() to operate porperly is available.
+ * If this functions signals that a rescan is necessary, the board code must
+ * unbind all the drivers using dm_uninit() and then rescan the DT with
+ * dm_init_and_scan().
+ *
+ * @param rescan Returns a flag indicating that fdt has changed and rescanning
+ *               the fdt is required
+ *
+ * @return 0 if OK, -ve on error
+ */
+int fdtdec_resetup(int *rescan);
+#endif
+
 /**
  * Board-specific FDT initialization. Returns the address to a device tree blob.
  * Called when CONFIG_OF_BOARD is defined, or if CONFIG_OF_SEPARATE is defined
  * and the board implements it.
  */
+void *board_fdt_blob_setup(void);
 
 /*
  * Decode the size of memory

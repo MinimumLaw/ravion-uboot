@@ -18,13 +18,6 @@
   #define HWCONFIG_BUFFER_SIZE 256
 #endif
 
-/* CONFIG_HARD_SPI triggers SPI bus initialization in PowerPC */
-#if defined(CONFIG_MPC8XXX_SPI) || defined(CONFIG_FSL_ESPI)
-# ifndef CONFIG_HARD_SPI
-#  define CONFIG_HARD_SPI
-# endif
-#endif
-
 #define CONFIG_LMB
 #define CONFIG_SYS_BOOT_RAMDISK_HIGH
 
@@ -75,7 +68,7 @@
 /* All PPC boards must swap IDE bytes */
 #define CONFIG_IDE_SWAP_IO
 
-#if defined(CONFIG_DM_SERIAL)
+#if defined(CONFIG_DM_SERIAL) && !defined(CONFIG_CLK_MPC83XX)
 /*
  * TODO: Convert this to a clock driver exists that can give us the UART
  * clock here.

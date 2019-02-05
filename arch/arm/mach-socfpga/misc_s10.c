@@ -25,6 +25,26 @@ static struct socfpga_system_manager *sysmgr_regs =
 	(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
 
 /*
+ * FPGA programming support for SoC FPGA Stratix 10
+ */
+static Altera_desc altera_fpga[] = {
+	{
+		/* Family */
+		Intel_FPGA_Stratix10,
+		/* Interface type */
+		secure_device_manager_mailbox,
+		/* No limitation as additional data will be ignored */
+		-1,
+		/* No device function table */
+		NULL,
+		/* Base interface address specified in driver */
+		NULL,
+		/* No cookie implementation */
+		0
+	},
+};
+
+/*
  * DesignWare Ethernet initialization
  */
 #ifdef CONFIG_ETH_DESIGNWARE
@@ -36,7 +56,8 @@ static u32 socfpga_phymode_setup(u32 gmac_index, const char *phymode)
 	if (!phymode)
 		return -EINVAL;
 
-	if (!strcmp(phymode, "mii") || !strcmp(phymode, "gmii"))
+	if (!strcmp(phymode, "mii") || !strcmp(phymode, "gmii") ||
+	    !strcmp(phymode, "sgmii"))
 		modereg = SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII;
 	else if (!strcmp(phymode, "rgmii"))
 		modereg = SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RGMII;
@@ -58,7 +79,7 @@ static int socfpga_set_phymode(void)
 	struct fdtdec_phandle_args args;
 	const char *phy_mode;
 	u32 gmac_index;
-	int nodes[2];	/* Max. 3 GMACs */
+	int nodes[3];	/* Max. 3 GMACs */
 	int ret, count;
 	int i, node;
 
@@ -124,6 +145,8 @@ int arch_misc_init(void)
 
 int arch_early_init_r(void)
 {
+	socfpga_fpga_add(&altera_fpga[0]);
+
 	return 0;
 }
 

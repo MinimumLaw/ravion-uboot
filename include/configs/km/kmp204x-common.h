@@ -39,7 +39,6 @@
 #define CONFIG_SYS_DPAA_RMAN		/* RMan */
 
 /* Environment in SPI Flash */
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_ENV_SPI_BUS              0
 #define CONFIG_ENV_SPI_CS               0
 #define CONFIG_ENV_SPI_MAX_HZ           20000000
@@ -351,7 +350,6 @@ int get_scl(void);
  */
 
 /* we don't need flash support */
-#undef CONFIG_FLASH_CFI_MTD
 #undef CONFIG_JFFS2_CMDLINE
 
 /*

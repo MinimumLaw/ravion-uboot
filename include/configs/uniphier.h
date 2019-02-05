@@ -55,12 +55,9 @@
 
 /* FLASH related */
 
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
-
 #define CONFIG_SYS_MAX_FLASH_SECT	256
 #define CONFIG_SYS_MONITOR_BASE		0
-#define CONFIG_SYS_MONITOR_LEN		0x00090000	/* 576KB */
+#define CONFIG_SYS_MONITOR_LEN		0x000d0000	/* 832KB */
 #define CONFIG_SYS_FLASH_BASE		0
 
 /*
@@ -127,6 +124,8 @@
 	"third_image=u-boot.bin\0"
 #endif
 
+#define CONFIG_PREBOOT			"env exist ${bootdev}preboot && run ${bootdev}preboot"
+
 #define CONFIG_ROOTPATH			"/nfs/root/path"
 #define CONFIG_NFSBOOTCOMMAND						\
 	"setenv bootargs $bootargs root=/dev/nfs rw "			\
@@ -172,8 +171,32 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS				\
 	"netdev=eth0\0"						\
 	"initrd_high=0xffffffffffffffff\0"			\
+	"script=boot.scr\0" \
 	"scriptaddr=0x85000000\0"				\
 	"nor_base=0x42000000\0"					\
+	"emmcboot=mmcsetn && run bootcmd_mmc${mmc_first_dev}\0" \
+	"nandboot=run bootcmd_ubifs0\0" \
+	"norboot=run tftpboot\0" \
+	"usbboot=run bootcmd_usb0\0" \
+	"emmcscript=setenv devtype mmc && " \
+		"mmcsetn && " \
+		"setenv devnum ${mmc_first_dev} && " \
+		"run loadscript_fat\0" \
+	"nandscript=echo Running ${script} from ubi ... && " \
+		"ubi part UBI && " \
+		"ubifsmount ubi0:boot && " \
+		"ubifsload ${loadaddr} ${script} && " \
+		"source\0" \
+	"norscript=echo Running ${script} from tftp ... && " \
+		"tftpboot ${script} &&" \
+		"source\0" \
+	"usbscript=usb start && " \
+		"setenv devtype usb && " \
+		"setenv devnum 0 && " \
+		"run loadscript_fat\0" \
+	"loadscript_fat=echo Running ${script} from ${devtype}${devnum} ... && " \
+		"load ${devtype} ${devnum}:1 ${loadaddr} ${script} && " \
+		"source\0" \
 	"sramupdate=setexpr tmp_addr $nor_base + 0x50000 &&"	\
 		"tftpboot $tmp_addr $second_image && " \
 		"setexpr tmp_addr $nor_base + 0x70000 && " \
@@ -218,7 +241,7 @@
 #define CONFIG_SYS_NAND_U_BOOT_OFFS		0x20000
 
 /* subtract sizeof(struct image_header) */
-#define CONFIG_SYS_UBOOT_BASE			(0x70000 - 0x40)
+#define CONFIG_SYS_UBOOT_BASE			(0x130000 - 0x40)
 
 #define CONFIG_SPL_TARGET			"u-boot-with-spl.bin"
 #define CONFIG_SPL_MAX_FOOTPRINT		0x10000

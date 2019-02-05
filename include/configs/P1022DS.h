@@ -220,8 +220,6 @@
 #endif
 #endif
 
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
 #define CONFIG_SYS_FLASH_EMPTY_INFO
 
 /* Nand Flash */
@@ -388,12 +386,6 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
 #define CONFIG_SYS_EEPROM_BUS_NUM	1
 
-/*
- * eSPI - Enhanced SPI
- */
-
-#define CONFIG_HARD_SPI
-
 #define CONFIG_SF_DEFAULT_SPEED		10000000
 #define CONFIG_SF_DEFAULT_MODE		0
 
@@ -507,7 +499,6 @@
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#define CONFIG_FLASH_CFI_MTD
 
 /*
  * Environment

@@ -41,6 +41,14 @@ config ROCKCHIP_EFUSE
 	  extended (by porting the read function from the Linux kernel sources)
 	  to support other recent Rockchip devices.
 
+config VEXPRESS_CONFIG
+	bool "Enable support for Arm Versatile Express config bus"
+	depends on MISC
+	help
+	  If you say Y here, you will get support for accessing the
+	  configuration bus on the Arm Versatile Express boards via
+	  a sysreg driver.
+
 config CMD_CROS_EC
 	bool "Enable crosec command"
 	depends on CROS_EC
@@ -111,6 +119,12 @@ config FSL_SEC_MON
 	  system states.
 	  Security Monitor can be transitioned on any security failures,
 	  like software violations or hardware security violations.
+
+config JZ4780_EFUSE
+	bool "Ingenic JZ4780 eFUSE support"
+	depends on ARCH_JZ47XX
+	help
+	  This selects support for the eFUSE on Ingenic JZ4780 SoCs.
 
 config MXC_OCOTP
 	bool "Enable MXC OCOTP Driver"
@@ -288,4 +302,37 @@ config GDSYS_IOEP
 	depends on MISC
 	help
 	  Support gdsys FPGA's IO endpoint driver.
+
+config MPC83XX_SERDES
+	bool "Enable MPC83xx serdes driver"
+	depends on MISC
+	help
+	  Support for serdes found on MPC83xx SoCs.
+
+config FS_LOADER
+	bool "Enable loader driver for file system"
+	help
+	  This is file system generic loader which can be used to load
+	  the file image from the storage into target such as memory.
+
+	  The consumer driver would then use this loader to program whatever,
+	  ie. the FPGA device.
+
+config GDSYS_SOC
+	bool "Enable gdsys SOC driver"
+	depends on MISC
+	help
+	  Support for gdsys IHS SOC, a simple bus associated with each gdsys
+	  IHS (Integrated Hardware Systems) FPGA, which holds all devices whose
+	  register maps are contained within the FPGA's register map.
+
+config IHS_FPGA
+	bool "Enable IHS FPGA driver"
+	depends on MISC
+	help
+	  Support IHS (Integrated Hardware Systems) FPGA, the main FPGAs on
+	  gdsys devices, which supply the majority of the functionality offered
+	  by the devices. This driver supports both CON and CPU variants of the
+	  devices, depending on the device tree entry.
+
 endmenu

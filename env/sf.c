@@ -58,7 +58,8 @@ static int setup_flash_device(void)
 
 	/* speed and mode will be read from DT */
 	ret = spi_flash_probe_bus_cs(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
-				     0, 0, &new);
+				     CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE,
+				     &new);
 	if (ret) {
 		set_default_env("spi_flash_probe_bus_cs() failed", 0);
 		return ret;
@@ -297,10 +298,17 @@ out:
 }
 #endif
 
+#ifdef CONFIG_ENV_ADDR
+__weak void *env_sf_get_env_addr(void)
+{
+	return (void *)CONFIG_ENV_ADDR;
+}
+#endif
+
 #if defined(INITENV) && defined(CONFIG_ENV_ADDR)
 static int env_sf_init(void)
 {
-	env_t *env_ptr = (env_t *)(CONFIG_ENV_ADDR);
+	env_t *env_ptr = (env_t *)env_sf_get_env_addr();
 
 	if (crc32(0, env_ptr->data, ENV_SIZE) == env_ptr->crc) {
 		gd->env_addr	= (ulong)&(env_ptr->data);

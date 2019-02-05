@@ -55,10 +55,10 @@ static void board_final_cleanup(void)
 	if (top_type == MTRR_TYPE_WRPROT) {
 		struct mtrr_state state;
 
-		mtrr_open(&state);
+		mtrr_open(&state, true);
 		wrmsrl(MTRR_PHYS_BASE_MSR(top_mtrr), 0);
 		wrmsrl(MTRR_PHYS_MASK_MSR(top_mtrr), 0);
-		mtrr_close(&state);
+		mtrr_close(&state, true);
 	}
 
 	if (!fdtdec_get_config_bool(gd->fdt_blob, "u-boot,no-apm-finalize")) {
@@ -77,7 +77,8 @@ int last_stage_init(void)
 		timestamp_add_to_bootstage();
 
 	/* start usb so that usb keyboard can be used as input device */
-	usb_init();
+	if (CONFIG_IS_ENABLED(USB_KEYBOARD))
+		usb_init();
 
 	board_final_cleanup();
 

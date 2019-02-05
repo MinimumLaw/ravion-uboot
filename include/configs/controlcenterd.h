@@ -182,10 +182,6 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN 2
 
 #ifndef CONFIG_TRAILBLAZER
-/*
- * eSPI - Enhanced SPI
- */
-#define CONFIG_HARD_SPI
 
 #define CONFIG_SF_DEFAULT_SPEED		10000000
 #define CONFIG_SF_DEFAULT_MODE		0
@@ -297,8 +293,6 @@
 #define CONFIG_ENV_SIZE		0x2000
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #endif
-
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 
 /*
  * Command line configuration.

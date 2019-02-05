@@ -36,7 +36,6 @@
 #include <onenand_uboot.h>
 #include <scsi.h>
 #include <serial.h>
-#include <spi.h>
 #include <stdio_dev.h>
 #include <timer.h>
 #include <trace.h>
@@ -140,15 +139,12 @@ static int initr_reloc_global_data(void)
 	 */
 	fixup_cpu();
 #endif
-#ifdef CONFIG_SYS_EXTRA_ENV_RELOC
+#if !defined(CONFIG_ENV_ADDR) || defined(ENV_IS_EMBEDDED)
 	/*
-	 * Some systems need to relocate the env_addr pointer early because the
-	 * location it points to will get invalidated before env_relocate is
-	 * called.  One example is on systems that might use a L2 or L3 cache
-	 * in SRAM mode and initialize that cache from SRAM mode back to being
-	 * a cache in cpu_init_r.
+	 * Relocate the early env_addr pointer unless we know it is not inside
+	 * the binary. Some systems need this and for the rest, it doesn't hurt.
 	 */
-	gd->env_addr += gd->relocaddr - CONFIG_SYS_MONITOR_BASE;
+	gd->env_addr += gd->reloc_off;
 #endif
 #ifdef CONFIG_OF_EMBED
 	/*
@@ -382,20 +378,6 @@ static int initr_flash(void)
 }
 #endif
 
-#if defined(CONFIG_PPC) && !defined(CONFIG_DM_SPI)
-static int initr_spi(void)
-{
-	/* MPC8xx does this here */
-#ifdef CONFIG_MPC8XX_SPI
-#if !defined(CONFIG_ENV_IS_IN_EEPROM)
-	spi_init_f();
-#endif
-	spi_init_r();
-#endif
-	return 0;
-}
-#endif
-
 #ifdef CONFIG_CMD_NAND
 /* go init the NAND */
 static int initr_nand(void)
@@ -456,7 +438,8 @@ static int initr_env(void)
 	else
 		set_default_env(NULL, 0);
 #ifdef CONFIG_OF_CONTROL
-	env_set_addr("fdtcontroladdr", gd->fdt_blob);
+	env_set_hex("fdtcontroladdr",
+		    (unsigned long)map_to_sysmem(gd->fdt_blob));
 #endif
 
 	/* Initialize from environment */
@@ -745,9 +728,6 @@ static init_fnc_t init_sequence_r[] = {
 #if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_X86)
 	/* initialize higher level parts of CPU like time base and timers */
 	cpu_init_r,
-#endif
-#ifdef CONFIG_PPC
-	initr_spi,
 #endif
 #ifdef CONFIG_CMD_NAND
 	initr_nand,

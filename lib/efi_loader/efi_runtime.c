@@ -30,8 +30,9 @@ static efi_status_t __efi_runtime EFIAPI efi_device_error(void);
 static efi_status_t __efi_runtime EFIAPI efi_invalid_parameter(void);
 
 /*
- * TODO(sjg@chromium.org): These defines and structs should come from the elf
- * header for each arch (or a generic header) rather than being repeated here.
+ * TODO(sjg@chromium.org): These defines and structures should come from the ELF
+ * header for each architecture (or a generic header) rather than being repeated
+ * here.
  */
 #if defined(__aarch64__)
 #define R_RELATIVE	R_AARCH64_RELATIVE
@@ -40,9 +41,13 @@ static efi_status_t __efi_runtime EFIAPI efi_invalid_parameter(void);
 #elif defined(__arm__)
 #define R_RELATIVE	R_ARM_RELATIVE
 #define R_MASK		0xffULL
-#elif defined(__x86_64__) || defined(__i386__)
+#elif defined(__i386__)
 #define R_RELATIVE	R_386_RELATIVE
 #define R_MASK		0xffULL
+#elif defined(__x86_64__)
+#define R_RELATIVE	R_X86_64_RELATIVE
+#define R_MASK		0xffffffffULL
+#define IS_RELA		1
 #elif defined(__riscv)
 #define R_RELATIVE	R_RISCV_RELATIVE
 #define R_MASK		0xffULL
@@ -79,7 +84,7 @@ struct elf_rela {
 };
 
 /*
- * EFI Runtime code lives in 2 stages. In the first stage, U-Boot and an EFI
+ * EFI runtime code lives in two stages. In the first stage, U-Boot and an EFI
  * payload are running concurrently at the same time. In this mode, we can
  * handle a good number of runtime callbacks
  */
@@ -97,7 +102,7 @@ void __efi_runtime efi_update_table_header_crc32(struct efi_table_hdr *table)
 }
 
 /**
- * efi_reset_system_boottime() - reset system at boottime
+ * efi_reset_system_boottime() - reset system at boot time
  *
  * This function implements the ResetSystem() runtime service before
  * SetVirtualAddressMap() is called.
@@ -136,7 +141,9 @@ static void EFIAPI efi_reset_system_boottime(
 		do_reset(NULL, 0, 0, NULL);
 		break;
 	case EFI_RESET_SHUTDOWN:
-		/* We don't have anything to map this to */
+#ifdef CONFIG_CMD_POWEROFF
+		do_poweroff(NULL, 0, 0, NULL);
+#endif
 		break;
 	}
 
@@ -144,7 +151,7 @@ static void EFIAPI efi_reset_system_boottime(
 }
 
 /**
- * efi_get_time_boottime() - get current time at boottime
+ * efi_get_time_boottime() - get current time at boot time
  *
  * This function implements the GetTime runtime service before
  * SetVirtualAddressMap() is called.
@@ -277,7 +284,7 @@ static const struct efi_runtime_detach_list_struct efi_runtime_detach_list[] = {
 	}, {
 		/* invalidate_*cache_all are gone */
 		.ptr = &efi_runtime_services.set_virtual_address_map,
-		.patchto = &efi_invalid_parameter,
+		.patchto = &efi_unimplemented,
 	}, {
 		/* RTC accessors are gone */
 		.ptr = &efi_runtime_services.get_time,
@@ -335,7 +342,7 @@ static void efi_runtime_detach(ulong offset)
 		*p = newaddr;
 	}
 
-	/* Update crc32 */
+	/* Update CRC32 */
 	efi_update_table_header_crc32(&efi_runtime_services.hdr);
 }
 
@@ -357,7 +364,8 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 
 		p = (void*)((ulong)rel->offset - base) + gd->relocaddr;
 
-		debug("%s: rel->info=%#lx *p=%#lx rel->offset=%p\n", __func__, rel->info, *p, rel->offset);
+		debug("%s: rel->info=%#lx *p=%#lx rel->offset=%p\n", __func__,
+		      rel->info, *p, rel->offset);
 
 		switch (rel->info & R_MASK) {
 		case R_RELATIVE:
@@ -372,10 +380,16 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 			ulong symidx = rel->info >> SYM_INDEX;
 			extern struct dyn_sym __dyn_sym_start[];
 			newaddr = __dyn_sym_start[symidx].addr + offset;
+#ifdef IS_RELA
+			newaddr -= CONFIG_SYS_TEXT_BASE;
+#endif
 			break;
 		}
 #endif
 		default:
+			if (!efi_runtime_tobedetached(p))
+				printf("%s: Unknown relocation type %llx\n",
+				       __func__, rel->info & R_MASK);
 			continue;
 		}
 
@@ -384,8 +398,8 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 		    newaddr > (map->virtual_start +
 			      (map->num_pages << EFI_PAGE_SHIFT)))) {
 			if (!efi_runtime_tobedetached(p))
-				printf("U-Boot EFI: Relocation at %p is out of "
-				       "range (%lx)\n", p, newaddr);
+				printf("%s: Relocation at %p is out of "
+				       "range (%lx)\n", __func__, p, newaddr);
 			continue;
 		}
 
@@ -422,13 +436,41 @@ static efi_status_t EFIAPI efi_set_virtual_address_map(
 			uint32_t descriptor_version,
 			struct efi_mem_desc *virtmap)
 {
-	ulong runtime_start = (ulong)&__efi_runtime_start &
-			      ~(ulong)EFI_PAGE_MASK;
 	int n = memory_map_size / descriptor_size;
 	int i;
+	int rt_code_sections = 0;
 
 	EFI_ENTRY("%lx %lx %x %p", memory_map_size, descriptor_size,
 		  descriptor_version, virtmap);
+
+	/*
+	 * TODO:
+	 * Further down we are cheating. While really we should implement
+	 * SetVirtualAddressMap() events and ConvertPointer() to allow
+	 * dynamically loaded drivers to expose runtime services, we don't
+	 * today.
+	 *
+	 * So let's ensure we see exactly one single runtime section, as
+	 * that is the built-in one. If we see more (or less), someone must
+	 * have tried adding or removing to that which we don't support yet.
+	 * In that case, let's better fail rather than expose broken runtime
+	 * services.
+	 */
+	for (i = 0; i < n; i++) {
+		struct efi_mem_desc *map = (void*)virtmap +
+					   (descriptor_size * i);
+
+		if (map->type == EFI_RUNTIME_SERVICES_CODE)
+			rt_code_sections++;
+	}
+
+	if (rt_code_sections != 1) {
+		/*
+		 * We expose exactly one single runtime code section, so
+		 * something is definitely going wrong.
+		 */
+		return EFI_EXIT(EFI_INVALID_PARAMETER);
+	}
 
 	/* Rebind mmio pointers */
 	for (i = 0; i < n; i++) {
@@ -469,7 +511,7 @@ static efi_status_t EFIAPI efi_set_virtual_address_map(
 		map = (void*)virtmap + (descriptor_size * i);
 		if (map->type == EFI_RUNTIME_SERVICES_CODE) {
 			ulong new_offset = map->virtual_start -
-					   (runtime_start - gd->relocaddr);
+					   map->physical_start + gd->relocaddr;
 
 			efi_runtime_relocate(new_offset, map);
 			/* Once we're virtual, we can no longer handle
@@ -489,7 +531,7 @@ static efi_status_t EFIAPI efi_set_virtual_address_map(
  * available at runtime.
  *
  * @mmio_ptr:		address of the memory-mapped IO region
- * @len:		size of thememory-mapped IO region
+ * @len:		size of the memory-mapped IO region
  * Returns:		status code
  */
 efi_status_t efi_add_runtime_mmio(void *mmio_ptr, u64 len)
@@ -607,15 +649,15 @@ efi_status_t __efi_runtime EFIAPI efi_update_capsule(
  *
  * @capsule_header_array:	pointer to array of virtual pointers
  * @capsule_count:		number of pointers in capsule_header_array
- * @capsule_size:		maximum capsule size
+ * @maximum_capsule_size:	maximum capsule size
  * @reset_type:			type of reset needed for capsule update
  * Returns:			status code
  */
 efi_status_t __efi_runtime EFIAPI efi_query_capsule_caps(
 			struct efi_capsule_header **capsule_header_array,
 			efi_uintn_t capsule_count,
-			u64 maximum_capsule_size,
-			u32 reset_type)
+			u64 *maximum_capsule_size,
+			u32 *reset_type)
 {
 	return EFI_UNSUPPORTED;
 }

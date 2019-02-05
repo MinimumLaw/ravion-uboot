@@ -341,7 +341,7 @@ static int tsc_timer_get_count(struct udevice *dev, u64 *count)
 	return 0;
 }
 
-static void tsc_timer_ensure_setup(bool stop)
+static void tsc_timer_ensure_setup(bool early)
 {
 	if (gd->arch.tsc_base)
 		return;
@@ -362,8 +362,8 @@ static void tsc_timer_ensure_setup(bool stop)
 		if (fast_calibrate)
 			goto done;
 
-		if (stop)
-			panic("TSC frequency is ZERO");
+		if (early)
+			fast_calibrate = CONFIG_X86_TSC_TIMER_EARLY_FREQ;
 		else
 			return;
 
@@ -424,5 +424,4 @@ U_BOOT_DRIVER(tsc_timer) = {
 	.of_match = tsc_timer_ids,
 	.probe = tsc_timer_probe,
 	.ops	= &tsc_timer_ops,
-	.flags = DM_FLAG_PRE_RELOC,
 };

@@ -12,9 +12,12 @@
 
 #define CONFIG_SYS_MEMTEST_SCRATCH     0xfffc0000
 
+#define CONFIG_EXTRA_ENV_SETTINGS
+
 #include <configs/xilinx_zynqmp.h>
 
 /* Undef unneeded configs */
+#undef CONFIG_BOOTCOMMAND
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #undef CONFIG_SYS_MALLOC_LEN
 #undef CONFIG_ZLIB
@@ -24,7 +27,6 @@
 #undef CONFIG_BOOTM_NETBSD
 #undef CONFIG_BOOTM_VXWORKS
 #undef CONFIG_BOOTM_LINUX
-#undef CONFIG_BOARD_LATE_INIT
 
 /* BOOTP options */
 #undef CONFIG_BOOTP_BOOTFILESIZE

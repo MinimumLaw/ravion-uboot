@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <fdt_support.h>
-#include <inttypes.h>
+#include <mapmem.h>
 #include <linux/libfdt.h>
 #include <serial.h>
 #include <asm/sections.h>
@@ -200,7 +200,7 @@ fdt_addr_t fdtdec_get_addr(const void *blob, int node, const char *prop_name)
 	return fdtdec_get_addr_size(blob, node, prop_name, NULL);
 }
 
-#if defined(CONFIG_PCI) && defined(CONFIG_DM_PCI)
+#if CONFIG_IS_ENABLED(PCI) && defined(CONFIG_DM_PCI)
 int fdtdec_get_pci_addr(const void *blob, int node, enum fdt_pci_space type,
 			const char *prop_name, struct fdt_pci_addr *addr)
 {
@@ -922,28 +922,6 @@ char *fdtdec_get_config_string(const void *blob, const char *prop_name)
 	return (char *)nodep;
 }
 
-int fdtdec_decode_region(const void *blob, int node, const char *prop_name,
-			 fdt_addr_t *basep, fdt_size_t *sizep)
-{
-	const fdt_addr_t *cell;
-	int len;
-
-	debug("%s: %s: %s\n", __func__, fdt_get_name(blob, node, NULL),
-	      prop_name);
-	cell = fdt_getprop(blob, node, prop_name, &len);
-	if (!cell || (len < sizeof(fdt_addr_t) * 2)) {
-		debug("cell=%p, len=%d\n", cell, len);
-		return -1;
-	}
-
-	*basep = fdt_addr_to_cpu(*cell);
-	*sizep = fdt_size_to_cpu(cell[1]);
-	debug("%s: base=%08lx, size=%lx\n", __func__, (ulong)*basep,
-	      (ulong)*sizep);
-
-	return 0;
-}
-
 u64 fdtdec_get_number(const fdt32_t *ptr, unsigned int cells)
 {
 	u64 number = 0;
@@ -1000,67 +978,6 @@ int fdt_get_named_resource(const void *fdt, int node, const char *property,
 		return index;
 
 	return fdt_get_resource(fdt, node, property, index, res);
-}
-
-int fdtdec_decode_memory_region(const void *blob, int config_node,
-				const char *mem_type, const char *suffix,
-				fdt_addr_t *basep, fdt_size_t *sizep)
-{
-	char prop_name[50];
-	const char *mem;
-	fdt_size_t size, offset_size;
-	fdt_addr_t base, offset;
-	int node;
-
-	if (config_node == -1) {
-		config_node = fdt_path_offset(blob, "/config");
-		if (config_node < 0) {
-			debug("%s: Cannot find /config node\n", __func__);
-			return -ENOENT;
-		}
-	}
-	if (!suffix)
-		suffix = "";
-
-	snprintf(prop_name, sizeof(prop_name), "%s-memory%s", mem_type,
-		 suffix);
-	mem = fdt_getprop(blob, config_node, prop_name, NULL);
-	if (!mem) {
-		debug("%s: No memory type for '%s', using /memory\n", __func__,
-		      prop_name);
-		mem = "/memory";
-	}
-
-	node = fdt_path_offset(blob, mem);
-	if (node < 0) {
-		debug("%s: Failed to find node '%s': %s\n", __func__, mem,
-		      fdt_strerror(node));
-		return -ENOENT;
-	}
-
-	/*
-	 * Not strictly correct - the memory may have multiple banks. We just
-	 * use the first
-	 */
-	if (fdtdec_decode_region(blob, node, "reg", &base, &size)) {
-		debug("%s: Failed to decode memory region %s\n", __func__,
-		      mem);
-		return -EINVAL;
-	}
-
-	snprintf(prop_name, sizeof(prop_name), "%s-offset%s", mem_type,
-		 suffix);
-	if (fdtdec_decode_region(blob, config_node, prop_name, &offset,
-				 &offset_size)) {
-		debug("%s: Failed to decode memory region '%s'\n", __func__,
-		      prop_name);
-		return -EINVAL;
-	}
-
-	*basep = base + offset;
-	*sizep = offset_size;
-
-	return 0;
 }
 
 static int decode_timing_property(const void *blob, int node, const char *name,
@@ -1282,7 +1199,8 @@ static int uncompress_blob(const void *src, ulong sz_src, void **dstp)
 # else
 static int uncompress_blob(const void *src, ulong sz_src, void **dstp)
 {
-	return -ENOTSUPP;
+	*dstp = (void *)src;
+	return 0;
 }
 # endif
 #endif
@@ -1336,8 +1254,9 @@ int fdtdec_setup(void)
 #  if CONFIG_IS_ENABLED(OF_PRIOR_STAGE)
 	gd->fdt_blob = (void *)prior_stage_fdt_address;
 #  else
-	gd->fdt_blob = (void *)env_get_ulong("fdtcontroladdr", 16,
-						(uintptr_t)gd->fdt_blob);
+	gd->fdt_blob = map_sysmem
+		(env_get_ulong("fdtcontroladdr", 16,
+			       (unsigned long)map_to_sysmem(gd->fdt_blob)), 0);
 #  endif
 # endif
 
@@ -1356,13 +1275,54 @@ int fdtdec_setup(void)
 	 * If so, pick the most relevant
 	 */
 	fdt_blob = locate_dtb_in_fit(gd->fdt_blob);
-	if (fdt_blob)
+	if (fdt_blob) {
+		gd->multi_dtb_fit = gd->fdt_blob;
 		gd->fdt_blob = fdt_blob;
+	}
+
 # endif
 #endif
 
 	return fdtdec_prepare_fdt();
 }
+
+#if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
+int fdtdec_resetup(int *rescan)
+{
+	void *fdt_blob;
+
+	/*
+	 * If the current DTB is part of a compressed FIT image,
+	 * try to locate the best match from the uncompressed
+	 * FIT image stillpresent there. Save the time and space
+	 * required to uncompress it again.
+	 */
+	if (gd->multi_dtb_fit) {
+		fdt_blob = locate_dtb_in_fit(gd->multi_dtb_fit);
+
+		if (fdt_blob == gd->fdt_blob) {
+			/*
+			 * The best match did not change. no need to tear down
+			 * the DM and rescan the fdt.
+			 */
+			*rescan = 0;
+			return 0;
+		}
+
+		*rescan = 1;
+		gd->fdt_blob = fdt_blob;
+		return fdtdec_prepare_fdt();
+	}
+
+	/*
+	 * If multi_dtb_fit is NULL, it means that blob appended to u-boot is
+	 * not a FIT image containings DTB, but a single DTB. There is no need
+	 * to teard down DM and rescan the DT in this case.
+	 */
+	*rescan = 0;
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_NR_DRAM_BANKS
 int fdtdec_decode_ram_size(const void *blob, const char *area, int board_id,
@@ -1448,13 +1408,12 @@ int fdtdec_decode_ram_size(const void *blob, const char *area, int board_id,
 		if (auto_size) {
 			u64 new_size;
 
-			debug("Auto-sizing %" PRIx64 ", size %" PRIx64 ": ",
-			      addr, size);
+			debug("Auto-sizing %llx, size %llx: ", addr, size);
 			new_size = get_ram_size((long *)(uintptr_t)addr, size);
 			if (new_size == size) {
 				debug("OK\n");
 			} else {
-				debug("sized to %" PRIx64 "\n", new_size);
+				debug("sized to %llx\n", new_size);
 				size = new_size;
 			}
 		}
@@ -1464,7 +1423,7 @@ int fdtdec_decode_ram_size(const void *blob, const char *area, int board_id,
 		total_size += size;
 	}
 
-	debug("Memory size %" PRIu64 "\n", total_size);
+	debug("Memory size %llu\n", total_size);
 	if (sizep)
 		*sizep = (phys_size_t)total_size;
 

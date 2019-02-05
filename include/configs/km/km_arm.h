@@ -22,7 +22,6 @@
 /*
  * High Level Configuration Options (easy to change)
  */
-#define CONFIG_MARVELL
 #define CONFIG_FEROCEON_88FR131		/* CPU Core subversion */
 #define CONFIG_KW88F6281		/* SOC Name */
 
@@ -254,7 +253,6 @@ int get_scl(void);
 	""
 
 #if !defined(CONFIG_MTD_NOR_FLASH)
-#undef	CONFIG_FLASH_CFI_MTD
 #undef	CONFIG_JFFS2_CMDLINE
 #endif
 
