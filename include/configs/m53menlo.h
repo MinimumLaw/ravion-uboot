@@ -110,7 +110,6 @@
  * RTC
  */
 #ifdef CONFIG_CMD_DATE
-#define CONFIG_RTC_M41T62
 #define CONFIG_SYS_I2C_RTC_ADDR		0x68
 #define CONFIG_SYS_M41T11_BASE_YEAR	2000
 #endif
@@ -157,6 +156,9 @@
 
 /* IIM Fuses */
 #define CONFIG_FSL_IIM
+
+/* Watchdog */
+#define CONFIG_WATCHDOG_TIMEOUT_MSECS 8000
 
 /*
  * Boot Linux
