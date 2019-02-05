@@ -20,7 +20,6 @@
 #ifdef CONFIG_SDCARD
 #define CONFIG_RAMBOOT_SDCARD
 #define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_RESET_VECTOR_ADDRESS	0x110bfffc
 #endif
 
@@ -157,10 +156,7 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
 
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
 #define CONFIG_SYS_FLASH_EMPTY_INFO
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 
 #define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xffd00000
@@ -328,7 +324,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#define CONFIG_FLASH_CFI_MTD
 
 /*
  * Environment

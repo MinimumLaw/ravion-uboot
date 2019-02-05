@@ -38,14 +38,6 @@ ssize_t os_read(int fd, void *buf, size_t count)
 	return read(fd, buf, count);
 }
 
-ssize_t os_read_no_block(int fd, void *buf, size_t count)
-{
-	const int flags = fcntl(fd, F_GETFL, 0);
-
-	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-	return os_read(fd, buf, count);
-}
-
 ssize_t os_write(int fd, const void *buf, size_t count)
 {
 	return write(fd, buf, count);
@@ -85,6 +77,8 @@ int os_open(const char *pathname, int os_flags)
 
 	if (os_flags & OS_O_CREAT)
 		flags |= O_CREAT;
+	if (os_flags & OS_O_TRUNC)
+		flags |= O_TRUNC;
 
 	return open(pathname, flags, 0777);
 }
@@ -104,14 +98,41 @@ void os_exit(int exit_code)
 	exit(exit_code);
 }
 
+int os_write_file(const char *name, const void *buf, int size)
+{
+	char fname[256];
+	int fd;
+
+	fd = os_open(fname, OS_O_WRONLY | OS_O_CREAT | OS_O_TRUNC);
+	if (fd < 0) {
+		printf("Cannot open file '%s'\n", fname);
+		return -EIO;
+	}
+	if (os_write(fd, buf, size) != size) {
+		printf("Cannot write to file '%s'\n", fname);
+		return -EIO;
+	}
+	os_close(fd);
+	printf("Write '%s', size %#x (%d)\n", name, size, size);
+
+	return 0;
+}
+
 /* Restore tty state when we exit */
 static struct termios orig_term;
 static bool term_setup;
+static bool term_nonblock;
 
 void os_fd_restore(void)
 {
 	if (term_setup) {
+		int flags;
+
 		tcsetattr(0, TCSANOW, &orig_term);
+		if (term_nonblock) {
+			flags = fcntl(0, F_GETFL, 0);
+			fcntl(0, F_SETFL, flags & ~O_NONBLOCK);
+		}
 		term_setup = false;
 	}
 }
@@ -120,6 +141,7 @@ void os_fd_restore(void)
 void os_tty_raw(int fd, bool allow_sigs)
 {
 	struct termios term;
+	int flags;
 
 	if (term_setup)
 		return;
@@ -136,6 +158,13 @@ void os_tty_raw(int fd, bool allow_sigs)
 	if (tcsetattr(fd, TCSANOW, &term))
 		return;
 
+	flags = fcntl(fd, F_GETFL, 0);
+	if (!(flags & O_NONBLOCK)) {
+		if (fcntl(fd, F_SETFL, flags | O_NONBLOCK))
+			return;
+		term_nonblock = true;
+	}
+
 	term_setup = true;
 	atexit(os_fd_restore);
 }
@@ -143,14 +172,16 @@ void os_tty_raw(int fd, bool allow_sigs)
 void *os_malloc(size_t length)
 {
 	struct os_mem_hdr *hdr;
+	int page_size = getpagesize();
 
-	hdr = mmap(NULL, length + sizeof(*hdr), PROT_READ | PROT_WRITE,
+	hdr = mmap(NULL, length + page_size,
+		   PROT_READ | PROT_WRITE | PROT_EXEC,
 		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (hdr == MAP_FAILED)
 		return NULL;
 	hdr->length = length;
 
-	return hdr + 1;
+	return (void *)hdr + page_size;
 }
 
 void os_free(void *ptr)
@@ -567,15 +598,40 @@ int os_find_u_boot(char *fname, int maxlen)
 	struct sandbox_state *state = state_get_current();
 	const char *progname = state->argv[0];
 	int len = strlen(progname);
+	const char *suffix;
 	char *p;
 	int fd;
 
 	if (len >= maxlen || len < 4)
 		return -ENOSPC;
 
-	/* Look for 'u-boot' in the same directory as 'u-boot-spl' */
 	strcpy(fname, progname);
-	if (!strcmp(fname + len - 4, "-spl")) {
+	suffix = fname + len - 4;
+
+	/* If we are TPL, boot to SPL */
+	if (!strcmp(suffix, "-tpl")) {
+		fname[len - 3] = 's';
+		fd = os_open(fname, O_RDONLY);
+		if (fd >= 0) {
+			close(fd);
+			return 0;
+		}
+
+		/* Look for 'u-boot-tpl' in the tpl/ directory */
+		p = strstr(fname, "/tpl/");
+		if (p) {
+			p[1] = 's';
+			fd = os_open(fname, O_RDONLY);
+			if (fd >= 0) {
+				close(fd);
+				return 0;
+			}
+		}
+		return -ENOENT;
+	}
+
+	/* Look for 'u-boot' in the same directory as 'u-boot-spl' */
+	if (!strcmp(suffix, "-spl")) {
 		fname[len - 4] = '\0';
 		fd = os_open(fname, O_RDONLY);
 		if (fd >= 0) {
@@ -630,24 +686,18 @@ void os_localtime(struct rtc_time *rt)
 	rt->tm_isdst = tm->tm_isdst;
 }
 
-int os_setjmp(ulong *jmp, int size)
+void os_abort(void)
 {
-	jmp_buf dummy;
-
-	/*
-	 * We cannot rely on the struct name that jmp_buf uses, so use a
-	 * local variable here
-	 */
-	if (size < sizeof(dummy)) {
-		printf("setjmp: jmpbuf is too small (%d bytes, need %d)\n",
-		       size, sizeof(jmp_buf));
-		return -ENOSPC;
-	}
-
-	return setjmp((struct __jmp_buf_tag *)jmp);
+	abort();
 }
 
-void os_longjmp(ulong *jmp, int ret)
+int os_mprotect_allow(void *start, size_t len)
 {
-	longjmp((struct __jmp_buf_tag *)jmp, ret);
+	int page_size = getpagesize();
+
+	/* Move start to the start of a page, len to the end */
+	start = (void *)(((ulong)start) & ~(page_size - 1));
+	len = (len + page_size * 2) & ~(page_size - 1);
+
+	return mprotect(start, len, PROT_READ | PROT_WRITE);
 }

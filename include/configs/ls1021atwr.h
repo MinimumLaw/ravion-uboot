@@ -106,7 +106,6 @@
 
 #if !defined(CONFIG_SD_BOOT) && !defined(CONFIG_NAND_BOOT) && \
 	!defined(CONFIG_QSPI_BOOT)
-#define CONFIG_U_QE
 #define CONFIG_SYS_QE_FMAN_FW_IN_NOR
 #endif
 
@@ -141,9 +140,6 @@
 					FTIM2_NOR_TWPH(0x0e))
 #define CONFIG_SYS_NOR_FTIM3		0
 
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45	/* count down from 45/5: 9..1 */
 

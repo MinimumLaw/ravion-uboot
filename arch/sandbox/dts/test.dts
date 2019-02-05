@@ -11,6 +11,8 @@
 		eth0 = "/eth@10002000";
 		eth3 = &eth_3;
 		eth5 = &eth_5;
+		gpio1 = &gpio_a;
+		gpio2 = &gpio_b;
 		i2c0 = "/i2c@0";
 		mmc0 = "/mmc0";
 		mmc1 = "/mmc1";
@@ -37,6 +39,36 @@
 		usb1 = &usb_1;
 		usb2 = &usb_2;
 		axi0 = &axi;
+		osd0 = "/osd";
+	};
+
+	cros_ec: cros-ec {
+		reg = <0 0>;
+		compatible = "google,cros-ec-sandbox";
+
+		/*
+		 * This describes the flash memory within the EC. Note
+		 * that the STM32L flash erases to 0, not 0xff.
+		 */
+		flash {
+			image-pos = <0x08000000>;
+			size = <0x20000>;
+			erase-value = <0>;
+
+			/* Information for sandbox */
+			ro {
+				image-pos = <0>;
+				size = <0xf000>;
+			};
+			wp-ro {
+				image-pos = <0xf000>;
+				size = <0x1000>;
+			};
+			rw {
+				image-pos = <0x10000>;
+				size = <0x10000>;
+			};
+		};
 	};
 
 	a-test {
@@ -59,6 +91,15 @@
 
 	no-compatible {
 		reg = <2 1>;
+	};
+
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		enable-gpios = <&gpio_a 1>;
+		power-supply = <&ldo_1>;
+		pwms = <&pwm 0 1000>;
+		default-brightness-level = <5>;
+		brightness-levels = <0 16 32 64 128 170 202 234 255>;
 	};
 
 	bind-test {
@@ -190,6 +231,12 @@
 		fake-host-hwaddr = [00 00 66 44 22 22];
 	};
 
+	firmware {
+		sandbox_firmware: sandbox-firmware {
+			compatible = "sandbox,firmware";
+		};
+	};
+
 	gpio_a: base-gpios {
 		compatible = "sandbox,gpio";
 		gpio-controller;
@@ -297,6 +344,18 @@
 		mbox-names = "other", "test";
 	};
 
+	cpu-test1 {
+		compatible = "sandbox,cpu_sandbox";
+	};
+
+	cpu-test2 {
+		compatible = "sandbox,cpu_sandbox";
+	};
+
+	cpu-test3 {
+		compatible = "sandbox,cpu_sandbox";
+	};
+
 	misc-test {
 		compatible = "sandbox,misc_sandbox";
 	};
@@ -344,7 +403,11 @@
 		ranges = <0x02000000 0 0x30000000 0x30000000 0 0x2000
 				0x01000000 0 0x40000000 0x40000000 0 0x2000>;
 		sandbox,dev-info = <0x08 0x00 0x1234 0x5678
-				    0x0c 0x00 0x1234 0x5678>;
+				    0x0c 0x00 0x1234 0x5678
+				    0x10 0x00 0x1234 0x5678>;
+		pci@10,0 {
+			reg = <0x8000 0 0 0 0>;
+		};
 	};
 
 	pci2: pci-controller2 {
@@ -393,12 +456,14 @@
 		power-domains = <&pwrdom 2>;
 	};
 
-	pwm {
+	pwm: pwm {
 		compatible = "sandbox,pwm";
+		#pwm-cells = <2>;
 	};
 
 	pwm2 {
 		compatible = "sandbox,pwm";
+		#pwm-cells = <2>;
 	};
 
 	ram {
@@ -433,6 +498,11 @@
 		compatible = "sandbox,test-processor";
 		internal-memory-mapped;
 		remoteproc-name = "remoteproc-test-dev2";
+	};
+
+	panel {
+		compatible = "simple-panel";
+		backlight = <&backlight 0 100>;
 	};
 
 	smem@0 {
@@ -629,6 +699,18 @@
 				reg = <0x42>;
 			};
 		};
+	};
+
+	osd {
+		compatible = "sandbox,sandbox_osd";
+	};
+
+	board {
+		compatible = "sandbox,board_sandbox";
+	};
+
+	sandbox_tee {
+		compatible = "sandbox,tee";
 	};
 };
 

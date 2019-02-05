@@ -116,6 +116,7 @@
 		"ip=${ipaddr}:${tftpserver}:${gatewayip}:${netmask}::eth0:off\0" \
 	"nfsrootpath=/opt/nfs-exports/omap\0" \
 	"autoload=no\0" \
+	"fdtimage=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
 	"loadfdt=mmc rescan; " \
 		"load mmc ${mmcdev} ${fdtaddr} ${fdtimage}\0" \
 	"mmcbootcommon=echo Booting with DT from mmc${mmcdev} ...; " \
@@ -182,8 +183,13 @@
 
 /* **** PISMO SUPPORT *** */
 #if defined(CONFIG_CMD_NAND)
-#define CONFIG_SYS_FLASH_BASE		NAND_BASE
+#define CONFIG_SYS_FLASH_BASE		0x10000000
 #endif
+
+#define CONFIG_SYS_MAX_FLASH_SECT	256
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
+#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
+#define CONFIG_SYS_FLASH_SIZE		0x4000000
 
 /* Monitor at start of flash */
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE

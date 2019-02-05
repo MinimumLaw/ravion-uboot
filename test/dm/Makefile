@@ -14,14 +14,18 @@ obj-$(CONFIG_UT_DM) += test-uclass.o
 obj-$(CONFIG_UT_DM) += core.o
 ifneq ($(CONFIG_SANDBOX),)
 obj-$(CONFIG_BLK) += blk.o
+obj-$(CONFIG_BOARD) += board.o
 obj-$(CONFIG_CLK) += clk.o
 obj-$(CONFIG_DM_ETH) += eth.o
+obj-$(CONFIG_FIRMWARE) += firmware.o
 obj-$(CONFIG_DM_GPIO) += gpio.o
 obj-$(CONFIG_DM_I2C) += i2c.o
 obj-$(CONFIG_LED) += led.o
 obj-$(CONFIG_DM_MAILBOX) += mailbox.o
 obj-$(CONFIG_DM_MMC) += mmc.o
 obj-y += ofnode.o
+obj-$(CONFIG_OSD) += osd.o
+obj-$(CONFIG_DM_VIDEO) += panel.o
 obj-$(CONFIG_DM_PCI) += pci.o
 obj-$(CONFIG_PHY) += phy.o
 obj-$(CONFIG_POWER_DOMAIN) += power-domain.o
@@ -46,4 +50,7 @@ obj-$(CONFIG_SPMI) += spmi.o
 obj-$(CONFIG_WDT) += wdt.o
 obj-$(CONFIG_AXI) += axi.o
 obj-$(CONFIG_MISC) += misc.o
+obj-$(CONFIG_DM_SERIAL) += serial.o
+obj-$(CONFIG_CPU) += cpu.o
+obj-$(CONFIG_TEE) += tee.o
 endif

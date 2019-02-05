@@ -321,10 +321,7 @@ extern unsigned long get_sdram_size(void);
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
 
 /* CFI for NOR Flash */
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
 #define CONFIG_SYS_FLASH_EMPTY_INFO
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 
 /* NAND Flash on IFC */
 #define CONFIG_SYS_NAND_BASE		0xff800000
@@ -463,7 +460,6 @@ extern unsigned long get_sdram_size(void);
 #if defined(CONFIG_RAMBOOT_SDCARD) || defined(CONFIG_RAMBOOT_SPIFLASH) || \
 	defined(CONFIG_RAMBOOT_NAND)
 #define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #else
 #undef CONFIG_SYS_RAMBOOT
 #endif

@@ -449,6 +449,15 @@ The driver model tree is intended to mirror that of the device tree. The
 root driver is at device tree offset 0 (the root node, '/'), and its
 children are the children of the root node.
 
+In order for a device tree to be valid, the content must be correct with
+respect to either device tree specification
+(https://www.devicetree.org/specifications/) or the device tree bindings that
+are found in the doc/device-tree-bindings directory.  When not U-Boot specific
+the bindings in this directory tend to come from the Linux Kernel.  As such
+certain design decisions may have been made already for us in terms of how
+specific devices are described and bound.  In most circumstances we wish to
+retain compatibility without additional changes being made to the device tree
+source files.
 
 Declaring Uclasses
 ------------------
@@ -823,11 +832,14 @@ Pre-Relocation Support
 For pre-relocation we simply call the driver model init function. Only
 drivers marked with DM_FLAG_PRE_RELOC or the device tree
 'u-boot,dm-pre-reloc' flag are initialised prior to relocation. This helps
-to reduce the driver model overhead.
+to reduce the driver model overhead. This flag applies to SPL and TPL as
+well, if device tree is enabled there.
 
 It is possible to limit this to specific relocation steps, by using
 the more specialized 'u-boot,dm-spl' and 'u-boot,dm-tpl' flags
-in the devicetree.
+in the device tree node. For U-Boot proper you can use 'u-boot,dm-pre-proper'
+which means that it will be processed (and a driver bound) in U-Boot proper
+prior to relocation, but will not be available in SPL or TPL.
 
 Then post relocation we throw that away and re-init driver model again.
 For drivers which require some sort of continuity between pre- and

@@ -102,9 +102,6 @@ unsigned long get_board_sys_clk(void);
 #define CONFIG_SYS_IFC_CCR	0x01000000
 
 #ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45 /* count down from 45/5: 9..1 */
 
@@ -323,8 +320,7 @@ unsigned long get_board_sys_clk(void);
 #define BOOT_TARGET_DEVICES(func) \
 	func(USB, usb, 0) \
 	func(MMC, mmc, 0) \
-	func(SCSI, scsi, 0) \
-	func(DHCP, dhcp, na)
+	func(SCSI, scsi, 0)
 #include <config_distro_bootcmd.h>
 
 #ifdef CONFIG_QSPI_BOOT
@@ -456,8 +452,6 @@ unsigned long get_board_sys_clk(void);
 
 /* MAC/PHY configuration */
 #ifdef CONFIG_FSL_MC_ENET
-#define CONFIG_PHYLIB_10G
-#define CONFIG_PHY_AQUANTIA
 #define CONFIG_PHY_CORTINA
 #define	CONFIG_SYS_CORTINA_FW_IN_NOR
 #ifdef CONFIG_QSPI_BOOT
@@ -478,7 +472,6 @@ unsigned long get_board_sys_clk(void);
 #define AQR405_IRQ_MASK		0x36
 
 #define CONFIG_ETHPRIME		"DPMAC1@xgmii"
-#define CONFIG_PHY_AQUANTIA
 #endif
 
 #include <asm/fsl_secure_boot.h>

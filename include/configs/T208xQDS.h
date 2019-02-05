@@ -124,14 +124,7 @@
 #define CONFIG_MEM_INIT_VALUE		0xdeadbeef
 #endif
 
-#ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
-#endif
-
 #if defined(CONFIG_SPIFLASH)
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_ENV_SPI_BUS	0
 #define CONFIG_ENV_SPI_CS	0
 #define CONFIG_ENV_SPI_MAX_HZ	10000000
@@ -140,12 +133,10 @@
 #define CONFIG_ENV_OFFSET	0x100000   /* 1MB */
 #define CONFIG_ENV_SECT_SIZE	0x10000
 #elif defined(CONFIG_SDCARD)
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #define CONFIG_ENV_SIZE		0x2000
 #define CONFIG_ENV_OFFSET	(512 * 0x800)
 #elif defined(CONFIG_NAND)
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_ENV_SIZE		0x2000
 #define CONFIG_ENV_OFFSET	(10 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #elif defined(CONFIG_SRIO_PCIE_BOOT_SLAVE)
@@ -639,7 +630,6 @@ unsigned long get_board_ddr_clk(void);
 
 #ifdef CONFIG_SYS_DPAA_FMAN
 #define CONFIG_FMAN_ENET
-#define CONFIG_PHYLIB_10G
 #define CONFIG_PHY_VITESSE
 #define CONFIG_PHY_REALTEK
 #define CONFIG_PHY_TERANETICS
@@ -693,9 +683,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_FLASH_CFI_MTD
-#endif
 
 /*
  * Environment

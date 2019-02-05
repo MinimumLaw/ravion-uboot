@@ -13,19 +13,16 @@
 #ifdef CONFIG_SDCARD
 #define CONFIG_RAMBOOT_SDCARD
 #define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_RESET_VECTOR_ADDRESS	0x110bfffc
 #endif
 #ifdef CONFIG_SPIFLASH
 #define CONFIG_RAMBOOT_SPIFLASH
 #define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_RESET_VECTOR_ADDRESS	0x110bfffc
 #endif
 #ifdef CONFIG_NAND_SECBOOT
 #define CONFIG_RAMBOOT_NAND
 #define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_RESET_VECTOR_ADDRESS	0x110bfffc
 #endif
 
@@ -235,10 +232,7 @@ combinations. this should be removed later
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
 
 /* CFI for NOR Flash */
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
 #define CONFIG_SYS_FLASH_EMPTY_INFO
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 
 /* NAND Flash on IFC */
 #define CONFIG_SYS_NAND_BASE		0xff800000
@@ -508,9 +502,6 @@ combinations. this should be removed later
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_FLASH_CFI_MTD
-#endif
 /*
  * Environment Configuration
  */

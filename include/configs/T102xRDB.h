@@ -100,12 +100,6 @@
 #define CONFIG_RESET_VECTOR_ADDRESS	0xeffffffc
 #endif
 
-#ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
-#endif
-
 /* PCIe Boot - Master */
 #define CONFIG_SRIO_PCIE_BOOT_MASTER
 /*
@@ -150,7 +144,6 @@
 #endif
 
 #if defined(CONFIG_SPIFLASH)
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_ENV_SPI_BUS		0
 #define CONFIG_ENV_SPI_CS		0
 #define CONFIG_ENV_SPI_MAX_HZ		10000000
@@ -163,12 +156,10 @@
 #define CONFIG_ENV_SECT_SIZE		0x40000
 #endif
 #elif defined(CONFIG_SDCARD)
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			0x2000
 #define CONFIG_ENV_OFFSET		(512 * 0x800)
 #elif defined(CONFIG_NAND)
-#define CONFIG_SYS_EXTRA_ENV_RELOC
 #define CONFIG_ENV_SIZE			0x2000
 #if defined(CONFIG_TARGET_T1024RDB)
 #define CONFIG_ENV_OFFSET		(2 * CONFIG_SYS_NAND_BLOCK_SIZE)
@@ -669,7 +660,6 @@ unsigned long get_board_ddr_clk(void);
 
 #ifdef CONFIG_TARGET_T1024RDB
 #define CONFIG_QE
-#define CONFIG_U_QE
 #endif
 /* Default address of microcode for the Linux FMan driver */
 #if defined(CONFIG_SPIFLASH)
@@ -719,9 +709,7 @@ unsigned long get_board_ddr_clk(void);
 
 #ifdef CONFIG_SYS_DPAA_FMAN
 #define CONFIG_FMAN_ENET
-#define CONFIG_PHYLIB_10G
 #define CONFIG_PHY_REALTEK
-#define CONFIG_PHY_AQUANTIA
 #if defined(CONFIG_TARGET_T1024RDB)
 #define RGMII_PHY1_ADDR		0x2
 #define RGMII_PHY2_ADDR		0x6
@@ -741,9 +729,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * Dynamic MTD Partition support with mtdparts
  */
-#ifdef CONFIG_MTD_NOR_FLASH
-#define CONFIG_FLASH_CFI_MTD
-#endif
 
 /*
  * Environment

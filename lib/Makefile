@@ -19,7 +19,12 @@ obj-$(CONFIG_ARCH_AT91) += at91/
 obj-$(CONFIG_OPTEE) += optee/
 
 obj-$(CONFIG_AES) += aes.o
+
+ifndef API_BUILD
+ifneq ($(CONFIG_UT_UNICODE)$(CONFIG_EFI_LOADER),)
 obj-y += charset.o
+endif
+endif
 obj-$(CONFIG_USB_TTY) += circbuf.o
 obj-y += crc7.o
 obj-y += crc8.o
@@ -40,12 +45,16 @@ obj-$(CONFIG_PHYSMEM) += physmem.o
 obj-y += qsort.o
 obj-y += rc4.o
 obj-$(CONFIG_SUPPORT_EMMC_RPMB) += sha256.o
-obj-$(CONFIG_TPM) += tpm-common.o
-obj-$(CONFIG_TPM_V1) += tpm-v1.o
-obj-$(CONFIG_TPM_V2) += tpm-v2.o
 obj-$(CONFIG_RBTREE)	+= rbtree.o
 obj-$(CONFIG_BITREVERSE) += bitrev.o
 obj-y += list_sort.o
+endif
+
+obj-$(CONFIG_$(SPL_TPL_)TPM) += tpm-common.o
+ifeq ($(CONFIG_$(SPL_TPL_)TPM),y)
+obj-y += crc8.o
+obj-$(CONFIG_TPM_V1) += tpm-v1.o
+obj-$(CONFIG_TPM_V2) += tpm-v2.o
 endif
 
 obj-$(CONFIG_RSA) += rsa/

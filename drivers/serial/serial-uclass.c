@@ -26,6 +26,7 @@ static const unsigned long baudrate_table[] = CONFIG_SYS_BAUDRATE_TABLE;
 #error "Serial is required before relocation - define CONFIG_$(SPL_)SYS_MALLOC_F_LEN to make this work"
 #endif
 
+#if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 static int serial_check_stdout(const void *blob, struct udevice **devp)
 {
 	int node;
@@ -150,12 +151,15 @@ static void serial_find_console_or_panic(void)
 	panic_str("No serial driver found");
 #endif
 }
+#endif /* CONFIG_SERIAL_PRESENT */
 
 /* Called prior to relocation */
 int serial_init(void)
 {
+#if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 	serial_find_console_or_panic();
 	gd->flags |= GD_FLG_SERIAL_READY;
+#endif
 
 	return 0;
 }
@@ -228,6 +232,9 @@ static int _serial_getc(struct udevice *dev)
 	struct serial_dev_priv *upriv = dev_get_uclass_priv(dev);
 	char val;
 
+	if (upriv->rd_ptr == upriv->wr_ptr)
+		return __serial_getc(dev);
+
 	val = upriv->buf[upriv->rd_ptr++];
 	upriv->rd_ptr %= CONFIG_SERIAL_RX_BUFFER_SIZE;
 
@@ -285,6 +292,20 @@ void serial_setbrg(void)
 	ops = serial_get_ops(gd->cur_serial_dev);
 	if (ops->setbrg)
 		ops->setbrg(gd->cur_serial_dev, gd->baudrate);
+}
+
+int serial_setconfig(uint config)
+{
+	struct dm_serial_ops *ops;
+
+	if (!gd->cur_serial_dev)
+		return 0;
+
+	ops = serial_get_ops(gd->cur_serial_dev);
+	if (ops->setconfig)
+		return ops->setconfig(gd->cur_serial_dev, config);
+
+	return 0;
 }
 
 void serial_stdio_init(void)
@@ -398,9 +419,11 @@ static int serial_post_probe(struct udevice *dev)
 		ops->pending += gd->reloc_off;
 	if (ops->clear)
 		ops->clear += gd->reloc_off;
+	if (ops->setconfig)
+		ops->setconfig += gd->reloc_off;
 #if CONFIG_POST & CONFIG_SYS_POST_UART
 	if (ops->loop)
-		ops->loop += gd->reloc_off
+		ops->loop += gd->reloc_off;
 #endif
 #endif
 	/* Set the baud rate */

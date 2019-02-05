@@ -541,9 +541,13 @@ fdt_addr_t ofnode_get_addr_size(ofnode node, const char *property,
 		if (!prop)
 			return FDT_ADDR_T_NONE;
 		na = of_n_addr_cells(np);
-		ns = of_n_addr_cells(np);
+		ns = of_n_size_cells(np);
 		*sizep = of_read_number(prop + na, ns);
-		return of_read_number(prop, na);
+
+		if (IS_ENABLED(CONFIG_OF_TRANSLATE) && ns > 0)
+			return of_translate_address(np, prop);
+		else
+			return of_read_number(prop, na);
 	} else {
 		return fdtdec_get_addr_size(gd->fdt_blob,
 					    ofnode_to_offset(node), property,
@@ -695,6 +699,8 @@ bool ofnode_pre_reloc(ofnode node)
 {
 	if (ofnode_read_bool(node, "u-boot,dm-pre-reloc"))
 		return true;
+	if (ofnode_read_bool(node, "u-boot,dm-pre-proper"))
+		return true;
 
 #ifdef CONFIG_TPL_BUILD
 	if (ofnode_read_bool(node, "u-boot,dm-tpl"))
@@ -776,4 +782,88 @@ ofnode ofnode_by_compatible(ofnode from, const char *compat)
 		return offset_to_ofnode(fdt_node_offset_by_compatible(
 				gd->fdt_blob, ofnode_to_offset(from), compat));
 	}
+}
+
+ofnode ofnode_by_prop_value(ofnode from, const char *propname,
+			    const void *propval, int proplen)
+{
+	if (of_live_active()) {
+		return np_to_ofnode(of_find_node_by_prop_value(
+			(struct device_node *)ofnode_to_np(from), propname,
+			propval, proplen));
+	} else {
+		return offset_to_ofnode(fdt_node_offset_by_prop_value(
+				gd->fdt_blob, ofnode_to_offset(from),
+				propname, propval, proplen));
+	}
+}
+
+int ofnode_write_prop(ofnode node, const char *propname, int len,
+		      const void *value)
+{
+	const struct device_node *np = ofnode_to_np(node);
+	struct property *pp;
+	struct property *pp_last = NULL;
+	struct property *new;
+
+	if (!of_live_active())
+		return -ENOSYS;
+
+	if (!np)
+		return -EINVAL;
+
+	for (pp = np->properties; pp; pp = pp->next) {
+		if (strcmp(pp->name, propname) == 0) {
+			/* Property exists -> change value */
+			pp->value = (void *)value;
+			pp->length = len;
+			return 0;
+		}
+		pp_last = pp;
+	}
+
+	if (!pp_last)
+		return -ENOENT;
+
+	/* Property does not exist -> append new property */
+	new = malloc(sizeof(struct property));
+	if (!new)
+		return -ENOMEM;
+
+	new->name = strdup(propname);
+	if (!new->name)
+		return -ENOMEM;
+
+	new->value = (void *)value;
+	new->length = len;
+	new->next = NULL;
+
+	pp_last->next = new;
+
+	return 0;
+}
+
+int ofnode_write_string(ofnode node, const char *propname, const char *value)
+{
+	if (!of_live_active())
+		return -ENOSYS;
+
+	assert(ofnode_valid(node));
+
+	debug("%s: %s = %s", __func__, propname, value);
+
+	return ofnode_write_prop(node, propname, strlen(value) + 1, value);
+}
+
+int ofnode_set_enabled(ofnode node, bool value)
+{
+	if (!of_live_active())
+		return -ENOSYS;
+
+	assert(ofnode_valid(node));
+
+	if (value)
+		return ofnode_write_string(node, "status", "okay");
+	else
+		return ofnode_write_string(node, "status", "disable");
 }

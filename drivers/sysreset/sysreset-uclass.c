@@ -4,6 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY UCLASS_SYSRESET
+
 #include <common.h>
 #include <sysreset.h>
 #include <dm.h>
@@ -22,6 +24,26 @@ int sysreset_request(struct udevice *dev, enum sysreset_t type)
 		return -ENOSYS;
 
 	return ops->request(dev, type);
+}
+
+int sysreset_get_status(struct udevice *dev, char *buf, int size)
+{
+	struct sysreset_ops *ops = sysreset_get_ops(dev);
+
+	if (!ops->get_status)
+		return -ENOSYS;
+
+	return ops->get_status(dev, buf, size);
+}
+
+int sysreset_get_last(struct udevice *dev)
+{
+	struct sysreset_ops *ops = sysreset_get_ops(dev);
+
+	if (!ops->get_last)
+		return -ENOSYS;
+
+	return ops->get_last(dev);
 }
 
 int sysreset_walk(enum sysreset_t type)
@@ -43,6 +65,26 @@ int sysreset_walk(enum sysreset_t type)
 	return ret;
 }
 
+int sysreset_get_last_walk(void)
+{
+	struct udevice *dev;
+	int value = -ENOENT;
+
+	for (uclass_first_device(UCLASS_SYSRESET, &dev);
+	     dev;
+	     uclass_next_device(&dev)) {
+		int ret;
+
+		ret = sysreset_get_last(dev);
+		if (ret >= 0) {
+			value = ret;
+			break;
+		}
+	}
+
+	return value;
+}
+
 void sysreset_walk_halt(enum sysreset_t type)
 {
 	int ret;
@@ -54,7 +96,7 @@ void sysreset_walk_halt(enum sysreset_t type)
 		mdelay(100);
 
 	/* Still no reset? Give up */
-	debug("System reset not supported on this platform\n");
+	log_err("System reset not supported on this platform\n");
 	hang();
 }
 

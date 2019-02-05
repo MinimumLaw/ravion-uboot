@@ -127,6 +127,11 @@ __weak void spl_board_prepare_for_boot(void)
 	/* Nothing to do! */
 }
 
+__weak struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
+{
+	return (struct image_header *)(CONFIG_SYS_TEXT_BASE + offset);
+}
+
 void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 {
 	ulong u_boot_pos = binman_sym(ulong, u_boot_any, image_pos);
@@ -180,9 +185,8 @@ static int spl_load_fit_image(struct spl_image_info *spl_image,
 	spl_image->os = IH_OS_U_BOOT;
 	spl_image->name = "U-Boot";
 
-	debug("spl: payload image: %.*s load addr: 0x%lx size: %d\n",
-	      (int)sizeof(spl_image->name), spl_image->name,
-		spl_image->load_addr, spl_image->size);
+	debug("spl: payload image: %32s load addr: 0x%lx size: %d\n",
+	      spl_image->name, spl_image->load_addr, spl_image->size);
 
 #ifdef CONFIG_SPL_FIT_SIGNATURE
 	images.verify = 1;
@@ -251,9 +255,8 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 		}
 		spl_image->os = image_get_os(header);
 		spl_image->name = image_get_name(header);
-		debug("spl: payload image: %.*s load addr: 0x%lx size: %d\n",
-			IH_NMLEN, spl_image->name,
-			spl_image->load_addr, spl_image->size);
+		debug("spl: payload image: %32s load addr: 0x%lx size: %d\n",
+		      spl_image->name, spl_image->load_addr, spl_image->size);
 #else
 		/* LEGACY image not supported */
 		debug("Legacy boot image support not enabled, proceeding to other boot methods\n");
@@ -309,7 +312,7 @@ __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	image_entry_noargs_t image_entry =
 		(image_entry_noargs_t)spl_image->entry_point;
 
-	debug("image entry point: 0x%lX\n", spl_image->entry_point);
+	debug("image entry point: 0x%lx\n", spl_image->entry_point);
 	image_entry();
 }
 
@@ -531,6 +534,13 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		spl_invoke_atf(&spl_image);
 		break;
 #endif
+#if CONFIG_IS_ENABLED(OPTEE)
+	case IH_OS_TEE:
+		debug("Jumping to U-Boot via OP-TEE\n");
+		spl_optee_entry(NULL, NULL, spl_image.fdt_addr,
+				(void *)spl_image.entry_point);
+		break;
+#endif
 #ifdef CONFIG_SPL_OS_BOOT
 	case IH_OS_LINUX:
 		debug("Jumping to Linux\n");
@@ -542,7 +552,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
 #if CONFIG_VAL(SYS_MALLOC_F_LEN) && !defined(CONFIG_SYS_SPL_MALLOC_SIZE)
-	debug("SPL malloc() used %#lx bytes (%ld KB)\n", gd->malloc_ptr,
+	debug("SPL malloc() used 0x%lx bytes (%ld KB)\n", gd->malloc_ptr,
 	      gd->malloc_ptr / 1024);
 #endif
 #ifdef CONFIG_BOOTSTAGE_STASH

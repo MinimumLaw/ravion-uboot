@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-dtb-$(CONFIG_AT91FAMILY) += at91sam9260-smartweb.dtb \
-	at91sam9g20-taurus.dtb \
-	at91sam9g45-corvus.dtb \
-	at91sam9g45-gurnard.dtb
+dtb-$(CONFIG_TARGET_SMARTWEB) += at91sam9260-smartweb.dtb
+dtb-$(CONFIG_TARGET_TAURUS) += at91sam9g20-taurus.dtb
+dtb-$(CONFIG_TARGET_CORVUS) += at91sam9g45-corvus.dtb
+dtb-$(CONFIG_TARGET_GURNARD) += at91sam9g45-gurnard.dtb
 
 dtb-$(CONFIG_S5PC100) += s5pc1xx-smdkc100.dtb
 dtb-$(CONFIG_S5PC110) += s5pc1xx-goni.dtb
@@ -58,7 +58,8 @@ dtb-$(CONFIG_ARCH_MESON) += \
 	meson-gxbb-nanopi-k2.dtb \
 	meson-gxl-s905x-p212.dtb \
 	meson-gxl-s905x-libretech-cc.dtb \
-	meson-gxl-s905x-khadas-vim.dtb
+	meson-gxl-s905x-khadas-vim.dtb \
+	meson-gxm-khadas-vim2.dtb
 dtb-$(CONFIG_TEGRA) += tegra20-harmony.dtb \
 	tegra20-medcom-wide.dtb \
 	tegra20-paz00.dtb \
@@ -134,6 +135,7 @@ dtb-$(CONFIG_ARCH_ZYNQ) += \
 	zynq-cse-nand.dtb \
 	zynq-cse-nor.dtb \
 	zynq-cse-qspi-single.dtb \
+	zynq-dlc20-rev1.0.dtb \
 	zynq-microzed.dtb \
 	zynq-minized.dtb \
 	zynq-picozed.dtb \
@@ -452,15 +454,17 @@ dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
 
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb
 
+dtb-$(CONFIG_ARCH_IMX8) += fsl-imx8qxp-mek.dtb
+
 dtb-$(CONFIG_RCAR_GEN3) += \
-	r8a7795-h3ulcb.dtb \
-	r8a7795-salvator-x.dtb \
-	r8a7796-m3ulcb.dtb \
-	r8a7796-salvator-x.dtb \
-	r8a77965-salvator-x.dtb \
-	r8a77970-eagle.dtb \
-	r8a77990-ebisu.dtb \
-	r8a77995-draak.dtb
+	r8a7795-h3ulcb-u-boot.dtb \
+	r8a7795-salvator-x-u-boot.dtb \
+	r8a7796-m3ulcb-u-boot.dtb \
+	r8a7796-salvator-x-u-boot.dtb \
+	r8a77965-salvator-x-u-boot.dtb \
+	r8a77970-eagle-u-boot.dtb \
+	r8a77990-ebisu-u-boot.dtb \
+	r8a77995-draak-u-boot.dtb
 
 dtb-$(CONFIG_SOC_KEYSTONE) += keystone-k2hk-evm.dtb \
 	keystone-k2l-evm.dtb \
@@ -551,6 +555,8 @@ dtb-$(CONFIG_ARCH_STI) += stih410-b2260.dtb
 dtb-$(CONFIG_TARGET_STM32MP1) += \
 	stm32mp157c-ed1.dtb \
 	stm32mp157c-ev1.dtb
+
+dtb-$(CONFIG_SOC_K3_AM6) += k3-am654-base-board.dtb
 
 targets += $(dtb-y)
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2018
-PATCHLEVEL = 09
+PATCHLEVEL = 11
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -372,7 +372,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__ -D__UBOOT__
 KBUILD_CFLAGS   := -Wall -Wstrict-prototypes \
 		   -Wno-format-security \
 		   -fno-builtin -ffreestanding $(CSTD_FLAG)
-KBUILD_CFLAGS	+= -fshort-wchar
+KBUILD_CFLAGS	+= -fshort-wchar -fno-strict-aliasing
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 
 # Don't generate position independent code
@@ -689,7 +689,7 @@ libs-y += drivers/dma/
 libs-y += drivers/gpio/
 libs-y += drivers/i2c/
 libs-y += drivers/mtd/
-libs-$(CONFIG_CMD_NAND) += drivers/mtd/nand/
+libs-$(CONFIG_CMD_NAND) += drivers/mtd/nand/raw/
 libs-y += drivers/mtd/onenand/
 libs-$(CONFIG_CMD_UBI) += drivers/mtd/ubi/
 libs-y += drivers/mtd/spi/
@@ -861,6 +861,10 @@ ifneq ($(CONFIG_SYS_INIT_SP_BSS_OFFSET),)
 ALL-y += init_sp_bss_offset_check
 endif
 
+ifeq ($(CONFIG_MPC85xx)$(CONFIG_OF_SEPARATE),yy)
+ALL-y += u-boot-with-dtb.bin
+endif
+
 LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 
 # Avoid 'Not enough room for program headers' error on binutils 2.28 onwards.
@@ -983,7 +987,13 @@ spl/u-boot-spl.srec: spl/u-boot-spl FORCE
 	$(call if_changed,objcopy)
 
 OBJCOPYFLAGS_u-boot-nodtb.bin := -O binary \
-		$(if $(CONFIG_X86_16BIT_INIT),-R .start16 -R .resetvec)
+		$(if $(CONFIG_X86_16BIT_INIT),-R .start16 -R .resetvec) \
+		$(if $(CONFIG_MPC85XX_HAVE_RESET_VECTOR),-R .bootpg -R .resetvec)
+
+OBJCOPYFLAGS_u-boot-spl.hex = $(OBJCOPYFLAGS_u-boot.hex)
+
+spl/u-boot-spl.hex: spl/u-boot-spl FORCE
+	$(call if_changed,objcopy)
 
 binary_size_check: u-boot-nodtb.bin FORCE
 	@file_size=$(shell wc -c u-boot-nodtb.bin | awk '{print $$1}') ; \
@@ -1064,7 +1074,10 @@ U_BOOT_ITS = $(subst ",,$(CONFIG_SPL_FIT_SOURCE))
 else
 ifneq ($(CONFIG_SPL_FIT_GENERATOR),"")
 U_BOOT_ITS := u-boot.its
-$(U_BOOT_ITS): FORCE
+ifeq ($(CONFIG_SPL_FIT_GENERATOR),"arch/arm/mach-rockchip/make_fit_atf.py")
+U_BOOT_ITS_DEPS += u-boot
+endif
+$(U_BOOT_ITS): $(U_BOOT_ITS_DEPS) FORCE
 	$(srctree)/$(CONFIG_SPL_FIT_GENERATOR) \
 	$(patsubst %,arch/$(ARCH)/dts/%.dtb,$(subst ",,$(CONFIG_OF_LIST))) > $@
 endif
@@ -1126,6 +1139,7 @@ OBJCOPYFLAGS_u-boot-with-spl.bin = -I binary -O binary \
 u-boot-with-spl.bin: spl/u-boot-spl.bin $(SPL_PAYLOAD) FORCE
 	$(call if_changed,pad_cat)
 
+ifeq ($(CONFIG_ARCH_LPC32XX)$(CONFIG_SPL),yy)
 MKIMAGEFLAGS_lpc32xx-spl.img = -T lpc32xximage -a $(CONFIG_SPL_TEXT_BASE)
 
 lpc32xx-spl.img: spl/u-boot-spl.bin FORCE
@@ -1145,6 +1159,7 @@ lpc32xx-full.bin: lpc32xx-boot-0.bin lpc32xx-boot-1.bin u-boot.img FORCE
 	$(call if_changed,cat)
 
 CLEAN_FILES += lpc32xx-*
+endif
 
 OBJCOPYFLAGS_u-boot-with-tpl.bin = -I binary -O binary \
 				   --pad-to=$(CONFIG_TPL_PAD_TO)
@@ -1200,6 +1215,18 @@ cmd_socboot = cat	spl/u-boot-spl.sfp spl/u-boot-spl.sfp	\
 			u-boot.img > $@ || rm -f $@
 u-boot-with-spl.sfp: spl/u-boot-spl.sfp u-boot.img FORCE
 	$(call if_changed,socboot)
+endif
+
+ifeq ($(CONFIG_MPC85xx)$(CONFIG_OF_SEPARATE),yy)
+u-boot-with-dtb.bin: u-boot.bin u-boot.dtb \
+	$(if $(CONFIG_MPC85XX_HAVE_RESET_VECTOR), u-boot-br.bin) FORCE
+	$(call if_changed,binman)
+
+ifeq ($(CONFIG_MPC85XX_HAVE_RESET_VECTOR),y)
+OBJCOPYFLAGS_u-boot-br.bin := -O binary -j .bootpg -j .resetvec
+u-boot-br.bin: u-boot FORCE
+	$(call if_changed,objcopy)
+endif
 endif
 
 # x86 uses a large ROM. We fill it with 0xff, put the 16-bit stuff (including
@@ -1296,7 +1323,11 @@ spl/u-boot-spl.pbl: spl/u-boot-spl.bin FORCE
 ifeq ($(ARCH),arm)
 UBOOT_BINLOAD := u-boot.img
 else
+ifeq ($(CONFIG_MPC85xx)$(CONFIG_OF_SEPARATE),yy)
+UBOOT_BINLOAD := u-boot-with-dtb.bin
+else
 UBOOT_BINLOAD := u-boot.bin
+endif
 endif
 
 OBJCOPYFLAGS_u-boot-with-spl-pbl.bin = -I binary -O binary --pad-to=$(CONFIG_SPL_PAD_TO) \
@@ -1495,7 +1526,7 @@ $(defaultenv_h): $(CONFIG_DEFAULT_ENV_FILE:"%"=%) FORCE
 # ---------------------------------------------------------------------------
 quiet_cmd_cpp_lds = LDS     $@
 cmd_cpp_lds = $(CPP) -Wp,-MD,$(depfile) $(cpp_flags) $(LDPPFLAGS) \
-		-D__ASSEMBLY__ -x assembler-with-cpp -P -o $@ $<
+		-D__ASSEMBLY__ -x assembler-with-cpp -std=c99 -P -o $@ $<
 
 u-boot.lds: $(LDSCRIPT) prepare FORCE
 	$(call if_changed_dep,cpp_lds)
@@ -1669,6 +1700,10 @@ help:
 	@echo  'Configuration targets:'
 	@$(MAKE) -f $(srctree)/scripts/kconfig/Makefile help
 	@echo  ''
+	@echo  'Test targets:'
+	@echo  ''
+	@echo  '  check           - Run all automated tests that use sandbox'
+	@echo  ''
 	@echo  'Other generic targets:'
 	@echo  '  all		  - Build all necessary images depending on configuration'
 	@echo  '  tests		  - Build U-Boot for sandbox and run tests'
@@ -1707,7 +1742,7 @@ help:
 	@echo  'Execute "make" or "make all" to build all targets marked with [*] '
 	@echo  'For further info see the ./README file'
 
-tests:
+tests check:
 	$(srctree)/test/run
 
 # Documentation targets

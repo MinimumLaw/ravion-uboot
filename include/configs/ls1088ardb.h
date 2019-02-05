@@ -78,9 +78,6 @@
 #define CONFIG_SYS_IFC_CCR	0x01000000
 
 #ifndef SYS_NO_FLASH
-#define CONFIG_FLASH_CFI_DRIVER
-#define CONFIG_SYS_FLASH_CFI
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45 /* count down from 45/5: 9..1 */
 
@@ -423,12 +420,9 @@
 
 /* MAC/PHY configuration */
 #ifdef CONFIG_FSL_MC_ENET
-#define CONFIG_PHYLIB_10G
-#define CONFIG_PHY_GIGE
 #define CONFIG_PHYLIB
 
 #define CONFIG_PHY_VITESSE
-#define CONFIG_PHY_AQUANTIA
 #define AQ_PHY_ADDR1			0x00
 #define AQR105_IRQ_MASK			0x00000004
 
@@ -455,8 +449,7 @@
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
-	func(SCSI, scsi, 0) \
-	func(DHCP, dhcp, na)
+	func(SCSI, scsi, 0)
 #include <config_distro_bootcmd.h>
 #endif
 

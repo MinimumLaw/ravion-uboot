@@ -18,7 +18,7 @@
 		stdout-path = "/serial";
 	};
 
-	cros_ec: cros-ec@0 {
+	cros_ec: cros-ec {
 		reg = <0 0>;
 		compatible = "google,cros-ec-sandbox";
 
@@ -26,23 +26,23 @@
 		 * This describes the flash memory within the EC. Note
 		 * that the STM32L flash erases to 0, not 0xff.
 		 */
-		#address-cells = <1>;
-		#size-cells = <1>;
-		flash@8000000 {
-			reg = <0x08000000 0x20000>;
+		flash {
+			image-pos = <0x08000000>;
+			size = <0x20000>;
 			erase-value = <0>;
-			#address-cells = <1>;
-			#size-cells = <1>;
 
 			/* Information for sandbox */
 			ro {
-				reg = <0 0xf000>;
+				image-pos = <0>;
+				size = <0xf000>;
 			};
 			wp-ro {
-				reg = <0xf000 0x1000>;
+				image-pos = <0xf000>;
+				size = <0x1000>;
 			};
 			rw {
-				reg = <0x10000 0x10000>;
+				image-pos = <0x10000>;
+				size = <0x10000>;
 			};
 		};
 	};
@@ -153,6 +153,7 @@
 
 	pinctrl {
 		compatible = "sandbox,pinctrl";
+		status = "okay";
 
 		pinctrl_i2c0: i2c0 {
 			groups = "i2c";
@@ -163,6 +164,12 @@
 		pinctrl_serial0: uart0 {
 			groups = "serial_a";
 			function = "serial";
+		};
+
+		pinctrl_onewire0: onewire0 {
+			groups = "w1";
+			function = "w1";
+			bias-pull-up;
 		};
 	};
 
@@ -321,6 +328,23 @@
 			compatible = "sandbox,sandbox_store";
 			reg = <0x0 0x400>;
 		};
+	};
+
+	onewire0: onewire {
+		compatible = "w1-gpio";
+		gpios = <&gpio_a 8>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_onewire0>;
+		status = "okay";
+
+		sandbox_eeprom0: sandbox_eeprom@0 {
+			compatible = "sandbox,w1-eeprom";
+			status = "okay";
+		};
+	};
+
+	sandbox_tee {
+		compatible = "sandbox,tee";
 	};
 };
 
