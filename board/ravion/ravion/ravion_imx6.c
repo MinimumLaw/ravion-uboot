@@ -556,6 +556,37 @@ static void do_enable_hdmi(struct display_info_t const *dev)
 	imx_enable_hdmi_phy();
 }
 
+static iomux_v3_cfg_t const disp_ctrl_pads[] = {
+	MX6_PAD_KEY_COL0__GPIO4_IO06 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#define MTU_DISP_EN_GP IMX_GPIO_NR(4, 6)
+	MX6_PAD_DISP0_DAT6__GPIO4_IO27 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#define MTU_DISP_SD_GP IMX_GPIO_NR(4, 27)
+};
+
+static void mtu_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+		gpio_direction_output(MTU_DISP_SD_GP, 1);
+	gpio_direction_output(MTU_DISP_EN_GP, 1);
+}
+
+static void pkk_m7_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(MTU_DISP_SD_GP, 0);
+	gpio_direction_output(MTU_DISP_EN_GP, 1);
+}
+
+static void pkk_m10_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(MTU_DISP_SD_GP, 0);
+	gpio_direction_output(MTU_DISP_EN_GP, 1);
+}
+
 #if defined CONFIG_RAVION_DISPLAY_KOE
 /* Defined on common/koe_init.c */
 extern void turn_on_koe_display(void);
@@ -574,6 +605,9 @@ static void enable_rgb(struct display_info_t const *dev)
 	if(!strcmp("cimc-i", board)) /* FixMe: LVDS display here */
 		turn_on_koe_display();
 #endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+	if(!strcmp("mtu", board)) mtu_display_init();
+	if(!strcmp("pkk-m7", board)) pkk_m7_display_init();
+	if(!strcmp("pkk-m10", board)) pkk_m10_display_init();
 
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
@@ -657,15 +691,38 @@ static void enable_lvds(struct display_info_t const *dev)
 	if(!strcmp("cimc-i", board))
 		turn_on_koe_display();
 #endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+	if(!strcmp("mtu", board)) /* FixMe: TFT display here */
+		mtu_display_init();
+	if(!strcmp("pkk-m7-i", board)) pkk_m7_display_init();
+	if(!strcmp("pkk-m10-i", board)) pkk_m10_display_init();
 
 	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
 	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
 }
 
+static iomux_v3_cfg_t const led_pads[] = {
+	/* Status Blue Led on Router */
+	MX6_PAD_KEY_ROW0__GPIO4_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
+#define BLUE_LED_GP IMX_GPIO_NR(4, 7)
+};
+
+static void turn_on_blue_led(void)
+{
+	imx_iomux_v3_setup_multiple_pads(
+		led_pads,
+		ARRAY_SIZE(led_pads));
+	gpio_direction_output(BLUE_LED_GP, 0);
+}
 
 static int detect_default(struct display_info_t const *dev)
 {
 	char *display = env_get("display");
+	char *board = env_get("board");
+
+	/* FixMe: here ??? */
+	if(!strcmp("router", board)) {
+	    turn_on_blue_led();
+	}
 
 	if(display)
 		return (!strcmp(dev->mode.name,display));
