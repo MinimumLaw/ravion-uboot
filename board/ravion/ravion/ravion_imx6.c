@@ -468,7 +468,7 @@ static void mtu_display_init(void)
 		ARRAY_SIZE(disp_ctrl_pads));
 	gpio_direction_output(DISP_SD_GP, 1);
 	gpio_direction_output(DISP_EN_GP, 1);
-	puts("MTU control!\n");
+	debug("MTU control!\n");
 }
 
 static void pkk_m7_display_init(void)
@@ -478,7 +478,7 @@ static void pkk_m7_display_init(void)
 	gpio_direction_output(PKK_LVDS_SHDN_GP, 1);
 	gpio_direction_output(DISP_SD_GP, 0);
 	gpio_direction_output(DISP_EN_GP, 1);
-	puts("PKK-M7 control!\n");
+	debug("PKK-M7 control!\n");
 }
 
 static void pkk_m10_display_init(void)
@@ -488,7 +488,7 @@ static void pkk_m10_display_init(void)
 	gpio_direction_output(PKK_LVDS_SHDN_GP, 1);
 	gpio_direction_output(DISP_SD_GP, 0);
 	gpio_direction_output(DISP_EN_GP, 1);
-	puts("PKK-M10 control!\n");
+	debug("PKK-M10 control!\n");
 }
 
 static iomux_v3_cfg_t const backlight_pads[] = {
@@ -502,9 +502,9 @@ static void common_backlight_init(void)
 {
 	imx_iomux_v3_setup_multiple_pads(backlight_pads,
 		ARRAY_SIZE(backlight_pads));
-	gpio_direction_output(BACKLIGHT_GP, 1);
-	gpio_direction_output(BACKLIGHTPWM_GP, 0);
-	puts("Backlight!\n");
+	gpio_direction_output(BACKLIGHT_GP, 0);
+	gpio_direction_output(BACKLIGHTPWM_GP, 1);
+	debug("Backlight!\n");
 }
 
 static iomux_v3_cfg_t const led_pads[] = {
@@ -520,11 +520,6 @@ static void turn_on_blue_led(void)
 		ARRAY_SIZE(led_pads));
 	gpio_direction_output(BLUE_LED_GP, 0);
 }
-
-#if defined CONFIG_RAVION_DISPLAY_KOE
-/* Defined on common/koe_init.c */
-extern void turn_on_koe_display(void);
-#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
 
 static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_EIM_A16__IPU1_DI1_DISP_CLK | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm56  TFT_PCLK  */
@@ -558,6 +553,11 @@ static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_EIM_D27__IPU1_DISP1_DATA23 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm146 TFT_DAT23 */
 };
 
+#if defined CONFIG_RAVION_DISPLAY_KOE
+/* Defined on common/koe_init.c */
+extern void turn_on_koe_display(void);
+#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
+
 static void enable_rgb(struct display_info_t const *dev)
 {
 	imx_iomux_v3_setup_multiple_pads(
@@ -576,7 +576,7 @@ static void enable_rgb(struct display_info_t const *dev)
 
 	common_backlight_init();
 
-	puts("Enable RGB!\n");
+	debug("Enable RGB!\n");
 }
 
 static void enable_lvds(struct display_info_t const *dev)
@@ -664,7 +664,7 @@ static void enable_lvds(struct display_info_t const *dev)
 	if(!strcmp("pkk-m7-i", board)) pkk_m7_display_init();
 	if(!strcmp("pkk-m10-i", board)) pkk_m10_display_init();
 
-	puts("enable LVDS!\n");
+	debug("enable LVDS!\n");
 }
 
 static int detect_default(struct display_info_t const *dev)

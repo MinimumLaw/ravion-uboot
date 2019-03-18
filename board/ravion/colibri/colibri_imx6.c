@@ -472,16 +472,79 @@ static iomux_v3_cfg_t const pwr_intb_pads[] = {
 
 #if defined(CONFIG_VIDEO_IPUV3)
 
+static void do_enable_hdmi(struct display_info_t const *dev)
+{
+	imx_enable_hdmi_phy();
+}
+
+static iomux_v3_cfg_t const disp_ctrl_pads[] = {
+    MX6_PAD_EIM_DA8__GPIO3_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm110 */
+#define PKK_LVDS_SHDN_GP IMX_GPIO_NR(3, 8)
+    MX6_PAD_EIM_DA15__GPIO3_IO15 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm124 */
+#define DISP_EN_GP IMX_GPIO_NR(3, 15)
+    MX6_PAD_KEY_COL2__GPIO4_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm184 */
+#define DISP_SD_GP IMX_GPIO_NR(4, 10)
+};
+
+static void mtu_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(DISP_SD_GP, 1);
+	gpio_direction_output(DISP_EN_GP, 1);
+	debug("MTU control!\n");
+}
+
+static void pkk_m7_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(PKK_LVDS_SHDN_GP, 1);
+	gpio_direction_output(DISP_SD_GP, 0);
+	gpio_direction_output(DISP_EN_GP, 1);
+	debug("PKK-M7 control!\n");
+}
+
+static void pkk_m10_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(PKK_LVDS_SHDN_GP, 1);
+	gpio_direction_output(DISP_SD_GP, 0);
+	gpio_direction_output(DISP_EN_GP, 1);
+	debug("PKK-M10 control!\n");
+}
+
 static iomux_v3_cfg_t const backlight_pads[] = {
 	/* Backlight On */
-	MX6_PAD_EIM_D26__GPIO3_IO26 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define RGB_BACKLIGHT_GP IMX_GPIO_NR(3, 26)
-	/* WTF! Why SoDimm59 here??? */
-	/* Backlight PWM, used as GPIO in U-Boot */
-	MX6_PAD_EIM_A22__GPIO2_IO16  | MUX_PAD_CTRL(NO_PULLUP),
-	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define RGB_BACKLIGHTPWM_GP IMX_GPIO_NR(2, 9)
+	MX6_PAD_EIM_DA4__GPIO3_IO04 | MUX_PAD_CTRL(NO_PAD_CTRL),/* soDimm119 */
+#define BACKLIGHT_GP IMX_GPIO_NR(3, 4)
+	MX6_PAD_GPIO_9__GPIO1_IO09  | MUX_PAD_CTRL(NO_PAD_CTRL),/* soDimm28 */
+#define BACKLIGHTPWM_GP IMX_GPIO_NR(1, 9)
 };
+
+static void common_backlight_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(backlight_pads,
+		ARRAY_SIZE(backlight_pads));
+	gpio_direction_output(BACKLIGHT_GP, 0);
+	gpio_direction_output(BACKLIGHTPWM_GP, 1);
+	debug("Backlight!\n");
+}
+
+static iomux_v3_cfg_t const led_pads[] = {
+	/* Backlight On */
+	MX6_PAD_NANDF_D1__GPIO2_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm134 */
+#define BLUE_LED_GP IMX_GPIO_NR(2, 1)
+};
+
+static void turn_on_blue_led(void)
+{
+	imx_iomux_v3_setup_multiple_pads(
+		led_pads,
+		ARRAY_SIZE(led_pads));
+	gpio_direction_output(BLUE_LED_GP, 0);
+}
 
 static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK | MUX_PAD_CTRL(OUTPUT_RGB),
@@ -515,42 +578,6 @@ static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_DISP0_DAT23__IPU1_DISP0_DATA23 | MUX_PAD_CTRL(OUTPUT_RGB),
 };
 
-static void do_enable_hdmi(struct display_info_t const *dev)
-{
-	imx_enable_hdmi_phy();
-}
-
-static iomux_v3_cfg_t const disp_ctrl_pads[] = {
-    MX6_PAD_EIM_DA15__GPIO3_IO15 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define MTU_DISP_EN_GP IMX_GPIO_NR(3, 15)
-    MX6_PAD_KEY_COL2__GPIO4_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define MTU_DISP_SD_GP IMX_GPIO_NR(4, 10)
-};
-
-static void mtu_display_init(void)
-{
-	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
-		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 1);
-	gpio_direction_output(MTU_DISP_EN_GP, 1);
-}
-
-static void pkk_m7_display_init(void)
-{
-	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
-		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 0);
-	gpio_direction_output(MTU_DISP_EN_GP, 1);
-}
-
-static void pkk_m10_display_init(void)
-{
-	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
-		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 0);
-	gpio_direction_output(MTU_DISP_EN_GP, 1);
-}
-
 #if defined CONFIG_RAVION_DISPLAY_KOE
 /* Defined on common/koe_init.c */
 extern void turn_on_koe_display(void);
@@ -570,22 +597,6 @@ static void enable_rgb(struct display_info_t const *dev)
 	if(!strcmp("pkk-m7", board)) pkk_m7_display_init();
 	if(!strcmp("pkk-m10", board)) pkk_m10_display_init();
 
-	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
-	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
-}
-
-static iomux_v3_cfg_t const led_pads[] = {
-	/* Backlight On */
-	MX6_PAD_NANDF_D1__GPIO2_IO01 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define BLUE_LED_GP IMX_GPIO_NR(2, 1)
-};
-
-static void turn_on_blue_led(void)
-{
-	imx_iomux_v3_setup_multiple_pads(
-		led_pads,
-		ARRAY_SIZE(led_pads));
-	gpio_direction_output(BLUE_LED_GP, 0);
 }
 
 static int detect_default(struct display_info_t const *dev)
@@ -816,12 +827,7 @@ static void setup_display(void)
 	       <<IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
 	writel(reg, &iomux->gpr[3]);
 
-	/* backlight unconditionally on for now */
-	imx_iomux_v3_setup_multiple_pads(backlight_pads,
-					 ARRAY_SIZE(backlight_pads));
-	/* use 0 for EDT 7", use 1 for LG fullHD panel */
-	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
-	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
+	common_backlight_init();
 }
 #endif /* defined(CONFIG_VIDEO_IPUV3) */
 
