@@ -17,7 +17,7 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |	\
 	PAD_CTL_SRE_SLOW)
 
-iomux_v3_cfg_t const power_key_pads[] = {
+static iomux_v3_cfg_t const power_key_pads[] = {
 #if defined CONFIG_TARGET_RAVION_COLIBRI_IMX6
 	MX6_PAD_EIM_A16__GPIO2_IO22	| MUX_PAD_CTRL(WEAK_PULLUP),
 #	define PIN_POWER	IMX_GPIO_NR(2, 22)

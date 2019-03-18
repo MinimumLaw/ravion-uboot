@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export CROSS_COMPILE=arm-linux-gnueabihf-
+if [ -z $CROSS_COMPILE ]; then
+	export CROSS_COMPILE=arm-linux-gnueabihf-
+fi
 
 if [ -f .config ]; then
 	make $*

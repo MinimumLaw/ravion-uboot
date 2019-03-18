@@ -207,80 +207,16 @@ static void setup_iomux_enet(void)
 
 /* mux auxiliary pins to GPIO, so they can be used from the U-Boot cmdline */
 iomux_v3_cfg_t const gpio_pads[] = {
-#if 0
-	/* ADDRESS[17:18] [25] used as GPIO */
-	MX6_PAD_KEY_ROW2__GPIO4_IO11	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_KEY_COL2__GPIO4_IO10	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_D1__GPIO2_IO01	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* ADDRESS[19:24] used as GPIO */
-	MX6_PAD_DISP0_DAT23__GPIO5_IO17 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_DISP0_DAT22__GPIO5_IO16 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_DISP0_DAT21__GPIO5_IO15 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_DISP0_DAT20__GPIO5_IO14 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_DISP0_DAT19__GPIO5_IO13 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_DISP0_DAT18__GPIO5_IO12 | MUX_PAD_CTRL(WEAK_PULLUP),
-	/* DATA[16:29] [31]	 used as GPIO */
-	MX6_PAD_EIM_LBA__GPIO2_IO27	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_BCLK__GPIO6_IO31	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_CS3__GPIO6_IO16	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_CS1__GPIO6_IO14	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_RB0__GPIO6_IO10	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_ALE__GPIO6_IO08	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_WP_B__GPIO6_IO09	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_CS0__GPIO6_IO11	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_CLE__GPIO6_IO07	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_GPIO_19__GPIO4_IO05	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_CSI0_MCLK__GPIO5_IO19	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_CSI0_PIXCLK__GPIO5_IO18 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_GPIO_4__GPIO1_IO04	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_GPIO_5__GPIO1_IO05	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_GPIO_2__GPIO1_IO02	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* DQM[0:3]	 used as GPIO */
-	MX6_PAD_EIM_EB0__GPIO2_IO28	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_EB1__GPIO2_IO29	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_SD2_DAT2__GPIO1_IO13	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_D0__GPIO2_IO00	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* RDY	used as GPIO */
-	MX6_PAD_EIM_WAIT__GPIO5_IO00	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* ADDRESS[16] DATA[30]	 used as GPIO */
-	MX6_PAD_KEY_ROW4__GPIO4_IO15	| MUX_PAD_CTRL(WEAK_PULLDOWN),
-	MX6_PAD_KEY_COL4__GPIO4_IO14	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* CSI pins used as GPIO */
-	MX6_PAD_EIM_A24__GPIO5_IO04	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_SD2_CMD__GPIO1_IO11	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_CS2__GPIO6_IO15	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_D18__GPIO3_IO18	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_A19__GPIO2_IO19	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_D29__GPIO3_IO29	| MUX_PAD_CTRL(WEAK_PULLDOWN),
-	MX6_PAD_EIM_A23__GPIO6_IO06	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_A20__GPIO2_IO18	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_A17__GPIO2_IO21	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_A18__GPIO2_IO20	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_EB3__GPIO2_IO31	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_D17__GPIO3_IO17	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_SD2_DAT0__GPIO1_IO15	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* GPIO */
-	MX6_PAD_EIM_D26__GPIO3_IO26	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_EIM_D27__GPIO3_IO27	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_D6__GPIO2_IO06	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_D3__GPIO2_IO03	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_ENET_REF_CLK__GPIO1_IO23 | MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_DI0_PIN4__GPIO4_IO20	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_SD4_DAT3__GPIO2_IO11	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_NANDF_D4__GPIO2_IO04	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_SD4_DAT0__GPIO2_IO08	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_GPIO_7__GPIO1_IO07	| MUX_PAD_CTRL(WEAK_PULLUP),
-	MX6_PAD_GPIO_8__GPIO1_IO08	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* USBH_OC */
-	MX6_PAD_EIM_D30__GPIO3_IO30	| MUX_PAD_CTRL(WEAK_PULLUP),
-	/* USBC_DET */
-	MX6_PAD_GPIO_17__GPIO7_IO12	| MUX_PAD_CTRL(WEAK_PULLUP),
-#endif
+	/*
+	 * ToDo: We _REALLY_ need this???
+	 */
 };
 
 static void setup_iomux_gpio(void)
 {
+	/*
 	imx_iomux_v3_setup_multiple_pads(gpio_pads, ARRAY_SIZE(gpio_pads));
+	*/
 }
 
 /* FixMe: need to be checked */
@@ -511,12 +447,84 @@ int board_eth_init(bd_t *bis)
 
 #if defined(CONFIG_VIDEO_IPUV3)
 
-static iomux_v3_cfg_t const backlight_pads[] = {
-	MX6_PAD_NANDF_D4__GPIO2_IO04 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm119 */
-#define RGB_BACKLIGHT_GP IMX_GPIO_NR(2, 4)
-	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL), /* soDimm28 */
-#define RGB_BACKLIGHTPWM_GP IMX_GPIO_NR(2, 9)
+static void do_enable_hdmi(struct display_info_t const *dev)
+{
+	imx_setup_hdmi();
+	imx_enable_hdmi_phy();
+}
+
+static iomux_v3_cfg_t const disp_ctrl_pads[] = {
+	MX6_PAD_EIM_OE__GPIO2_IO25 | MUX_PAD_CTRL(NO_PAD_CTRL),		/* soDimm110 */
+#define PKK_LVDS_SHDN_GP IMX_GPIO_NR(2, 25)
+	MX6_PAD_KEY_COL0__GPIO4_IO06 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm124 */
+#define DISP_EN_GP IMX_GPIO_NR(4, 6)
+	MX6_PAD_DISP0_DAT6__GPIO4_IO27 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm184 */
+#define DISP_SD_GP IMX_GPIO_NR(4, 27)
 };
+
+static void mtu_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(DISP_SD_GP, 1);
+	gpio_direction_output(DISP_EN_GP, 1);
+	puts("MTU control!\n");
+}
+
+static void pkk_m7_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(PKK_LVDS_SHDN_GP, 1);
+	gpio_direction_output(DISP_SD_GP, 0);
+	gpio_direction_output(DISP_EN_GP, 1);
+	puts("PKK-M7 control!\n");
+}
+
+static void pkk_m10_display_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
+		ARRAY_SIZE(disp_ctrl_pads));
+	gpio_direction_output(PKK_LVDS_SHDN_GP, 1);
+	gpio_direction_output(DISP_SD_GP, 0);
+	gpio_direction_output(DISP_EN_GP, 1);
+	puts("PKK-M10 control!\n");
+}
+
+static iomux_v3_cfg_t const backlight_pads[] = {
+	MX6_PAD_NANDF_D4__GPIO2_IO04 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm119 */
+#define BACKLIGHT_GP IMX_GPIO_NR(2, 4)
+	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm28 */
+#define BACKLIGHTPWM_GP IMX_GPIO_NR(2, 9)
+};
+
+static void common_backlight_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(backlight_pads,
+		ARRAY_SIZE(backlight_pads));
+	gpio_direction_output(BACKLIGHT_GP, 1);
+	gpio_direction_output(BACKLIGHTPWM_GP, 0);
+	puts("Backlight!\n");
+}
+
+static iomux_v3_cfg_t const led_pads[] = {
+	/* Status Blue Led on Router */
+	MX6_PAD_KEY_ROW0__GPIO4_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* soDimm134 */
+#define BLUE_LED_GP IMX_GPIO_NR(4, 7)
+};
+
+static void turn_on_blue_led(void)
+{
+	imx_iomux_v3_setup_multiple_pads(
+		led_pads,
+		ARRAY_SIZE(led_pads));
+	gpio_direction_output(BLUE_LED_GP, 0);
+}
+
+#if defined CONFIG_RAVION_DISPLAY_KOE
+/* Defined on common/koe_init.c */
+extern void turn_on_koe_display(void);
+#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
 
 static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_EIM_A16__IPU1_DI1_DISP_CLK | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm56  TFT_PCLK  */
@@ -550,53 +558,10 @@ static iomux_v3_cfg_t const rgb_pads[] = {
 	MX6_PAD_EIM_D27__IPU1_DISP1_DATA23 | MUX_PAD_CTRL(OUTPUT_RGB), /* soDimm146 TFT_DAT23 */
 };
 
-static void do_enable_hdmi(struct display_info_t const *dev)
-{
-	imx_setup_hdmi();
-	imx_enable_hdmi_phy();
-}
-
-static iomux_v3_cfg_t const disp_ctrl_pads[] = {
-	MX6_PAD_KEY_COL0__GPIO4_IO06 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define MTU_DISP_EN_GP IMX_GPIO_NR(4, 6)
-	MX6_PAD_DISP0_DAT6__GPIO4_IO27 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define MTU_DISP_SD_GP IMX_GPIO_NR(4, 27)
-};
-
-static void mtu_display_init(void)
-{
-	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
-		ARRAY_SIZE(disp_ctrl_pads));
-		gpio_direction_output(MTU_DISP_SD_GP, 1);
-	gpio_direction_output(MTU_DISP_EN_GP, 1);
-}
-
-static void pkk_m7_display_init(void)
-{
-	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
-		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 0);
-	gpio_direction_output(MTU_DISP_EN_GP, 1);
-}
-
-static void pkk_m10_display_init(void)
-{
-	imx_iomux_v3_setup_multiple_pads(disp_ctrl_pads,
-		ARRAY_SIZE(disp_ctrl_pads));
-	gpio_direction_output(MTU_DISP_SD_GP, 0);
-	gpio_direction_output(MTU_DISP_EN_GP, 1);
-}
-
-#if defined CONFIG_RAVION_DISPLAY_KOE
-/* Defined on common/koe_init.c */
-extern void turn_on_koe_display(void);
-#endif /* defined CONFIG_RAVION_DISPLAY_KOE */
-
 static void enable_rgb(struct display_info_t const *dev)
 {
 	imx_iomux_v3_setup_multiple_pads(
-		rgb_pads,
-		ARRAY_SIZE(rgb_pads));
+		rgb_pads, ARRAY_SIZE(rgb_pads));
 
 #if defined CONFIG_RAVION_DISPLAY_KOE
 	char *board = env_get("board");
@@ -609,8 +574,9 @@ static void enable_rgb(struct display_info_t const *dev)
 	if(!strcmp("pkk-m7", board)) pkk_m7_display_init();
 	if(!strcmp("pkk-m10", board)) pkk_m10_display_init();
 
-	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
-	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
+	common_backlight_init();
+
+	puts("Enable RGB!\n");
 }
 
 static void enable_lvds(struct display_info_t const *dev)
@@ -684,6 +650,8 @@ static void enable_lvds(struct display_info_t const *dev)
 	    IOMUXC_GPR3_LVDS0_MUX_CTL_MASK | IOMUXC_GPR3_HDMI_MUX_CTL_MASK,
 	    IOMUXC_GPR3_MUX_SRC_IPU1_DI0 << IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
 
+	common_backlight_init();
+
 #if defined CONFIG_RAVION_DISPLAY_KOE
 	char *board = env_get("board");
 	if(!strcmp("cimc-lite", board)) /* FixMe: TFT display here */
@@ -696,22 +664,7 @@ static void enable_lvds(struct display_info_t const *dev)
 	if(!strcmp("pkk-m7-i", board)) pkk_m7_display_init();
 	if(!strcmp("pkk-m10-i", board)) pkk_m10_display_init();
 
-	gpio_direction_output(RGB_BACKLIGHT_GP, 1);
-	gpio_direction_output(RGB_BACKLIGHTPWM_GP, 0);
-}
-
-static iomux_v3_cfg_t const led_pads[] = {
-	/* Status Blue Led on Router */
-	MX6_PAD_KEY_ROW0__GPIO4_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#define BLUE_LED_GP IMX_GPIO_NR(4, 7)
-};
-
-static void turn_on_blue_led(void)
-{
-	imx_iomux_v3_setup_multiple_pads(
-		led_pads,
-		ARRAY_SIZE(led_pads));
-	gpio_direction_output(BLUE_LED_GP, 0);
+	puts("enable LVDS!\n");
 }
 
 static int detect_default(struct display_info_t const *dev)
@@ -998,10 +951,6 @@ size_t display_count = ARRAY_SIZE(displays);
 static void setup_display(void)
 {
 	enable_ipu_clock();
-
-	/* backlight unconditionally on for now */
-	imx_iomux_v3_setup_multiple_pads(backlight_pads,
-					 ARRAY_SIZE(backlight_pads));
 }
 #endif /* defined(CONFIG_VIDEO_IPUV3) */
 

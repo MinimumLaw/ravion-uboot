@@ -476,6 +476,7 @@ static iomux_v3_cfg_t const backlight_pads[] = {
 	/* Backlight On */
 	MX6_PAD_EIM_D26__GPIO3_IO26 | MUX_PAD_CTRL(NO_PAD_CTRL),
 #define RGB_BACKLIGHT_GP IMX_GPIO_NR(3, 26)
+	/* WTF! Why SoDimm59 here??? */
 	/* Backlight PWM, used as GPIO in U-Boot */
 	MX6_PAD_EIM_A22__GPIO2_IO16  | MUX_PAD_CTRL(NO_PULLUP),
 	MX6_PAD_SD4_DAT1__GPIO2_IO09 | MUX_PAD_CTRL(NO_PAD_CTRL),
