@@ -259,15 +259,22 @@ int board_ehci_hcd_init(int port)
 
 int board_ehci_power(int port, int on)
 {
+	char *board = env_get("board");
+
 	switch (port) {
 	case 0:	/* control OTG power */
 		/* No special PE for USBC, always on when ID pin signals
 		   host mode */
-		gpio_direction_output(GPIO_USB_OTG_PEN, !!on);
-		mdelay(100);
+		if(strcmp("eval-v3",board)) {
+			gpio_direction_output(GPIO_USB_OTG_PEN, !!on);
+			mdelay(100);
+		}
 		break;
 	case 1:	/* Control MXM USBH */
-		/* No special PE for USB Host */
+		if(!strcmp("eval-v3",board)) {
+			gpio_direction_output(GPIO_USB_OTG_PEN, !on);
+			mdelay(100);
+		}
 		break;
 	default:
 		break;
@@ -279,7 +286,8 @@ int board_usb_phy_mode(int port)
 {
 	switch (port) {
 	case 0: /* OTG port mode - check ID pin */
-		if (!gpio_get_value(GPIO_USB_OTG_ID))
+		/* FixMe: Ravion200 board have DIRECT OTG ID func. "1" - Device, "0" - Host */
+		if (gpio_get_value(GPIO_USB_OTG_ID))
 		    return USB_INIT_DEVICE;
 		break;
 	case 1: /* HOST port */
@@ -1001,15 +1009,6 @@ int board_init(void)
 #endif
 
 	setup_iomux_gpio();
-
-#ifdef CONFIG_USB
-	usb_init();
-# ifdef CONFIG_USB_STORAGE
-	/* try to recognize storage devices immediately */
-	usb_stor_scan(1);
-# endif
-#endif
-
 	return 0;
 }
 
@@ -1024,6 +1023,14 @@ int board_late_init(void)
 	rev = get_board_rev();
 	snprintf(env_str, ARRAY_SIZE(env_str), "%.4x", rev);
 	env_set("board_rev", env_str);
+#endif
+
+#ifdef CONFIG_USB
+	usb_init();
+# ifdef CONFIG_USB_STORAGE
+	/* try to recognize storage devices immediately */
+	usb_stor_scan(1);
+# endif
 #endif
 
 	return 0;
