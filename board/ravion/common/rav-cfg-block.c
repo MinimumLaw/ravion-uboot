@@ -97,7 +97,9 @@ const char * const ravion_modules[] = {
 	[37] = "UNKNOWN MODULE",
 	[38] = "UNKNOWN MODULE",
 	[39] = "UNKNOWN MODULE",
-	[40] = "soDimm200 iMX6 QuadPlus 2GB IT",
+	[40] = "Ravion200 iMX6 QuadPlus 2GB IT",
+	[41] = "Ravion200 iMX6 Dual 512MB IT",
+	[42] = "Ravion200 iMX6 Dual 2GB IT",
 };
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC
@@ -300,7 +302,10 @@ static int get_cfgblock_interactive(void)
 			if (is_cpu_type(MXC_CPU_MX6QP))
 				rav_hw_tag.prodid = RAVION_IMX6QP_IT;
 			else if (is_cpu_type(MXC_CPU_MX6DL))
-				rav_hw_tag.prodid = COLIBRI_IMX6DL_IT;
+				if (gd->ram_size == 0x20000000)
+					rav_hw_tag.prodid = RAVION_IMX6DL_512MB_IT;
+				else
+					rav_hw_tag.prodid = RAVION_IMX6DL_2GB_IT;
 			else
 				rav_hw_tag.prodid = COLIBRI_IMX6S_IT;
 		} else {

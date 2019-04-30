@@ -190,7 +190,7 @@
 	"bootcmd_mfg=run usbboot\0" \
 	"ubootupdate=if env exists ethaddr; then; else "\
 	"setenv ethaddr 00:14:2d:00:00:00; fi; " \
-	"tftp ${kernel_addr_r} ${serverip}:u-boot-ravion.imx && " \
+	"tftp ${kernel_addr_r} ${serverip}:${u-boot-name} && " \
 	"setexpr blkcnt ${filesize} + 0x1ff && " \
 	"setexpr blkcnt ${blkcnt} / 0x200 && " \
 	"mmc dev 0 1 && " \
@@ -208,9 +208,15 @@
 	"check_recovery=echo Boot into recovery mode disabled\0"
 #endif
 
+#ifdef CONFIG_MX6Q
+#define VARIANT	"variant=qp\0"
+#else
+#define VARIANT	"variant=dl\0"
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"ethaddr=00:14:2d:00:00:00\0" \
-	"variant=qp\0" \
+	VARIANT \
 	"board=eval\0" \
 	"console=ttymxc0\0" \
 	"bootcmd=" \
@@ -231,6 +237,7 @@
 	NFS_BOOTCMD \
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
+	"u-boot-name=u-boot-ravion.imx\0" \
 	UBOOT_UPDATE \
 	RECOVERY_BOOTCMD \
 	"splashpos=m,m\0" \

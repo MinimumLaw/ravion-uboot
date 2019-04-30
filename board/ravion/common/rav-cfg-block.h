@@ -57,6 +57,8 @@ enum {
 	APALIS_TK1_2GB,
 	APALIS_IMX6D_IT,
 	RAVION_IMX6QP_IT = 40,
+	RAVION_IMX6DL_512MB_IT,
+	RAVION_IMX6DL_2GB_IT,
 };
 
 extern const char * const ravion_modules[];
