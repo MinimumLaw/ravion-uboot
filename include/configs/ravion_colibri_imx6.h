@@ -197,7 +197,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"variant=dl\0" \
-	"board=eval\0" \
+	"board=eval-v3\0" \
 	"console=ttymxc0\0" \
 	"bootcmd=" \
 	    "run check_recovery; " \

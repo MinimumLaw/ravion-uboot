@@ -217,7 +217,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"ethaddr=00:14:2d:00:00:00\0" \
 	VARIANT \
-	"board=eval\0" \
+	"board=eval-v3\0" \
 	"console=ttymxc0\0" \
 	"bootcmd=" \
 	    "run check_recovery; " \
