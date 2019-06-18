@@ -33,15 +33,9 @@
 
 #define CONFIG_SPL_STACK		0x10087fff
 
-/* MMC/SD IP block */
-#define CONFIG_BOUNCE_BUFFER
-
 #define CONFIG_SYS_SDRAM_BASE		0x60000000
 #define SDRAM_BANK_SIZE			(2UL << 30)
 #define SDRAM_MAX_SIZE			0x80000000
-
-#define CONFIG_SPI_FLASH
-#define CONFIG_SF_DEFAULT_SPEED 20000000
 
 #ifndef CONFIG_SPL_BUILD
 /* usb otg */

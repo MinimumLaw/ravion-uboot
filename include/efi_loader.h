@@ -106,6 +106,10 @@ extern const struct efi_device_path_utilities_protocol
 /* Implementation of the EFI_UNICODE_COLLATION_PROTOCOL */
 extern const struct efi_unicode_collation_protocol
 					efi_unicode_collation_protocol;
+extern const struct efi_hii_config_routing_protocol efi_hii_config_routing;
+extern const struct efi_hii_config_access_protocol efi_hii_config_access;
+extern const struct efi_hii_database_protocol efi_hii_database;
+extern const struct efi_hii_string_protocol efi_hii_string;
 
 uint16_t *efi_dp_str(struct efi_device_path *dp);
 
@@ -139,6 +143,10 @@ extern const efi_guid_t efi_file_system_info_guid;
 extern const efi_guid_t efi_guid_device_path_utilities_protocol;
 /* GUID of the Unicode collation protocol */
 extern const efi_guid_t efi_guid_unicode_collation_protocol;
+extern const efi_guid_t efi_guid_hii_config_routing_protocol;
+extern const efi_guid_t efi_guid_hii_config_access_protocol;
+extern const efi_guid_t efi_guid_hii_database_protocol;
+extern const efi_guid_t efi_guid_hii_string_protocol;
 
 extern unsigned int __efi_runtime_start, __efi_runtime_stop;
 extern unsigned int __efi_runtime_rel_start, __efi_runtime_rel_stop;
@@ -244,6 +252,8 @@ extern struct list_head efi_obj_list;
 /* List of all events */
 extern struct list_head efi_events;
 
+/* Initialize efi execution environment */
+efi_status_t efi_init_obj_list(void);
 /* Called by bootefi to initialize root node */
 efi_status_t efi_root_node_register(void);
 /* Called by bootefi to initialize runtime */
@@ -291,8 +301,8 @@ efi_status_t efi_set_watchdog(unsigned long timeout);
 /* Called from places to check whether a timer expired */
 void efi_timer_check(void);
 /* PE loader implementation */
-void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
-		  struct efi_loaded_image *loaded_image_info);
+efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
+			 struct efi_loaded_image *loaded_image_info);
 /* Called once to store the pristine gd pointer */
 void efi_save_gd(void);
 /* Special case handler for error/abort that just tries to dtrt to get
@@ -310,6 +320,10 @@ efi_status_t efi_create_handle(efi_handle_t *handle);
 void efi_delete_handle(efi_handle_t obj);
 /* Call this to validate a handle and find the EFI object for it */
 struct efi_object *efi_search_obj(const efi_handle_t handle);
+/* Start image */
+efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
+				    efi_uintn_t *exit_data_size,
+				    u16 **exit_data);
 /* Find a protocol on a handle */
 efi_status_t efi_search_protocol(const efi_handle_t handle,
 				 const efi_guid_t *protocol_guid,
@@ -387,7 +401,7 @@ efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 				    struct efi_loaded_image_obj **handle_ptr,
 				    struct efi_loaded_image **info_ptr);
 efi_status_t efi_load_image_from_path(struct efi_device_path *file_path,
-				      void **buffer);
+				      void **buffer, efi_uintn_t *size);
 /* Print information about all loaded images */
 void efi_print_image_infos(void *pc);
 
@@ -508,15 +522,15 @@ efi_status_t EFIAPI efi_selftest(efi_handle_t image_handle,
 				 struct efi_system_table *systab);
 #endif
 
-efi_status_t EFIAPI efi_get_variable(u16 *variable_name, efi_guid_t *vendor,
-				     u32 *attributes, efi_uintn_t *data_size,
-				     void *data);
+efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
+				     const efi_guid_t *vendor, u32 *attributes,
+				     efi_uintn_t *data_size, void *data);
 efi_status_t EFIAPI efi_get_next_variable_name(efi_uintn_t *variable_name_size,
 					       u16 *variable_name,
-					       efi_guid_t *vendor);
-efi_status_t EFIAPI efi_set_variable(u16 *variable_name, efi_guid_t *vendor,
-				     u32 attributes, efi_uintn_t data_size,
-				     void *data);
+					       const efi_guid_t *vendor);
+efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
+				     const efi_guid_t *vendor, u32 attributes,
+				     efi_uintn_t data_size, const void *data);
 
 /*
  * See section 3.1.3 in the v2.7 UEFI spec for more details on

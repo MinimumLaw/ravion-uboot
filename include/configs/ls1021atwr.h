@@ -104,6 +104,8 @@
 #define CONFIG_SYS_DDR_SDRAM_BASE      0x80000000UL
 #define CONFIG_SYS_SDRAM_BASE          CONFIG_SYS_DDR_SDRAM_BASE
 
+#define CONFIG_CHIP_SELECTS_PER_CTRL	4
+
 #if !defined(CONFIG_SD_BOOT) && !defined(CONFIG_NAND_BOOT) && \
 	!defined(CONFIG_QSPI_BOOT)
 #define CONFIG_SYS_QE_FMAN_FW_IN_NOR
@@ -315,7 +317,8 @@
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
-	func(USB, usb, 0)
+	func(USB, usb, 0) \
+	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
 
 #ifdef CONFIG_LPUART

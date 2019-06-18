@@ -51,6 +51,7 @@ obj-$(CONFIG_CMD_ECHO) += echo.o
 obj-$(CONFIG_ENV_IS_IN_EEPROM) += eeprom.o
 obj-$(CONFIG_CMD_EEPROM) += eeprom.o
 obj-$(CONFIG_EFI_STUB) += efi.o
+obj-$(CONFIG_CMD_EFIDEBUG) += efidebug.o
 obj-$(CONFIG_CMD_ELF) += elf.o
 obj-$(CONFIG_HUSH_PARSER) += exit.o
 obj-$(CONFIG_CMD_EXT4) += ext4.o
@@ -98,13 +99,14 @@ obj-$(CONFIG_CMD_MTD) += mtd.o
 obj-$(CONFIG_CMD_MTDPARTS) += mtdparts.o
 obj-$(CONFIG_CMD_NAND) += nand.o
 obj-$(CONFIG_CMD_NET) += net.o
+obj-$(CONFIG_CMD_NVEDIT_EFI) += nvedit_efi.o
 obj-$(CONFIG_CMD_ONENAND) += onenand.o
 obj-$(CONFIG_CMD_OSD) += osd.o
 obj-$(CONFIG_CMD_PART) += part.o
 ifdef CONFIG_PCI
 obj-$(CONFIG_CMD_PCI) += pci.o
 endif
-obj-y += pcmcia.o
+obj-$(CONFIG_CMD_PCMCIA) += pcmcia.o
 obj-$(CONFIG_CMD_PINMUX) += pinmux.o
 obj-$(CONFIG_CMD_PXE) += pxe.o
 obj-$(CONFIG_CMD_WOL) += wol.o

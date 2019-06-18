@@ -40,21 +40,14 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(NVIDIA_TEGRA210_XUSB_PADCTL, "nvidia,tegra210-xusb-padctl"),
 	COMPAT(SMSC_LAN9215, "smsc,lan9215"),
 	COMPAT(SAMSUNG_EXYNOS5_SROMC, "samsung,exynos-sromc"),
-	COMPAT(SAMSUNG_S3C2440_I2C, "samsung,s3c2440-i2c"),
-	COMPAT(SAMSUNG_EXYNOS5_SOUND, "samsung,exynos-sound"),
-	COMPAT(WOLFSON_WM8994_CODEC, "wolfson,wm8994-codec"),
 	COMPAT(SAMSUNG_EXYNOS_USB_PHY, "samsung,exynos-usb-phy"),
 	COMPAT(SAMSUNG_EXYNOS5_USB3_PHY, "samsung,exynos5250-usb3-phy"),
 	COMPAT(SAMSUNG_EXYNOS_TMU, "samsung,exynos-tmu"),
 	COMPAT(SAMSUNG_EXYNOS_MIPI_DSI, "samsung,exynos-mipi-dsi"),
 	COMPAT(SAMSUNG_EXYNOS_DWMMC, "samsung,exynos-dwmmc"),
-	COMPAT(SAMSUNG_EXYNOS_MMC, "samsung,exynos-mmc"),
 	COMPAT(GENERIC_SPI_FLASH, "spi-flash"),
-	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
-	COMPAT(SAMSUNG_EXYNOS5_I2C, "samsung,exynos5-hsi2c"),
 	COMPAT(SAMSUNG_EXYNOS_SYSMMU, "samsung,sysmmu-v3.3"),
 	COMPAT(INTEL_MICROCODE, "intel,microcode"),
-	COMPAT(AMS_AS3722, "ams,as3722"),
 	COMPAT(INTEL_QRK_MRC, "intel,quark-mrc"),
 	COMPAT(ALTERA_SOCFPGA_DWMAC, "altr,socfpga-stmmac"),
 	COMPAT(ALTERA_SOCFPGA_DWMMC, "altr,socfpga-dw-mshc"),
@@ -94,16 +87,6 @@ fdt_addr_t fdtdec_get_addr_size_fixed(const void *blob, int node,
 	fdt_addr_t addr;
 
 	debug("%s: %s: ", __func__, prop_name);
-
-	if (na > (sizeof(fdt_addr_t) / sizeof(fdt32_t))) {
-		debug("(na too large for fdt_addr_t type)\n");
-		return FDT_ADDR_T_NONE;
-	}
-
-	if (ns > (sizeof(fdt_size_t) / sizeof(fdt32_t))) {
-		debug("(ns too large for fdt_size_t type)\n");
-		return FDT_ADDR_T_NONE;
-	}
 
 	prop = fdt_getprop(blob, node, prop_name, &len);
 	if (!prop) {
@@ -557,6 +540,39 @@ int fdtdec_get_alias_seq(const void *blob, const char *base, int offset,
 
 	debug("Not found\n");
 	return -ENOENT;
+}
+
+int fdtdec_get_alias_highest_id(const void *blob, const char *base)
+{
+	int base_len = strlen(base);
+	int prop_offset;
+	int aliases;
+	int max = -1;
+
+	debug("Looking for highest alias id for '%s'\n", base);
+
+	aliases = fdt_path_offset(blob, "/aliases");
+	for (prop_offset = fdt_first_property_offset(blob, aliases);
+	     prop_offset > 0;
+	     prop_offset = fdt_next_property_offset(blob, prop_offset)) {
+		const char *prop;
+		const char *name;
+		int len, val;
+
+		prop = fdt_getprop_by_offset(blob, prop_offset, &name, &len);
+		debug("   - %s, %s\n", name, prop);
+		if (*prop != '/' || prop[len - 1] ||
+		    strncmp(name, base, base_len))
+			continue;
+
+		val = trailing_strtol(name);
+		if (val > max) {
+			debug("Found seq %d\n", val);
+			max = val;
+		}
+	}
+
+	return max;
 }
 
 const char *fdtdec_get_chosen_prop(const void *blob, const char *name)

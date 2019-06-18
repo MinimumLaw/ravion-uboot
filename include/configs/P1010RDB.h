@@ -78,7 +78,7 @@
 #define CONFIG_SPL_NAND_INIT
 #define CONFIG_SPL_COMMON_INIT_DDR
 #define CONFIG_SPL_MAX_SIZE		(128 << 10)
-#define CONFIG_SPL_TEXT_BASE		0xD0001000
+#define CONFIG_TPL_TEXT_BASE		0xD0001000
 #define CONFIG_SYS_MPC85XX_NO_RESETVEC
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	(576 << 10)
 #define CONFIG_SYS_NAND_U_BOOT_DST	(0x11000000)
@@ -111,7 +111,9 @@
 #define CONFIG_RESET_VECTOR_ADDRESS	0xeffffffc
 #endif
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_TPL_BUILD
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_TPL_TEXT_BASE
+#elif defined(CONFIG_SPL_BUILD)
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SPL_TEXT_BASE
 #else
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
@@ -571,8 +573,6 @@ extern unsigned long get_sdram_size(void);
  */
 #if !defined(CONFIG_NAND) || !defined(CONFIG_NAND_SECBOOT)
 /* eSPI - Enhanced SPI */
-#define CONFIG_SF_DEFAULT_SPEED		10000000
-#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
 #endif
 
 #if defined(CONFIG_TSEC_ENET)
@@ -644,10 +644,6 @@ extern unsigned long get_sdram_size(void);
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			0x2000
 #elif defined(CONFIG_SPIFLASH)
-#define CONFIG_ENV_SPI_BUS	0
-#define CONFIG_ENV_SPI_CS	0
-#define CONFIG_ENV_SPI_MAX_HZ	10000000
-#define CONFIG_ENV_SPI_MODE	0
 #define CONFIG_ENV_OFFSET	0x100000	/* 1MB */
 #define CONFIG_ENV_SECT_SIZE	0x10000
 #define CONFIG_ENV_SIZE		0x2000

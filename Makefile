@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2019
-PATCHLEVEL = 01
+PATCHLEVEL = 04
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -291,6 +291,9 @@ DARWIN_MINOR_VERSION	= $(shell sw_vers -productVersion | cut -f 2 -d '.')
 os_x_before	= $(shell if [ $(DARWIN_MAJOR_VERSION) -le $(1) -a \
 	$(DARWIN_MINOR_VERSION) -le $(2) ] ; then echo "$(3)"; else echo "$(4)"; fi ;)
 
+os_x_after = $(shell if [ $(DARWIN_MAJOR_VERSION) -ge $(1) -a \
+	$(DARWIN_MINOR_VERSION) -ge $(2) ] ; then echo "$(3)"; else echo "$(4)"; fi ;)	
+
 # Snow Leopards build environment has no longer restrictions as described above
 HOSTCC       = $(call os_x_before, 10, 5, "cc", "gcc")
 HOSTCFLAGS  += $(call os_x_before, 10, 4, "-traditional-cpp")
@@ -300,6 +303,10 @@ HOSTLDFLAGS += $(call os_x_before, 10, 5, "-multiply_defined suppress")
 # in some host tools which is a problem then ... so disable ASLR for these
 # tools
 HOSTLDFLAGS += $(call os_x_before, 10, 7, "", "-Xlinker -no_pie")
+
+# macOS Mojave (10.14.X) 
+# Undefined symbols for architecture x86_64: "_PyArg_ParseTuple"
+HOSTLDFLAGS += $(call os_x_after, 10, 14, "-lpython -dynamclib", "")
 endif
 
 # Decide whether to build built-in, modular, or both.
@@ -534,7 +541,7 @@ include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
 	@# Otherwise, 'make silentoldconfig' would be invoked twice.
 	$(Q)touch include/config/auto.conf
 
-u-boot.cfg spl/u-boot.cfg tpl/u-boot.cfg: include/config.h FORCE
+u-boot.cfg spl/u-boot.cfg tpl/u-boot.cfg:
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.autoconf $(@)
 
 -include include/autoconf.mk
@@ -893,7 +900,7 @@ cmd_mkimage = $(objtree)/tools/mkimage $(MKIMAGEFLAGS_$(@F)) -d $< $@ \
 	>$(MKIMAGEOUTPUT) $(if $(KBUILD_VERBOSE:0=), && cat $(MKIMAGEOUTPUT))
 
 quiet_cmd_mkfitimage = MKIMAGE $@
-cmd_mkfitimage = $(objtree)/tools/mkimage $(MKIMAGEFLAGS_$(@F)) -f $(U_BOOT_ITS) -E $@ -p $(CONFIG_FIT_EXTERNAL_OFFSET)\
+cmd_mkfitimage = $(objtree)/tools/mkimage $(MKIMAGEFLAGS_$(@F)) -f $(U_BOOT_ITS) -p $(CONFIG_FIT_EXTERNAL_OFFSET) $@\
 	>$(MKIMAGEOUTPUT) $(if $(KBUILD_VERBOSE:0=), && cat $(MKIMAGEOUTPUT))
 
 quiet_cmd_cat = CAT     $@
@@ -910,7 +917,7 @@ quiet_cmd_cfgcheck = CFGCHK  $2
 cmd_cfgcheck = $(srctree)/scripts/check-config.sh $2 \
 		$(srctree)/scripts/config_whitelist.txt $(srctree)
 
-all:		$(ALL-y) cfg
+all:		$(ALL-y)
 ifeq ($(CONFIG_DM_I2C_COMPAT)$(CONFIG_SANDBOX),y)
 	@echo >&2 "===================== WARNING ======================"
 	@echo >&2 "This board uses CONFIG_DM_I2C_COMPAT. Please remove"
@@ -1198,6 +1205,13 @@ MKIMAGEFLAGS_u-boot.pbl = -n $(srctree)/$(CONFIG_SYS_FSL_PBL_RCW:"%"=%) \
 u-boot-dtb.img u-boot.img u-boot.kwb u-boot.pbl u-boot-ivt.img: \
 		$(if $(CONFIG_SPL_LOAD_FIT),u-boot-nodtb.bin dts/dt.dtb,u-boot.bin) FORCE
 	$(call if_changed,mkimage)
+	$(BOARD_SIZE_CHECK)
+
+ifeq ($(CONFIG_SPL_LOAD_FIT_FULL),y)
+MKIMAGEFLAGS_u-boot.itb =
+else
+MKIMAGEFLAGS_u-boot.itb = -E
+endif
 
 u-boot.itb: u-boot-nodtb.bin dts/dt.dtb $(U_BOOT_ITS) FORCE
 	$(call if_changed,mkfitimage)
@@ -1253,7 +1267,7 @@ tpl/u-boot-with-tpl.bin: tpl/u-boot-tpl.bin u-boot.bin FORCE
 SPL: spl/u-boot-spl.bin FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 
-ifeq ($(CONFIG_ARCH_IMX8M), y)
+ifeq ($(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8), y)
 flash.bin: spl/u-boot-spl.bin u-boot.itb FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 endif
@@ -1555,7 +1569,7 @@ ifneq ($(KBUILD_SRC),)
 endif
 
 # prepare2 creates a makefile if using a separate output directory
-prepare2: prepare3 outputmakefile
+prepare2: prepare3 outputmakefile cfg
 
 prepare1: prepare2 $(version_h) $(timestamp_h) \
                    include/config/auto.conf
@@ -1739,7 +1753,8 @@ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h \
 MRPROPER_DIRS  += include/config include/generated spl tpl \
 		  .tmp_objdiff
 MRPROPER_FILES += .config .config.old include/autoconf.mk* include/config.h \
-		  ctags etags tags TAGS cscope* GPATH GTAGS GRTAGS GSYMS
+		  ctags etags tags TAGS cscope* GPATH GTAGS GRTAGS GSYMS \
+		  drivers/video/fonts/*.S
 
 # clean - Delete most, but leave enough to build external modules
 #
@@ -1794,7 +1809,7 @@ distclean: mrproper
 		-o -name '.*.rej' -o -name '*%' -o -name 'core' \
 		-o -name '*.pyc' \) \
 		-type f -print | xargs rm -f
-	@rm -f boards.cfg
+	@rm -f boards.cfg CHANGELOG
 
 backup:
 	F=`basename $(srctree)` ; cd .. ; \

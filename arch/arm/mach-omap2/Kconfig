@@ -13,8 +13,8 @@ config OMAP34XX
 	select ARM_ERRATA_725233
 	select USE_TINY_PRINTF
 	imply NAND_OMAP_GPMC
-	imply SPL_EXT_SUPPORT
-	imply SPL_FAT_SUPPORT
+	imply SPL_FS_EXT4
+	imply SPL_FS_FAT
 	imply SPL_GPIO_SUPPORT
 	imply SPL_I2C_SUPPORT
 	imply SPL_LIBCOMMON_SUPPORT
@@ -35,8 +35,8 @@ config OMAP44XX
 	imply NAND_OMAP_ELM
 	imply NAND_OMAP_GPMC
 	imply SPL_DISPLAY_PRINT
-	imply SPL_EXT_SUPPORT
-	imply SPL_FAT_SUPPORT
+	imply SPL_FS_EXT4
+	imply SPL_FS_FAT
 	imply SPL_GPIO_SUPPORT
 	imply SPL_I2C_SUPPORT
 	imply SPL_LIBCOMMON_SUPPORT
@@ -59,8 +59,8 @@ config OMAP54XX
 	imply NAND_OMAP_GPMC
 	imply SPL_DISPLAY_PRINT
 	imply SPL_ENV_SUPPORT
-	imply SPL_EXT_SUPPORT
-	imply SPL_FAT_SUPPORT
+	imply SPL_FS_EXT4
+	imply SPL_FS_FAT
 	imply SPL_GPIO_SUPPORT
 	imply SPL_I2C_SUPPORT
 	imply SPL_LIBCOMMON_SUPPORT
@@ -166,6 +166,21 @@ config TI_SECURE_EMIF_PROTECTED_REGION_SIZE
 	  reserved EMIF region set aside for secure OS needs that will  be protected
 	  using hardware memory firewalls. This value must be smaller than the
 	  TI_SECURE_EMIF_TOTAL_REGION_SIZE value.
+
+if AM43XX || AM33XX || OMAP54XX
+config ISW_ENTRY_ADDR
+	hex "Address in memory or XIP address of bootloader entry point"
+	default 0x402F4000 if AM43XX
+	default 0x402F0400 if AM33XX
+	default 0x40301350 if OMAP54XX
+	help
+	  After any reset, the boot ROM searches the boot media for a valid
+	  boot image. For non-XIP devices, the ROM then copies the image into
+	  internal memory. For all boot modes, after the ROM processes the
+	  boot image it eventually computes the entry point address depending
+	  on the device type (secure/non-secure), boot media (xip/non-xip) and
+	  image headers.
+endif
 
 source "arch/arm/mach-omap2/omap3/Kconfig"
 

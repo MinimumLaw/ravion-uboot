@@ -57,14 +57,9 @@
  */
  #ifdef CONFIG_CADENCE_QSPI
 /* Enable it if you want to use dual-stacked mode */
-#undef CONFIG_SF_DUAL_FLASH
 /*#define CONFIG_QSPI_RBF_ADDR		0x720000*/
 
 /* Flash device info */
-#define CONFIG_SF_DEFAULT_SPEED		(50000000)
-#define CONFIG_SF_DEFAULT_MODE		(SPI_MODE_3 | SPI_RX_QUAD)
-#define CONFIG_SF_DEFAULT_BUS		0
-#define CONFIG_SF_DEFAULT_CS		0
 
 /*#define CONFIG_ENV_IS_IN_SPI_FLASH*/
 #ifdef CONFIG_ENV_IS_IN_SPI_FLASH
@@ -154,7 +149,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * SDMMC configurations
  */
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_BOUNCE_BUFFER
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT	256
 #endif
 /*

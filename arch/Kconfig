@@ -61,6 +61,7 @@ config PPC
 
 config RISCV
 	bool "RISC-V architecture"
+	select CREATE_ARCH_SYMLINK
 	select SUPPORT_OF_CONTROL
 	select OF_CONTROL
 	select DM
@@ -117,6 +118,7 @@ config SANDBOX
 	imply VIRTIO_BLK
 	imply VIRTIO_NET
 	imply DM_SOUND
+	imply PCH
 
 config SH
 	bool "SuperH architecture"
@@ -160,6 +162,7 @@ config X86
 	imply USB_ETHER_ASIX
 	imply USB_ETHER_SMSC95XX
 	imply USB_HOST_ETHER
+	imply PCH
 
 config XTENSA
 	bool "Xtensa architecture"

@@ -14,9 +14,6 @@
 
 #define CONFIG_TIMESTAMP		/* Print image info with timestamp */
 
-/* add target to build it automatically upon "make" */
-#define CONFIG_BUILD_TARGET		"u-boot-with-spl.sfp"
-
 /*
  * Memory configurations
  */
@@ -72,7 +69,6 @@
  * EPCS/EPCQx1 Serial Flash Controller
  */
 #ifdef CONFIG_ALTERA_SPI
-#define CONFIG_SF_DEFAULT_SPEED		30000000
 /*
  * The base address is configurable in QSys, each board must specify the
  * base address based on it's particular FPGA configuration. Please note
@@ -121,7 +117,6 @@
  * MMC Driver
  */
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_BOUNCE_BUFFER
 /* FIXME */
 /* using smaller max blk cnt to avoid flooding the limited stack we have */
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT	256	/* FIXME -- SPL only? */
@@ -252,8 +247,10 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * 0xFFEz_zzzz ...... Malloc area (grows up to top)
  * 0xFFE3_FFFF ...... End of SRAM (top)
  */
+#ifndef CONFIG_SPL_TEXT_BASE
 #define CONFIG_SPL_TEXT_BASE		CONFIG_SYS_INIT_RAM_ADDR
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_INIT_RAM_SIZE
+#endif
 
 #if defined(CONFIG_TARGET_SOCFPGA_ARRIA10)
 /* SPL memory allocation configuration, this is for FAT implementation */
@@ -267,7 +264,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 
 /* SPL SDMMC boot support */
 #ifdef CONFIG_SPL_MMC_SUPPORT
-#if defined(CONFIG_SPL_FAT_SUPPORT) || defined(CONFIG_SPL_EXT_SUPPORT)
+#if defined(CONFIG_SPL_FS_FAT) || defined(CONFIG_SPL_FS_EXT4)
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot-dtb.img"
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #endif
@@ -279,13 +276,20 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 
 /* SPL QSPI boot support */
 #ifdef CONFIG_SPL_SPI_SUPPORT
+#if defined(CONFIG_TARGET_SOCFPGA_GEN5)
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x40000
+#elif defined(CONFIG_TARGET_SOCFPGA_ARRIA10)
+#define CONFIG_SYS_SPI_U_BOOT_OFFS	0x100000
+#endif
 #endif
 
 /* SPL NAND boot support */
 #ifdef CONFIG_SPL_NAND_SUPPORT
-#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
+#if defined(CONFIG_TARGET_SOCFPGA_GEN5)
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x40000
+#elif defined(CONFIG_TARGET_SOCFPGA_ARRIA10)
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x100000
+#endif
 #endif
 
 /*

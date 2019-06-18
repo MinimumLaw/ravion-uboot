@@ -35,9 +35,6 @@
 #endif
 
 /* SPI NOR flash default params, used by sf commands */
-#define CONFIG_SF_DEFAULT_SPEED		1000000
-#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
-#define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SPANSION
 
 /*
@@ -66,7 +63,6 @@
 
 /* PCIe support */
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_PCI_MVEBU
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 

@@ -144,10 +144,6 @@
 #endif
 
 #if defined(CONFIG_SPIFLASH)
-#define CONFIG_ENV_SPI_BUS		0
-#define CONFIG_ENV_SPI_CS		0
-#define CONFIG_ENV_SPI_MAX_HZ		10000000
-#define CONFIG_ENV_SPI_MODE		0
 #define CONFIG_ENV_SIZE			0x2000		/* 8KB */
 #define CONFIG_ENV_OFFSET		0x100000	/* 1MB */
 #if defined(CONFIG_TARGET_T1024RDB)
@@ -236,7 +232,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 #define CONFIG_DIMM_SLOTS_PER_CTLR	1
 #define CONFIG_CHIP_SELECTS_PER_CTRL	(4 * CONFIG_DIMM_SLOTS_PER_CTLR)
-#define CONFIG_FSL_DDR_INTERACTIVE
 #if defined(CONFIG_TARGET_T1024RDB)
 #define CONFIG_DDR_SPD
 #define CONFIG_SYS_SPD_BUS_NUM	0
@@ -498,9 +493,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * eSPI - Enhanced SPI
  */
-#define CONFIG_SPI_FLASH_BAR
-#define CONFIG_SF_DEFAULT_SPEED	10000000
-#define CONFIG_SF_DEFAULT_MODE	0
 
 /*
  * General PCIe

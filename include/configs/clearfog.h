@@ -22,7 +22,6 @@
  */
 
 /* SPI NOR flash default params, used by sf commands */
-#define CONFIG_SF_DEFAULT_BUS		1
 
 /*
  * SDIO/MMC Card Configuration
@@ -55,7 +54,6 @@
 
 /* PCIe support */
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_PCI_MVEBU
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 

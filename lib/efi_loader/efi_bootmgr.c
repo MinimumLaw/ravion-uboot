@@ -14,10 +14,6 @@
 static const struct efi_boot_services *bs;
 static const struct efi_runtime_services *rs;
 
-#define LOAD_OPTION_ACTIVE		0x00000001
-#define LOAD_OPTION_FORCE_RECONNECT	0x00000002
-#define LOAD_OPTION_HIDDEN		0x00000008
-
 /*
  * bootmgr implements the logic of trying to find a payload to boot
  * based on the BootOrder + BootXXXX variables, and then loading it.
@@ -150,7 +146,7 @@ static void *try_load_entry(uint16_t n, struct efi_device_path **device_path,
 		debug("%s: trying to load \"%ls\" from %pD\n",
 		      __func__, lo.label, lo.file_path);
 
-		ret = efi_load_image_from_path(lo.file_path, &image);
+		ret = efi_load_image_from_path(lo.file_path, &image, &size);
 
 		if (ret != EFI_SUCCESS)
 			goto error;
@@ -178,14 +174,14 @@ void *efi_bootmgr_load(struct efi_device_path **device_path,
 	void *image = NULL;
 	int i, num;
 
-	__efi_entry_check();
-
 	bs = systab.boottime;
 	rs = systab.runtime;
 
 	bootorder = get_var(L"BootOrder", &efi_global_variable_guid, &size);
-	if (!bootorder)
+	if (!bootorder) {
+		printf("BootOrder not defined\n");
 		goto error;
+	}
 
 	num = size / sizeof(uint16_t);
 	for (i = 0; i < num; i++) {
@@ -198,7 +194,5 @@ void *efi_bootmgr_load(struct efi_device_path **device_path,
 	free(bootorder);
 
 error:
-	__efi_exit_check();
-
 	return image;
 }

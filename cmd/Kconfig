@@ -226,7 +226,7 @@ config CMD_BOOTEFI
 
 config CMD_BOOTEFI_HELLO_COMPILE
 	bool "Compile a standard EFI hello world binary for testing"
-	depends on CMD_BOOTEFI && (ARM || X86 || RISCV)
+	depends on CMD_BOOTEFI && !CPU_V7M && !SANDBOX
 	default y
 	help
 	  This compiles a standard EFI hello world application with U-Boot so
@@ -419,6 +419,16 @@ config CMD_ENV_FLAGS
 	  behaviour. For example, serial# can only be written once and cannot
 	  be deleted. This command shows the variables that have special
 	  flags.
+
+config CMD_NVEDIT_EFI
+	bool "env [set|print] -e - set/print UEFI variables"
+	depends on EFI_LOADER
+	default y
+	imply HEXDUMP
+	help
+	  UEFI variables are encoded as some form of U-Boot variables.
+	  If enabled, we are allowed to set/print UEFI variables using
+	  "env" command with "-e" option without knowing details.
 
 endmenu
 
@@ -1030,9 +1040,19 @@ config CMD_SF_TEST
 	  everything is working properly.
 
 config CMD_SPI
-	bool "sspi"
+	bool "sspi - Command to access spi device"
 	help
 	  SPI utility command.
+
+config DEFAULT_SPI_BUS
+	int "default spi bus used by sspi command"
+	depends on CMD_SPI
+	default 0
+
+config DEFAULT_SPI_MODE
+	hex "default spi mode used by sspi command (see include/spi.h)"
+	depends on CMD_SPI
+	default 0
 
 config CMD_TSI148
 	bool "tsi148 - Command to access tsi148 device"
@@ -1397,8 +1417,19 @@ config CMD_DISPLAY
 	  displayed on a simple board-specific display. Implement
 	  display_putc() to use it.
 
+config CMD_EFIDEBUG
+	bool "efidebug - display/configure UEFI environment"
+	depends on EFI_LOADER
+	default n
+	help
+	  Enable the 'efidebug' command which provides a subset of UEFI
+	  shell utility with simplified functionality. It will be useful
+	  particularly for managing boot parameters as  well as examining
+	  various EFI status for debugging.
+
 config CMD_LED
 	bool "led"
+	depends on LED
 	default y if LED
 	help
 	  Enable the 'led' command which allows for control of LEDs supported

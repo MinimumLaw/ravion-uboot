@@ -58,7 +58,7 @@ u32 spl_boot_device(void)
 #ifdef CONFIG_SPL_MMC_SUPPORT
 u32 spl_boot_mode(const u32 boot_device)
 {
-#if defined(CONFIG_SPL_FAT_SUPPORT) || defined(CONFIG_SPL_EXT_SUPPORT)
+#if defined(CONFIG_SPL_FS_FAT) || defined(CONFIG_SPL_FS_EXT4)
 	return MMCSD_MODE_FS;
 #else
 	return MMCSD_MODE_RAW;
@@ -77,6 +77,8 @@ void spl_board_init(void)
 
 void board_init_f(ulong dummy)
 {
+	dcache_disable();
+
 	socfpga_init_security_policies();
 	socfpga_sdram_remap_zero();
 

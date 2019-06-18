@@ -181,6 +181,7 @@ void br_summaryscreen(void)
 void lcdpower(int on)
 {
 	u32 pin, swval, i;
+	char buf[16] = { 0 };
 
 	pin = env_get_ulong("ds1_pwr", 16, ~0UL);
 
@@ -191,6 +192,12 @@ void lcdpower(int on)
 
 	for (i = 0; i < 3; i++) {
 		if (pin != 0) {
+			snprintf(buf, sizeof(buf), "ds1_pwr#%d", i);
+			if (gpio_request(pin & 0x7F, buf) != 0) {
+				printf("%s: not able to request gpio %s",
+				       __func__, buf);
+				continue;
+			}
 			swval = pin & 0x80 ? 0 : 1;
 			if (on)
 				gpio_direction_output(pin & 0x7F, swval);
@@ -269,13 +276,14 @@ int ft_board_setup(void *blob, bd_t *bd)
 
 static struct ctrl_dev *cdev = (struct ctrl_dev *)CTRL_DEVICE_BASE;
 
-void pmicsetup(u32 mpupll)
+void pmicsetup(u32 mpupll, unsigned int bus)
 {
 	int mpu_vdd;
 	int usb_cur_lim;
 
-	if (i2c_probe(TPS65217_CHIP_PM)) {
-		puts("PMIC (0x24) not found! skip further initalization.\n");
+	if (power_tps65217_init(bus)) {
+		printf("WARN: cannot setup PMIC 0x24 @ bus #%d, not found!.\n",
+		       bus);
 		return;
 	}
 

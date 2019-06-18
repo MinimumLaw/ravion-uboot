@@ -147,6 +147,15 @@ LDPPFLAGS += \
 	$(shell $(LD) --version | \
 	  sed -ne 's/GNU ld version \([0-9][0-9]*\)\.\([0-9][0-9]*\).*/-DLD_MAJOR=\1 -DLD_MINOR=\2/p')
 
+# Turn various CONFIG symbols into IMAGE symbols for easy reuse of
+# the scripts between SPL and TPL.
+ifneq ($(CONFIG_$(SPL_TPL_)MAX_SIZE),)
+LDPPFLAGS += -DIMAGE_MAX_SIZE=$(CONFIG_$(SPL_TPL_)MAX_SIZE)
+endif
+ifneq ($(CONFIG_$(SPL_TPL_)TEXT_BASE),)
+LDPPFLAGS += -DIMAGE_TEXT_BASE=$(CONFIG_$(SPL_TPL_)TEXT_BASE)
+endif
+
 MKIMAGEOUTPUT ?= /dev/null
 
 quiet_cmd_mkimage = MKIMAGE $@
@@ -190,7 +199,10 @@ MKIMAGEFLAGS_boot.bin = -T zynqmpimage -R $(srctree)/$(CONFIG_BOOT_INIT_FILE) \
 	-n "$(shell cd $(srctree); readlink -f $(CONFIG_PMUFW_INIT_FILE))"
 endif
 
-spl/boot.bin: $(obj)/u-boot-spl.bin FORCE
+$(obj)/$(SPL_BIN)-align.bin: $(obj)/$(SPL_BIN).bin
+	@dd if=$< of=$@ conv=block,sync bs=4 2>/dev/null;
+
+spl/boot.bin: $(obj)/$(SPL_BIN)-align.bin FORCE
 	$(call if_changed,mkimage)
 endif
 
@@ -200,7 +212,7 @@ ifdef CONFIG_SAMSUNG
 ALL-y	+= $(obj)/$(BOARD)-spl.bin
 endif
 
-ifdef CONFIG_ARCH_SOCFPGA
+ifneq ($(CONFIG_TARGET_SOCFPGA_GEN5)$(CONFIG_TARGET_SOCFPGA_ARRIA10),)
 ALL-y	+= $(obj)/$(SPL_BIN).sfp
 endif
 
@@ -318,14 +330,9 @@ LDFLAGS_$(SPL_BIN) += -T u-boot-spl.lds $(LDFLAGS_FINAL)
 # Avoid 'Not enough room for program headers' error on binutils 2.28 onwards.
 LDFLAGS_$(SPL_BIN) += $(call ld-option, --no-dynamic-linker)
 
-# First try the best-match (i.e. SPL_TEXT_BASE for SPL, TPL_TEXT_BASE for TPL)
+# Pick the best-match (i.e. SPL_TEXT_BASE for SPL, TPL_TEXT_BASE for TPL)
 ifneq ($(CONFIG_$(SPL_TPL_)TEXT_BASE),)
 LDFLAGS_$(SPL_BIN) += -Ttext $(CONFIG_$(SPL_TPL_)TEXT_BASE)
-else
-# And then fall back to just testing for SPL_TEXT_BASE, even if in TPL mode
-ifneq ($(CONFIG_SPL_TEXT_BASE),)
-LDFLAGS_$(SPL_BIN) += -Ttext $(CONFIG_SPL_TEXT_BASE)
-endif
 endif
 
 ifdef CONFIG_TARGET_SOCFPGA_ARRIA10

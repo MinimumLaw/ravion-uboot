@@ -26,7 +26,6 @@
 #endif
 
 #define CONFIG_REMAKE_ELF
-#define CONFIG_FSL_LAYERSCAPE
 #define CONFIG_GICV2
 
 #include <asm/arch/config.h>
@@ -171,10 +170,6 @@
 
 #ifdef CONFIG_TFABOOT
 #define CONFIG_SYS_FMAN_FW_ADDR		0x900000
-#define CONFIG_ENV_SPI_BUS		0
-#define CONFIG_ENV_SPI_CS		0
-#define CONFIG_ENV_SPI_MAX_HZ		1000000
-#define CONFIG_ENV_SPI_MODE		0x03
 #else
 #ifdef CONFIG_SD_BOOT
 /*
@@ -187,10 +182,6 @@
 #elif defined(CONFIG_QSPI_BOOT)
 #define CONFIG_SYS_QE_FW_IN_SPIFLASH
 #define CONFIG_SYS_FMAN_FW_ADDR		0x40900000
-#define CONFIG_ENV_SPI_BUS		0
-#define CONFIG_ENV_SPI_CS		0
-#define CONFIG_ENV_SPI_MAX_HZ		1000000
-#define CONFIG_ENV_SPI_MODE		0x03
 #elif defined(CONFIG_NAND_BOOT)
 #define CONFIG_SYS_QE_FMAN_FW_IN_NAND
 #define CONFIG_SYS_FMAN_FW_ADDR		(36 * CONFIG_SYS_NAND_BLOCK_SIZE)
@@ -213,7 +204,8 @@
 #define BOOT_TARGET_DEVICES(func) \
 	func(SCSI, scsi, 0) \
 	func(MMC, mmc, 0) \
-	func(USB, usb, 0)
+	func(USB, usb, 0) \
+	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
 #endif
 
@@ -259,13 +251,6 @@
 			"run scan_dev_for_boot; "            \
 		  "fi; "                                   \
 		"done\0"                                   \
-	"scan_dev_for_boot="				  \
-		"echo Scanning ${devtype} "		  \
-				"${devnum}:${distro_bootpart}...; "  \
-		"for prefix in ${boot_prefixes}; do "	  \
-			"run scan_dev_for_scripts; "	  \
-		"done;"					  \
-		"\0"					  \
 	"boot_a_script="				  \
 		"load ${devtype} ${devnum}:${distro_bootpart} "  \
 			"${scriptaddr} ${prefix}${script}; "    \

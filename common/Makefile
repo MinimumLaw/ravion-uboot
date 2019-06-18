@@ -64,10 +64,9 @@ obj-$(CONFIG_$(SPL_TPL_)BOOTSTAGE) += bootstage.o
 obj-$(CONFIG_$(SPL_TPL_)BLOBLIST) += bloblist.o
 
 ifdef CONFIG_SPL_BUILD
-ifdef CONFIG_SPL_DFU_SUPPORT
+ifdef CONFIG_SPL_DFU
 obj-$(CONFIG_DFU_OVER_USB) += dfu.o
 endif
-obj-$(CONFIG_SPL_DFU_SUPPORT) += cli_hush.o
 obj-$(CONFIG_SPL_HASH_SUPPORT) += hash.o
 obj-$(CONFIG_TPL_HASH_SUPPORT) += hash.o
 obj-$(CONFIG_SPL_YMODEM_SUPPORT) += xyzModem.o
@@ -76,8 +75,9 @@ obj-$(CONFIG_SPL_NET_SUPPORT) += miiphyutil.o
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += fdt_support.o
 
 ifdef CONFIG_SPL_USB_HOST_SUPPORT
-obj-$(CONFIG_SPL_USB_SUPPORT) += usb.o usb_hub.o
-obj-$(CONFIG_USB_STORAGE) += usb_storage.o
+obj-y += usb.o
+obj-y += usb_hub.o
+obj-$(CONFIG_SPL_USB_STORAGE) += usb_storage.o
 else
 obj-$(CONFIG_USB_MUSB_HOST) += usb.o
 endif

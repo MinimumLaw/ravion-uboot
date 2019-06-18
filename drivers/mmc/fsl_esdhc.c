@@ -384,6 +384,25 @@ static void check_and_invalidate_dcache_range
 	invalidate_dcache_range(start, end);
 }
 
+#ifdef CONFIG_MCF5441x
+/*
+ * Swaps 32-bit words to little-endian byte order.
+ */
+static inline void sd_swap_dma_buff(struct mmc_data *data)
+{
+	int i, size = data->blocksize >> 2;
+	u32 *buffer = (u32 *)data->dest;
+	u32 sw;
+
+	while (data->blocks--) {
+		for (i = 0; i < size; i++) {
+			sw = __sw32(*buffer);
+			*buffer++ = sw;
+		}
+	}
+}
+#endif
+
 /*
  * Sends a command out on the bus.  Takes the mmc pointer,
  * a command pointer, and an optional data pointer.
@@ -546,8 +565,12 @@ static int esdhc_send_cmd_common(struct fsl_esdhc_priv *priv, struct mmc *mmc,
 		 * cache-fill during the DMA operations such as the
 		 * speculative pre-fetching etc.
 		 */
-		if (data->flags & MMC_DATA_READ)
+		if (data->flags & MMC_DATA_READ) {
 			check_and_invalidate_dcache_range(cmd, data);
+#ifdef CONFIG_MCF5441x
+			sd_swap_dma_buff(data);
+#endif
+		}
 #endif
 	}
 
@@ -781,7 +804,7 @@ static int esdhc_set_voltage(struct mmc *mmc)
 	case MMC_SIGNAL_VOLTAGE_330:
 		if (priv->vs18_enable)
 			return -EIO;
-#ifdef CONFIG_DM_REGULATOR
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 		if (!IS_ERR_OR_NULL(priv->vqmmc_dev)) {
 			ret = regulator_set_value(priv->vqmmc_dev, 3300000);
 			if (ret) {
@@ -800,7 +823,7 @@ static int esdhc_set_voltage(struct mmc *mmc)
 
 		return -EAGAIN;
 	case MMC_SIGNAL_VOLTAGE_180:
-#ifdef CONFIG_DM_REGULATOR
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 		if (!IS_ERR_OR_NULL(priv->vqmmc_dev)) {
 			ret = regulator_set_value(priv->vqmmc_dev, 1800000);
 			if (ret) {
@@ -1029,8 +1052,12 @@ static int esdhc_init_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 	/* Disable the BRR and BWR bits in IRQSTAT */
 	esdhc_clrbits32(&regs->irqstaten, IRQSTATEN_BRR | IRQSTATEN_BWR);
 
+#ifdef CONFIG_MCF5441x
+	esdhc_write32(&regs->proctl, PROCTL_INIT | PROCTL_D3CD);
+#else
 	/* Put the PROCTL reg back to the default */
 	esdhc_write32(&regs->proctl, PROCTL_INIT);
+#endif
 
 	/* Set timout to the maximum value */
 	esdhc_clrsetbits32(&regs->sysctl, SYSCTL_TIMEOUT_MASK, 14 << 16);
@@ -1138,6 +1165,11 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv,
 	if (ret)
 		return ret;
 
+#ifdef CONFIG_MCF5441x
+	/* ColdFire, using SDHC_DATA[3] for card detection */
+	esdhc_write32(&regs->proctl, PROCTL_INIT | PROCTL_D3CD);
+#endif
+
 #ifndef CONFIG_FSL_USDHC
 	esdhc_setbits32(&regs->sysctl, SYSCTL_PEREN | SYSCTL_HCKEN
 				| SYSCTL_IPGEN | SYSCTL_CKEN);
@@ -1161,6 +1193,15 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv,
 
 	voltage_caps = 0;
 	caps = esdhc_read32(&regs->hostcapblt);
+
+#ifdef CONFIG_MCF5441x
+	/*
+	 * MCF5441x RM declares in more points that sdhc clock speed must
+	 * never exceed 25 Mhz. From this, the HS bit needs to be disabled
+	 * from host capabilities.
+	 */
+	caps &= ~ESDHC_HOSTCAPBLT_HSS;
+#endif
 
 #ifdef CONFIG_SYS_FSL_ERRATUM_ESDHC135
 	caps = caps & ~(ESDHC_HOSTCAPBLT_SRS |
@@ -1401,7 +1442,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	int node = dev_of_offset(dev);
 	struct esdhc_soc_data *data =
 		(struct esdhc_soc_data *)dev_get_driver_data(dev);
-#ifdef CONFIG_DM_REGULATOR
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *vqmmc_dev;
 #endif
 	fdt_addr_t addr;
@@ -1459,7 +1500,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 
 	priv->vs18_enable = 0;
 
-#ifdef CONFIG_DM_REGULATOR
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	/*
 	 * If emmc I/O has a fixed voltage at 1.8V, this must be provided,
 	 * otherwise, emmc will work abnormally.
@@ -1545,7 +1586,6 @@ static int fsl_esdhc_get_cd(struct udevice *dev)
 {
 	struct fsl_esdhc_priv *priv = dev_get_priv(dev);
 
-	return true;
 	return esdhc_getcd_common(priv);
 }
 
@@ -1585,6 +1625,7 @@ static struct esdhc_soc_data usdhc_imx7d_data = {
 };
 
 static const struct udevice_id fsl_esdhc_ids[] = {
+	{ .compatible = "fsl,imx53-esdhc", },
 	{ .compatible = "fsl,imx6ul-usdhc", },
 	{ .compatible = "fsl,imx6sx-usdhc", },
 	{ .compatible = "fsl,imx6sl-usdhc", },

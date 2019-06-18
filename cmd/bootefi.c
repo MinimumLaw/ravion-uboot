@@ -5,8 +5,9 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
-#include <charset.h>
 #include <common.h>
+#include <bootm.h>
+#include <charset.h>
 #include <command.h>
 #include <dm.h>
 #include <efi_loader.h>
@@ -21,92 +22,10 @@
 #include <asm-generic/unaligned.h>
 #include <linux/linkage.h>
 
-#ifdef CONFIG_ARMV7_NONSEC
-#include <asm/armv7.h>
-#include <asm/secure.h>
-#endif
-
 DECLARE_GLOBAL_DATA_PTR;
-
-#define OBJ_LIST_NOT_INITIALIZED 1
-
-static efi_status_t efi_obj_list_initialized = OBJ_LIST_NOT_INITIALIZED;
 
 static struct efi_device_path *bootefi_image_path;
 static struct efi_device_path *bootefi_device_path;
-
-/* Initialize and populate EFI object list */
-efi_status_t efi_init_obj_list(void)
-{
-	efi_status_t ret = EFI_SUCCESS;
-
-	/*
-	 * On the ARM architecture gd is mapped to a fixed register (r9 or x18).
-	 * As this register may be overwritten by an EFI payload we save it here
-	 * and restore it on every callback entered.
-	 */
-	efi_save_gd();
-
-	/* Initialize once only */
-	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
-		return efi_obj_list_initialized;
-
-	/* Initialize system table */
-	ret = efi_initialize_system_table();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	/* Initialize root node */
-	ret = efi_root_node_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	/* Initialize EFI driver uclass */
-	ret = efi_driver_init();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	ret = efi_console_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#ifdef CONFIG_PARTITIONS
-	ret = efi_disk_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
-#if defined(CONFIG_LCD) || defined(CONFIG_DM_VIDEO)
-	ret = efi_gop_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
-#ifdef CONFIG_NET
-	ret = efi_net_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
-#ifdef CONFIG_GENERATE_ACPI_TABLE
-	ret = efi_acpi_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
-#ifdef CONFIG_GENERATE_SMBIOS_TABLE
-	ret = efi_smbios_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
-	ret = efi_watchdog_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	/* Initialize EFI runtime services */
-	ret = efi_reset_system_init();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-out:
-	efi_obj_list_initialized = ret;
-	return ret;
-}
 
 /*
  * Allow unaligned memory access.
@@ -213,48 +132,6 @@ static efi_status_t copy_fdt(void **fdtp)
 done:
 	return ret;
 }
-
-static efi_status_t efi_do_enter(
-			efi_handle_t image_handle, struct efi_system_table *st,
-			EFIAPI efi_status_t (*entry)(
-				efi_handle_t image_handle,
-				struct efi_system_table *st))
-{
-	efi_status_t ret = EFI_LOAD_ERROR;
-
-	if (entry)
-		ret = entry(image_handle, st);
-	st->boottime->exit(image_handle, ret, 0, NULL);
-	return ret;
-}
-
-#ifdef CONFIG_ARM64
-static efi_status_t efi_run_in_el2(EFIAPI efi_status_t (*entry)(
-			efi_handle_t image_handle, struct efi_system_table *st),
-			efi_handle_t image_handle, struct efi_system_table *st)
-{
-	/* Enable caches again */
-	dcache_enable();
-
-	return efi_do_enter(image_handle, st, entry);
-}
-#endif
-
-#ifdef CONFIG_ARMV7_NONSEC
-static bool is_nonsec;
-
-static efi_status_t efi_run_in_hyp(EFIAPI efi_status_t (*entry)(
-			efi_handle_t image_handle, struct efi_system_table *st),
-			efi_handle_t image_handle, struct efi_system_table *st)
-{
-	/* Enable caches again */
-	dcache_enable();
-
-	is_nonsec = true;
-
-	return efi_do_enter(image_handle, st, entry);
-}
-#endif
 
 /*
  * efi_carve_out_dt_rsv() - Carve out DT reserved memory ranges
@@ -375,9 +252,6 @@ static efi_status_t do_bootefi_exec(void *efi,
 	struct efi_loaded_image_obj *image_obj = NULL;
 	struct efi_loaded_image *loaded_image_info = NULL;
 
-	EFIAPI efi_status_t (*entry)(efi_handle_t image_handle,
-				     struct efi_system_table *st);
-
 	/*
 	 * Special case for efi payload not loaded from disk, such as
 	 * 'bootefi hello' or for example payload loaded directly into
@@ -386,7 +260,7 @@ static efi_status_t do_bootefi_exec(void *efi,
 	if (!device_path && !image_path) {
 		printf("WARNING: using memory device/image path, this may confuse some payloads!\n");
 		/* actual addresses filled in after efi_load_pe() */
-		memdp = efi_dp_from_mem(0, 0, 0);
+		memdp = efi_dp_from_mem(EFI_RESERVED_MEMORY_TYPE, 0, 0);
 		device_path = image_path = memdp;
 		/*
 		 * Grub expects that the device path of the loaded image is
@@ -409,11 +283,9 @@ static efi_status_t do_bootefi_exec(void *efi,
 		goto err_prepare;
 
 	/* Load the EFI payload */
-	entry = efi_load_pe(image_obj, efi, loaded_image_info);
-	if (!entry) {
-		ret = EFI_LOAD_ERROR;
+	ret = efi_load_pe(image_obj, efi, loaded_image_info);
+	if (ret != EFI_SUCCESS)
 		goto err_prepare;
-	}
 
 	if (memdp) {
 		struct efi_device_path_memory *mdp = (void *)memdp;
@@ -428,47 +300,8 @@ static efi_status_t do_bootefi_exec(void *efi,
 		"{ro,boot}(blob)0000000000000000");
 
 	/* Call our payload! */
-	debug("%s:%d Jumping to 0x%lx\n", __func__, __LINE__, (long)entry);
-
-	if (setjmp(&image_obj->exit_jmp)) {
-		ret = image_obj->exit_status;
-		goto err_prepare;
-	}
-
-#ifdef CONFIG_ARM64
-	/* On AArch64 we need to make sure we call our payload in < EL3 */
-	if (current_el() == 3) {
-		smp_kick_all_cpus();
-		dcache_disable();	/* flush cache before switch to EL2 */
-
-		/* Move into EL2 and keep running there */
-		armv8_switch_to_el2((ulong)entry,
-				    (ulong)&image_obj->header,
-				    (ulong)&systab, 0, (ulong)efi_run_in_el2,
-				    ES_TO_AARCH64);
-
-		/* Should never reach here, efi exits with longjmp */
-		while (1) { }
-	}
-#endif
-
-#ifdef CONFIG_ARMV7_NONSEC
-	if (armv7_boot_nonsec() && !is_nonsec) {
-		dcache_disable();	/* flush cache before switch to HYP */
-
-		armv7_init_nonsec();
-		secure_ram_addr(_do_nonsec_entry)(
-					efi_run_in_hyp,
-					(uintptr_t)entry,
-					(uintptr_t)&image_obj->header,
-					(uintptr_t)&systab);
-
-		/* Should never reach here, efi exits with longjmp */
-		while (1) { }
-	}
-#endif
-
-	ret = efi_do_enter(&image_obj->header, &systab, entry);
+	debug("%s: Jumping to 0x%p\n", __func__, image_obj->entry);
+	ret = EFI_CALL(efi_start_image(&image_obj->header, NULL, NULL));
 
 err_prepare:
 	/* image has returned, loaded-image obj goes *poof*: */
@@ -485,38 +318,46 @@ err_add_protocol:
 /**
  * bootefi_test_prepare() - prepare to run an EFI test
  *
- * This sets things up so we can call EFI functions. This involves preparing
- * the 'gd' pointer and setting up the load ed image data structures.
+ * Prepare to run a test as if it were provided by a loaded image.
  *
- * @image_objp: loaded_image_infop: Pointer to a struct which will hold the
- *    loaded image object. This struct will be inited by this function before
- *    use.
- * @loaded_image_infop: Pointer to a struct which will hold the loaded image
- *    info. This struct will be inited by this function before use.
- * @path: File path to the test being run (often just the test name with a
- *    backslash before it
- * @test_func: Address of the test function that is being run
- * @load_options_path: U-Boot environment variable to use as load options
- * @return 0 if OK, -ve on error
+ * @image_objp:		pointer to be set to the loaded image handle
+ * @loaded_image_infop:	pointer to be set to the loaded image protocol
+ * @path:		dummy file path used to construct the device path
+ *			set in the loaded image protocol
+ * @load_options_path:	name of a U-Boot environment variable. Its value is
+ *			set as load options in the loaded image protocol.
+ * Return:		status code
  */
 static efi_status_t bootefi_test_prepare
 		(struct efi_loaded_image_obj **image_objp,
-		struct efi_loaded_image **loaded_image_infop, const char *path,
-		ulong test_func, const char *load_options_path)
+		 struct efi_loaded_image **loaded_image_infop, const char *path,
+		 const char *load_options_path)
 {
+	efi_status_t ret;
+
 	/* Construct a dummy device path */
-	bootefi_device_path = efi_dp_from_mem(EFI_RESERVED_MEMORY_TYPE,
-					      (uintptr_t)test_func,
-					      (uintptr_t)test_func);
+	bootefi_device_path = efi_dp_from_mem(EFI_RESERVED_MEMORY_TYPE, 0, 0);
 	if (!bootefi_device_path)
 		return EFI_OUT_OF_RESOURCES;
-	bootefi_image_path = efi_dp_from_file(NULL, 0, path);
-	if (!bootefi_image_path)
-		return EFI_OUT_OF_RESOURCES;
 
-	return bootefi_run_prepare(load_options_path, bootefi_device_path,
-				   bootefi_image_path, image_objp,
-				   loaded_image_infop);
+	bootefi_image_path = efi_dp_from_file(NULL, 0, path);
+	if (!bootefi_image_path) {
+		ret = EFI_OUT_OF_RESOURCES;
+		goto failure;
+	}
+
+	ret = bootefi_run_prepare(load_options_path, bootefi_device_path,
+				  bootefi_image_path, image_objp,
+				  loaded_image_infop);
+	if (ret == EFI_SUCCESS)
+		return ret;
+
+	efi_free_pool(bootefi_image_path);
+	bootefi_image_path = NULL;
+failure:
+	efi_free_pool(bootefi_device_path);
+	bootefi_device_path = NULL;
+	return ret;
 }
 
 #endif /* CONFIG_CMD_BOOTEFI_SELFTEST */
@@ -552,6 +393,8 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	/* Allow unaligned memory access */
 	allow_unaligned();
+
+	switch_to_non_secure_mode();
 
 	/* Initialize EFI drivers */
 	r = efi_init_obj_list();
@@ -596,13 +439,13 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		struct efi_loaded_image_obj *image_obj;
 		struct efi_loaded_image *loaded_image_info;
 
-		if (bootefi_test_prepare(&image_obj, &loaded_image_info,
-					 "\\selftest", (uintptr_t)&efi_selftest,
-					 "efi_selftest"))
+		r = bootefi_test_prepare(&image_obj, &loaded_image_info,
+					 "\\selftest", "efi_selftest");
+		if (r != EFI_SUCCESS)
 			return CMD_RET_FAILURE;
 
 		/* Execute the test */
-		r = efi_selftest(&image_obj->header, &systab);
+		r = EFI_CALL(efi_selftest(&image_obj->header, &systab));
 		bootefi_run_finish(image_obj, loaded_image_info);
 		return r != EFI_SUCCESS;
 	} else

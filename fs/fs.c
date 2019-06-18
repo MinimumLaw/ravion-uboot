@@ -168,7 +168,7 @@ static struct fstype_info fstypes[] = {
 		.exists = fat_exists,
 		.size = fat_size,
 		.read = fat_read_file,
-#ifdef CONFIG_FAT_WRITE
+#if CONFIG_IS_ENABLED(FAT_WRITE)
 		.write = file_fat_write,
 		.unlink = fat_unlink,
 		.mkdir = fat_mkdir,
@@ -183,7 +183,8 @@ static struct fstype_info fstypes[] = {
 		.closedir = fat_closedir,
 	},
 #endif
-#ifdef CONFIG_FS_EXT4
+
+#if CONFIG_IS_ENABLED(FS_EXT4)
 	{
 		.fstype = FS_TYPE_EXT,
 		.name = "ext4",
@@ -429,12 +430,55 @@ int fs_size(const char *filename, loff_t *size)
 	return ret;
 }
 
-int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
-	    loff_t *actread)
+#ifdef CONFIG_LMB
+/* Check if a file may be read to the given address */
+static int fs_read_lmb_check(const char *filename, ulong addr, loff_t offset,
+			     loff_t len, struct fstype_info *info)
+{
+	struct lmb lmb;
+	int ret;
+	loff_t size;
+	loff_t read_len;
+
+	/* get the actual size of the file */
+	ret = info->size(filename, &size);
+	if (ret)
+		return ret;
+	if (offset >= size) {
+		/* offset >= EOF, no bytes will be written */
+		return 0;
+	}
+	read_len = size - offset;
+
+	/* limit to 'len' if it is smaller */
+	if (len && len < read_len)
+		read_len = len;
+
+	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+	lmb_dump_all(&lmb);
+
+	if (lmb_alloc_addr(&lmb, addr, read_len) == addr)
+		return 0;
+
+	printf("** Reading file would overwrite reserved memory **\n");
+	return -ENOSPC;
+}
+#endif
+
+static int _fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+		    int do_lmb_check, loff_t *actread)
 {
 	struct fstype_info *info = fs_get_info(fs_type);
 	void *buf;
 	int ret;
+
+#ifdef CONFIG_LMB
+	if (do_lmb_check) {
+		ret = fs_read_lmb_check(filename, addr, offset, len, info);
+		if (ret)
+			return ret;
+	}
+#endif
 
 	/*
 	 * We don't actually know how many bytes are being read, since len==0
@@ -450,6 +494,12 @@ int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
 	fs_close();
 
 	return ret;
+}
+
+int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+	    loff_t *actread)
+{
+	return _fs_read(filename, addr, offset, len, 0, actread);
 }
 
 int fs_write(const char *filename, ulong addr, loff_t offset, loff_t len,
@@ -622,7 +672,7 @@ int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 		pos = 0;
 
 	time = get_timer(0);
-	ret = fs_read(filename, addr, pos, bytes, &len_read);
+	ret = _fs_read(filename, addr, pos, bytes, 1, &len_read);
 	time = get_timer(time);
 	if (ret < 0)
 		return 1;
@@ -750,6 +800,8 @@ int do_fs_type(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		env_set(argv[3], info->name);
 	else
 		printf("%s\n", info->name);
+
+	fs_close();
 
 	return CMD_RET_SUCCESS;
 }

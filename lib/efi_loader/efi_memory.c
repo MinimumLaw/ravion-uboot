@@ -440,6 +440,7 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 efi_status_t efi_allocate_pool(int pool_type, efi_uintn_t size, void **buffer)
 {
 	efi_status_t r;
+	u64 addr;
 	struct efi_pool_allocation *alloc;
 	u64 num_pages = efi_size_in_pages(size +
 					  sizeof(struct efi_pool_allocation));
@@ -453,9 +454,9 @@ efi_status_t efi_allocate_pool(int pool_type, efi_uintn_t size, void **buffer)
 	}
 
 	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, pool_type, num_pages,
-			       (uint64_t *)&alloc);
-
+			       &addr);
 	if (r == EFI_SUCCESS) {
+		alloc = (struct efi_pool_allocation *)(uintptr_t)addr;
 		alloc->num_pages = num_pages;
 		*buffer = alloc->data;
 	}
@@ -553,6 +554,12 @@ __weak void efi_add_known_memory(void)
 {
 	u64 ram_top = board_get_usable_ram_top(0) & ~EFI_PAGE_MASK;
 	int i;
+
+	/*
+	 * ram_top is just outside mapped memory. So use an offset of one for
+	 * mapping the sandbox address.
+	 */
+	ram_top = (uintptr_t)map_sysmem(ram_top - 1, 0) + 1;
 
 	/* Fix for 32bit targets with ram_top at 4G */
 	if (!ram_top)

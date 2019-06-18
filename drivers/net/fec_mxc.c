@@ -1264,20 +1264,35 @@ static const struct eth_ops fecmxc_ops = {
 	.read_rom_hwaddr	= fecmxc_read_rom_hwaddr,
 };
 
+static int device_get_phy_addr(struct udevice *dev)
+{
+	struct ofnode_phandle_args phandle_args;
+	int reg;
+
+	if (dev_read_phandle_with_args(dev, "phy-handle", NULL, 0, 0,
+				       &phandle_args)) {
+		debug("Failed to find phy-handle");
+		return -ENODEV;
+	}
+
+	reg = ofnode_read_u32_default(phandle_args.node, "reg", 0);
+
+	return reg;
+}
+
 static int fec_phy_init(struct fec_priv *priv, struct udevice *dev)
 {
 	struct phy_device *phydev;
-	int mask = 0xffffffff;
+	int addr;
 
+	addr = device_get_phy_addr(dev);
 #ifdef CONFIG_FEC_MXC_PHYADDR
-	mask = 1 << CONFIG_FEC_MXC_PHYADDR;
+	addr = CONFIG_FEC_MXC_PHYADDR;
 #endif
 
-	phydev = phy_find_by_mask(priv->bus, mask, priv->interface);
+	phydev = phy_connect(priv->bus, addr, dev, priv->interface);
 	if (!phydev)
 		return -ENODEV;
-
-	phy_connect_dev(phydev, dev);
 
 	priv->phydev = phydev;
 	phy_config(phydev);
@@ -1294,6 +1309,8 @@ static void fec_gpio_reset(struct fec_priv *priv)
 		dm_gpio_set_value(&priv->phy_reset_gpio, 1);
 		mdelay(priv->reset_delay);
 		dm_gpio_set_value(&priv->phy_reset_gpio, 0);
+		if (priv->reset_post_delay)
+			mdelay(priv->reset_post_delay);
 	}
 }
 #endif
@@ -1327,7 +1344,7 @@ static int fecmxc_probe(struct udevice *dev)
 
 #ifdef CONFIG_DM_REGULATOR
 	if (priv->phy_supply) {
-		ret = regulator_autoset(priv->phy_supply);
+		ret = regulator_set_enable(priv->phy_supply, true);
 		if (ret) {
 			printf("%s: Error enabling phy supply\n", dev->name);
 			return ret;
@@ -1452,6 +1469,15 @@ static int fecmxc_ofdata_to_platdata(struct udevice *dev)
 		printf("FEC MXC: phy reset duration should be <= 1000ms\n");
 		/* property value wrong, use default value */
 		priv->reset_delay = 1;
+	}
+
+	priv->reset_post_delay = dev_read_u32_default(dev,
+						      "phy-reset-post-delay",
+						      0);
+	if (priv->reset_post_delay > 1000) {
+		printf("FEC MXC: phy reset post delay should be <= 1000ms\n");
+		/* property value wrong, use default value */
+		priv->reset_post_delay = 0;
 	}
 #endif
 

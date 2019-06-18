@@ -3,7 +3,7 @@ if ARM64
 config ARMV8_SPL_EXCEPTION_VECTORS
 	bool "Install crash dump exception vectors"
 	depends on SPL
-	default y
+	default n
 	help
 	  The default exception vector table is only used for the crash
 	  dump, but still takes quite a lot of space in the image size.
@@ -106,7 +106,8 @@ config PSCI_RESET
 		   !TARGET_LS1012AFRWY && \
 		   !TARGET_LS1043ARDB && !TARGET_LS1043AQDS && \
 		   !TARGET_LS1046ARDB && !TARGET_LS1046AQDS && \
-		   !TARGET_LS2081ARDB && \
+		   !TARGET_LS2081ARDB && !TARGET_LX2160ARDB && \
+		   !TARGET_LX2160AQDS && \
 		   !ARCH_UNIPHIER && !TARGET_S32V234EVB
 	help
 	  Most armv8 systems have PSCI support enabled in EL3, either through

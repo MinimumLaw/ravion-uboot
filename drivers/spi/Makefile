@@ -11,6 +11,7 @@ obj-$(CONFIG_SOFT_SPI) += soft_spi.o
 obj-$(CONFIG_SPI_MEM) += spi-mem.o
 else
 obj-y += spi.o
+obj-$(CONFIG_SPI_MEM) += spi-mem-nodm.o
 obj-$(CONFIG_SOFT_SPI) += soft_spi_legacy.o
 endif
 
@@ -36,6 +37,7 @@ obj-$(CONFIG_MPC8XX_SPI) += mpc8xx_spi.o
 obj-$(CONFIG_MPC8XXX_SPI) += mpc8xxx_spi.o
 obj-$(CONFIG_MTK_QSPI) += mtk_qspi.o
 obj-$(CONFIG_MT7621_SPI) += mt7621_spi.o
+obj-$(CONFIG_MSCC_BB_SPI) += mscc_bb_spi.o
 obj-$(CONFIG_MVEBU_A3700_SPI) += mvebu_a3700_spi.o
 obj-$(CONFIG_MXC_SPI) += mxc_spi.o
 obj-$(CONFIG_MXS_SPI) += mxs_spi.o
@@ -46,10 +48,10 @@ obj-$(CONFIG_PL022_SPI) += pl022_spi.o
 obj-$(CONFIG_RENESAS_RPC_SPI) += renesas_rpc_spi.o
 obj-$(CONFIG_ROCKCHIP_SPI) += rk_spi.o
 obj-$(CONFIG_SANDBOX_SPI) += sandbox_spi.o
+obj-$(CONFIG_SPI_SUNXI) += spi-sunxi.o
 obj-$(CONFIG_SH_SPI) += sh_spi.o
 obj-$(CONFIG_SH_QSPI) += sh_qspi.o
 obj-$(CONFIG_STM32_QSPI) += stm32_qspi.o
-obj-$(CONFIG_SUN4I_SPI) += sun4i_spi.o
 obj-$(CONFIG_TEGRA114_SPI) += tegra114_spi.o
 obj-$(CONFIG_TEGRA20_SFLASH) += tegra20_sflash.o
 obj-$(CONFIG_TEGRA20_SLINK) += tegra20_slink.o

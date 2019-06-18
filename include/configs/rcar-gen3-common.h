@@ -12,7 +12,6 @@
 #include <asm/arch/rmobile.h>
 
 #define CONFIG_REMAKE_ELF
-#define CONFIG_BUILD_TARGET	"u-boot-elf.srec"
 
 /* boot option */
 
@@ -49,7 +48,6 @@
 #define CONFIG_SYS_MONITOR_BASE		0x00000000
 #define CONFIG_SYS_MONITOR_LEN		(256 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
-#define CONFIG_SYS_BOOTMAPSZ		(8 * 1024 * 1024)
 #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
 /* ENV setting */
