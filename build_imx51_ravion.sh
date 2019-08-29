@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MKARGS="ARCH=arm CROSS_COMPILE=armv7a-hardfloat-linux-gnueabi-"
+MKARGS="ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-"
 
 make $MKARGS clean distclean
 make $MKARGS mx51rav_config
