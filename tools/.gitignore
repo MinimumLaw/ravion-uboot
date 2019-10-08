@@ -14,6 +14,7 @@
 /gen_eth_addr
 /gen_ethaddr_crc
 /ifdtool
+/ifwitool
 /img2srec
 /kwboot
 /lib/
@@ -27,6 +28,7 @@
 /prelink-riscv
 /proftool
 /relocate-rela
+/spl_size_limit
 /sunxi-spl-image-builder
 /ubsha1
 /xway-swap-bytes

@@ -22,6 +22,7 @@
 #include <linux/compiler.h>
 #include <fdt_support.h>
 #include <bootcount.h>
+#include <wdt.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -194,10 +195,12 @@ static int spl_load_fit_image(struct spl_image_info *spl_image,
 #ifdef CONFIG_SPL_FIT_SIGNATURE
 	images.verify = 1;
 #endif
-	fit_image_load(&images, (ulong)header,
+	ret = fit_image_load(&images, (ulong)header,
 		       &fit_uname_fdt, &fit_uname_config,
 		       IH_ARCH_DEFAULT, IH_TYPE_FLATDT, -1,
 		       FIT_LOAD_OPTIONAL, &dt_data, &dt_len);
+	if (ret >= 0)
+		spl_image->fdt_addr = (void *)dt_data;
 
 	conf_noffset = fit_conf_get_node((const void *)header,
 					 fit_uname_config);
@@ -239,6 +242,14 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 #ifdef CONFIG_SPL_LEGACY_IMAGE_SUPPORT
 		u32 header_size = sizeof(struct image_header);
 
+#ifdef CONFIG_SPL_LEGACY_IMAGE_CRC_CHECK
+		/* check uImage header CRC */
+		if (!image_check_hcrc(header)) {
+			puts("SPL: Image header CRC check failed!\n");
+			return -EINVAL;
+		}
+#endif
+
 		if (spl_image->flags & SPL_COPY_PAYLOAD_ONLY) {
 			/*
 			 * On some system (e.g. powerpc), the load-address and
@@ -256,6 +267,13 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 			spl_image->size = image_get_data_size(header) +
 				header_size;
 		}
+#ifdef CONFIG_SPL_LEGACY_IMAGE_CRC_CHECK
+		/* store uImage data length and CRC to check later */
+		spl_image->dcrc_data = image_get_load(header);
+		spl_image->dcrc_length = image_get_data_size(header);
+		spl_image->dcrc = image_get_dcrc(header);
+#endif
+
 		spl_image->os = image_get_os(header);
 		spl_image->name = image_get_name(header);
 		debug(SPL_TPL_PROMPT
@@ -495,16 +513,29 @@ static struct spl_image_loader *spl_ll_find_loader(uint boot_device)
 static int spl_load_image(struct spl_image_info *spl_image,
 			  struct spl_image_loader *loader)
 {
+	int ret;
 	struct spl_boot_device bootdev;
 
 	bootdev.boot_device = loader->boot_device;
 	bootdev.boot_device_name = NULL;
 
-	return loader->load_image(spl_image, &bootdev);
+	ret = loader->load_image(spl_image, &bootdev);
+#ifdef CONFIG_SPL_LEGACY_IMAGE_CRC_CHECK
+	if (!ret && spl_image->dcrc_length) {
+		/* check data crc */
+		ulong dcrc = crc32_wd(0, (unsigned char *)spl_image->dcrc_data,
+				      spl_image->dcrc_length, CHUNKSZ_CRC32);
+		if (dcrc != spl_image->dcrc) {
+			puts("SPL: Image data CRC check failed!\n");
+			ret = -EINVAL;
+		}
+	}
+#endif
+	return ret;
 }
 
 /**
- * boot_from_devices() - Try loading an booting U-Boot from a list of devices
+ * boot_from_devices() - Try loading a booting U-Boot from a list of devices
  *
  * @spl_image: Place to put the image details if successful
  * @spl_boot_list: List of boot devices to try
@@ -572,6 +603,10 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_board_init();
 #endif
 
+#if defined(CONFIG_SPL_WATCHDOG_SUPPORT) && CONFIG_IS_ENABLED(WDT)
+	initr_watchdog();
+#endif
+
 	if (IS_ENABLED(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF))
 		dram_init_banksize();
 
@@ -622,6 +657,12 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		debug("Jumping to U-Boot via OP-TEE\n");
 		spl_optee_entry(NULL, NULL, spl_image.fdt_addr,
 				(void *)spl_image.entry_point);
+		break;
+#endif
+#if CONFIG_IS_ENABLED(OPENSBI)
+	case IH_OS_OPENSBI:
+		debug("Jumping to U-Boot via RISC-V OpenSBI\n");
+		spl_invoke_opensbi(&spl_image);
 		break;
 #endif
 #ifdef CONFIG_SPL_OS_BOOT
@@ -675,6 +716,28 @@ void preloader_console_init(void)
 #endif
 
 /**
+ * This function is called before the stack is changed from initial stack to
+ * relocated stack. It tries to dump the stack size used
+ */
+__weak void spl_relocate_stack_check(void)
+{
+#if CONFIG_IS_ENABLED(SYS_REPORT_STACK_F_USAGE)
+	ulong init_sp = gd->start_addr_sp;
+	ulong stack_bottom = init_sp - CONFIG_VAL(SIZE_LIMIT_PROVIDE_STACK);
+	u8 *ptr = (u8 *)stack_bottom;
+	ulong i;
+
+	for (i = 0; i < CONFIG_VAL(SIZE_LIMIT_PROVIDE_STACK); i++) {
+		if (*ptr != CONFIG_VAL(SYS_STACK_F_CHECK_BYTE))
+			break;
+		ptr++;
+	}
+	printf("SPL initial stack usage: %lu bytes\n",
+	       CONFIG_VAL(SIZE_LIMIT_PROVIDE_STACK) - i);
+#endif
+}
+
+/**
  * spl_relocate_stack_gd() - Relocate stack ready for board_init_r() execution
  *
  * Sometimes board_init_f() runs with a stack in SRAM but we want to use SDRAM
@@ -698,8 +761,13 @@ ulong spl_relocate_stack_gd(void)
 	gd_t *new_gd;
 	ulong ptr = CONFIG_SPL_STACK_R_ADDR;
 
+	if (CONFIG_IS_ENABLED(SYS_REPORT_STACK_F_USAGE))
+		spl_relocate_stack_check();
+
 #if defined(CONFIG_SPL_SYS_MALLOC_SIMPLE) && CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN) {
+		debug("SPL malloc() before relocation used 0x%lx bytes (%ld KB)\n",
+		      gd->malloc_ptr, gd->malloc_ptr / 1024);
 		ptr -= CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN;
 		gd->malloc_base = ptr;
 		gd->malloc_limit = CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN;
@@ -713,7 +781,7 @@ ulong spl_relocate_stack_gd(void)
 #if CONFIG_IS_ENABLED(DM)
 	dm_fixup_for_gd_move(new_gd);
 #endif
-#if !defined(CONFIG_ARM)
+#if !defined(CONFIG_ARM) && !defined(CONFIG_RISCV)
 	gd = new_gd;
 #endif
 	return ptr;

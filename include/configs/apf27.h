@@ -27,7 +27,6 @@
  */
 #define CONFIG_SPL_TARGET	"u-boot-with-spl.bin"
 #define CONFIG_SPL_MAX_SIZE	2048
-#define CONFIG_SPL_TEXT_BASE    0xA0000000
 
 /* NAND boot config */
 #define CONFIG_SYS_NAND_U_BOOT_START    CONFIG_SYS_TEXT_BASE
@@ -84,7 +83,6 @@
 #define CONFIG_SYS_CBSIZE		2048		/* console I/O buffer */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 						/* Boot argument buffer size */
-#define CONFIG_PREBOOT			"run check_flash check_env;"
 
 /*
  * Boot Linux

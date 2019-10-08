@@ -8,7 +8,6 @@
 #ifndef __CONFIG_AM43XX_EVM_H
 #define __CONFIG_AM43XX_EVM_H
 
-#define CONFIG_ARCH_CPU_INIT
 #define CONFIG_MAX_RAM_BANK_SIZE	(1024 << 21)	/* 2GB */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
 
@@ -35,7 +34,6 @@
 #define CONFIG_POWER_TPS62362
 
 /* SPL defines. */
-#define CONFIG_SPL_TEXT_BASE		CONFIG_ISW_ENTRY_ADDR
 #define CONFIG_SYS_SPL_ARGS_ADDR	(CONFIG_SYS_SDRAM_BASE + \
 					 (128 << 20))
 
@@ -59,9 +57,6 @@
 
 /* Now bring in the rest of the common code. */
 #include <configs/ti_armv7_omap.h>
-
-/* Always 64 KiB env size */
-#define CONFIG_ENV_SIZE			(64 << 10)
 
 /* Clock Defines */
 #define V_OSCK				24000000  /* Clock output from T2 */
@@ -115,19 +110,8 @@
 
 #ifdef CONFIG_QSPI_BOOT
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
-#define CONFIG_ENV_SPI_MAX_HZ           CONFIG_SF_DEFAULT_SPEED
-#define CONFIG_ENV_SECT_SIZE           (64 << 10) /* 64 KB sectors */
-#define CONFIG_ENV_OFFSET              0x110000
 #define CONFIG_ENV_OFFSET_REDUND       0x120000
 #endif
-
-/* SPI */
-#define CONFIG_TI_SPI_MMAP
-#define CONFIG_QSPI_SEL_GPIO                   48
-#define CONFIG_SF_DEFAULT_SPEED                48000000
-#define CONFIG_SF_DEFAULT_MODE                 SPI_MODE_3
-#define CONFIG_QSPI_QUAD_SUPPORT
-#define CONFIG_TI_EDMA3
 
 #ifndef CONFIG_SPL_BUILD
 #include <environment/ti/dfu.h>

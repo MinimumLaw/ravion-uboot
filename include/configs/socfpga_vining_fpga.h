@@ -16,27 +16,9 @@
 #define CONFIG_LOADADDR		0x01000000
 #define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
 
-/* I2C EEPROM */
-#ifdef CONFIG_CMD_EEPROM
-#define CONFIG_SYS_I2C_EEPROM_ADDR		0x50
-#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		1
-#define CONFIG_SYS_I2C_EEPROM_BUS		0
-#define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
-#define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	70
-#endif
-
-/*
- * Status LEDs:
- *   0 ... Top Green
- *   1 ... Top Red
- *   2 ... Bottom Green
- *   3 ... Bottom Red
- */
-
 /* Ethernet on SoC (EMAC) */
 #if defined(CONFIG_CMD_NET)
 #define CONFIG_BOOTP_SEND_HOSTNAME
-/* PHY */
 #endif
 
 /* Extra Environment */
@@ -51,16 +33,6 @@
  *  if button B is not pressed, boot normal Linux system immediatelly
  *  if button B is pressed, wait $bootdelay and boot recovery system
  */
-#define CONFIG_PREBOOT						\
-	"setenv hostname vining-${unit_serial} ; "		\
-	"setenv PS1 \"${unit_ident} (${unit_serial}) => \" ; "	\
-	"if gpio input 78 ; then "			\
-		"setenv bootdelay 10 ; "		\
-		"setenv boottype rcvr ; "		\
-	"else "						\
-		"setenv bootdelay 5 ; "			\
-		"setenv boottype norm ; "		\
-	"fi"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=n\0" \
@@ -163,6 +135,7 @@
 			"run ubi_ubi ; "				\
 		"else echo \"Unsupported boot mode: \"${bootmode} ; "	\
 		"fi\0"							\
+		"socfpga_legacy_reset_compat=1\0"
 
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE

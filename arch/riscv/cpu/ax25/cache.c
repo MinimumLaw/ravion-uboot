@@ -5,10 +5,39 @@
  */
 
 #include <common.h>
+#include <dm.h>
+#include <dm/uclass-internal.h>
+#include <cache.h>
+#include <asm/csr.h>
+
+#ifdef CONFIG_RISCV_NDS_CACHE
+/* mcctlcommand */
+#define CCTL_REG_MCCTLCOMMAND_NUM	0x7cc
+
+/* D-cache operation */
+#define CCTL_L1D_WBINVAL_ALL	6
+#endif
+
+void flush_dcache_all(void)
+{
+#ifdef CONFIG_RISCV_NDS_CACHE
+	csr_write(CCTL_REG_MCCTLCOMMAND_NUM, CCTL_L1D_WBINVAL_ALL);
+#endif
+}
+
+void flush_dcache_range(unsigned long start, unsigned long end)
+{
+	flush_dcache_all();
+}
+
+void invalidate_dcache_range(unsigned long start, unsigned long end)
+{
+	flush_dcache_all();
+}
 
 void icache_enable(void)
 {
-#ifndef CONFIG_SYS_ICACHE_OFF
+#if !CONFIG_IS_ENABLED(SYS_ICACHE_OFF)
 #ifdef CONFIG_RISCV_NDS_CACHE
 	asm volatile (
 		"csrr t1, mcache_ctl\n\t"
@@ -21,7 +50,7 @@ void icache_enable(void)
 
 void icache_disable(void)
 {
-#ifndef CONFIG_SYS_ICACHE_OFF
+#if !CONFIG_IS_ENABLED(SYS_ICACHE_OFF)
 #ifdef CONFIG_RISCV_NDS_CACHE
 	asm volatile (
 		"fence.i\n\t"
@@ -35,27 +64,41 @@ void icache_disable(void)
 
 void dcache_enable(void)
 {
-#ifndef CONFIG_SYS_DCACHE_OFF
+#if !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
 #ifdef CONFIG_RISCV_NDS_CACHE
+	struct udevice *dev = NULL;
+
 	asm volatile (
 		"csrr t1, mcache_ctl\n\t"
 		"ori t0, t1, 0x2\n\t"
 		"csrw mcache_ctl, t0\n\t"
 	);
+
+	uclass_find_first_device(UCLASS_CACHE, &dev);
+
+	if (dev)
+		cache_enable(dev);
 #endif
 #endif
 }
 
 void dcache_disable(void)
 {
-#ifndef CONFIG_SYS_DCACHE_OFF
+#if !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
 #ifdef CONFIG_RISCV_NDS_CACHE
+	struct udevice *dev = NULL;
+
+	csr_write(CCTL_REG_MCCTLCOMMAND_NUM, CCTL_L1D_WBINVAL_ALL);
 	asm volatile (
-		"fence\n\t"
 		"csrr t1, mcache_ctl\n\t"
 		"andi t0, t1, ~0x2\n\t"
 		"csrw mcache_ctl, t0\n\t"
 	);
+
+	uclass_find_first_device(UCLASS_CACHE, &dev);
+
+	if (dev)
+		cache_disable(dev);
 #endif
 #endif
 }

@@ -4,6 +4,7 @@
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
  */
 #include <common.h>
+#include <env.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>
 #include <jffs2/jffs2.h> /* LEGACY */
@@ -122,7 +123,6 @@ static const char *get_mtdparts(void)
 {
 	__maybe_unused const char *mtdids = NULL;
 	static char tmp_parts[MTDPARTS_MAXLEN];
-	static bool use_defaults = true;
 	const char *mtdparts = NULL;
 
 	if (gd->flags & GD_FLG_ENV_READY)
@@ -130,7 +130,7 @@ static const char *get_mtdparts(void)
 	else if (env_get_f("mtdparts", tmp_parts, sizeof(tmp_parts)) != -1)
 		mtdparts = tmp_parts;
 
-	if (mtdparts || !use_defaults)
+	if (mtdparts)
 		return mtdparts;
 
 #if defined(CONFIG_SYS_MTDPARTS_RUNTIME)
@@ -143,8 +143,6 @@ static const char *get_mtdparts(void)
 
 	if (mtdparts)
 		env_set("mtdparts", mtdparts);
-
-	use_defaults = false;
 
 	return mtdparts;
 }

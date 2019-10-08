@@ -8,6 +8,8 @@ This includes unit tests for some functions and functional tests for the dtoc
 tool.
 """
 
+from __future__ import print_function
+
 import collections
 import os
 import struct
@@ -97,7 +99,7 @@ class TestDtoc(unittest.TestCase):
         if expected != actual:
             self._WritePythonString('/tmp/binman.expected', expected)
             self._WritePythonString('/tmp/binman.actual', actual)
-            print 'Failures written to /tmp/binman.{expected,actual}'
+            print('Failures written to /tmp/binman.{expected,actual}')
         self.assertEquals(expected, actual)
 
     def test_name(self):
@@ -196,17 +198,17 @@ struct dtd_sandbox_spl_test_2 {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_sandbox_spl_test dtv_spl_test = {
+static const struct dtd_sandbox_spl_test dtv_spl_test = {
+\t.boolval\t\t= true,
 \t.bytearray\t\t= {0x6, 0x0, 0x0},
 \t.byteval\t\t= 0x5,
+\t.intarray\t\t= {0x2, 0x3, 0x4, 0x0},
 \t.intval\t\t\t= 0x1,
-\t.notstring\t\t= {0x20, 0x21, 0x22, 0x10, 0x0},
 \t.longbytearray\t\t= {0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10,
 \t\t0x11},
-\t.stringval\t\t= "message",
-\t.boolval\t\t= true,
-\t.intarray\t\t= {0x2, 0x3, 0x4, 0x0},
+\t.notstring\t\t= {0x20, 0x21, 0x22, 0x10, 0x0},
 \t.stringarray\t\t= {"multi-word", "message", ""},
+\t.stringval\t\t= "message",
 };
 U_BOOT_DEVICE(spl_test) = {
 \t.name\t\t= "sandbox_spl_test",
@@ -214,15 +216,15 @@ U_BOOT_DEVICE(spl_test) = {
 \t.platdata_size\t= sizeof(dtv_spl_test),
 };
 
-static struct dtd_sandbox_spl_test dtv_spl_test2 = {
+static const struct dtd_sandbox_spl_test dtv_spl_test2 = {
 \t.bytearray\t\t= {0x1, 0x23, 0x34},
 \t.byteval\t\t= 0x8,
+\t.intarray\t\t= {0x5, 0x0, 0x0, 0x0},
 \t.intval\t\t\t= 0x3,
 \t.longbytearray\t\t= {0x9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 \t\t0x0},
-\t.stringval\t\t= "message2",
-\t.intarray\t\t= {0x5, 0x0, 0x0, 0x0},
 \t.stringarray\t\t= {"another", "multi-word", "message"},
+\t.stringval\t\t= "message2",
 };
 U_BOOT_DEVICE(spl_test2) = {
 \t.name\t\t= "sandbox_spl_test",
@@ -230,7 +232,7 @@ U_BOOT_DEVICE(spl_test2) = {
 \t.platdata_size\t= sizeof(dtv_spl_test2),
 };
 
-static struct dtd_sandbox_spl_test dtv_spl_test3 = {
+static const struct dtd_sandbox_spl_test dtv_spl_test3 = {
 \t.stringarray\t\t= {"one", "", ""},
 };
 U_BOOT_DEVICE(spl_test3) = {
@@ -239,7 +241,7 @@ U_BOOT_DEVICE(spl_test3) = {
 \t.platdata_size\t= sizeof(dtv_spl_test3),
 };
 
-static struct dtd_sandbox_spl_test_2 dtv_spl_test4 = {
+static const struct dtd_sandbox_spl_test_2 dtv_spl_test4 = {
 };
 U_BOOT_DEVICE(spl_test4) = {
 \t.name\t\t= "sandbox_spl_test_2",
@@ -247,7 +249,7 @@ U_BOOT_DEVICE(spl_test4) = {
 \t.platdata_size\t= sizeof(dtv_spl_test4),
 };
 
-static struct dtd_sandbox_i2c_test dtv_i2c_at_0 = {
+static const struct dtd_sandbox_i2c_test dtv_i2c_at_0 = {
 };
 U_BOOT_DEVICE(i2c_at_0) = {
 \t.name\t\t= "sandbox_i2c_test",
@@ -255,7 +257,7 @@ U_BOOT_DEVICE(i2c_at_0) = {
 \t.platdata_size\t= sizeof(dtv_i2c_at_0),
 };
 
-static struct dtd_sandbox_pmic_test dtv_pmic_at_9 = {
+static const struct dtd_sandbox_pmic_test dtv_pmic_at_9 = {
 \t.low_power\t\t= true,
 \t.reg\t\t\t= {0x9, 0x0},
 };
@@ -287,7 +289,7 @@ struct dtd_target {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_target dtv_phandle_target = {
+static const struct dtd_target dtv_phandle_target = {
 \t.intval\t\t\t= 0x0,
 };
 U_BOOT_DEVICE(phandle_target) = {
@@ -296,7 +298,7 @@ U_BOOT_DEVICE(phandle_target) = {
 \t.platdata_size\t= sizeof(dtv_phandle_target),
 };
 
-static struct dtd_target dtv_phandle2_target = {
+static const struct dtd_target dtv_phandle2_target = {
 \t.intval\t\t\t= 0x1,
 };
 U_BOOT_DEVICE(phandle2_target) = {
@@ -305,7 +307,7 @@ U_BOOT_DEVICE(phandle2_target) = {
 \t.platdata_size\t= sizeof(dtv_phandle2_target),
 };
 
-static struct dtd_target dtv_phandle3_target = {
+static const struct dtd_target dtv_phandle3_target = {
 \t.intval\t\t\t= 0x2,
 };
 U_BOOT_DEVICE(phandle3_target) = {
@@ -314,7 +316,7 @@ U_BOOT_DEVICE(phandle3_target) = {
 \t.platdata_size\t= sizeof(dtv_phandle3_target),
 };
 
-static struct dtd_source dtv_phandle_source = {
+static const struct dtd_source dtv_phandle_source = {
 \t.clocks\t\t\t= {
 \t\t\t{&dtv_phandle_target, {}},
 \t\t\t{&dtv_phandle2_target, {11}},
@@ -327,7 +329,7 @@ U_BOOT_DEVICE(phandle_source) = {
 \t.platdata_size\t= sizeof(dtv_phandle_source),
 };
 
-static struct dtd_source dtv_phandle_source2 = {
+static const struct dtd_source dtv_phandle_source2 = {
 \t.clocks\t\t\t= {
 \t\t\t{&dtv_phandle_target, {}},},
 };
@@ -363,7 +365,7 @@ struct dtd_target {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_target dtv_phandle_target = {
+static const struct dtd_target dtv_phandle_target = {
 };
 U_BOOT_DEVICE(phandle_target) = {
 \t.name\t\t= "target",
@@ -371,7 +373,7 @@ U_BOOT_DEVICE(phandle_target) = {
 \t.platdata_size\t= sizeof(dtv_phandle_target),
 };
 
-static struct dtd_source dtv_phandle_source2 = {
+static const struct dtd_source dtv_phandle_source2 = {
 \t.clocks\t\t\t= {
 \t\t\t{&dtv_phandle_target, {}},},
 };
@@ -422,7 +424,7 @@ struct dtd_compat1 {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_compat1 dtv_spl_test = {
+static const struct dtd_compat1 dtv_spl_test = {
 \t.intval\t\t\t= 0x1,
 };
 U_BOOT_DEVICE(spl_test) = {
@@ -456,7 +458,7 @@ struct dtd_test3 {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_test1 dtv_test1 = {
+static const struct dtd_test1 dtv_test1 = {
 \t.reg\t\t\t= {0x1234, 0x5678},
 };
 U_BOOT_DEVICE(test1) = {
@@ -465,7 +467,7 @@ U_BOOT_DEVICE(test1) = {
 \t.platdata_size\t= sizeof(dtv_test1),
 };
 
-static struct dtd_test2 dtv_test2 = {
+static const struct dtd_test2 dtv_test2 = {
 \t.reg\t\t\t= {0x1234567890123456, 0x9876543210987654},
 };
 U_BOOT_DEVICE(test2) = {
@@ -474,7 +476,7 @@ U_BOOT_DEVICE(test2) = {
 \t.platdata_size\t= sizeof(dtv_test2),
 };
 
-static struct dtd_test3 dtv_test3 = {
+static const struct dtd_test3 dtv_test3 = {
 \t.reg\t\t\t= {0x1234567890123456, 0x9876543210987654, 0x2, 0x3},
 };
 U_BOOT_DEVICE(test3) = {
@@ -505,7 +507,7 @@ struct dtd_test2 {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_test1 dtv_test1 = {
+static const struct dtd_test1 dtv_test1 = {
 \t.reg\t\t\t= {0x1234, 0x5678},
 };
 U_BOOT_DEVICE(test1) = {
@@ -514,7 +516,7 @@ U_BOOT_DEVICE(test1) = {
 \t.platdata_size\t= sizeof(dtv_test1),
 };
 
-static struct dtd_test2 dtv_test2 = {
+static const struct dtd_test2 dtv_test2 = {
 \t.reg\t\t\t= {0x12345678, 0x98765432, 0x2, 0x3},
 };
 U_BOOT_DEVICE(test2) = {
@@ -548,7 +550,7 @@ struct dtd_test3 {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_test1 dtv_test1 = {
+static const struct dtd_test1 dtv_test1 = {
 \t.reg\t\t\t= {0x123400000000, 0x5678},
 };
 U_BOOT_DEVICE(test1) = {
@@ -557,7 +559,7 @@ U_BOOT_DEVICE(test1) = {
 \t.platdata_size\t= sizeof(dtv_test1),
 };
 
-static struct dtd_test2 dtv_test2 = {
+static const struct dtd_test2 dtv_test2 = {
 \t.reg\t\t\t= {0x1234567890123456, 0x98765432},
 };
 U_BOOT_DEVICE(test2) = {
@@ -566,7 +568,7 @@ U_BOOT_DEVICE(test2) = {
 \t.platdata_size\t= sizeof(dtv_test2),
 };
 
-static struct dtd_test3 dtv_test3 = {
+static const struct dtd_test3 dtv_test3 = {
 \t.reg\t\t\t= {0x1234567890123456, 0x98765432, 0x2, 0x3},
 };
 U_BOOT_DEVICE(test3) = {
@@ -600,7 +602,7 @@ struct dtd_test3 {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_test1 dtv_test1 = {
+static const struct dtd_test1 dtv_test1 = {
 \t.reg\t\t\t= {0x1234, 0x567800000000},
 };
 U_BOOT_DEVICE(test1) = {
@@ -609,7 +611,7 @@ U_BOOT_DEVICE(test1) = {
 \t.platdata_size\t= sizeof(dtv_test1),
 };
 
-static struct dtd_test2 dtv_test2 = {
+static const struct dtd_test2 dtv_test2 = {
 \t.reg\t\t\t= {0x12345678, 0x9876543210987654},
 };
 U_BOOT_DEVICE(test2) = {
@@ -618,7 +620,7 @@ U_BOOT_DEVICE(test2) = {
 \t.platdata_size\t= sizeof(dtv_test2),
 };
 
-static struct dtd_test3 dtv_test3 = {
+static const struct dtd_test3 dtv_test3 = {
 \t.reg\t\t\t= {0x12345678, 0x9876543210987654, 0x2, 0x3},
 };
 U_BOOT_DEVICE(test3) = {
@@ -667,7 +669,7 @@ struct dtd_sandbox_spl_test {
         with open(output) as infile:
             data = infile.read()
         self._CheckStrings(C_HEADER + '''
-static struct dtd_sandbox_spl_test dtv_spl_test = {
+static const struct dtd_sandbox_spl_test dtv_spl_test = {
 \t.intval\t\t\t= 0x1,
 };
 U_BOOT_DEVICE(spl_test) = {
@@ -676,7 +678,7 @@ U_BOOT_DEVICE(spl_test) = {
 \t.platdata_size\t= sizeof(dtv_spl_test),
 };
 
-static struct dtd_sandbox_spl_test dtv_spl_test2 = {
+static const struct dtd_sandbox_spl_test dtv_spl_test2 = {
 \t.intarray\t\t= 0x5,
 };
 U_BOOT_DEVICE(spl_test2) = {

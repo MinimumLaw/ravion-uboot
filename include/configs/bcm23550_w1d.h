@@ -93,15 +93,11 @@
 
 /* version string, parser, etc */
 
-#define CONFIG_MX_CYCLIC
-
 /* Initial upstream - boot to cmd prompt only */
 #define CONFIG_BOOTCOMMAND		""
 
 #define CONFIG_USBID_ADDR		0x34052c46
 
-#define CONFIG_SYS_ICACHE_OFF
-#define CONFIG_SYS_DCACHE_OFF
 #define CONFIG_SYS_L2CACHE_OFF
 
 #endif /* __BCM23550_W1D_H */

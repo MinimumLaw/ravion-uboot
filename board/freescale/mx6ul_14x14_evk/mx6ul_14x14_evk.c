@@ -16,7 +16,8 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/io.h>
 #include <common.h>
-#include <fsl_esdhc.h>
+#include <env.h>
+#include <fsl_esdhc_imx.h>
 #include <i2c.h>
 #include <miiphy.h>
 #include <linux/sizes.h>
@@ -86,16 +87,13 @@ int power_init_board(void)
 	pmic_reg_write(dev, PFUZE3000_LDOGCTL, reg);
 
 	/* SW1B step ramp up time from 2us to 4us/25mV */
-	reg = 0x40;
-	pmic_reg_write(dev, PFUZE3000_SW1BCONF, reg);
+	pmic_reg_write(dev, PFUZE3000_SW1BCONF, 0x40);
 
 	/* SW1B mode to APS/PFM */
-	reg = 0xc;
-	pmic_reg_write(dev, PFUZE3000_SW1BMODE, reg);
+	pmic_reg_write(dev, PFUZE3000_SW1BMODE, 0xc);
 
 	/* SW1B standby voltage set to 0.975V */
-	reg = 0xb;
-	pmic_reg_write(dev, PFUZE3000_SW1BSTBY, reg);
+	pmic_reg_write(dev, PFUZE3000_SW1BSTBY, 0xb);
 
 	return 0;
 }
@@ -192,7 +190,7 @@ static int board_qspi_init(void)
 }
 #endif
 
-#ifdef CONFIG_FSL_ESDHC
+#ifdef CONFIG_FSL_ESDHC_IMX
 static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC1_BASE_ADDR, 0, 4},
 #if defined(CONFIG_MX6UL_14X14_EVK_EMMC_REWORK)

@@ -17,8 +17,6 @@
  * We are only ever GP parts and will utilize all of the "downloaded image"
  * area in SRAM which starts at 0x40200000 and ends at 0x4020FFFF (64KB).
  */
-#undef CONFIG_SPL_TEXT_BASE
-#define CONFIG_SPL_TEXT_BASE            0x40200000
 
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -42,7 +40,6 @@
 #define CONFIG_NAND_OMAP_ECCSCHEME      OMAP_ECC_BCH8_CODE_HW_DETECTION_SW
 #define CONFIG_SYS_NAND_U_BOOT_OFFS     0x80000
 #define CONFIG_SYS_ENV_SECT_SIZE        SZ_128K
-#define CONFIG_ENV_OFFSET               0x260000
 #define CONFIG_ENV_ADDR                 0x260000
 #define CONFIG_ENV_OVERWRITE
 /* NAND: SPL falcon mode configs */
@@ -60,11 +57,6 @@
 /* DSS Support */
 
 /* TWL4030 LED Support */
-
-/* Environment */
-#define CONFIG_ENV_SIZE                 SZ_128K
-
-#define CONFIG_PREBOOT                  "usb start"
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV

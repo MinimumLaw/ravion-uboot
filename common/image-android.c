@@ -4,10 +4,12 @@
  */
 
 #include <common.h>
+#include <env.h>
 #include <image.h>
 #include <android_image.h>
 #include <malloc.h>
 #include <errno.h>
+#include <asm/unaligned.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 
@@ -51,6 +53,8 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 			     ulong *os_data, ulong *os_len)
 {
 	u32 kernel_addr = android_image_get_kernel_addr(hdr);
+	const struct image_header *ihdr = (const struct image_header *)
+		((uintptr_t)hdr + hdr->page_size);
 
 	/*
 	 * Not all Android tools use the id field for signing the image with
@@ -92,11 +96,19 @@ int android_image_get_kernel(const struct andr_img_hdr *hdr, int verify,
 	env_set("bootargs", newbootargs);
 
 	if (os_data) {
-		*os_data = (ulong)hdr;
-		*os_data += hdr->page_size;
+		if (image_get_magic(ihdr) == IH_MAGIC) {
+			*os_data = image_get_data(ihdr);
+		} else {
+			*os_data = (ulong)hdr;
+			*os_data += hdr->page_size;
+		}
 	}
-	if (os_len)
-		*os_len = hdr->kernel_size;
+	if (os_len) {
+		if (image_get_magic(ihdr) == IH_MAGIC)
+			*os_len = image_get_data_size(ihdr);
+		else
+			*os_len = hdr->kernel_size;
+	}
 	return 0;
 }
 
@@ -124,6 +136,18 @@ ulong android_image_get_end(const struct andr_img_hdr *hdr)
 ulong android_image_get_kload(const struct andr_img_hdr *hdr)
 {
 	return android_image_get_kernel_addr(hdr);
+}
+
+ulong android_image_get_kcomp(const struct andr_img_hdr *hdr)
+{
+	const void *p = (void *)((uintptr_t)hdr + hdr->page_size);
+
+	if (image_get_magic((image_header_t *)p) == IH_MAGIC)
+		return image_get_comp((image_header_t *)p);
+	else if (get_unaligned_le32(p) == LZ4F_MAGIC)
+		return IH_COMP_LZ4;
+	else
+		return IH_COMP_NONE;
 }
 
 int android_image_get_ramdisk(const struct andr_img_hdr *hdr,
@@ -186,7 +210,7 @@ void android_print_contents(const struct andr_img_hdr *hdr)
 	printf("%skernel size:      %x\n", p, hdr->kernel_size);
 	printf("%skernel address:   %x\n", p, hdr->kernel_addr);
 	printf("%sramdisk size:     %x\n", p, hdr->ramdisk_size);
-	printf("%sramdisk addrress: %x\n", p, hdr->ramdisk_addr);
+	printf("%sramdisk address:  %x\n", p, hdr->ramdisk_addr);
 	printf("%ssecond size:      %x\n", p, hdr->second_size);
 	printf("%ssecond address:   %x\n", p, hdr->second_addr);
 	printf("%stags address:     %x\n", p, hdr->tags_addr);

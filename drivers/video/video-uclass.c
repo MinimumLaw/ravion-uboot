@@ -136,6 +136,7 @@ void video_set_default_colors(struct udevice *dev, bool invert)
 		back = temp;
 	}
 	priv->fg_col_idx = fore;
+	priv->bg_col_idx = back;
 	priv->colour_fg = vid_console_color(priv, fore);
 	priv->colour_bg = vid_console_color(priv, back);
 }
@@ -148,7 +149,7 @@ void video_sync(struct udevice *vid, bool force)
 	 * architectures do not actually implement it. Is there a way to find
 	 * out whether it exists? For now, ARM is safe.
 	 */
-#if defined(CONFIG_ARM) && !defined(CONFIG_SYS_DCACHE_OFF)
+#if defined(CONFIG_ARM) && !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
 	struct video_priv *priv = dev_get_uclass_priv(vid);
 
 	if (priv->flush_dcache) {
@@ -290,7 +291,9 @@ static int video_post_bind(struct udevice *dev)
 		return 0;
 	size = alloc_fb(dev, &addr);
 	if (addr < gd->video_bottom) {
-		/* Device tree node may need the 'u-boot,dm-pre-reloc' tag */
+		/* Device tree node may need the 'u-boot,dm-pre-reloc' or
+		 * 'u-boot,dm-pre-proper' tag
+		 */
 		printf("Video device '%s' cannot allocate frame buffer memory -ensure the device is set up before relocation\n",
 		       dev->name);
 		return -ENOSPC;

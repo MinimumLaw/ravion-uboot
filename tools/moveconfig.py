@@ -354,6 +354,26 @@ CONFIG_DATABASE = 'moveconfig.db'
 
 CONFIG_LEN = len('CONFIG_')
 
+SIZES = {
+    "SZ_1":    0x00000001, "SZ_2":    0x00000002,
+    "SZ_4":    0x00000004, "SZ_8":    0x00000008,
+    "SZ_16":   0x00000010, "SZ_32":   0x00000020,
+    "SZ_64":   0x00000040, "SZ_128":  0x00000080,
+    "SZ_256":  0x00000100, "SZ_512":  0x00000200,
+    "SZ_1K":   0x00000400, "SZ_2K":   0x00000800,
+    "SZ_4K":   0x00001000, "SZ_8K":   0x00002000,
+    "SZ_16K":  0x00004000, "SZ_32K":  0x00008000,
+    "SZ_64K":  0x00010000, "SZ_128K": 0x00020000,
+    "SZ_256K": 0x00040000, "SZ_512K": 0x00080000,
+    "SZ_1M":   0x00100000, "SZ_2M":   0x00200000,
+    "SZ_4M":   0x00400000, "SZ_8M":   0x00800000,
+    "SZ_16M":  0x01000000, "SZ_32M":  0x02000000,
+    "SZ_64M":  0x04000000, "SZ_128M": 0x08000000,
+    "SZ_256M": 0x10000000, "SZ_512M": 0x20000000,
+    "SZ_1G":   0x40000000, "SZ_2G":   0x80000000,
+    "SZ_4G":  0x100000000
+}
+
 ### helper functions ###
 def get_devnull():
     """Get the file object of '/dev/null' device."""
@@ -545,6 +565,28 @@ def confirm(options, prompt):
 
     return True
 
+def cleanup_empty_blocks(header_path, options):
+    """Clean up empty conditional blocks
+
+    Arguments:
+      header_path: path to the cleaned file.
+      options: option flags.
+    """
+    pattern = re.compile(r'^\s*#\s*if.*$\n^\s*#\s*endif.*$\n*', flags=re.M)
+    with open(header_path) as f:
+        data = f.read()
+
+    new_data = pattern.sub('\n', data)
+
+    show_diff(data.splitlines(True), new_data.splitlines(True), header_path,
+              options.color)
+
+    if options.dry_run:
+        return
+
+    with open(header_path, 'w') as f:
+        f.write(new_data)
+
 def cleanup_one_header(header_path, patterns, options):
     """Clean regex-matched lines away from a file.
 
@@ -626,8 +668,9 @@ def cleanup_headers(configs, options):
                 continue
             for filename in filenames:
                 if not fnmatch.fnmatch(filename, '*~'):
-                    cleanup_one_header(os.path.join(dirpath, filename),
-                                       patterns, options)
+                    header_path = os.path.join(dirpath, filename)
+                    cleanup_one_header(header_path, patterns, options)
+                    cleanup_empty_blocks(header_path, options)
 
 def cleanup_one_extra_option(defconfig_path, configs, options):
     """Delete config defines in CONFIG_SYS_EXTRA_OPTIONS in one defconfig file.
@@ -754,6 +797,25 @@ def cleanup_readme(configs, options):
     with open('README', 'w') as f:
         f.write(''.join(newlines))
 
+def try_expand(line):
+    """If value looks like an expression, try expanding it
+    Otherwise just return the existing value
+    """
+    if line.find('=') == -1:
+        return line
+
+    try:
+        cfg, val = re.split("=", line)
+        val= val.strip('\"')
+        if re.search("[*+-/]|<<|SZ_+|\(([^\)]+)\)", val):
+            newval = hex(eval(val, SIZES))
+            print "\tExpanded expression %s to %s" % (val, newval)
+            return cfg+'='+newval
+    except:
+        print "\tFailed to expand expression in %s" % line
+
+    return line
+
 
 ### classes ###
 class Progress:
@@ -867,6 +929,8 @@ class KconfigParser:
                 break
         else:
             new_val = not_set
+
+        new_val = try_expand(new_val)
 
         for line in dotconfig_lines:
             line = line.rstrip()

@@ -25,12 +25,6 @@
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
 
-/* Custom script for NOR */
-#define CONFIG_SYS_LDSCRIPT		"board/vscom/baltos/u-boot.lds"
-
-/* Always 128 KiB env size */
-#define CONFIG_ENV_SIZE			(128 << 10)
-
 /* FIT support */
 #define CONFIG_SYS_BOOTM_LEN         SZ_64M
 
@@ -251,7 +245,6 @@
  * add mass storage support and for gadget we add both RNDIS ethernet
  * and DFU.
  */
-#define CONFIG_USB_MUSB_DISABLE_BULK_COMBINE_SPLIT
 #define CONFIG_AM335X_USB0
 #define CONFIG_AM335X_USB0_MODE	MUSB_HOST
 #define CONFIG_AM335X_USB1

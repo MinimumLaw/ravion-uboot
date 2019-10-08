@@ -54,16 +54,11 @@
 #define CONFIG_SYS_NUM_CPC		CONFIG_SYS_NUM_DDR_CTLRS
 #define CONFIG_PCIE1			/* PCIE controller 1 */
 #define CONFIG_PCIE2			/* PCIE controller 2 */
-#define CONFIG_FSL_PCI_INIT		/* Use common FSL init code */
 #define CONFIG_SYS_PCI_64BIT		/* enable 64-bit PCI resources */
 
 #define CONFIG_ENV_OVERWRITE
 
 #if defined(CONFIG_SPIFLASH)
-#define CONFIG_ENV_SPI_BUS              0
-#define CONFIG_ENV_SPI_CS               0
-#define CONFIG_ENV_SPI_MAX_HZ           10000000
-#define CONFIG_ENV_SPI_MODE             0
 #define CONFIG_ENV_SIZE                 0x2000          /* 8KB */
 #define CONFIG_ENV_OFFSET               0x100000        /* 1MB */
 #define CONFIG_ENV_SECT_SIZE            0x10000
@@ -358,8 +353,6 @@
 /*
  * eSPI - Enhanced SPI
  */
-#define CONFIG_SF_DEFAULT_SPEED         10000000
-#define CONFIG_SF_DEFAULT_MODE          0
 
 /*
  * General PCI
@@ -368,68 +361,25 @@
 
 /* controller 1, direct to uli, tgtid 3, Base address 20000 */
 #define CONFIG_SYS_PCIE1_MEM_VIRT	0x80000000
-#ifdef CONFIG_PHYS_64BIT
-#define CONFIG_SYS_PCIE1_MEM_BUS	0xe0000000
 #define CONFIG_SYS_PCIE1_MEM_PHYS	0xc00000000ull
-#else
-#define CONFIG_SYS_PCIE1_MEM_BUS	0x80000000
-#define CONFIG_SYS_PCIE1_MEM_PHYS	0x80000000
-#endif
-#define CONFIG_SYS_PCIE1_MEM_SIZE	0x20000000	/* 512M */
 #define CONFIG_SYS_PCIE1_IO_VIRT	0xf8000000
-#define CONFIG_SYS_PCIE1_IO_BUS		0x00000000
-#ifdef CONFIG_PHYS_64BIT
 #define CONFIG_SYS_PCIE1_IO_PHYS	0xff8000000ull
-#else
-#define CONFIG_SYS_PCIE1_IO_PHYS	0xf8000000
-#endif
-#define CONFIG_SYS_PCIE1_IO_SIZE	0x00010000	/* 64k */
 
 /* controller 2, Slot 2, tgtid 2, Base address 201000 */
 #define CONFIG_SYS_PCIE2_MEM_VIRT	0xa0000000
-#ifdef CONFIG_PHYS_64BIT
-#define CONFIG_SYS_PCIE2_MEM_BUS	0xe0000000
 #define CONFIG_SYS_PCIE2_MEM_PHYS	0xc20000000ull
-#else
-#define CONFIG_SYS_PCIE2_MEM_BUS	0xa0000000
-#define CONFIG_SYS_PCIE2_MEM_PHYS	0xa0000000
-#endif
-#define CONFIG_SYS_PCIE2_MEM_SIZE	0x20000000	/* 512M */
 #define CONFIG_SYS_PCIE2_IO_VIRT	0xf8010000
-#define CONFIG_SYS_PCIE2_IO_BUS		0x00000000
-#ifdef CONFIG_PHYS_64BIT
 #define CONFIG_SYS_PCIE2_IO_PHYS	0xff8010000ull
-#else
-#define CONFIG_SYS_PCIE2_IO_PHYS	0xf8010000
-#endif
-#define CONFIG_SYS_PCIE2_IO_SIZE	0x00010000	/* 64k */
 
 /* controller 3, Slot 1, tgtid 1, Base address 202000 */
 #define CONFIG_SYS_PCIE3_MEM_VIRT	0xc0000000
-#ifdef CONFIG_PHYS_64BIT
-#define CONFIG_SYS_PCIE3_MEM_BUS	0xe0000000
 #define CONFIG_SYS_PCIE3_MEM_PHYS	0xc40000000ull
-#else
-#define CONFIG_SYS_PCIE3_MEM_BUS	0xc0000000
-#define CONFIG_SYS_PCIE3_MEM_PHYS	0xc0000000
-#endif
-#define CONFIG_SYS_PCIE3_MEM_SIZE	0x20000000	/* 512M */
 #define CONFIG_SYS_PCIE3_IO_VIRT	0xf8020000
-#define CONFIG_SYS_PCIE3_IO_BUS		0x00000000
-#ifdef CONFIG_PHYS_64BIT
 #define CONFIG_SYS_PCIE3_IO_PHYS	0xff8020000ull
-#else
-#define CONFIG_SYS_PCIE3_IO_PHYS	0xf8020000
-#endif
-#define CONFIG_SYS_PCIE3_IO_SIZE	0x00010000	/* 64k */
 
 /* controller 4, Base address 203000 */
-#define CONFIG_SYS_PCIE4_MEM_BUS	0xe0000000
 #define CONFIG_SYS_PCIE4_MEM_PHYS	0xc60000000ull
-#define CONFIG_SYS_PCIE4_MEM_SIZE	0x20000000	/* 512M */
-#define CONFIG_SYS_PCIE4_IO_BUS		0x00000000
 #define CONFIG_SYS_PCIE4_IO_PHYS	0xff8030000ull
-#define CONFIG_SYS_PCIE4_IO_SIZE	0x00010000	/* 64k */
 
 /* Qman/Bman */
 #define CONFIG_SYS_BMAN_NUM_PORTALS	10
@@ -473,7 +423,6 @@
  * env is stored at 0x100000, sector size is 0x10000, ucode is stored after
  * env, so we got 0x110000.
  */
-#define CONFIG_SYS_QE_FW_IN_SPIFLASH
 #define CONFIG_SYS_FMAN_FW_ADDR	0x110000
 #elif defined(CONFIG_SDCARD)
 /*
@@ -481,10 +430,8 @@
  * about 825KB (1650 blocks), Env is stored after the image, and the env size is
  * 0x2000 (16 blocks), 8 + 1650 + 16 = 1674, enlarge it to 1680.
  */
-#define CONFIG_SYS_QE_FMAN_FW_IN_MMC
 #define CONFIG_SYS_FMAN_FW_ADDR	(512 * 1680)
 #elif defined(CONFIG_NAND)
-#define CONFIG_SYS_QE_FMAN_FW_IN_NAND
 #define CONFIG_SYS_FMAN_FW_ADDR	(8 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #elif defined(CONFIG_SRIO_PCIE_BOOT_SLAVE)
 /*
@@ -494,24 +441,40 @@
  * slave SRIO or PCIE outbound window->master inbound window->
  * master LAW->the ucode address in master's memory space.
  */
-#define CONFIG_SYS_QE_FMAN_FW_IN_REMOTE
 #define CONFIG_SYS_FMAN_FW_ADDR	0xFFE00000
 #else
-#define CONFIG_SYS_QE_FMAN_FW_IN_NOR
 #define CONFIG_SYS_FMAN_FW_ADDR		0xEFF00000
 #endif
 #define CONFIG_SYS_QE_FMAN_FW_LENGTH	0x10000
 #define CONFIG_SYS_FDT_PAD		(0x3000 + CONFIG_SYS_QE_FMAN_FW_LENGTH)
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#define CONFIG_FMAN_ENET
 #define CONFIG_PHYLIB_10G
 #define CONFIG_PHY_VITESSE
 #define CONFIG_PHY_TERANETICS
 #endif
 
 #ifdef CONFIG_PCI
+#if !defined(CONFIG_DM_PCI)
+#define CONFIG_FSL_PCI_INIT	/* Use common FSL init code */
 #define CONFIG_PCI_INDIRECT_BRIDGE
+#define CONFIG_SYS_PCIE1_MEM_BUS	0xe0000000
+#define CONFIG_SYS_PCIE1_MEM_SIZE	0x20000000      /* 512M */
+#define CONFIG_SYS_PCIE1_IO_BUS		0x00000000
+#define CONFIG_SYS_PCIE1_IO_SIZE	0x00010000	/* 64k */
+#define CONFIG_SYS_PCIE2_MEM_BUS	0xe0000000
+#define CONFIG_SYS_PCIE2_MEM_SIZE	0x20000000	/* 512M */
+#define CONFIG_SYS_PCIE2_IO_BUS		0x00000000
+#define CONFIG_SYS_PCIE2_IO_SIZE	0x00010000	/* 64k */
+#define CONFIG_SYS_PCIE3_MEM_BUS	0xe0000000
+#define CONFIG_SYS_PCIE3_MEM_SIZE	0x20000000	/* 512M */
+#define CONFIG_SYS_PCIE3_IO_BUS		0x00000000
+#define CONFIG_SYS_PCIE3_IO_SIZE	0x00010000	/* 64k */
+#define CONFIG_SYS_PCIE4_MEM_BUS	0xe0000000
+#define CONFIG_SYS_PCIE4_MEM_SIZE	0x20000000	/* 512M */
+#define CONFIG_SYS_PCIE4_IO_BUS		0x00000000
+#define CONFIG_SYS_PCIE4_IO_SIZE	0x00010000	/* 64k */
+#endif
 
 #define CONFIG_PCI_SCAN_SHOW		/* show pci devices on startup */
 #endif	/* CONFIG_PCI */

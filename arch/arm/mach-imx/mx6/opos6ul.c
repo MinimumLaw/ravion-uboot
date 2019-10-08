@@ -13,7 +13,7 @@
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/io.h>
 #include <common.h>
-#include <environment.h>
+#include <env.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -127,7 +127,7 @@ int board_late_init(void)
 
 	/* In bootstrap don't use the env vars */
 	if (((reg & 0x3000000) >> 24) == 0x1) {
-		set_default_env(NULL, 0);
+		env_set_default(NULL, 0);
 		env_set("preboot", "");
 	}
 
@@ -192,6 +192,8 @@ struct mx6_ddr_sysinfo ddr_sysinfo = {
 	.sde_to_rst = 0x10,	/* 14 cycles, 200us (JEDEC default) */
 	.rst_to_cke = 0x23,	/* 33 cycles, 500us (JEDEC default) */
 	.ddr_type = DDR_TYPE_DDR3,
+	.refsel = 1,		/* Refresh cycles at 32KHz */
+	.refr = 7,		/* 8 refreshes commands per refresh cycle */
 };
 
 static struct mx6_ddr3_cfg mem_ddr = {

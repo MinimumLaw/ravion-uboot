@@ -11,6 +11,7 @@
 #include <linux/io.h>
 #include <faraday/ftsmc020.h>
 #include <fdtdec.h>
+#include <dm.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -67,10 +68,6 @@ ulong board_flash_get_legacy(ulong base, int banknum, flash_info_t *info)
 
 void *board_fdt_blob_setup(void)
 {
-	void **ptr = (void *)&prior_stage_fdt_address;
-	if (fdt_magic(*ptr) == FDT_MAGIC)
-			return (void *)*ptr;
-
 	return (void *)CONFIG_SYS_FDT_BASE;
 }
 
@@ -97,10 +94,18 @@ int smc_init(void)
 	return 0;
 }
 
+static void v5l2_init(void)
+{
+	struct udevice *dev;
+
+	uclass_get_device(UCLASS_CACHE, 0, &dev);
+}
+
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
 	smc_init();
+	v5l2_init();
 
 	return 0;
 }

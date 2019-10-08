@@ -9,6 +9,7 @@
 #include <common.h>
 #include <console.h>
 #include <dm.h>
+#include <env.h>
 #include <errno.h>
 #include <malloc.h>
 #include <memalign.h>
@@ -145,6 +146,12 @@ static void usb_kbd_put_queue(struct usb_kbd_pdata *data, char c)
 	data->usb_kbd_buffer[data->usb_in_pointer] = c;
 }
 
+static void usb_kbd_put_sequence(struct usb_kbd_pdata *data, char *s)
+{
+	for (; *s; s++)
+		usb_kbd_put_queue(data, *s);
+}
+
 /*
  * Set the LEDs. Since this is used in the irq routine, the control job is
  * issued with a timeout of 0. This means, that the job is queued without
@@ -235,9 +242,25 @@ static int usb_kbd_translate(struct usb_kbd_pdata *data, unsigned char scancode,
 	}
 
 	/* Report keycode if any */
-	if (keycode) {
+	if (keycode)
 		debug("%c", keycode);
+
+	switch (keycode) {
+	case 0x0e:					/* Down arrow key */
+		usb_kbd_put_sequence(data, "\e[B");
+		break;
+	case 0x10:					/* Up arrow key */
+		usb_kbd_put_sequence(data, "\e[A");
+		break;
+	case 0x06:					/* Right arrow key */
+		usb_kbd_put_sequence(data, "\e[C");
+		break;
+	case 0x02:					/* Left arrow key */
+		usb_kbd_put_sequence(data, "\e[D");
+		break;
+	default:
 		usb_kbd_put_queue(data, keycode);
+		break;
 	}
 
 	return 0;
@@ -317,10 +340,9 @@ static inline void usb_kbd_poll_for_event(struct usb_device *dev)
 	struct usb_kbd_pdata *data = dev->privptr;
 
 	/* Submit a interrupt transfer request */
-	usb_submit_int_msg(dev, data->intpipe, &data->new[0], data->intpktsize,
-			   data->intinterval);
-
-	usb_kbd_irq_worker(dev);
+	if (usb_int_msg(dev, data->intpipe, &data->new[0],
+			data->intpktsize, data->intinterval, true) >= 0)
+		usb_kbd_irq_worker(dev);
 #elif defined(CONFIG_SYS_USB_EVENT_POLL_VIA_CONTROL_EP) || \
       defined(CONFIG_SYS_USB_EVENT_POLL_VIA_INT_QUEUE)
 #if defined(CONFIG_SYS_USB_EVENT_POLL_VIA_CONTROL_EP)
@@ -482,8 +504,8 @@ static int usb_kbd_probe_dev(struct usb_device *dev, unsigned int ifnum)
 	if (usb_get_report(dev, iface->desc.bInterfaceNumber,
 			   1, 0, data->new, USB_KBD_BOOT_REPORT_SIZE) < 0) {
 #else
-	if (usb_submit_int_msg(dev, data->intpipe, data->new, data->intpktsize,
-			       data->intinterval) < 0) {
+	if (usb_int_msg(dev, data->intpipe, data->new, data->intpktsize,
+			data->intinterval, false) < 0) {
 #endif
 		printf("Failed to get keyboard state from device %04x:%04x\n",
 		       dev->descriptor.idVendor, dev->descriptor.idProduct);

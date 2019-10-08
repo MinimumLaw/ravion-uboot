@@ -3,7 +3,6 @@
  * Copyright (C) 2018 Armadeus Systems
  */
 
-#include <asm/arch/clock.h>
 #include <asm/arch/mx6-pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
@@ -49,8 +48,6 @@ int setup_lcd(void)
 	struct gpio_desc backlight;
 	int ret;
 
-	enable_lcdif_clock(LCDIF1_BASE_ADDR, 1);
-
 	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
 
 	/* Set Brightness to high */
@@ -68,27 +65,6 @@ int setup_lcd(void)
 
 	dm_gpio_set_dir_flags(&backlight, GPIOD_IS_OUT);
 	dm_gpio_set_value(&backlight, 1);
-
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_USB_EHCI_MX6
-#define USB_OTHERREGS_OFFSET	0x800
-#define UCTRL_PWR_POL		(1 << 9)
-
-int board_ehci_hcd_init(int port)
-{
-	u32 *usbnc_usb_ctrl;
-
-	if (port > 1)
-		return -EINVAL;
-
-	usbnc_usb_ctrl = (u32 *)(USB_BASE_ADDR + USB_OTHERREGS_OFFSET +
-				 port * 4);
-
-	/* Set Power polarity */
-	setbits_le32(usbnc_usb_ctrl, UCTRL_PWR_POL);
 
 	return 0;
 }

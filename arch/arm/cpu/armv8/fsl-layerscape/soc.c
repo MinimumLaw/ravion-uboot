@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2015 Freescale Semiconductor
+ * Copyright 2019 NXP
  */
 
 #include <common.h>
+#include <env.h>
 #include <fsl_immap.h>
 #include <fsl_ifc.h>
 #include <asm/arch/fsl_serdes.h>
@@ -25,7 +27,7 @@
 #endif
 #include <fsl_immap.h>
 #ifdef CONFIG_TFABOOT
-#include <environment.h>
+#include <env_internal.h>
 DECLARE_GLOBAL_DATA_PTR;
 #endif
 
@@ -126,6 +128,10 @@ static void erratum_a008997(void)
 	set_usb_pcstxswingfull(scfg, SCFG_USB3PRM2CR_USB2);
 	set_usb_pcstxswingfull(scfg, SCFG_USB3PRM2CR_USB3);
 #endif
+#elif defined(CONFIG_ARCH_LS1028A)
+	clrsetbits_le32(DCSR_BASE +  DCSR_USB_IOCR1,
+			0x7F << 11,
+			DCSR_USB_PCSTXSWINGFULL << 11);
 #endif
 #endif /* CONFIG_SYS_FSL_ERRATUM_A008997 */
 }
@@ -139,7 +145,8 @@ static void erratum_a008997(void)
 	out_be16((phy) + SCFG_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_3);	\
 	out_be16((phy) + SCFG_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_4)
 
-#elif defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LS1088A)
+#elif defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LS1088A) || \
+	defined(CONFIG_ARCH_LS1028A)
 
 #define PROGRAM_USB_PHY_RX_OVRD_IN_HI(phy)	\
 	out_le16((phy) + DCSR_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_1); \
@@ -163,7 +170,8 @@ static void erratum_a009007(void)
 	usb_phy = (void __iomem *)SCFG_USB_PHY3;
 	PROGRAM_USB_PHY_RX_OVRD_IN_HI(usb_phy);
 #endif
-#elif defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LS1088A)
+#elif defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LS1088A) || \
+	defined(CONFIG_ARCH_LS1028A)
 	void __iomem *dcsr = (void __iomem *)DCSR_BASE;
 
 	PROGRAM_USB_PHY_RX_OVRD_IN_HI(dcsr + DCSR_USB_PHY1);
@@ -331,6 +339,10 @@ void fsl_lsch3_early_init_f(void)
 	*/
 	if (fsl_check_boot_mode_secure() == 1)
 		bypass_smmu();
+#endif
+
+#if defined(CONFIG_ARCH_LS1088A) || defined(CONFIG_ARCH_LS1028A)
+	set_icids();
 #endif
 }
 
@@ -593,6 +605,9 @@ void fsl_lsch2_early_init_f(void)
 	struct ccsr_cci400 *cci = (struct ccsr_cci400 *)(CONFIG_SYS_IMMR +
 					CONFIG_SYS_CCI400_OFFSET);
 	struct ccsr_scfg *scfg = (struct ccsr_scfg *)CONFIG_SYS_FSL_SCFG_ADDR;
+#if defined(CONFIG_FSL_QSPI) && defined(CONFIG_TFABOOT)
+	enum boot_src src;
+#endif
 
 #ifdef CONFIG_LAYERSCAPE_NS_ACCESS
 	enable_layerscape_ns_access();
@@ -602,8 +617,14 @@ void fsl_lsch2_early_init_f(void)
 	init_early_memctl_regs();	/* tighten IFC timing */
 #endif
 
+#if defined(CONFIG_FSL_QSPI) && defined(CONFIG_TFABOOT)
+	src = get_boot_src();
+	if (src != BOOT_SOURCE_QSPI_NOR)
+		out_be32(&scfg->qspi_cfg, SCFG_QSPI_CLKSEL);
+#else
 #if defined(CONFIG_FSL_QSPI) && !defined(CONFIG_QSPI_BOOT)
 	out_be32(&scfg->qspi_cfg, SCFG_QSPI_CLKSEL);
+#endif
 #endif
 	/* Make SEC reads and writes snoopable */
 	setbits_be32(&scfg->snpcnfgcr, SCFG_SNPCNFGCR_SECRDSNP |
@@ -684,7 +705,7 @@ int qspi_ahb_init(void)
 #endif
 
 #ifdef CONFIG_TFABOOT
-#define MAX_BOOTCMD_SIZE	256
+#define MAX_BOOTCMD_SIZE	512
 
 int fsl_setenv_bootcmd(void)
 {
@@ -808,10 +829,25 @@ int board_late_init(void)
 	 * check if gd->env_addr is default_environment; then setenv bootcmd
 	 * and mcinitcmd.
 	 */
+#if !defined(CONFIG_ENV_ADDR) || defined(ENV_IS_EMBEDDED)
+	if (gd->env_addr == (ulong)&default_environment[0]) {
+#else
 	if (gd->env_addr + gd->reloc_off == (ulong)&default_environment[0]) {
+#endif
 		fsl_setenv_bootcmd();
 		fsl_setenv_mcinitcmd();
 	}
+
+	/*
+	 * If the boot mode is secure, default environment is not present then
+	 * setenv command needs to be run by default
+	 */
+#ifdef CONFIG_CHAIN_OF_TRUST
+	if ((fsl_check_boot_mode_secure() == 1)) {
+		fsl_setenv_bootcmd();
+		fsl_setenv_mcinitcmd();
+	}
+#endif
 #endif
 #ifdef CONFIG_QSPI_AHB_INIT
 	qspi_ahb_init();

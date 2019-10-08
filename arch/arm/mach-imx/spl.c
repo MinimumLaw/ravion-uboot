@@ -24,6 +24,7 @@ u32 spl_boot_device(void)
 {
 	unsigned int bmode = readl(&src_base->sbmr2);
 	u32 reg = imx6_src_get_boot_mode();
+	u32 mmc_index = ((reg >> 11) & 0x03);
 
 	/*
 	 * Check for BMODE if serial downloader is enabled
@@ -84,11 +85,12 @@ u32 spl_boot_device(void)
 	/* SD/eSD: 8.5.3, Table 8-15  */
 	case IMX6_BMODE_SD:
 	case IMX6_BMODE_ESD:
-		return BOOT_DEVICE_MMC1;
-	/* MMC/eMMC: 8.5.3 */
 	case IMX6_BMODE_MMC:
 	case IMX6_BMODE_EMMC:
-		return BOOT_DEVICE_MMC1;
+		if (mmc_index == 1)
+			return BOOT_DEVICE_MMC2;
+		else
+			return BOOT_DEVICE_MMC1;
 	/* NAND Flash: 8.5.2, Table 8-10 */
 	case IMX6_BMODE_NAND_MIN ... IMX6_BMODE_NAND_MAX:
 		return BOOT_DEVICE_NAND;
@@ -96,7 +98,7 @@ u32 spl_boot_device(void)
 	return BOOT_DEVICE_NONE;
 }
 
-#elif defined(CONFIG_MX7) || defined(CONFIG_IMX8M)
+#elif defined(CONFIG_MX7) || defined(CONFIG_IMX8M) || defined(CONFIG_IMX8)
 /* Translate iMX7/i.MX8M boot device to the SPL boot device enumeration */
 u32 spl_boot_device(void)
 {
@@ -134,6 +136,15 @@ u32 spl_boot_device(void)
 	case SD3_BOOT:
 	case MMC3_BOOT:
 		return BOOT_DEVICE_MMC1;
+#elif defined(CONFIG_IMX8)
+	case MMC1_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case SD2_BOOT:
+		return BOOT_DEVICE_MMC2_2;
+	case SD3_BOOT:
+		return BOOT_DEVICE_MMC1;
+	case FLEXSPI_BOOT:
+		return BOOT_DEVICE_SPI;
 #elif defined(CONFIG_IMX8M)
 	case SD1_BOOT:
 	case MMC1_BOOT:
@@ -152,7 +163,7 @@ u32 spl_boot_device(void)
 		return BOOT_DEVICE_NONE;
 	}
 }
-#endif /* CONFIG_MX7 || CONFIG_IMX8M */
+#endif /* CONFIG_MX7 || CONFIG_IMX8M || CONFIG_IMX8 */
 
 #ifdef CONFIG_SPL_USB_GADGET
 int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
@@ -171,7 +182,8 @@ u32 spl_boot_mode(const u32 boot_device)
 	/* for MMC return either RAW or FAT mode */
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
-#if defined(CONFIG_SPL_FAT_SUPPORT)
+	case BOOT_DEVICE_MMC2_2:
+#if defined(CONFIG_SPL_FS_FAT)
 		return MMCSD_MODE_FS;
 #elif defined(CONFIG_SUPPORT_EMMC_BOOT)
 		return MMCSD_MODE_EMMCBOOT;

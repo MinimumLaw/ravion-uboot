@@ -90,11 +90,15 @@
 #include <common.h>
 #include <command.h>
 #include <console.h>
-#include <environment.h>
+#include <env.h>
+#include <env_internal.h>
 #include <errno.h>
 #include <net.h>
 #include <net/fastboot.h>
 #include <net/tftp.h>
+#if defined(CONFIG_CMD_PCAP)
+#include <net/pcap.h>
+#endif
 #if defined(CONFIG_LED_STATUS)
 #include <miiphy.h>
 #include <status_led.h>
@@ -129,10 +133,6 @@ struct in_addr net_dns_server;
 #if defined(CONFIG_BOOTP_DNS2)
 /* Our 2nd DNS IP address */
 struct in_addr net_dns_server2;
-#endif
-
-#ifdef CONFIG_MCAST_TFTP	/* Multicast TFTP */
-struct in_addr net_mcast_addr;
 #endif
 
 /** END OF BOOTP EXTENTIONS **/
@@ -657,6 +657,7 @@ restart:
 			/* Invalidate the last protocol */
 			eth_set_last_protocol(BOOTP);
 			debug_cond(DEBUG_INT_STATE, "--- net_loop Fail!\n");
+			ret = -ENONET;
 			goto done;
 
 		case NETLOOP_CONTINUE:
@@ -674,6 +675,11 @@ done:
 	net_set_icmp_handler(NULL);
 #endif
 	net_set_state(prev_net_state);
+
+#if defined(CONFIG_CMD_PCAP)
+	if (pcap_active())
+		pcap_print_status();
+#endif
 	return ret;
 }
 
@@ -1086,6 +1092,9 @@ void net_process_received_packet(uchar *in_packet, int len)
 
 	debug_cond(DEBUG_NET_PKT, "packet received\n");
 
+#if defined(CONFIG_CMD_PCAP)
+	pcap_post(in_packet, len, false);
+#endif
 	net_rx_packet = in_packet;
 	net_rx_packet_len = len;
 	et = (struct ethernet_hdr *)in_packet;
@@ -1215,9 +1224,6 @@ void net_process_received_packet(uchar *in_packet, int len)
 		dst_ip = net_read_ip(&ip->ip_dst);
 		if (net_ip.s_addr && dst_ip.s_addr != net_ip.s_addr &&
 		    dst_ip.s_addr != 0xFFFFFFFF) {
-#ifdef CONFIG_MCAST_TFTP
-			if (net_mcast_addr != dst_ip)
-#endif
 				return;
 		}
 		/* Read source IP address for later use */
@@ -1257,6 +1263,9 @@ void net_process_received_packet(uchar *in_packet, int len)
 		} else if (ip->ip_p != IPPROTO_UDP) {	/* Only UDP packets */
 			return;
 		}
+
+		if (ntohs(ip->udp_len) < UDP_HDR_SIZE || ntohs(ip->udp_len) > ntohs(ip->ip_len))
+			return;
 
 		debug_cond(DEBUG_DEV_PKT,
 			   "received UDP (to=%pI4, from=%pI4, len=%d)\n",
@@ -1618,4 +1627,16 @@ ushort string_to_vlan(const char *s)
 ushort env_get_vlan(char *var)
 {
 	return string_to_vlan(env_get(var));
+}
+
+void eth_parse_enetaddr(const char *addr, uint8_t *enetaddr)
+{
+	char *end;
+	int i;
+
+	for (i = 0; i < 6; ++i) {
+		enetaddr[i] = addr ? simple_strtoul(addr, &end, 16) : 0;
+		if (addr)
+			addr = (*end) ? end + 1 : end;
+	}
 }

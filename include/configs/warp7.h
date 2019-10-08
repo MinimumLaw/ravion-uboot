@@ -13,25 +13,11 @@
 
 #define PHYS_SDRAM_SIZE			SZ_512M
 
-/*
- * If we have defined the OPTEE ram size and not OPTEE it means that we were
- * launched by OPTEE, because of that we shall skip all the low level
- * initialization since it was already done by ATF or OPTEE
- */
-#ifdef CONFIG_OPTEE_TZDRAM_SIZE
-#ifndef CONFIG_OPTEE
-#define CONFIG_SKIP_LOWLEVEL_INIT
-#endif
-#endif
-
-#define CONFIG_MXC_UART_BASE		UART1_IPS_BASE_ADDR
-
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(35 * SZ_1M)
 
 /* MMC Config*/
 #define CONFIG_SYS_FSL_ESDHC_ADDR       USDHC3_BASE_ADDR
-#define CONFIG_SUPPORT_EMMC_BOOT
 #define CONFIG_SYS_FSL_ESDHC_HAS_DDR_MODE
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
@@ -39,12 +25,25 @@
 #define CONFIG_SERIAL_TAG
 
 #define CONFIG_DFU_ENV_SETTINGS \
-	"dfu_alt_info=boot raw 0x2 0x400 mmcpart 1\0" \
+	"dfu_alt_info=boot raw 0x2 0x1000 mmcpart 1\0" \
+
+/* When booting with FIT specify the node entry containing boot.scr */
+#if defined(CONFIG_FIT)
+#define BOOT_SCR_STRING "source ${bootscriptaddr}:${bootscr_fitimage_name}\0"
+#else
+#define BOOT_SCR_STRING "source ${bootscriptaddr}\0"
+#endif
+
+#ifndef CONFIG_OPTEE_LOAD_ADDR
+#define CONFIG_OPTEE_LOAD_ADDR 0
+#endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_DFU_ENV_SETTINGS \
 	"script=boot.scr\0" \
+	"bootscr_fitimage_name=bootscr\0" \
 	"script_signed=boot.scr.imx-signed\0" \
+	"bootscriptaddr=0x83200000\0" \
 	"image=zImage\0" \
 	"console=ttymxc0\0" \
 	"ethact=usb_ether\0" \
@@ -52,6 +51,7 @@
 	"initrd_high=0xffffffff\0" \
 	"fdt_file=imx7s-warp.dtb\0" \
 	"fdt_addr=" __stringify(CONFIG_SYS_FDT_ADDR)"\0" \
+	"fdtovaddr=0x83100000\0" \
 	"optee_addr=" __stringify(CONFIG_OPTEE_LOAD_ADDR)"\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
@@ -65,16 +65,16 @@
 	"warp7_auth_or_fail=hab_auth_img_or_fail ${hab_ivt_addr} ${filesize} 0;\0" \
 	"do_bootscript_hab=" \
 		"if test ${hab_enabled} -eq 1; then " \
-			"setexpr hab_ivt_addr ${loadaddr} - ${ivt_offset}; " \
+			"setexpr hab_ivt_addr ${bootscriptaddr} - ${ivt_offset}; " \
 			"setenv script ${script_signed}; " \
 			"load mmc ${mmcdev}:${mmcpart} ${hab_ivt_addr} ${script}; " \
 			"run warp7_auth_or_fail; " \
 			"run bootscript; "\
 		"fi;\0" \
 	"loadbootscript=" \
-		"load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
+		"load mmc ${mmcdev}:${mmcpart} ${bootscriptaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
-		"source\0" \
+		BOOT_SCR_STRING \
 	"loadimage=load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=load mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
@@ -126,16 +126,8 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* I2C configs */
-#define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_MXC_I2C1
 #define CONFIG_SYS_I2C_SPEED		100000
-
-/* PMIC */
-#define CONFIG_POWER
-#define CONFIG_POWER_I2C
-#define CONFIG_POWER_PFUZE3000
-#define CONFIG_POWER_PFUZE3000_I2C_ADDR	0x08
 
 /* environment organization */
 #define CONFIG_ENV_SIZE			SZ_8K

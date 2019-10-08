@@ -57,14 +57,9 @@
  */
  #ifdef CONFIG_CADENCE_QSPI
 /* Enable it if you want to use dual-stacked mode */
-#undef CONFIG_SF_DUAL_FLASH
 /*#define CONFIG_QSPI_RBF_ADDR		0x720000*/
 
 /* Flash device info */
-#define CONFIG_SF_DEFAULT_SPEED		(50000000)
-#define CONFIG_SF_DEFAULT_MODE		(SPI_MODE_3 | SPI_RX_QUAD)
-#define CONFIG_SF_DEFAULT_BUS		0
-#define CONFIG_SF_DEFAULT_CS		0
 
 /*#define CONFIG_ENV_IS_IN_SPI_FLASH*/
 #ifdef CONFIG_ENV_IS_IN_SPI_FLASH
@@ -118,7 +113,8 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"scriptaddr=0x02100000\0" \
 	"scriptfile=u-boot.scr\0" \
 	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
-		   "then source ${scriptaddr}; fi\0"
+		   "then source ${scriptaddr}; fi\0" \
+	"socfpga_legacy_reset_compat=1\0"
 
 /*
  * Generic Interrupt Controller Definitions
@@ -135,11 +131,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_SYS_MEMTEST_END		PHYS_SDRAM_1_SIZE - 0x200000
 
 /*
- * SDRAM controller
- */
-#define CONFIG_ALTERA_SDRAM
-
-/*
  * Serial / UART configurations
  */
 #define CONFIG_SYS_NS16550_CLK		100000000
@@ -154,7 +145,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * SDMMC configurations
  */
 #ifdef CONFIG_CMD_MMC
-#define CONFIG_BOUNCE_BUFFER
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT	256
 #endif
 /*
@@ -203,7 +193,6 @@ unsigned int cm_get_l4_sys_free_clk_hz(void);
  *
  */
 #define CONFIG_SPL_TARGET		"spl/u-boot-spl.hex"
-#define CONFIG_SPL_TEXT_BASE		CONFIG_SYS_INIT_RAM_ADDR
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_INIT_RAM_SIZE
 #define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
 #define CONFIG_SPL_BSS_MAX_SIZE		0x100000	/* 1 MB */
@@ -212,7 +201,6 @@ unsigned int cm_get_l4_sys_free_clk_hz(void);
 #define CONFIG_SYS_SPL_MALLOC_SIZE	(CONFIG_SYS_MALLOC_LEN)
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SPL_BSS_START_ADDR \
 					- CONFIG_SYS_SPL_MALLOC_SIZE)
-#define CONFIG_SYS_SPI_U_BOOT_OFFS      0x3C00000
 
 /* SPL SDMMC boot support */
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1

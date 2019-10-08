@@ -15,7 +15,6 @@
  * SPL
  */
 
-#define CONFIG_SPL_TEXT_BASE		0xffff0000
 #define CONFIG_SPL_MAX_SIZE		0x0000fff0
 #define CONFIG_SPL_STACK		0x00020000
 #define CONFIG_SPL_BSS_START_ADDR	0x00020000
@@ -184,7 +183,6 @@
 /*
  * Other required minimal configurations
  */
-#define CONFIG_ARCH_CPU_INIT		/* call arch_cpu_init() */
 
 #define CONFIG_SYS_LOAD_ADDR		0x00800000
 #define CONFIG_SYS_MEMTEST_START	0x00400000

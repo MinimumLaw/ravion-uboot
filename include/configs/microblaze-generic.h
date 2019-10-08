@@ -81,18 +81,11 @@
 #else /* !FLASH */
 
 #ifdef SPIFLASH
-# define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
-# define CONFIG_SF_DEFAULT_SPEED	XILINX_SPI_FLASH_MAX_FREQ
-# define CONFIG_SF_DEFAULT_CS		XILINX_SPI_FLASH_CS
-
 # ifdef	RAMENV
 #  define CONFIG_ENV_SIZE	0x1000
 #  define CONFIG_ENV_ADDR	(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SIZE)
 
 # else	/* SPIFLASH && !RAMENV */
-#  define CONFIG_ENV_SPI_MODE		SPI_MODE_3
-#  define CONFIG_ENV_SPI_MAX_HZ		CONFIG_SF_DEFAULT_SPEED
-#  define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
 /* 128K(two sectors) for env */
 #  define CONFIG_ENV_SECT_SIZE	0x10000
 #  define CONFIG_ENV_SIZE	(2 * CONFIG_ENV_SECT_SIZE)
@@ -146,8 +139,6 @@
 
 /* architecture dependent code */
 #define	CONFIG_SYS_USR_EXCEP	/* user exception */
-
-#define	CONFIG_PREBOOT	"echo U-BOOT for ${hostname};setenv preboot;echo"
 
 #ifndef CONFIG_EXTRA_ENV_SETTINGS
 #define	CONFIG_EXTRA_ENV_SETTINGS	"unlock=yes\0" \

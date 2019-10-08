@@ -14,7 +14,6 @@
 
 #include <configs/ti_omap3_common.h>
 
-#undef CONFIG_DM_I2C_COMPAT
 #define CONFIG_REVISION_TAG
 
 /* Hardware drivers */
@@ -27,18 +26,11 @@
  * Enable CONFIG_USB_MUSB_HOST for Host functionalities MSC, keyboard
  * Enable CONFIG_USB_MUSB_GADGET for Device functionalities.
  */
-
-#ifdef CONFIG_USB_MUSB_AM35X
-
-#ifdef CONFIG_USB_MUSB_HOST
-
-#ifdef CONFIG_USB_KEYBOARD
-#define CONFIG_PREBOOT "usb start"
-#endif /* CONFIG_USB_KEYBOARD */
-
-#endif /* CONFIG_USB_MUSB_HOST */
-
-#endif /* CONFIG_USB_MUSB_AM35X */
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_USB_EHCI_OMAP
+#else
+#define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	57
+#endif
 
 /* I2C */
 
@@ -71,6 +63,7 @@
 #define CONFIG_SYS_NAND_MAX_ECCPOS	56
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000
+#define CONFIG_SYS_NAND_SPL_KERNEL_OFFS 0x2a0000
 /* NAND block size is 128 KiB.  Synchronize these values with
  * corresponding Device Tree entries in Linux:
  *  MLO(SPL)             4 * NAND_BLOCK_SIZE = 512 KiB  @ 0x000000
@@ -183,13 +176,9 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_SIZE			CONFIG_SYS_ENV_SECT_SIZE
-#define CONFIG_ENV_OFFSET		0x260000
 #define CONFIG_ENV_ADDR			0x260000
 
 /* Defines for SPL */
-#undef CONFIG_SPL_TEXT_BASE
-#define CONFIG_SPL_TEXT_BASE		0x40200000
 
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"

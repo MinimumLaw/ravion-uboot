@@ -94,6 +94,7 @@
 #define AHCI_BASE_ADDR				(CONFIG_SYS_IMMR + 0x02200000)
 
 #define QDMA_BASE_ADDR				(CONFIG_SYS_IMMR + 0x07380000)
+#define QMAN_CQSIDR_REG				0x20a80
 
 #define CONFIG_SYS_PCIE1_PHYS_ADDR		0x4000000000ULL
 #define CONFIG_SYS_PCIE2_PHYS_ADDR		0x4800000000ULL
@@ -179,7 +180,7 @@ struct sys_info {
 	unsigned long freq_systembus;
 	unsigned long freq_ddrbus;
 	unsigned long freq_localbus;
-	unsigned long freq_sdhc;
+	unsigned long freq_cga_m2;
 #ifdef CONFIG_SYS_DPAA_FMAN
 	unsigned long freq_fman[CONFIG_SYS_NUM_FMAN];
 #endif

@@ -67,13 +67,18 @@ struct spl_image_info {
 	u8 os;
 	uintptr_t load_addr;
 	uintptr_t entry_point;
-#if CONFIG_IS_ENABLED(LOAD_FIT)
+#if CONFIG_IS_ENABLED(LOAD_FIT) || CONFIG_IS_ENABLED(LOAD_FIT_FULL)
 	void *fdt_addr;
 #endif
 	u32 boot_device;
 	u32 size;
 	u32 flags;
 	void *arg;
+#ifdef CONFIG_SPL_LEGACY_IMAGE_CRC_CHECK
+	ulong dcrc_data;
+	ulong dcrc_length;
+	ulong dcrc;
+#endif
 };
 
 /*
@@ -102,6 +107,15 @@ struct spl_load_info {
  * spl_parse_image_header() can parse a valid header.
  */
 binman_sym_extern(ulong, u_boot_any, image_pos);
+
+/**
+ * spl_load_simple_fit_skip_processing() - Hook to allow skipping the FIT
+ *	image processing during spl_load_simple_fit().
+ *
+ * Return true to skip FIT processing, false to preserve the full code flow
+ * of spl_load_simple_fit().
+ */
+bool spl_load_simple_fit_skip_processing(void);
 
 /**
  * spl_load_simple_fit() - Loads a fit image from a device.
@@ -326,6 +340,23 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 		       struct spl_boot_device *bootdev);
 
 /**
+ * spl_mmc_load() - Load an image file from MMC/SD media
+ *
+ * @param spl_image	Image data filled in by loading process
+ * @param bootdev	Describes which device to load from
+ * @param filename	Name of file to load (in FS mode)
+ * @param raw_part	Partition to load from (in RAW mode)
+ * @param raw_sect	Sector to load from (in RAW mode)
+ *
+ * @return 0 on success, otherwise error code
+ */
+int spl_mmc_load(struct spl_image_info *spl_image,
+		 struct spl_boot_device *bootdev,
+		 const char *filename,
+		 int raw_part,
+		 unsigned long raw_sect);
+
+/**
  * spl_invoke_atf - boot using an ARM trusted firmware image
  */
 void spl_invoke_atf(struct spl_image_info *spl_image);
@@ -342,6 +373,11 @@ void spl_invoke_atf(struct spl_image_info *spl_image);
  * @arg3: non-secure entry address (ARMv7 bootarg #0)
  */
 void spl_optee_entry(void *arg0, void *arg1, void *arg2, void *arg3);
+
+/**
+ * spl_invoke_opensbi - boot using a RISC-V OpenSBI image
+ */
+void spl_invoke_opensbi(struct spl_image_info *spl_image);
 
 /**
  * board_return_to_bootrom - allow for boards to continue with the boot ROM

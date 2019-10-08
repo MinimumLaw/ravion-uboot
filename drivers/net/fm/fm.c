@@ -4,6 +4,7 @@
  *	Dave Liu <daveliu@freescale.com>
  */
 #include <common.h>
+#include <env.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <linux/errno.h>
@@ -14,7 +15,6 @@
 #include <nand.h>
 #include <spi_flash.h>
 #include <mmc.h>
-#include <environment.h>
 
 #ifdef CONFIG_ARM64
 #include <asm/armv8/mmu.h>
@@ -459,7 +459,7 @@ int fm_init_common(int index, struct ccsr_fman *reg)
 		printf("NAND read of FMAN firmware at offset 0x%x failed %d\n",
 			CONFIG_SYS_FMAN_FW_ADDR, rc);
 	}
-#elif defined(CONFIG_SYS_QE_FW_IN_SPIFLASH)
+#elif defined(CONFIG_SYS_QE_FMAN_FW_IN_SPIFLASH)
 	struct spi_flash *ucode_flash;
 	void *addr = malloc(CONFIG_SYS_QE_FMAN_FW_LENGTH);
 	int ret = 0;

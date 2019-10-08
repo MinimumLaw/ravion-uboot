@@ -21,23 +21,31 @@
 #include <thermal.h>
 #include <sata.h>
 
-#ifdef CONFIG_FSL_ESDHC
-#include <fsl_esdhc.h>
+#ifdef CONFIG_FSL_ESDHC_IMX
+#include <fsl_esdhc_imx.h>
 #endif
 
-#if defined(CONFIG_DISPLAY_CPUINFO) && !defined(CONFIG_SPL_BUILD)
 static u32 reset_cause = -1;
 
-static char *get_reset_cause(void)
+u32 get_imx_reset_cause(void)
 {
-	u32 cause;
 	struct src *src_regs = (struct src *)SRC_BASE_ADDR;
 
-	cause = readl(&src_regs->srsr);
-	writel(cause, &src_regs->srsr);
-	reset_cause = cause;
+	if (reset_cause == -1) {
+		reset_cause = readl(&src_regs->srsr);
+/* preserve the value for U-Boot proper */
+#if !defined(CONFIG_SPL_BUILD)
+		writel(reset_cause, &src_regs->srsr);
+#endif
+	}
 
-	switch (cause) {
+	return reset_cause;
+}
+
+#if defined(CONFIG_DISPLAY_CPUINFO) && !defined(CONFIG_SPL_BUILD)
+static char *get_reset_cause(void)
+{
+	switch (get_imx_reset_cause()) {
 	case 0x00001:
 	case 0x00011:
 		return "POR";
@@ -76,11 +84,6 @@ static char *get_reset_cause(void)
 	default:
 		return "unknown reset";
 	}
-}
-
-u32 get_imx_reset_cause(void)
-{
-	return reset_cause;
 }
 #endif
 
@@ -255,7 +258,7 @@ int cpu_eth_init(bd_t *bis)
 	return rc;
 }
 
-#ifdef CONFIG_FSL_ESDHC
+#ifdef CONFIG_FSL_ESDHC_IMX
 /*
  * Initializes on-chip MMC controllers.
  * to override, implement board_mmc_init()
@@ -282,20 +285,22 @@ u32 get_ahb_clk(void)
 
 void arch_preboot_os(void)
 {
-#if defined(CONFIG_PCIE_IMX)
+#if defined(CONFIG_PCIE_IMX) && !CONFIG_IS_ENABLED(DM_PCI)
 	imx_pcie_remove();
 #endif
 #if defined(CONFIG_SATA)
-	sata_remove(0);
+	if (!is_mx6sdl()) {
+		sata_remove(0);
 #if defined(CONFIG_MX6)
-	disable_sata_clock();
+		disable_sata_clock();
 #endif
+	}
 #endif
 #if defined(CONFIG_VIDEO_IPUV3)
 	/* disable video before launching O/S */
 	ipuv3_fb_shutdown();
 #endif
-#if defined(CONFIG_VIDEO_MXS)
+#if defined(CONFIG_VIDEO_MXS) && !defined(CONFIG_DM_VIDEO)
 	lcdif_power_down();
 #endif
 }

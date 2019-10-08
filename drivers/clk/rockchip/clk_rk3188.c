@@ -12,10 +12,10 @@
 #include <mapmem.h>
 #include <syscon.h>
 #include <asm/io.h>
-#include <asm/arch/clock.h>
-#include <asm/arch/cru_rk3188.h>
-#include <asm/arch/grf_rk3188.h>
-#include <asm/arch/hardware.h>
+#include <asm/arch-rockchip/clock.h>
+#include <asm/arch-rockchip/cru_rk3188.h>
+#include <asm/arch-rockchip/grf_rk3188.h>
+#include <asm/arch-rockchip/hardware.h>
 #include <dt-bindings/clock/rk3188-cru.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
@@ -562,6 +562,9 @@ static int rk3188_clk_probe(struct udevice *dev)
 #endif
 
 	rkclk_init(priv->cru, priv->grf, priv->has_bwadj);
+
+	/* Init CPU frequency */
+	rkclk_configure_cpu(priv->cru, priv->grf, APLL_HZ, priv->has_bwadj);
 #endif
 
 	return 0;

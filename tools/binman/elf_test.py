@@ -5,12 +5,16 @@
 # Test for the elf module
 
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 
+import command
 import elf
 import test_util
 import tools
+import tout
 
 binman_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
@@ -22,7 +26,7 @@ class FakeEntry:
     """
     def __init__(self, contents_size):
         self.contents_size = contents_size
-        self.data = 'a' * contents_size
+        self.data = tools.GetBytes(ord('a'), contents_size)
 
     def GetPath(self):
         return 'entry_path'
@@ -122,18 +126,59 @@ class TestElf(unittest.TestCase):
         section = FakeSection(sym_value=None)
         elf_fname = os.path.join(binman_dir, 'test', 'u_boot_binman_syms')
         syms = elf.LookupAndWriteSymbols(elf_fname, entry, section)
-        self.assertEqual(chr(255) * 16 + 'a' * 4, entry.data)
+        self.assertEqual(tools.GetBytes(255, 16) + tools.GetBytes(ord('a'), 4),
+                                                                  entry.data)
 
     def testDebug(self):
         """Check that enabling debug in the elf module produced debug output"""
-        elf.debug = True
-        entry = FakeEntry(20)
-        section = FakeSection()
-        elf_fname = os.path.join(binman_dir, 'test', 'u_boot_binman_syms')
-        with test_util.capture_sys_output() as (stdout, stderr):
-            syms = elf.LookupAndWriteSymbols(elf_fname, entry, section)
-        elf.debug = False
-        self.assertTrue(len(stdout.getvalue()) > 0)
+        try:
+            tout.Init(tout.DEBUG)
+            entry = FakeEntry(20)
+            section = FakeSection()
+            elf_fname = os.path.join(binman_dir, 'test', 'u_boot_binman_syms')
+            with test_util.capture_sys_output() as (stdout, stderr):
+                syms = elf.LookupAndWriteSymbols(elf_fname, entry, section)
+            self.assertTrue(len(stdout.getvalue()) > 0)
+        finally:
+            tout.Init(tout.WARNING)
+
+    def testMakeElf(self):
+        """Test for the MakeElf function"""
+        outdir = tempfile.mkdtemp(prefix='elf.')
+        expected_text = b'1234'
+        expected_data = b'wxyz'
+        elf_fname = os.path.join(outdir, 'elf')
+        bin_fname = os.path.join(outdir, 'elf')
+
+        # Make an Elf file and then convert it to a fkat binary file. This
+        # should produce the original data.
+        elf.MakeElf(elf_fname, expected_text, expected_data)
+        stdout = command.Output('objcopy', '-O', 'binary', elf_fname, bin_fname)
+        with open(bin_fname, 'rb') as fd:
+            data = fd.read()
+        self.assertEqual(expected_text + expected_data, data)
+        shutil.rmtree(outdir)
+
+    def testDecodeElf(self):
+        """Test for the MakeElf function"""
+        if not elf.ELF_TOOLS:
+            self.skipTest('Python elftools not available')
+        outdir = tempfile.mkdtemp(prefix='elf.')
+        expected_text = b'1234'
+        expected_data = b'wxyz'
+        elf_fname = os.path.join(outdir, 'elf')
+        elf.MakeElf(elf_fname, expected_text, expected_data)
+        data = tools.ReadFile(elf_fname)
+
+        load = 0xfef20000
+        entry = load + 2
+        expected = expected_text + expected_data
+        self.assertEqual(elf.ElfInfo(expected, load, entry, len(expected)),
+                         elf.DecodeElf(data, 0))
+        self.assertEqual(elf.ElfInfo(b'\0\0' + expected[2:],
+                                     load, entry, len(expected)),
+                         elf.DecodeElf(data, load + 2))
+        #shutil.rmtree(outdir)
 
 
 if __name__ == '__main__':
