@@ -63,8 +63,6 @@
 #define CONFIG_NET_RETRY_COUNT		10
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs longer aneg time at 1G */
 
-#define CONFIG_SUPPORT_EMMC_BOOT
-
 /* USB xHCI HOST */
 #define CONFIG_USB_XHCI_OMAP
 
@@ -92,11 +90,6 @@
 #define CONFIG_SYS_SPI_ARGS_SIZE        0x80000
 
 /* SPI SPL */
-#define CONFIG_TI_EDMA3
 #define CONFIG_SYS_SPI_U_BOOT_OFFS     0x40000
-
-/* SPI */
-#define CONFIG_TI_SPI_MMAP
-#define CONFIG_QSPI_QUAD_SUPPORT
 
 #endif /* __CONFIG_AM57XX_EVM_H */

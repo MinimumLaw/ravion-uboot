@@ -130,11 +130,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_SYS_MEMTEST_END		PHYS_SDRAM_1_SIZE - 0x200000
 
 /*
- * SDRAM controller
- */
-#define CONFIG_ALTERA_SDRAM
-
-/*
  * Serial / UART configurations
  */
 #define CONFIG_SYS_NS16550_CLK		100000000
@@ -197,7 +192,6 @@ unsigned int cm_get_l4_sys_free_clk_hz(void);
  *
  */
 #define CONFIG_SPL_TARGET		"spl/u-boot-spl.hex"
-#define CONFIG_SPL_TEXT_BASE		CONFIG_SYS_INIT_RAM_ADDR
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_INIT_RAM_SIZE
 #define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
 #define CONFIG_SPL_BSS_MAX_SIZE		0x100000	/* 1 MB */

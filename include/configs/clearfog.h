@@ -21,16 +21,10 @@
  * Commands configuration
  */
 
-/* SPI NOR flash default params, used by sf commands */
-
 /*
  * SDIO/MMC Card Configuration
  */
 #define CONFIG_SYS_MMC_BASE		MVEBU_SDIO_BASE
-
-#ifdef CONFIG_CMD_MMC
-#define CONFIG_SUPPORT_EMMC_BOOT
-#endif
 
 /* USB/EHCI configuration */
 #define CONFIG_EHCI_IS_TDI
@@ -75,7 +69,6 @@
 
 /* Defines for SPL */
 #define CONFIG_SPL_SIZE			(140 << 10)
-#define CONFIG_SPL_TEXT_BASE		0x40000030
 #define CONFIG_SPL_MAX_SIZE		(CONFIG_SPL_SIZE - 0x0030)
 
 #define CONFIG_SPL_BSS_START_ADDR	(0x40000000 + CONFIG_SPL_SIZE)

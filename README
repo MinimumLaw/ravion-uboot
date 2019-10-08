@@ -486,10 +486,6 @@ The following options need to be configured:
 		PBI commands can be used to configure SoC before it starts the execution.
 		Please refer doc/README.pblimage for more details
 
-		CONFIG_SPL_FSL_PBL
-		It adds a target to create boot binary having SPL binary in PBI format
-		concatenated with u-boot binary.
-
 		CONFIG_SYS_FSL_DDR_BE
 		Defines the DDR controller register space as Big Endian
 
@@ -634,8 +630,6 @@ The following options need to be configured:
 		the defaults discussed just above.
 
 - Cache Configuration:
-		CONFIG_SYS_ICACHE_OFF - Do not enable instruction cache in U-Boot
-		CONFIG_SYS_DCACHE_OFF - Do not enable data cache in U-Boot
 		CONFIG_SYS_L2CACHE_OFF- Do not enable L2 cache in U-Boot
 
 - Cache Configuration for ARM:
@@ -766,9 +760,6 @@ The following options need to be configured:
 		When using a watchdog circuitry external to the used
 		SoC, then define this variable and provide board
 		specific code for the "hw_watchdog_reset" function.
-
-		CONFIG_AT91_HW_WDT_TIMEOUT
-		specify the timeout in seconds. default 2 seconds.
 
 - Real-Time Clock:
 
@@ -1122,9 +1113,6 @@ The following options need to be configured:
 
 			CONFIG_SH_MMCIF_CLK
 			Define the clock frequency for MMCIF
-
-		CONFIG_SUPPORT_EMMC_BOOT
-		Enable some additional features of the eMMC boot partitions.
 
 - USB Device Firmware Update (DFU) class support:
 		CONFIG_DFU_OVER_USB
@@ -2426,9 +2414,6 @@ FIT uImage format:
 		When defined, the linker checks that the actual size does
 		not exceed it.
 
-		CONFIG_SPL_TEXT_BASE
-		TEXT_BASE for linking the SPL binary.
-
 		CONFIG_SPL_RELOC_TEXT_BASE
 		Address to relocate to.  If unspecified, this is equal to
 		CONFIG_SPL_TEXT_BASE (i.e. no relocation is done).
@@ -2556,9 +2541,6 @@ FIT uImage format:
 		CONFIG_SYS_NAND_ECCBYTES
 		Defines the size and behavior of the NAND that SPL uses
 		to read U-Boot
-
-		CONFIG_SPL_NAND_BOOT
-		Add support NAND boot
 
 		CONFIG_SYS_NAND_U_BOOT_OFFS
 		Location in NAND to read U-Boot from
@@ -3305,12 +3287,12 @@ within that device.
 
 - CONFIG_SYS_FMAN_FW_ADDR
 	The address in the storage device where the FMAN microcode is located.  The
-	meaning of this address depends on which CONFIG_SYS_QE_FW_IN_xxx macro
+	meaning of this address depends on which CONFIG_SYS_QE_FMAN_FW_IN_xxx macro
 	is also specified.
 
 - CONFIG_SYS_QE_FW_ADDR
 	The address in the storage device where the QE microcode is located.  The
-	meaning of this address depends on which CONFIG_SYS_QE_FW_IN_xxx macro
+	meaning of this address depends on which CONFIG_SYS_QE_FMAN_FW_IN_xxx macro
 	is also specified.
 
 - CONFIG_SYS_QE_FMAN_FW_LENGTH

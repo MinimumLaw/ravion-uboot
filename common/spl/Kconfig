@@ -25,6 +25,63 @@ config SPL_FRAMEWORK
 	  supports MMC, NAND and YMODEM and other methods loading of U-Boot
 	  and the Linux Kernel.  If unsure, say Y.
 
+config SPL_SIZE_LIMIT
+	int "Maximum size of SPL image"
+	depends on SPL
+	default 69632 if ARCH_MX6
+	default 0
+	help
+	  Specifies the maximum length of the U-Boot SPL image.
+	  If this value is zero, it is ignored.
+
+config SPL_SIZE_LIMIT_SUBTRACT_GD
+	bool "SPL image size check: provide space for global data"
+	depends on SPL_SIZE_LIMIT > 0
+	help
+	  If enabled, aligned size of global data is reserved in
+	  SPL_SIZE_LIMIT check to ensure such an image does not overflow SRAM
+	  if SPL_SIZE_LIMIT describes the size of SRAM available for SPL when
+	  pre-reloc global data is put into this SRAM, too.
+
+config SPL_SIZE_LIMIT_SUBTRACT_MALLOC
+	bool "SPL image size check: provide space for malloc() pool before relocation"
+	depends on SPL_SIZE_LIMIT > 0
+	help
+	  If enabled, SPL_SYS_MALLOC_F_LEN is reserved in SPL_SIZE_LIMIT check
+	  to ensure such an image does not overflow SRAM if SPL_SIZE_LIMIT
+	  describes the size of SRAM available for SPL when pre-reloc malloc
+	  pool is put into this SRAM, too.
+
+config SPL_SIZE_LIMIT_PROVIDE_STACK
+	hex "SPL image size check: provide stack space before relocation"
+	depends on SPL_SIZE_LIMIT > 0
+	default 0
+	help
+	  If set, this size is reserved in SPL_SIZE_LIMIT check to ensure such
+	  an image does not overflow SRAM if SPL_SIZE_LIMIT describes the size
+	  of SRAM available for SPL when the stack required before reolcation
+	  uses this SRAM, too.
+
+menu "PowerPC SPL Boot options"
+	depends on PPC && (SUPPORT_SPL && !SPL_FRAMEWORK)
+
+config SPL_NAND_BOOT
+	bool "Load SPL from NAND flash"
+
+config SPL_MMC_BOOT
+	bool "Load SPL from SD Card / eMMC"
+
+config SPL_SPI_BOOT
+	bool "Load SPL from SPI flash"
+
+config SPL_FSL_PBL
+	bool "Create SPL in Freescale PBI format"
+	help
+	  Create boot binary having SPL binary in PBI format concatenated with
+	  u-boot binary.
+
+endmenu
+
 config HANDOFF
 	bool "Pass hand-off information from SPL to U-Boot proper"
 	depends on BLOBLIST
@@ -55,6 +112,13 @@ config SPL_LDSCRIPT
 	  (as it runs from a different memory region) than the regular
 	  U-Boot stage.	 Set this to the path of the linker-script to
 	  be used for SPL.
+
+config SPL_TEXT_BASE
+	hex "SPL Text Base"
+	default ISW_ENTRY_ADDR if AM43XX || AM33XX || OMAP54XX || ARCH_KEYSTONE
+	default 0x0
+	help
+	  The address in memory that SPL will be running from.
 
 config SPL_BOARD_INIT
 	bool "Call board-specific initialization in SPL"
@@ -275,7 +339,7 @@ config SPL_SHA1_SUPPORT
 	  checksum is a 160-bit (20-byte) hash value used to check that the
 	  image contents have not been corrupted or maliciously altered.
 	  While SHA1 is fairly secure it is coming to the end of its life
-	  due to the expanding computing power avaiable to brute-force
+	  due to the expanding computing power available to brute-force
 	  attacks. For more security, consider SHA256.
 
 config SPL_SHA256_SUPPORT
@@ -1143,6 +1207,18 @@ config TPL_YMODEM_SUPPORT
 	  with a checksum to ensure correctness.
 
 endif # TPL
+
+config SPL_AT91_MCK_BYPASS
+	bool "Use external clock signal as a source of main clock for AT91 platforms"
+	depends on ARCH_AT91
+	default n
+	help
+	  Use external 8 to 24 Mhz clock signal as source of main clock instead
+	  of an external crystal oscillator.
+	  This option disables the internal driving on the XOUT pin.
+	  The external source has to provide a stable clock on the XIN pin.
+	  If this option is disabled, the SoC expects a crystal oscillator
+	  that needs driving on both XIN and XOUT lines.
 
 endif # SPL
 endmenu

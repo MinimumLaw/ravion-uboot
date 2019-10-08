@@ -81,9 +81,6 @@
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
 
-/* eMMC Configs */
-#define CONFIG_SUPPORT_EMMC_BOOT
-
 /*
  * SATA Configs
  */
@@ -132,7 +129,6 @@
 #define CONFIG_NETCONSOLE
 
 /* Framebuffer and LCD */
-#define CONFIG_VIDEO_IPUV3
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP

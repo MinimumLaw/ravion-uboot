@@ -8,7 +8,7 @@
 
 #define CONFIG_SYS_CACHELINE_SIZE	64
 
-#include <asm/arch/hardware.h>
+#include <asm/arch-rockchip/hardware.h>
 #include "rockchip-common.h"
 
 #define CONFIG_SKIP_LOWLEVEL_INIT_ONLY
@@ -26,7 +26,6 @@
 #define CONFIG_ROCKCHIP_MAX_INIT_SIZE	(0x8000 - 0x800)
 #define CONFIG_ROCKCHIP_CHIP_TAG	"RK31"
 
-#define CONFIG_SPL_TEXT_BASE		0x10080800
 /* spl size 32kb sram - 2kb bootrom */
 #define CONFIG_SPL_MAX_SIZE		(0x8000 - 0x800)
 #define CONFIG_ROCKCHIP_SERIAL		1

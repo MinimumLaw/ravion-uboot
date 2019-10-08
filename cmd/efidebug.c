@@ -11,6 +11,7 @@
 #include <efi_loader.h>
 #include <environment.h>
 #include <exports.h>
+#include <hexdump.h>
 #include <malloc.h>
 #include <search.h>
 #include <linux/ctype.h>
@@ -185,7 +186,7 @@ static const struct {
 } guid_list[] = {
 	{
 		"Device Path",
-		DEVICE_PATH_GUID,
+		EFI_DEVICE_PATH_PROTOCOL_GUID,
 	},
 	{
 		"Device Path To Text",
@@ -217,7 +218,7 @@ static const struct {
 	},
 	{
 		"Block IO",
-		BLOCK_IO_GUID,
+		EFI_BLOCK_IO_PROTOCOL_GUID,
 	},
 	{
 		"Simple File System",
@@ -225,11 +226,31 @@ static const struct {
 	},
 	{
 		"Loaded Image",
-		LOADED_IMAGE_PROTOCOL_GUID,
+		EFI_LOADED_IMAGE_PROTOCOL_GUID,
 	},
 	{
-		"GOP",
-		EFI_GOP_GUID,
+		"Graphics Output",
+		EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID,
+	},
+	{
+		"HII String",
+		EFI_HII_STRING_PROTOCOL_GUID,
+	},
+	{
+		"HII Database",
+		EFI_HII_DATABASE_PROTOCOL_GUID,
+	},
+	{
+		"HII Config Routing",
+		EFI_HII_CONFIG_ROUTING_PROTOCOL_GUID,
+	},
+	{
+		"Simple Network",
+		EFI_SIMPLE_NETWORK_PROTOCOL_GUID,
+	},
+	{
+		"PXE Base Code",
+		EFI_PXE_BASE_CODE_PROTOCOL_GUID,
 	},
 };
 
@@ -484,7 +505,8 @@ static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 	struct efi_load_option lo;
 	void *data = NULL;
 	efi_uintn_t size;
-	int ret;
+	efi_status_t ret;
+	int r = CMD_RET_SUCCESS;
 
 	if (argc < 6 || argc > 7)
 		return CMD_RET_USAGE;
@@ -517,7 +539,7 @@ static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 	if (ret != EFI_SUCCESS) {
 		printf("Cannot create device path for \"%s %s\"\n",
 		       argv[3], argv[4]);
-		ret = CMD_RET_FAILURE;
+		r = CMD_RET_FAILURE;
 		goto out;
 	}
 	lo.file_path = file_path;
@@ -525,26 +547,33 @@ static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 				+ sizeof(struct efi_device_path); /* for END */
 
 	/* optional data */
-	lo.optional_data = (u8 *)(argc == 6 ? "" : argv[6]);
+	if (argc < 6)
+		lo.optional_data = NULL;
+	else
+		lo.optional_data = (const u8 *)argv[6];
 
 	size = efi_serialize_load_option(&lo, (u8 **)&data);
 	if (!size) {
-		ret = CMD_RET_FAILURE;
+		r = CMD_RET_FAILURE;
 		goto out;
 	}
 
 	ret = EFI_CALL(RT->set_variable(var_name16, &guid,
+					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
 					size, data));
-	ret = (ret == EFI_SUCCESS ? CMD_RET_SUCCESS : CMD_RET_FAILURE);
+	if (ret != EFI_SUCCESS) {
+		printf("Cannot set %ls\n", var_name16);
+		r = CMD_RET_FAILURE;
+	}
 out:
 	free(data);
 	efi_free_pool(device_path);
 	efi_free_pool(file_path);
 	free(lo.label);
 
-	return ret;
+	return r;
 }
 
 /**
@@ -584,7 +613,7 @@ static int do_efi_boot_rm(cmd_tbl_t *cmdtp, int flag,
 
 		ret = EFI_CALL(RT->set_variable(var_name16, &guid, 0, 0, NULL));
 		if (ret) {
-			printf("cannot remove Boot%04X", id);
+			printf("Cannot remove Boot%04X", id);
 			return CMD_RET_FAILURE;
 		}
 	}
@@ -595,12 +624,13 @@ static int do_efi_boot_rm(cmd_tbl_t *cmdtp, int flag,
 /**
  * show_efi_boot_opt_data() - dump UEFI load option
  *
- * @id:		Load option number
- * @data:	Value of UEFI load option variable
+ * @id:		load option number
+ * @data:	value of UEFI load option variable
+ * @size:	size of the boot option
  *
  * Decode the value of UEFI load option variable and print information.
  */
-static void show_efi_boot_opt_data(int id, void *data)
+static void show_efi_boot_opt_data(int id, void *data, size_t size)
 {
 	struct efi_load_option lo;
 	char *label, *p;
@@ -618,7 +648,7 @@ static void show_efi_boot_opt_data(int id, void *data)
 	utf16_utf8_strncpy(&p, lo.label, label_len16);
 
 	printf("Boot%04X:\n", id);
-	printf("\tattributes: %c%c%c (0x%08x)\n",
+	printf("  attributes: %c%c%c (0x%08x)\n",
 	       /* ACTIVE */
 	       lo.attributes & LOAD_OPTION_ACTIVE ? 'A' : '-',
 	       /* FORCE RECONNECT */
@@ -626,14 +656,16 @@ static void show_efi_boot_opt_data(int id, void *data)
 	       /* HIDDEN */
 	       lo.attributes & LOAD_OPTION_HIDDEN ? 'H' : '-',
 	       lo.attributes);
-	printf("\tlabel: %s\n", label);
+	printf("  label: %s\n", label);
 
 	dp_str = efi_dp_str(lo.file_path);
-	printf("\tfile_path: %ls\n", dp_str);
+	printf("  file_path: %ls\n", dp_str);
 	efi_free_pool(dp_str);
 
-	printf("\tdata: %s\n", lo.optional_data);
-
+	printf("  data:\n");
+	print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+		       lo.optional_data, size + (u8 *)data -
+		       (u8 *)lo.optional_data, true);
 	free(label);
 }
 
@@ -666,11 +698,22 @@ static void show_efi_boot_opt(int id)
 						data));
 	}
 	if (ret == EFI_SUCCESS)
-		show_efi_boot_opt_data(id, data);
+		show_efi_boot_opt_data(id, data, size);
 	else if (ret == EFI_NOT_FOUND)
 		printf("Boot%04X: not found\n", id);
 
 	free(data);
+}
+
+static int u16_tohex(u16 c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+
+	/* not hexadecimal */
+	return -1;
 }
 
 /**
@@ -689,38 +732,58 @@ static void show_efi_boot_opt(int id)
 static int do_efi_boot_dump(cmd_tbl_t *cmdtp, int flag,
 			    int argc, char * const argv[])
 {
-	char regex[256];
-	char * const regexlist[] = {regex};
-	char *variables = NULL, *boot, *value;
-	int len;
-	int id;
+	u16 *var_name16, *p;
+	efi_uintn_t buf_size, size;
+	efi_guid_t guid;
+	int id, i, digit;
+	efi_status_t ret;
 
 	if (argc > 1)
 		return CMD_RET_USAGE;
 
-	snprintf(regex, 256, "efi_.*-.*-.*-.*-.*_Boot[0-9A-F]+");
-
-	/* TODO: use GetNextVariableName? */
-	len = hexport_r(&env_htab, '\n', H_MATCH_REGEX | H_MATCH_KEY,
-			&variables, 0, 1, regexlist);
-
-	if (!len)
-		return CMD_RET_SUCCESS;
-
-	if (len < 0)
+	buf_size = 128;
+	var_name16 = malloc(buf_size);
+	if (!var_name16)
 		return CMD_RET_FAILURE;
 
-	boot = variables;
-	while (*boot) {
-		value = strstr(boot, "Boot") + 4;
-		id = (int)simple_strtoul(value, NULL, 16);
-		show_efi_boot_opt(id);
-		boot = strchr(boot, '\n');
-		if (!*boot)
+	var_name16[0] = 0;
+	for (;;) {
+		size = buf_size;
+		ret = EFI_CALL(efi_get_next_variable_name(&size, var_name16,
+							  &guid));
+		if (ret == EFI_NOT_FOUND)
 			break;
-		boot++;
+		if (ret == EFI_BUFFER_TOO_SMALL) {
+			buf_size = size;
+			p = realloc(var_name16, buf_size);
+			if (!p) {
+				free(var_name16);
+				return CMD_RET_FAILURE;
+			}
+			var_name16 = p;
+			ret = EFI_CALL(efi_get_next_variable_name(&size,
+								  var_name16,
+								  &guid));
+		}
+		if (ret != EFI_SUCCESS) {
+			free(var_name16);
+			return CMD_RET_FAILURE;
+		}
+
+		if (memcmp(var_name16, L"Boot", 8))
+			continue;
+
+		for (id = 0, i = 0; i < 4; i++) {
+			digit = u16_tohex(var_name16[4 + i]);
+			if (digit < 0)
+				break;
+			id = (id << 4) + digit;
+		}
+		if (i == 4 && !var_name16[8])
+			show_efi_boot_opt(id);
 	}
-	free(variables);
+
+	free(var_name16);
 
 	return CMD_RET_SUCCESS;
 }
@@ -837,6 +900,7 @@ static int do_efi_boot_next(cmd_tbl_t *cmdtp, int flag,
 	char *endp;
 	efi_guid_t guid;
 	efi_status_t ret;
+	int r = CMD_RET_SUCCESS;
 
 	if (argc != 2)
 		return CMD_RET_USAGE;
@@ -844,19 +908,23 @@ static int do_efi_boot_next(cmd_tbl_t *cmdtp, int flag,
 	bootnext = (u16)simple_strtoul(argv[1], &endp, 16);
 	if (*endp != '\0' || bootnext > 0xffff) {
 		printf("invalid value: %s\n", argv[1]);
-		ret = CMD_RET_FAILURE;
+		r = CMD_RET_FAILURE;
 		goto out;
 	}
 
 	guid = efi_global_variable_guid;
 	size = sizeof(u16);
 	ret = EFI_CALL(RT->set_variable(L"BootNext", &guid,
+					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
 					size, &bootnext));
-	ret = (ret == EFI_SUCCESS ? CMD_RET_SUCCESS : CMD_RET_FAILURE);
+	if (ret != EFI_SUCCESS) {
+		printf("Cannot set BootNext\n");
+		r = CMD_RET_FAILURE;
+	}
 out:
-	return ret;
+	return r;
 }
 
 /**
@@ -881,6 +949,7 @@ static int do_efi_boot_order(cmd_tbl_t *cmdtp, int flag,
 	char *endp;
 	efi_guid_t guid;
 	efi_status_t ret;
+	int r = CMD_RET_SUCCESS;
 
 	if (argc == 1)
 		return show_efi_boot_order();
@@ -897,7 +966,7 @@ static int do_efi_boot_order(cmd_tbl_t *cmdtp, int flag,
 		id = (int)simple_strtoul(argv[i], &endp, 16);
 		if (*endp != '\0' || id > 0xffff) {
 			printf("invalid value: %s\n", argv[i]);
-			ret = CMD_RET_FAILURE;
+			r = CMD_RET_FAILURE;
 			goto out;
 		}
 
@@ -906,14 +975,18 @@ static int do_efi_boot_order(cmd_tbl_t *cmdtp, int flag,
 
 	guid = efi_global_variable_guid;
 	ret = EFI_CALL(RT->set_variable(L"BootOrder", &guid,
+					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
 					size, bootorder));
-	ret = (ret == EFI_SUCCESS ? CMD_RET_SUCCESS : CMD_RET_FAILURE);
+	if (ret != EFI_SUCCESS) {
+		printf("Cannot set BootOrder\n");
+		r = CMD_RET_FAILURE;
+	}
 out:
 	free(bootorder);
 
-	return ret;
+	return r;
 }
 
 static cmd_tbl_t cmd_efidebug_boot_sub[] = {

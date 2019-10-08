@@ -22,6 +22,7 @@
 #include <linux/compiler.h>
 #include <fdt_support.h>
 #include <bootcount.h>
+#include <wdt.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -194,10 +195,12 @@ static int spl_load_fit_image(struct spl_image_info *spl_image,
 #ifdef CONFIG_SPL_FIT_SIGNATURE
 	images.verify = 1;
 #endif
-	fit_image_load(&images, (ulong)header,
+	ret = fit_image_load(&images, (ulong)header,
 		       &fit_uname_fdt, &fit_uname_config,
 		       IH_ARCH_DEFAULT, IH_TYPE_FLATDT, -1,
 		       FIT_LOAD_OPTIONAL, &dt_data, &dt_len);
+	if (ret >= 0)
+		spl_image->fdt_addr = (void *)dt_data;
 
 	conf_noffset = fit_conf_get_node((const void *)header,
 					 fit_uname_config);
@@ -598,6 +601,10 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 #if CONFIG_IS_ENABLED(BOARD_INIT)
 	spl_board_init();
+#endif
+
+#if defined(CONFIG_SPL_WATCHDOG_SUPPORT) && defined(CONFIG_WDT)
+	initr_watchdog();
 #endif
 
 	if (IS_ENABLED(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF))

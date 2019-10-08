@@ -23,7 +23,7 @@ config ALTERA_PIO
 
 config BCM6345_GPIO
 	bool "BCM6345 GPIO driver"
-	depends on DM_GPIO && ARCH_BMIPS
+	depends on DM_GPIO && (ARCH_BMIPS || ARCH_BCM6858 || ARCH_BCM63158)
 	help
 	  This driver supports the GPIO banks on BCM6345 SoCs.
 
@@ -168,6 +168,12 @@ config RCAR_GPIO
 	depends on DM_GPIO && ARCH_RMOBILE
 	help
 	  This driver supports the GPIO banks on Renesas RCar SoCs.
+
+config RZA1_GPIO
+	bool "Renesas RZ/A1 GPIO driver"
+	depends on DM_GPIO && RZA1
+	help
+	  This driver supports the GPIO banks on Renesas RZ/A1 R7S72100 SoCs.
 
 config ROCKCHIP_GPIO
 	bool "Rockchip GPIO driver"
@@ -351,7 +357,7 @@ config MPC8XXX_GPIO
 
 config MT7621_GPIO
 	bool "MediaTek MT7621 GPIO driver"
-	depends on DM_GPIO && ARCH_MT7620
+	depends on DM_GPIO && SOC_MT7628
 	default y
 	help
 	  Say yes here to support MediaTek MT7621 compatible GPIOs.

@@ -190,10 +190,16 @@ config FEC_MXC_MDIO_BASE
 
 config FEC_MXC
 	bool "FEC Ethernet controller"
-	depends on MX5 || MX6 || MX7 || IMX8
+	depends on MX5 || MX6 || MX7 || IMX8 || VF610
 	help
 	  This driver supports the 10/100 Fast Ethernet controller for
 	  NXP i.MX processors.
+
+config FMAN_ENET
+	bool "Freescale FMan ethernet support"
+	depends on ARM || PPC
+	help
+	  This driver support the Freescale FMan Ethernet controller
 
 config FTMAC100
 	bool "Ftmac100 Ethernet Support"
@@ -269,7 +275,7 @@ config MACB_ZYNQ
 
 config MT7628_ETH
 	bool "MediaTek MT7628 Ethernet Interface"
-	depends on ARCH_MT7620
+	depends on SOC_MT7628
 	help
 	  The MediaTek MT7628 ethernet interface is used on MT7628 and
 	  MT7688 based boards.
@@ -527,5 +533,14 @@ config MEDIATEK_ETH
 	help
 	  This Driver support MediaTek Ethernet GMAC
 	  Say Y to enable support for the MediaTek Ethernet GMAC.
+
+config HIGMACV300_ETH
+	bool "HiSilicon Gigabit Ethernet Controller"
+	depends on DM_ETH
+	select DM_RESET
+	select PHYLIB
+	help
+	  This driver supports HIGMACV300 Ethernet controller found on
+	  HiSilicon SoCs.
 
 endif # NETDEVICES

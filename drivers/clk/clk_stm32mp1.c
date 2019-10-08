@@ -15,9 +15,11 @@
 #include <dt-bindings/clock/stm32mp1-clks.h>
 #include <dt-bindings/clock/stm32mp1-clksrc.h>
 
+#ifndef CONFIG_STM32MP1_TRUSTED
 #if !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD)
 /* activate clock tree initialization in the driver */
 #define STM32MP1_CLOCK_TREE_INIT
+#endif
 #endif
 
 #define MAX_HSI_HZ		64000000
@@ -88,6 +90,7 @@
 #define RCC_PLL4CSGR		0x8A4
 #define RCC_I2C12CKSELR		0x8C0
 #define RCC_I2C35CKSELR		0x8C4
+#define RCC_SPI2S1CKSELR	0x8D8
 #define RCC_UART6CKSELR		0x8E4
 #define RCC_UART24CKSELR	0x8E8
 #define RCC_UART35CKSELR	0x8EC
@@ -296,6 +299,7 @@ enum stm32mp1_parent_sel {
 	_STGEN_SEL,
 	_DSI_SEL,
 	_ADC12_SEL,
+	_SPI1_SEL,
 	_PARENT_SEL_NB,
 	_UNKNOWN_SEL = 0xff,
 };
@@ -517,6 +521,7 @@ static const struct stm32mp1_clk_gate stm32mp1_clk_gate[] = {
 	STM32MP1_CLK_SET_CLR(RCC_MP_APB1ENSETR, 23, I2C3_K, _I2C35_SEL),
 	STM32MP1_CLK_SET_CLR(RCC_MP_APB1ENSETR, 24, I2C5_K, _I2C35_SEL),
 
+	STM32MP1_CLK_SET_CLR(RCC_MP_APB2ENSETR, 8, SPI1_K, _SPI1_SEL),
 	STM32MP1_CLK_SET_CLR(RCC_MP_APB2ENSETR, 13, USART6_K, _UART6_SEL),
 
 	STM32MP1_CLK_SET_CLR_F(RCC_MP_APB3ENSETR, 13, VREF, _PCLK3),
@@ -553,7 +558,7 @@ static const struct stm32mp1_clk_gate stm32mp1_clk_gate[] = {
 
 	STM32MP1_CLK_SET_CLR(RCC_MP_AHB5ENSETR, 0, GPIOZ, _UNKNOWN_SEL),
 
-	STM32MP1_CLK_SET_CLR(RCC_MP_AHB6ENSETR, 7, ETHCK, _ETH_SEL),
+	STM32MP1_CLK_SET_CLR(RCC_MP_AHB6ENSETR, 7, ETHCK_K, _ETH_SEL),
 	STM32MP1_CLK_SET_CLR(RCC_MP_AHB6ENSETR, 8, ETHTX, _UNKNOWN_SEL),
 	STM32MP1_CLK_SET_CLR(RCC_MP_AHB6ENSETR, 9, ETHRX, _UNKNOWN_SEL),
 	STM32MP1_CLK_SET_CLR_F(RCC_MP_AHB6ENSETR, 10, ETHMAC, _ACLK),
@@ -587,6 +592,8 @@ static const u8 usbo_parents[] = {_PLL4_R, _USB_PHY_48};
 static const u8 stgen_parents[] = {_HSI_KER, _HSE_KER};
 static const u8 dsi_parents[] = {_DSI_PHY, _PLL4_P};
 static const u8 adc_parents[] = {_PLL4_R, _CK_PER, _PLL3_Q};
+static const u8 spi_parents[] = {_PLL4_P, _PLL3_Q, _I2S_CKIN, _CK_PER,
+				 _PLL3_R};
 
 static const struct stm32mp1_clk_sel stm32mp1_clk_sel[_PARENT_SEL_NB] = {
 	STM32MP1_CLK_PARENT(_I2C12_SEL, RCC_I2C12CKSELR, 0, 0x7, i2c12_parents),
@@ -611,6 +618,7 @@ static const struct stm32mp1_clk_sel stm32mp1_clk_sel[_PARENT_SEL_NB] = {
 	STM32MP1_CLK_PARENT(_STGEN_SEL, RCC_STGENCKSELR, 0, 0x3, stgen_parents),
 	STM32MP1_CLK_PARENT(_DSI_SEL, RCC_DSICKSELR, 0, 0x1, dsi_parents),
 	STM32MP1_CLK_PARENT(_ADC12_SEL, RCC_ADCCKSELR, 0, 0x1, adc_parents),
+	STM32MP1_CLK_PARENT(_SPI1_SEL, RCC_SPI2S1CKSELR, 0, 0x7, spi_parents),
 };
 
 #ifdef STM32MP1_CLOCK_TREE_INIT
@@ -725,6 +733,7 @@ char * const stm32mp1_clk_parent_sel_name[_PARENT_SEL_NB] = {
 	[_STGEN_SEL] = "STGEN",
 	[_DSI_SEL] = "DSI",
 	[_ADC12_SEL] = "ADC12",
+	[_SPI1_SEL] = "SPI1",
 };
 
 static const struct stm32mp1_clk_data stm32mp1_data = {
@@ -1446,6 +1455,71 @@ static void pll_csg(struct stm32mp1_clk_priv *priv, int pll_id, u32 *csg)
 	setbits_le32(priv->base + pll[pll_id].pllxcr, RCC_PLLNCR_SSCG_CTRL);
 }
 
+static  __maybe_unused int pll_set_rate(struct udevice *dev,
+					int pll_id,
+					int div_id,
+					unsigned long clk_rate)
+{
+	struct stm32mp1_clk_priv *priv = dev_get_priv(dev);
+	unsigned int pllcfg[PLLCFG_NB];
+	ofnode plloff;
+	char name[12];
+	const struct stm32mp1_clk_pll *pll = priv->data->pll;
+	enum stm32mp1_plltype type = pll[pll_id].plltype;
+	int divm, divn, divy;
+	int ret;
+	ulong fck_ref;
+	u32 fracv;
+	u64 value;
+
+	if (div_id > _DIV_NB)
+		return -EINVAL;
+
+	sprintf(name, "st,pll@%d", pll_id);
+	plloff = dev_read_subnode(dev, name);
+	if (!ofnode_valid(plloff))
+		return -FDT_ERR_NOTFOUND;
+
+	ret = ofnode_read_u32_array(plloff, "cfg",
+				    pllcfg, PLLCFG_NB);
+	if (ret < 0)
+		return -FDT_ERR_NOTFOUND;
+
+	fck_ref = pll_get_fref_ck(priv, pll_id);
+
+	divm = pllcfg[PLLCFG_M];
+	/* select output divider = 0: for _DIV_P, 1:_DIV_Q 2:_DIV_R */
+	divy = pllcfg[PLLCFG_P + div_id];
+
+	/* For: PLL1 & PLL2 => VCO is * 2 but ck_pll_y is also / 2
+	 * So same final result than PLL2 et 4
+	 * with FRACV
+	 * Fck_pll_y = Fck_ref * ((DIVN + 1) + FRACV / 2^13)
+	 *             / (DIVy + 1) * (DIVM + 1)
+	 * value = (DIVN + 1) * 2^13 + FRACV / 2^13
+	 *       = Fck_pll_y (DIVy + 1) * (DIVM + 1) * 2^13 / Fck_ref
+	 */
+	value = ((u64)clk_rate * (divy + 1) * (divm + 1)) << 13;
+	value = lldiv(value, fck_ref);
+
+	divn = (value >> 13) - 1;
+	if (divn < DIVN_MIN ||
+	    divn > stm32mp1_pll[type].divn_max) {
+		pr_err("divn invalid = %d", divn);
+		return -EINVAL;
+	}
+	fracv = value - ((divn + 1) << 13);
+	pllcfg[PLLCFG_N] = divn;
+
+	/* reconfigure PLL */
+	pll_stop(priv, pll_id);
+	pll_config(priv, pll_id, pllcfg, fracv);
+	pll_start(priv, pll_id);
+	pll_output(priv, pll_id, pllcfg[PLLCFG_O]);
+
+	return 0;
+}
+
 static int set_clksrc(struct stm32mp1_clk_priv *priv, unsigned int clksrc)
 {
 	u32 address = priv->base + (clksrc >> 4);
@@ -1818,6 +1892,11 @@ static ulong stm32mp1_clk_set_rate(struct clk *clk, unsigned long clk_rate)
 	int p;
 
 	switch (clk->id) {
+#if defined(STM32MP1_CLOCK_TREE_INIT) && \
+	defined(CONFIG_STM32MP1_DDR_INTERACTIVE)
+	case DDRPHYC:
+		break;
+#endif
 	case LTDC_PX:
 	case DSI_PX:
 		break;
@@ -1831,6 +1910,19 @@ static ulong stm32mp1_clk_set_rate(struct clk *clk, unsigned long clk_rate)
 		return -EINVAL;
 
 	switch (p) {
+#if defined(STM32MP1_CLOCK_TREE_INIT) && \
+	defined(CONFIG_STM32MP1_DDR_INTERACTIVE)
+	case _PLL2_R: /* DDRPHYC */
+	{
+		/* only for change DDR clock in interactive mode */
+		ulong result;
+
+		set_clksrc(priv, CLK_AXI_HSI);
+		result = pll_set_rate(clk->dev,  _PLL2, _DIV_R, clk_rate);
+		set_clksrc(priv, CLK_AXI_PLL2P);
+		return result;
+	}
+#endif
 	case _PLL4_Q:
 		/* for LTDC_PX and DSI_PX case */
 		return pll_set_output_rate(clk->dev, _PLL4, _DIV_Q, clk_rate);

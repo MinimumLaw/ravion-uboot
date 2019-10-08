@@ -21,8 +21,6 @@
 #define CONFIG_LOADCMD "fatload"
 #define CONFIG_RFSPART "2"
 
-#define CONFIG_SUPPORT_EMMC_BOOT
-
 #include "mx6_common.h"
 #include <linux/sizes.h>
 
@@ -33,8 +31,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
 #define CONFIG_MXC_UART
-
-#define CONFIG_MXC_OCOTP
 
 /* SATA Configs */
 #define CONFIG_SYS_SATA_MAX_DEVICE	1
@@ -217,7 +213,6 @@
 
 /* Framebuffer */
 #ifdef CONFIG_VIDEO
-#define CONFIG_VIDEO_IPUV3
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_SPLASH_SCREEN
 #define CONFIG_SPLASH_SCREEN_ALIGN

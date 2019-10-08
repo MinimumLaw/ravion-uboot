@@ -16,7 +16,6 @@
 #include <efi_loader.h>
 #include <div64.h>
 #include <hexdump.h>
-#include <uuid.h>
 #include <stdarg.h>
 #include <linux/ctype.h>
 #include <linux/err.h>
@@ -297,6 +296,7 @@ static char *string16(char *buf, char *end, u16 *s, int field_width,
 	return buf;
 }
 
+#if CONFIG_IS_ENABLED(EFI_DEVICE_PATH_TO_TEXT)
 static char *device_path_string(char *buf, char *end, void *dp, int field_width,
 				int precision, int flags)
 {
@@ -314,6 +314,7 @@ static char *device_path_string(char *buf, char *end, void *dp, int field_width,
 	efi_free_pool(str);
 	return buf;
 }
+#endif
 #endif
 
 #ifdef CONFIG_CMD_NET
@@ -382,29 +383,31 @@ static char *ip4_addr_string(char *buf, char *end, u8 *addr, int field_width,
 
 #ifdef CONFIG_LIB_UUID
 /*
- * This works (roughly) the same way as linux's, but we currently always
- * print lower-case (ie. we just keep %pUB and %pUL for compat with linux),
- * mostly just because that is what uuid_bin_to_str() supports.
+ * This works (roughly) the same way as Linux's.
  *
  *   %pUb:   01020304-0506-0708-090a-0b0c0d0e0f10
+ *   %pUB:   01020304-0506-0708-090A-0B0C0D0E0F10
  *   %pUl:   04030201-0605-0807-090a-0b0c0d0e0f10
+ *   %pUL:   04030201-0605-0807-090A-0B0C0D0E0F10
  */
 static char *uuid_string(char *buf, char *end, u8 *addr, int field_width,
 			 int precision, int flags, const char *fmt)
 {
 	char uuid[UUID_STR_LEN + 1];
-	int str_format = UUID_STR_FORMAT_STD;
+	int str_format;
 
 	switch (*(++fmt)) {
 	case 'L':
+		str_format = UUID_STR_FORMAT_GUID | UUID_STR_UPPER_CASE;
+		break;
 	case 'l':
 		str_format = UUID_STR_FORMAT_GUID;
 		break;
 	case 'B':
-	case 'b':
-		/* this is the default */
+		str_format = UUID_STR_FORMAT_STD | UUID_STR_UPPER_CASE;
 		break;
 	default:
+		str_format = UUID_STR_FORMAT_STD;
 		break;
 	}
 
@@ -452,12 +455,11 @@ static char *pointer(const char *fmt, char *buf, char *end, void *ptr,
 
 	switch (*fmt) {
 /* Device paths only exist in the EFI context. */
-#if CONFIG_IS_ENABLED(EFI_LOADER) && !defined(API_BUILD)
+#if CONFIG_IS_ENABLED(EFI_DEVICE_PATH_TO_TEXT) && !defined(API_BUILD)
 	case 'D':
 		return device_path_string(buf, end, ptr, field_width,
 					  precision, flags);
 #endif
-#ifdef CONFIG_CMD_NET
 	case 'a':
 		flags |= SPECIAL | ZEROPAD;
 
@@ -469,6 +471,7 @@ static char *pointer(const char *fmt, char *buf, char *end, void *ptr,
 			break;
 		}
 		break;
+#ifdef CONFIG_CMD_NET
 	case 'm':
 		flags |= SPECIAL;
 		/* Fallthrough */

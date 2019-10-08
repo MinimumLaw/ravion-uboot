@@ -166,6 +166,12 @@ M:	Jagan Teki <jagan@amarulasolutions.com>
 S:	Maintained
 F:	configs/bananapi_m64_defconfig
 
+BEELINK GS1
+M:	Clément Péron <peron.clem@gmail.com>
+S:	Maintained
+F:	configs/beelink_gs1_defconfig
+F:	arch/arm/dts/sun50i-h6-beelink-gs1.dts
+
 COLOMBUS BOARD
 M:	Maxime Ripard <maxime.ripard@bootlin.com>
 S:	Maintained
@@ -341,14 +347,25 @@ M:	FUKAUMI Naoki <naobsd@gmail.com>
 S:	Maintained
 F:	configs/Nintendo_NES_Classic_Edition_defconfig
 
+OCEANIC 5205 5INMFD BOARD
+M:	Jagan Teki <jagan@amarulasolutions.com>
+S:	Maintained
+F:	configs/oceanic_5205_5inmfd_defconfig
+
 OLIMEX A20-SOM204 BOARD
 M:	Stefan Mavrodiev <stefan@olimex.com>
 S:	Maintained
 F:	configs/A20-Olimex-SOM204-EVB_defconfig
 F:	configs/A20-Olimex-SOM204-EVB-eMMC_defconfig
 
+OLIMEX TERES-I BOARD
+M:	Jonas Smedegaard <dr@jones.dk>
+M:	Icenowy Zheng <icenowy@aosc.io>
+S:	Maintained
+F:	configs/teres_i_defconfig
+
 ORANGEPI LITE2 BOARD
-M:	Jagan Teki <jagan@openedev.com>
+M:	Jagan Teki <jagan@amarulasolutions.com>
 S:	Maintained
 F:	configs/orangepi_lite2_defconfig
 

@@ -125,6 +125,8 @@ static const char *parse_attr(const char *str, u32 *attrp)
 
 		if ((s = prefix(str, "ro"))) {
 			attr |= READ_ONLY;
+		} else if ((s = prefix(str, "nv"))) {
+			attr |= EFI_VARIABLE_NON_VOLATILE;
 		} else if ((s = prefix(str, "boot"))) {
 			attr |= EFI_VARIABLE_BOOTSERVICE_ACCESS;
 		} else if ((s = prefix(str, "run"))) {
@@ -146,7 +148,7 @@ static const char *parse_attr(const char *str, u32 *attrp)
 }
 
 /**
- * efi_efi_get_variable() - retrieve value of a UEFI variable
+ * efi_get_variable() - retrieve value of a UEFI variable
  *
  * This function implements the GetVariable runtime service.
  *
@@ -180,7 +182,7 @@ efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
 	if (ret)
 		return EFI_EXIT(ret);
 
-	debug("%s: get '%s'\n", __func__, native_name);
+	EFI_PRINT("get '%s'\n", native_name);
 
 	val = env_get(native_name);
 	free(native_name);
@@ -202,8 +204,10 @@ efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
 		len /= 2;
 		*data_size = len;
 
-		if (in_size < len)
-			return EFI_EXIT(EFI_BUFFER_TOO_SMALL);
+		if (in_size < len) {
+			ret = EFI_BUFFER_TOO_SMALL;
+			goto out;
+		}
 
 		if (!data)
 			return EFI_EXIT(EFI_INVALID_PARAMETER);
@@ -211,14 +215,16 @@ efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
 		if (hex2bin(data, s, len))
 			return EFI_EXIT(EFI_DEVICE_ERROR);
 
-		debug("%s: got value: \"%s\"\n", __func__, s);
+		EFI_PRINT("got value: \"%s\"\n", s);
 	} else if ((s = prefix(val, "(utf8)"))) {
 		unsigned len = strlen(s) + 1;
 
 		*data_size = len;
 
-		if (in_size < len)
-			return EFI_EXIT(EFI_BUFFER_TOO_SMALL);
+		if (in_size < len) {
+			ret = EFI_BUFFER_TOO_SMALL;
+			goto out;
+		}
 
 		if (!data)
 			return EFI_EXIT(EFI_INVALID_PARAMETER);
@@ -226,16 +232,17 @@ efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
 		memcpy(data, s, len);
 		((char *)data)[len] = '\0';
 
-		debug("%s: got value: \"%s\"\n", __func__, (char *)data);
+		EFI_PRINT("got value: \"%s\"\n", (char *)data);
 	} else {
-		debug("%s: invalid value: '%s'\n", __func__, val);
+		EFI_PRINT("invalid value: '%s'\n", val);
 		return EFI_EXIT(EFI_DEVICE_ERROR);
 	}
 
+out:
 	if (attributes)
 		*attributes = attr & EFI_VARIABLE_MASK;
 
-	return EFI_EXIT(EFI_SUCCESS);
+	return EFI_EXIT(ret);
 }
 
 static char *efi_variables_list;
@@ -397,7 +404,7 @@ efi_status_t EFIAPI efi_get_next_variable_name(efi_uintn_t *variable_name_size,
 }
 
 /**
- * efi_efi_set_variable() - set value of a UEFI variable
+ * efi_set_variable() - set value of a UEFI variable
  *
  * This function implements the SetVariable runtime service.
  *
@@ -422,7 +429,11 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 	EFI_ENTRY("\"%ls\" %pUl %x %zu %p", variable_name, vendor, attributes,
 		  data_size, data);
 
-	if (!variable_name || !vendor) {
+	/* TODO: implement APPEND_WRITE */
+	if (!variable_name || !*variable_name || !vendor ||
+	    ((attributes & EFI_VARIABLE_RUNTIME_ACCESS) &&
+	     !(attributes & EFI_VARIABLE_BOOTSERVICE_ACCESS)) ||
+	    (attributes & EFI_VARIABLE_APPEND_WRITE)) {
 		ret = EFI_INVALID_PARAMETER;
 		goto out;
 	}
@@ -444,15 +455,24 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 	if (val) {
 		parse_attr(val, &attr);
 
+		/* We should not free val */
+		val = NULL;
 		if (attr & READ_ONLY) {
-			/* We should not free val */
-			val = NULL;
 			ret = EFI_WRITE_PROTECTED;
+			goto out;
+		}
+
+		/*
+		 * attributes won't be changed
+		 * TODO: take care of APPEND_WRITE once supported
+		 */
+		if (attr != attributes) {
+			ret = EFI_INVALID_PARAMETER;
 			goto out;
 		}
 	}
 
-	val = malloc(2 * data_size + strlen("{ro,run,boot}(blob)") + 1);
+	val = malloc(2 * data_size + strlen("{ro,run,boot,nv}(blob)") + 1);
 	if (!val) {
 		ret = EFI_OUT_OF_RESOURCES;
 		goto out;
@@ -464,12 +484,16 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 	 * store attributes
 	 * TODO: several attributes are not supported
 	 */
-	attributes &= (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS);
+	attributes &= (EFI_VARIABLE_NON_VOLATILE |
+		       EFI_VARIABLE_BOOTSERVICE_ACCESS |
+		       EFI_VARIABLE_RUNTIME_ACCESS);
 	s += sprintf(s, "{");
 	while (attributes) {
 		u32 attr = 1 << (ffs(attributes) - 1);
 
-		if (attr == EFI_VARIABLE_BOOTSERVICE_ACCESS)
+		if (attr == EFI_VARIABLE_NON_VOLATILE)
+			s += sprintf(s, "nv");
+		else if (attr == EFI_VARIABLE_BOOTSERVICE_ACCESS)
 			s += sprintf(s, "boot");
 		else if (attr == EFI_VARIABLE_RUNTIME_ACCESS)
 			s += sprintf(s, "run");
@@ -485,7 +509,7 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 	s = bin2hex(s, data, data_size);
 	*s = '\0';
 
-	debug("%s: setting: %s=%s\n", __func__, native_name, val);
+	EFI_PRINT("setting: %s=%s\n", native_name, val);
 
 	if (env_set(native_name, val))
 		ret = EFI_DEVICE_ERROR;
