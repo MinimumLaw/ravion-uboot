@@ -69,7 +69,6 @@
 #undef CONFIG_CMD_IMLS
 
 #undef CONFIG_CMD_CRC32
-#undef CONFIG_BOOTM_NETBSD
 
 /* ENET Config */
 /* ENET1 */
@@ -216,8 +215,6 @@
 #define CONFIG_IMX_BOOTAUX
 
 #define CONFIG_CMD_MMC
-#define CONFIG_FSL_ESDHC
-#define CONFIG_FSL_USDHC
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0

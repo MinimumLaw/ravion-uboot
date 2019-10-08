@@ -44,7 +44,6 @@
 #define CONFIG_SYS_NAND_ECCBYTES        3
 #define CONFIG_NAND_OMAP_ECCSCHEME      OMAP_ECC_BCH8_CODE_HW_DETECTION_SW
 #define CONFIG_SYS_ENV_SECT_SIZE        SZ_128K
-#define CONFIG_ENV_OFFSET               0x260000
 #define CONFIG_ENV_ADDR                 0x260000
 #define CONFIG_ENV_OVERWRITE
 /* NAND: SPL falcon mode configs */
@@ -52,11 +51,6 @@
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS 0x2a0000
 #endif /* CONFIG_SPL_OS_BOOT */
 #endif /* CONFIG_NAND */
-
-/* Environment */
-#define CONFIG_ENV_SIZE                 SZ_128K
-
-#define CONFIG_PREBOOT                  "usb start"
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV

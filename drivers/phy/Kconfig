@@ -19,7 +19,7 @@ config PHY
 
 config SPL_PHY
 	bool "PHY Core in SPL"
-	depends on DM
+	depends on DM && SPL
 	help
 	  PHY support in SPL.
 
@@ -84,6 +84,12 @@ config BCM6368_USBH_PHY
 	help
 	  Support for the Broadcom MIPS BCM6368 USBH PHY.
 
+config PHY_DA8XX_USB
+	tristate "TI DA8xx USB PHY Driver"
+	depends on PHY && ARCH_DAVINCI
+	help
+	  Enable this to support the USB PHY on DA8xx SoCs.
+
 config PIPE3_PHY
 	bool "Support omap's PIPE3 PHY"
 	depends on PHY && ARCH_OMAP2PLUS
@@ -101,6 +107,15 @@ config SPL_PIPE3_PHY
 
 	  This PHY is found on omap devices supporting SATA such as dra7, am57x
 	  and omap5
+
+config AM654_PHY
+	tristate "TI AM654 SERDES support"
+	depends on PHY && ARCH_K3
+	select REGMAP
+	select SYSCON
+	help
+	  This option enables support for TI AM654 SerDes PHY used for
+	  PCIe.
 
 config STI_USB_PHY
 	bool "STMicroelectronics USB2 picoPHY driver for STiH407 family"

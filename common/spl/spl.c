@@ -535,7 +535,7 @@ static int spl_load_image(struct spl_image_info *spl_image,
 }
 
 /**
- * boot_from_devices() - Try loading an booting U-Boot from a list of devices
+ * boot_from_devices() - Try loading a booting U-Boot from a list of devices
  *
  * @spl_image: Place to put the image details if successful
  * @spl_boot_list: List of boot devices to try
@@ -603,7 +603,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_board_init();
 #endif
 
-#if defined(CONFIG_SPL_WATCHDOG_SUPPORT) && defined(CONFIG_WDT)
+#if defined(CONFIG_SPL_WATCHDOG_SUPPORT) && CONFIG_IS_ENABLED(WDT)
 	initr_watchdog();
 #endif
 
@@ -659,6 +659,12 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 				(void *)spl_image.entry_point);
 		break;
 #endif
+#if CONFIG_IS_ENABLED(OPENSBI)
+	case IH_OS_OPENSBI:
+		debug("Jumping to U-Boot via RISC-V OpenSBI\n");
+		spl_invoke_opensbi(&spl_image);
+		break;
+#endif
 #ifdef CONFIG_SPL_OS_BOOT
 	case IH_OS_LINUX:
 		debug("Jumping to Linux\n");
@@ -710,6 +716,28 @@ void preloader_console_init(void)
 #endif
 
 /**
+ * This function is called before the stack is changed from initial stack to
+ * relocated stack. It tries to dump the stack size used
+ */
+__weak void spl_relocate_stack_check(void)
+{
+#if CONFIG_IS_ENABLED(SYS_REPORT_STACK_F_USAGE)
+	ulong init_sp = gd->start_addr_sp;
+	ulong stack_bottom = init_sp - CONFIG_VAL(SIZE_LIMIT_PROVIDE_STACK);
+	u8 *ptr = (u8 *)stack_bottom;
+	ulong i;
+
+	for (i = 0; i < CONFIG_VAL(SIZE_LIMIT_PROVIDE_STACK); i++) {
+		if (*ptr != CONFIG_VAL(SYS_STACK_F_CHECK_BYTE))
+			break;
+		ptr++;
+	}
+	printf("SPL initial stack usage: %lu bytes\n",
+	       CONFIG_VAL(SIZE_LIMIT_PROVIDE_STACK) - i);
+#endif
+}
+
+/**
  * spl_relocate_stack_gd() - Relocate stack ready for board_init_r() execution
  *
  * Sometimes board_init_f() runs with a stack in SRAM but we want to use SDRAM
@@ -733,6 +761,9 @@ ulong spl_relocate_stack_gd(void)
 	gd_t *new_gd;
 	ulong ptr = CONFIG_SPL_STACK_R_ADDR;
 
+	if (CONFIG_IS_ENABLED(SYS_REPORT_STACK_F_USAGE))
+		spl_relocate_stack_check();
+
 #if defined(CONFIG_SPL_SYS_MALLOC_SIMPLE) && CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN) {
 		debug("SPL malloc() before relocation used 0x%lx bytes (%ld KB)\n",
@@ -750,7 +781,7 @@ ulong spl_relocate_stack_gd(void)
 #if CONFIG_IS_ENABLED(DM)
 	dm_fixup_for_gd_move(new_gd);
 #endif
-#if !defined(CONFIG_ARM)
+#if !defined(CONFIG_ARM) && !defined(CONFIG_RISCV)
 	gd = new_gd;
 #endif
 	return ptr;

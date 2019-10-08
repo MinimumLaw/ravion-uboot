@@ -9,10 +9,11 @@
  */
 
 #include <common.h>
+#include <env.h>
 #include <miiphy.h>
 #include <input.h>
 #include <mmc.h>
-#include <fsl_esdhc.h>
+#include <fsl_esdhc_imx.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <linux/sizes.h>
@@ -200,7 +201,7 @@ static iomux_v3_cfg_t const usdhc2_pads[] = {
 	MX6_PAD_GPIO_4__GPIO1_IO04	| MUX_PAD_CTRL(NO_PAD_CTRL), /* CD */
 };
 
-#ifdef CONFIG_FSL_ESDHC
+#ifdef CONFIG_FSL_ESDHC_IMX
 struct fsl_esdhc_cfg usdhc_cfg[] = {
 	{USDHC1_BASE_ADDR}, /* SOM */
 	{USDHC2_BASE_ADDR}  /* Baseboard */
@@ -223,25 +224,15 @@ int board_mmc_init(bd_t *bis)
 	switch (reg) {
 	case 0:
 		SETUP_IOMUX_PADS(usdhc1_pads);
-		usdhc_cfg[0].esdhc_base = USDHC1_BASE_ADDR;
-		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
-		gd->arch.sdhc_clk = usdhc_cfg[0].sdhc_clk;
 		break;
 	case 1:
 		SETUP_IOMUX_PADS(usdhc2_pads);
-		usdhc_cfg[1].esdhc_base = USDHC2_BASE_ADDR;
-		usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
-		gd->arch.sdhc_clk = usdhc_cfg[1].sdhc_clk;
 		break;
 	}
 
-	return fsl_esdhc_initialize(bis, &usdhc_cfg[reg]);
+	return 0;
 }
 
-int board_mmc_getcd(struct mmc *mmc)
-{
-	return 1;
-}
 #endif
 
 static void ccgr_init(void)

@@ -70,7 +70,6 @@
 #define CONFIG_MXC_NAND_IP_REGS_BASE	NFC_BASE_ADDR
 #define CONFIG_SYS_NAND_LARGEPAGE
 #define CONFIG_MXC_NAND_HWECC
-#define CONFIG_SYS_NAND_USE_FLASH_BBT
 
 /* Environment is in NAND */
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
@@ -185,7 +184,6 @@
 /*
  * Extra Environments
  */
-#define CONFIG_PREBOOT		"run try_bootscript"
 #define CONFIG_HOSTNAME		"m53menlo"
 
 #define CONFIG_EXTRA_ENV_SETTINGS					\
@@ -241,5 +239,10 @@
 			"source ${kernel_addr_r} ; "			\
 		"fi ; "							\
 		"fi\0"
+
+#if defined(CONFIG_SPL_BUILD)
+#undef CONFIG_WATCHDOG
+#define CONFIG_HW_WATCHDOG
+#endif
 
 #endif	/* __M53MENLO_CONFIG_H__ */

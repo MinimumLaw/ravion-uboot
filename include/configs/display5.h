@@ -45,7 +45,6 @@
 #define CONFIG_SYS_SPI_ARGS_SIZE        0x10000
 
 #include "imx6_spl.h"
-#define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -55,10 +54,7 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(16 * 1024 * 1024)
 
-/*#define CONFIG_MXC_UART*/
 #define CONFIG_MXC_UART_BASE		UART5_BASE
-
-/* SPI NOR Flash */
 
 /* I2C Configs */
 #define CONFIG_SYS_I2C
@@ -80,7 +76,6 @@
 #endif
 
 /* MMC Configs */
-#define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 
@@ -357,8 +352,6 @@
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
-
-/* Commands */
 
 /* Watchdog */
 #define CONFIG_WATCHDOG_TIMEOUT_MSECS   15000

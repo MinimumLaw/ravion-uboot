@@ -31,9 +31,6 @@
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
 
-/* Always 128 KiB env size */
-#define CONFIG_ENV_SIZE			(128 << 10)
-
 #ifdef CONFIG_NAND
 #define NANDARGS \
 	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
@@ -446,7 +443,6 @@ DEFAULT_LINUX_BOOT_ENV \
  */
 #if defined(CONFIG_SPI_BOOT)
 /* SPL related */
-#define CONFIG_SYS_SPI_U_BOOT_OFFS	0x20000
 
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #define CONFIG_ENV_SECT_SIZE		(4 << 10) /* 4 KB sectors */

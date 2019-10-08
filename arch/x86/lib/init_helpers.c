@@ -10,15 +10,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/* Get the top of usable RAM */
-__weak ulong board_get_usable_ram_top(ulong total_size)
-{
-	return gd->ram_size;
-}
-
 int init_cache_f_r(void)
 {
-#if CONFIG_IS_ENABLED(X86_32BIT_INIT) && !defined(CONFIG_HAVE_FSP)
+#if CONFIG_IS_ENABLED(X86_32BIT_INIT) && !defined(CONFIG_HAVE_FSP) && \
+		!defined(CONFIG_SYS_SLIMBOOTLOADER)
 	int ret;
 
 	ret = mtrr_commit(false);

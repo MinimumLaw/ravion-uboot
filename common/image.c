@@ -8,6 +8,7 @@
 
 #ifndef USE_HOSTCC
 #include <common.h>
+#include <env.h>
 #include <watchdog.h>
 
 #ifdef CONFIG_SHOW_BOOT_PROGRESS
@@ -16,7 +17,7 @@
 
 #include <rtc.h>
 
-#include <environment.h>
+#include <gzip.h>
 #include <image.h>
 #include <mapmem.h>
 
@@ -32,13 +33,19 @@
 #include <linux/errno.h>
 #include <asm/io.h>
 
+#include <bzlib.h>
+#include <linux/lzo.h>
+#include <lzma/LzmaTypes.h>
+#include <lzma/LzmaDec.h>
+#include <lzma/LzmaTools.h>
+
 #ifdef CONFIG_CMD_BDI
 extern int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 						int verify);
 #endif
@@ -125,6 +132,7 @@ static const table_entry_t uimage_os[] = {
 #if defined(CONFIG_BOOTM_OPENRTOS) || defined(USE_HOSTCC)
 	{	IH_OS_OPENRTOS,	"openrtos",	"OpenRTOS",		},
 #endif
+	{	IH_OS_OPENSBI,	"opensbi",	"RISC-V OpenSBI",	},
 
 	{	-1,		"",		"",			},
 };
@@ -168,6 +176,7 @@ static const table_entry_t uimage_type[] = {
 	{       IH_TYPE_PMMC,        "pmmc",        "TI Power Management Micro-Controller Firmware",},
 	{	IH_TYPE_STM32IMAGE, "stm32image", "STMicroelectronics STM32 Image" },
 	{	IH_TYPE_MTKIMAGE,   "mtk_image",   "MediaTek BootROM loadable Image" },
+	{	IH_TYPE_COPRO, "copro", "Coprocessor Image"},
 	{	-1,		    "",		  "",			},
 };
 
@@ -375,9 +384,109 @@ void image_print_contents(const void *ptr)
 	}
 }
 
+/**
+ * print_decomp_msg() - Print a suitable decompression/loading message
+ *
+ * @type:	OS type (IH_OS_...)
+ * @comp_type:	Compression type being used (IH_COMP_...)
+ * @is_xip:	true if the load address matches the image start
+ */
+static void print_decomp_msg(int comp_type, int type, bool is_xip)
+{
+	const char *name = genimg_get_type_name(type);
+
+	if (comp_type == IH_COMP_NONE)
+		printf("   %s %s\n", is_xip ? "XIP" : "Loading", name);
+	else
+		printf("   Uncompressing %s\n", name);
+}
+
+int image_decomp(int comp, ulong load, ulong image_start, int type,
+		 void *load_buf, void *image_buf, ulong image_len,
+		 uint unc_len, ulong *load_end)
+{
+	int ret = 0;
+
+	*load_end = load;
+	print_decomp_msg(comp, type, load == image_start);
+
+	/*
+	 * Load the image to the right place, decompressing if needed. After
+	 * this, image_len will be set to the number of uncompressed bytes
+	 * loaded, ret will be non-zero on error.
+	 */
+	switch (comp) {
+	case IH_COMP_NONE:
+		if (load == image_start)
+			break;
+		if (image_len <= unc_len)
+			memmove_wd(load_buf, image_buf, image_len, CHUNKSZ);
+		else
+			ret = -ENOSPC;
+		break;
+#ifdef CONFIG_GZIP
+	case IH_COMP_GZIP: {
+		ret = gunzip(load_buf, unc_len, image_buf, &image_len);
+		break;
+	}
+#endif /* CONFIG_GZIP */
+#ifdef CONFIG_BZIP2
+	case IH_COMP_BZIP2: {
+		uint size = unc_len;
+
+		/*
+		 * If we've got less than 4 MB of malloc() space,
+		 * use slower decompression algorithm which requires
+		 * at most 2300 KB of memory.
+		 */
+		ret = BZ2_bzBuffToBuffDecompress(load_buf, &size,
+			image_buf, image_len,
+			CONFIG_SYS_MALLOC_LEN < (4096 * 1024), 0);
+		image_len = size;
+		break;
+	}
+#endif /* CONFIG_BZIP2 */
+#ifdef CONFIG_LZMA
+	case IH_COMP_LZMA: {
+		SizeT lzma_len = unc_len;
+
+		ret = lzmaBuffToBuffDecompress(load_buf, &lzma_len,
+					       image_buf, image_len);
+		image_len = lzma_len;
+		break;
+	}
+#endif /* CONFIG_LZMA */
+#ifdef CONFIG_LZO
+	case IH_COMP_LZO: {
+		size_t size = unc_len;
+
+		ret = lzop_decompress(image_buf, image_len, load_buf, &size);
+		image_len = size;
+		break;
+	}
+#endif /* CONFIG_LZO */
+#ifdef CONFIG_LZ4
+	case IH_COMP_LZ4: {
+		size_t size = unc_len;
+
+		ret = ulz4fn(image_buf, image_len, load_buf, &size);
+		image_len = size;
+		break;
+	}
+#endif /* CONFIG_LZ4 */
+	default:
+		printf("Unimplemented compression type %d\n", comp);
+		return -ENOSYS;
+	}
+
+	*load_end = load + image_len;
+
+	return ret;
+}
+
 
 #ifndef USE_HOSTCC
-#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 /**
  * image_get_ramdisk - get and verify ramdisk image
  * @rd_addr: ramdisk image start address
@@ -550,6 +659,11 @@ void memmove_wd(void *to, void *from, size_t len, ulong chunksz)
 #else	/* !(CONFIG_HW_WATCHDOG || CONFIG_WATCHDOG) */
 	memmove(to, from, len);
 #endif	/* CONFIG_HW_WATCHDOG || CONFIG_WATCHDOG */
+}
+#else	/* USE_HOSTCC */
+void memmove_wd(void *to, void *from, size_t len, ulong chunksz)
+{
+	memmove(to, from, len);
 }
 #endif /* !USE_HOSTCC */
 
@@ -867,7 +981,7 @@ ulong genimg_get_kernel_addr(char * const img_addr)
  */
 int genimg_get_format(const void *img_addr)
 {
-#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	const image_header_t *hdr;
 
 	hdr = (const image_header_t *)img_addr;
@@ -933,7 +1047,7 @@ int boot_get_ramdisk(int argc, char * const argv[], bootm_headers_t *images,
 {
 	ulong rd_addr, rd_load;
 	ulong rd_data, rd_len;
-#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	const image_header_t *rd_hdr;
 #endif
 	void *buf;
@@ -1025,7 +1139,7 @@ int boot_get_ramdisk(int argc, char * const argv[], bootm_headers_t *images,
 		 */
 		buf = map_sysmem(rd_addr, 0);
 		switch (genimg_get_format(buf)) {
-#if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 		case IMAGE_FORMAT_LEGACY:
 			printf("## Loading init Ramdisk from Legacy "
 					"Image at %08lx ...\n", rd_addr);

@@ -58,6 +58,8 @@ enum uclass_id {
 	UCLASS_LPC,		/* x86 'low pin count' interface */
 	UCLASS_MAILBOX,		/* Mailbox controller */
 	UCLASS_MASS_STORAGE,	/* Mass storage device */
+	UCLASS_MDIO,		/* MDIO bus */
+	UCLASS_MDIO_MUX,	/* MDIO MUX/switch */
 	UCLASS_MISC,		/* Miscellaneous device */
 	UCLASS_MMC,		/* SD / MMC card or chip */
 	UCLASS_MOD_EXP,		/* RSA Mod Exp device */
@@ -69,6 +71,7 @@ enum uclass_id {
 	UCLASS_PANEL_BACKLIGHT,	/* Backlight controller for panel */
 	UCLASS_PCH,		/* x86 platform controller hub */
 	UCLASS_PCI,		/* PCI bus */
+	UCLASS_PCI_EP,		/* PCI endpoint device */
 	UCLASS_PCI_GENERIC,	/* Generic PCI bus device */
 	UCLASS_PHY,		/* Physical Layer (PHY) device */
 	UCLASS_PINCONFIG,	/* Pin configuration node device */

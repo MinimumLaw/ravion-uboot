@@ -38,10 +38,6 @@
 #define CONFIG_POWER_PFUZE3000
 #define CONFIG_POWER_PFUZE3000_I2C_ADDR	0x08
 
-#undef CONFIG_BOOTM_NETBSD
-#undef CONFIG_BOOTM_PLAN9
-#undef CONFIG_BOOTM_RTEMS
-
 /* I2C configs */
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC
@@ -147,7 +143,6 @@
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
 
 /* MMC Config*/
-#define CONFIG_FSL_USDHC
 #ifdef CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR       USDHC1_BASE_ADDR
 
@@ -166,8 +161,5 @@
 
 /* SPL */
 #include "imx7_spl.h"
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_SPI_U_BOOT_OFFS	(64 * 1024)
-#endif /* CONFIG_SPL_BUILD */
 
 #endif	/* __CONFIG_H */

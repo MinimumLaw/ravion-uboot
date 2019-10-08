@@ -22,16 +22,11 @@
 #define CONFIG_EHCI_IS_TDI
 
 /* Environment in SPI NOR flash */
-#define CONFIG_ENV_OFFSET		(3*(1 << 18)) /* 768KiB in */
 #define CONFIG_ENV_SIZE			(64 << 10) /* 64KiB */
-#define CONFIG_ENV_SECT_SIZE		(256 << 10) /* 256KiB sectors */
+#define CONFIG_ENV_OFFSET		((1 << 20) - CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SECT_SIZE		(64 << 10) /* 64KiB */
 
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs a longer aneg time */
-
-/* PCIe support */
-#ifndef CONFIG_SPL_BUILD
-#define CONFIG_PCI_SCAN_SHOW
-#endif
 
 /* Keep device tree and initrd in lower memory so the kernel can access them */
 #define RELOCATION_LIMITS_ENV_SETTINGS	\
@@ -55,7 +50,6 @@
 
 #ifdef CONFIG_MVEBU_SPL_BOOT_DEVICE_SPI
 /* SPL related SPI defines */
-# define CONFIG_SYS_SPI_U_BOOT_OFFS	0x24000
 # define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
 #endif
 
@@ -97,8 +91,8 @@
 
 #define BOOT_TARGET_DEVICES(func) \
 	BOOT_TARGET_DEVICES_MMC(func) \
-	BOOT_TARGET_DEVICES_USB(func) \
 	BOOT_TARGET_DEVICES_SCSI(func) \
+	BOOT_TARGET_DEVICES_USB(func) \
 	func(PXE, pxe, na) \
 	func(DHCP, dhcp, na)
 
@@ -122,6 +116,7 @@
 	LOAD_ADDRESS_ENV_SETTINGS \
 	"fdtfile=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
 	"console=ttyS0,115200\0" \
+	"ethact=ethernet@34000\0" \
 	BOOTENV
 
 #endif /* CONFIG_SPL_BUILD */

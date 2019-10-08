@@ -68,7 +68,7 @@ iomux_v3_cfg_t const ecspi2_pads[] = {
 
 int board_spi_cs_gpio(unsigned int bus, unsigned int cs)
 {
-	if (bus != 1 || cs != (IMX_GPIO_NR(5, 29) << 8))
+	if (bus != 1 || cs != 0)
 		return -EINVAL;
 
 	return IMX_GPIO_NR(5, 29);
@@ -89,7 +89,7 @@ void displ5_set_iomux_ecspi_spl(void) {}
 void displ5_set_iomux_ecspi(void) {}
 #endif
 
-#ifdef CONFIG_FSL_ESDHC
+#ifdef CONFIG_FSL_ESDHC_IMX
 iomux_v3_cfg_t const usdhc4_pads[] = {
 	MX6_PAD_SD4_CLK__SD4_CLK	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
 	MX6_PAD_SD4_CMD__SD4_CMD	| MUX_PAD_CTRL(USDHC_PAD_CTRL),

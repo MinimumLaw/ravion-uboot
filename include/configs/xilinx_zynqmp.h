@@ -62,7 +62,6 @@
 #if defined(CONFIG_ZYNQMP_USB)
 #define CONFIG_SYS_DFU_DATA_BUF_SIZE	0x1800000
 #define DFU_DEFAULT_POLL_TIMEOUT	300
-#define CONFIG_USB_CABLE_CHECK
 #define CONFIG_THOR_RESET_OFF
 #define DFU_ALT_INFO_RAM \
 	"dfu_ram_info=" \
@@ -218,8 +217,6 @@
 # define CONFIG_SYS_SPI_KERNEL_OFFS	0x80000
 # define CONFIG_SYS_SPI_ARGS_OFFS	0xa0000
 # define CONFIG_SYS_SPI_ARGS_SIZE	0xa0000
-
-# define CONFIG_SYS_SPI_U_BOOT_OFFS	0x170000
 #endif
 
 /* u-boot is like dtb */

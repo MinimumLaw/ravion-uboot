@@ -20,15 +20,25 @@ config POSITION_INDEPENDENT
 	  information that is embedded into the binary to support U-Boot
 	  relocating itself to the top-of-RAM later during execution.
 
-config SYS_INIT_SP_BSS_OFFSET
-	int
+config INIT_SP_RELATIVE
+	bool "Specify the early stack pointer relative to the .bss section"
 	help
 	  U-Boot typically uses a hard-coded value for the stack pointer
-	  before relocation. Define this option to instead calculate the
+	  before relocation. Enable this option to instead calculate the
 	  initial SP at run-time. This is useful to avoid hard-coding addresses
 	  into U-Boot, so that can be loaded and executed at arbitrary
-	  addresses and thus avoid using arbitrary addresses at runtime. This
-	  option's value is the offset added to &_bss_start in order to
+	  addresses and thus avoid using arbitrary addresses at runtime.
+
+	  If this option is enabled, the early stack pointer is set to
+	  &_bss_start with a offset value added. The offset is specified by
+	  SYS_INIT_SP_BSS_OFFSET.
+
+config SYS_INIT_SP_BSS_OFFSET
+	int "Early stack offset from the .bss base address"
+	depends on INIT_SP_RELATIVE
+	default 524288
+	help
+	  This option's value is the offset added to &_bss_start in order to
 	  calculate the stack pointer. This offset should be large enough so
 	  that the early malloc region, global data (gd), and early stack usage
 	  do not overlap any appended DTB.
@@ -319,6 +329,12 @@ config SYS_CACHELINE_SIZE
 	default 64 if SYS_CACHE_SHIFT_6
 	default 32 if SYS_CACHE_SHIFT_5
 
+config ARCH_CPU_INIT
+	bool "Enable ARCH_CPU_INIT"
+	help
+	  Some architectures require a call to arch_cpu_init()
+	  Say Y here to enable it
+
 config SYS_ARCH_TIMER
 	bool "ARM Generic Timer support"
 	depends on CPU_V7A || ARM64
@@ -357,7 +373,7 @@ config SYS_THUMB_BUILD
 config SPL_SYS_THUMB_BUILD
 	bool "Build SPL using the Thumb instruction set"
 	default y if SYS_THUMB_BUILD
-	depends on !ARM64
+	depends on !ARM64 && SPL
 	help
 	   Use this flag to build SPL using the Thumb instruction set for
 	   ARM architectures. Thumb instruction set provides better code
@@ -404,7 +420,7 @@ config USE_ARCH_MEMCPY
 config SPL_USE_ARCH_MEMCPY
 	bool "Use an assembly optimized implementation of memcpy for SPL"
 	default y if USE_ARCH_MEMCPY
-	depends on !ARM64
+	depends on !ARM64 && SPL
 	help
 	  Enable the generation of an optimized version of memcpy.
 	  Such implementation may be faster under some conditions
@@ -413,7 +429,7 @@ config SPL_USE_ARCH_MEMCPY
 config TPL_USE_ARCH_MEMCPY
 	bool "Use an assembly optimized implementation of memcpy for TPL"
 	default y if USE_ARCH_MEMCPY
-	depends on !ARM64
+	depends on !ARM64 && TPL
 	help
 	  Enable the generation of an optimized version of memcpy.
 	  Such implementation may be faster under some conditions
@@ -431,7 +447,7 @@ config USE_ARCH_MEMSET
 config SPL_USE_ARCH_MEMSET
 	bool "Use an assembly optimized implementation of memset for SPL"
 	default y if USE_ARCH_MEMSET
-	depends on !ARM64
+	depends on !ARM64 && SPL
 	help
 	  Enable the generation of an optimized version of memset.
 	  Such implementation may be faster under some conditions
@@ -440,7 +456,7 @@ config SPL_USE_ARCH_MEMSET
 config TPL_USE_ARCH_MEMSET
 	bool "Use an assembly optimized implementation of memset for TPL"
 	default y if USE_ARCH_MEMSET
-	depends on !ARM64
+	depends on !ARM64 && TPL
 	help
 	  Enable the generation of an optimized version of memset.
 	  Such implementation may be faster under some conditions
@@ -448,7 +464,8 @@ config TPL_USE_ARCH_MEMSET
 
 config ARM64_SUPPORT_AARCH32
 	bool "ARM64 system support AArch32 execution state"
-	default y if ARM64 && !TARGET_THUNDERX_88XX
+	depends on ARM64
+	default y if !TARGET_THUNDERX_88XX
 	help
 	  This ARM64 system supports AArch32 execution state.
 
@@ -830,6 +847,7 @@ config ARCH_OWL
 
 config ARCH_QEMU
 	bool "QEMU Virtual Platform"
+	select ARCH_SUPPORT_TFABOOT
 	select DM
 	select DM_SERIAL
 	select OF_CONTROL
@@ -884,10 +902,14 @@ config ARCH_SOCFPGA
 	select SPL_OF_CONTROL
 	select SPL_SEPARATE_BSS if TARGET_SOCFPGA_STRATIX10
 	select SPL_SERIAL_SUPPORT
+	select SPL_SYSRESET
 	select SPL_WATCHDOG_SUPPORT
 	select SUPPORT_SPL
 	select SYS_NS16550
 	select SYS_THUMB_BUILD if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
+	select SYSRESET
+	select SYSRESET_SOCFPGA if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
+	select SYSRESET_SOCFPGA_S10 if TARGET_SOCFPGA_STRATIX10
 	imply CMD_DM
 	imply CMD_MTDPARTS
 	imply CRC32_VERIFY
@@ -926,6 +948,7 @@ config ARCH_SUNXI
 	select SPL_STACK_R if SPL
 	select SPL_SYS_MALLOC_SIMPLE if SPL
 	select SPL_SYS_THUMB_BUILD if !ARM64
+	select SUNXI_GPIO
 	select SYS_NS16550
 	select SYS_THUMB_BUILD if !ARM64
 	select USB if DISTRO_DEFAULTS
@@ -1043,16 +1066,6 @@ config TARGET_VEXPRESS64_BASE_FVP
 	select PL01X_SERIAL
 	select SEMIHOSTING
 
-config TARGET_VEXPRESS64_BASE_FVP_DRAM
-	bool "Support Versatile Express ARMv8a FVP BASE model booting from DRAM"
-	select ARM64
-	select PL01X_SERIAL
-	help
-	  This target is derived from TARGET_VEXPRESS64_BASE_FVP and over-rides
-	  the default config to allow the user to load the images directly into
-	  DRAM using model parameters rather than by using semi-hosting to load
-	  the files from the host filesystem.
-
 config TARGET_VEXPRESS64_JUNO
 	bool "Support Versatile Express Juno Development Platform"
 	select ARM64
@@ -1077,6 +1090,7 @@ config TARGET_LS2080A_SIMU
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select BOARD_LATE_INIT
 	help
 	  Support for Freescale LS2080A_SIMU platform
 	  The LS2080A Development System (QDS) is a pre silicon
@@ -1089,6 +1103,7 @@ config TARGET_LS1088AQDS
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select FSL_DDR_INTERACTIVE if !SD_BOOT
@@ -1104,6 +1119,7 @@ config TARGET_LS2080AQDS
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	imply SCSI
@@ -1122,6 +1138,7 @@ config TARGET_LS2080ARDB
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select FSL_DDR_BIST
@@ -1154,6 +1171,7 @@ config TARGET_LX2160ARDB
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	help
 	  Support for NXP LX2160ARDB platform.
@@ -1167,6 +1185,7 @@ config TARGET_LX2160AQDS
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	help
 	  Support for NXP LX2160AQDS platform.
@@ -1188,6 +1207,18 @@ config TARGET_HIKEY
 	  Support for HiKey 96boards platform. It features a HI6220
 	  SoC, with 8xA53 CPU, mali450 gpu, and 1GB RAM.
 
+config TARGET_HIKEY960
+	bool "Support HiKey960 96boards Consumer Edition Platform"
+	select ARM64
+	select DM
+	select DM_SERIAL
+	select OF_CONTROL
+	select PL01X_SERIAL
+	imply CMD_DM
+	  help
+	  Support for HiKey960 96boards platform. It features a HI3660
+	  SoC, with 4xA73 CPU, 4xA53 CPU, MALI-G71 GPU, and 3GB RAM.
+
 config TARGET_POPLAR
 	bool "Support Poplar 96boards Enterprise Edition Platform"
 	select ARM64
@@ -1207,6 +1238,7 @@ config TARGET_LS1012AQDS
 	bool "Support ls1012aqds"
 	select ARCH_LS1012A
 	select ARM64
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	help
 	  Support for Freescale LS1012AQDS platform.
@@ -1218,6 +1250,7 @@ config TARGET_LS1012ARDB
 	bool "Support ls1012ardb"
 	select ARCH_LS1012A
 	select ARM64
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	imply SCSI
 	imply SCSI_AHCI
@@ -1231,6 +1264,7 @@ config TARGET_LS1012A2G5RDB
 	bool "Support ls1012a2g5rdb"
 	select ARCH_LS1012A
 	select ARM64
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	imply SCSI
 	help
@@ -1243,6 +1277,7 @@ config TARGET_LS1012AFRWY
 	bool "Support ls1012afrwy"
 	select ARCH_LS1012A
 	select ARM64
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	imply SCSI
 	imply SCSI_AHCI
@@ -1256,6 +1291,7 @@ config TARGET_LS1012AFRDM
 	bool "Support ls1012afrdm"
 	select ARCH_LS1012A
 	select ARM64
+	select ARCH_SUPPORT_TFABOOT
 	help
 	  Support for Freescale LS1012AFRDM platform.
 	  The LS1012A Freedom  board (FRDM) is a high-performance
@@ -1267,6 +1303,9 @@ config TARGET_LS1028AQDS
 	select ARCH_LS1028A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
+	select BOARD_LATE_INIT
+	select ARCH_MISC_INIT
 	help
 	  Support for Freescale LS1028AQDS platform
 	  The LS1028A Development System (QDS) is a high-performance
@@ -1278,6 +1317,7 @@ config TARGET_LS1028ARDB
 	select ARCH_LS1028A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	help
 	  Support for Freescale LS1028ARDB platform
 	  The LS1028A Development System (RDB) is a high-performance
@@ -1290,6 +1330,7 @@ config TARGET_LS1088ARDB
 	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select FSL_DDR_INTERACTIVE if !SD_BOOT
@@ -1327,6 +1368,19 @@ config TARGET_LS1021ATWR
 	select SUPPORT_SPL
 	imply SCSI
 
+config TARGET_LS1021ATSN
+	bool "Support ls1021atsn"
+	select ARCH_LS1021A
+	select ARCH_SUPPORT_PSCI
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	select CPU_V7A
+	select CPU_V7_HAS_NONSEC
+	select CPU_V7_HAS_VIRT
+	select LS1_DEEP_SLEEP
+	select SUPPORT_SPL
+	imply SCSI
+
 config TARGET_LS1021AIOT
 	bool "Support ls1021aiot"
 	select ARCH_LS1021A
@@ -1348,6 +1402,7 @@ config TARGET_LS1043AQDS
 	select ARCH_LS1043A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
@@ -1362,6 +1417,7 @@ config TARGET_LS1043ARDB
 	select ARCH_LS1043A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
@@ -1373,6 +1429,7 @@ config TARGET_LS1046AQDS
 	select ARCH_LS1046A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select DM_SPI_FLASH if DM_SPI
@@ -1392,6 +1449,7 @@ config TARGET_LS1046ARDB
 	select ARCH_LS1046A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select DM_SPI_FLASH if DM_SPI
@@ -1411,6 +1469,7 @@ config TARGET_LS1046AFRWY
 	select ARCH_LS1046A
 	select ARM64
 	select ARMV8_MULTIENTRY
+	select ARCH_SUPPORT_TFABOOT
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select DM_SPI_FLASH if DM_SPI
@@ -1488,6 +1547,7 @@ config ARCH_STM32MP
 	select MISC
 	select OF_CONTROL
 	select OF_LIBFDT
+	select OF_SYSTEM_SETUP
 	select PINCTRL
 	select REGMAP
 	select SUPPORT_SPL
@@ -1497,6 +1557,7 @@ config ARCH_STM32MP
 	imply SPL_SYSRESET
 	imply CMD_DM
 	imply CMD_POWEROFF
+	imply OF_LIBFDT_OVERLAY
 	imply ENV_VARS_UBOOT_RUNTIME_CONFIG
 	imply USE_PREBOOT
 	help
@@ -1552,6 +1613,17 @@ config ARCH_ASPEED
 	imply CMD_DM
 
 endchoice
+
+config ARCH_SUPPORT_TFABOOT
+	bool
+
+config TFABOOT
+	bool "Support for booting from TF-A"
+	depends on ARCH_SUPPORT_TFABOOT
+	default n
+	help
+	  Enabling this will make a U-Boot binary that is capable of being
+	  booted via TF-A.
 
 config TI_SECURE_DEVICE
 	bool "HS Device Type Support"
@@ -1703,6 +1775,7 @@ source "board/freescale/ls1028a/Kconfig"
 source "board/freescale/ls1021aqds/Kconfig"
 source "board/freescale/ls1043aqds/Kconfig"
 source "board/freescale/ls1021atwr/Kconfig"
+source "board/freescale/ls1021atsn/Kconfig"
 source "board/freescale/ls1021aiot/Kconfig"
 source "board/freescale/ls1046aqds/Kconfig"
 source "board/freescale/ls1043ardb/Kconfig"
@@ -1718,6 +1791,7 @@ source "board/grinn/chiliboard/Kconfig"
 source "board/gumstix/pepper/Kconfig"
 source "board/h2200/Kconfig"
 source "board/hisilicon/hikey/Kconfig"
+source "board/hisilicon/hikey960/Kconfig"
 source "board/hisilicon/poplar/Kconfig"
 source "board/isee/igep003x/Kconfig"
 source "board/phytec/pcm051/Kconfig"

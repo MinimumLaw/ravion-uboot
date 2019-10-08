@@ -33,16 +33,6 @@
  *  if button B is not pressed, boot normal Linux system immediatelly
  *  if button B is pressed, wait $bootdelay and boot recovery system
  */
-#define CONFIG_PREBOOT						\
-	"setenv hostname vining-${unit_serial} ; "		\
-	"setenv PS1 \"${unit_ident} (${unit_serial}) => \" ; "	\
-	"if gpio input 78 ; then "			\
-		"setenv bootdelay 10 ; "		\
-		"setenv boottype rcvr ; "		\
-	"else "						\
-		"setenv bootdelay 5 ; "			\
-		"setenv boottype norm ; "		\
-	"fi"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=n\0" \
@@ -145,6 +135,7 @@
 			"run ubi_ubi ; "				\
 		"else echo \"Unsupported boot mode: \"${bootmode} ; "	\
 		"fi\0"							\
+		"socfpga_legacy_reset_compat=1\0"
 
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE

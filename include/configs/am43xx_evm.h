@@ -8,7 +8,6 @@
 #ifndef __CONFIG_AM43XX_EVM_H
 #define __CONFIG_AM43XX_EVM_H
 
-#define CONFIG_ARCH_CPU_INIT
 #define CONFIG_MAX_RAM_BANK_SIZE	(1024 << 21)	/* 2GB */
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
 
@@ -58,9 +57,6 @@
 
 /* Now bring in the rest of the common code. */
 #include <configs/ti_armv7_omap.h>
-
-/* Always 64 KiB env size */
-#define CONFIG_ENV_SIZE			(64 << 10)
 
 /* Clock Defines */
 #define V_OSCK				24000000  /* Clock output from T2 */
@@ -114,8 +110,6 @@
 
 #ifdef CONFIG_QSPI_BOOT
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
-#define CONFIG_ENV_SECT_SIZE           (64 << 10) /* 64 KB sectors */
-#define CONFIG_ENV_OFFSET              0x110000
 #define CONFIG_ENV_OFFSET_REDUND       0x120000
 #endif
 
