@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: GPL-2.0+ OR X11
+/*
+ * Copyright 2019 Radioavionica Corp
+ */
+
+/dts-v1/;
+
+#define IMX6DL
+#include <dt-bindings/gpio/gpio.h>
+#include "imx6dl.dtsi"
+#include "imx6qdl-ravion.dtsi"
+
+/ {
+	model = "Radioavionica Corp, Ravion200 iMX6DL";
+	compatible = "ravion,ravion200_imx6dl", "fsl,imx6dl";
+
+	/* Will be filled by the bootloader */
+	memory@10000000 {
+		device_type = "memory";
+		reg = <0x10000000 0>;
+	};
+
+	aliases {
+		mmc0 = &usdhc3;
+		mmc1 = &usdhc1;
+		mmc2 = &usdhc2;
+		usb0 = &usbotg; /* required for ums */
+	};
+
+	chosen {
+		stdout-path = &uart1;
+	};
+
+};
+
+/* serial ports */
+&uart1 { status = "okay"; };
+
+/* SD/MMC/eMMC */
+&usdhc1 { status = "okay"; }; /* compatible */
+&usdhc2 { status = "okay"; }; /* extended */
+&usdhc3 { status = "okay"; }; /* eMMC */

@@ -609,6 +609,7 @@ dtb-$(CONFIG_MX6ULL) += \
 	imx6ull-dart-6ul.dtb
 
 dtb-$(CONFIG_ARCH_MX6) += \
+	imx6dl-ravion.dtb \
 	imx6-apalis.dtb \
 	imx6-colibri.dtb
 
