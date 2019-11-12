@@ -54,11 +54,11 @@
 #endif
 
 /* I2C Configs */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_MXC_I2C1         /* enable I2C bus 1 */
-#define CONFIG_SYS_I2C_MXC_I2C2         /* enable I2C bus 2 */
-#define CONFIG_SYS_I2C_MXC_I2C3         /* enable I2C bus 3 */
+//#define CONFIG_SYS_I2C
+//#define CONFIG_SYS_I2C_MXC
+//#define CONFIG_SYS_I2C_MXC_I2C1         /* enable I2C bus 1 */
+//#define CONFIG_SYS_I2C_MXC_I2C2         /* enable I2C bus 2 */
+//#define CONFIG_SYS_I2C_MXC_I2C3         /* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		100000
 
 /* MMC Configs */
@@ -130,14 +130,6 @@
 #define CONFIG_SERVERIP			192.168.5.254
 
 #define CONFIG_LOADADDR			0x12000000
-
-#ifdef CONFIG_CMD_MMC
-#define CONFIG_DRIVE_MMC "mmc "
-#else
-#define CONFIG_DRIVE_MMC
-#endif
-
-#define CONFIG_DRIVE_TYPES CONFIG_DRIVE_MMC
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"kernel_addr_r=0x11000000\0" \

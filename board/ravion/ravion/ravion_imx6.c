@@ -959,16 +959,16 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
-
+#if 0
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_local);
 	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_compat);
 	setup_i2c(3, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_extend);
-
+#endif
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();
 #endif
 
-#ifdef CONFIG_RAVION_CMD_IMX_MFGR
+#if 0 /* CONFIG_RAVION_CMD_IMX_MFGR */
 	(void) pmic_init();
 #endif
 

@@ -456,6 +456,7 @@ config TARGET_RAVION_IMX6
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select DM
+	select DM_MMC
 	select DM_SERIAL
 	select DM_THERMAL
 
