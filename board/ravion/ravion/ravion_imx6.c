@@ -27,7 +27,7 @@
 #include <asm/io.h>
 #include <dm/platform_data/serial_mxc.h>
 #include <dm/platdata.h>
-#include <fsl_esdhc.h>
+#include <fsl_esdhc_imx.h>
 #include <i2c.h>
 #include <input.h>
 #include <imx_thermal.h>
@@ -297,7 +297,7 @@ int board_usb_phy_mode(int port)
 }
 #endif
 
-#ifdef CONFIG_FSL_ESDHC
+#ifdef CONFIG_FSL_ESDHC_IMX
 /* use the following sequence: eMMC, MMC */
 struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 	{USDHC3_BASE_ADDR},
@@ -308,16 +308,22 @@ struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
 int board_mmc_getcd(struct mmc *mmc)
 {
 	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
-	int ret = true; /* default: assume inserted */
+	int ret = false; /* default: assume not inserted */
 
 	switch (cfg->esdhc_base) {
 	case USDHC1_BASE_ADDR:
 		gpio_direction_input(GPIO_MMC1_CD);
 		ret = !gpio_get_value(GPIO_MMC1_CD);
+		printf("MMC1: report %s\n", ret ? "present" : "not present");
 		break;
 	case USDHC2_BASE_ADDR:
 		gpio_direction_input(GPIO_MMC2_CD);
 		ret = !gpio_get_value(GPIO_MMC2_CD);
+		printf("MMC2: report %s\n", ret ? "present" : "not present");
+		break;
+	case USDHC3_BASE_ADDR:
+		printf("eMMC: report present\n");
+		ret = true;
 		break;
 	}
 
@@ -341,8 +347,8 @@ int board_mmc_init(bd_t *bis)
 	case 0x0:
 		imx_iomux_v3_setup_multiple_pads(
 			usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
-		usdhc_cfg[0].esdhc_base = USDHC1_BASE_ADDR;
-		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
+		usdhc_cfg[0].esdhc_base = USDHC3_BASE_ADDR;
+		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 		gd->arch.sdhc_clk = usdhc_cfg[0].sdhc_clk;
 		break;
 	case 0x1:
@@ -355,8 +361,8 @@ int board_mmc_init(bd_t *bis)
 	case 0x2:
 		imx_iomux_v3_setup_multiple_pads(
 			usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
-		usdhc_cfg[0].esdhc_base = USDHC3_BASE_ADDR;
-		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
+		usdhc_cfg[0].esdhc_base = USDHC1_BASE_ADDR;
+		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 		gd->arch.sdhc_clk = usdhc_cfg[0].sdhc_clk;
 		break;
 	default:
