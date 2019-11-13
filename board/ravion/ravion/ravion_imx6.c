@@ -20,40 +20,21 @@
 #include <asm/bootm.h>
 #include <asm/gpio.h>
 #include <asm/mach-imx/iomux-v3.h>
-#include <asm/mach-imx/mxc_i2c.h>
-#include <asm/mach-imx/sata.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/video.h>
 #include <asm/io.h>
-#include <dm/platform_data/serial_mxc.h>
 #include <dm/platdata.h>
-#include <fsl_esdhc_imx.h>
-#include <i2c.h>
 #include <input.h>
 #include <imx_thermal.h>
 #include <linux/errno.h>
 #include <malloc.h>
 #include <micrel.h>
 #include <miiphy.h>
-#include <mmc.h>
-#include <usb.h>
-#include <usb/ehci-ci.h>
 #include <netdev.h>
 
 #include "../common/rav-cfg-block.h"
-#ifdef CONFIG_RAVION_CMD_IMX_MFGR
-#include "pf0100.h"
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
-
-#define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
-	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm |			\
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-
-#define USDHC_PAD_CTRL (PAD_CTL_PUS_47K_UP |			\
-	PAD_CTL_SPEED_LOW | PAD_CTL_DSE_80ohm |			\
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
 #define ENET_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
@@ -63,10 +44,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define BUTTON_PAD_CTRL (PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
-
-#define I2C_PAD_CTRL	(PAD_CTL_PUS_100K_UP |			\
-	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |	\
-	PAD_CTL_ODE | PAD_CTL_SRE_FAST)
 
 #define WEAK_PULLUP	(PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |	\
@@ -90,334 +67,6 @@ int dram_init(void)
 	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
 				    (ulong)imx_ddr_size());
 
-	return 0;
-}
-
-/* Ravion UARTA */
-iomux_v3_cfg_t const uart1_pads[] = {
-	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-};
-
-#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
-/* Extened I2C on soDimm pins 128, 130 */
-struct i2c_pads_info i2c_pad_info_extend = {
-	.scl = {
-		.i2c_mode = MX6_PAD_EIM_D17__I2C3_SCL | PC,
-		.gpio_mode = MX6_PAD_EIM_D17__GPIO3_IO17 | PC,
-		.gp = IMX_GPIO_NR(3, 17)
-	},
-	.sda = {
-		.i2c_mode = MX6_PAD_EIM_D18__I2C3_SDA | PC,
-		.gpio_mode = MX6_PAD_EIM_D18__GPIO3_IO18 | PC,
-		.gp = IMX_GPIO_NR(3, 18)
-	}
-};
-
-/* Compatible I2C on soDimm pins 194, 196 */
-struct i2c_pads_info i2c_pad_info_compat = {
-	.scl = {
-		.i2c_mode = MX6_PAD_EIM_EB2__I2C2_SCL | PC,
-		.gpio_mode = MX6_PAD_EIM_EB2__GPIO2_IO30 | PC,
-		.gp = IMX_GPIO_NR(2, 30)
-	},
-	.sda = {
-		.i2c_mode = MX6_PAD_EIM_D16__I2C2_SDA | PC,
-		.gpio_mode = MX6_PAD_EIM_D16__GPIO3_IO16 | PC,
-		.gp = IMX_GPIO_NR(3, 16)
-	}
-};
-
-/* Ravion local, PMIC, SGTL5000, etc... */
-struct i2c_pads_info i2c_pad_info_local = {
-	.scl = {
-		.i2c_mode = MX6_PAD_CSI0_DAT9__I2C1_SCL | PC,
-		.gpio_mode = MX6_PAD_CSI0_DAT9__GPIO5_IO27 | PC,
-		.gp = IMX_GPIO_NR(5, 27)
-	},
-	.sda = {
-		.i2c_mode = MX6_PAD_CSI0_DAT8__I2C1_SDA | PC,
-		.gpio_mode = MX6_PAD_CSI0_DAT8__GPIO5_IO26 | PC,
-		.gp = IMX_GPIO_NR(5, 26)
-	}
-};
-
-/* Compatible MMC soDimm pins 43, 47, 49, 51, 53, 190, 192 */
-iomux_v3_cfg_t const usdhc1_pads[] = {
-	MX6_PAD_SD1_CLK__SD1_CLK    | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD1_CMD__SD1_CMD    | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD1_DAT0__SD1_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD1_DAT1__SD1_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD1_DAT2__SD1_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD1_DAT3__SD1_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_CSI0_DATA_EN__GPIO5_IO20 | MUX_PAD_CTRL(NO_PAD_CTRL), /* CD */
-#	define GPIO_MMC1_CD IMX_GPIO_NR(5, 20)
-};
-
-/* Extended MMC soDImm pins 89, 93, 95, 99, 105, 106, 107 */
-iomux_v3_cfg_t const usdhc2_pads[] = {
-	MX6_PAD_SD2_CMD__SD2_CMD	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD2_CLK__SD2_CLK	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD2_DAT0__SD2_DATA0	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD2_DAT1__SD2_DATA1	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD2_DAT2__SD2_DATA2	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD2_DAT3__SD2_DATA3	| MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_EIM_CS1__GPIO2_IO24	| MUX_PAD_CTRL(NO_PAD_CTRL), /* CD */
-#	define GPIO_MMC2_CD IMX_GPIO_NR(2, 24)
-};
-
-/* eMMC */
-iomux_v3_cfg_t const usdhc3_pads[] = {
-	MX6_PAD_SD3_CLK__SD3_CLK    | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_CMD__SD3_CMD    | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT0__SD3_DATA0 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT1__SD3_DATA1 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT2__SD3_DATA2 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT3__SD3_DATA3 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT4__SD3_DATA4 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT5__SD3_DATA5 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT6__SD3_DATA6 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_DAT7__SD3_DATA7 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-	MX6_PAD_SD3_RST__SD3_RESET  | MUX_PAD_CTRL(USDHC_PAD_CTRL),
-};
-
-iomux_v3_cfg_t const enet_pads[] = {
-	/* MDIO bus */
-	MX6_PAD_ENET_MDC__ENET_MDC		| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_MDIO__ENET_MDIO		| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	/* receive */
-	MX6_PAD_GPIO_16__ENET_REF_CLK		| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_RXD0__ENET_RX_DATA0	| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_RXD1__ENET_RX_DATA1	| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_CRS_DV__ENET_RX_EN		| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_RX_ER__ENET_RX_ER		| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	/* transmitt */
-	MX6_PAD_ENET_TXD0__ENET_TX_DATA0	| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_TXD1__ENET_TX_DATA1	| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	MX6_PAD_ENET_TX_EN__ENET_TX_EN		| MUX_PAD_CTRL(ENET_PAD_CTRL),
-	/* GPIO */
-	MX6_PAD_NANDF_CLE__GPIO6_IO07		| MUX_PAD_CTRL(NO_PAD_CTRL), /* nPHY_RESET */
-	MX6_PAD_NANDF_ALE__GPIO6_IO08		| MUX_PAD_CTRL(NO_PAD_CTRL), /* nPHY_IRQ */
-};
-
-static void setup_iomux_enet(void)
-{
-	imx_iomux_v3_setup_multiple_pads(enet_pads, ARRAY_SIZE(enet_pads));
-}
-
-/* mux auxiliary pins to GPIO, so they can be used from the U-Boot cmdline */
-iomux_v3_cfg_t const gpio_pads[] = {
-	/*
-	 * ToDo: We _REALLY_ need this???
-	 */
-};
-
-static void setup_iomux_gpio(void)
-{
-	/*
-	imx_iomux_v3_setup_multiple_pads(gpio_pads, ARRAY_SIZE(gpio_pads));
-	*/
-}
-
-/* FixMe: need to be checked */
-iomux_v3_cfg_t const usb_pads[] = {
-	/* USB OTG PEN */
-	MX6_PAD_GPIO_0__GPIO1_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),
-#	define GPIO_USB_OTG_PEN IMX_GPIO_NR(1, 0)
-	/* USB OTG ID */
-	MX6_PAD_GPIO_1__GPIO1_IO01| MUX_PAD_CTRL(NO_PAD_CTRL),
-#	define GPIO_USB_OTG_ID IMX_GPIO_NR(1, 1)
-};
-
-/*
- * UARTs are used in DTE mode, switch the mode on all UARTs before
- * any pinmuxing connects a (DCE) output to a transceiver output.
- */
-#define UFCR		0x90	/* FIFO Control Register */
-#define UFCR_DCEDTE	(1<<6)	/* DCE=0 */
-
-static void setup_dcemode_uart(void)
-{
-	clrbits_le32((u32 *)(UART1_BASE + UFCR), UFCR_DCEDTE);
-	clrbits_le32((u32 *)(UART2_BASE + UFCR), UFCR_DCEDTE);
-	clrbits_le32((u32 *)(UART3_BASE + UFCR), UFCR_DCEDTE);
-}
-
-static void setup_iomux_uart(void)
-{
-	setup_dcemode_uart();
-	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
-}
-
-#ifdef CONFIG_USB_EHCI_MX6
-int board_ehci_hcd_init(int port)
-{
-	imx_iomux_v3_setup_multiple_pads(usb_pads, ARRAY_SIZE(usb_pads));
-	gpio_direction_input(GPIO_USB_OTG_ID);
-	return 0;
-}
-
-int board_ehci_power(int port, int on)
-{
-	char *board = env_get("board");
-
-	switch (port) {
-	case 0:	/* control OTG power */
-		/* No special PE for USBC, always on when ID pin signals
-		   host mode */
-		if(strcmp("eval-v3",board)) {
-			gpio_direction_output(GPIO_USB_OTG_PEN, !!on);
-			mdelay(100);
-		}
-		break;
-	case 1:	/* Control MXM USBH */
-		if(!strcmp("eval-v3",board)) {
-			gpio_direction_output(GPIO_USB_OTG_PEN, !on);
-			mdelay(100);
-		}
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
-
-int board_usb_phy_mode(int port)
-{
-	switch (port) {
-	case 0: /* OTG port mode - check ID pin */
-		/* FixMe: Ravion200 board have DIRECT OTG ID func. "1" - Device, "0" - Host */
-		if (gpio_get_value(GPIO_USB_OTG_ID))
-		    return USB_INIT_DEVICE;
-		break;
-	case 1: /* HOST port */
-		break;
-	}
-	return USB_INIT_HOST;
-}
-#endif
-
-#ifdef CONFIG_FSL_ESDHC_IMX
-/* use the following sequence: eMMC, MMC */
-struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
-	{USDHC3_BASE_ADDR},
-	{USDHC2_BASE_ADDR},
-	{USDHC1_BASE_ADDR},
-};
-
-int board_mmc_getcd(struct mmc *mmc)
-{
-	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
-	int ret = false; /* default: assume not inserted */
-
-	switch (cfg->esdhc_base) {
-	case USDHC1_BASE_ADDR:
-		gpio_direction_input(GPIO_MMC1_CD);
-		ret = !gpio_get_value(GPIO_MMC1_CD);
-		printf("MMC1: report %s\n", ret ? "present" : "not present");
-		break;
-	case USDHC2_BASE_ADDR:
-		gpio_direction_input(GPIO_MMC2_CD);
-		ret = !gpio_get_value(GPIO_MMC2_CD);
-		printf("MMC2: report %s\n", ret ? "present" : "not present");
-		break;
-	case USDHC3_BASE_ADDR:
-		printf("eMMC: report present\n");
-		ret = true;
-		break;
-	}
-
-	return ret;
-}
-
-int board_mmc_init(bd_t *bis)
-{
-	struct src *psrc = (struct src *)SRC_BASE_ADDR;
-	unsigned reg = readl(&psrc->sbmr1) >> 11;
-	/*
-	 * Upon reading BOOT_CFG register the following map is done:
-	 * Bit 11 and 12 of BOOT_CFG register can determine the current
-	 * mmc port
-	 * 0x1                  SD1
-	 * 0x2                  SD2
-	 * 0x3                  SD4
-	 */
-
-	switch (reg & 0x3) {
-	case 0x0:
-		imx_iomux_v3_setup_multiple_pads(
-			usdhc1_pads, ARRAY_SIZE(usdhc1_pads));
-		usdhc_cfg[0].esdhc_base = USDHC3_BASE_ADDR;
-		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
-		gd->arch.sdhc_clk = usdhc_cfg[0].sdhc_clk;
-		break;
-	case 0x1:
-		imx_iomux_v3_setup_multiple_pads(
-			usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
-		usdhc_cfg[0].esdhc_base = USDHC2_BASE_ADDR;
-		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
-		gd->arch.sdhc_clk = usdhc_cfg[0].sdhc_clk;
-		break;
-	case 0x2:
-		imx_iomux_v3_setup_multiple_pads(
-			usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
-		usdhc_cfg[0].esdhc_base = USDHC1_BASE_ADDR;
-		usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
-		gd->arch.sdhc_clk = usdhc_cfg[0].sdhc_clk;
-		break;
-	default:
-		puts("MMC boot device not available");
-	}
-
-	return fsl_esdhc_initialize(bis, &usdhc_cfg[0]);
-}
-#endif
-
-int board_phy_config(struct phy_device *phydev)
-{
-	if (phydev->drv->config)
-		phydev->drv->config(phydev);
-
-	return 0;
-}
-
-int board_eth_init(bd_t *bis)
-{
-	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
-	uint32_t base = IMX_FEC_BASE;
-	struct mii_dev *bus = NULL;
-	struct phy_device *phydev = NULL;
-	int ret;
-
-	/* provide the PHY clock from the i.MX 6 */
-	ret = enable_fec_anatop_clock(0, ENET_50MHZ);
-	if (ret)
-		return ret;
-	/* set gpr1[ENET_CLK_SEL] */
-	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_ENET_CLK_SEL_MASK);
-
-	setup_iomux_enet();
-
-#ifdef CONFIG_FEC_MXC
-	bus = fec_get_miibus(base, -1);
-	if (!bus)
-		return 0;
-	/* scan PHY 1..7 */
-	phydev = phy_find_by_mask(bus, 0xff, PHY_INTERFACE_MODE_RMII);
-	if (!phydev) {
-		free(bus);
-		puts("no PHY found\n");
-		return 0;
-	}
-	phy_reset(phydev);
-	printf("using PHY at %d\n", phydev->addr);
-	ret = fec_probe(bis, -1, base, bus, phydev);
-	if (ret) {
-		printf("FEC MXC: %s:failed\n", __func__);
-		free(phydev);
-		free(bus);
-	}
-#endif
 	return 0;
 }
 
@@ -941,7 +590,6 @@ int board_early_init_f(void)
 					 ARRAY_SIZE(pwr_intb_pads));
 	/* Set nRESETOUT to 100mS, then set them into ACTIVE state */
 	gpio_direction_output(EXT_NRESETOUTPUT_GP, 1);
-	setup_iomux_uart();
 
 	return 0;
 }
@@ -959,24 +607,9 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
-#if 0
-	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_local);
-	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_compat);
-	setup_i2c(3, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info_extend);
-#endif
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();
 #endif
-
-#if 0 /* CONFIG_RAVION_CMD_IMX_MFGR */
-	(void) pmic_init();
-#endif
-
-#ifdef CONFIG_SATA
-	setup_sata();
-#endif
-
-	setup_iomux_gpio();
 	return 0;
 }
 
@@ -992,15 +625,6 @@ int board_late_init(void)
 	snprintf(env_str, ARRAY_SIZE(env_str), "%.4x", rev);
 	env_set("board_rev", env_str);
 #endif
-
-#ifdef CONFIG_USB
-	usb_init();
-# ifdef CONFIG_USB_STORAGE
-	/* try to recognize storage devices immediately */
-	usb_stor_scan(1);
-# endif
-#endif
-
 	return 0;
 }
 #endif /* CONFIG_BOARD_LATE_INIT */
@@ -1064,13 +688,3 @@ void ldo_mode_set(int ldo_bypass)
 	return;
 }
 #endif
-
-static struct mxc_serial_platdata mxc_serial_plat = {
-	.reg = (struct mxc_uart *)UART1_BASE,
-	.use_dte = false,
-};
-
-U_BOOT_DEVICE(mxc_serial) = {
-	.name = "serial_mxc",
-	.platdata = &mxc_serial_plat,
-};

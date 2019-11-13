@@ -108,7 +108,7 @@
 
 #define CONFIG_AUTOBOOT_KEYED
 #define CONFIG_AUTOBOOT_PROMPT	\
-	"\nEnter boot password - autoboot in %d seconds...\n", CONFIG_BOOTDELAY
+	"\nEnter boot password - autoboot in %d seconds...\n"
 #define CONFIG_AUTOBOOT_DELAY_STR	"ravion"
 #define CONFIG_BOOT_RETRY_TIME		120
 #define CONFIG_RESET_TO_RETRY

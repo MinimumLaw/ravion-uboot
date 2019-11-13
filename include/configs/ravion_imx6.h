@@ -39,26 +39,12 @@
 #define CONFIG_VERSION_VARIABLE		/* ver environment variable */
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
-/* PCI */
-#ifdef CONFIG_CMD_PCI
-#define CONFIG_PCI_SCAN_SHOW
-#define CONFIG_PCIE_IMX
-/* #define CONFIG_PCIE_IMX_PERST_GPIO	IMX_GPIO_NR(7, 12) */
-#endif
-
 /* SATA */
 #ifdef CONFIG_CMD_SATA
-#define CONFIG_SYS_SATA_MAX_DEVICE	1
-#define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 #define CONFIG_LBA48
 #endif
 
 /* I2C Configs */
-//#define CONFIG_SYS_I2C
-//#define CONFIG_SYS_I2C_MXC
-//#define CONFIG_SYS_I2C_MXC_I2C1         /* enable I2C bus 1 */
-//#define CONFIG_SYS_I2C_MXC_I2C2         /* enable I2C bus 2 */
-//#define CONFIG_SYS_I2C_MXC_I2C3         /* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		100000
 
 /* MMC Configs */
@@ -68,12 +54,6 @@
 #define CONFIG_BOUNCE_BUFFER
 
 /* Network */
-#define CONFIG_FEC_MXC
-#define CONFIG_MII
-#define IMX_FEC_BASE			ENET_BASE_ADDR
-#define CONFIG_FEC_XCV_TYPE		RMII
-#define CONFIG_ETHPRIME			"FEC"
-#define CONFIG_FEC_MXC_PHYADDR		1
 #define CONFIG_IP_DEFRAG
 #define CONFIG_TFTP_TSIZE
 
@@ -118,7 +98,7 @@
 
 #define CONFIG_AUTOBOOT_KEYED
 #define CONFIG_AUTOBOOT_PROMPT	\
-	"\nEnter boot password - autoboot in %d seconds...\n", CONFIG_BOOTDELAY
+	"\nEnter boot password - autoboot in %d seconds...\n"
 #define CONFIG_AUTOBOOT_DELAY_STR	"ravion"
 #define CONFIG_BOOT_RETRY_TIME		120
 #define CONFIG_RESET_TO_RETRY
