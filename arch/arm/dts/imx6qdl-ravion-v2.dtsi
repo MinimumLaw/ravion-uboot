@@ -13,6 +13,19 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
+	aliases {
+		mmc0 = &usdhc3;
+		mmc1 = &usdhc2;
+		mmc2 = &usdhc1;
+		serial0 = &uart1;
+		serial1 = &uart2;
+		serial2 = &uart3;
+		i2c0 = &i2c1;
+		i2c1 = &i2c2;
+		i2c2 = &i2c3;
+		spi0 = &ecspi1;
+	};
+
 	/* Power sources */
 
 	avcc_reg: avcc_regulator {

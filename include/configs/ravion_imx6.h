@@ -32,9 +32,6 @@
 
 #define CONFIG_MISC_INIT_R
 
-#define CONFIG_MXC_UART
-#define CONFIG_MXC_UART_BASE		UART1_BASE
-
 /* Make the HW version stuff available in U-Boot env */
 #define CONFIG_VERSION_VARIABLE		/* ver environment variable */
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
@@ -48,10 +45,6 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 
 /* MMC Configs */
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
-#define CONFIG_SYS_FSL_USDHC_NUM	3
-#define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
-#define CONFIG_BOUNCE_BUFFER
 
 /* Network */
 #define CONFIG_IP_DEFRAG
@@ -73,15 +66,6 @@
 /* Framebuffer and LCD */
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
-#define CONFIG_VIDEO_BMP_RLE8
-#define CONFIG_SPLASH_SCREEN
-#define CONFIG_SPLASH_SCREEN_ALIGN
-#define CONFIG_BMP_16BPP
-#define CONFIG_VIDEO_LOGO
-#define CONFIG_VIDEO_BMP_LOGO
-#define CONFIG_CONSOLE_MUX
-#define CONFIG_IMX_HDMI
-#define CONFIG_IMX_VIDEO_SKIP
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
