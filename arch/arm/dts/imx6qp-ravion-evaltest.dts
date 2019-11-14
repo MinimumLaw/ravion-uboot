@@ -9,8 +9,9 @@
  *
  */
 /dts-v1/;
-#include "imx6qp.dtsi"
 
+#include <dt-bindings/clock/imx6qdl-clock.h>
+#include "imx6qp.dtsi"
 #include "imx6qdl-ravion-v2.dtsi"
 
 / {
