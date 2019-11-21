@@ -1,42 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0+ OR X11
 /*
- * Copyright 2019 Radioavionica Corp
+ * Copyright 2018 Radioavionica Corp.
+ *
+ * Author: Alex A. Mihaylov <minimumlaw@rambler.ru>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
  */
-
 /dts-v1/;
 
-#define IMX6DL
-#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/clock/imx6qdl-clock.h>
 #include "imx6dl.dtsi"
 #include "imx6qdl-ravion.dtsi"
 
 / {
-	model = "Radioavionica Corp, Ravion200 iMX6DL";
-	compatible = "ravion,ravion200_imx6dl", "fsl,imx6dl";
+	model = "ravion:evaltest";
+	compatible = "ravion,imx6qp", "fsl,imx6qp";
 
-	/* Will be filled by the bootloader */
-	memory@10000000 {
-		device_type = "memory";
-		reg = <0x10000000 0>;
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		power {
+			label = "Power";
+			gpios = <&gpio2 7 GPIO_ACTIVE_LOW>;	/* soDimm 125 */
+			linux,code = <KEY_POWER>;
+			debounce-interval = <100>;
+			wakeup-source;
+		};
 	};
 
-	aliases {
-		mmc0 = &usdhc3;
-		mmc1 = &usdhc1;
-		mmc2 = &usdhc2;
-		usb0 = &usbotg; /* required for ums */
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		reset_out {
+			label = "nRESET_OUT";
+			gpios = <&gpio2 5 GPIO_ACTIVE_HIGH>;	/* soDimm 121 */
+			default-state = "on";
+		};
 	};
 
-	chosen {
-		stdout-path = &uart1;
+	gpio-poweroff {
+		compatible = "gpio-poweroff";
+		gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;		/* soDimm 127 */
 	};
-
 };
 
-/* serial ports */
-&uart1 { status = "okay"; };
 
-/* SD/MMC/eMMC */
-&usdhc1 { status = "okay"; }; /* compatible */
-&usdhc2 { status = "okay"; }; /* extended */
-&usdhc3 { status = "okay"; }; /* eMMC */
+/*
+ * Serial ports
+ */
+/* &uart1 {	status = "okay";	}; => Allways enabled */
+&uart2 {	status = "okay";	};
+&uart3 {	status = "okay";	};
+
+/*
+ * I2C Busses
+ */
+/* &i2c1 {	status = "okay";	}; => Allways enabled */
+
+&i2c2 {	/* Compatible I2C: soDimm 194, 196 */
+	status = "okay";
+
+	/* M41T0M6 real time clock on carrier board */
+	rtc_i2c: rtc@68 {
+		compatible = "st,m41t0";
+		reg = <0x68>;
+	};
+};
+
+&i2c3 { /* Extended I2C: soDimm 128, 130 */
+	status = "okay";
+};
+
+/*
+ * SPI Bus
+ */
+&ecspi1 {	status = "okay";	};
+
+
+/*
+ * SD/MMC and eMMC controllers
+ */
+&usdhc1 {	status = "okay";	}; /* compatible */
+&usdhc2 {	status = "okay";	}; /* externed */
+/* &usdhc3 {	status = "okay";	}; => eMMC allways enabled */
+
+/*
+ * Ethernet controller
+ */
+/* &fec {	status = "okay";	}; => eth0 allways enabled */
+
+/*
+ * Audio (digital part)
+ */
+/* &audmux {	status = "okay";	}; => Allways enabled */
+/* &ssi1 {	status = "okay";	}; => Allways enabled */
+
+/*
+ * High-speed serial bus
+ */
+&pcie	{	status = "okay";	};
+/* &usbh1  {	status = "okay";	}; => Allways enabled */
+/* &usbotg`{	status = "okay";	}; => Allways enabled */
+
+/*
+ * PWMs
+ */
+&pwm3	{	status = "okay";	};
+&pwm4	{	status = "okay";	};
+
+/*
+ * Video subsystems
+ */
+&hdmi	{	status = "okay";	};

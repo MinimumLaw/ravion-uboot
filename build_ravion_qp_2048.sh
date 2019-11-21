@@ -11,6 +11,6 @@ else
 	make $*
 fi
 
-if [ -f u-boot.imx ]; then
+if [ -f u-boot-dtb.imx ]; then
 	cp -f u-boot-dtb.imx /cimc/exporttftp/u-boot-ravion-2048qp.imx
 fi

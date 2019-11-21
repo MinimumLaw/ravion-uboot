@@ -3,6 +3,7 @@ M:	Alex A. Mihaylov <minimumlaw@rambler.ru>
 W:	https://github.com/MinimumLaw/ravion-uboot
 S:	Maintained
 F:	board/ravion/
-F:	include/configs/ravion_colibri_imx6.h
-F:	configs/ravion_colibri_imx6_defconfig
-F:	configs/ravion_colibri_imx6_nospl_defconfig
+F:	include/configs/ravion_imx6.h
+F:	configs/ravion_dl_2048_defconfig
+F:	configs/ravion_dl_512_defconfig
+F:	configs/ravion_qp_2048_defconfig

@@ -163,7 +163,6 @@
 	"ethaddr=00:14:2d:00:00:00\0" \
 	VARIANT \
 	"board=evaltest\0" \
-	"console=ttymxc0\0" \
 	"bootcmd=" \
 	    "run check_recovery; " \
 	    "run usbboot; " \
@@ -223,7 +222,6 @@
 #define CONFIG_SYS_MMC_ENV_PART		1
 #endif
 
-#define CONFIG_OF_SYSTEM_SETUP
 
 #define CONFIG_CMD_TIME
 

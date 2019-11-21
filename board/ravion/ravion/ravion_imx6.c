@@ -31,6 +31,7 @@
 #include <micrel.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <usb.h>
 
 #include "../common/rav-cfg-block.h"
 
@@ -41,21 +42,6 @@ int dram_init(void)
 	/* use the DDR controllers configured size */
 	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
 				    (ulong)imx_ddr_size());
-
-	return 0;
-}
-
-static iomux_v3_cfg_t const pwr_intb_pads[] = {
-#define EXT_NRESETOUTPUT_GP IMX_GPIO_NR(5, 7)
-	MX6_PAD_DISP0_DAT13__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
-int board_early_init_f(void)
-{
-	imx_iomux_v3_setup_multiple_pads(pwr_intb_pads,
-					 ARRAY_SIZE(pwr_intb_pads));
-	/* Set nRESETOUT to 100mS, then set them into ACTIVE state */
-	gpio_direction_output(EXT_NRESETOUTPUT_GP, 1);
 
 	return 0;
 }
@@ -80,10 +66,13 @@ int board_init(void)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
+#ifdef CONFIG_FEC_MXC
 	/* enable FEC clock */
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	enable_fec_anatop_clock(0, ENET_50MHZ);
 	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_ENET_CLK_SEL_MASK);
+#endif /* CONFIG_FEC_MXC */
+
 #if defined(CONFIG_REVISION_TAG) && \
     defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 	char env_str[256];
@@ -93,66 +82,33 @@ int board_late_init(void)
 	snprintf(env_str, ARRAY_SIZE(env_str), "%.4x", rev);
 	env_set("board_rev", env_str);
 #endif
+
+#ifdef CONFIG_USB
+	usb_init();
+#ifdef CONFIG_USB_STORAGE
+	/* try to recognize storage devices immediately */
+	usb_stor_scan(1);
+#endif
+#endif
 	return 0;
 }
 #endif /* CONFIG_BOARD_LATE_INIT */
 
-#if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_SYSTEM_SETUP)
-int ft_system_setup(void *blob, bd_t *bd)
-{
-	return 0;
-}
-#endif
-
-int checkboard(void)
-{
-	char it[] = " IT";
-	int minc, maxc;
-
-	switch (get_cpu_temp_grade(&minc, &maxc)) {
-	case TEMP_AUTOMOTIVE:
-	case TEMP_INDUSTRIAL:
-		break;
-	case TEMP_EXTCOMMERCIAL:
-	default:
-		it[0] = 0;
-	};
-	printf("CPU Module: Ravion iMX6 %s %sMB%s\n",
-	       is_cpu_type(MXC_CPU_MX6QP) ? "QuadPlus" : \
-			is_cpu_type(MXC_CPU_MX6Q) ? "Quad" : \
-	    		is_cpu_type(MXC_CPU_MX6DL) ? "DualLite" : "Solo",
-	       (gd->ram_size == 0x80000000) ? "2048" : \
-			(gd->ram_size == 0x40000000) ? "1024" : \
-			(gd->ram_size == 0x20000000) ? "512" : "256", it);
-	return 0;
-}
-
 #if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
+/*
+ * ToDo: Place FDT patches here. Applyed for U-Boot FDT
+ */
 int ft_board_setup(void *blob, bd_t *bd)
 {
 	return ft_common_board_setup(blob, bd);
 }
 #endif
-
-#ifdef CONFIG_CMD_BMODE
-static const struct boot_mode board_boot_modes[] = {
-	{"mmc",	MAKE_CFGVAL(0x40, 0x20, 0x00, 0x00)},
-	{NULL,	0},
-};
-#endif
-
+           
 int misc_init_r(void)
 {
 #ifdef CONFIG_CMD_BMODE
-	add_board_boot_modes(board_boot_modes);
+	/* no need fixup plaftorm bootmodes */
+	add_board_boot_modes(NULL);
 #endif
 	return 0;
 }
-
-#ifdef CONFIG_LDO_BYPASS_CHECK
-/* TODO, use external pmic, for now always ldo_enable */
-void ldo_mode_set(int ldo_bypass)
-{
-	return;
-}
-#endif

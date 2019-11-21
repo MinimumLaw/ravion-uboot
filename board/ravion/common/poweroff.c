@@ -18,15 +18,8 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_SRE_SLOW)
 
 static iomux_v3_cfg_t const power_key_pads[] = {
-#if defined CONFIG_TARGET_RAVION_COLIBRI_IMX6
-	MX6_PAD_NANDF_D3__GPIO2_IO03	| MUX_PAD_CTRL(WEAK_PULLUP),
-#	define PIN_POWER_OFF	IMX_GPIO_NR(2, 3)
-#elif defined CONFIG_TARGET_RAVION_IMX6
 	MX6_PAD_SD4_DAT3__GPIO2_IO11	| MUX_PAD_CTRL(WEAK_PULLUP),
 #	define PIN_POWER_OFF	IMX_GPIO_NR(2, 11)
-#else
-#error Command nned recovery support only on ravion imx6 and ravion colibri imx6 boards
-#endif
 };
 
 int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc,

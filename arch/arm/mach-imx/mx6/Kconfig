@@ -443,22 +443,19 @@ config TARGET_PFLA02
 	select MX6QDL
 	select SUPPORT_SPL
 
-config TARGET_RAVION_COLIBRI_IMX6
-	bool "Ravion board with Toradex Colibri iMX6 module"
-	select BOARD_LATE_INIT
-	select SUPPORT_SPL
-	select DM
-	select DM_SERIAL
-	select DM_THERMAL
-
 config TARGET_RAVION_IMX6
-	bool "Ravion iMX6 module"
+	bool "OAO Radioavionica Ravion200 iMX6 module"
 	select BOARD_LATE_INIT
-	select SUPPORT_SPL
 	select DM
+	select DM_GPIO
+	select DM_I2C
+	select DM_PMIC
+	select DM_REGULATOR
 	select DM_MMC
+	select DM_ETH
 	select DM_SERIAL
 	select DM_THERMAL
+	select DM_USB
 
 config MX6Q
 	depends on TARGET_RAVION_IMX6
@@ -617,7 +614,6 @@ source "board/softing/vining_2000/Kconfig"
 source "board/liebherr/display5/Kconfig"
 source "board/liebherr/mccmon6/Kconfig"
 source "board/logicpd/imx6/Kconfig"
-source "board/ravion/colibri/Kconfig"
 source "board/ravion/ravion/Kconfig"
 source "board/seco/Kconfig"
 source "board/sks-kinkel/sksimx6/Kconfig"
