@@ -11,9 +11,6 @@
 
 #include "mx6_common.h"
 
-#undef CONFIG_DISPLAY_BOARDINFO
-#define CONFIG_DISPLAY_BOARDINFO_LATE	/* Calls show_board_info() */
-
 #include <asm/arch/imx-regs.h>
 #include <asm/mach-imx/gpio.h>
 
@@ -30,62 +27,14 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(32 * 1024 * 1024)
 
-#define CONFIG_MISC_INIT_R
-
-/* Make the HW version stuff available in U-Boot env */
-#define CONFIG_VERSION_VARIABLE		/* ver environment variable */
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-
 /* SATA */
 #ifdef CONFIG_CMD_SATA
 #define CONFIG_LBA48
 #endif
-
 /* I2C Configs */
 #define CONFIG_SYS_I2C_SPEED		100000
-
-/* MMC Configs */
-
-/* Network */
-#define CONFIG_IP_DEFRAG
-#define CONFIG_TFTP_TSIZE
-
-/* USB Configs */
-/* Host */
-#define CONFIG_USB_MAX_CONTROLLER_COUNT		2
-#define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
-#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
-#define CONFIG_MXC_USB_FLAGS		0
-/* Client */
-#define CONFIG_USBD_HS
-
-#define CONFIG_USB_GADGET_MASS_STORAGE
-
-/* Miscellaneous commands */
-
-/* Framebuffer and LCD */
-#define CONFIG_SYS_CONSOLE_IS_IN_ENV
-#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
-
-/* allow to overwrite serial and ethaddr */
-#define CONFIG_ENV_OVERWRITE
-#define CONFIG_CONS_INDEX		1
-
-/* Command definition */
-#undef CONFIG_CMD_LOADB
-#undef CONFIG_CMD_LOADS
-#undef CONFIG_CMD_NFS
-#undef CONFIG_CMD_FLASH
-
-#undef CONFIG_BOOTDELAY
-#define CONFIG_BOOTDELAY		5
-
-#define CONFIG_AUTOBOOT_KEYED
-#define CONFIG_AUTOBOOT_PROMPT	\
-	"\nEnter boot password - autoboot in %d seconds...\n"
-#define CONFIG_AUTOBOOT_DELAY_STR	"ravion"
-#define CONFIG_BOOT_RETRY_TIME		120
-#define CONFIG_RESET_TO_RETRY
+/* USB Config (Host) */
+#define CONFIG_MXC_USB_PORTSC          (PORT_PTS_UTMI | PORT_PTS_PTW)
 
 #undef CONFIG_IPADDR
 #define CONFIG_IPADDR			192.168.5.101
