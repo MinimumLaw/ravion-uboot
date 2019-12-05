@@ -18,6 +18,10 @@
 	model = "ravion:evaltest";
 	compatible = "ravion,imx6qp", "fsl,imx6qp";
 
+	chosen {
+		stdout-path = &uart1;
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 
@@ -104,6 +108,7 @@
 &sata	{	status = "okay";	};
 /* &usbh1  {	status = "okay";	}; => Allways enabled */
 /* &usbotg`{	status = "okay";	}; => Allways enabled */
+/* &usbh3  {	status = "okay";	}; => HSIC interface disabled - no hub */
 
 /*
  * PWMs
