@@ -7,10 +7,10 @@ fi
 if [ -f .config ]; then
 	make $*
 else
-	make ravion_dl_512_defconfig
+	make ravion_defconfig
 	make $*
 fi
 
-if [ -f u-boot-dtb.imx ]; then
-	cp -f u-boot-dtb.imx /cimc/exporttftp/u-boot-ravion-512dl.imx
-fi
+#if [ -f u-boot-dtb.imx ]; then
+#	cp -f u-boot-dtb.imx /cimc/exporttftp/u-boot-ravion.imx
+#fi

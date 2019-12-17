@@ -63,6 +63,13 @@ int board_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_BOARD_EARLY_INIT_F
+int board_early_init_f(void)
+{
+	return 0;
+}
+#endif /* CONFIG_BOARD_EARLY_INIT_F */
+
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
@@ -103,7 +110,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	return ft_common_board_setup(blob, bd);
 }
 #endif
-           
+
 int misc_init_r(void)
 {
 #ifdef CONFIG_CMD_BMODE
@@ -112,3 +119,91 @@ int misc_init_r(void)
 #endif
 	return 0;
 }
+
+#ifdef CONFIG_MULTI_DTB_FIT
+int board_fit_config_name_match(const char *name)
+{
+	if (is_mx6dq()) {
+		if (!strcmp(name, "imx6qp-ravion"))
+			return 0;
+	} else if (is_mx6dl()) {
+		if (!strcmp(name, "imx6dl-ravion"))
+			return 0;
+	}
+
+	return -1;
+}
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+#include <asm/arch/mx6-ddr.h>
+#include <spl.h>
+#include <linux/libfdt.h>
+#include "ravion_qp_2048.h"
+
+#ifdef CONFIG_SPL_OS_BOOT
+int spl_start_uboot(void)
+{
+	return 0;
+}
+#endif /* CONFIG_SPL_OS_BOOT*/
+
+static void ccgr_init(void)
+{
+	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+#warning Only really required clocks must be enabled here
+	writel(0xFFFFFFFF, &ccm->CCGR0);
+	writel(0xFFFFFFFF, &ccm->CCGR1);
+	writel(0xFFFFFFFF, &ccm->CCGR2);
+	writel(0xFFFFFFFF, &ccm->CCGR3);
+	writel(0xFFFFFFFF, &ccm->CCGR4);
+	writel(0xFFFFFFFF, &ccm->CCGR5);
+	writel(0xFFFFFFFF, &ccm->CCGR6);
+}
+
+static int imx6qp_2048_dcd[] = RAVION_QP_2048;
+
+static void ddr_init(int *table, int size) 
+{
+	int i;
+
+	for (i = 0; i < size / 2 ; i++)
+		writel(table[2 * i + 1], table[2 * i]);
+}
+
+static void spl_dram_init(void)
+{
+	if (is_mx6dqp())
+		ddr_init(imx6qp_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
+	else if (is_mx6dq())
+		ddr_init(imx6qp_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
+}
+
+void board_init_f(ulong dummy)
+{
+	/* DDR initialization */
+	spl_dram_init();
+
+	/* setup AIPS and disable watchdog */
+	arch_cpu_init();
+
+	ccgr_init();
+	gpr_init();
+
+	/* iomux and setup of i2c */
+	board_early_init_f();
+
+	/* setup GP timer */
+	timer_init();
+
+	/* UART clocks enabled and gd valid - init serial console */
+	preloader_console_init();
+
+	/* Clear the BSS. */
+	memset(__bss_start, 0, __bss_end - __bss_start);
+
+	/* load/boot image from boot device */
+	board_init_r(NULL, 0);
+}
+
+#endif /* CONFIG_SPL_BUILD */

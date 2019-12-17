@@ -445,6 +445,7 @@ config TARGET_PFLA02
 
 config TARGET_RAVION_IMX6
 	bool "OAO Radioavionica Ravion200 iMX6 module"
+	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select DM
 	select DM_GPIO
@@ -456,6 +457,8 @@ config TARGET_RAVION_IMX6
 	select DM_SERIAL
 	select DM_THERMAL
 	select DM_USB
+	select SUPPORT_SPL
+	imply CMD_DM
 
 config MX6Q
 	depends on TARGET_RAVION_IMX6
