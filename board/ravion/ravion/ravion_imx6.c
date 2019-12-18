@@ -64,8 +64,19 @@ int board_init(void)
 }
 
 #ifdef CONFIG_BOARD_EARLY_INIT_F
+#define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
+	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm |	\
+	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
+
+static iomux_v3_cfg_t const uart1_pads[] = {
+	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+
+
 int board_early_init_f(void)
 {
+	SETUP_IOMUX_PADS(uart1_pads);
 	return 0;
 }
 #endif /* CONFIG_BOARD_EARLY_INIT_F */
@@ -144,7 +155,7 @@ int board_fit_config_name_match(const char *name)
 #ifdef CONFIG_SPL_OS_BOOT
 int spl_start_uboot(void)
 {
-	return 0;
+	return 1;
 }
 #endif /* CONFIG_SPL_OS_BOOT*/
 
