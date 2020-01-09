@@ -91,6 +91,7 @@
 
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
+	func(MMC, mmc, 0) \
 	func(MMC, mmc, 1) \
 	func(USB, usb, 0) \
 	func(DHCP, dhcp, na)
@@ -147,28 +148,10 @@
 	"nfsdtbload=setenv dtbparam; tftp ${fdt_addr_r} ${fdt_file} " \
 		"&& setenv dtbparam \" - ${fdt_addr_r}\" && true\0"
 
-#define SD_BOOTCMD \
-	"set_sdargs=setenv sdargs ip=off root=PARTUUID=${uuid} rw,noatime " \
-		"rootfstype=ext4 rootwait\0" \
-	"sdboot=run setup; run sdfinduuid; run set_sdargs; " \
-		"setenv bootargs ${defargs} ${sdargs} ${setupargs} " \
-		"${vidargs}; echo Booting from SD card; " \
-		"run sddtbload; load mmc ${sddev}:${sdbootpart} "\
-		"${kernel_addr_r} ${boot_file} && run fdt_fixup && " \
-		"bootz ${kernel_addr_r} ${dtbparam}\0" \
-	"sdbootpart=1\0" \
-	"sddev=1\0" \
-	"sddtbload=setenv dtbparam; load mmc ${sddev}:${sdbootpart} " \
-		"${fdt_addr_r} ${fdt_file} && setenv dtbparam \" - " \
-		"${fdt_addr_r}\" && true\0" \
-	"sdfinduuid=part uuid mmc ${sddev}:${sdrootpart} uuid\0" \
-	"sdrootpart=2\0"
-
 #define FDT_FILE "imx6dl-colibri-eval-v3.dtb"
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	BOOTENV \
-	"bootcmd=run emmcboot ; echo ; echo emmcboot failed ; " \
-		"setenv fdtfile ${fdt_file}; run distro_bootcmd ; " \
+	"bootcmd=setenv fdtfile ${fdt_file}; run distro_bootcmd; " \
 		"usb start ; " \
 		"setenv stdout serial,vga ; setenv stdin serial,usbkbd\0" \
 	"boot_file=zImage\0" \
@@ -180,7 +163,6 @@
 	"fdt_fixup=;\0" \
 	MEM_LAYOUT_ENV_SETTINGS \
 	NFS_BOOTCMD \
-	SD_BOOTCMD \
 	"setethupdate=if env exists ethaddr; then; else setenv ethaddr " \
 		"00:14:2d:00:00:00; fi; tftpboot ${loadaddr} " \
 		"flash_eth.img && source ${loadaddr}\0" \
@@ -224,12 +206,9 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* environment organization */
-#define CONFIG_ENV_SIZE			(8 * 1024)
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 /* Environment in eMMC, before config block at the end of 1st "boot sector" */
-#define CONFIG_ENV_OFFSET		(-CONFIG_ENV_SIZE + \
-					 CONFIG_TDX_CFG_BLOCK_OFFSET)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART		1
 #endif

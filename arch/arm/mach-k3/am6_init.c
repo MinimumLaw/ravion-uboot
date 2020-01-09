@@ -82,6 +82,7 @@ void board_init_f(ulong dummy)
 	ctrl_mmr_unlock();
 
 #ifdef CONFIG_CPU_V7R
+	disable_linefill_optimization();
 	setup_k3_mpu_regions();
 #endif
 
@@ -115,6 +116,13 @@ void board_init_f(ulong dummy)
 
 	/* Perform EEPROM-based board detection */
 	do_board_detect();
+
+#if defined(CONFIG_CPU_V7R) && defined(CONFIG_K3_AVS0)
+	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_GET_DRIVER(k3_avs),
+					  &dev);
+	if (ret)
+		printf("AVS init failed: %d\n", ret);
+#endif
 
 #ifdef CONFIG_K3_AM654_DDRSS
 	ret = uclass_get_device(UCLASS_RAM, 0, &dev);

@@ -52,7 +52,7 @@
 #define CONFIG_SYS_MEMTEST_END		(OMAP34XX_SDRC_CS0 + \
 					0x01F00000) /* 31MB */
 
-#if defined(CONFIG_NAND)
+#if defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_FLASH_BASE		NAND_BASE
 #endif
 
@@ -61,6 +61,5 @@
 
 
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
-#define CONFIG_ENV_ADDR			0x260000
 
 #endif				/* __CONFIG_H */

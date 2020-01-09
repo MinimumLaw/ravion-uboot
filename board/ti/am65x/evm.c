@@ -9,6 +9,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <init.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/hardware.h>
 #include <asm/gpio.h>
@@ -125,6 +126,19 @@ int do_board_detect(void)
 		       CONFIG_EEPROM_CHIP_ADDRESS, ret);
 
 	return ret;
+}
+
+int checkboard(void)
+{
+	struct ti_am6_eeprom *ep = TI_AM6_EEPROM_DATA;
+
+	if (do_board_detect())
+		/* EEPROM not populated */
+		printf("Board: %s rev %s\n", "AM6-COMPROCEVM", "E3");
+	else
+		printf("Board: %s rev %s\n", ep->name, ep->version);
+
+	return 0;
 }
 
 static void setup_board_eeprom_env(void)
@@ -272,7 +286,7 @@ static int probe_daughtercards(void)
 		if (strncmp(ep.name, cards[i].card_name, sizeof(ep.name)))
 			continue;
 
-		printf("detected %s\n", cards[i].card_name);
+		printf("Detected: %s rev %s\n", ep.name, ep.version);
 
 		/*
 		 * Populate any MAC addresses from daughtercard into the U-Boot

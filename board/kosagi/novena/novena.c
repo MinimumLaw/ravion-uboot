@@ -7,6 +7,8 @@
 
 #include <common.h>
 #include <dm.h>
+#include <eeprom.h>
+#include <init.h>
 #include <dm/device-internal.h>
 #include <ahci.h>
 #include <env.h>
@@ -32,8 +34,6 @@
 #include <linux/fb.h>
 #include <linux/input.h>
 #include <malloc.h>
-#include <micrel.h>
-#include <miiphy.h>
 #include <mmc.h>
 #include <netdev.h>
 #include <power/pmic.h>

@@ -5,14 +5,13 @@
  *  Copyright (c) 2017 Rob Clark
  */
 
-#include <env.h>
-#include <malloc.h>
-#include <charset.h>
+#include <common.h>
 #include <efi_loader.h>
-#include <hexdump.h>
 #include <env_internal.h>
+#include <hexdump.h>
+#include <malloc.h>
 #include <search.h>
-#include <uuid.h>
+#include <u-boot/crc.h>
 
 #define READ_ONLY BIT(31)
 
@@ -478,10 +477,12 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 			old_size = 0;
 		}
 	} else {
-		if ((data_size == 0 &&
-		     !(attributes & EFI_VARIABLE_APPEND_WRITE)) ||
-		    !attributes) {
-			/* delete, but nothing to do */
+		if (data_size == 0 || !attributes ||
+		    (attributes & EFI_VARIABLE_APPEND_WRITE)) {
+			/*
+			 * Trying to delete or to update a non-existent
+			 * variable.
+			 */
 			ret = EFI_NOT_FOUND;
 			goto out;
 		}

@@ -40,9 +40,6 @@
 #else
 #ifdef CONFIG_QSPI_BOOT
 #define CONFIG_SYS_FSL_QSPI_BASE	0x20000000
-#define CONFIG_ENV_OFFSET		0x300000        /* 3MB */
-#define CONFIG_ENV_ADDR			(CONFIG_SYS_FSL_QSPI_BASE + \
-						CONFIG_ENV_OFFSET)
 #endif
 #endif
 
@@ -235,7 +232,7 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SYS_SPL_MALLOC_SIZE     0x00100000
 #define CONFIG_SYS_SPL_MALLOC_START    0x80200000
 
-#ifdef CONFIG_SECURE_BOOT
+#ifdef CONFIG_NXP_ESBC
 #define CONFIG_U_BOOT_HDR_SIZE		(16 << 10)
 /*
  * HDR would be appended at end of image and copied to DDR along
@@ -246,7 +243,7 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SYS_MONITOR_LEN         (0x100000 + CONFIG_U_BOOT_HDR_SIZE)
 #else
 #define CONFIG_SYS_MONITOR_LEN         0x100000
-#endif /* ifdef CONFIG_SECURE_BOOT */
+#endif /* ifdef CONFIG_NXP_ESBC */
 
 #endif
 #define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */

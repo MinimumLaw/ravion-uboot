@@ -48,27 +48,9 @@
 #define CONFIG_ENV_OVERWRITE
 
 #if defined(CONFIG_SPIFLASH)
-	#define CONFIG_ENV_SIZE                 0x2000          /* 8KB */
-	#define CONFIG_ENV_OFFSET               0x100000        /* 1MB */
-	#define CONFIG_ENV_SECT_SIZE            0x10000
 #elif defined(CONFIG_SDCARD)
 	#define CONFIG_FSL_FIXED_MMC_LOCATION
 	#define CONFIG_SYS_MMC_ENV_DEV          0
-	#define CONFIG_ENV_SIZE			0x2000
-	#define CONFIG_ENV_OFFSET		(512 * 1658)
-#elif defined(CONFIG_NAND)
-#define CONFIG_ENV_SIZE			CONFIG_SYS_NAND_BLOCK_SIZE
-#define CONFIG_ENV_OFFSET		(7 * CONFIG_SYS_NAND_BLOCK_SIZE)
-#elif defined(CONFIG_SRIO_PCIE_BOOT_SLAVE)
-#define CONFIG_ENV_ADDR		0xffe20000
-#define CONFIG_ENV_SIZE		0x2000
-#elif defined(CONFIG_ENV_IS_NOWHERE)
-#define CONFIG_ENV_SIZE		0x2000
-#else
-	#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE \
-			- CONFIG_ENV_SECT_SIZE)
-	#define CONFIG_ENV_SIZE		0x2000
-	#define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) */
 #endif
 
 #ifndef __ASSEMBLY__
@@ -221,7 +203,7 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 			       | OR_FCM_TRLX \
 			       | OR_FCM_EHTR)
 
-#ifdef CONFIG_NAND
+#ifdef CONFIG_MTD_RAW_NAND
 #define CONFIG_SYS_BR0_PRELIM  CONFIG_SYS_NAND_BR_PRELIM /* NAND Base Address */
 #define CONFIG_SYS_OR0_PRELIM  CONFIG_SYS_NAND_OR_PRELIM /* NAND Options */
 #define CONFIG_SYS_BR1_PRELIM  CONFIG_SYS_FLASH_BR_PRELIM /* NOR Base Address */
@@ -419,7 +401,7 @@ unsigned long get_board_sys_clk(unsigned long dummy);
  * 0x2000 (16 blocks), 8 + 1650 + 16 = 1674, enlarge it to 1680.
  */
 #define CONFIG_SYS_FMAN_FW_ADDR	(512 * 1680)
-#elif defined(CONFIG_NAND)
+#elif defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_FMAN_FW_ADDR	(8 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #elif defined(CONFIG_SRIO_PCIE_BOOT_SLAVE)
 /*

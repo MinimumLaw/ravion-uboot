@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2019 NXP
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
  */
 
 #include <common.h>
+#include <cpu_func.h>
 #include <env.h>
 #include <fsl_ddr_sdram.h>
+#include <vsprintf.h>
 #include <asm/io.h>
 #include <linux/errno.h>
 #include <asm/system.h>
@@ -38,6 +40,7 @@
 #include <fsl_validate.h>
 #endif
 #endif
+#include <linux/mii.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -59,6 +62,9 @@ static struct cpu_type cpu_type_list[] = {
 	CPU_TYPE_ENTRY(LS1026A, LS1026A, 2),
 	CPU_TYPE_ENTRY(LS2040A, LS2040A, 4),
 	CPU_TYPE_ENTRY(LS1012A, LS1012A, 1),
+	CPU_TYPE_ENTRY(LS1017A, LS1017A, 1),
+	CPU_TYPE_ENTRY(LS1018A, LS1018A, 1),
+	CPU_TYPE_ENTRY(LS1027A, LS1027A, 2),
 	CPU_TYPE_ENTRY(LS1028A, LS1028A, 2),
 	CPU_TYPE_ENTRY(LS1088A, LS1088A, 8),
 	CPU_TYPE_ENTRY(LS1084A, LS1084A, 8),
@@ -1069,6 +1075,8 @@ static void config_core_prefetch(void)
 
 	if (env_get_f("hwconfig", buffer, sizeof(buffer)) > 0)
 		buf = buffer;
+	else
+		return;
 
 	prefetch_arg = hwconfig_subarg_f("core_prefetch", "disable",
 					 &arglen, buf);
@@ -1218,7 +1226,7 @@ void __efi_runtime reset_cpu(ulong addr)
 #endif
 }
 
-#ifdef CONFIG_EFI_LOADER
+#if defined(CONFIG_EFI_LOADER) && !defined(CONFIG_PSCI_RESET)
 
 void __efi_runtime EFIAPI efi_reset_system(
 		       enum efi_reset_type reset_type,

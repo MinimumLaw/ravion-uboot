@@ -10,6 +10,8 @@
 #include <common.h>
 #include <env.h>
 #include <errno.h>
+#include <init.h>
+#include <serial.h>
 #include <linux/libfdt.h>
 #include <spl.h>
 #include <asm/arch/cpu.h>
@@ -263,7 +265,7 @@ int board_init(void)
 #endif
 
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
-#if defined(CONFIG_NOR) || defined(CONFIG_NAND)
+#if defined(CONFIG_NOR) || defined(CONFIG_MTD_RAW_NAND)
 	gpmc_init();
 #endif
 	return 0;

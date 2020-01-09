@@ -89,9 +89,7 @@
 #define CONFIG_SYS_INIT_L3_ADDR		0xFFFC0000
 #define CONFIG_SYS_L3_SIZE		(512 << 10)
 #define CONFIG_SPL_GD_ADDR		(CONFIG_SYS_INIT_L3_ADDR + 32 * 1024)
-#ifdef CONFIG_RAMBOOT_PBL
-#define CONFIG_ENV_ADDR			(CONFIG_SPL_GD_ADDR + 4 * 1024)
-#endif
+#define SPL_ENV_ADDR			(CONFIG_SPL_GD_ADDR + 4 * 1024)
 #define CONFIG_SPL_RELOC_MALLOC_ADDR	(CONFIG_SPL_GD_ADDR + 12 * 1024)
 #define CONFIG_SPL_RELOC_MALLOC_SIZE	(50 << 10)
 #define CONFIG_SPL_RELOC_STACK		(CONFIG_SPL_GD_ADDR + 64 * 1024)
@@ -280,22 +278,8 @@
 	"bootm 0x01000000 - 0x00f00000"
 
 #if defined(CONFIG_SPIFLASH)
-#define CONFIG_ENV_SIZE                 0x2000          /* 8KB */
-#define CONFIG_ENV_OFFSET               0x100000        /* 1MB */
-#define CONFIG_ENV_SECT_SIZE            0x10000
 #elif defined(CONFIG_SDCARD)
 #define CONFIG_SYS_MMC_ENV_DEV          0
-#define CONFIG_ENV_SIZE			0x2000
-#define CONFIG_ENV_OFFSET		(512 * 0x800)
-#elif defined(CONFIG_NAND)
-#define CONFIG_ENV_SIZE			CONFIG_SYS_NAND_BLOCK_SIZE
-#define CONFIG_ENV_OFFSET		(7 * CONFIG_SYS_NAND_BLOCK_SIZE)
-#elif defined(CONFIG_ENV_IS_NOWHERE)
-#define CONFIG_ENV_SIZE		0x2000
-#else
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
-#define CONFIG_ENV_SIZE		0x2000
-#define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) */
 #endif
 
 #define CONFIG_SYS_CLK_FREQ	66666666
@@ -402,7 +386,7 @@ unsigned long get_board_ddr_clk(void);
 
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(512 * 1024)
 
-#if defined(CONFIG_NAND)
+#if defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_CSPR0_EXT		CONFIG_SYS_NAND_CSPR_EXT
 #define CONFIG_SYS_CSPR0		CONFIG_SYS_NAND_CSPR
 #define CONFIG_SYS_AMASK0		CONFIG_SYS_NAND_AMASK
@@ -552,7 +536,7 @@ unsigned long get_board_ddr_clk(void);
  * 0x2000 (16 blocks), 8 + 2048 + 16 = 2072, enlarge it to 2080.
  */
 #define CONFIG_SYS_FMAN_FW_ADDR	(512 * 0x820)
-#elif defined(CONFIG_NAND)
+#elif defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_FMAN_FW_ADDR	(8 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #else
 #define CONFIG_SYS_FMAN_FW_ADDR	0xEFF00000
@@ -564,8 +548,6 @@ unsigned long get_board_ddr_clk(void);
 #ifdef CONFIG_SYS_DPAA_FMAN
 #define CONFIG_PHYLIB_10G
 #define CONFIG_PHY_VITESSE
-#define CONFIG_PHY_CORTINA
-#define CONFIG_SYS_CORTINA_FW_IN_NOR
 #define CONFIG_CORTINA_FW_ADDR		0xefe00000
 #define CONFIG_CORTINA_FW_LENGTH	0x40000
 #define CONFIG_PHY_TERANETICS
