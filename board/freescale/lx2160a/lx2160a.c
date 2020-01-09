@@ -27,6 +27,7 @@
 #include "../common/qixis.h"
 #include "../common/vid.h"
 #include <fsl_immap.h>
+#include <asm/arch-fsl-layerscape/fsl_icid.h>
 
 #ifdef CONFIG_EMC2305
 #include "../common/emc2305.h"
@@ -127,7 +128,7 @@ int board_fix_fdt(void *fdt)
 		char *old_str;
 		char *new_str;
 	} reg_names_map[] = {
-		{ "ccsr", "dip" },
+		{ "ccsr", "dbi" },
 		{ "pf_ctrl", "ctrl" }
 	};
 	int off = -1, i;
@@ -684,6 +685,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	fdt_fsl_mc_fixup_iommu_map_entry(blob);
 	fdt_fixup_board_enet(blob);
 #endif
+	fdt_fixup_icid(blob);
 
 	return 0;
 }

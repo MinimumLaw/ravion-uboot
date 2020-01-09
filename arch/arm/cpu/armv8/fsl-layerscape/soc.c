@@ -8,6 +8,7 @@
 #include <env.h>
 #include <fsl_immap.h>
 #include <fsl_ifc.h>
+#include <init.h>
 #include <asm/arch/fsl_serdes.h>
 #include <asm/arch/soc.h>
 #include <asm/io.h>
@@ -341,7 +342,8 @@ void fsl_lsch3_early_init_f(void)
 		bypass_smmu();
 #endif
 
-#if defined(CONFIG_ARCH_LS1088A) || defined(CONFIG_ARCH_LS1028A)
+#if defined(CONFIG_ARCH_LS1088A) || defined(CONFIG_ARCH_LS1028A) || \
+	defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LX2160A)
 	set_icids();
 #endif
 }
@@ -627,10 +629,19 @@ void fsl_lsch2_early_init_f(void)
 #endif
 #endif
 	/* Make SEC reads and writes snoopable */
+#if defined(CONFIG_ARCH_LS1043A) || defined(CONFIG_ARCH_LS1046A)
+	setbits_be32(&scfg->snpcnfgcr, SCFG_SNPCNFGCR_SECRDSNP |
+			SCFG_SNPCNFGCR_SECWRSNP | SCFG_SNPCNFGCR_USB1RDSNP |
+			SCFG_SNPCNFGCR_USB1WRSNP | SCFG_SNPCNFGCR_USB2RDSNP |
+			SCFG_SNPCNFGCR_USB2WRSNP | SCFG_SNPCNFGCR_USB3RDSNP |
+			SCFG_SNPCNFGCR_USB3WRSNP | SCFG_SNPCNFGCR_SATARDSNP |
+			SCFG_SNPCNFGCR_SATAWRSNP);
+#else
 	setbits_be32(&scfg->snpcnfgcr, SCFG_SNPCNFGCR_SECRDSNP |
 		     SCFG_SNPCNFGCR_SECWRSNP |
 		     SCFG_SNPCNFGCR_SATARDSNP |
 		     SCFG_SNPCNFGCR_SATAWRSNP);
+#endif
 
 	/*
 	 * Enable snoop requests and DVM message requests for
@@ -819,6 +830,11 @@ int fsl_setenv_mcinitcmd(void)
 #endif
 
 #ifdef CONFIG_BOARD_LATE_INIT
+__weak int fsl_board_late_init(void)
+{
+	return 0;
+}
+
 int board_late_init(void)
 {
 #ifdef CONFIG_CHAIN_OF_TRUST
@@ -829,7 +845,7 @@ int board_late_init(void)
 	 * check if gd->env_addr is default_environment; then setenv bootcmd
 	 * and mcinitcmd.
 	 */
-#if !defined(CONFIG_ENV_ADDR) || defined(ENV_IS_EMBEDDED)
+#ifdef CONFIG_SYS_RELOC_GD_ENV_ADDR
 	if (gd->env_addr == (ulong)&default_environment[0]) {
 #else
 	if (gd->env_addr + gd->reloc_off == (ulong)&default_environment[0]) {
@@ -853,6 +869,6 @@ int board_late_init(void)
 	qspi_ahb_init();
 #endif
 
-	return 0;
+	return fsl_board_late_init();
 }
 #endif

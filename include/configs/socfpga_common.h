@@ -108,7 +108,6 @@
 #define CONFIG_DESIGNWARE_WATCHDOG
 #define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD0_ADDRESS
 #define CONFIG_DW_WDT_CLOCK_KHZ		25000
-#define CONFIG_WATCHDOG_TIMEOUT_MSECS	30000
 #endif
 
 /*
@@ -133,10 +132,6 @@
 /*
  * QSPI support
  */
-/* Enable multiple SPI NOR flash manufacturers */
-#ifndef CONFIG_SPL_BUILD
-#define CONFIG_SPI_FLASH_MTD
-#endif
 /* QSPI reference clock */
 #ifndef __ASSEMBLY__
 unsigned int cm_get_qspi_controller_clk_hz(void);
@@ -162,21 +157,13 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /*
  * U-Boot environment
  */
-#if !defined(CONFIG_ENV_SIZE)
-#define CONFIG_ENV_SIZE			(8 * 1024)
-#endif
 
 /* Environment for SDMMC boot */
-#if defined(CONFIG_ENV_IS_IN_MMC) && !defined(CONFIG_ENV_OFFSET)
+#if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		0 /* device 0 */
-#define CONFIG_ENV_OFFSET		(34 * 512) /* just after the GPT */
 #endif
 
 /* Environment for QSPI boot */
-#if defined(CONFIG_ENV_IS_IN_SPI_FLASH) && !defined(CONFIG_ENV_OFFSET)
-#define CONFIG_ENV_OFFSET		0x00100000
-#define CONFIG_ENV_SECT_SIZE		(64 * 1024)
-#endif
 
 /*
  * SPL

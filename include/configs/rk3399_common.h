@@ -21,7 +21,7 @@
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_TPL_BOOTROM_SUPPORT)
 #define CONFIG_SPL_STACK		0x00400000
-#define CONFIG_SPL_MAX_SIZE             0x100000
+#define CONFIG_SPL_MAX_SIZE             0x40000
 #define CONFIG_SPL_BSS_START_ADDR	0x00400000
 #define CONFIG_SPL_BSS_MAX_SIZE         0x2000
 #else
@@ -51,7 +51,7 @@
 	"pxefile_addr_r=0x00600000\0" \
 	"fdt_addr_r=0x01f00000\0" \
 	"kernel_addr_r=0x02080000\0" \
-	"ramdisk_addr_r=0x04000000\0"
+	"ramdisk_addr_r=0x06000000\0"
 
 #ifndef ROCKCHIP_DEVICE_SETTINGS
 #define ROCKCHIP_DEVICE_SETTINGS

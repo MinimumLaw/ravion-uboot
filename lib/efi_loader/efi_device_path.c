@@ -10,10 +10,12 @@
 #include <dm.h>
 #include <usb.h>
 #include <mmc.h>
+#include <nvme.h>
 #include <efi_loader.h>
 #include <part.h>
 #include <sandboxblockdev.h>
 #include <asm-generic/unaligned.h>
+#include <linux/compat.h> /* U16_MAX */
 
 #ifdef CONFIG_SANDBOX
 const efi_guid_t efi_guid_host_dev = U_BOOT_HOST_DEV_GUID;
@@ -420,7 +422,7 @@ bool efi_dp_is_multi_instance(const struct efi_device_path *dp)
 /* size of device-path not including END node for device and all parents
  * up to the root device.
  */
-static unsigned dp_size(struct udevice *dev)
+__maybe_unused static unsigned int dp_size(struct udevice *dev)
 {
 	if (!dev || !dev->driver)
 		return sizeof(ROOT);
@@ -450,6 +452,11 @@ static unsigned dp_size(struct udevice *dev)
 		case UCLASS_MMC:
 			return dp_size(dev->parent) +
 				sizeof(struct efi_device_path_sd_mmc_path);
+#endif
+#if defined(CONFIG_NVME)
+		case UCLASS_NVME:
+			return dp_size(dev->parent) +
+				sizeof(struct efi_device_path_nvme);
 #endif
 #ifdef CONFIG_SANDBOX
 		case UCLASS_ROOT:
@@ -487,7 +494,7 @@ static unsigned dp_size(struct udevice *dev)
  * @dev		device
  * @return	pointer to the end of the device path
  */
-static void *dp_fill(void *buf, struct udevice *dev)
+__maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 {
 	if (!dev || !dev->driver)
 		return buf;
@@ -584,6 +591,20 @@ static void *dp_fill(void *buf, struct udevice *dev)
 			return &sddp[1];
 			}
 #endif
+#if defined(CONFIG_NVME)
+		case UCLASS_NVME: {
+			struct efi_device_path_nvme *dp =
+				dp_fill(buf, dev->parent);
+			u32 ns_id;
+
+			dp->dp.type     = DEVICE_PATH_TYPE_MESSAGING_DEVICE;
+			dp->dp.sub_type = DEVICE_PATH_SUB_TYPE_MSG_NVME;
+			dp->dp.length   = sizeof(*dp);
+			nvme_get_namespace_id(dev, &ns_id, dp->eui64);
+			memcpy(&dp->ns_id, &ns_id, sizeof(ns_id));
+			return &dp[1];
+			}
+#endif
 		default:
 			debug("%s(%u) %s: unhandled parent class: %s (%u)\n",
 			      __FILE__, __LINE__, __func__,
@@ -632,20 +653,6 @@ static void *dp_fill(void *buf, struct udevice *dev)
 		      dev->name, dev->driver->id);
 		return dp_fill(buf, dev->parent);
 	}
-}
-
-/* Construct a device-path from a device: */
-struct efi_device_path *efi_dp_from_dev(struct udevice *dev)
-{
-	void *buf, *start;
-
-	start = buf = dp_alloc(dp_size(dev) + sizeof(END));
-	if (!buf)
-		return NULL;
-	buf = dp_fill(buf, dev);
-	*((struct efi_device_path *)buf) = END;
-
-	return start;
 }
 #endif
 
@@ -868,13 +875,16 @@ struct efi_device_path *efi_dp_from_file(struct blk_desc *desc, int part,
 {
 	struct efi_device_path_file_path *fp;
 	void *buf, *start;
-	unsigned dpsize = 0, fpsize;
+	size_t dpsize = 0, fpsize;
 
 	if (desc)
 		dpsize = dp_part_size(desc, part);
 
 	fpsize = sizeof(struct efi_device_path) +
 		 2 * (utf8_utf16_strlen(path) + 1);
+	if (fpsize > U16_MAX)
+		return NULL;
+
 	dpsize += fpsize;
 
 	start = buf = dp_alloc(dpsize + sizeof(END));
@@ -888,7 +898,7 @@ struct efi_device_path *efi_dp_from_file(struct blk_desc *desc, int part,
 	fp = buf;
 	fp->dp.type = DEVICE_PATH_TYPE_MEDIA_DEVICE;
 	fp->dp.sub_type = DEVICE_PATH_SUB_TYPE_FILE_PATH;
-	fp->dp.length = fpsize;
+	fp->dp.length = (u16)fpsize;
 	path_to_uefi(fp->str, path);
 	buf += fpsize;
 
@@ -1008,6 +1018,16 @@ out:
 	return EFI_SUCCESS;
 }
 
+/**
+ * efi_dp_from_name() - convert U-Boot device and file path to device path
+ *
+ * @dev:	U-Boot device, e.g. 'mmc'
+ * @devnr:	U-Boot device number, e.g. 1 for 'mmc:1'
+ * @path:	file path relative to U-Boot device, may be NULL
+ * @device:	pointer to receive device path of the device
+ * @file:	pointer to receive device path for the file
+ * Return:	status code
+ */
 efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 			      const char *path,
 			      struct efi_device_path **device,
@@ -1047,8 +1067,10 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 	s = filename;
 	while ((s = strchr(s, '/')))
 		*s++ = '\\';
-	*file = efi_dp_from_file(((!is_net && device) ? desc : NULL),
-				 part, filename);
+	*file = efi_dp_from_file(is_net ? NULL : desc, part, filename);
+
+	if (!*file)
+		return EFI_INVALID_PARAMETER;
 
 	return EFI_SUCCESS;
 }

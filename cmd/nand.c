@@ -30,11 +30,12 @@
 #include <jffs2/jffs2.h>
 #include <nand.h>
 
+#include "legacy-mtd-utils.h"
+
 #if defined(CONFIG_CMD_MTDPARTS)
 
 /* partition handling routines */
 int mtdparts_init(void);
-int id_parse(const char *id, const char **ret_id, u8 *dev_type, u8 *dev_num);
 int find_dev_and_part(const char *id, struct mtd_device **dev,
 		      u8 *part_num, struct part_info **part);
 #endif

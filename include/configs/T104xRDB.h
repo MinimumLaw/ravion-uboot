@@ -13,7 +13,7 @@
 
 #ifdef CONFIG_RAMBOOT_PBL
 
-#ifndef CONFIG_SECURE_BOOT
+#ifndef CONFIG_NXP_ESBC
 #define CONFIG_SYS_FSL_PBL_PBI $(SRCTREE)/board/freescale/t104xrdb/t104x_pbi.cfg
 #else
 #define CONFIG_SYS_FSL_PBL_PBI \
@@ -31,8 +31,8 @@
 #define RESET_VECTOR_OFFSET		0x27FFC
 #define BOOT_PAGE_OFFSET		0x27000
 
-#ifdef CONFIG_NAND
-#ifdef CONFIG_SECURE_BOOT
+#ifdef CONFIG_MTD_RAW_NAND
+#ifdef CONFIG_NXP_ESBC
 #define CONFIG_U_BOOT_HDR_SIZE		(16 << 10)
 /*
  * HDR would be appended at end of image and copied to DDR along
@@ -155,24 +155,13 @@ $(SRCTREE)/board/freescale/t104xrdb/t1042d4_sd_rcw.cfg
 #define CONFIG_ENV_OVERWRITE
 
 #if defined(CONFIG_SPIFLASH)
-#define CONFIG_ENV_SIZE                 0x2000          /* 8KB */
-#define CONFIG_ENV_OFFSET               0x100000        /* 1MB */
-#define CONFIG_ENV_SECT_SIZE            0x10000
 #elif defined(CONFIG_SDCARD)
 #define CONFIG_SYS_MMC_ENV_DEV          0
-#define CONFIG_ENV_SIZE			0x2000
-#define CONFIG_ENV_OFFSET		(512 * 0x800)
-#elif defined(CONFIG_NAND)
-#ifdef CONFIG_SECURE_BOOT
+#elif defined(CONFIG_MTD_RAW_NAND)
+#ifdef CONFIG_NXP_ESBC
 #define CONFIG_RAMBOOT_NAND
 #define CONFIG_BOOTSCRIPT_COPY_RAM
 #endif
-#define CONFIG_ENV_SIZE			0x2000
-#define CONFIG_ENV_OFFSET		(3 * CONFIG_SYS_NAND_BLOCK_SIZE)
-#else
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
-#define CONFIG_ENV_SIZE		0x2000
-#define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) */
 #endif
 
 #define CONFIG_SYS_CLK_FREQ	100000000
@@ -211,9 +200,7 @@ $(SRCTREE)/board/freescale/t104xrdb/t1042d4_sd_rcw.cfg
 #define CONFIG_SYS_INIT_L3_VADDR	0xFFFC0000
 #define CONFIG_SYS_L3_SIZE		256 << 10
 #define CONFIG_SPL_GD_ADDR		(CONFIG_SYS_INIT_L3_VADDR + 32 * 1024)
-#ifdef CONFIG_RAMBOOT_PBL
-#define CONFIG_ENV_ADDR			(CONFIG_SPL_GD_ADDR + 4 * 1024)
-#endif
+#define SPL_ENV_ADDR			(CONFIG_SPL_GD_ADDR + 4 * 1024)
 #define CONFIG_SPL_RELOC_MALLOC_ADDR	(CONFIG_SPL_GD_ADDR + 12 * 1024)
 #define CONFIG_SPL_RELOC_MALLOC_SIZE	(30 << 10)
 #define CONFIG_SPL_RELOC_STACK		(CONFIG_SPL_GD_ADDR + 64 * 1024)
@@ -370,7 +357,7 @@ $(SRCTREE)/board/freescale/t104xrdb/t1042d4_sd_rcw.cfg
 
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(512 * 1024)
 
-#if defined(CONFIG_NAND)
+#if defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_CSPR0_EXT		CONFIG_SYS_NAND_CSPR_EXT
 #define CONFIG_SYS_CSPR0		CONFIG_SYS_NAND_CSPR
 #define CONFIG_SYS_AMASK0		CONFIG_SYS_NAND_AMASK
@@ -417,7 +404,7 @@ $(SRCTREE)/board/freescale/t104xrdb/t1042d4_sd_rcw.cfg
 #endif
 
 #ifdef CONFIG_SYS_FSL_ERRATUM_A008044
-#if defined(CONFIG_NAND)
+#if defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_A008044_WORKAROUND
 #endif
 #endif
@@ -647,7 +634,7 @@ $(SRCTREE)/board/freescale/t104xrdb/t1042d4_sd_rcw.cfg
  * 0x2000 (16 blocks), 8 + 2048 + 16 = 2072, enlarge it to 2080.
  */
 #define CONFIG_SYS_FMAN_FW_ADDR	(512 * 0x820)
-#elif defined(CONFIG_NAND)
+#elif defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_FMAN_FW_ADDR	(5 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #else
 #define CONFIG_SYS_FMAN_FW_ADDR		0xEFF00000
@@ -657,7 +644,7 @@ $(SRCTREE)/board/freescale/t104xrdb/t1042d4_sd_rcw.cfg
 #define CONFIG_SYS_QE_FW_ADDR		0x130000
 #elif defined(CONFIG_SDCARD)
 #define CONFIG_SYS_QE_FW_ADDR		(512 * 0x920)
-#elif defined(CONFIG_NAND)
+#elif defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_QE_FW_ADDR		(7 * CONFIG_SYS_NAND_BLOCK_SIZE)
 #else
 #define CONFIG_SYS_QE_FW_ADDR		0xEFF10000

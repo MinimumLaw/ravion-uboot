@@ -56,13 +56,9 @@
  * SPI Flash configuration
  */
 
-#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
 #define CONFIG_MTD_PARTITIONS		/* required for UBI partition support */
 
 /* Environment in SPI NOR flash */
-#define CONFIG_ENV_OFFSET		0x180000 /* as Marvell U-Boot version */
-#define CONFIG_ENV_SIZE			(64 << 10) /* 64KiB */
-#define CONFIG_ENV_SECT_SIZE		(64 << 10) /* 64KiB sectors */
 
 /*
  * Ethernet Driver configuration

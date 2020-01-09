@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-VERSION = 2019
-PATCHLEVEL = 10
+VERSION = 2020
+PATCHLEVEL = 01
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -16,6 +16,25 @@ NAME =
 #   (this increases performance and avoids hard-to-debug behaviour);
 # o Look for make include files relative to root of kernel src
 MAKEFLAGS += -rR --include-dir=$(CURDIR)
+
+# Determine host architecture
+include include/host_arch.h
+MK_ARCH="${shell uname -m}"
+unexport HOST_ARCH
+ifeq ("x86_64", $(MK_ARCH))
+  export HOST_ARCH=$(HOST_ARCH_X86_64)
+else ifneq (,$(findstring $(MK_ARCH), "i386" "i486" "i586" "i686"))
+  export HOST_ARCH=$(HOST_ARCH_X86)
+else ifneq (,$(findstring $(MK_ARCH), "aarch64" "armv8l"))
+  export HOST_ARCH=$(HOST_ARCH_AARCH64)
+else ifeq ("armv7l", $(MK_ARCH))
+  export HOST_ARCH=$(HOST_ARCH_ARM)
+else ifeq ("riscv32", $(MK_ARCH))
+  export HOST_ARCH=$(HOST_ARCH_RISCV32)
+else ifeq ("riscv64", $(MK_ARCH))
+  export HOST_ARCH=$(HOST_ARCH_RISCV64)
+endif
+undefine MK_ARCH
 
 # Avoid funny character set dependencies
 unexport LC_ALL
@@ -337,14 +356,18 @@ endif
 #  KBUILD_MODULES := 1
 #endif
 
+# Check ths size of a binary:
+# Args:
+#   $1: File to check
+#   #2: Size limit in bytes (decimal or 0xhex)
 define size_check
 	actual=$$( wc -c $1 | awk '{print $$1}'); \
 	limit=$$( printf "%d" $2 ); \
 	if test $$actual -gt $$limit; then \
 		echo "$1 exceeds file size limit:" >&2; \
-		echo "  limit:  $$limit bytes" >&2; \
-		echo "  actual: $$actual bytes" >&2; \
-		echo "  excess: $$((actual - limit)) bytes" >&2; \
+		echo "  limit:  $$(printf %#x $$limit) bytes" >&2; \
+		echo "  actual: $$(printf %#x $$actual) bytes" >&2; \
+		echo "  excess: $$(printf %#x $$((actual - limit))) bytes" >&2;\
 		exit 1; \
 	fi
 endef
@@ -708,11 +731,6 @@ libs-y += drivers/
 libs-y += drivers/dma/
 libs-y += drivers/gpio/
 libs-y += drivers/i2c/
-libs-y += drivers/mtd/
-libs-$(CONFIG_CMD_NAND) += drivers/mtd/nand/raw/
-libs-y += drivers/mtd/onenand/
-libs-$(CONFIG_CMD_UBI) += drivers/mtd/ubi/
-libs-y += drivers/mtd/spi/
 libs-y += drivers/net/
 libs-y += drivers/net/phy/
 libs-y += drivers/power/ \
@@ -728,6 +746,7 @@ libs-$(CONFIG_SYS_FSL_DDR) += drivers/ddr/fsl/
 libs-$(CONFIG_SYS_FSL_MMDC) += drivers/ddr/fsl/
 libs-$(CONFIG_$(SPL_)ALTERA_SDRAM) += drivers/ddr/altera/
 libs-y += drivers/serial/
+libs-y += drivers/usb/cdns3/
 libs-y += drivers/usb/dwc3/
 libs-y += drivers/usb/common/
 libs-y += drivers/usb/emul/
@@ -746,6 +765,7 @@ libs-$(CONFIG_API) += api/
 libs-$(CONFIG_HAS_POST) += post/
 libs-$(CONFIG_UNIT_TEST) += test/ test/dm/
 libs-$(CONFIG_UT_ENV) += test/env/
+libs-$(CONFIG_UT_OPTEE) += test/optee/
 libs-$(CONFIG_UT_OVERLAY) += test/overlay/
 
 libs-y += $(if $(BOARDDIR),board/$(BOARDDIR)/)
@@ -802,6 +822,12 @@ else
 SPL_SIZE_CHECK =
 endif
 
+ifneq ($(CONFIG_TPL_SIZE_LIMIT),0)
+TPL_SIZE_CHECK = @$(call size_check,$@,$(CONFIG_TPL_SIZE_LIMIT))
+else
+TPL_SIZE_CHECK =
+endif
+
 # Statically apply RELA-style relocations (currently arm64 only)
 # This is useful for arm64 where static relocation needs to be performed on
 # the raw binary, but certain simulators only accept an ELF file (but don't
@@ -830,10 +856,10 @@ ALL-$(CONFIG_RAMBOOT_PBL) += u-boot.pbl
 endif
 endif
 ALL-$(CONFIG_SPL) += spl/u-boot-spl.bin
-ifeq ($(CONFIG_MX6)$(CONFIG_SECURE_BOOT), yy)
+ifeq ($(CONFIG_MX6)$(CONFIG_IMX_HAB), yy)
 ALL-$(CONFIG_SPL_FRAMEWORK) += u-boot-ivt.img
 else
-ifeq ($(CONFIG_MX7)$(CONFIG_SECURE_BOOT), yy)
+ifeq ($(CONFIG_MX7)$(CONFIG_IMX_HAB), yy)
 ALL-$(CONFIG_SPL_FRAMEWORK) += u-boot-ivt.img
 else
 ALL-$(CONFIG_SPL_FRAMEWORK) += u-boot.img
@@ -1115,7 +1141,15 @@ u-boot.bin: u-boot-nodtb.bin FORCE
 	$(call if_changed,copy)
 endif
 
-%.imx: %.bin
+# we call Makefile in arch/arm/mach-imx which
+# has targets which are dependent on targets defined
+# here. make could not resolve them and we must ensure
+# that they are finished before calling imx targets
+ifeq ($(CONFIG_MULTI_DTB_FIT),y)
+IMX_DEPS = u-boot-fit-dtb.bin
+endif
+
+%.imx: $(IMX_DEPS) %.bin
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 	$(BOARD_SIZE_CHECK)
 
@@ -1213,7 +1247,9 @@ u-boot.ldr:	u-boot
 # Use 'make BINMAN_DEBUG=1' to enable debugging
 quiet_cmd_binman = BINMAN  $@
 cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
-                build -u -d u-boot.dtb -O . -m \
+                --toolpath $(objtree)/tools \
+		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
+		build -u -d u-boot.dtb -O . -m \
 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
 		$(BINMAN_$(@F))
 
@@ -1254,6 +1290,7 @@ endif
 ifdef CONFIG_SPL_LOAD_FIT
 MKIMAGEFLAGS_u-boot.img = -f auto -A $(ARCH) -T firmware -C none -O u-boot \
 	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-p $(CONFIG_FIT_EXTERNAL_OFFSET) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board" -E \
 	$(patsubst %,-b arch/$(ARCH)/dts/%.dtb,$(subst ",,$(CONFIG_OF_LIST)))
 else
@@ -1264,15 +1301,25 @@ MKIMAGEFLAGS_u-boot-ivt.img = -A $(ARCH) -T firmware_ivt -C none -O u-boot \
 	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
 u-boot-ivt.img: MKIMAGEOUTPUT = u-boot-ivt.img.log
-CLEAN_FILES += u-boot-ivt.img.log u-boot-dtb.imx.log SPL.log u-boot.imx.log
 endif
 
 MKIMAGEFLAGS_u-boot-dtb.img = $(MKIMAGEFLAGS_u-boot.img)
 
-MKIMAGEFLAGS_u-boot.kwb = -n $(srctree)/$(CONFIG_SYS_KWD_CONFIG:"%"=%) \
+# Some boards have the kwbimage.cfg file written in advance, while some
+# other boards generate it on the fly during the build in the build tree.
+# Let's check if the file exists in the build tree first, otherwise we
+# fall back to use the one in the source tree.
+KWD_CONFIG_FILE = $(shell \
+	if [ -f $(objtree)/$(CONFIG_SYS_KWD_CONFIG:"%"=%) ]; then \
+		echo -n $(objtree)/$(CONFIG_SYS_KWD_CONFIG:"%"=%); \
+	else \
+		echo -n $(srctree)/$(CONFIG_SYS_KWD_CONFIG:"%"=%); \
+	fi)
+
+MKIMAGEFLAGS_u-boot.kwb = -n $(KWD_CONFIG_FILE) \
 	-T kwbimage -a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_TEXT_BASE)
 
-MKIMAGEFLAGS_u-boot-spl.kwb = -n $(srctree)/$(CONFIG_SYS_KWD_CONFIG:"%"=%) \
+MKIMAGEFLAGS_u-boot-spl.kwb = -n $(KWD_CONFIG_FILE) \
 	-T kwbimage -a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_TEXT_BASE) \
 	$(if $(KEYDIR),-k $(KEYDIR))
 
@@ -1353,7 +1400,6 @@ lpc32xx-boot-1.bin: lpc32xx-spl.img FORCE
 lpc32xx-full.bin: lpc32xx-boot-0.bin lpc32xx-boot-1.bin u-boot.img FORCE
 	$(call if_changed,cat)
 
-CLEAN_FILES += lpc32xx-*
 endif
 
 OBJCOPYFLAGS_u-boot-with-tpl.bin = -I binary -O binary \
@@ -1365,8 +1411,16 @@ SPL: spl/u-boot-spl.bin FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 
 ifeq ($(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8), y)
+ifeq ($(CONFIG_SPL_LOAD_IMX_CONTAINER), y)
+u-boot.cnt: u-boot.bin FORCE
+	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
+
+flash.bin: spl/u-boot-spl.bin u-boot.cnt FORCE
+	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
+else
 flash.bin: spl/u-boot-spl.bin u-boot.itb FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
+endif
 endif
 
 u-boot-with-spl.imx u-boot-with-nand-spl.imx: SPL u-boot.bin FORCE
@@ -1415,6 +1469,17 @@ cmd_socboot = cat	spl/u-boot-spl.sfp spl/u-boot-spl.sfp	\
 			u-boot.img > $@ || rm -f $@
 u-boot-with-spl.sfp: spl/u-boot-spl.sfp u-boot.img FORCE
 	$(call if_changed,socboot)
+
+quiet_cmd_socnandboot = SOCNANDBOOT $@
+cmd_socnandboot =  dd if=/dev/zero of=spl/u-boot-spl.pad bs=64 count=1024 ; \
+		   cat	spl/u-boot-spl.sfp spl/u-boot-spl.pad \
+			spl/u-boot-spl.sfp spl/u-boot-spl.pad \
+			spl/u-boot-spl.sfp spl/u-boot-spl.pad \
+			spl/u-boot-spl.sfp spl/u-boot-spl.pad \
+			u-boot.img > $@ || rm -f $@ spl/u-boot-spl.pad
+u-boot-with-nand-spl.sfp: spl/u-boot-spl.sfp u-boot.img FORCE
+	$(call if_changed,socnandboot)
+
 endif
 
 ifeq ($(CONFIG_MPC85xx)$(CONFIG_OF_SEPARATE),yy)
@@ -1443,14 +1508,18 @@ quiet_cmd_ldr = LD      $@
 cmd_ldr = $(LD) $(LDFLAGS_$(@F)) \
 	       $(filter-out FORCE,$^) -o $@
 
-u-boot.rom: u-boot-x86-16bit.bin u-boot.bin \
+u-boot.rom: u-boot-x86-start16.bin u-boot-x86-reset16.bin u-boot.bin \
 		$(if $(CONFIG_SPL_X86_16BIT_INIT),spl/u-boot-spl.bin) \
 		$(if $(CONFIG_TPL_X86_16BIT_INIT),tpl/u-boot-tpl.bin) \
 		$(if $(CONFIG_HAVE_REFCODE),refcode.bin) FORCE
 	$(call if_changed,binman)
 
-OBJCOPYFLAGS_u-boot-x86-16bit.bin := -O binary -j .start16 -j .resetvec
-u-boot-x86-16bit.bin: u-boot FORCE
+OBJCOPYFLAGS_u-boot-x86-start16.bin := -O binary -j .start16
+u-boot-x86-start16.bin: u-boot FORCE
+	$(call if_changed,objcopy)
+
+OBJCOPYFLAGS_u-boot-x86-reset16.bin := -O binary -j .resetvec
+u-boot-x86-reset16.bin: u-boot FORCE
 	$(call if_changed,objcopy)
 endif
 
@@ -1618,7 +1687,7 @@ u-boot.sym: u-boot FORCE
 # make sure no implicit rule kicks in
 $(sort $(u-boot-init) $(u-boot-main)): $(u-boot-dirs) ;
 
-# Handle descending into subdirectories listed in $(vmlinux-dirs)
+# Handle descending into subdirectories listed in $(u-boot-dirs)
 # Preset locale variables to speed up the build process. Limit locale
 # tweaks to this spot to avoid wrong language settings when running
 # make menuconfig etc.
@@ -1776,6 +1845,7 @@ spl/boot.bin: spl/u-boot-spl
 tpl/u-boot-tpl.bin: tools prepare \
 		$(if $(CONFIG_OF_SEPARATE)$(CONFIG_OF_EMBED)$(CONFIG_SPL_OF_PLATDATA),dts/dt.dtb)
 	$(Q)$(MAKE) obj=tpl -f $(srctree)/scripts/Makefile.spl all
+	$(TPL_SIZE_CHECK)
 
 TAG_SUBDIRS := $(patsubst %,$(srctree)/%,$(u-boot-dirs) include)
 
@@ -1793,6 +1863,9 @@ etags:
 cscope:
 		$(FIND) $(FINDFLAGS) $(TAG_SUBDIRS) -name '*.[chS]' -print > \
 						cscope.files
+		@find $(TAG_SUBDIRS) -name '*.[chS]' -type l -print | \
+			grep -xvf - cscope.files > cscope.files.no-symlinks; \
+		mv cscope.files.no-symlinks cscope.files
 		cscope -b -q -k
 
 SYSTEM_MAP = \
@@ -1815,11 +1888,15 @@ checkarmreloc: u-boot
 		false; \
 	fi
 
-envtools: scripts_basic $(version_h) $(timestamp_h)
+tools/version.h: include/version.h
+	$(Q)mkdir -p $(dir $@)
+	$(call if_changed,copy)
+
+envtools: scripts_basic $(version_h) $(timestamp_h) tools/version.h
 	$(Q)$(MAKE) $(build)=tools/env
 
 tools-only: export TOOLS_ONLY=y
-tools-only: scripts_basic $(version_h) $(timestamp_h)
+tools-only: scripts_basic $(version_h) $(timestamp_h) tools/version.h
 	$(Q)$(MAKE) $(build)=tools
 
 tools-all: export HOST_TOOLS_ALL=y
@@ -1847,8 +1924,11 @@ CLEAN_DIRS  += $(MODVERDIR) \
 	       $(foreach d, spl tpl, $(patsubst %,$d/%, \
 			$(filter-out include, $(shell ls -1 $d 2>/dev/null))))
 
-CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h \
-	       boot* u-boot* MLO* SPL System.map fit-dtb.blob*
+CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h tools/version.h \
+	       boot* u-boot* MLO* SPL System.map fit-dtb.blob* \
+	       u-boot-ivt.img.log u-boot-dtb.imx.log SPL.log u-boot.imx.log \
+	       lpc32xx-* bl31.c bl31.elf bl31_*.bin image.map tispl.bin* \
+	       idbloader.img
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl \
@@ -1878,12 +1958,12 @@ clean: $(clean-dirs)
 		-o -name '*.ko.*' -o -name '*.su' -o -name '*.pyc' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
 		-o -name '*.lex.c' -o -name '*.tab.[ch]' \
+		-o -name '*.asn1.[ch]' \
 		-o -name '*.symtypes' -o -name 'modules.order' \
 		-o -name modules.builtin -o -name '.tmp_*.o.*' \
 		-o -name 'dsdt.aml' -o -name 'dsdt.asl.tmp' -o -name 'dsdt.c' \
 		-o -name '*.efi' -o -name '*.gcno' -o -name '*.so' \) \
-		-type f -print | xargs rm -f \
-		bl31.c bl31.elf bl31_*.bin image.map tispl.bin*
+		-type f -print | xargs rm -f
 
 # mrproper - Delete all generated files, including .config
 #

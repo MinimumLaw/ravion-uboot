@@ -108,11 +108,6 @@
 #define DFUARGS
 #endif
 
-#ifdef CONFIG_QSPI_BOOT
-#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
-#define CONFIG_ENV_OFFSET_REDUND       0x120000
-#endif
-
 #ifndef CONFIG_SPL_BUILD
 #include <environment/ti/dfu.h>
 #include <environment/ti/mmc.h>
@@ -208,7 +203,7 @@
 #define CONFIG_SYS_RX_ETH_BUFFER	64
 
 /* NAND support */
-#ifdef CONFIG_NAND
+#ifdef CONFIG_MTD_RAW_NAND
 /* NAND: device related configs */
 #define CONFIG_SYS_NAND_PAGE_SIZE	4096
 #define CONFIG_SYS_NAND_OOBSIZE		224
@@ -265,10 +260,10 @@
 		"nand read ${loadaddr} NAND.kernel; " \
 		"bootz ${loadaddr} - ${fdtaddr}\0"
 #define NANDBOOT			"run nandboot; "
-#else /* !CONFIG_NAND */
+#else /* !CONFIG_MTD_RAW_NAND */
 #define NANDARGS
 #define NANDBOOT
-#endif /* CONFIG_NAND */
+#endif /* CONFIG_MTD_RAW_NAND */
 
 #if defined(CONFIG_TI_SECURE_DEVICE)
 /* Avoid relocating onto firewalled area at end of DRAM */

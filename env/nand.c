@@ -23,17 +23,13 @@
 #include <nand.h>
 #include <search.h>
 #include <errno.h>
+#include <u-boot/crc.h>
 
 #if defined(CONFIG_CMD_SAVEENV) && defined(CONFIG_CMD_NAND) && \
 		!defined(CONFIG_SPL_BUILD)
 #define CMD_SAVEENV
 #elif defined(CONFIG_ENV_OFFSET_REDUND) && !defined(CONFIG_SPL_BUILD)
 #error CONFIG_ENV_OFFSET_REDUND must have CONFIG_CMD_SAVEENV & CONFIG_CMD_NAND
-#endif
-
-#if defined(CONFIG_ENV_SIZE_REDUND) &&	\
-	(CONFIG_ENV_SIZE_REDUND != CONFIG_ENV_SIZE)
-#error CONFIG_ENV_SIZE_REDUND should be the same as CONFIG_ENV_SIZE
 #endif
 
 #ifndef CONFIG_ENV_RANGE

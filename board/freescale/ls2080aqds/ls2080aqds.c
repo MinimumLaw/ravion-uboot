@@ -20,6 +20,7 @@
 #include <hwconfig.h>
 #include <fsl_sec.h>
 #include <asm/arch/ppa.h>
+#include <asm/arch-fsl-layerscape/fsl_icid.h>
 
 
 #include "../common/qixis.h"
@@ -220,7 +221,7 @@ int board_init(void)
 	else
 		config_board_mux(MUX_TYPE_SDHC);
 
-#if defined(CONFIG_NAND) && defined(CONFIG_FSL_QSPI)
+#if defined(CONFIG_MTD_RAW_NAND) && defined(CONFIG_FSL_QSPI)
 	val = in_le32(dcfg_ccsr + DCFG_RCWSR15 / 4);
 
 	if (DCFG_RCWSR15_IFCGRPABASE_QSPI == (val & (u32)0x3))
@@ -357,6 +358,8 @@ int ft_board_setup(void *blob, bd_t *bd)
 #if defined(CONFIG_FSL_MC_ENET) && !defined(CONFIG_SPL_BUILD)
 	fdt_fixup_board_enet(blob);
 #endif
+
+	fdt_fixup_icid(blob);
 
 	return 0;
 }

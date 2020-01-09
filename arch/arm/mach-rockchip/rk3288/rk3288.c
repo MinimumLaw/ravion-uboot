@@ -6,6 +6,7 @@
 #include <dm.h>
 #include <env.h>
 #include <clk.h>
+#include <init.h>
 #include <asm/armv7.h>
 #include <asm/io.h>
 #include <asm/arch-rockchip/bootrom.h>
@@ -15,15 +16,15 @@
 #include <asm/arch-rockchip/grf_rk3288.h>
 #include <asm/arch-rockchip/pmu_rk3288.h>
 #include <asm/arch-rockchip/qos_rk3288.h>
-#include <asm/arch-rockchip/sdram_common.h>
+#include <asm/arch-rockchip/sdram.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #define GRF_BASE	0xff770000
 
 const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
-	[BROM_BOOTSOURCE_EMMC] = "dwmmc@ff0f0000",
-	[BROM_BOOTSOURCE_SD] = "dwmmc@ff0c0000",
+	[BROM_BOOTSOURCE_EMMC] = "/dwmmc@ff0f0000",
+	[BROM_BOOTSOURCE_SD] = "/dwmmc@ff0c0000",
 };
 
 #ifdef CONFIG_SPL_BUILD

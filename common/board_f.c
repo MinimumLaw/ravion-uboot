@@ -13,12 +13,14 @@
 #include <bloblist.h>
 #include <console.h>
 #include <cpu.h>
+#include <cpu_func.h>
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
 #include <fdtdec.h>
 #include <fs.h>
 #include <i2c.h>
+#include <init.h>
 #include <initcall.h>
 #include <lcd.h>
 #include <malloc.h>
@@ -26,6 +28,7 @@
 #include <os.h>
 #include <post.h>
 #include <relocate.h>
+#include <serial.h>
 #ifdef CONFIG_SPL
 #include <spl.h>
 #endif
@@ -588,6 +591,7 @@ static int reserve_stacks(void)
 static int reserve_bloblist(void)
 {
 #ifdef CONFIG_BLOBLIST
+	gd->start_addr_sp &= ~0xf;
 	gd->start_addr_sp -= CONFIG_BLOBLIST_SIZE;
 	gd->new_bloblist = map_sysmem(gd->start_addr_sp, CONFIG_BLOBLIST_SIZE);
 #endif
@@ -695,6 +699,7 @@ static int reloc_bootstage(void)
 		      gd->bootstage, gd->new_bootstage, size);
 		memcpy(gd->new_bootstage, gd->bootstage, size);
 		gd->bootstage = gd->new_bootstage;
+		bootstage_relocate();
 	}
 #endif
 

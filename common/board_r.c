@@ -11,6 +11,9 @@
 
 #include <common.h>
 #include <api.h>
+#include <cpu_func.h>
+#include <irq_func.h>
+#include <u-boot/crc.h>
 /* TODO: can we just include all these headers whether needed or not? */
 #if defined(CONFIG_CMD_BEDBUG)
 #include <bedbug/type.h>
@@ -26,6 +29,7 @@
 #if defined(CONFIG_CMD_KGDB)
 #include <kgdb.h>
 #endif
+#include <irq_func.h>
 #include <malloc.h>
 #include <mapmem.h>
 #ifdef CONFIG_BITBANGMII
@@ -37,6 +41,7 @@
 #include <onenand_uboot.h>
 #include <scsi.h>
 #include <serial.h>
+#include <status_led.h>
 #include <stdio_dev.h>
 #include <timer.h>
 #include <trace.h>
@@ -144,7 +149,7 @@ static int initr_reloc_global_data(void)
 	 */
 	fixup_cpu();
 #endif
-#if !defined(CONFIG_ENV_ADDR) || defined(ENV_IS_EMBEDDED)
+#ifdef CONFIG_SYS_RELOC_GD_ENV_ADDR
 	/*
 	 * Relocate the early env_addr pointer unless we know it is not inside
 	 * the binary. Some systems need this and for the rest, it doesn't hurt.
@@ -670,7 +675,6 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_SYS_NONCACHED_MEMORY
 	initr_noncached,
 #endif
-	bootstage_relocate,
 #ifdef CONFIG_OF_LIVE
 	initr_of_live,
 #endif

@@ -48,6 +48,8 @@ config SYS_LONGHELP
 
 config SYS_PROMPT
 	string "Shell prompt"
+	default "Zynq> " if ARCH_ZYNQ
+	default "ZynqMP> " if ARCH_ZYNQMP
 	default "=> "
 	help
 	  This string is displayed in the command line to the left of the
@@ -261,13 +263,6 @@ config CMD_BOOTI
 	help
 	  Boot an AArch64 Linux Kernel image from memory.
 
-config CMD_BOOTEFI
-	bool "bootefi"
-	depends on EFI_LOADER
-	default y
-	help
-	  Boot an EFI image from memory.
-
 config BOOTM_LINUX
 	bool "Support booting Linux OS images"
 	depends on CMD_BOOTM || CMD_BOOTZ || CMD_BOOTI
@@ -316,9 +311,16 @@ config BOOTM_VXWORKS
 	help
 	  Support booting VxWorks images via the bootm command.
 
+config CMD_BOOTEFI
+	bool "bootefi"
+	depends on EFI_LOADER
+	default y
+	help
+	  Boot an EFI image from memory.
+
 config CMD_BOOTEFI_HELLO_COMPILE
 	bool "Compile a standard EFI hello world binary for testing"
-	depends on CMD_BOOTEFI && !CPU_V7M && !SANDBOX
+	depends on CMD_BOOTEFI && !CPU_V7M
 	default y
 	help
 	  This compiles a standard EFI hello world application with U-Boot so
@@ -440,6 +442,7 @@ config CMD_FITUPD
 
 config CMD_THOR_DOWNLOAD
 	bool "thor - TIZEN 'thor' download"
+	select DFU
 	help
 	  Implements the 'thor' download protocol. This is a way of
 	  downloading a software update over USB from an attached host.
@@ -531,7 +534,6 @@ config CMD_ENV_FLAGS
 config CMD_NVEDIT_EFI
 	bool "env [set|print] -e - set/print UEFI variables"
 	depends on EFI_LOADER
-	default y
 	imply HEXDUMP
 	help
 	  UEFI variables are encoded as some form of U-Boot variables.
@@ -848,6 +850,7 @@ config CMD_FDC
 config CMD_FLASH
 	bool "flinfo, erase, protect"
 	default y
+	depends on MTD || FLASH_CFI_DRIVER || MTD_NOR_FLASH
 	help
 	  NOR flash support.
 	    flinfo - print FLASH memory information
@@ -1037,6 +1040,7 @@ config CMD_MMC_SWRITE
 
 config CMD_MTD
 	bool "mtd"
+	depends on MTD
 	select MTD_PARTITIONS
 	help
 	  MTD commands support.
@@ -1044,6 +1048,7 @@ config CMD_MTD
 config CMD_NAND
 	bool "nand"
 	default y if NAND_SUNXI
+	depends on MTD_RAW_NAND
 	help
 	  NAND support.
 
@@ -1075,6 +1080,7 @@ config CMD_NVME
 
 config CMD_ONENAND
 	bool "onenand - access to onenand device"
+	depends on MTD
 	help
 	  OneNAND is a brand of NAND ('Not AND' gate) flash which provides
 	  various useful features. This command allows reading, writing,
@@ -1167,6 +1173,7 @@ config CMD_SDRAM
 config CMD_SF
 	bool "sf"
 	depends on DM_SPI_FLASH || SPI_FLASH
+	default y if DM_SPI_FLASH
 	help
 	  SPI Flash support
 
@@ -1203,6 +1210,13 @@ config CMD_TSI148
 	help
 	  This provides various sub-commands to initialise and configure the
 	  Turndra tsi148 device. See the command help for full details.
+
+config CMD_UFS
+	bool "Enable UFS - Universal Flash Subsystem commands"
+	depends on UFS
+	help
+	  "This provides commands to initialise and configure universal flash
+	   subsystem devices"
 
 config CMD_UNIVERSE
 	bool "universe - Command to set up the Turndra Universe controller"
@@ -1459,8 +1473,22 @@ config CMD_NFS
 
 config CMD_MII
 	bool "mii"
+	imply CMD_MDIO
 	help
-	  Enable MII utility commands.
+	  If set, allows 802.3(clause 22) MII Management functions interface access
+	  The management interface specified in Clause 22 provides
+	  a simple, two signal, serial interface to connect a
+	  Station Management entity and a managed PHY for providing access
+	  to management parameters and services.
+	  The interface is referred to as the MII management interface.
+
+config CMD_MDIO
+	bool "mdio"
+	depends on PHYLIB
+	help
+	  If set, allows Enable 802.3(clause 45) MDIO interface registers access
+	  The MDIO interface is orthogonal to the MII interface and extends
+	  it by adding access to more registers through indirect addressing.
 
 config CMD_PING
 	bool "ping"
@@ -1611,6 +1639,7 @@ config CMD_LED
 config CMD_DATE
 	bool "date"
 	default y if DM_RTC
+	select LIB_DATE
 	help
 	  Enable the 'date' command for getting/setting the time/date in RTC
 	  devices.
@@ -1656,6 +1685,12 @@ config CMD_SOUND
 
 	     sound init   - set up sound system
 	     sound play   - play a sound
+
+config CMD_SYSBOOT
+	bool "sysboot"
+	select MENU
+	help
+	  Boot image via local extlinux.conf file
 
 config CMD_QFW
 	bool "qfw"
@@ -1944,27 +1979,13 @@ config CMD_JFFS2
 
 config CMD_MTDPARTS
 	bool "MTD partition support"
-	select MTD_DEVICE if (CMD_NAND || NAND)
+	depends on MTD
 	help
 	  MTD partitioning tool support.
 	  It is strongly encouraged to avoid using this command
 	  anymore along with 'sf', 'nand', 'onenand'. One can still
 	  declare the partitions in the mtdparts environment variable
 	  but better use the MTD stack and the 'mtd' command instead.
-
-config MTDIDS_DEFAULT
-	string "Default MTD IDs"
-	depends on MTD_PARTITIONS || CMD_MTDPARTS || CMD_NAND || CMD_FLASH
-	help
-	  Defines a default MTD IDs list for use with MTD partitions in the
-	  Linux MTD command line partitions format.
-
-config MTDPARTS_DEFAULT
-	string "Default MTD partition scheme"
-	depends on MTD_PARTITIONS || CMD_MTDPARTS || CMD_NAND || CMD_FLASH
-	help
-	  Defines a default MTD partitioning scheme in the Linux MTD command
-	  line partitions format
 
 config CMD_MTDPARTS_SPREAD
 	bool "Padd partition size to take account of bad blocks"
@@ -1975,6 +1996,28 @@ config CMD_MTDPARTS_SPREAD
 	  the size of the partitions such that 1) each partition's net size is
 	  at least as large as the size specified in the mtdparts variable and
 	  2) each partition starts on a good block.
+
+config CMD_MTDPARTS_SHOW_NET_SIZES
+	bool "Show net size (w/o bad blocks) of partitions"
+	depends on CMD_MTDPARTS
+	help
+	  Adds two columns to the printed partition table showing the
+	  effective usable size of a partition, if bad blocks are taken
+	  into account.
+
+config MTDIDS_DEFAULT
+	string "Default MTD IDs"
+	depends on MTD || SPI_FLASH
+	help
+	  Defines a default MTD IDs list for use with MTD partitions in the
+	  Linux MTD command line partitions format.
+
+config MTDPARTS_DEFAULT
+	string "Default MTD partition scheme"
+	depends on MTD || SPI_FLASH
+	help
+	  Defines a default MTD partitioning scheme in the Linux MTD command
+	  line partitions format
 
 config CMD_REISER
 	bool "reiser - Access to reiserfs filesystems"

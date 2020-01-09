@@ -303,6 +303,7 @@ static int do_mem_cmp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 static int do_mem_cp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong	addr, dest, count;
+	void	*src, *dst;
 	int	size;
 
 	if (argc != 4)
@@ -326,25 +327,34 @@ static int do_mem_cp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return 1;
 	}
 
+	src = map_sysmem(addr, count * size);
+	dst = map_sysmem(dest, count * size);
+
 #ifdef CONFIG_MTD_NOR_FLASH
 	/* check if we are copying to Flash */
-	if (addr2info(dest) != NULL) {
+	if (addr2info((ulong)dst)) {
 		int rc;
 
 		puts ("Copy to Flash... ");
 
-		rc = flash_write ((char *)addr, dest, count*size);
+		rc = flash_write((char *)src, (ulong)dst, count * size);
 		if (rc != 0) {
 			flash_perror (rc);
+			unmap_sysmem(src);
+			unmap_sysmem(dst);
 			return (1);
 		}
 		puts ("done\n");
+		unmap_sysmem(src);
+		unmap_sysmem(dst);
 		return 0;
 	}
 #endif
 
-	memcpy((void *)dest, (void *)addr, count * size);
+	memcpy(dst, src, count * size);
 
+	unmap_sysmem(src);
+	unmap_sysmem(dst);
 	return 0;
 }
 
@@ -1212,16 +1222,11 @@ U_BOOT_CMD(
 #endif
 
 #ifdef CONFIG_CMD_MEMINFO
-__weak void board_show_dram(phys_size_t size)
-{
-	puts("DRAM:  ");
-	print_size(size, "\n");
-}
-
 static int do_mem_info(cmd_tbl_t *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
-	board_show_dram(gd->ram_size);
+	puts("DRAM:  ");
+	print_size(gd->ram_size, "\n");
 
 	return 0;
 }
