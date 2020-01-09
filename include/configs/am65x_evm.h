@@ -12,8 +12,7 @@
 #include <linux/sizes.h>
 #include <config_distro_bootcmd.h>
 #include <environment/ti/mmc.h>
-
-#define CONFIG_ENV_SIZE			(128 << 10)
+#include <environment/ti/k3_rproc.h>
 
 /* DDR Configuration */
 #define CONFIG_SYS_SDRAM_BASE1		0x880000000
@@ -98,21 +97,25 @@
 		"${bootdir}/${name_fit}\0"				\
 	"partitions=" PARTS_DEFAULT
 
+#ifdef DEFAULT_RPROCS
+#undef DEFAULT_RPROCS
+#endif
+#define DEFAULT_RPROCS	""						\
+		"0 /lib/firmware/am65x-mcu-r5f0_0-fw "			\
+		"1 /lib/firmware/am65x-mcu-r5f0_1-fw "
+
 /* Incorporate settings into the U-Boot environment */
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	DEFAULT_MMC_TI_ARGS						\
 	DEFAULT_FIT_TI_ARGS						\
 	EXTRA_ENV_AM65X_BOARD_SETTINGS					\
-	EXTRA_ENV_AM65X_BOARD_SETTINGS_MMC
+	EXTRA_ENV_AM65X_BOARD_SETTINGS_MMC				\
+	EXTRA_ENV_RPROC_SETTINGS
 
 /* MMC ENV related defines */
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART	1
-#define CONFIG_ENV_SIZE		(128 << 10)
-#define CONFIG_ENV_OFFSET		0x680000
-#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
-#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #endif
 
 #define CONFIG_SUPPORT_EMMC_BOOT

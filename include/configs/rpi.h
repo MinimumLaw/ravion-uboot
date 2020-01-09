@@ -9,6 +9,10 @@
 #include <linux/sizes.h>
 #include <asm/arch/timer.h>
 
+#ifndef __ASSEMBLY__
+#include <asm/arch/base.h>
+#endif
+
 #if defined(CONFIG_TARGET_RPI_2) || defined(CONFIG_TARGET_RPI_3_32B)
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #endif
@@ -74,7 +78,6 @@
 #define CONFIG_SYS_CBSIZE		1024
 
 /* Environment */
-#define CONFIG_ENV_SIZE			SZ_16K
 #define CONFIG_SYS_LOAD_ADDR		0x1000000
 
 /* Shell */

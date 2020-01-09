@@ -17,10 +17,6 @@
 
 #define CONFIG_BOARD_LATE_INIT
 
-/* Uncomment to enable secure boot support */
-/* #define CONFIG_SECURE_BOOT */
-#define CONFIG_CSF_SIZE			0x4000
-
 /* Network */
 #define CONFIG_FEC_MXC
 #define CONFIG_FEC_XCV_TYPE             RGMII
@@ -138,9 +134,6 @@
 /* SPI Flash support */
 
 /* FLASH and environment organization */
-#define CONFIG_ENV_SIZE			SZ_8K
-#define CONFIG_ENV_OFFSET		(768 * 1024)
-#define CONFIG_ENV_SECT_SIZE		(64 * 1024)
 
 /* MMC Config*/
 #ifdef CONFIG_FSL_USDHC

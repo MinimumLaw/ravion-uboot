@@ -40,15 +40,6 @@
 #define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE /* select UART1/UART2 */
 
-/* Ethernet */
-#define CONFIG_FEC_MXC
-#define CONFIG_FEC_MXC
-#define IMX_FEC_BASE			ENET_BASE_ADDR
-#define CONFIG_FEC_XCV_TYPE		RGMII
-#define CONFIG_ETHPRIME			"FEC"
-#define CONFIG_FEC_MXC_PHYADDR		4
-#define CONFIG_PHY_ATHEROS
-
 /* Framebuffer */
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_BMP_RLE8
@@ -84,8 +75,6 @@
 /* Environment organization */
 #define CONFIG_SYS_MMC_ENV_DEV		2 /* overwritten on SD boot */
 #define CONFIG_SYS_MMC_ENV_PART		1 /* overwritten on SD boot */
-#define CONFIG_ENV_SIZE			(8 * 1024)
-#define CONFIG_ENV_OFFSET		(384 * 1024)
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_BOARD_SIZE_LIMIT		392192 /* (CONFIG_ENV_OFFSET - 1024) */

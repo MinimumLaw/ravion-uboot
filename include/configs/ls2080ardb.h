@@ -72,12 +72,6 @@ unsigned long get_board_sys_clk(void);
 						CONFIG_SYS_SCSI_MAX_LUN)
 #ifdef CONFIG_TFABOOT
 #define CONFIG_SYS_MMC_ENV_DEV         0
-
-#define CONFIG_ENV_SIZE			0x2000
-#define CONFIG_ENV_OFFSET		0x500000	/* 5MB */
-#define CONFIG_ENV_ADDR			(CONFIG_SYS_FLASH_BASE + \
-					 CONFIG_ENV_OFFSET)
-#define CONFIG_ENV_SECT_SIZE		0x40000
 #endif
 
 #if !defined(CONFIG_FSL_QSPI) || defined(CONFIG_TFABOOT)
@@ -202,7 +196,7 @@ unsigned long get_board_sys_clk(void);
 					FTIM2_GPCM_TWP(0x3E))
 #define CONFIG_SYS_CS3_FTIM3		0x0
 
-#if defined(CONFIG_SPL) && defined(CONFIG_NAND)
+#if defined(CONFIG_SPL) && defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_CSPR2_EXT		CONFIG_SYS_NOR0_CSPR_EXT
 #define CONFIG_SYS_CSPR2		CONFIG_SYS_NOR0_CSPR_EARLY
 #define CONFIG_SYS_CSPR2_FINAL		CONFIG_SYS_NOR0_CSPR
@@ -221,11 +215,6 @@ unsigned long get_board_sys_clk(void);
 #define CONFIG_SYS_CS0_FTIM2		CONFIG_SYS_NAND_FTIM2
 #define CONFIG_SYS_CS0_FTIM3		CONFIG_SYS_NAND_FTIM3
 
-#ifndef CONFIG_TFABOOT
-#define CONFIG_ENV_OFFSET		(2048 * 1024)
-#define CONFIG_ENV_SECT_SIZE		0x20000
-#define CONFIG_ENV_SIZE			0x2000
-#endif
 #define CONFIG_SPL_PAD_TO		0x80000
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	(1024 * 1024)
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	(512 * 1024)
@@ -247,12 +236,6 @@ unsigned long get_board_sys_clk(void);
 #define CONFIG_SYS_CS2_FTIM1		CONFIG_SYS_NAND_FTIM1
 #define CONFIG_SYS_CS2_FTIM2		CONFIG_SYS_NAND_FTIM2
 #define CONFIG_SYS_CS2_FTIM3		CONFIG_SYS_NAND_FTIM3
-
-#ifndef CONFIG_TFABOOT
-#define CONFIG_ENV_ADDR			(CONFIG_SYS_FLASH_BASE + 0x300000)
-#define CONFIG_ENV_SECT_SIZE		0x20000
-#define CONFIG_ENV_SIZE			0x2000
-#endif
 #endif
 
 /* Debug Server firmware */
@@ -577,8 +560,6 @@ unsigned long get_board_sys_clk(void);
 
 /* MAC/PHY configuration */
 #ifdef CONFIG_FSL_MC_ENET
-#define CONFIG_PHY_CORTINA
-#define	CONFIG_SYS_CORTINA_FW_IN_NOR
 #ifdef CONFIG_QSPI_BOOT
 #define CONFIG_CORTINA_FW_ADDR		0x20980000
 #else

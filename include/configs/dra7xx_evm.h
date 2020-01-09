@@ -21,8 +21,6 @@
 #ifndef CONFIG_QSPI_BOOT
 /* MMC ENV related defines */
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SLOT2: eMMC(1) */
-#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
-#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #endif
 
 #if (CONFIG_CONS_INDEX == 1)
@@ -65,10 +63,8 @@
 #define CONFIG_HSMMC2_8BIT
 
 /* CPSW Ethernet */
-#define CONFIG_BOOTP_DNS2
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT		10
-#define CONFIG_PHY_TI
 
 /*
  * Default to using SPI for environment, etc.
@@ -83,13 +79,6 @@
 #define CONFIG_SYS_SPI_KERNEL_OFFS	0x1E0000
 #define CONFIG_SYS_SPI_ARGS_OFFS	0x140000
 #define CONFIG_SYS_SPI_ARGS_SIZE	0x80000
-#if defined(CONFIG_QSPI_BOOT)
-#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
-#define CONFIG_ENV_SIZE			(64 << 10)
-#define CONFIG_ENV_SECT_SIZE		(64 << 10) /* 64 KB sectors */
-#define CONFIG_ENV_OFFSET		0x1C0000
-#define CONFIG_ENV_OFFSET_REDUND	0x1D0000
-#endif
 
 /* SPI SPL */
 
@@ -102,7 +91,7 @@
 #define CONFIG_SCSI_AHCI_PLAT
 
 /* NAND support */
-#ifdef CONFIG_NAND
+#ifdef CONFIG_MTD_RAW_NAND
 /* NAND: device related configs */
 #define CONFIG_SYS_NAND_PAGE_SIZE	2048
 #define CONFIG_SYS_NAND_OOBSIZE		64
@@ -129,7 +118,7 @@
 #ifdef CONFIG_SPL_OS_BOOT
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS	0x00200000 /* kernel offset */
 #endif
-#endif /* !CONFIG_NAND */
+#endif /* !CONFIG_MTD_RAW_NAND */
 
 /* Parallel NOR Support */
 #if defined(CONFIG_NOR)
@@ -142,11 +131,6 @@
 #define CONFIG_SYS_FLASH_BASE		(0x08000000)
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 /* Reduce SPL size by removing unlikey targets */
-#ifdef CONFIG_NOR_BOOT
-#define CONFIG_ENV_SECT_SIZE		(128 * 1024)	/* 128 KiB */
-#define CONFIG_ENV_OFFSET		0x001c0000
-#define CONFIG_ENV_OFFSET_REDUND	0x001e0000
-#endif
 #endif  /* NOR support */
 
 #endif /* __CONFIG_DRA7XX_EVM_H */

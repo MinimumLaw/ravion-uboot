@@ -18,6 +18,7 @@
 #include <search.h>
 #include <errno.h>
 #include <dm/device-internal.h>
+#include <u-boot/crc.h>
 
 #ifndef CONFIG_SPL_BUILD
 #define CMD_SAVEENV
@@ -284,14 +285,14 @@ out:
 }
 #endif
 
-#ifdef CONFIG_ENV_ADDR
+#if CONFIG_ENV_ADDR != 0x0
 __weak void *env_sf_get_env_addr(void)
 {
 	return (void *)CONFIG_ENV_ADDR;
 }
 #endif
 
-#if defined(INITENV) && defined(CONFIG_ENV_ADDR)
+#if defined(INITENV) && (CONFIG_ENV_ADDR != 0x0)
 static int env_sf_init(void)
 {
 	env_t *env_ptr = (env_t *)env_sf_get_env_addr();
@@ -315,7 +316,7 @@ U_BOOT_ENV_LOCATION(sf) = {
 #ifdef CMD_SAVEENV
 	.save		= env_save_ptr(env_sf_save),
 #endif
-#if defined(INITENV) && defined(CONFIG_ENV_ADDR)
+#if defined(INITENV) && (CONFIG_ENV_ADDR != 0x0)
 	.init		= env_sf_init,
 #endif
 };

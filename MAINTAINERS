@@ -94,6 +94,13 @@ L:	uboot-snps-arc@synopsys.com
 F:	doc/device-tree-bindings/gpio/snps,creg-gpio.txt
 F:	drivers/gpio/hsdk-creg-gpio.c
 
+ARC HSDK RESET
+M:	Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+S:	Maintained
+L:	uboot-snps-arc@synopsys.com
+F:	include/dt-bindings/reset/snps,hsdk-reset.h
+F:	drivers/reset/reset-hsdk.c
+
 ARC SYNOPSYS DW MMC EXTENSIONS
 M:	Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
 S:	Maintained
@@ -102,7 +109,7 @@ F:	doc/device-tree-bindings/mmc/snps,dw-mmc.txt
 F:	drivers/mmc/snps_dw_mmc.c
 
 ARM
-M:	Albert Aribaud <albert.u.boot@aribaud.net>
+M:	Tom Rini <trini@konsulko.com>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-arm.git
 F:	arch/arm/
@@ -137,12 +144,15 @@ F:	drivers/pinctrl/meson/
 F:	drivers/power/domain/meson-gx-pwrc-vpu.c
 F:	drivers/video/meson/
 F:	include/configs/meson64.h
+F:	include/configs/meson64_android.h
 N:	meson
 
 ARM BROADCOM BCM283X
 M:	Matthias Brugger <mbrugger@suse.com>
 S:	Maintained
+F:	arch/arm/dts/bcm283*
 F:	arch/arm/mach-bcm283x/
+F:	board/raspberrypi/
 F:	drivers/gpio/bcm2835_gpio.c
 F:	drivers/mmc/bcm2835_sdhci.c
 F:	drivers/mmc/bcm2835_sdhost.c
@@ -150,6 +160,7 @@ F:	drivers/serial/serial_bcm283x_mu.c
 F:	drivers/serial/serial_bcm283x_pl011.c
 F:	drivers/video/bcm2835.c
 F:	include/dm/platform_data/serial_bcm283x_mu.h
+F:	include/dt-bindings/pinctrl/bcm2835.h
 F:	drivers/pinctrl/broadcom/
 
 ARM BROADCOM BCMSTB
@@ -245,6 +256,7 @@ S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-atmel.git
 F:	arch/arm/mach-at91/
 F:	board/atmel/
+F:	drivers/misc/microchip_flexcom.c
 
 ARM OWL
 M:	Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
@@ -404,6 +416,7 @@ M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-versal/
+N:	(?<!uni)versal
 
 ARM VERSATILE EXPRESS DRIVERS
 M:	Liviu Dudau <liviu.dudau@foss.arm.com>
@@ -442,11 +455,13 @@ S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-zynqmp/
 F:	drivers/clk/clk_zynqmp.c
+F:	driver/firmware/firmware-zynqmp.c
 F:	drivers/fpga/zynqpl.c
 F:	drivers/gpio/zynq_gpio.c
 F:	drivers/i2c/i2c-cdns.c
 F:	drivers/i2c/muxes/pca954x.c
 F:	drivers/i2c/zynq_i2c.c
+F:	drivers/mailbox/zynqmp-ipi.c
 F:	drivers/mmc/zynq_sdhci.c
 F:	drivers/mtd/nand/raw/zynq_nand.c
 F:	drivers/net/phy/xilinx_phy.c
@@ -458,6 +473,7 @@ F:	drivers/timer/cadence-ttc.c
 F:	drivers/usb/host/ehci-zynq.c
 F:	drivers/watchdog/cdns_wdt.c
 F:	include/zynqmppl.h
+F:	include/zynqmp_firmware.h
 F:	tools/zynqmp*
 N:	ultra96
 N:	zynqmp
@@ -467,6 +483,13 @@ M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-zynqmp-r5/
+
+ARM PHYTIUM
+M:	liuhao <liuhao@phytium.com.cn>
+M:	shuyiqi <shuyiqi@phytium.com.cn>
+S:	Maintained
+F:	drivers/pci/pcie_phytium.c
+F:	arch/arm/dts/phytium-durian.dts
 
 BINMAN
 M:	Simon Glass <sjg@chromium.org>
@@ -540,6 +563,16 @@ F:	cmd/bootefi.c
 F:	cmd/efidebug.c
 F:	cmd/nvedit_efi.c
 F:	tools/file2include.c
+
+ENVIRONMENT
+M:	Joe Hershberger <joe.hershberger@ni.com>
+R:	Wolfgang Denk <wd@denx.de>
+S:	Maintained
+F:	env/
+F:	include/env*
+F:	test/env/
+F:	tools/env*
+F:	tools/mkenvimage.c
 
 FPGA
 M:	Michal Simek <michal.simek@xilinx.com>
@@ -688,6 +721,11 @@ S:	Maintained
 F:	drivers/pci_endpoint/
 F:  include/pci_ep.h
 
+PCI MPC85xx
+M:	Heiko Schocher <hs@denx.de>
+S:	Maintained
+F:	drivers/pci/pci_mpc85xx.c
+
 POWER
 M:	Jaehoon Chung <jh80.chung@samsung.com>
 S:	Maintained
@@ -835,17 +873,25 @@ S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-ubi.git
 F:	drivers/mtd/ubi/
 
+UFS
+M:	Faiz Abbas <faiz_abbas@ti.com>
+S:	Maintained
+F:	drivers/ufs/
+
 USB
 M:	Marek Vasut <marex@denx.de>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-usb.git
 F:	drivers/usb/
+F:	common/usb.c
+F:	common/usb_kbd.c
 
 USB xHCI
 M:	Bin Meng <bmeng.cn@gmail.com>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-usb.git topic-xhci
 F:	drivers/usb/host/xhci*
+F:	include/usb/xhci.h
 
 VIDEO
 M:	Anatolij Gustschin <agust@denx.de>

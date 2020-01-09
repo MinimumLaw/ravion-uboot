@@ -186,60 +186,6 @@ fdt_addr_t fdtdec_get_addr(const void *blob, int node, const char *prop_name)
 }
 
 #if CONFIG_IS_ENABLED(PCI) && defined(CONFIG_DM_PCI)
-int fdtdec_get_pci_addr(const void *blob, int node, enum fdt_pci_space type,
-			const char *prop_name, struct fdt_pci_addr *addr)
-{
-	const u32 *cell;
-	int len;
-	int ret = -ENOENT;
-
-	debug("%s: %s: ", __func__, prop_name);
-
-	/*
-	 * If we follow the pci bus bindings strictly, we should check
-	 * the value of the node's parent node's #address-cells and
-	 * #size-cells. They need to be 3 and 2 accordingly. However,
-	 * for simplicity we skip the check here.
-	 */
-	cell = fdt_getprop(blob, node, prop_name, &len);
-	if (!cell)
-		goto fail;
-
-	if ((len % FDT_PCI_REG_SIZE) == 0) {
-		int num = len / FDT_PCI_REG_SIZE;
-		int i;
-
-		for (i = 0; i < num; i++) {
-			debug("pci address #%d: %08lx %08lx %08lx\n", i,
-			      (ulong)fdt32_to_cpu(cell[0]),
-			      (ulong)fdt32_to_cpu(cell[1]),
-			      (ulong)fdt32_to_cpu(cell[2]));
-			if ((fdt32_to_cpu(*cell) & type) == type) {
-				addr->phys_hi = fdt32_to_cpu(cell[0]);
-				addr->phys_mid = fdt32_to_cpu(cell[1]);
-				addr->phys_lo = fdt32_to_cpu(cell[2]);
-				break;
-			}
-
-			cell += (FDT_PCI_ADDR_CELLS +
-				 FDT_PCI_SIZE_CELLS);
-		}
-
-		if (i == num) {
-			ret = -ENXIO;
-			goto fail;
-		}
-
-		return 0;
-	}
-
-	ret = -EINVAL;
-
-fail:
-	debug("(not found)\n");
-	return ret;
-}
-
 int fdtdec_get_pci_vendev(const void *blob, int node, u16 *vendor, u16 *device)
 {
 	const char *list, *end;
@@ -296,7 +242,7 @@ int fdtdec_get_pci_bar32(struct udevice *dev, struct fdt_pci_addr *addr,
 uint64_t fdtdec_get_uint64(const void *blob, int node, const char *prop_name,
 			   uint64_t default_val)
 {
-	const uint64_t *cell64;
+	const unaligned_fdt64_t *cell64;
 	int length;
 
 	cell64 = fdt_getprop(blob, node, prop_name, &length);
@@ -1363,7 +1309,8 @@ int fdtdec_add_reserved_memory(void *blob, const char *basename,
 		}
 
 		if (addr == carveout->start && (addr + size) == carveout->end) {
-			*phandlep = fdt_get_phandle(blob, node);
+			if (phandlep)
+				*phandlep = fdt_get_phandle(blob, node);
 			return 0;
 		}
 	}
@@ -1392,13 +1339,15 @@ int fdtdec_add_reserved_memory(void *blob, const char *basename,
 	if (node < 0)
 		return node;
 
-	err = fdt_generate_phandle(blob, &phandle);
-	if (err < 0)
-		return err;
+	if (phandlep) {
+		err = fdt_generate_phandle(blob, &phandle);
+		if (err < 0)
+			return err;
 
-	err = fdtdec_set_phandle(blob, node, phandle);
-	if (err < 0)
-		return err;
+		err = fdtdec_set_phandle(blob, node, phandle);
+		if (err < 0)
+			return err;
+	}
 
 	/* store one or two address cells */
 	if (na > 1)

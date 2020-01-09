@@ -23,7 +23,7 @@
 #define CONFIG_SYS_TIMERBASE		DAVINCI_TIMER0_BASE
 #define CONFIG_SYS_HZ_CLOCK		clk_get(DAVINCI_AUXCLK_CLKID)
 #define CONFIG_SYS_HZ			1000
-#define CONFIG_SKIP_LOWLEVEL_INIT
+#define CONFIG_SKIP_LOWLEVEL_INIT_ONLY
 
 /*
  * Memory Info
@@ -116,9 +116,7 @@
 /*
  * Flash & Environment
  */
-#ifdef CONFIG_NAND
-#define CONFIG_ENV_OFFSET		0x0 /* Block 0--not used by bootcode */
-#define CONFIG_ENV_SIZE			(128 << 9)
+#ifdef CONFIG_MTD_RAW_NAND
 #define CONFIG_SYS_NAND_4BIT_HW_ECC_OOBFIRST
 #define	CONFIG_SYS_NAND_PAGE_2K
 #define CONFIG_SYS_NAND_CS		3
@@ -214,13 +212,6 @@
 #endif
 
 /* SD/MMC */
-
-#ifdef CONFIG_ENV_IS_IN_MMC
-#undef CONFIG_ENV_SIZE
-#undef CONFIG_ENV_OFFSET
-#define CONFIG_ENV_SIZE		(16 << 10)	/* 16 KiB */
-#define CONFIG_ENV_OFFSET	(51 << 9)	/* Sector 51 */
-#endif
 
 /* defines for SPL */
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_TEXT_BASE - \

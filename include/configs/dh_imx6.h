@@ -59,7 +59,6 @@
 #if defined(CONFIG_SPL_BUILD)
 #undef CONFIG_DM_SPI
 #undef CONFIG_DM_SPI_FLASH
-#undef CONFIG_SPI_FLASH_MTD
 #endif
 
 /* UART */
@@ -88,7 +87,6 @@
 #endif
 
 /* Watchdog */
-#define CONFIG_WATCHDOG_TIMEOUT_MSECS	60000
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -139,15 +137,5 @@
 #define CONFIG_SYS_MEMTEST_SCRATCH	0x10800000
 
 /* Environment */
-#define CONFIG_ENV_SIZE			(16 * 1024)
-#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
-
-#if defined(CONFIG_ENV_IS_IN_SPI_FLASH)
-#define CONFIG_ENV_OFFSET		(1024 * 1024)
-#define CONFIG_ENV_SECT_SIZE		(64 * 1024)
-#define CONFIG_ENV_OFFSET_REDUND	\
-	(CONFIG_ENV_OFFSET + CONFIG_ENV_SECT_SIZE)
-#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
-#endif
 
 #endif	/* __DH_IMX6_CONFIG_H */

@@ -22,8 +22,6 @@
 #define FDT_MODULE_V1_0			"apalis"
 
 /* Environment in eMMC, before config block at the end of 1st "boot sector" */
-#define CONFIG_ENV_OFFSET		(-CONFIG_ENV_SIZE + \
-					 CONFIG_TDX_CFG_BLOCK_OFFSET)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART		1
 
@@ -137,8 +135,6 @@
 #define CONFIG_SYS_MAXARGS		32
 
 #define CONFIG_CMD_TIME
-
-#define CONFIG_SYS_BOOT_RAMDISK_HIGH
 
 #include "tegra-common-usb-gadget.h"
 #include "tegra-common-post.h"

@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <search.h>
 #include <errno.h>
+#include <u-boot/crc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -26,11 +27,6 @@ DECLARE_GLOBAL_DATA_PTR;
 # elif defined(CONFIG_ENV_ADDR_REDUND)
 #  error CONFIG_ENV_ADDR_REDUND must have CONFIG_CMD_SAVEENV & CONFIG_CMD_FLASH
 # endif
-#endif
-
-#if defined(CONFIG_ENV_SIZE_REDUND) &&	\
-	(CONFIG_ENV_SIZE_REDUND < CONFIG_ENV_SIZE)
-#error CONFIG_ENV_SIZE_REDUND should not be less then CONFIG_ENV_SIZE
 #endif
 
 /* TODO(sjg@chromium.org): Figure out all these special cases */

@@ -106,29 +106,8 @@
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"kernel_addr_r=0x81000000\0" \
-	"ramdisk_addr_r=0x82100000\0"
-
-#if defined(CONFIG_TARGET_COLIBRI_IMX7_NAND)
-#define SD_BOOTDEV 0
-#elif defined(CONFIG_TARGET_COLIBRI_IMX7_EMMC)
-#define SD_BOOTDEV 1
-#endif
-
-#define SD_BOOTCMD \
-	"set_sdargs=setenv sdargs root=PARTUUID=${uuid} ro rootwait\0" \
-	"sdboot=run setup; run sdfinduuid; run set_sdargs; " \
-	"setenv bootargs ${defargs} ${sdargs} " \
-	"${setupargs} ${vidargs}; echo Booting from MMC/SD card...; " \
-	"run m4boot && " \
-	"load mmc ${sddev}:${sdbootpart} ${kernel_addr_r} ${kernel_file} && " \
-	"load mmc ${sddev}:${sdbootpart} ${fdt_addr_r} " \
-	"${soc}-colibri-${fdt_board}.dtb && " \
-	"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
-	"sdbootpart=1\0" \
-	"sddev=" __stringify(SD_BOOTDEV) "\0" \
-	"sdfinduuid=part uuid mmc ${sddev}:${sdrootpart} uuid\0" \
-	"sdrootpart=2\0"
-
+	"ramdisk_addr_r=0x82100000\0" \
+	"scriptaddr=0x82500000\0"
 
 #define NFS_BOOTCMD \
 	"nfsargs=ip=:::::eth0: root=/dev/nfs\0" \
@@ -157,7 +136,7 @@
 	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	UBI_BOOTCMD
 #elif defined(CONFIG_TARGET_COLIBRI_IMX7_EMMC)
-#define CONFIG_BOOTCOMMAND "run emmcboot ; echo ; echo emmcboot failed ; " \
+#define CONFIG_BOOTCOMMAND \
 	"setenv fdtfile ${soc}-colibri-emmc-${fdt_board}.dtb && run distro_bootcmd;"
 #define MODULE_EXTRA_ENV_SETTINGS \
 	"variant=-emmc\0" \
@@ -183,7 +162,6 @@
 	BOOTENV \
 	MEM_LAYOUT_ENV_SETTINGS \
 	NFS_BOOTCMD \
-	SD_BOOTCMD \
 	MODULE_EXTRA_ENV_SETTINGS \
 	"boot_file=zImage\0" \
 	"console=ttymxc0\0" \
@@ -234,15 +212,8 @@
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 /* Environment in eMMC, before config block at the end of 1st "boot sector" */
-#define CONFIG_ENV_SIZE			(8 * 1024)
-#define CONFIG_ENV_OFFSET		(-CONFIG_ENV_SIZE + \
-					 CONFIG_TDX_CFG_BLOCK_OFFSET)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART		1
-#elif defined(CONFIG_ENV_IS_IN_NAND)
-#define CONFIG_ENV_SECT_SIZE		(128 * 1024)
-#define CONFIG_ENV_OFFSET		(28 * CONFIG_ENV_SECT_SIZE)
-#define CONFIG_ENV_SIZE			CONFIG_ENV_SECT_SIZE
 #endif
 
 #ifdef CONFIG_TARGET_COLIBRI_IMX7_NAND

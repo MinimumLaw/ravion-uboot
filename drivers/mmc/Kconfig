@@ -489,6 +489,17 @@ config MMC_SDHCI_AM654
 	  Support for Secure Digital Host Controller Interface (SDHCI)
 	  controllers present on TI's AM654 SOCs.
 
+config MMC_SDHCI_IPROC
+	bool "SDHCI support for the iProc SD/MMC Controller"
+	depends on MMC_SDHCI
+	help
+	  This selects the iProc SD/MMC controller.
+
+	  If you have a Broadcom IPROC platform with SD or MMC devices,
+	  say Y or M here.
+
+	  If unsure, say N.
+
 config MMC_SDHCI_KONA
 	bool "SDHCI support on Broadcom KONA platform"
 	depends on MMC_SDHCI
@@ -634,6 +645,12 @@ config ZYNQ_SDHCI_MIN_FREQ
 	help
 	  Set the minimum frequency of the controller.
 
+config ZYNQ_HISPD_BROKEN
+	bool "High speed broken for Zynq SDHCI controller"
+	depends on MMC_SDHCI_ZYNQ
+	help
+	  Set if high speed mode is broken.
+
 config MMC_SUNXI
 	bool "Allwinner sunxi SD/MMC Host Controller support"
 	depends on ARCH_SUNXI && !UART0_PORT_F
@@ -681,7 +698,7 @@ config FTSDC010_SDIO
 
 config MMC_MTK
 	bool "MediaTek SD/MMC Card Interface support"
-	depends on ARCH_MEDIATEK
+	depends on ARCH_MEDIATEK || ARCH_MTMIPS
 	depends on BLK && DM_MMC
 	depends on OF_CONTROL
 	help
