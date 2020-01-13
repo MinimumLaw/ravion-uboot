@@ -147,7 +147,7 @@
 	NFS_BOOTCMD \
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
-	"u-boot-name=u-boot-ravion.imx\0" \
+	"u-boot-name=u-boot-with-spl.imx\0" \
 	UBOOT_UPDATE \
 	RECOVERY_BOOTCMD \
 	"splashpos=m,m\0" \
