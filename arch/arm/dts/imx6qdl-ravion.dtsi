@@ -129,6 +129,7 @@
 
 		regulators {
 			sw1a_reg: sw1ab {
+				regulator-name = "sw1ab";
 				regulator-min-microvolt = <300000>;
 				regulator-max-microvolt = <1875000>;
 				regulator-boot-on;
@@ -137,6 +138,7 @@
 			    };
 
 			sw1c_reg: sw1c {
+				regulator-name = "sw1c";
 				regulator-min-microvolt = <300000>;
 				regulator-max-microvolt = <1875000>;
 				regulator-boot-on;
@@ -145,6 +147,7 @@
 			};
 
 			sw2_reg: sw2 {
+				regulator-name = "sw2";
 				regulator-min-microvolt = <800000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-boot-on;
@@ -153,6 +156,7 @@
 			};
 
 			sw3a_reg: sw3a {
+				regulator-name = "sw3a";
 				regulator-min-microvolt = <400000>;
 				regulator-max-microvolt = <1975000>;
 				regulator-boot-on;
@@ -160,6 +164,7 @@
 			};
 
 			sw3b_reg: sw3b {
+				regulator-name = "sw3b";
 				regulator-min-microvolt = <400000>;
 				regulator-max-microvolt = <1975000>;
 				regulator-boot-on;
@@ -167,11 +172,13 @@
 			};
 
 			sw4_reg: sw4 {
+				regulator-name = "sw4";
 				regulator-min-microvolt = <800000>;
 				regulator-max-microvolt = <3300000>;
 			};
 
 			swbst_reg: swbst {
+				regulator-name = "swbst";
 				regulator-min-microvolt = <5000000>;
 				regulator-max-microvolt = <5150000>;
 				regulator-boot-on;
@@ -179,6 +186,7 @@
 			};
 
 			snvs_reg: vsnvs {
+				regulator-name = "vsnvs";
 				regulator-min-microvolt = <1000000>;
 				regulator-max-microvolt = <3000000>;
 				regulator-boot-on;
@@ -186,16 +194,19 @@
 			};
 
 			vref_reg: vrefddr {
+				regulator-name = "vrefddr";
 				regulator-boot-on;
 				regulator-always-on;
 			};
 
 			vgen1_reg: vgen1 {
+				regulator-name = "vgen1";
 				regulator-min-microvolt = <800000>;
 				regulator-max-microvolt = <1550000>;
 			};
 
 			vgen2_reg: vgen2 {
+				regulator-name = "vgen2";
 				regulator-min-microvolt = <1500000>;
 				regulator-max-microvolt = <1500000>;
 				regulator-boot-on;
@@ -203,24 +214,28 @@
 			};
 
 			vgen3_reg: vgen3 {
+				regulator-name = "vgen3";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-always-on;
 			};
 
 			vgen4_reg: vgen4 {
+				regulator-name = "vgen4";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-always-on;
 			};
 
 			vgen5_reg: vgen5 {
+				regulator-name = "vgen5";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-always-on;
 			};
 
 			vgen6_reg: vgen6 {
+				regulator-name = "vgen6";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-always-on;
