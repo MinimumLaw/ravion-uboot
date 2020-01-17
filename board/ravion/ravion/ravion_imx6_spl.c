@@ -36,6 +36,7 @@
 #include <spl.h>
 
 #include "ravion_qp_2048.h"
+#include "ravion_dl_2048.h"
 
 void reset_cpu(ulong addr)
 {
@@ -81,6 +82,7 @@ static void ccgr_init(void)
 }
 
 static int imx6qp_2048_dcd[] = RAVION_QP_2048;
+static int imx6dl_2048_dcd[] = RAVION_DL_2048;
 
 static void ddr_init(int *table, int size) 
 {
@@ -95,7 +97,7 @@ static void spl_dram_init(void)
 	if (is_mx6dqp())
 		ddr_init(imx6qp_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
 	else if (is_mx6dq())
-		ddr_init(imx6qp_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
+		ddr_init(imx6dl_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
 }
 
 void board_init_f(ulong dummy)

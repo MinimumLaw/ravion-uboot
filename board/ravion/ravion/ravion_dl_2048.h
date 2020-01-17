@@ -2,7 +2,7 @@
  *
  */
 
-#define RAVION_V2_DL_2048Mb_DEFAULTS { \
+#define RAVION_DL_2048 { \
 /* DDR IO TYPE: */ \
 	0x020e0774,	0x000C0000,	/* IOMUXC_SW_PAD_CTL_GRP_DDR_TYPE */ \
 	0x020e0754,	0x00000000,	/* IOMUXC_SW_PAD_CTL_GRP_DDRPKE */ \
@@ -64,14 +64,12 @@
 /*=============================================================================*/ \
 /* Calibration setup.                                                          */ \
 /*=============================================================================*/ \
-	0x021b0800,	0xA1390003	/* DDR_PHY_P0_MPZQHWCTRL, enable both one-time & periodic HW ZQ calibration */ \
-/* For target board, may need to run write leveling calibration to fine tune these settings. */ \
-	0x021b080c,	0x004C0054,	*/ \
-	0x021b0810,	0x003F0047,	*/ \
-	0x021b480c,	0x00300032,	*/ \
-	0x021b4810,	0x002E003D,	*/ \
-			
-/*/*Read DQS Gating calibration			
+	0x021b0800,	0xA1390003,	/* DDR_PHY_P0_MPZQHWCTRL, enable both one-time & periodic HW ZQ calibration */ \
+	0x021b080c,	0x004C0054,	\
+	0x021b0810,	0x003F0047,	\
+	0x021b480c,	0x00300032,	\
+	0x021b4810,	0x002E003D,	\
+/*Read DQS Gating calibration */ \
 	0x021b083c,	0x02440244,	/* MPDGCTRL0 PHY0 */ \
 	0x021b0840,	0x022C0234,	/* MPDGCTRL1 PHY0 */ \
 	0x021b483c,	0x0228022C,	/* MPDGCTRL0 PHY1 */ \
@@ -92,7 +90,7 @@
 	0x021b4824,	0x33333333,	/* DDR_PHY_P1_MPREDQBY2DL3 */ \
 	0x021b4828,	0x33333333,	/* DDR_PHY_P1_MPREDQBY3DL3 */ \
 /*For i.mx6qd parts of versions A & B (v1.0, v1.1), uncomment the following lines. For version C (v1.2), keep commented */ \
-/*	0x021b08c0,	0x24911492,	/* fine tune SDCLK duty cyc to low - seen to improve measured duty cycle of i.mx6 */ \
+/*	0x021b08c0,	0x24911492,	// fine tune SDCLK duty cyc to low - seen to improve measured duty cycle of i.mx6 */ \
 /*	0x021b48c0,	0x24911492,	 */ \
 /* Complete calibration by forced measurement: */ \
 	0x021b08b8,	0x00000800,	/* DDR_PHY_P0_MPMUR0, frc_msr */ \
@@ -122,11 +120,11 @@
 	0x021b001c,	0x00048031,	/* MMDC0_MDSCR, MR1 write, CS0 */ \
 	0x021b001c,	0x15208030,	/* MMDC0_MDSCR, MR0write, CS0 */ \
 	0x021b001c,	0x04008040,	/* MMDC0_MDSCR, ZQ calibration command sent to device on CS0 */ \
-/*	0x021b001c,	0x0200803A,	/* MMDC0_MDSCR, MR2 write, CS1 */ \
-/*	0x021b001c,	0x0000803B,	/* MMDC0_MDSCR, MR3 write, CS1 */ \
-/*	0x021b001c,	0x00048039,	/* MMDC0_MDSCR, MR1 write, CS1 */ \
-/*	0x021b001c,	0x15208038,	/* MMDC0_MDSCR, MR0write, CS1 */ \
-/*	0x021b001c,	0x04008048,	/* MMDC0_MDSCR, ZQ calibration command sent to device on CS1 */ \
+/*	0x021b001c,	0x0200803A,	// MMDC0_MDSCR, MR2 write, CS1 */ \
+/*	0x021b001c,	0x0000803B,	// MMDC0_MDSCR, MR3 write, CS1 */ \
+/*	0x021b001c,	0x00048039,	// MMDC0_MDSCR, MR1 write, CS1 */ \
+/*	0x021b001c,	0x15208038,	// MMDC0_MDSCR, MR0write, CS1 */ \
+/*	0x021b001c,	0x04008048,	// MMDC0_MDSCR, ZQ calibration command sent to device on CS1 */ \
 	0x021b0020,	0x00007800,	/* MMDC0_MDREF */ \
 	0x021b0818,	0x00022227,	/* DDR_PHY_P0_MPODTCTRL */ \
 	0x021b4818,	0x00022227,	/* DDR_PHY_P1_MPODTCTRL */ \
