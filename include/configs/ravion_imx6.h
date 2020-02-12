@@ -66,6 +66,13 @@
 	"setenv blkdev 1:1 && " \
 	"run blkdevboot\0" \
 
+#define SATA_BOOTCMD \
+	"sataboot=setenv boot_script_file bscript.img; "\
+	"setenv blkname sata; " \
+	"setenv blkdev 0:1; " \
+	"sata init; " \
+	"run blkdevboot\0" \
+
 #define NFS_BOOTCMD \
 	"nfsboot=nfs ${script_addr_r} " \
 	"${serverip}:${server_path}${boot_script_file} && " \
@@ -117,6 +124,7 @@
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
+	    "run sataboot; " \
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=/boot/bscript.img\0" \
@@ -127,6 +135,7 @@
 	BLKDEV_BOOTCMD \
 	USB_BOOTCMD \
 	SD_BOOTCMD \
+	SATA_BOOTCMD \
 	NFS_BOOTCMD \
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
