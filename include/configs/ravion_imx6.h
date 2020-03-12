@@ -53,7 +53,9 @@
 	"initrd_high=0xffffffff\0"
 
 #define BLKDEV_BOOTCMD \
-	"blkdevboot=load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
+	"blkdevboot=sysboot ${blkname} ${blkdev} any " \
+	"${script_addr_r} syslinux.conf || " \
+	"load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
 	"source ${script_addr_r}\0" \
 
 #define USB_BOOTCMD \
