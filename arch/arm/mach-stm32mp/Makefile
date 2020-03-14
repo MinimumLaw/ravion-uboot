@@ -6,11 +6,17 @@
 obj-y += cpu.o
 obj-y += dram_init.o
 obj-y += syscon.o
+obj-y += bsec.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o
+obj-$(CONFIG_STM32MP1_RESET_HALT_WORKAROUND) += stm32mp1_helper_dbg.o
 else
-obj-y += bsec.o
-endif
+obj-$(CONFIG_CMD_STM32PROG) += cmd_stm32prog/
+obj-$(CONFIG_CMD_STM32KEY) += cmd_stm32key.o
+obj-$(CONFIG_SYSRESET) += cmd_poweroff.o
 obj-$(CONFIG_ARMV7_PSCI) += psci.o
+endif
+
 obj-$(CONFIG_$(SPL_)DM_REGULATOR) += pwr_regulator.o
+obj-$(CONFIG_OF_SYSTEM_SETUP) += fdt.o

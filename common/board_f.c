@@ -434,7 +434,6 @@ static int reserve_uboot(void)
 		debug("Reserving %ldk for U-Boot at: %08lx\n",
 		      gd->mon_len >> 10, gd->relocaddr);
 	}
-
 	gd->start_addr_sp = gd->relocaddr;
 
 	return 0;

@@ -7,6 +7,7 @@
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
+#include <reset.h>
 #include <serial.h>
 #include <watchdog.h>
 #include <asm/io.h>
@@ -66,6 +67,14 @@ static int stm32_serial_setconfig(struct udevice *dev, uint serial_config)
 	if (bits != SERIAL_8_BITS || stop != SERIAL_ONE_STOP || stm32f4)
 		return -ENOTSUPP; /* not supported in driver*/
 
+	/*
+	 * only parity config is implemented, check if other serial settings
+	 * are the default one.
+	 * (STM32F4 serial IP didn't support parity setting)
+	 */
+	if (bits != SERIAL_8_BITS || stop != SERIAL_ONE_STOP || stm32f4)
+		return -ENOTSUPP; /* not supported in driver*/
+
 	clrbits_le32(cr1, USART_CR1_RE | USART_CR1_TE | BIT(uart_enable_bit));
 	/* update usart configuration (uart need to be disable)
 	 * PCE: parity check enable
@@ -105,10 +114,11 @@ static int stm32_serial_getc(struct udevice *dev)
 	if ((isr & USART_ISR_RXNE) == 0)
 		return -EAGAIN;
 
-	if (isr & (USART_ISR_PE | USART_ISR_ORE)) {
+	if (isr & (USART_ISR_PE | USART_ISR_ORE | USART_ISR_FE)) {
 		if (!stm32f4)
 			setbits_le32(base + ICR_OFFSET,
-				     USART_ICR_PCECF | USART_ICR_ORECF);
+				     USART_ICR_PCECF | USART_ICR_ORECF |
+				     USART_ICR_FECF);
 		else
 			readl(base + RDR_OFFSET(stm32f4));
 		return -EIO;
@@ -171,6 +181,7 @@ static int stm32_serial_probe(struct udevice *dev)
 {
 	struct stm32x7_serial_platdata *plat = dev_get_platdata(dev);
 	struct clk clk;
+	struct reset_ctl reset;
 	int ret;
 
 	plat->uart_info = (struct stm32_uart_info *)dev_get_driver_data(dev);
@@ -185,10 +196,17 @@ static int stm32_serial_probe(struct udevice *dev)
 		return ret;
 	}
 
+	ret = reset_get_by_index(dev, 0, &reset);
+	if (!ret) {
+		reset_assert(&reset);
+		udelay(2);
+		reset_deassert(&reset);
+	}
+
 	plat->clock_rate = clk_get_rate(&clk);
-	if (plat->clock_rate < 0) {
+	if (!plat->clock_rate) {
 		clk_disable(&clk);
-		return plat->clock_rate;
+		return -EINVAL;
 	};
 
 	_stm32_serial_init(plat->base, plat->uart_info);
@@ -258,7 +276,6 @@ static inline void _debug_uart_init(void)
 	_stm32_serial_setbrg(base, uart_info,
 			     CONFIG_DEBUG_UART_CLOCK,
 			     CONFIG_BAUDRATE);
-	printf("DEBUG done\n");
 }
 
 static inline void _debug_uart_putc(int c)
@@ -267,7 +284,7 @@ static inline void _debug_uart_putc(int c)
 	struct stm32_uart_info *uart_info = _debug_uart_info();
 
 	while (_stm32_serial_putc(base, uart_info, c) == -EAGAIN)
-		WATCHDOG_RESET();
+		;
 }
 
 DEBUG_UART_FUNCS

@@ -35,11 +35,13 @@ enum uclass_id {
 	UCLASS_CPU,		/* CPU, typically part of an SoC */
 	UCLASS_CROS_EC,		/* Chrome OS EC */
 	UCLASS_DISPLAY,		/* Display (e.g. DisplayPort, HDMI) */
+	UCLASS_DSI_HOST,	/* Dsi host device */
 	UCLASS_DMA,		/* Direct Memory Access */
 	UCLASS_EFI,		/* EFI managed devices */
 	UCLASS_ETH,		/* Ethernet device */
 	UCLASS_FS_FIRMWARE_LOADER,		/* Generic loader */
 	UCLASS_GPIO,		/* Bank of general-purpose I/O pins */
+	UCLASS_HWSPINLOCK,	/* Hardware semaphores */
 	UCLASS_FIRMWARE,	/* Firmware */
 	UCLASS_I2C,		/* I2C bus */
 	UCLASS_I2C_EEPROM,	/* I2C EEPROM device */

@@ -8,7 +8,7 @@
 #include <asm/io.h>
 #include <asm/arch/ddr.h>
 #include <power/pmic.h>
-#include <power/stpmu1.h>
+#include <power/stpmic1.h>
 
 #ifdef CONFIG_DEBUG_UART_BOARD_INIT
 void board_debug_uart_init(void)
@@ -37,64 +37,189 @@ void board_debug_uart_init(void)
 }
 #endif
 
-#ifdef CONFIG_PMIC_STPMU1
-int board_ddr_power_init(void)
+#ifdef CONFIG_PMIC_STPMIC1
+u32 opp_voltage_mv;
+
+void board_vddcore_init(u32 voltage_mv)
+{
+	opp_voltage_mv = voltage_mv;
+}
+
+int board_vddcore_set(void)
 {
 	struct udevice *dev;
 	int ret;
+	u32 value;
+
+	if (!opp_voltage_mv)
+		return 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_PMIC,
-					  DM_GET_DRIVER(pmic_stpmu1), &dev);
+					  DM_GET_DRIVER(pmic_stpmic1), &dev);
+	if (ret)
+		return ret;
+
+	/* VDDCORE= STMPCI1 BUCK1 ramp=+25mV, 5 => 725mV, 36 => 1500mV */
+	value = ((opp_voltage_mv - 725) / 25) + 5;
+	if (value < 5)
+		value = 5;
+	if (value > 36)
+		value = 36;
+
+	return pmic_clrsetbits(dev,
+			       STPMIC1_BUCKX_MAIN_CR(STPMIC1_BUCK1),
+			       STPMIC1_BUCK_VOUT_MASK,
+			       STPMIC1_BUCK_VOUT(value));
+}
+
+int board_ddr_power_init(enum ddr_type ddr_type)
+{
+	struct udevice *dev;
+	bool buck3_at_1800000v = false;
+	int ret;
+	u32 buck2;
+
+	ret = uclass_get_device_by_driver(UCLASS_PMIC,
+					  DM_GET_DRIVER(pmic_stpmic1), &dev);
 	if (ret)
 		/* No PMIC on board */
 		return 0;
 
-	/* Set LDO3 to sync mode */
-	ret = pmic_reg_read(dev, STPMU1_LDOX_CTRL_REG(STPMU1_LDO3));
-	if (ret < 0)
-		return ret;
+	switch (ddr_type) {
+	case STM32MP_DDR3:
+		/* VTT = Set LDO3 to sync mode */
+		ret = pmic_reg_read(dev, STPMIC1_LDOX_MAIN_CR(STPMIC1_LDO3));
+		if (ret < 0)
+			return ret;
 
-	ret &= ~STPMU1_LDO3_MODE;
-	ret &= ~STPMU1_LDO12356_OUTPUT_MASK;
-	ret |= STPMU1_LDO3_DDR_SEL << STPMU1_LDO12356_OUTPUT_SHIFT;
+		ret &= ~STPMIC1_LDO3_MODE;
+		ret &= ~STPMIC1_LDO12356_VOUT_MASK;
+		ret |= STPMIC1_LDO_VOUT(STPMIC1_LDO3_DDR_SEL);
 
-	ret = pmic_reg_write(dev, STPMU1_LDOX_CTRL_REG(STPMU1_LDO3),
-			     ret);
-	if (ret < 0)
-		return ret;
+		ret = pmic_reg_write(dev, STPMIC1_LDOX_MAIN_CR(STPMIC1_LDO3),
+				     ret);
+		if (ret < 0)
+			return ret;
 
-	/* Set BUCK2 to 1.35V */
-	ret = pmic_clrsetbits(dev,
-			      STPMU1_BUCKX_CTRL_REG(STPMU1_BUCK2),
-			      STPMU1_BUCK_OUTPUT_MASK,
-			      STPMU1_BUCK2_1350000V);
-	if (ret < 0)
-		return ret;
+		/* VDD_DDR = Set BUCK2 to 1.35V */
+		ret = pmic_clrsetbits(dev,
+				      STPMIC1_BUCKX_MAIN_CR(STPMIC1_BUCK2),
+				      STPMIC1_BUCK_VOUT_MASK,
+				      STPMIC1_BUCK2_1350000V);
+		if (ret < 0)
+			return ret;
 
-	/* Enable BUCK2 and VREF */
-	ret = pmic_clrsetbits(dev,
-			      STPMU1_BUCKX_CTRL_REG(STPMU1_BUCK2),
-			      STPMU1_BUCK_EN, STPMU1_BUCK_EN);
-	if (ret < 0)
-		return ret;
+		/* Enable VDD_DDR = BUCK2 */
+		ret = pmic_clrsetbits(dev,
+				      STPMIC1_BUCKX_MAIN_CR(STPMIC1_BUCK2),
+				      STPMIC1_BUCK_ENA, STPMIC1_BUCK_ENA);
+		if (ret < 0)
+			return ret;
 
-	mdelay(STPMU1_DEFAULT_START_UP_DELAY_MS);
+		mdelay(STPMIC1_DEFAULT_START_UP_DELAY_MS);
 
-	ret = pmic_clrsetbits(dev, STPMU1_VREF_CTRL_REG,
-			      STPMU1_VREF_EN, STPMU1_VREF_EN);
-	if (ret < 0)
-		return ret;
+		/* Enable VREF */
+		ret = pmic_clrsetbits(dev, STPMIC1_REFDDR_MAIN_CR,
+				      STPMIC1_VREF_ENA, STPMIC1_VREF_ENA);
+		if (ret < 0)
+			return ret;
 
-	mdelay(STPMU1_DEFAULT_START_UP_DELAY_MS);
+		mdelay(STPMIC1_DEFAULT_START_UP_DELAY_MS);
 
-	/* Enable LDO3 */
-	ret = pmic_clrsetbits(dev,
-			      STPMU1_LDOX_CTRL_REG(STPMU1_LDO3),
-			      STPMU1_LDO_EN, STPMU1_LDO_EN);
-	if (ret < 0)
-		return ret;
+		/* Enable VTT = LDO3 */
+		ret = pmic_clrsetbits(dev,
+				      STPMIC1_LDOX_MAIN_CR(STPMIC1_LDO3),
+				      STPMIC1_LDO_ENA, STPMIC1_LDO_ENA);
+		if (ret < 0)
+			return ret;
 
-	mdelay(STPMU1_DEFAULT_START_UP_DELAY_MS);
+		mdelay(STPMIC1_DEFAULT_START_UP_DELAY_MS);
+
+		break;
+
+	case STM32MP_LPDDR2_16:
+	case STM32MP_LPDDR2_32:
+	case STM32MP_LPDDR3_16:
+	case STM32MP_LPDDR3_32:
+		/*
+		 * configure VDD_DDR1 = LDO3
+		 * Set LDO3 to 1.8V
+		 * + bypass mode if BUCK3 = 1.8V
+		 * + normal mode if BUCK3 != 1.8V
+		 */
+		ret = pmic_reg_read(dev,
+				    STPMIC1_BUCKX_MAIN_CR(STPMIC1_BUCK3));
+		if (ret < 0)
+			return ret;
+
+		if ((ret & STPMIC1_BUCK3_1800000V) == STPMIC1_BUCK3_1800000V)
+			buck3_at_1800000v = true;
+
+		ret = pmic_reg_read(dev, STPMIC1_LDOX_MAIN_CR(STPMIC1_LDO3));
+		if (ret < 0)
+			return ret;
+
+		ret &= ~STPMIC1_LDO3_MODE;
+		ret &= ~STPMIC1_LDO12356_VOUT_MASK;
+		ret |= STPMIC1_LDO3_1800000;
+		if (buck3_at_1800000v)
+			ret |= STPMIC1_LDO3_MODE;
+
+		ret = pmic_reg_write(dev, STPMIC1_LDOX_MAIN_CR(STPMIC1_LDO3),
+				     ret);
+		if (ret < 0)
+			return ret;
+
+		/* VDD_DDR2 : Set BUCK2 to 1.2V (16bits) or 1.25V (32 bits)*/
+		switch (ddr_type) {
+		case STM32MP_LPDDR2_32:
+		case STM32MP_LPDDR3_32:
+			buck2 = STPMIC1_BUCK2_1250000V;
+			break;
+		default:
+		case STM32MP_LPDDR2_16:
+		case STM32MP_LPDDR3_16:
+			buck2 = STPMIC1_BUCK2_1200000V;
+			break;
+		}
+
+		ret = pmic_clrsetbits(dev,
+				      STPMIC1_BUCKX_MAIN_CR(STPMIC1_BUCK2),
+				      STPMIC1_BUCK_VOUT_MASK,
+				      buck2);
+		if (ret < 0)
+			return ret;
+
+		/* Enable VDD_DDR1 = LDO3 */
+		ret = pmic_clrsetbits(dev, STPMIC1_LDOX_MAIN_CR(STPMIC1_LDO3),
+				      STPMIC1_LDO_ENA, STPMIC1_LDO_ENA);
+		if (ret < 0)
+			return ret;
+
+		mdelay(STPMIC1_DEFAULT_START_UP_DELAY_MS);
+
+		/* Enable VDD_DDR2 =BUCK2 */
+		ret = pmic_clrsetbits(dev,
+				      STPMIC1_BUCKX_MAIN_CR(STPMIC1_BUCK2),
+				      STPMIC1_BUCK_ENA, STPMIC1_BUCK_ENA);
+		if (ret < 0)
+			return ret;
+
+		mdelay(STPMIC1_DEFAULT_START_UP_DELAY_MS);
+
+		/* Enable VREF */
+		ret = pmic_clrsetbits(dev, STPMIC1_REFDDR_MAIN_CR,
+				      STPMIC1_VREF_ENA, STPMIC1_VREF_ENA);
+		if (ret < 0)
+			return ret;
+
+		mdelay(STPMIC1_DEFAULT_START_UP_DELAY_MS);
+
+		break;
+
+	default:
+		break;
+	};
 
 	return 0;
 }
