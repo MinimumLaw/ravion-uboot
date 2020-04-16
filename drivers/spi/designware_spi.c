@@ -18,6 +18,7 @@
 #include <spi.h>
 #include <fdtdec.h>
 #include <reset.h>
+#include <dm/device_compat.h>
 #include <linux/compat.h>
 #include <linux/iopoll.h>
 #include <asm/io.h>
@@ -126,7 +127,7 @@ static inline void dw_write(struct dw_spi_priv *priv, u32 offset, u32 val)
 
 static int request_gpio_cs(struct udevice *bus)
 {
-#if defined(CONFIG_DM_GPIO) && !defined(CONFIG_SPL_BUILD)
+#if CONFIG_IS_ENABLED(DM_GPIO) && !defined(CONFIG_SPL_BUILD)
 	struct dw_spi_priv *priv = dev_get_priv(bus);
 	int ret;
 
@@ -373,7 +374,7 @@ static int poll_transfer(struct dw_spi_priv *priv)
  */
 __weak void external_cs_manage(struct udevice *dev, bool on)
 {
-#if defined(CONFIG_DM_GPIO) && !defined(CONFIG_SPL_BUILD)
+#if CONFIG_IS_ENABLED(DM_GPIO) && !defined(CONFIG_SPL_BUILD)
 	struct dw_spi_priv *priv = dev_get_priv(dev->parent);
 
 	if (!dm_gpio_is_valid(&priv->cs_gpio))
