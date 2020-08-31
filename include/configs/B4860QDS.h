@@ -6,6 +6,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 /*
  * B4860 QDS board configuration file
  */
@@ -128,8 +130,6 @@ unsigned long get_board_ddr_clk(void);
 #if 0
 #define CONFIG_POST CONFIG_SYS_POST_MEMORY	/* test POST memory test */
 #endif
-#define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest works on */
-#define CONFIG_SYS_MEMTEST_END		0x00400000
 
 /*
  *  Config the L3 Cache as L3 SRAM
@@ -586,9 +586,6 @@ unsigned long get_board_ddr_clk(void);
 #endif /* CONFIG_NOBQFMAN */
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#define CONFIG_PHYLIB_10G
-#define CONFIG_PHY_VITESSE
-#define CONFIG_PHY_TERANETICS
 #define SGMII_CARD_PORT1_PHY_ADDR 0x1C
 #define SGMII_CARD_PORT2_PHY_ADDR 0x10
 #define SGMII_CARD_PORT3_PHY_ADDR 0x1E

@@ -29,8 +29,6 @@
 #define CONFIG_SYS_FSL_USDHC_NUM	1
 #endif /* CONFIG_FSL_USDHC */
 
-#define CONFIG_CMD_READ
-
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootm_size=0x10000000\0" \
 	"console=ttymxc0\0" \
@@ -73,8 +71,6 @@
 	"fi"
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x8000000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000

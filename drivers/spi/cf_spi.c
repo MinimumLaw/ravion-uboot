@@ -15,6 +15,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <dm/platform_data/spi_coldfire.h>
 #include <spi.h>
 #include <malloc.h>
@@ -380,10 +381,6 @@ static int coldfire_spi_probe(struct udevice *bus)
 	    DSPI_MCR_CRXF | DSPI_MCR_CTXF;
 
 	return 0;
-}
-
-void spi_init(void)
-{
 }
 
 #if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)

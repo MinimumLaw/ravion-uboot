@@ -7,10 +7,12 @@
 
 /*
  * sbc8548 board configuration file
- * Please refer to doc/README.sbc8548 for more info.
+ * Please refer to board/sbc8548/README for more info.
  */
 #ifndef __CONFIG_H
 #define __CONFIG_H
+
+#include <linux/stringify.h>
 
 /*
  * Top level Makefile configuration choices
@@ -73,8 +75,6 @@
 #define CONFIG_ENABLE_36BIT_PHYS	1
 
 #undef	CONFIG_SYS_DRAM_TEST			/* memory test, takes time */
-#define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest works on */
-#define CONFIG_SYS_MEMTEST_END		0x00400000
 
 #define CONFIG_SYS_CCSRBAR		0xe0000000
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR

@@ -31,8 +31,6 @@
 					 GENERATED_GBL_DATA_SIZE)
 
 /* Mem test settings */
-#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + (1024 * 1024))
 
 /* NAND Flash */
 #define CONFIG_SYS_NAND_ECC_BASE	ATMEL_BASE_ECC
@@ -100,10 +98,5 @@
 
 /* U-Boot memory settings */
 #define CONFIG_SYS_MALLOC_LEN		(1 << 20)
-
-/* Command line configuration */
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_MMC
-#define CONFIG_CMD_CACHE
 
 #endif /* __CONFIG_H */

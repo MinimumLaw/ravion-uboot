@@ -2,17 +2,17 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 #
 
-import command
 import re
 import os
-import series
 import subprocess
 import sys
-import terminal
 
-import checkpatch
-import settings
-import tools
+from patman import checkpatch
+from patman import command
+from patman import series
+from patman import settings
+from patman import terminal
+from patman import tools
 
 # True to use --no-decorate - we check this in Setup()
 use_no_decorate = True
@@ -254,7 +254,7 @@ def Fetch(git_dir=None, work_tree=None):
     if result.return_code != 0:
         raise OSError('git fetch: %s' % result.stderr)
 
-def CreatePatches(start, count, series):
+def CreatePatches(start, count, ignore_binary, series):
     """Create a series of patches from the top of the current branch.
 
     The patch files are written to the current directory using
@@ -270,6 +270,8 @@ def CreatePatches(start, count, series):
     if series.get('version'):
         version = '%s ' % series['version']
     cmd = ['git', 'format-patch', '-M', '--signoff']
+    if ignore_binary:
+        cmd.append('--no-binary')
     if series.get('cover'):
         cmd.append('--cover-letter')
     prefix = series.GetPatchPrefix()

@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <timer.h>
 #include <asm/io.h>
+#include <linux/bitops.h>
 
 #define MTK_GPT4_CTRL	0x40
 #define MTK_GPT4_CLK	0x44
@@ -71,6 +72,7 @@ static const struct timer_ops mtk_timer_ops = {
 
 static const struct udevice_id mtk_timer_ids[] = {
 	{ .compatible = "mediatek,timer" },
+	{ .compatible = "mediatek,mt6577-timer" },
 	{ }
 };
 

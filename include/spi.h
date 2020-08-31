@@ -10,6 +10,7 @@
 #define _SPI_H_
 
 #include <common.h>
+#include <linux/bitops.h>
 
 /* SPI mode flags */
 #define SPI_CPHA	BIT(0)			/* clock phase */
@@ -65,6 +66,39 @@ struct dm_spi_slave_platdata {
 };
 
 #endif /* CONFIG_DM_SPI */
+
+/**
+ * enum spi_clock_phase - indicates  the clock phase to use for SPI (CPHA)
+ *
+ * @SPI_CLOCK_PHASE_FIRST: Data sampled on the first phase
+ * @SPI_CLOCK_PHASE_SECOND: Data sampled on the second phase
+ */
+enum spi_clock_phase {
+	SPI_CLOCK_PHASE_FIRST,
+	SPI_CLOCK_PHASE_SECOND,
+};
+
+/**
+ * enum spi_wire_mode - indicates the number of wires used for SPI
+ *
+ * @SPI_4_WIRE_MODE: Normal bidirectional mode with MOSI and MISO
+ * @SPI_3_WIRE_MODE: Unidirectional version with a single data line SISO
+ */
+enum spi_wire_mode {
+	SPI_4_WIRE_MODE,
+	SPI_3_WIRE_MODE,
+};
+
+/**
+ * enum spi_polarity - indicates the polarity of the SPI bus (CPOL)
+ *
+ * @SPI_POLARITY_LOW: Clock is low in idle state
+ * @SPI_POLARITY_HIGH: Clock is high in idle state
+ */
+enum spi_polarity {
+	SPI_POLARITY_LOW,
+	SPI_POLARITY_HIGH,
+};
 
 /**
  * struct spi_slave - Representation of a SPI slave

@@ -15,16 +15,12 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
 
-#define CONFIG_BOARD_LATE_INIT
-
 /* Network */
 #define CONFIG_FEC_MXC
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_ETHPRIME                 "FEC"
 #define CONFIG_FEC_MXC_PHYADDR          0
 
-#define CONFIG_PHYLIB
-#define CONFIG_PHY_ATHEROS
 /* ENET1 */
 #define IMX_FEC_BASE			ENET_IPS_BASE_ADDR
 
@@ -46,7 +42,6 @@
 #define CONFIG_SYS_I2C_EEPROM_BUS	SYS_I2C_BUS_SOM
 
 #define CONFIG_PCA953X
-#define CONFIG_CMD_PCA953X
 #define CONFIG_SYS_I2C_PCA953X_ADDR	0x20
 #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x20, 16} }
 
@@ -112,9 +107,6 @@
 	"echo SD boot attempt ...; run sdbootscript; run sdboot; " \
 	"echo eMMC boot attempt ...; run emmcbootscript; run emmcboot; " \
 	"echo USB boot attempt ...; run usbbootscript; "
-
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x20000000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000

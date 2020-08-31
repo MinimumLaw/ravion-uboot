@@ -6,6 +6,7 @@
 #include <common.h>
 #include <clock_legacy.h>
 #include <dm.h>
+#include <init.h>
 #include <dm/platform_data/serial_pl01x.h>
 #include <i2c.h>
 #include <malloc.h>
@@ -15,6 +16,7 @@
 #include <fsl_sec.h>
 #include <asm/io.h>
 #include <fdt_support.h>
+#include <linux/bitops.h>
 #include <linux/libfdt.h>
 #include <fsl-mc/fsl_mc.h>
 #include <env_internal.h>
@@ -29,14 +31,11 @@
 #include "../common/vid.h"
 #include <fsl_immap.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
-#include <asm/gic-v3.h>
-#include <cpu_func.h>
 
 #ifdef CONFIG_EMC2305
 #include "../common/emc2305.h"
 #endif
 
-#define GIC_LPI_SIZE                             0x200000
 #ifdef CONFIG_TARGET_LX2160AQDS
 #define CFG_MUX_I2C_SDHC(reg, value)		((reg & 0x3f) | value)
 #define SET_CFG_MUX1_SDHC1_SDHC(reg)		(reg & 0x3f)
@@ -587,6 +586,9 @@ int board_init(void)
 	sec_init();
 #endif
 
+#if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)
+	pci_init();
+#endif
 	return 0;
 }
 
@@ -632,7 +634,9 @@ void fdt_fixup_board_enet(void *fdt)
 	if (get_mc_boot_status() == 0 &&
 	    (is_lazy_dpl_addr_valid() || get_dpl_apply_status() == 0)) {
 		fdt_status_okay(fdt, offset);
+#ifndef CONFIG_DM_ETH
 		fdt_fixup_board_phy(fdt);
+#endif
 	} else {
 		fdt_status_fail(fdt, offset);
 	}
@@ -641,21 +645,6 @@ void fdt_fixup_board_enet(void *fdt)
 void board_quiesce_devices(void)
 {
 	fsl_mc_ldpaa_exit(gd->bd);
-}
-#endif
-
-#ifdef CONFIG_GIC_V3_ITS
-void fdt_fixup_gic_lpi_memory(void *blob, u64 gic_lpi_base)
-{
-	u32 phandle;
-	int err;
-	struct fdt_memory gic_lpi;
-
-	gic_lpi.start = gic_lpi_base;
-	gic_lpi.end = gic_lpi_base + GIC_LPI_SIZE - 1;
-	err = fdtdec_add_reserved_memory(blob, "gic-lpi", &gic_lpi, &phandle);
-	if (err < 0)
-		debug("failed to add reserved memory: %d\n", err);
 }
 #endif
 
@@ -670,7 +659,6 @@ int ft_board_setup(void *blob, bd_t *bd)
 	u64 mc_memory_base = 0;
 	u64 mc_memory_size = 0;
 	u16 total_memory_banks;
-	u64 gic_lpi_base;
 
 	ft_cpu_setup(blob, bd);
 
@@ -689,12 +677,6 @@ int ft_board_setup(void *blob, bd_t *bd)
 		base[i] = gd->bd->bi_dram[i].start;
 		size[i] = gd->bd->bi_dram[i].size;
 	}
-
-#ifdef CONFIG_GIC_V3_ITS
-	gic_lpi_base = gd->arch.resv_ram - GIC_LPI_SIZE;
-	gic_lpi_tables_init(gic_lpi_base, cpu_numcores());
-	fdt_fixup_gic_lpi_memory(blob, gic_lpi_base);
-#endif
 
 #ifdef CONFIG_RESV_RAM
 	/* reduce size if reserved memory is within this bank */

@@ -12,10 +12,13 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <command.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <hang.h>
+#include <lmb.h>
+#include <log.h>
 #include <dm/root.h>
 #include <env.h>
 #include <image.h>
@@ -29,6 +32,7 @@
 #include <linux/compiler.h>
 #include <bootm.h>
 #include <vxworks.h>
+#include <asm/cache.h>
 
 #ifdef CONFIG_ARMV7_NONSEC
 #include <asm/armv7.h>
@@ -75,6 +79,9 @@ void arch_lmb_reserve(struct lmb *lmb)
 			gd->bd->bi_dram[bank].size - 1;
 		if (sp > bank_end)
 			continue;
+		if (bank_end > gd->ram_top)
+			bank_end = gd->ram_top - 1;
+
 		lmb_reserve(lmb, sp, bank_end - sp + 1);
 		break;
 	}
@@ -416,7 +423,7 @@ static void boot_jump_linux(bootm_headers_t *images, int flag)
  * DIFFERENCE: Instead of calling prep and go at the end
  * they are called if subcommand is equal 0.
  */
-int do_bootm_linux(int flag, int argc, char * const argv[],
+int do_bootm_linux(int flag, int argc, char *const argv[],
 		   bootm_headers_t *images)
 {
 	/* No need for those on ARM */

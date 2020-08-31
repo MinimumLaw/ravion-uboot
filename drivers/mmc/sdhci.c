@@ -11,11 +11,16 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
+#include <log.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <sdhci.h>
 #include <dm.h>
+#include <asm/cache.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/dma-mapping.h>
+#include <phys2bus.h>
 
 static void sdhci_reset(struct sdhci_host *host, u8 mask)
 {
@@ -150,7 +155,8 @@ static void sdhci_prepare_dma(struct sdhci_host *host, struct mmc_data *data,
 					  mmc_get_dma_dir(data));
 
 	if (host->flags & USE_SDMA) {
-		sdhci_writel(host, host->start_addr, SDHCI_DMA_ADDRESS);
+		sdhci_writel(host, phys_to_bus((ulong)host->start_addr),
+				SDHCI_DMA_ADDRESS);
 	} else if (host->flags & (USE_ADMA | USE_ADMA64)) {
 		sdhci_prepare_adma_table(host, data);
 
@@ -204,7 +210,7 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data)
 				start_addr &=
 				~(SDHCI_DEFAULT_BOUNDARY_SIZE - 1);
 				start_addr += SDHCI_DEFAULT_BOUNDARY_SIZE;
-				sdhci_writel(host, start_addr,
+				sdhci_writel(host, phys_to_bus((ulong)start_addr),
 					     SDHCI_DMA_ADDRESS);
 			}
 		}
@@ -561,6 +567,7 @@ static int sdhci_set_ios(struct mmc *mmc)
 #endif
 	u32 ctrl;
 	struct sdhci_host *host = mmc->priv;
+	bool no_hispd_bit = false;
 
 	if (host->ops && host->ops->set_control_reg)
 		host->ops->set_control_reg(host);
@@ -588,14 +595,26 @@ static int sdhci_set_ios(struct mmc *mmc)
 			ctrl &= ~SDHCI_CTRL_4BITBUS;
 	}
 
-	if (mmc->clock > 26000000)
-		ctrl |= SDHCI_CTRL_HISPD;
-	else
-		ctrl &= ~SDHCI_CTRL_HISPD;
-
 	if ((host->quirks & SDHCI_QUIRK_NO_HISPD_BIT) ||
-	    (host->quirks & SDHCI_QUIRK_BROKEN_HISPD_MODE))
+	    (host->quirks & SDHCI_QUIRK_BROKEN_HISPD_MODE)) {
 		ctrl &= ~SDHCI_CTRL_HISPD;
+		no_hispd_bit = true;
+	}
+
+	if (!no_hispd_bit) {
+		if (mmc->selected_mode == MMC_HS ||
+		    mmc->selected_mode == SD_HS ||
+		    mmc->selected_mode == MMC_DDR_52 ||
+		    mmc->selected_mode == MMC_HS_200 ||
+		    mmc->selected_mode == MMC_HS_400 ||
+		    mmc->selected_mode == UHS_SDR25 ||
+		    mmc->selected_mode == UHS_SDR50 ||
+		    mmc->selected_mode == UHS_SDR104 ||
+		    mmc->selected_mode == UHS_DDR50)
+			ctrl |= SDHCI_CTRL_HISPD;
+		else
+			ctrl &= ~SDHCI_CTRL_HISPD;
+	}
 
 	sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 
@@ -739,13 +758,12 @@ int sdhci_setup_cfg(struct mmc_config *cfg, struct sdhci_host *host,
 	debug("%s, caps: 0x%x\n", __func__, caps);
 
 #ifdef CONFIG_MMC_SDHCI_SDMA
-	if (!(caps & SDHCI_CAN_DO_SDMA)) {
-		printf("%s: Your controller doesn't support SDMA!!\n",
-		       __func__);
-		return -EINVAL;
+	if ((caps & SDHCI_CAN_DO_SDMA)) {
+		host->flags |= USE_SDMA;
+	} else {
+		debug("%s: Your controller doesn't support SDMA!!\n",
+		      __func__);
 	}
-
-	host->flags |= USE_SDMA;
 #endif
 #if CONFIG_IS_ENABLED(MMC_SDHCI_ADMA)
 	if (!(caps & SDHCI_CAN_DO_ADMA2)) {
@@ -839,8 +857,7 @@ int sdhci_setup_cfg(struct mmc_config *cfg, struct sdhci_host *host,
 		cfg->host_caps &= ~MMC_MODE_HS_52MHz;
 	}
 
-	if (!(cfg->voltages & MMC_VDD_165_195) ||
-	    (host->quirks & SDHCI_QUIRK_NO_1_8_V))
+	if (!(cfg->voltages & MMC_VDD_165_195))
 		caps_1 &= ~(SDHCI_SUPPORT_SDR104 | SDHCI_SUPPORT_SDR50 |
 			    SDHCI_SUPPORT_DDR50);
 

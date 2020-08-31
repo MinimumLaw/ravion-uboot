@@ -10,6 +10,10 @@
 #include <linux/kconfig.h>
 #include <fsl_ddrc_version.h>
 
+#ifndef __ASSEMBLY__
+#include <linux/bitops.h>
+#endif
+
 #define CONFIG_STANDALONE_LOAD_ADDR	0x80300000
 
 /*
@@ -306,7 +310,6 @@
 #define CONFIG_SYS_FSL_ESDHC_BE
 #define CONFIG_SYS_FSL_WDOG_BE
 #define CONFIG_SYS_FSL_DSPI_BE
-#define CONFIG_SYS_FSL_QSPI_BE
 #define CONFIG_SYS_FSL_CCSR_GUR_BE
 #define CONFIG_SYS_FSL_PEX_LUT_BE
 

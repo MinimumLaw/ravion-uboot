@@ -40,8 +40,6 @@
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"bootm_size=0x10000000\0" \
 	"fdt_addr_r=0x82100000\0" \
-	"fdt_high=0xffffffff\0" \
-	"initrd_high=0xffffffff\0" \
 	"kernel_addr_r=0x81000000\0" \
 	"pxefile_addr_r=0x87100000\0" \
 	"ramdisk_addr_r=0x82200000\0" \
@@ -90,6 +88,7 @@
 	NFS_BOOTCMD \
 	UBI_BOOTCMD \
 	UBOOT_UPDATE \
+	"bootubipart=ubi\0" \
 	"console=ttymxc0\0" \
 	"defargs=user_debug=30\0" \
 	"dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
@@ -114,9 +113,6 @@
 	"splashpos=m,m\0" \
 	"videomode=video=ctfb:x:640,y:480,depth:18,pclk:39722,le:48,ri:16,up:33,lo:10,hs:96,vs:2,sync:0,vmode:0\0" \
 	"vidargs=video=mxsfb:640x480M-16@60"
-
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x08000000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 

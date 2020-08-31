@@ -5,10 +5,12 @@
  */
 
 #include <common.h>
+#include <log.h>
 #include <usb.h>
 #include <errno.h>
 #include <wait_bit.h>
 #include <linux/compiler.h>
+#include <linux/delay.h>
 #include <usb/ehci-ci.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
@@ -380,6 +382,14 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	if (index > 3)
 		return -EINVAL;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (usb_fused((ulong)ehci)) {
+			printf("SoC fuse indicates USB@0x%lx is unavailable.\n",
+			       (ulong)ehci);
+			return	-ENODEV;
+		}
+	}
+
 	ret = ehci_mx6_common_init(ehci, index);
 	if (ret)
 		return ret;
@@ -437,8 +447,8 @@ static int mx6_init_after_reset(struct ehci_ctrl *dev)
 		ret = regulator_set_enable(priv->vbus_supply,
 					   (type == USB_INIT_DEVICE) ?
 					   false : true);
-		if (ret) {
-			puts("Error enabling VBUS supply\n");
+		if (ret && ret != -ENOSYS) {
+			printf("Error enabling VBUS supply (ret=%i)\n", ret);
 			return ret;
 		}
 	}
@@ -513,7 +523,7 @@ static int ehci_usb_ofdata_to_platdata(struct udevice *dev)
 	struct usb_platdata *plat = dev_get_platdata(dev);
 	enum usb_dr_mode dr_mode;
 
-	dr_mode = usb_get_dr_mode(dev_of_offset(dev));
+	dr_mode = usb_get_dr_mode(dev->node);
 
 	switch (dr_mode) {
 	case USB_DR_MODE_HOST:
@@ -577,6 +587,14 @@ static int ehci_usb_probe(struct udevice *dev)
 	struct ehci_hcor *hcor;
 	int ret;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (usb_fused((ulong)ehci)) {
+			printf("SoC fuse indicates USB@0x%lx is unavailable.\n",
+			       (ulong)ehci);
+			return -ENODEV;
+		}
+	}
+
 	priv->ehci = ehci;
 	priv->portnr = dev->seq;
 	priv->init_type = type;
@@ -596,8 +614,8 @@ static int ehci_usb_probe(struct udevice *dev)
 		ret = regulator_set_enable(priv->vbus_supply,
 					   (type == USB_INIT_DEVICE) ?
 					   false : true);
-		if (ret) {
-			puts("Error enabling VBUS supply\n");
+		if (ret && ret != -ENOSYS) {
+			printf("Error enabling VBUS supply (ret=%i)\n", ret);
 			return ret;
 		}
 	}

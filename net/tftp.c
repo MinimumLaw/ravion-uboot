@@ -11,6 +11,8 @@
 #include <efi_loader.h>
 #include <env.h>
 #include <image.h>
+#include <lmb.h>
+#include <log.h>
 #include <mapmem.h>
 #include <net.h>
 #include <net/tftp.h>
@@ -133,14 +135,9 @@ static char tftp_filename[MAX_LEN];
  * almost-MTU block sizes.  At least try... fall back to 512 if need be.
  * (but those using CONFIG_IP_DEFRAG may want to set a larger block in cfg file)
  */
-#ifdef CONFIG_TFTP_BLOCKSIZE
-#define TFTP_MTU_BLOCKSIZE CONFIG_TFTP_BLOCKSIZE
-#else
-#define TFTP_MTU_BLOCKSIZE 1468
-#endif
 
 static unsigned short tftp_block_size = TFTP_BLOCK_SIZE;
-static unsigned short tftp_block_size_option = TFTP_MTU_BLOCKSIZE;
+static unsigned short tftp_block_size_option = CONFIG_TFTP_BLOCKSIZE;
 
 static inline int store_block(int block, uchar *src, unsigned int len)
 {

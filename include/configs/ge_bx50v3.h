@@ -144,10 +144,6 @@
 
 /* Miscellaneous configurable options */
 
-#define CONFIG_SYS_MEMTEST_START       0x10000000
-#define CONFIG_SYS_MEMTEST_END         0x10010000
-#define CONFIG_SYS_MEMTEST_SCRATCH     0x10800000
-
 #define CONFIG_SYS_LOAD_ADDR           CONFIG_LOADADDR
 
 /* Physical Memory Map */
@@ -172,7 +168,6 @@
 #define CONFIG_HIDE_LOGO_VERSION
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_CMD_BMP
 
 #define CONFIG_IMX6_PWM_PER_CLK	66000000
 

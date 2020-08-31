@@ -896,8 +896,6 @@ The following options need to be configured:
 
 		CONFIG_TULIP
 		Support for Digital 2114x chips.
-		Optional CONFIG_TULIP_SELECT_MEDIA for board specific
-		modem chip initialisation (KS8761/QS6611).
 
 		CONFIG_NATSEMI
 		Support for National dp83815 chips.
@@ -1332,21 +1330,6 @@ The following options need to be configured:
 		can be displayed via the splashscreen support or the
 		bmp command.
 
-- Compression support:
-		CONFIG_GZIP
-
-		Enabled by default to support gzip compressed images.
-
-		CONFIG_BZIP2
-
-		If this option is set, support for bzip2 compressed
-		images is included. If not, only uncompressed and gzip
-		compressed images are supported.
-
-		NOTE: the bzip2 algorithm requires a lot of RAM, so
-		the malloc area (as defined by CONFIG_SYS_MALLOC_LEN) should
-		be at least 4MB.
-
 - MII/PHY support:
 		CONFIG_PHY_CLOCK_FREQ (ppc4xx)
 
@@ -1569,14 +1552,6 @@ The following options need to be configured:
 
 		This enable the NEW i2c subsystem, and will allow you to use
 		i2c commands at the u-boot command line (as long as you set
-		CONFIG_CMD_I2C in CONFIG_COMMANDS) and communicate with i2c
-		based realtime clock chips or other i2c devices. See
-		common/cmd_i2c.c for a description of the command line
-		interface.
-
-		ported i2c driver to the new framework:
-		- drivers/i2c/soft_i2c.c:
-		  - activate first bus with CONFIG_SYS_I2C_SOFT define
 		    CONFIG_SYS_I2C_SOFT_SPEED and CONFIG_SYS_I2C_SOFT_SLAVE
 		    for defining speed and slave address
 		  - activate second bus with I2C_SOFT_DECLARATIONS2 define
@@ -1631,16 +1606,6 @@ The following options need to be configured:
 		- drivers/i2c/rcar_i2c.c:
 		  - activate this driver with CONFIG_SYS_I2C_RCAR
 		  - This driver adds 4 i2c buses
-
-		  - CONFIG_SYS_RCAR_I2C0_BASE for setting the register channel 0
-		  - CONFIG_SYS_RCAR_I2C0_SPEED for for the speed channel 0
-		  - CONFIG_SYS_RCAR_I2C1_BASE for setting the register channel 1
-		  - CONFIG_SYS_RCAR_I2C1_SPEED for for the speed channel 1
-		  - CONFIG_SYS_RCAR_I2C2_BASE for setting the register channel 2
-		  - CONFIG_SYS_RCAR_I2C2_SPEED for for the speed channel 2
-		  - CONFIG_SYS_RCAR_I2C3_BASE for setting the register channel 3
-		  - CONFIG_SYS_RCAR_I2C3_SPEED for for the speed channel 3
-		  - CONFIF_SYS_RCAR_I2C_NUM_CONTROLLERS for number of i2c buses
 
 		- drivers/i2c/sh_i2c.c:
 		  - activate this driver with CONFIG_SYS_I2C_SH
@@ -2485,14 +2450,6 @@ Configuration Settings:
 - CONFIG_SYS_BAUDRATE_TABLE:
 		List of legal baudrate settings for this board.
 
-- CONFIG_SYS_MEMTEST_START, CONFIG_SYS_MEMTEST_END:
-		Begin and End addresses of the area used by the
-		simple memory test.
-
-- CONFIG_SYS_MEMTEST_SCRATCH:
-		Scratch address used by the alternate memory test
-		You only need to set this if address zero isn't writeable
-
 - CONFIG_SYS_MEM_RESERVE_SECURE
 		Only implemented for ARMv8 for now.
 		If defined, the size of CONFIG_SYS_MEM_RESERVE_SECURE memory
@@ -2748,10 +2705,6 @@ Configuration Settings:
 	If CONFIG_REGEX is defined, the variable_name above is evaluated as a
 	regular expression. This allows multiple variables to define the same
 	flags without explicitly listing them for each variable.
-
-- CONFIG_ENV_ACCESS_IGNORE_FORCE
-	If defined, don't allow the -f switch to env set override variable
-	access flags.
 
 The following definitions that deal with the placement and management
 of environment data (variable area); in general, we support the
@@ -3186,16 +3139,6 @@ necessary. For example using the ELDK on a 4xx CPU, please enter:
 	$ CROSS_COMPILE=ppc_4xx-
 	$ export CROSS_COMPILE
 
-Note: If you wish to generate Windows versions of the utilities in
-      the tools directory you can use the MinGW toolchain
-      (http://www.mingw.org).  Set your HOST tools to the MinGW
-      toolchain and execute 'make tools'.  For example:
-
-       $ make HOSTCC=i586-mingw32msvc-gcc HOSTSTRIP=i586-mingw32msvc-strip tools
-
-      Binaries such as tools/mkimage.exe will be created which can
-      be executed on computers running Windows.
-
 U-Boot is intended to be simple to build. After installing the
 sources you must configure U-Boot for one specific board type. This
 is done by typing:
@@ -3203,9 +3146,9 @@ is done by typing:
 	make NAME_defconfig
 
 where "NAME_defconfig" is the name of one of the existing configu-
-rations; see boards.cfg for supported names.
+rations; see configs/*_defconfig for supported names.
 
-Note: for some board special configuration names may exist; check if
+Note: for some boards special configuration names may exist; check if
       additional information is available from the board vendor; for
       instance, the TQM823L systems are available without (standard)
       or with LCD support. You can select such additional "features"
@@ -4639,7 +4582,7 @@ int main(int argc, char *argv[])
 	while (learning) {
 		Read the README file in the top level directory;
 		Read http://www.denx.de/twiki/bin/view/DULG/Manual;
-		Read applicable doc/*.README;
+		Read applicable doc/README.*;
 		Read the source, Luke;
 		/* find . -name "*.[chS]" | xargs grep -i <keyword> */
 	}
@@ -4733,8 +4676,6 @@ it:
 
 * For new features: a description of the feature and your
   implementation.
-
-* A CHANGELOG entry as plaintext (separate from the patch)
 
 * For major contributions, add a MAINTAINERS file with your
   information and associated file and directory references.

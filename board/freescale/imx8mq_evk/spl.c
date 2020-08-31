@@ -7,6 +7,9 @@
 
 #include <common.h>
 #include <hang.h>
+#include <image.h>
+#include <init.h>
+#include <log.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <asm/io.h>
@@ -19,6 +22,7 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
 #include <mmc.h>
+#include <linux/delay.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include <spl.h>
@@ -235,7 +239,6 @@ void board_init_f(ulong dummy)
 
 	enable_tzc380();
 
-	/* Adjust pmic voltage to 1.0V for 800M */
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 
 	power_init_board();

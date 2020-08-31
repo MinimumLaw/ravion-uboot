@@ -8,6 +8,32 @@
 
 / {
 	chosen {
-		u-boot,spl-boot-order = &sdhci, &sdmmc;
+		stdout-path = "serial2:1500000n8";
+		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc;
 	};
+};
+
+&rng {
+	status = "okay";
+};
+
+&i2c0 {
+	u-boot,dm-pre-reloc;
+};
+
+&rk808 {
+	u-boot,dm-pre-reloc;
+};
+
+&tcphy1 {
+	status = "okay";
+};
+
+&usbdrd3_1 {
+	status = "okay";
+};
+
+&usbdrd_dwc3_1 {
+	dr_mode = "host";
+	status = "okay";
 };

@@ -13,6 +13,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 /*** Arcturus FirmWare Environment */
 
 #define MAX_SERIAL_SIZE 15
@@ -163,9 +165,6 @@
 #define CONFIG_BTB
 
 #define CONFIG_ENABLE_36BIT_PHYS
-
-#define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest works on */
-#define CONFIG_SYS_MEMTEST_END		0x1fffffff
 
 #define CONFIG_SYS_CCSRBAR		0xffe00000
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR

@@ -31,8 +31,6 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x10000000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000
@@ -67,7 +65,6 @@
 #define CONFIG_FEC_MXC_PHYADDR          0x0
 #define CONFIG_FEC_XCV_TYPE             RMII
 #define CONFIG_ETHPRIME			"FEC"
-#define CONFIG_PHY_SMSC
 
 #define CONFIG_IMX_THERMAL
 

@@ -13,6 +13,8 @@
 #ifndef _M54455EVB_H
 #define _M54455EVB_H
 
+#include <linux/stringify.h>
+
 /*
  * High Level Configuration Options
  * (easy to change)
@@ -200,9 +202,6 @@
 #define CONFIG_SYS_SDRAM_EMOD		0x40010000
 #define CONFIG_SYS_SDRAM_MODE		0x00010033
 #define CONFIG_SYS_SDRAM_DRV_STRENGTH	0xAA
-
-#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE + 0x400
-#define CONFIG_SYS_MEMTEST_END		((CONFIG_SYS_SDRAM_SIZE - 3) << 20)
 
 #ifdef CONFIG_CF_SBF
 #	define CONFIG_SERIAL_BOOT

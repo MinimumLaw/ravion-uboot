@@ -5,6 +5,8 @@
 
 #include <common.h>
 #include <dm.h>
+#include <init.h>
+#include <log.h>
 #include <vbe.h>
 #include <video.h>
 #include <asm/fsp/fsp_support.h>
@@ -77,6 +79,9 @@ static int fsp_video_probe(struct udevice *dev)
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct vesa_mode_info *vesa = &mode_info.vesa;
 	int ret;
+
+	if (!ll_boot_init())
+		return 0;
 
 	printf("Video: ");
 

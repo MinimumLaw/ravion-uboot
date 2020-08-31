@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2019 NXP
  *
  * Peng Fan <peng.fan@nxp.com>
  */
 
 #include <common.h>
 #include <cpu_func.h>
+#include <init.h>
+#include <log.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -20,6 +22,7 @@
 #include <fdt_support.h>
 #include <fsl_wdog.h>
 #include <imx_sip.h>
+#include <linux/bitops.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -165,7 +168,13 @@ static u32 get_cpu_variant_type(u32 type)
 
 	u32 value = readl(&fuse->tester4);
 
-	if (type == MXC_CPU_IMX8MM) {
+	if (type == MXC_CPU_IMX8MQ) {
+		if ((value & 0x3) == 0x2)
+			return MXC_CPU_IMX8MD;
+		else if (value & 0x200000)
+			return MXC_CPU_IMX8MQL;
+
+	} else if (type == MXC_CPU_IMX8MM) {
 		switch (value & 0x3) {
 		case 2:
 			if (value & 0x1c0000)
@@ -180,6 +189,23 @@ static u32 get_cpu_variant_type(u32 type)
 		default:
 			if (value & 0x1c0000)
 				return MXC_CPU_IMX8MML;
+			break;
+		}
+	} else if (type == MXC_CPU_IMX8MN) {
+		switch (value & 0x3) {
+		case 2:
+			if (value & 0x1000000)
+				return MXC_CPU_IMX8MNDL;
+			else
+				return MXC_CPU_IMX8MND;
+		case 3:
+			if (value & 0x1000000)
+				return MXC_CPU_IMX8MNSL;
+			else
+				return MXC_CPU_IMX8MNS;
+		default:
+			if (value & 0x1000000)
+				return MXC_CPU_IMX8MNL;
 			break;
 		}
 	}
@@ -202,7 +228,7 @@ u32 get_cpu_rev(void)
 		return (MXC_CPU_IMX8MP << 12) | reg;
 	} else if (major_low == 0x42) {
 		/* iMX8MN */
-		return (MXC_CPU_IMX8MN << 12) | reg;
+		type = get_cpu_variant_type(MXC_CPU_IMX8MN);
 	} else if (major_low == 0x41) {
 		type = get_cpu_variant_type(MXC_CPU_IMX8MM);
 	} else {
@@ -226,6 +252,8 @@ u32 get_cpu_rev(void)
 				}
 			}
 		}
+
+		type = get_cpu_variant_type(type);
 	}
 
 	return (type << 12) | reg;
@@ -364,16 +392,18 @@ int ft_system_setup(void *blob, bd_t *bd)
 			if (nodeoff < 0)
 				continue; /* Not found, skip it */
 
-			printf("Found %s node\n", nodes_path[i]);
+			debug("Found %s node\n", nodes_path[i]);
 
 			rc = fdt_delprop(blob, nodeoff, "cpu-idle-states");
+			if (rc == -FDT_ERR_NOTFOUND)
+				continue;
 			if (rc) {
 				printf("Unable to update property %s:%s, err=%s\n",
 				       nodes_path[i], "status", fdt_strerror(rc));
 				return rc;
 			}
 
-			printf("Remove %s:%s\n", nodes_path[i],
+			debug("Remove %s:%s\n", nodes_path[i],
 			       "cpu-idle-states");
 		}
 	}
@@ -382,21 +412,115 @@ int ft_system_setup(void *blob, bd_t *bd)
 }
 #endif
 
-#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_SYSRESET)
+#if !CONFIG_IS_ENABLED(SYSRESET)
 void reset_cpu(ulong addr)
 {
-       struct watchdog_regs *wdog = (struct watchdog_regs *)addr;
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
-       if (!addr)
-	       wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((SET_WCR_WT(1) | WCR_WDT | WCR_WDE | WCR_SRS), &wdog->wcr);
 
-       /* Clear WDA to trigger WDOG_B immediately */
-       writew((WCR_WDE | WCR_SRS), &wdog->wcr);
-
-       while (1) {
-               /*
-                * spin for .5 seconds before reset
-                */
-       }
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	}
 }
 #endif
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+static void acquire_buildinfo(void)
+{
+	u64 atf_commit = 0;
+
+	/* Get ARM Trusted Firmware commit id */
+	atf_commit = call_imx_sip(IMX_SIP_BUILDINFO,
+				  IMX_SIP_BUILDINFO_GET_COMMITHASH, 0, 0, 0);
+	if (atf_commit == 0xffffffff) {
+		debug("ATF does not support build info\n");
+		atf_commit = 0x30; /* Display 0, 0 ascii is 0x30 */
+	}
+
+	printf("\n BuildInfo:\n  - ATF %s\n\n", (char *)&atf_commit);
+}
+
+int arch_misc_init(void)
+{
+	acquire_buildinfo();
+
+	return 0;
+}
+#endif
+
+void imx_tmu_arch_init(void *reg_base)
+{
+	if (is_imx8mm() || is_imx8mn()) {
+		/* Load TCALIV and TASR from fuses */
+		struct ocotp_regs *ocotp =
+			(struct ocotp_regs *)OCOTP_BASE_ADDR;
+		struct fuse_bank *bank = &ocotp->bank[3];
+		struct fuse_bank3_regs *fuse =
+			(struct fuse_bank3_regs *)bank->fuse_regs;
+
+		u32 tca_rt, tca_hr, tca_en;
+		u32 buf_vref, buf_slope;
+
+		tca_rt = fuse->ana0 & 0xFF;
+		tca_hr = (fuse->ana0 & 0xFF00) >> 8;
+		tca_en = (fuse->ana0 & 0x2000000) >> 25;
+
+		buf_vref = (fuse->ana0 & 0x1F00000) >> 20;
+		buf_slope = (fuse->ana0 & 0xF0000) >> 16;
+
+		writel(buf_vref | (buf_slope << 16), (ulong)reg_base + 0x28);
+		writel((tca_en << 31) | (tca_hr << 16) | tca_rt,
+		       (ulong)reg_base + 0x30);
+	}
+#ifdef CONFIG_IMX8MP
+	/* Load TCALIV0/1/m40 and TRIM from fuses */
+	struct ocotp_regs *ocotp = (struct ocotp_regs *)OCOTP_BASE_ADDR;
+	struct fuse_bank *bank = &ocotp->bank[38];
+	struct fuse_bank38_regs *fuse =
+		(struct fuse_bank38_regs *)bank->fuse_regs;
+	struct fuse_bank *bank2 = &ocotp->bank[39];
+	struct fuse_bank39_regs *fuse2 =
+		(struct fuse_bank39_regs *)bank2->fuse_regs;
+	u32 buf_vref, buf_slope, bjt_cur, vlsb, bgr;
+	u32 reg;
+	u32 tca40[2], tca25[2], tca105[2];
+
+	/* For blank sample */
+	if (!fuse->ana_trim2 && !fuse->ana_trim3 &&
+	    !fuse->ana_trim4 && !fuse2->ana_trim5) {
+		/* Use a default 25C binary codes */
+		tca25[0] = 1596;
+		tca25[1] = 1596;
+		writel(tca25[0], (ulong)reg_base + 0x30);
+		writel(tca25[1], (ulong)reg_base + 0x34);
+		return;
+	}
+
+	buf_vref = (fuse->ana_trim2 & 0xc0) >> 6;
+	buf_slope = (fuse->ana_trim2 & 0xF00) >> 8;
+	bjt_cur = (fuse->ana_trim2 & 0xF000) >> 12;
+	bgr = (fuse->ana_trim2 & 0xF0000) >> 16;
+	vlsb = (fuse->ana_trim2 & 0xF00000) >> 20;
+	writel(buf_vref | (buf_slope << 16), (ulong)reg_base + 0x28);
+
+	reg = (bgr << 28) | (bjt_cur << 20) | (vlsb << 12) | (1 << 7);
+	writel(reg, (ulong)reg_base + 0x3c);
+
+	tca40[0] = (fuse->ana_trim3 & 0xFFF0000) >> 16;
+	tca25[0] = (fuse->ana_trim3 & 0xF0000000) >> 28;
+	tca25[0] |= ((fuse->ana_trim4 & 0xFF) << 4);
+	tca105[0] = (fuse->ana_trim4 & 0xFFF00) >> 8;
+	tca40[1] = (fuse->ana_trim4 & 0xFFF00000) >> 20;
+	tca25[1] = fuse2->ana_trim5 & 0xFFF;
+	tca105[1] = (fuse2->ana_trim5 & 0xFFF000) >> 12;
+
+	/* use 25c for 1p calibration */
+	writel(tca25[0] | (tca105[0] << 16), (ulong)reg_base + 0x30);
+	writel(tca25[1] | (tca105[1] << 16), (ulong)reg_base + 0x34);
+	writel(tca40[0] | (tca40[1] << 16), (ulong)reg_base + 0x38);
+#endif
+}

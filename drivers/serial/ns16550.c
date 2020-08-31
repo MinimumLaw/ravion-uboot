@@ -9,6 +9,7 @@
 #include <clk.h>
 #include <dm.h>
 #include <errno.h>
+#include <log.h>
 #include <ns16550.h>
 #include <reset.h>
 #include <serial.h>
@@ -476,6 +477,8 @@ static int ns16550_serial_getinfo(struct udevice *dev,
 	info->reg_width = plat->reg_width;
 	info->reg_shift = plat->reg_shift;
 	info->reg_offset = plat->reg_offset;
+	info->clock = plat->clock;
+
 	return 0;
 }
 

@@ -1,4 +1,5 @@
 #include <common.h>
+#include <command.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
@@ -12,6 +13,8 @@
 #include <asm/arch/crm_regs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+typedef struct cmd_tbl cmd_tbl_t;
 
 #define WEAK_PULLUP	(PAD_CTL_PUS_22K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |	\

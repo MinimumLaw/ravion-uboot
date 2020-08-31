@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <elf.h>
 #include <efi_loader.h>
+#include <log.h>
 #include <malloc.h>
 #include <rtc.h>
 #include <u-boot/crc.h>
@@ -784,11 +785,10 @@ out:
 efi_status_t efi_add_runtime_mmio(void *mmio_ptr, u64 len)
 {
 	struct efi_runtime_mmio_list *newmmio;
-	u64 pages = (len + EFI_PAGE_MASK) >> EFI_PAGE_SHIFT;
 	uint64_t addr = *(uintptr_t *)mmio_ptr;
 	efi_status_t ret;
 
-	ret = efi_add_memory_map(addr, pages, EFI_MMAP_IO, false);
+	ret = efi_add_memory_map(addr, len, EFI_MMAP_IO);
 	if (ret != EFI_SUCCESS)
 		return EFI_OUT_OF_RESOURCES;
 

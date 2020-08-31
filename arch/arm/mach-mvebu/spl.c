@@ -8,6 +8,8 @@
 #include <debug_uart.h>
 #include <fdtdec.h>
 #include <hang.h>
+#include <init.h>
+#include <log.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
@@ -129,6 +131,9 @@ void board_init_f(ulong dummy)
 
 	/* Initialize Auto Voltage Scaling */
 	mv_avs_init();
+
+	/* Update read timing control for PCIe */
+	mv_rtc_config();
 
 	/*
 	 * Return to the BootROM to continue the Marvell xmodem

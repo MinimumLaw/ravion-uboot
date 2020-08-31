@@ -67,6 +67,32 @@ int dev_read_u32_default(const struct udevice *dev, const char *propname,
 			 int def);
 
 /**
+ * dev_read_u32_index() - read an indexed 32-bit integer from a device's DT
+ *                        property
+ *
+ * @dev:	device to read DT property from
+ * @propname:	name of the property to read from
+ * @index:	index of the integer to return
+ * @outp:	place to put value (if found)
+ * @return 0 if OK, -ve on error
+ */
+int dev_read_u32_index(struct udevice *dev, const char *propname, int index,
+		       u32 *outp);
+
+/**
+ * dev_read_u32_index_default() - read an indexed 32-bit integer from a device's
+ *                                DT property
+ *
+ * @dev:	device to read DT property from
+ * @propname:	name of the property to read from
+ * @index:	index of the integer to return
+ * @def:	default value to return if the property has no value
+ * @return property value, or @def if not found
+ */
+u32 dev_read_u32_index_default(struct udevice *dev, const char *propname,
+			       int index, u32 def);
+
+/**
  * dev_read_s32() - read a signed 32-bit integer from a device's DT property
  *
  * @dev:	device to read DT property from
@@ -469,6 +495,42 @@ const void *dev_read_prop(const struct udevice *dev, const char *propname,
 			  int *lenp);
 
 /**
+ * dev_read_first_prop()- get the reference of the first property
+ *
+ * Get reference to the first property of the node, it is used to iterate
+ * and read all the property with dev_read_prop_by_prop().
+ *
+ * @dev: device to check
+ * @prop: place to put argument reference
+ * @return 0 if OK, -ve on error. -FDT_ERR_NOTFOUND if not found
+ */
+int dev_read_first_prop(const struct udevice *dev, struct ofprop *prop);
+
+/**
+ * ofnode_get_next_property() - get the reference of the next property
+ *
+ * Get reference to the next property of the node, it is used to iterate
+ * and read all the property with dev_read_prop_by_prop().
+ *
+ * @prop: reference of current argument and place to put reference of next one
+ * @return 0 if OK, -ve on error. -FDT_ERR_NOTFOUND if not found
+ */
+int dev_read_next_prop(struct ofprop *prop);
+
+/**
+ * dev_read_prop_by_prop() - get a pointer to the value of a property
+ *
+ * Get value for the property identified by the provided reference.
+ *
+ * @prop: reference on property
+ * @propname: If non-NULL, place to property name on success,
+ * @lenp: If non-NULL, place to put length on success
+ * @return 0 if OK, -ve on error. -FDT_ERR_NOTFOUND if not found
+ */
+const void *dev_read_prop_by_prop(struct ofprop *prop,
+				  const char **propname, int *lenp);
+
+/**
  * dev_read_alias_seq() - Get the alias sequence number of a node
  *
  * This works out whether a node is pointed to by an alias, and if so, the
@@ -607,6 +669,14 @@ u64 dev_translate_dma_address(const struct udevice *dev,
  */
 int dev_read_alias_highest_id(const char *stem);
 
+/**
+ * dev_get_child_count() - get the child count of a device
+ *
+ * @dev: device to use for interation (struct udevice *)
+ * @return the count of child subnode
+ */
+int dev_get_child_count(const struct udevice *dev);
+
 #else /* CONFIG_DM_DEV_READ_INLINE is enabled */
 
 static inline int dev_read_u32(const struct udevice *dev,
@@ -619,6 +689,20 @@ static inline int dev_read_u32_default(const struct udevice *dev,
 				       const char *propname, int def)
 {
 	return ofnode_read_u32_default(dev_ofnode(dev), propname, def);
+}
+
+static inline int dev_read_u32_index(struct udevice *dev,
+				     const char *propname, int index, u32 *outp)
+{
+	return ofnode_read_u32_index(dev_ofnode(dev), propname, index, outp);
+}
+
+static inline u32 dev_read_u32_index_default(struct udevice *dev,
+					     const char *propname, int index,
+					     u32 def)
+{
+	return ofnode_read_u32_index_default(dev_ofnode(dev), propname, index,
+					     def);
 }
 
 static inline int dev_read_s32(const struct udevice *dev,
@@ -820,6 +904,23 @@ static inline const void *dev_read_prop(const struct udevice *dev,
 	return ofnode_get_property(dev_ofnode(dev), propname, lenp);
 }
 
+static inline int dev_read_first_prop(const struct udevice *dev, struct ofprop *prop)
+{
+	return ofnode_get_first_property(dev_ofnode(dev), prop);
+}
+
+static inline int dev_read_next_prop(struct ofprop *prop)
+{
+	return ofnode_get_next_property(prop);
+}
+
+static inline const void *dev_read_prop_by_prop(struct ofprop *prop,
+						const char **propname,
+						int *lenp)
+{
+	return ofnode_get_property_by_prop(prop, propname, lenp);
+}
+
 static inline int dev_read_alias_seq(const struct udevice *dev, int *devnump)
 {
 	return fdtdec_get_alias_seq(gd->fdt_blob, dev->uclass->uc_drv->name,
@@ -885,6 +986,11 @@ static inline int dev_read_alias_highest_id(const char *stem)
 	return fdtdec_get_alias_highest_id(gd->fdt_blob, stem);
 }
 
+static inline int dev_get_child_count(const struct udevice *dev)
+{
+	return ofnode_get_child_count(dev_ofnode(dev));
+}
+
 #endif /* CONFIG_DM_DEV_READ_INLINE */
 
 /**
@@ -900,5 +1006,19 @@ static inline int dev_read_alias_highest_id(const char *stem)
 	for (subnode = dev_read_first_subnode(dev); \
 	     ofnode_valid(subnode); \
 	     subnode = ofnode_next_subnode(subnode))
+
+/**
+ * dev_for_each_property() - Helper function to iterate through property
+ *
+ * This creates a for() loop which works through the property in a device's
+ * device-tree node.
+ *
+ * @prop: struct ofprop holding the current property
+ * @dev: device to use for interation (struct udevice *)
+ */
+#define dev_for_each_property(prop, dev) \
+	for (int ret_prop = dev_read_first_prop(dev, &prop); \
+	     !ret_prop; \
+	     ret_prop = dev_read_next_prop(&prop))
 
 #endif

@@ -8,6 +8,8 @@
  */
 
 #include <common.h>
+#include <command.h>
+#include <log.h>
 #include <linux/ctype.h>
 #include <dm.h>
 #include <video.h>
@@ -620,10 +622,11 @@ void vidconsole_position_cursor(struct udevice *dev, unsigned col, unsigned row)
 	col *= priv->x_charsize;
 	row *= priv->y_charsize;
 	priv->xcur_frac = VID_TO_POS(min_t(short, col, vid_priv->xsize - 1));
+	priv->xstart_frac = priv->xcur_frac;
 	priv->ycur = min_t(short, row, vid_priv->ysize - 1);
 }
 
-static int do_video_setcursor(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_video_setcursor(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
 	unsigned int col, row;
@@ -641,7 +644,7 @@ static int do_video_setcursor(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static int do_video_puts(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_video_puts(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char *const argv[])
 {
 	struct udevice *dev;

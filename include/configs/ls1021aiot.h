@@ -97,7 +97,6 @@
 /*
  * I2C
  */
-#define CONFIG_CMD_I2C
 
 #ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
@@ -120,7 +119,6 @@
 /*
  * MMC
  */
-#define CONFIG_CMD_MMC
 
 /* SATA */
 #define CONFIG_SCSI_AHCI_PLAT
@@ -138,17 +136,10 @@
 /* SPI */
 #if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
 #define CONFIG_SPI_FLASH_SPANSION
-
-/* QSPI */
-#define QSPI0_AMBA_BASE			0x40000000
-#define FSL_QSPI_FLASH_SIZE		(1 << 24)
-#define FSL_QSPI_FLASH_NUM		2
-#define CONFIG_SPI_FLASH_SPANSION
 #endif
 
 /* DM SPI */
 #if defined(CONFIG_FSL_DSPI) || defined(CONFIG_FSL_QSPI)
-#define CONFIG_CMD_SF
 #define CONFIG_DM_SPI_FLASH
 #endif
 
@@ -174,8 +165,6 @@
 
 #define CONFIG_ETHPRIME			"eTSEC2"
 
-#define CONFIG_PHY_ATHEROS
-
 #define CONFIG_HAS_ETH0
 #define CONFIG_HAS_ETH1
 #define CONFIG_HAS_ETH2
@@ -190,8 +179,6 @@
 #ifdef CONFIG_PCI
 #define CONFIG_PCI_SCAN_SHOW
 #endif
-
-#define CONFIG_CMD_MII
 
 #define CONFIG_CMDLINE_TAG
 
@@ -213,9 +200,6 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_BOOTMAPSZ		(256 << 20)
-
-#define CONFIG_CMD_GREPENV
-#define CONFIG_CMD_MEMINFO
 
 #define CONFIG_SYS_LOAD_ADDR		0x82000000
 

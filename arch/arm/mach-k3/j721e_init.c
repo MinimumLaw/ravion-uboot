@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <init.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/armv7_mpu.h>
@@ -19,6 +20,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/pinctrl.h>
 #include <mmc.h>
+#include <remoteproc.h>
 
 #ifdef CONFIG_SPL_BUILD
 #ifdef CONFIG_K3_LOAD_SYSFW
@@ -202,6 +204,9 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 
+	/* Output System Firmware version info */
+	k3_sysfw_print_ver();
+
 	/* Perform EEPROM-based board detection */
 	do_board_detect();
 
@@ -217,9 +222,10 @@ void board_init_f(ulong dummy)
 	if (ret)
 		panic("DRAM init failed: %d\n", ret);
 #endif
+	spl_enable_dcache();
 }
 
-u32 spl_boot_mode(const u32 boot_device)
+u32 spl_mmc_boot_mode(const u32 boot_device)
 {
 	switch (boot_device) {
 	case BOOT_DEVICE_MMC1:
@@ -229,6 +235,35 @@ u32 spl_boot_mode(const u32 boot_device)
 	default:
 		return MMCSD_MODE_RAW;
 	}
+}
+
+static u32 __get_backup_bootmedia(u32 main_devstat)
+{
+	u32 bkup_boot = (main_devstat & MAIN_DEVSTAT_BKUP_BOOTMODE_MASK) >>
+			MAIN_DEVSTAT_BKUP_BOOTMODE_SHIFT;
+
+	switch (bkup_boot) {
+	case BACKUP_BOOT_DEVICE_USB:
+		return BOOT_DEVICE_DFU;
+	case BACKUP_BOOT_DEVICE_UART:
+		return BOOT_DEVICE_UART;
+	case BACKUP_BOOT_DEVICE_ETHERNET:
+		return BOOT_DEVICE_ETHERNET;
+	case BACKUP_BOOT_DEVICE_MMC2:
+	{
+		u32 port = (main_devstat & MAIN_DEVSTAT_BKUP_MMC_PORT_MASK) >>
+			    MAIN_DEVSTAT_BKUP_MMC_PORT_SHIFT;
+		if (port == 0x0)
+			return BOOT_DEVICE_MMC1;
+		return BOOT_DEVICE_MMC2;
+	}
+	case BACKUP_BOOT_DEVICE_SPI:
+		return BOOT_DEVICE_SPI;
+	case BACKUP_BOOT_DEVICE_I2C:
+		return BOOT_DEVICE_I2C;
+	}
+
+	return BOOT_DEVICE_RAM;
 }
 
 static u32 __get_primary_bootmedia(u32 main_devstat, u32 wkup_devstat)
@@ -267,8 +302,10 @@ u32 spl_boot_device(void)
 	/* MAIN CTRL MMR can only be read if MCU ONLY is 0 */
 	main_devstat = readl(CTRLMMR_MAIN_DEVSTAT);
 
-	/* ToDo: Add support for backup boot media */
-	return __get_primary_bootmedia(main_devstat, wkup_devstat);
+	if (bootindex == K3_PRIMARY_BOOTMODE)
+		return __get_primary_bootmedia(main_devstat, wkup_devstat);
+	else
+		return __get_backup_bootmedia(main_devstat);
 }
 #endif
 
@@ -324,5 +361,38 @@ void release_resources_for_core_shutdown(void)
 			panic("Failed sending core %u shutdown message (%d)\n",
 			      id, ret);
 	}
+}
+#endif
+
+#ifdef CONFIG_SYS_K3_SPL_ATF
+void start_non_linux_remote_cores(void)
+{
+	int size = 0, ret;
+	u32 loadaddr = 0;
+
+	size = load_firmware("name_mainr5f0_0fw", "addr_mainr5f0_0load",
+			     &loadaddr);
+	if (size <= 0)
+		goto err_load;
+
+	/* assuming remoteproc 2 is aliased for the needed remotecore */
+	ret = rproc_load(2, loadaddr, size);
+	if (ret) {
+		printf("Firmware failed to start on rproc (%d)\n", ret);
+		goto err_load;
+	}
+
+	ret = rproc_start(2);
+	if (ret) {
+		printf("Firmware init failed on rproc (%d)\n", ret);
+		goto err_load;
+	}
+
+	printf("Remoteproc 2 started successfully\n");
+
+	return;
+
+err_load:
+	rproc_reset(2);
 }
 #endif

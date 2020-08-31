@@ -7,6 +7,7 @@
 #define __CONFIG_H__
 
 #include <asm/hardware.h>
+#include <linux/stringify.h>
 
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_SLOW_CLOCK  32768
@@ -49,7 +50,6 @@
 #define CONFIG_SYS_NAND_READY_PIN   AT91_PIN_PD5
 
 #define CONFIG_RBTREE
-#define CONFIG_LZO
 
 /* Ethernet */
 #define CONFIG_MACB
@@ -61,8 +61,6 @@
 
 /* System */
 #define CONFIG_SYS_LOAD_ADDR        0x22000000	/* load address */
-#define CONFIG_SYS_MEMTEST_START    CONFIG_SYS_SDRAM_BASE
-#define CONFIG_SYS_MEMTEST_END      0x23e00000
 
 #ifdef CONFIG_SYS_USE_NANDFLASH
 /* bootstrap + u-boot + env + linux in nandflash */

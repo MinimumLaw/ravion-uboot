@@ -80,18 +80,21 @@ struct driver_info;
  */
 enum {
 	/* Normal remove, remove all devices */
-	DM_REMOVE_NORMAL     = 1 << 0,
+	DM_REMOVE_NORMAL	= 1 << 0,
 
 	/* Remove devices with active DMA */
-	DM_REMOVE_ACTIVE_DMA = DM_FLAG_ACTIVE_DMA,
+	DM_REMOVE_ACTIVE_DMA	= DM_FLAG_ACTIVE_DMA,
 
 	/* Remove devices which need some final OS preparation steps */
-	DM_REMOVE_OS_PREPARE = DM_FLAG_OS_PREPARE,
+	DM_REMOVE_OS_PREPARE	= DM_FLAG_OS_PREPARE,
 
 	/* Add more use cases here */
 
 	/* Remove devices with any active flag */
-	DM_REMOVE_ACTIVE_ALL = DM_REMOVE_ACTIVE_DMA | DM_REMOVE_OS_PREPARE,
+	DM_REMOVE_ACTIVE_ALL	= DM_REMOVE_ACTIVE_DMA | DM_REMOVE_OS_PREPARE,
+
+	/* Don't power down any attached power domains */
+	DM_REMOVE_NO_PD		= 1 << 1,
 };
 
 /**
@@ -245,6 +248,8 @@ struct udevice_id {
  * pointers defined by the driver, to implement driver functions required by
  * the uclass.
  * @flags: driver flags - see DM_FLAGS_...
+ * @acpi_ops: Advanced Configuration and Power Interface (ACPI) operations,
+ * allowing the device to add things to the ACPI tables passed to Linux
  */
 struct driver {
 	char *name;
@@ -264,6 +269,9 @@ struct driver {
 	int per_child_platdata_auto_alloc_size;
 	const void *ops;	/* driver-specific operations */
 	uint32_t flags;
+#if CONFIG_IS_ENABLED(ACPIGEN)
+	struct acpi_ops *acpi_ops;
+#endif
 };
 
 /* Declare a new U-Boot driver */

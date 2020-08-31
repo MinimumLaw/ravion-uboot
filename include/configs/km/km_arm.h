@@ -37,8 +37,6 @@
 
 #include "asm/arch/config.h"
 
-#define CONFIG_SYS_MEMTEST_START 0x00400000	/* 4M */
-#define CONFIG_SYS_MEMTEST_END	0x007fffff	/*(_8M -1) */
 #define CONFIG_SYS_LOAD_ADDR	0x00800000	/* default load adr- 8M */
 
 /* architecture specific default bootargs */
@@ -106,6 +104,8 @@
 
 #ifndef __ASSEMBLY__
 #include <asm/arch/gpio.h>
+#include <linux/delay.h>
+#include <linux/stringify.h>
 extern void __set_direction(unsigned pin, int high);
 void set_sda(int state);
 void set_scl(int state);

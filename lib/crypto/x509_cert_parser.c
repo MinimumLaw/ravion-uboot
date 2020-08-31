@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "X.509: "fmt
+#include <log.h>
 #include <dm/devres.h>
 #include <linux/kernel.h>
 #ifndef __UBOOT__
@@ -18,7 +19,11 @@
 #include <linux/string.h>
 #endif
 #include <crypto/public_key.h>
+#ifdef __UBOOT__
+#include <crypto/x509_parser.h>
+#else
 #include "x509_parser.h"
+#endif
 #include "x509.asn1.h"
 #include "x509_akid.asn1.h"
 
