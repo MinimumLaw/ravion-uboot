@@ -1,4 +1,5 @@
 #include <common.h>
+#include <command.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
@@ -10,8 +11,11 @@
 #include <asm/mach-imx/iomux-v3.h>
 #include <fsl_esdhc.h>
 #include <asm/arch/crm_regs.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+typedef struct cmd_tbl cmd_tbl_t;
 
 static iomux_v3_cfg_t const bb_spi_9b_pads[] = {
 	MX6_PAD_NANDF_D0__GPIO2_IO00 | MUX_PAD_CTRL(NO_PAD_CTRL),	/* CS   - soDimm 111 */

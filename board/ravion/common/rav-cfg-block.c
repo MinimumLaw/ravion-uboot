@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include "rav-cfg-block.h"
 
 #if defined(CONFIG_TARGET_RAVION_COLIBRI_IMX6) || defined(CONFIG_TARGET_RAVION_IMX6)
@@ -44,6 +45,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #else
 #error Ravion config block location not set
 #endif
+
+typedef struct cmd_tbl cmd_tbl_t;
 
 struct ravion_tag {
 	u32 len:14;
