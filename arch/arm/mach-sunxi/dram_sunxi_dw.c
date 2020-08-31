@@ -9,10 +9,13 @@
  * (C) Copyright 2015      Jens Kuske <jenskuske@gmail.com>
  */
 #include <common.h>
+#include <init.h>
+#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/dram.h>
 #include <asm/arch/cpu.h>
+#include <linux/delay.h>
 #include <linux/kconfig.h>
 
 static void mctl_phy_init(u32 val)
@@ -76,15 +79,15 @@ enum {
 	MBUS_QOS_HIGHEST
 };
 
-inline void mbus_configure_port(u8 port,
-				bool bwlimit,
-				bool priority,
-				u8 qos,         /* MBUS_QOS_LOWEST .. MBUS_QOS_HIGEST */
-				u8 waittime,    /* 0 .. 0xf */
-				u8 acs,         /* 0 .. 0xff */
-				u16 bwl0,       /* 0 .. 0xffff, bandwidth limit in MB/s */
-				u16 bwl1,
-				u16 bwl2)
+static inline void mbus_configure_port(u8 port,
+				       bool bwlimit,
+				       bool priority,
+				       u8 qos,         /* MBUS_QOS_LOWEST .. MBUS_QOS_HIGEST */
+				       u8 waittime,    /* 0 .. 0xf */
+				       u8 acs,         /* 0 .. 0xff */
+				       u16 bwl0,       /* 0 .. 0xffff, bandwidth limit in MB/s */
+				       u16 bwl1,
+				       u16 bwl2)
 {
 	struct sunxi_mctl_com_reg * const mctl_com =
 			(struct sunxi_mctl_com_reg *)SUNXI_DRAM_COM_BASE;

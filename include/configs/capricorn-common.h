@@ -45,12 +45,7 @@
 #define CONFIG_BOARD_EARLY_INIT_F
 
 /* Commands */
-#define CONFIG_CMD_READ
 
-#undef CONFIG_CMD_EXPORTENV
-#undef CONFIG_CMD_IMPORTENV
-#undef CONFIG_CMD_IMLS
-#undef CONFIG_CMD_CRC32
 #undef CONFIG_BOOTM_NETBSD
 
 /* ENET Config */
@@ -166,10 +161,6 @@
 /* DDR3 board total DDR is 1 GB */
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* 1 GB */
 #define PHYS_SDRAM_2_SIZE		0x00000000	/* 0 GB */
-
-#define CONFIG_SYS_MEMTEST_START	0xA0000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + \
-					 (PHYS_SDRAM_1_SIZE >> 2))
 
 /* Console buffer and boot args */
 #define CONFIG_SYS_CBSIZE		2048

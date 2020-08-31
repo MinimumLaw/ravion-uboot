@@ -11,11 +11,14 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <env.h>
+#include <log.h>
 #include <malloc.h>
 #include <memalign.h>
 #include <miiphy.h>
 #include <net.h>
 #include <netdev.h>
+#include <asm/cache.h>
+#include <linux/delay.h>
 #include <power/regulator.h>
 
 #include <asm/io.h>
@@ -28,6 +31,7 @@
 #include <asm-generic/gpio.h>
 
 #include "fec_mxc.h"
+#include <eth_phy.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -502,6 +506,16 @@ static int fec_open(struct eth_device *edev)
 	/* Enable FEC-Lite controller */
 	writel(readl(&fec->eth->ecntrl) | FEC_ECNTRL_ETHER_EN,
 	       &fec->eth->ecntrl);
+
+#ifdef FEC_ENET_ENABLE_TXC_DELAY
+	writel(readl(&fec->eth->ecntrl) | FEC_ECNTRL_TXC_DLY,
+	       &fec->eth->ecntrl);
+#endif
+
+#ifdef FEC_ENET_ENABLE_RXC_DELAY
+	writel(readl(&fec->eth->ecntrl) | FEC_ECNTRL_RXC_DLY,
+	       &fec->eth->ecntrl);
+#endif
 
 #if defined(CONFIG_MX25) || defined(CONFIG_MX53) || defined(CONFIG_MX6SL)
 	udelay(100);
@@ -1194,6 +1208,13 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 #endif
 	int ret;
 
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (enet_fused((ulong)addr)) {
+			printf("SoC fuse indicates Ethernet@0x%x is unavailable.\n", addr);
+			return -ENODEV;
+		}
+	}
+
 #ifdef CONFIG_FEC_MXC_MDIO_BASE
 	/*
 	 * The i.MX28 has two ethernet interfaces, but they are not equal.
@@ -1273,7 +1294,7 @@ static const struct eth_ops fecmxc_ops = {
 	.read_rom_hwaddr	= fecmxc_read_rom_hwaddr,
 };
 
-static int device_get_phy_addr(struct udevice *dev)
+static int device_get_phy_addr(struct fec_priv *priv, struct udevice *dev)
 {
 	struct ofnode_phandle_args phandle_args;
 	int reg;
@@ -1283,6 +1304,8 @@ static int device_get_phy_addr(struct udevice *dev)
 		debug("Failed to find phy-handle");
 		return -ENODEV;
 	}
+
+	priv->phy_of_node = phandle_args.node;
 
 	reg = ofnode_read_u32_default(phandle_args.node, "reg", 0);
 
@@ -1294,7 +1317,7 @@ static int fec_phy_init(struct fec_priv *priv, struct udevice *dev)
 	struct phy_device *phydev;
 	int addr;
 
-	addr = device_get_phy_addr(dev);
+	addr = device_get_phy_addr(priv, dev);
 #ifdef CONFIG_FEC_MXC_PHYADDR
 	addr = CONFIG_FEC_MXC_PHYADDR;
 #endif
@@ -1304,6 +1327,7 @@ static int fec_phy_init(struct fec_priv *priv, struct udevice *dev)
 		return -ENODEV;
 
 	priv->phydev = phydev;
+	priv->phydev->node = priv->phy_of_node;
 	phy_config(phydev);
 
 	return 0;
@@ -1331,6 +1355,13 @@ static int fecmxc_probe(struct udevice *dev)
 	struct mii_dev *bus = NULL;
 	uint32_t start;
 	int ret;
+
+	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+		if (enet_fused((ulong)priv->eth)) {
+			printf("SoC fuse indicates Ethernet@0x%lx is unavailable.\n", (ulong)priv->eth);
+			return -ENODEV;
+		}
+	}
 
 	if (IS_ENABLED(CONFIG_IMX8)) {
 		ret = clk_get_by_name(dev, "ipg", &priv->ipg_clk);
@@ -1420,15 +1451,26 @@ static int fecmxc_probe(struct udevice *dev)
 	fec_reg_setup(priv);
 
 	priv->dev_id = dev->seq;
-#ifdef CONFIG_FEC_MXC_MDIO_BASE
-	bus = fec_get_miibus((ulong)CONFIG_FEC_MXC_MDIO_BASE, dev->seq);
-#else
-	bus = fec_get_miibus((ulong)priv->eth, dev->seq);
+
+#ifdef CONFIG_DM_ETH_PHY
+	bus = eth_phy_get_mdio_bus(dev);
 #endif
+
+	if (!bus) {
+#ifdef CONFIG_FEC_MXC_MDIO_BASE
+		bus = fec_get_miibus((ulong)CONFIG_FEC_MXC_MDIO_BASE, dev->seq);
+#else
+		bus = fec_get_miibus((ulong)priv->eth, dev->seq);
+#endif
+	}
 	if (!bus) {
 		ret = -ENOMEM;
 		goto err_mii;
 	}
+
+#ifdef CONFIG_DM_ETH_PHY
+	eth_phy_set_mdio_bus(dev, bus);
+#endif
 
 	priv->bus = bus;
 	priv->interface = pdata->phy_interface;

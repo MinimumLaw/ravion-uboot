@@ -8,6 +8,10 @@
 #ifndef _ASM_ARCH_IMX8M_CLOCK_H
 #define _ASM_ARCH_IMX8M_CLOCK_H
 
+#ifndef __ASSEMBLY__
+#include <linux/bitops.h>
+#endif
+
 enum pll_clocks {
 	ANATOP_ARM_PLL,
 	ANATOP_GPU_PLL,
@@ -153,6 +157,7 @@ enum clk_root_src {
 	EXT_CLK_3,
 	EXT_CLK_4,
 	OSC_27M_CLK,
+	ARM_A53_ALT_CLK,
 };
 
 /* CCGR index */
@@ -419,7 +424,7 @@ enum clk_src_index {
 
 enum frac_pll_out_val {
 	FRAC_PLL_OUT_1000M,
-	FRAC_PLL_OUT_1600M,
+	FRAC_PLL_OUT_800M,
 };
 
 void init_nand_clk(void);

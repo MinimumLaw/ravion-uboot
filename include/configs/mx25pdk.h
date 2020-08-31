@@ -41,8 +41,6 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* Memory Test */
-#define CONFIG_SYS_MEMTEST_START	(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE/2)
-#define CONFIG_SYS_MEMTEST_END		(PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)
 
 /* Serial Info */
 #define CONFIG_MXC_UART
@@ -83,7 +81,6 @@
 
 /* Fuse API support */
 #define CONFIG_FSL_IIM
-#define CONFIG_CMD_FUSE
 
 /* Ethernet Configs */
 

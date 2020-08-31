@@ -10,8 +10,10 @@
 #include <fpga.h>
 #include <gzip.h>
 #include <image.h>
+#include <log.h>
 #include <malloc.h>
 #include <spl.h>
+#include <asm/cache.h>
 #include <linux/libfdt.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -425,8 +427,7 @@ static int spl_fit_append_fdt(struct spl_image_info *spl_image,
 			debug("%s: DT overlay %s applied\n", __func__,
 			      fit_get_name(fit, node, NULL));
 		}
-		if (tmpbuffer)
-			free(tmpbuffer);
+		free(tmpbuffer);
 		if (ret)
 			return ret;
 	}

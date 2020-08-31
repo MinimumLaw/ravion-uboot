@@ -162,7 +162,7 @@ config LIB_RAND
 	bool "Pseudo-random library support"
 
 config LIB_HW_RAND
-	bool "HW Engine for random libray support"
+	bool "HW Engine for random library support"
 
 endchoice
 
@@ -363,7 +363,22 @@ config SHA_PROG_HW_ACCEL
 	  is performed in hardware.
 
 config MD5
-	bool
+	bool "Support MD5 algorithm"
+	help
+	  This option enables MD5 support. MD5 is an algorithm designed
+	  in 1991 that produces a 16-byte digest (or checksum) from its input
+	  data. It has a number of vulnerabilities which preclude its use in
+	  security applications, but it can be useful for providing a quick
+	  checksum of a block of data.
+
+config SPL_MD5
+	bool "Support MD5 algorithm in SPL"
+	help
+	  This option enables MD5 support in SPL. MD5 is an algorithm designed
+	  in 1991 that produces a 16-byte digest (or checksum) from its input
+	  data. It has a number of vulnerabilities which preclude its use in
+	  security applications, but it can be useful for providing a quick
+	  checksum of a block of data.
 
 config CRC32C
 	bool
@@ -409,6 +424,15 @@ config GZIP
 	help
 	  This enables support for GZIP compression algorithm.
 
+config GZIP_COMPRESSED
+	bool
+	select ZLIB
+
+config BZIP2
+	bool "Enable bzip2 decompression support"
+	help
+	  This enables support for BZIP2 compression algorithm.
+
 config ZLIB
 	bool
 	default y
@@ -424,10 +448,15 @@ config ZSTD
 config SPL_LZ4
 	bool "Enable LZ4 decompression support in SPL"
 	help
-	  This enables support for tge LZ4 decompression algorithm in SPL. LZ4
+	  This enables support for the LZ4 decompression algorithm in SPL. LZ4
 	  is a lossless data compression algorithm that is focused on
 	  fast compression and decompression speed. It belongs to the LZ77
 	  family of byte-oriented compression schemes.
+
+config SPL_LZMA
+	bool "Enable LZMA decompression support for SPL build"
+	help
+	  This enables support for LZMA compression algorithm for SPL boot.
 
 config SPL_LZO
 	bool "Enable LZO decompression support in SPL"
@@ -601,5 +630,11 @@ config TEST_FDTDEC
 
 config LIB_DATE
 	bool
+
+config LIB_ELF
+	bool
+	help
+	  Supoort basic elf loading/validating functions.
+	  This supports fir 32 bit and 64 bit versions.
 
 endmenu

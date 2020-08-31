@@ -8,15 +8,23 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <image.h>
+#include <init.h>
+#include <log.h>
 #include <spl.h>
 #include "common.h"
 #include <dm.h>
 #include <remoteproc.h>
+#include <asm/cache.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
 #include <fdt_support.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/hardware.h>
 #include <asm/io.h>
+#include <fs_loader.h>
+#include <fs.h>
+#include <env.h>
+#include <elf.h>
 
 struct ti_sci_handle *get_ti_sci_handle(void)
 {
@@ -29,6 +37,28 @@ struct ti_sci_handle *get_ti_sci_handle(void)
 		panic("Failed to get SYSFW (%d)\n", ret);
 
 	return (struct ti_sci_handle *)ti_sci_get_handle_from_sysfw(dev);
+}
+
+void k3_sysfw_print_ver(void)
+{
+	struct ti_sci_handle *ti_sci = get_ti_sci_handle();
+	char fw_desc[sizeof(ti_sci->version.firmware_description) + 1];
+
+	/*
+	 * Output System Firmware version info. Note that since the
+	 * 'firmware_description' field is not guaranteed to be zero-
+	 * terminated we manually add a \0 terminator if needed. Further
+	 * note that we intentionally no longer rely on the extended
+	 * printf() formatter '%.*s' to not having to require a more
+	 * full-featured printf() implementation.
+	 */
+	strncpy(fw_desc, ti_sci->version.firmware_description,
+		sizeof(ti_sci->version.firmware_description));
+	fw_desc[sizeof(fw_desc) - 1] = '\0';
+
+	printf("SYSFW ABI: %d.%d (firmware rev 0x%04x '%s')\n",
+	       ti_sci->version.abi_major, ti_sci->version.abi_minor,
+	       ti_sci->version.firmware_revision, fw_desc);
 }
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -58,23 +88,98 @@ int early_console_init(void)
 #endif
 
 #ifdef CONFIG_SYS_K3_SPL_ATF
+
+void init_env(void)
+{
+#ifdef CONFIG_SPL_ENV_SUPPORT
+	char *part;
+
+	env_init();
+	env_relocate();
+	switch (spl_boot_device()) {
+	case BOOT_DEVICE_MMC2:
+		part = env_get("bootpart");
+		env_set("storage_interface", "mmc");
+		env_set("fw_dev_part", part);
+		break;
+	case BOOT_DEVICE_SPI:
+		env_set("storage_interface", "ubi");
+		env_set("fw_ubi_mtdpart", "UBI");
+		env_set("fw_ubi_volume", "UBI0");
+		break;
+	default:
+		printf("%s from device %u not supported!\n",
+		       __func__, spl_boot_device());
+		return;
+	}
+#endif
+}
+
+#ifdef CONFIG_FS_LOADER
+int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr)
+{
+	struct udevice *fsdev;
+	char *name = NULL;
+	int size = 0;
+
+	*loadaddr = 0;
+#ifdef CONFIG_SPL_ENV_SUPPORT
+	switch (spl_boot_device()) {
+	case BOOT_DEVICE_MMC2:
+		name = env_get(name_fw);
+		*loadaddr = env_get_hex(name_loadaddr, *loadaddr);
+		break;
+	default:
+		printf("Loading rproc fw image from device %u not supported!\n",
+		       spl_boot_device());
+		return 0;
+	}
+#endif
+	if (!*loadaddr)
+		return 0;
+
+	if (!uclass_get_device(UCLASS_FS_FIRMWARE_LOADER, 0, &fsdev)) {
+		size = request_firmware_into_buf(fsdev, name, (void *)*loadaddr,
+						 0, 0);
+	}
+
+	return size;
+}
+#else
+int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr)
+{
+	return 0;
+}
+#endif
+
+__weak void start_non_linux_remote_cores(void)
+{
+}
+
 void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
+	typedef void __noreturn (*image_entry_noargs_t)(void);
 	struct ti_sci_handle *ti_sci = get_ti_sci_handle();
-	int ret;
+	u32 loadaddr = 0;
+	int ret, size;
 
 	/* Release all the exclusive devices held by SPL before starting ATF */
 	ti_sci->ops.dev_ops.release_exclusive_devices(ti_sci);
+
+	ret = rproc_init();
+	if (ret)
+		panic("rproc failed to be initialized (%d)\n", ret);
+
+	init_env();
+	start_non_linux_remote_cores();
+	size = load_firmware("name_mcur5f0_0fw", "addr_mcur5f0_0load",
+			     &loadaddr);
+
 
 	/*
 	 * It is assumed that remoteproc device 1 is the corresponding
 	 * Cortex-A core which runs ATF. Make sure DT reflects the same.
 	 */
-	ret = rproc_dev_init(1);
-	if (ret)
-		panic("%s: ATF failed to initialize on rproc (%d)\n", __func__,
-		      ret);
-
 	ret = rproc_load(1, spl_image->entry_point, 0x200);
 	if (ret)
 		panic("%s: ATF failed to load on rproc (%d)\n", __func__, ret);
@@ -85,13 +190,18 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	ret = rproc_start(1);
 	if (ret)
 		panic("%s: ATF failed to start on rproc (%d)\n", __func__, ret);
+	if (!(size > 0 && valid_elf_image(loadaddr))) {
+		debug("Shutting down...\n");
+		release_resources_for_core_shutdown();
 
-	debug("Releasing resources...\n");
-	release_resources_for_core_shutdown();
+		while (1)
+			asm volatile("wfe");
+	}
 
-	debug("Finalizing core shutdown...\n");
-	while (1)
-		asm volatile("wfe");
+	image_entry_noargs_t image_entry =
+		(image_entry_noargs_t)load_elf_image_phdr(loadaddr);
+
+	image_entry();
 }
 #endif
 
@@ -201,15 +311,15 @@ int print_cpuinfo(void)
 	u32 soc, rev;
 	char *name;
 
-	soc = (readl(CTRLMMR_WKUP_JTAG_DEVICE_ID) &
-		DEVICE_ID_FAMILY_MASK) >> DEVICE_ID_FAMILY_SHIFT;
+	soc = (readl(CTRLMMR_WKUP_JTAG_ID) &
+		JTAG_ID_PARTNO_MASK) >> JTAG_ID_PARTNO_SHIFT;
 	rev = (readl(CTRLMMR_WKUP_JTAG_ID) &
 		JTAG_ID_VARIANT_MASK) >> JTAG_ID_VARIANT_SHIFT;
 
 	printf("SoC:   ");
 	switch (soc) {
-	case AM654:
-		name = "AM654";
+	case AM65X:
+		name = "AM65x";
 		break;
 	case J721E:
 		name = "J721E";
@@ -300,3 +410,38 @@ void remove_fwl_configs(struct fwl_data *fwl_data, size_t fwl_data_size)
 		}
 	}
 }
+
+void spl_enable_dcache(void)
+{
+#if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
+	phys_addr_t ram_top = CONFIG_SYS_SDRAM_BASE;
+
+	dram_init_banksize();
+
+	/* reserve TLB table */
+	gd->arch.tlb_size = PGTABLE_SIZE;
+
+	ram_top += get_effective_memsize();
+	/* keep ram_top in the 32-bit address space */
+	if (ram_top >= 0x100000000)
+		ram_top = (phys_addr_t) 0x100000000;
+
+	gd->arch.tlb_addr = ram_top - gd->arch.tlb_size;
+	debug("TLB table from %08lx to %08lx\n", gd->arch.tlb_addr,
+	      gd->arch.tlb_addr + gd->arch.tlb_size);
+
+	dcache_enable();
+#endif
+}
+
+#if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
+void spl_board_prepare_for_boot(void)
+{
+	dcache_disable();
+}
+
+void spl_board_prepare_for_boot_linux(void)
+{
+	dcache_disable();
+}
+#endif

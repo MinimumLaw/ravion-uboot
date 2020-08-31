@@ -57,10 +57,6 @@
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
 
-/*
- * Command line configuration.
- */
-
 /* SDRAM */
 #define PHYS_SDRAM_1		ATMEL_BASE_CS1	/* on DDRSDRC1 */
 #define PHYS_SDRAM_1_SIZE	0x08000000	/* 128 MB */
@@ -85,9 +81,6 @@
 #define CONFIG_AT91_WANTS_COMMON_PHY
 
 #define CONFIG_SYS_LOAD_ADDR		0x22000000	/* load address */
-
-#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_SYS_MEMTEST_END		0x23e00000
 
 #ifdef CONFIG_SYS_USE_MMC
 /* bootstrap + u-boot + env + linux in mmc */

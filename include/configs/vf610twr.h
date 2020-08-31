@@ -9,6 +9,7 @@
 #define __CONFIG_H
 
 #include <asm/arch/imx-regs.h>
+#include <linux/stringify.h>
 
 #define CONFIG_SYS_FSL_CLK
 
@@ -42,14 +43,6 @@
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RMII
 #define CONFIG_FEC_MXC_PHYADDR          0
-
-/* QSPI Configs*/
-
-#ifdef CONFIG_FSL_QSPI
-#define FSL_QSPI_FLASH_SIZE		(1 << 24)
-#define FSL_QSPI_FLASH_NUM		2
-#define CONFIG_SYS_FSL_QSPI_LE
-#endif
 
 /* I2C Configs */
 #define CONFIG_SYS_I2C
@@ -169,9 +162,6 @@
 	   "else run netboot; fi"
 
 /* Miscellaneous configurable options */
-
-#define CONFIG_SYS_MEMTEST_START	0x80010000
-#define CONFIG_SYS_MEMTEST_END		0x87C00000
 
 /* Physical memory map */
 #define PHYS_SDRAM			(0x80000000)

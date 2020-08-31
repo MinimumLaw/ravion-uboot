@@ -8,16 +8,7 @@
 
 #include "ls1088a_common.h"
 
-#ifdef CONFIG_TFABOOT
 #define CONFIG_SYS_MMC_ENV_DEV		0
-#else
-#if defined(CONFIG_QSPI_BOOT)
-#elif defined(CONFIG_SD_BOOT)
-#define CONFIG_SYS_MMC_ENV_DEV		0
-#else
-#define CONFIG_ENV_IS_IN_FLASH
-#endif
-#endif /* CONFIG_TFABOOT */
 
 #if defined(CONFIG_TFABOOT) || \
 	defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
@@ -25,7 +16,6 @@
 #define CONFIG_QIXIS_I2C_ACCESS
 #endif
 #define SYS_NO_FLASH
-#undef CONFIG_CMD_IMLS
 #endif
 
 #define CONFIG_SYS_CLK_FREQ		100000000
@@ -130,7 +120,6 @@
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
-#define CONFIG_CMD_NAND
 
 #define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
 
@@ -267,19 +256,6 @@
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		1
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	5
-
-#ifndef SPL_NO_QSPI
-/* QSPI device */
-#if defined(CONFIG_TFABOOT) || \
-	defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
-#define FSL_QSPI_FLASH_SIZE		(1 << 26)
-#define FSL_QSPI_FLASH_NUM		2
-#endif
-#endif
-
-#define CONFIG_CMD_MEMINFO
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_MONITOR_BASE CONFIG_SPL_TEXT_BASE
@@ -522,9 +498,6 @@
 
 /* MAC/PHY configuration */
 #ifdef CONFIG_FSL_MC_ENET
-#define CONFIG_PHYLIB
-
-#define CONFIG_PHY_VITESSE
 #define AQ_PHY_ADDR1			0x00
 #define AQR105_IRQ_MASK			0x00000004
 

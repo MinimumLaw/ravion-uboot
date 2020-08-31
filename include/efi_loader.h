@@ -9,8 +9,14 @@
 #define _EFI_LOADER_H 1
 
 #include <common.h>
+#include <blk.h>
+#include <log.h>
 #include <part_efi.h>
 #include <efi_api.h>
+#include <image.h>
+#include <pe.h>
+
+struct blk_desc;
 
 static inline int guidcmp(const void *g1, const void *g2)
 {
@@ -26,6 +32,7 @@ static inline void *guidcpy(void *dst, const void *src)
 #if CONFIG_IS_ENABLED(EFI_LOADER)
 
 #include <linux/list.h>
+#include <linux/oid_registry.h>
 
 /* Maximum number of configuration tables */
 #define EFI_MAX_CONFIGURATION_TABLES 16
@@ -38,12 +45,23 @@ static inline void *guidcpy(void *dst, const void *src)
 #define U_BOOT_HOST_DEV_GUID \
 	EFI_GUID(0xbbe4e671, 0x5773, 0x4ea1, \
 		 0x9a, 0xab, 0x3a, 0x7d, 0xbf, 0x40, 0xc4, 0x82)
+/* GUID used as root for virtio devices */
+#define U_BOOT_VIRTIO_DEV_GUID \
+	EFI_GUID(0x63293792, 0xadf5, 0x9325, \
+		 0xb9, 0x9f, 0x4e, 0x0e, 0x45, 0x5c, 0x1b, 0x1e)
 
 /* Use internal device tree when starting UEFI application */
 #define EFI_FDT_USE_INTERNAL NULL
 
 /* Root node */
 extern efi_handle_t efi_root;
+
+/* EFI system partition */
+extern struct efi_system_partition {
+	enum if_type if_type;
+	int devnum;
+	u8 part;
+} efi_system_partition;
 
 int __efi_entry_check(void);
 int __efi_exit_check(void);
@@ -178,6 +196,12 @@ extern const efi_guid_t efi_guid_hii_config_routing_protocol;
 extern const efi_guid_t efi_guid_hii_config_access_protocol;
 extern const efi_guid_t efi_guid_hii_database_protocol;
 extern const efi_guid_t efi_guid_hii_string_protocol;
+/* GUIDs for authentication */
+extern const efi_guid_t efi_guid_image_security_database;
+extern const efi_guid_t efi_guid_sha256;
+extern const efi_guid_t efi_guid_cert_x509;
+extern const efi_guid_t efi_guid_cert_x509_sha256;
+extern const efi_guid_t efi_guid_cert_type_pkcs7;
 
 /* GUID of RNG protocol */
 extern const efi_guid_t efi_guid_rng_protocol;
@@ -256,6 +280,11 @@ struct efi_object {
 	enum efi_object_type type;
 };
 
+enum efi_image_auth_status {
+	EFI_IMAGE_AUTH_FAILED = 0,
+	EFI_IMAGE_AUTH_PASSED,
+};
+
 /**
  * struct efi_loaded_image_obj - handle of a loaded image
  *
@@ -275,6 +304,7 @@ struct efi_loaded_image_obj {
 	EFIAPI efi_status_t (*entry)(efi_handle_t image_handle,
 				     struct efi_system_table *st);
 	u16 image_type;
+	enum efi_image_auth_status auth_status;
 };
 
 /**
@@ -372,6 +402,8 @@ efi_status_t efi_disk_register(void);
 int efi_disk_create_partitions(efi_handle_t parent, struct blk_desc *desc,
 			       const char *if_typename, int diskid,
 			       const char *pdevname);
+/* Check if it is EFI system partition */
+bool efi_disk_is_system_part(efi_handle_t handle);
 /* Called by bootefi to make GOP (graphical) interface available */
 efi_status_t efi_gop_register(void);
 /* Called by bootefi to make the network interface available */
@@ -408,7 +440,8 @@ efi_status_t efi_set_watchdog(unsigned long timeout);
 /* Called from places to check whether a timer expired */
 void efi_timer_check(void);
 /* PE loader implementation */
-efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
+efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
+			 void *efi, size_t efi_size,
 			 struct efi_loaded_image *loaded_image_info);
 /* Called once to store the pristine gd pointer */
 void efi_save_gd(void);
@@ -520,8 +553,7 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 				efi_uintn_t *descriptor_size,
 				uint32_t *descriptor_version);
 /* Adds a range into the EFI memory map */
-efi_status_t efi_add_memory_map(uint64_t start, uint64_t pages, int memory_type,
-				bool overlap_only_ram);
+efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type);
 /* Adds a conventional range into the EFI memory map */
 efi_status_t efi_add_conventional_memory_map(u64 ram_start, u64 ram_end,
 					     u64 ram_top);
@@ -676,9 +708,80 @@ struct efi_load_option {
 	const u8 *optional_data;
 };
 
-void efi_deserialize_load_option(struct efi_load_option *lo, u8 *data);
+efi_status_t efi_deserialize_load_option(struct efi_load_option *lo, u8 *data,
+					 efi_uintn_t *size);
 unsigned long efi_serialize_load_option(struct efi_load_option *lo, u8 **data);
 efi_status_t efi_bootmgr_load(efi_handle_t *handle);
+
+/**
+ * efi_image_regions - A list of memory regions
+ *
+ * @max:	Maximum number of regions
+ * @num:	Number of regions
+ * @reg:	array of regions
+ */
+struct efi_image_regions {
+	int			max;
+	int			num;
+	struct image_region	reg[];
+};
+
+/**
+ * efi_sig_data - A decoded data of struct efi_signature_data
+ *
+ * This structure represents an internal form of signature in
+ * signature database. A listed list may represent a signature list.
+ *
+ * @next:	Pointer to next entry
+ * @onwer:	Signature owner
+ * @data:	Pointer to signature data
+ * @size:	Size of signature data
+ */
+struct efi_sig_data {
+	struct efi_sig_data *next;
+	efi_guid_t owner;
+	void *data;
+	size_t size;
+};
+
+/**
+ * efi_signature_store - A decoded data of signature database
+ *
+ * This structure represents an internal form of signature database.
+ *
+ * @next:		Pointer to next entry
+ * @sig_type:		Signature type
+ * @sig_data_list:	Pointer to signature list
+ */
+struct efi_signature_store {
+	struct efi_signature_store *next;
+	efi_guid_t sig_type;
+	struct efi_sig_data *sig_data_list;
+};
+
+struct x509_certificate;
+struct pkcs7_message;
+
+bool efi_signature_verify_cert(struct x509_certificate *cert,
+			       struct efi_signature_store *dbx);
+bool efi_signature_verify_signers(struct pkcs7_message *msg,
+				  struct efi_signature_store *dbx);
+bool efi_signature_verify_with_sigdb(struct efi_image_regions *regs,
+				     struct pkcs7_message *msg,
+				  struct efi_signature_store *db,
+				  struct x509_certificate **cert);
+
+efi_status_t efi_image_region_add(struct efi_image_regions *regs,
+				  const void *start, const void *end,
+				  int nocheck);
+
+void efi_sigstore_free(struct efi_signature_store *sigstore);
+struct efi_signature_store *efi_sigstore_parse_sigdb(u16 *name);
+
+bool efi_secure_boot_enabled(void);
+
+bool efi_image_parse(void *efi, size_t len, struct efi_image_regions **regp,
+		     WIN_CERTIFICATE **auth, size_t *auth_len);
 
 #else /* CONFIG_IS_ENABLED(EFI_LOADER) */
 

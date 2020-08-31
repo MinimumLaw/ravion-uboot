@@ -29,8 +29,6 @@
 #define CONFIG_SYS_MALLOC_LEN		SZ_1M
 #define CONFIG_SYS_SDRAM_BASE		EMC_DYCS0_BASE
 #define CONFIG_SYS_SDRAM_SIZE		SZ_128M
-#define CONFIG_SYS_MEMTEST_START	(CONFIG_SYS_SDRAM_BASE + SZ_32K)
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_TEXT_BASE - SZ_1M)
 
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + SZ_32K)
 
@@ -46,7 +44,6 @@
  * Ethernet Driver
  */
 
-#define CONFIG_PHY_SMSC
 #define CONFIG_LPC32XX_ETH
 #define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 /* FIXME: remove "Waiting for PHY auto negotiation to complete..." message */
@@ -107,11 +104,6 @@
 
 #define CONFIG_LPC32XX_GPIO
 
-/*
- * SSP/SPI/DISPLAY
- */
-
-#define CONFIG_LPC32XX_SSP_TIMEOUT 100000
 /*
  * Environment
  */

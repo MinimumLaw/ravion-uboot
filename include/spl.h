@@ -7,11 +7,16 @@
 #define	_SPL_H_
 
 #include <binman_sym.h>
+#include <linker_lists.h>
 
 /* Platform-specific defines */
 #include <linux/compiler.h>
+#include <asm/global_data.h>
 #include <asm/spl.h>
 #include <handoff.h>
+
+struct blk_desc;
+struct image_header;
 
 /* Value in r0 indicates we booted from U-Boot */
 #define UBOOT_NOT_LOADED_FROM_SPL	0x13578642
@@ -21,6 +26,9 @@
 #define MMCSD_MODE_RAW		1
 #define MMCSD_MODE_FS		2
 #define MMCSD_MODE_EMMCBOOT	3
+
+struct blk_desc;
+struct image_header;
 
 /*
  * u_boot_first_phase() - check if this is the first U-Boot phase
@@ -220,6 +228,19 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 #define SPL_FIT_FOUND		2
 
 /**
+ * spl_load_legacy_img() - Loads a legacy image from a device.
+ * @spl_image:	Image description to set up
+ * @load:	Structure containing the information required to load data.
+ * @header:	Pointer to image header (including appended image)
+ *
+ * Reads an legacy image from the device. Loads u-boot image to
+ * specified load address.
+ * Returns 0 on success.
+ */
+int spl_load_legacy_img(struct spl_image_info *spl_image,
+			struct spl_load_info *load, ulong header);
+
+/**
  * spl_load_imx_container() - Loads a imx container image from a device.
  * @spl_image:	Image description to set up
  * @info:	Structure containing the information required to load data.
@@ -234,8 +255,36 @@ int spl_load_imx_container(struct spl_image_info *spl_image,
 /* SPL common functions */
 void preloader_console_init(void);
 u32 spl_boot_device(void);
-u32 spl_boot_mode(const u32 boot_device);
-int spl_boot_partition(const u32 boot_device);
+
+/**
+ * spl_mmc_boot_mode() - Lookup function for the mode of an MMC boot source.
+ * @boot_device:	ID of the device which the MMC driver wants to read
+ *			from.  Common values are e.g. BOOT_DEVICE_MMC1,
+ *			BOOT_DEVICE_MMC2, BOOT_DEVICE_MMC2_2.
+ *
+ * This function should return one of MMCSD_MODE_FS, MMCSD_MODE_EMMCBOOT, or
+ * MMCSD_MODE_RAW for each MMC boot source which is defined for the target.  The
+ * boot_device parameter tells which device the MMC driver is interested in.
+ *
+ * If not overridden, it is weakly defined in common/spl/spl_mmc.c.
+ *
+ * Note:  It is important to use the boot_device parameter instead of e.g.
+ * spl_boot_device() as U-Boot is not always loaded from the same device as SPL.
+ */
+u32 spl_mmc_boot_mode(const u32 boot_device);
+
+/**
+ * spl_mmc_boot_partition() - MMC partition to load U-Boot from.
+ * @boot_device:	ID of the device which the MMC driver wants to load
+ *			U-Boot from.
+ *
+ * This function should return the partition number which the SPL
+ * should load U-Boot from (on the given boot_device) when
+ * CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION is set.
+ *
+ * If not overridden, it is weakly defined in common/spl/spl_mmc.c.
+ */
+int spl_mmc_boot_partition(const u32 boot_device);
 void spl_set_bd(void);
 
 /**
@@ -537,4 +586,5 @@ void spl_perform_fixups(struct spl_image_info *spl_image);
  */
 struct image_header *spl_get_load_buffer(ssize_t offset, size_t size);
 
+void spl_save_restore_data(void);
 #endif

@@ -9,6 +9,8 @@
 #include <env.h>
 #include <errno.h>
 #include <fdtdec.h>
+#include <init.h>
+#include <log.h>
 #include <miiphy.h>
 #include <netdev.h>
 #include <asm/io.h>
@@ -66,7 +68,7 @@ static u32 socfpga_phymode_setup(u32 gmac_index, const char *phymode)
 		return -EINVAL;
 
 	clrsetbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_EMAC0 +
-			gmac_index,
+			(gmac_index * sizeof(u32)),
 			SYSMGR_EMACGRP_CTRL_PHYSEL_MASK, modereg);
 
 	return 0;

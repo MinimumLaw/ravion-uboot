@@ -5,9 +5,13 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <cpu_func.h>
+#include <debug_uart.h>
 #include <env.h>
 #include <init.h>
+#include <log.h>
+#include <net.h>
 #include <sata.h>
 #include <ahci.h>
 #include <scsi.h>
@@ -17,7 +21,9 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/psu_init_gpl.h>
+#include <asm/cache.h>
 #include <asm/io.h>
+#include <asm/ptrace.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <usb.h>
@@ -25,7 +31,10 @@
 #include <zynqmppl.h>
 #include <zynqmp_firmware.h>
 #include <g_dnl.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/sizes.h>
+#include "../common/board.h"
 
 #include "pm_cfg_obj.h"
 
@@ -319,22 +328,46 @@ static char *zynqmp_get_silicon_idcode_name(void)
 
 int board_early_init_f(void)
 {
-	int ret = 0;
-
 #if defined(CONFIG_ZYNQMP_PSU_INIT_ENABLED)
+	int ret;
+
 	ret = psu_init();
+	if (ret)
+		return ret;
+
+	/* Delay is required for clocks to be propagated */
+	udelay(1000000);
 #endif
 
-	return ret;
+#ifdef CONFIG_DEBUG_UART
+	/* Uart debug for sure */
+	debug_uart_init();
+	puts("Debug uart enabled\n"); /* or printch() */
+#endif
+
+	return 0;
+}
+
+static int multi_boot(void)
+{
+	u32 multiboot;
+
+	multiboot = readl(&csu_base->multi_boot);
+
+	printf("Multiboot:\t%x\n", multiboot);
+
+	return 0;
 }
 
 int board_init(void)
 {
+#if defined(CONFIG_ZYNQMP_FIRMWARE)
 	struct udevice *dev;
 
 	uclass_get_device_by_name(UCLASS_FIRMWARE, "zynqmp-power", &dev);
 	if (!dev)
 		panic("PMU Firmware device not found - Enable it");
+#endif
 
 #if defined(CONFIG_SPL_BUILD)
 	/* Check *at build time* if the filename is an non-empty string */
@@ -355,6 +388,9 @@ int board_init(void)
 		fpga_add(fpga_xilinx, &zynqmppl);
 	}
 #endif
+
+	if (current_el() == 3)
+		multi_boot();
 
 	return 0;
 }
@@ -385,7 +421,7 @@ int board_early_init_r(void)
 }
 
 unsigned long do_go_exec(ulong (*entry)(int, char * const []), int argc,
-			 char * const argv[])
+			 char *const argv[])
 {
 	int ret = 0;
 
@@ -487,7 +523,7 @@ static int reset_reason(void)
 
 	env_set("reset_reason", reason);
 
-	ret = zynqmp_mmio_write(~0, ~0, (ulong)&crlapb_base->reset_reason);
+	ret = zynqmp_mmio_write((ulong)&crlapb_base->reset_reason, ~0, ~0);
 	if (ret)
 		return -EINVAL;
 
@@ -524,9 +560,26 @@ static int set_fdtfile(void)
 	return 0;
 }
 
+static u8 zynqmp_get_bootmode(void)
+{
+	u8 bootmode;
+	u32 reg = 0;
+	int ret;
+
+	ret = zynqmp_mmio_read((ulong)&crlapb_base->boot_mode, &reg);
+	if (ret)
+		return -EINVAL;
+
+	if (reg >> BOOT_MODE_ALT_SHIFT)
+		reg >>= BOOT_MODE_ALT_SHIFT;
+
+	bootmode = reg & BOOT_MODES_MASK;
+
+	return bootmode;
+}
+
 int board_late_init(void)
 {
-	u32 reg = 0;
 	u8 bootmode;
 	struct udevice *dev;
 	int bootseq = -1;
@@ -536,7 +589,6 @@ int board_late_init(void)
 	char *new_targets;
 	char *env_targets;
 	int ret;
-	ulong initrd_hi;
 
 #if defined(CONFIG_USB_ETHER) && !defined(CONFIG_USB_GADGET_DOWNLOAD)
 	usb_ether_init();
@@ -551,14 +603,7 @@ int board_late_init(void)
 	if (ret)
 		return ret;
 
-	ret = zynqmp_mmio_read((ulong)&crlapb_base->boot_mode, &reg);
-	if (ret)
-		return -EINVAL;
-
-	if (reg >> BOOT_MODE_ALT_SHIFT)
-		reg >>= BOOT_MODE_ALT_SHIFT;
-
-	bootmode = reg & BOOT_MODES_MASK;
+	bootmode = zynqmp_get_bootmode();
 
 	puts("Bootmode: ");
 	switch (bootmode) {
@@ -663,15 +708,9 @@ int board_late_init(void)
 
 	env_set("boot_targets", new_targets);
 
-	initrd_hi = gd->start_addr_sp - CONFIG_STACK_SIZE;
-	initrd_hi = round_down(initrd_hi, SZ_16M);
-	env_set_addr("initrd_high", (void *)initrd_hi);
-
-	env_set_hex("script_offset_f", CONFIG_BOOT_SCRIPT_OFFSET);
-
 	reset_reason();
 
-	return 0;
+	return board_late_init_xilinx();
 }
 #endif
 

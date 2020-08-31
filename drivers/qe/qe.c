@@ -440,7 +440,8 @@ static void qe_upload_microcode(const void *base,
 /*
  * Upload a microcode to the I-RAM at a specific address.
  *
- * See docs/README.qe_firmware for information on QE microcode uploading.
+ * See Documentation/powerpc/qe_firmware.rst in the Linux kernel tree for
+ * information on QE microcode uploading.
  *
  * Currently, only version 1 is supported, so the 'version' field must be
  * set to 1.
@@ -579,7 +580,8 @@ int qe_upload_firmware(const struct qe_firmware *firmware)
 /*
  * Upload a microcode to the I-RAM at a specific address.
  *
- * See docs/README.qe_firmware for information on QE microcode uploading.
+ * See Documentation/powerpc/qe_firmware.rst in the Linux kernel tree for
+ * information on QE microcode uploading.
  *
  * Currently, only version 1 is supported, so the 'version' field must be
  * set to 1.
@@ -779,7 +781,7 @@ struct qe_firmware_info *qe_get_firmware_info(void)
 	return qe_firmware_uploaded ? &qe_firmware_info : NULL;
 }
 
-static int qe_cmd(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int qe_cmd(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	ulong addr;
 

@@ -63,13 +63,7 @@
 	"bootargs_mmc=root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait\0"
 
 /* Ethernet */
-#define CONFIG_KS8851_MLL
-#define CONFIG_KS8851_MLL_BASEADDR	0x30000000 /* use NCS2 */
-
 #define CONFIG_SYS_LOAD_ADDR		0x22000000 /* load address */
-
-#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_SYS_MEMTEST_END		0x26e00000
 
 /* USB host */
 #ifdef CONFIG_CMD_USB

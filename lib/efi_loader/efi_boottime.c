@@ -9,6 +9,7 @@
 #include <div64.h>
 #include <efi_loader.h>
 #include <irq_func.h>
+#include <log.h>
 #include <malloc.h>
 #include <time.h>
 #include <linux/libfdt_env.h>
@@ -48,7 +49,7 @@ static efi_handle_t current_image;
  * restriction so we need to manually swap its and our view of that register on
  * EFI callback entry/exit.
  */
-static volatile void *efi_gd, *app_gd;
+static volatile gd_t *efi_gd, *app_gd;
 #endif
 
 /* 1 if inside U-Boot code, 0 if inside EFI payload code */
@@ -88,7 +89,7 @@ int __efi_entry_check(void)
 #ifdef CONFIG_ARM
 	assert(efi_gd);
 	app_gd = gd;
-	gd = efi_gd;
+	set_gd(efi_gd);
 #endif
 	return ret;
 }
@@ -98,7 +99,7 @@ int __efi_exit_check(void)
 {
 	int ret = --entry_count == 0;
 #ifdef CONFIG_ARM
-	gd = app_gd;
+	set_gd(app_gd);
 #endif
 	return ret;
 }
@@ -122,7 +123,7 @@ void efi_restore_gd(void)
 	/* Only restore if we're already in EFI context */
 	if (!efi_gd)
 		return;
-	gd = efi_gd;
+	set_gd(efi_gd);
 #endif
 }
 
@@ -1882,12 +1883,12 @@ efi_status_t EFIAPI efi_load_image(bool boot_policy,
 	efi_dp_split_file_path(file_path, &dp, &fp);
 	ret = efi_setup_loaded_image(dp, fp, image_obj, &info);
 	if (ret == EFI_SUCCESS)
-		ret = efi_load_pe(*image_obj, dest_buffer, info);
+		ret = efi_load_pe(*image_obj, dest_buffer, source_size, info);
 	if (!source_buffer)
 		/* Release buffer to which file was loaded */
 		efi_free_pages((uintptr_t)dest_buffer,
 			       efi_size_in_pages(source_size));
-	if (ret == EFI_SUCCESS) {
+	if (ret == EFI_SUCCESS || ret == EFI_SECURITY_VIOLATION) {
 		info->system_table = &systab;
 		info->parent_handle = parent_image;
 	} else {
@@ -2885,9 +2886,15 @@ efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 
 	EFI_ENTRY("%p, %p, %p", image_handle, exit_data_size, exit_data);
 
+	if (!efi_search_obj(image_handle))
+		return EFI_EXIT(EFI_INVALID_PARAMETER);
+
 	/* Check parameters */
 	if (image_obj->header.type != EFI_OBJECT_TYPE_LOADED_IMAGE)
 		return EFI_EXIT(EFI_INVALID_PARAMETER);
+
+	if (image_obj->auth_status != EFI_IMAGE_AUTH_PASSED)
+		return EFI_EXIT(EFI_SECURITY_VIOLATION);
 
 	ret = EFI_CALL(efi_open_protocol(image_handle, &efi_guid_loaded_image,
 					 &info, NULL, NULL,
@@ -2913,7 +2920,7 @@ efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 		 * otherwise __efi_entry_check() will put the wrong value into
 		 * app_gd.
 		 */
-		gd = app_gd;
+		set_gd(app_gd);
 #endif
 		/*
 		 * To get ready to call EFI_EXIT below we have to execute the

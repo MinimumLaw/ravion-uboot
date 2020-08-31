@@ -5,6 +5,8 @@
 #include <common.h>
 #include <env.h>
 #include <i2c.h>
+#include <init.h>
+#include <log.h>
 #include <malloc.h>
 #include <errno.h>
 #include <netdev.h>
@@ -13,6 +15,7 @@
 #include <fsl_sec.h>
 #include <asm/io.h>
 #include <fdt_support.h>
+#include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <fsl-mc/fsl_mc.h>
 #include <env_internal.h>
@@ -801,6 +804,11 @@ int board_init(void)
 #ifdef CONFIG_FSL_LS_PPA
 	ppa_init();
 #endif
+
+#if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)
+	pci_init();
+#endif
+
 	return 0;
 }
 

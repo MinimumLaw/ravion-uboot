@@ -17,6 +17,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/delay.h>
+
 /* High Level Configuration Options */
 #define CONFIG_CPM2		1	/* has CPM2 */
 
@@ -56,9 +58,6 @@
 #define CONFIG_BTB			/* toggle branch predition */
 
 #define CONFIG_SYS_INIT_DBCR DBCR_IDM		/* Enable Debug Exceptions */
-
-#define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest region */
-#define CONFIG_SYS_MEMTEST_END		0x00400000
 
 #define CONFIG_SYS_CCSRBAR		0xe0000000
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR
@@ -287,8 +286,6 @@
   /* need more definitions here for FE3 */
   #define FETH3_RST		0x80
 #endif					/* CONFIG_ETHER_INDEX */
-
-#define CONFIG_BITBANGMII		/* bit-bang MII PHY management */
 
 /*
  * GPIO pins used for bit-banged MII communications

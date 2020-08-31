@@ -4,12 +4,12 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#include <asm/types.h>
-#include <asm/io.h>
 #include <common.h>
 #include <dm.h>
-#include <mapmem.h>
 #include <dm/of_access.h>
+#include <mapmem.h>
+#include <asm/types.h>
+#include <asm/io.h>
 
 int dev_read_u32(const struct udevice *dev, const char *propname, u32 *outp)
 {
@@ -20,6 +20,19 @@ int dev_read_u32_default(const struct udevice *dev, const char *propname,
 			 int def)
 {
 	return ofnode_read_u32_default(dev_ofnode(dev), propname, def);
+}
+
+int dev_read_u32_index(struct udevice *dev, const char *propname, int index,
+		       u32 *outp)
+{
+	return ofnode_read_u32_index(dev_ofnode(dev), propname, index, outp);
+}
+
+u32 dev_read_u32_index_default(struct udevice *dev, const char *propname,
+			       int index, u32 def)
+{
+	return ofnode_read_u32_index_default(dev_ofnode(dev), propname, index,
+					     def);
 }
 
 int dev_read_s32(const struct udevice *dev, const char *propname, s32 *outp)
@@ -242,6 +255,22 @@ const void *dev_read_prop(const struct udevice *dev, const char *propname,
 	return ofnode_get_property(dev_ofnode(dev), propname, lenp);
 }
 
+int dev_read_first_prop(const struct udevice *dev, struct ofprop *prop)
+{
+	return ofnode_get_first_property(dev_ofnode(dev), prop);
+}
+
+int dev_read_next_prop(struct ofprop *prop)
+{
+	return ofnode_get_next_property(prop);
+}
+
+const void *dev_read_prop_by_prop(struct ofprop *prop,
+				  const char **propname, int *lenp)
+{
+	return ofnode_get_property_by_prop(prop, propname, lenp);
+}
+
 int dev_read_alias_seq(const struct udevice *dev, int *devnump)
 {
 	ofnode node = dev_ofnode(dev);
@@ -322,4 +351,9 @@ fdt_addr_t dev_read_addr_pci(const struct udevice *dev)
 		addr = devfdt_get_addr_pci(dev);
 
 	return addr;
+}
+
+int dev_get_child_count(const struct udevice *dev)
+{
+	return ofnode_get_child_count(dev_ofnode(dev));
 }

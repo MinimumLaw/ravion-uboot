@@ -8,19 +8,21 @@
  * Bernecker & Rainer Industrieelektronik GmbH - http://www.br-automation.com
  *
  */
+#include <log.h>
 #include <version.h>
 #include <common.h>
 #include <env.h>
 #include <fdtdec.h>
 #include <i2c.h>
 #include <lcd.h>
+#include <linux/delay.h>
 #include "bur_common.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /* --------------------------------------------------------------------------*/
 #if defined(CONFIG_LCD) && defined(CONFIG_AM335X_LCD) && \
-	!defined(CONFIG_SPL_BUILD)
+	!defined(CONFIG_DM_VIDEO) && !defined(CONFIG_SPL_BUILD)
 #include <asm/arch/hardware.h>
 #include <asm/arch/cpu.h>
 #include <asm/gpio.h>

@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <fdt_support.h>
+#include <log.h>
 #include <malloc.h>
 #include <linux/libfdt.h>
 #include <dm/of_access.h>
@@ -18,32 +19,53 @@
 
 int ofnode_read_u32(ofnode node, const char *propname, u32 *outp)
 {
-	assert(ofnode_valid(node));
-	debug("%s: %s: ", __func__, propname);
-
-	if (ofnode_is_np(node)) {
-		return of_read_u32(ofnode_to_np(node), propname, outp);
-	} else {
-		const fdt32_t *cell;
-		int len;
-
-		cell = fdt_getprop(gd->fdt_blob, ofnode_to_offset(node),
-				   propname, &len);
-		if (!cell || len < sizeof(int)) {
-			debug("(not found)\n");
-			return -EINVAL;
-		}
-		*outp = fdt32_to_cpu(cell[0]);
-	}
-	debug("%#x (%d)\n", *outp, *outp);
-
-	return 0;
+	return ofnode_read_u32_index(node, propname, 0, outp);
 }
 
 u32 ofnode_read_u32_default(ofnode node, const char *propname, u32 def)
 {
 	assert(ofnode_valid(node));
-	ofnode_read_u32(node, propname, &def);
+	ofnode_read_u32_index(node, propname, 0, &def);
+
+	return def;
+}
+
+int ofnode_read_u32_index(ofnode node, const char *propname, int index,
+			  u32 *outp)
+{
+	const fdt32_t *cell;
+	int len;
+
+	assert(ofnode_valid(node));
+	debug("%s: %s: ", __func__, propname);
+
+	if (ofnode_is_np(node))
+		return of_read_u32_index(ofnode_to_np(node), propname, index,
+					 outp);
+
+	cell = fdt_getprop(gd->fdt_blob, ofnode_to_offset(node), propname,
+			   &len);
+	if (!cell) {
+		debug("(not found)\n");
+		return -EINVAL;
+	}
+
+	if (len < (sizeof(int) * (index + 1))) {
+		debug("(not large enough)\n");
+		return -EOVERFLOW;
+	}
+
+	*outp = fdt32_to_cpu(cell[index]);
+	debug("%#x (%d)\n", *outp, *outp);
+
+	return 0;
+}
+
+u32 ofnode_read_u32_index_default(ofnode node, const char *propname, int index,
+				  u32 def)
+{
+	assert(ofnode_valid(node));
+	ofnode_read_u32_index(node, propname, index, &def);
 
 	return def;
 }
@@ -453,6 +475,17 @@ ofnode ofnode_get_chosen_node(const char *name)
 	return ofnode_path(prop);
 }
 
+int ofnode_get_child_count(ofnode parent)
+{
+	ofnode child;
+	int num = 0;
+
+	ofnode_for_each_subnode(child, parent)
+		num++;
+
+	return num;
+}
+
 static int decode_timing_property(ofnode node, const char *name,
 				  struct timing_entry *result)
 {
@@ -548,6 +581,54 @@ const void *ofnode_get_property(ofnode node, const char *propname, int *lenp)
 	else
 		return fdt_getprop(gd->fdt_blob, ofnode_to_offset(node),
 				   propname, lenp);
+}
+
+int ofnode_get_first_property(ofnode node, struct ofprop *prop)
+{
+	prop->node = node;
+
+	if (ofnode_is_np(node)) {
+		prop->prop = of_get_first_property(ofnode_to_np(prop->node));
+		if (!prop->prop)
+			return -FDT_ERR_NOTFOUND;
+	} else {
+		prop->offset =
+			fdt_first_property_offset(gd->fdt_blob,
+						  ofnode_to_offset(prop->node));
+		if (prop->offset < 0)
+			return prop->offset;
+	}
+
+	return 0;
+}
+
+int ofnode_get_next_property(struct ofprop *prop)
+{
+	if (ofnode_is_np(prop->node)) {
+		prop->prop = of_get_next_property(ofnode_to_np(prop->node),
+						  prop->prop);
+		if (!prop->prop)
+			return -FDT_ERR_NOTFOUND;
+	} else {
+		prop->offset = fdt_next_property_offset(gd->fdt_blob,
+							prop->offset);
+		if (prop->offset  < 0)
+			return prop->offset;
+	}
+
+	return 0;
+}
+
+const void *ofnode_get_property_by_prop(const struct ofprop *prop,
+					const char **propname, int *lenp)
+{
+	if (ofnode_is_np(prop->node))
+		return of_get_property_by_prop(ofnode_to_np(prop->node),
+					       prop->prop, propname, lenp);
+	else
+		return fdt_getprop_by_offset(gd->fdt_blob,
+					     prop->offset,
+					     propname, lenp);
 }
 
 bool ofnode_is_available(ofnode node)

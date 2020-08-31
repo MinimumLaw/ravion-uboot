@@ -5,8 +5,12 @@
  * 2017 Marek Behun, CZ.NIC, marek.behun@nic.cz
  */
 
-#include "btrfs.h"
+#include <common.h>
+#include <log.h>
 #include <memalign.h>
+#include <part.h>
+#include <linux/compat.h>
+#include "btrfs.h"
 
 #define BTRFS_SUPER_FLAG_SUPP	(BTRFS_HEADER_FLAG_WRITTEN	\
 				 | BTRFS_HEADER_FLAG_RELOC	\
@@ -229,6 +233,13 @@ int btrfs_read_superblock(void)
 
 	if (btrfs_check_super_roots(&btrfs_info.sb)) {
 		printf("%s: No valid root_backup found!\n", __func__);
+		return -1;
+	}
+
+	if (sb->sectorsize != PAGE_SIZE) {
+		printf(
+	"%s: Unsupported sector size (%u), only supports %u as sector size\n",
+			__func__, sb->sectorsize, PAGE_SIZE);
 		return -1;
 	}
 

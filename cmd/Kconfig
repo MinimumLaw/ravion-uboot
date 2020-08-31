@@ -190,6 +190,20 @@ comment "Commands"
 
 menu "Info commands"
 
+config CMD_ACPI
+	bool "acpi"
+	default y if ACPIGEN
+	help
+	  List and dump ACPI tables. ACPI (Advanced Configuration and Power
+	  Interface) is used mostly on x86 for providing information to the
+	  Operating System about devices in the system. The tables are set up
+	  by the firmware, typically U-Boot but possibly an earlier firmware
+	  module, if U-Boot is chain-loaded from something else. ACPI tables
+	  can also include code, to perform hardware-specific tasks required
+	  by the Operating Systems. This allows some amount of separation
+	  between the firmware and OS, and is particularly useful when you
+	  want to make hardware changes without the OS needing to be adjusted.
+
 config CMD_BDI
 	bool "bdinfo"
 	default y
@@ -399,6 +413,7 @@ config CMD_ABOOTIMG
 config CMD_ELF
 	bool "bootelf, bootvx"
 	default y
+	select LIB_ELF
 	help
 	  Boot an ELF/vxWorks image from the memory.
 
@@ -476,6 +491,7 @@ config CMD_SPL_WRITE_SIZE
 
 config CMD_FITUPD
 	bool "fitImage update command"
+	depends on UPDATE_TFTP
 	help
 	  Implements the 'fitupd' command, which allows to automatically
 	  store software updates present on a TFTP server in NOR Flash
@@ -735,6 +751,22 @@ config SYS_ALT_MEMTEST
 	help
 	  Use a more complete alternative memory test.
 
+config SYS_MEMTEST_START
+	hex "default start address for mtest"
+	default 0
+	help
+	  This is the default start address for mtest for simple read/write
+	  test. If no arguments are given to mtest, default address is used
+	  as start address.
+
+config SYS_MEMTEST_END
+	hex "default end address for mtest"
+	default 0x1000
+	help
+	  This is the default end address for mtest for simple read/write
+	  test. If no arguments are given to mtest, default address is used
+	  as end address.
+
 endif
 
 config CMD_SHA1SUM
@@ -769,14 +801,23 @@ config CMD_LZMADEC
 	  Support decompressing an LZMA (Lempel-Ziv-Markov chain algorithm)
 	  image from memory.
 
+config CMD_UNLZ4
+	bool "unlz4"
+	default y if CMD_BOOTI
+	select LZ4
+	help
+	  Support decompressing an LZ4 image from memory region.
+
 config CMD_UNZIP
 	bool "unzip"
 	default y if CMD_BOOTI
+	select GZIP
 	help
 	  Uncompress a zip-compressed memory region.
 
 config CMD_ZIP
 	bool "zip"
+	select GZIP_COMPRESSED
 	help
 	  Compress a memory region with zlib deflate method.
 
@@ -1052,20 +1093,33 @@ config CMD_MMC
 	help
 	  MMC memory mapped support.
 
+if CMD_MMC
+
+config CMD_BKOPS_ENABLE
+	bool "mmc bkops enable"
+	depends on CMD_MMC
+	default n
+	help
+	  Enable command for setting manual background operations handshake
+	  on a eMMC device. The feature is optionally available on eMMC devices
+	  conforming to standard >= 4.41.
+
 config CMD_MMC_RPMB
 	bool "Enable support for RPMB in the mmc command"
-	depends on CMD_MMC
+	depends on SUPPORT_EMMC_RPMB
 	help
 	  Enable the commands for reading, writing and programming the
 	  key for the Replay Protection Memory Block partition in eMMC.
 
 config CMD_MMC_SWRITE
 	bool "mmc swrite"
-	depends on CMD_MMC && MMC_WRITE
+	depends on MMC_WRITE
 	select IMAGE_SPARSE
 	help
 	  Enable support for the "mmc swrite" command to write Android sparse
 	  images to eMMC.
+
+endif
 
 config CMD_MTD
 	bool "mtd"
@@ -1599,15 +1653,6 @@ config CMD_BSP
 	  option provides a way to control this. The commands that are enabled
 	  vary depending on the board.
 
-config CMD_BKOPS_ENABLE
-	bool "mmc bkops enable"
-	depends on CMD_MMC
-	default n
-	help
-	  Enable command for setting manual background operations handshake
-	  on a eMMC device. The feature is optionally available on eMMC devices
-	  conforming to standard >= 4.41.
-
 config CMD_BLOCK_CACHE
 	bool "blkcache - control and stats for block cache"
 	depends on BLOCK_CACHE
@@ -2095,7 +2140,7 @@ config CMD_BEDBUG
 	help
 	  The bedbug (emBEDded deBUGger) command provides debugging features
 	  for some PowerPC processors. For details please see the
-	  docuemntation in doc/README.beddbug
+	  documentation in doc/README.bedbug.
 
 config CMD_DIAG
 	bool "diag - Board diagnostics"
@@ -2171,6 +2216,14 @@ config CMD_UBI
 	  to use U-Boot UBI commands.
 	  It is also strongly encouraged to also enable CONFIG_MTD to get full
 	  partition support.
+
+config CMD_UBI_RENAME
+       bool "Enable rename"
+       depends on CMD_UBI
+       default n
+       help
+         Enable a "ubi" command to rename ubi volume:
+	   ubi rename <oldname> <newname>
 
 config CMD_UBIFS
 	tristate "Enable UBIFS - Unsorted block images filesystem commands"

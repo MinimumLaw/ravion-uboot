@@ -19,16 +19,18 @@
  */
 
 #include <common.h>
-#include <acpi_s3.h>
+#include <bootstage.h>
 #include <command.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
 #include <init.h>
+#include <log.h>
 #include <malloc.h>
 #include <syscon.h>
+#include <acpi/acpi_s3.h>
+#include <acpi/acpi_table.h>
 #include <asm/acpi.h>
-#include <asm/acpi_table.h>
 #include <asm/control_regs.h>
 #include <asm/coreboot_tables.h>
 #include <asm/cpu.h>
@@ -239,8 +241,10 @@ int cpu_init_r(void)
 	struct udevice *dev;
 	int ret;
 
-	if (!ll_boot_init())
+	if (!ll_boot_init()) {
+		uclass_first_device(UCLASS_PCI, &dev);
 		return 0;
+	}
 
 	ret = x86_init_cpus();
 	if (ret)
@@ -288,3 +292,28 @@ int reserve_arch(void)
 	return 0;
 }
 #endif
+
+long detect_coreboot_table_at(ulong start, ulong size)
+{
+	u32 *ptr, *end;
+
+	size /= 4;
+	for (ptr = (void *)start, end = ptr + size; ptr < end; ptr += 4) {
+		if (*ptr == 0x4f49424c) /* "LBIO" */
+			return (long)ptr;
+	}
+
+	return -ENOENT;
+}
+
+long locate_coreboot_table(void)
+{
+	long addr;
+
+	/* We look for LBIO in the first 4K of RAM and again at 960KB */
+	addr = detect_coreboot_table_at(0x0, 0x1000);
+	if (addr < 0)
+		addr = detect_coreboot_table_at(0xf0000, 0x1000);
+
+	return addr;
+}

@@ -3,11 +3,7 @@
 # see the file Documentation/kbuild/kconfig-language.txt in the
 # Linux kernel source tree.
 #
-mainmenu "U-Boot $UBOOTVERSION Configuration"
-
-config UBOOTVERSION
-	string
-	option env="UBOOTVERSION"
+mainmenu "U-Boot $(UBOOTVERSION) Configuration"
 
 # Allow defaults in arch-specific code to override any given here
 source "arch/Kconfig"
@@ -115,7 +111,7 @@ config ENV_VARS_UBOOT_CONFIG
 
 config NR_DRAM_BANKS
 	int "Number of DRAM banks"
-	default 1 if ARCH_SUNXI
+	default 1 if ARCH_SUNXI || ARCH_OWL
 	default 4
 	help
 	  This defines the number of DRAM banks.
@@ -150,7 +146,7 @@ config SYS_MALLOC_F_LEN
 	default 0x2000 if (ARCH_IMX8 || ARCH_IMX8M || ARCH_MX7 || \
 			   ARCH_MX7ULP || ARCH_MX6 || ARCH_MX5 || \
 			   ARCH_LS1012A || ARCH_LS1021A || ARCH_LS1043A || \
-			   ARCH_LS1046A)
+			   ARCH_LS1046A || ARCH_QEMU)
 	default 0x400
 	help
 	  Before relocation, memory is very limited on many platforms. Still,
@@ -213,6 +209,20 @@ if EXPERT
 	  When disabling this, please check if malloc calls, maybe
 	  should be replaced by calloc - if one expects zeroed memory.
 
+config SYS_MALLOC_DEFAULT_TO_INIT
+	bool "Default malloc to init while reserving the memory for it"
+	default n
+	help
+	  It may happen that one needs to move the dynamic allocation
+	  from one to another memory range, eg. when moving the malloc
+	  from the limited static to a potentially large dynamic (DDR)
+	  memory.
+
+	  If so then on top of setting the updated memory aside one
+	  needs to bring the malloc init.
+
+	  If such a scenario is sought choose yes.
+
 config TOOLS_DEBUG
 	bool "Enable debug information for tools"
 	help
@@ -237,7 +247,7 @@ config BUILD_ROM
 	  This option allows to build a ROM version of U-Boot.
 	  The build process generally requires several binary blobs
 	  which are not shipped in the U-Boot source tree.
-	  Please, see doc/README.x86 for details.
+	  Please, see doc/arch/x86.rst for details.
 
 config SPL_IMAGE
 	string "SPL image used in the combined SPL+U-Boot image"
@@ -258,7 +268,7 @@ config BUILD_TARGET
 	default "u-boot-elf.srec" if RCAR_GEN3
 	default "u-boot.itb" if SPL_LOAD_FIT && (ARCH_ROCKCHIP || \
 				ARCH_SUNXI || RISCV || ARCH_ZYNQMP)
-	default "u-boot.kwb" if KIRKWOOD
+	default "u-boot.kwb" if ARCH_KIRKWOOD
 	default "u-boot-with-spl.bin" if ARCH_AT91 && SPL_NAND_SUPPORT
 	default "u-boot-with-spl.imx" if ARCH_MX6 && SPL
 	help
@@ -360,6 +370,8 @@ config FIT_SIGNATURE
 	depends on DM
 	select HASH
 	select RSA
+	select RSA_VERIFY
+	select IMAGE_SIGN_INFO
 	help
 	  This option enables signature verification of FIT uImages,
 	  using a hash signed and verified using RSA. If
@@ -448,6 +460,8 @@ config SPL_FIT_SIGNATURE
 	depends on SPL_DM
 	select SPL_FIT
 	select SPL_RSA
+	select SPL_RSA_VERIFY
+	select SPL_IMAGE_SIGN_INFO
 
 config SPL_LOAD_FIT
 	bool "Enable SPL loading U-Boot as a FIT (basic fitImage features)"

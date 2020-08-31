@@ -9,6 +9,7 @@
 
 #include <asm/arch/base_addr_s10.h>
 #include <asm/arch/handoff_s10.h>
+#include <linux/stringify.h>
 
 /*
  * U-Boot general configurations
@@ -117,8 +118,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define PHYS_SDRAM_1			0x0
 #define PHYS_SDRAM_1_SIZE		(1 * 1024 * 1024 * 1024)
 #define CONFIG_SYS_SDRAM_BASE		0
-#define CONFIG_SYS_MEMTEST_START	0
-#define CONFIG_SYS_MEMTEST_END		PHYS_SDRAM_1_SIZE - 0x200000
 
 /*
  * Serial / UART configurations

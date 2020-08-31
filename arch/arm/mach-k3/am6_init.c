@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <init.h>
 #include <asm/io.h>
 #include <spl.h>
 #include <asm/arch/hardware.h>
@@ -161,10 +162,8 @@ void board_init_f(ulong dummy)
 		pinctrl_select_state(dev, "default");
 
 	/*
-	 * Load, start up, and configure system controller firmware. Provide
-	 * the U-Boot console init function to the SYSFW post-PM configuration
-	 * callback hook, effectively switching on (or over) the console
-	 * output.
+	 * Load, start up, and configure system controller firmware while
+	 * also populating the SYSFW post-PM configuration callback hook.
 	 */
 	k3_sysfw_loader(k3_mmc_stop_clock, k3_mmc_restart_clock);
 
@@ -181,6 +180,9 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 
+	/* Output System Firmware version info */
+	k3_sysfw_print_ver();
+
 	/* Perform EEPROM-based board detection */
 	do_board_detect();
 
@@ -196,9 +198,10 @@ void board_init_f(ulong dummy)
 	if (ret)
 		panic("DRAM init failed: %d\n", ret);
 #endif
+	spl_enable_dcache();
 }
 
-u32 spl_boot_mode(const u32 boot_device)
+u32 spl_mmc_boot_mode(const u32 boot_device)
 {
 #if defined(CONFIG_SUPPORT_EMMC_BOOT)
 	u32 devstat = readl(CTRLMMR_MAIN_DEVSTAT);

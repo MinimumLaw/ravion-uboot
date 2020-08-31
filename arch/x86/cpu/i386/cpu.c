@@ -24,6 +24,7 @@
 #include <malloc.h>
 #include <spl.h>
 #include <asm/control_regs.h>
+#include <asm/coreboot_tables.h>
 #include <asm/cpu.h>
 #include <asm/mp.h>
 #include <asm/msr.h>
@@ -451,6 +452,8 @@ int x86_cpu_reinit_f(void)
 {
 	setup_identity();
 	setup_pci_ram_top();
+	if (locate_coreboot_table() >= 0)
+		gd->flags |= GD_FLG_SKIP_LL_INIT;
 
 	return 0;
 }
@@ -610,16 +613,6 @@ int cpu_jump_to_64bit_uboot(ulong target)
 	memcpy(ptr, cpu_call64, call64_stub_size);
 
 	func = (func_t)ptr;
-
-	/*
-	 * Copy U-Boot from ROM
-	 * TODO(sjg@chromium.org): Figure out a way to get the text base
-	 * correctly here, and in the device-tree binman definition.
-	 *
-	 * Also consider using FIT so we get the correct image length and
-	 * parameters.
-	 */
-	memcpy((char *)target, (char *)0xfff00000, 0x100000);
 
 	/* Jump to U-Boot */
 	func((ulong)pgtable, 0, (ulong)target);
