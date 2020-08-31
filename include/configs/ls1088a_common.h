@@ -35,13 +35,7 @@
 #endif
 
 /* Link Definitions */
-#ifdef CONFIG_TFABOOT
 #define CONFIG_SYS_FSL_QSPI_BASE	0x20000000
-#else
-#ifdef CONFIG_QSPI_BOOT
-#define CONFIG_SYS_FSL_QSPI_BASE	0x20000000
-#endif
-#endif
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
@@ -55,10 +49,6 @@
  * SMP Definitinos
  */
 #define CPU_RELEASE_ADDR		secondary_boot_func
-
-#ifdef CONFIG_PCI
-#define CONFIG_CMD_PCI
-#endif
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2048 * 1024)
@@ -149,8 +139,6 @@ unsigned long long get_qixis_addr(void);
 #if defined(CONFIG_FSL_MC_ENET)
 #define CONFIG_SYS_LS_MC_DRAM_BLOCK_MIN_SIZE		(128UL * 1024 * 1024)
 #endif
-/* Command line configuration */
-#define CONFIG_CMD_CACHE
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LOAD_ADDR	(CONFIG_SYS_DDR_SDRAM_BASE + 0x10000000)

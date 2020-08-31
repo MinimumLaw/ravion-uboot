@@ -16,6 +16,8 @@
 #ifndef _I2C_H_
 #define _I2C_H_
 
+#include <linker_lists.h>
+
 /*
  * For now there are essentially two parts to this file - driver model
  * here at the top, and the older code below (with CONFIG_SYS_I2C being
@@ -329,6 +331,24 @@ uint i2c_get_chip_addr_offset_mask(struct udevice *dev);
  * @return 0 if OK, -ve on error
  */
 int i2c_deblock(struct udevice *bus);
+
+/**
+ * i2c_deblock_gpio_loop() - recover a bus from an unknown state by toggling SDA/SCL
+ *
+ * This is the inner logic used for toggling I2C SDA/SCL lines as GPIOs
+ * for deblocking the I2C bus.
+ *
+ * @sda_pin:	SDA GPIO
+ * @scl_pin:	SCL GPIO
+ * @scl_count:	Number of SCL clock cycles generated to deblock SDA
+ * @start_count:Number of I2C start conditions sent after deblocking SDA
+ * @delay:	Delay between SCL clock line changes
+ * @return 0 if OK, -ve on error
+ */
+struct gpio_desc;
+int i2c_deblock_gpio_loop(struct gpio_desc *sda_pin, struct gpio_desc *scl_pin,
+			  unsigned int scl_count, unsigned int start_count,
+			  unsigned int delay);
 
 /**
  * struct dm_i2c_ops - driver operations for I2C uclass

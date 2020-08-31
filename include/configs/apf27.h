@@ -9,6 +9,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 #define CONFIG_ENV_VERSION	10
 #define CONFIG_BOARD_NAME apf27
 
@@ -54,8 +56,6 @@
 #define PHYS_SDRAM_2			0xB0000000
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (512<<10))
-#define CONFIG_SYS_MEMTEST_START	0xA0000000	/* memtest test area  */
-#define CONFIG_SYS_MEMTEST_END		0xA0300000	/* 3 MiB RAM test */
 
 #define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_SDRAM_BASE	\
 		+ PHYS_SDRAM_1_SIZE - 0x0100000)

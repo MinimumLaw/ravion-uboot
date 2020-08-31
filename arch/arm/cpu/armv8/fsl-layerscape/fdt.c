@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
+ * Copyright 2020 NXP
  */
 
 #include <common.h>
 #include <clock_legacy.h>
 #include <efi_loader.h>
+#include <log.h>
+#include <asm/cache.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <phy.h>
@@ -31,6 +34,14 @@
 
 int fdt_fixup_phy_connection(void *blob, int offset, phy_interface_t phyc)
 {
+	const char *conn;
+
+	/* Do NOT apply fixup for backplane modes specified in DT */
+	if (phyc == PHY_INTERFACE_MODE_XGMII) {
+		conn = fdt_getprop(blob, offset, "phy-connection-type", NULL);
+		if (is_backplane_mode(conn))
+			return 0;
+	}
 	return fdt_setprop_string(blob, offset, "phy-connection-type",
 					 phy_string_for_interface(phyc));
 }
@@ -137,9 +148,8 @@ remove_psci_node:
 	fdt_add_mem_rsv(blob, (uintptr_t)&secondary_boot_code,
 			*boot_code_size);
 #if CONFIG_IS_ENABLED(EFI_LOADER)
-	efi_add_memory_map((uintptr_t)&secondary_boot_code,
-			   ALIGN(*boot_code_size, EFI_PAGE_SIZE) >> EFI_PAGE_SHIFT,
-			   EFI_RESERVED_MEMORY_TYPE, false);
+	efi_add_memory_map((uintptr_t)&secondary_boot_code, *boot_code_size,
+			   EFI_RESERVED_MEMORY_TYPE);
 #endif
 }
 #endif
@@ -461,6 +471,10 @@ void ft_cpu_setup(void *blob, bd_t *bd)
 
 	do_fixup_by_path_u32(blob, "/sysclk", "clock-frequency",
 			     CONFIG_SYS_CLK_FREQ, 1);
+
+#ifdef CONFIG_GIC_V3_ITS
+	ls_gic_rd_tables_init(blob);
+#endif
 
 #if defined(CONFIG_PCIE_LAYERSCAPE) || defined(CONFIG_PCIE_LAYERSCAPE_GEN4)
 	ft_pci_setup(blob, bd);

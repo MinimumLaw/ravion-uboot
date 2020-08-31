@@ -16,11 +16,15 @@
  * we only support v5, as used in the Raspberry Pi 4.
  */
 
+#include <log.h>
+#include <asm/cache.h>
 #include <asm/io.h>
 #include <clk.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <fdt_support.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/err.h>
 #include <malloc.h>
 #include <miiphy.h>
@@ -448,7 +452,10 @@ static int bcmgenet_adjust_link(struct bcmgenet_eth_priv *priv)
 	}
 
 	clrsetbits_32(priv->mac_reg + EXT_RGMII_OOB_CTRL, OOB_DISABLE,
-			RGMII_LINK | RGMII_MODE_EN | ID_MODE_DIS);
+			RGMII_LINK | RGMII_MODE_EN);
+
+	if (phy_dev->interface == PHY_INTERFACE_MODE_RGMII)
+		setbits_32(priv->mac_reg + EXT_RGMII_OOB_CTRL, ID_MODE_DIS);
 
 	writel(speed << CMD_SPEED_SHIFT, (priv->mac_reg + UMAC_CMD));
 

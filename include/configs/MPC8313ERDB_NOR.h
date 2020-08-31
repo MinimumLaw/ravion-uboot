@@ -18,6 +18,7 @@
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_PCI_INDIRECT_BRIDGE
 
 /*
@@ -28,9 +29,6 @@
  */
 #define CONFIG_VSC7385_ENET
 #define CONFIG_TSEC2
-
-#define CONFIG_SYS_MEMTEST_START	0x00001000
-#define CONFIG_SYS_MEMTEST_END		0x07f00000
 
 /* Early revs of this board will lock up hard when attempting
  * to access the PMC registers, unless a JTAG debugger is
@@ -275,10 +273,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-
-/*
- * Command line configuration.
- */
 
 /*
  * Miscellaneous configurable options

@@ -16,6 +16,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 
 #define TBG_SEL		0x0
 #define DIV_SEL0	0x4
@@ -89,8 +90,8 @@ static const struct clk_div_table div_table1[] = {
 };
 
 static const struct clk_div_table div_table2[] = {
-	{ 2, 1 },
-	{ 4, 2 },
+	{ 2, 0 },
+	{ 4, 1 },
 	{ 0, 0 },
 };
 

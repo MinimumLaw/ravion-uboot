@@ -26,8 +26,6 @@
 #undef CONFIG_MPC83XX_PCI2		/* support for 2nd PCI controller */
 
 #undef CONFIG_SYS_DRAM_TEST			/* memory test, takes time */
-#define CONFIG_SYS_MEMTEST_START	0x00000000	/* memtest region */
-#define CONFIG_SYS_MEMTEST_END		0x00100000
 
 /*
  * DDR Setup
@@ -210,9 +208,6 @@
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
 
-/*
- * Command line configuration.
- */
 #define CONFIG_SYS_RTC_BUS_NUM  0x01
 #define CONFIG_SYS_I2C_RTC_ADDR	0x32
 

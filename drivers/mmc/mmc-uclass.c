@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <log.h>
 #include <mmc.h>
 #include <dm.h>
 #include <dm/device-internal.h>
@@ -12,6 +13,22 @@
 #include <dm/lists.h>
 #include <linux/compat.h>
 #include "mmc_private.h"
+
+int dm_mmc_get_b_max(struct udevice *dev, void *dst, lbaint_t blkcnt)
+{
+	struct dm_mmc_ops *ops = mmc_get_ops(dev);
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+
+	if (ops->get_b_max)
+		return ops->get_b_max(dev, dst, blkcnt);
+	else
+		return mmc->cfg->b_max;
+}
+
+int mmc_get_b_max(struct mmc *mmc, void *dst, lbaint_t blkcnt)
+{
+	return dm_mmc_get_b_max(mmc->dev, dst, blkcnt);
+}
 
 int dm_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		    struct mmc_data *data)
@@ -223,7 +240,7 @@ int mmc_of_parse(struct udevice *dev, struct mmc_config *cfg)
 	return 0;
 }
 
-struct mmc *mmc_get_mmc_dev(struct udevice *dev)
+struct mmc *mmc_get_mmc_dev(const struct udevice *dev)
 {
 	struct mmc_uclass_priv *upriv;
 

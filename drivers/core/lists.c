@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <errno.h>
+#include <log.h>
 #include <dm/device.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
@@ -175,7 +176,7 @@ int lists_bind_fdt(struct udevice *parent, ofnode node, struct udevice **devp,
 			continue;
 
 		if (pre_reloc_only) {
-			if (!dm_ofnode_pre_reloc(node) &&
+			if (!ofnode_pre_reloc(node) &&
 			    !(entry->flags & DM_FLAG_PRE_RELOC)) {
 				log_debug("Skipping device pre-relocation\n");
 				return 0;

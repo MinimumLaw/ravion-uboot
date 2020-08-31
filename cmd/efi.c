@@ -8,6 +8,7 @@
 #include <command.h>
 #include <efi.h>
 #include <errno.h>
+#include <log.h>
 #include <malloc.h>
 #include <sort.h>
 
@@ -43,6 +44,7 @@ static struct attr_info {
 	{ EFI_MEMORY_NV, "non-volatile" },
 	{ EFI_MEMORY_MORE_RELIABLE, "higher reliability" },
 	{ EFI_MEMORY_RO, "read-only" },
+	{ EFI_MEMORY_SP, "specific purpose" },
 	{ EFI_MEMORY_RUNTIME, "needs runtime mapping" }
 };
 
@@ -191,7 +193,8 @@ static void efi_print_mem_table(struct efi_entry_memmap *map,
 		printf("*Some areas are merged (use 'all' to see)\n");
 }
 
-static int do_efi_mem(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_efi_mem(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	struct efi_mem_desc *desc;
 	struct efi_entry_memmap *map;
@@ -231,13 +234,13 @@ done:
 	return ret ? CMD_RET_FAILURE : 0;
 }
 
-static cmd_tbl_t efi_commands[] = {
+static struct cmd_tbl efi_commands[] = {
 	U_BOOT_CMD_MKENT(mem, 1, 1, do_efi_mem, "", ""),
 };
 
-static int do_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_efi(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	cmd_tbl_t *efi_cmd;
+	struct cmd_tbl *efi_cmd;
 	int ret;
 
 	if (argc < 2)

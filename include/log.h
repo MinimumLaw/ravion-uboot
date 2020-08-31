@@ -9,9 +9,12 @@
 #ifndef __LOG_H
 #define __LOG_H
 
-#include <command.h>
+#include <stdio.h>
+#include <linker_lists.h>
 #include <dm/uclass-id.h>
 #include <linux/list.h>
+
+struct cmd_tbl;
 
 /** Log levels supported, ranging from most to least important */
 enum log_level_t {
@@ -51,6 +54,8 @@ enum log_category_t {
 	LOGC_SANDBOX,	/* Related to the sandbox board */
 	LOGC_BLOBLIST,	/* Bloblist */
 	LOGC_DEVRES,	/* Device resources (devres_... functions) */
+	/* Advanced Configuration and Power Interface (ACPI) */
+	LOGC_ACPI,
 
 	LOGC_COUNT,	/* Number of log categories */
 	LOGC_END,	/* Sentinel value for a list of log categories */
@@ -115,11 +120,11 @@ static inline int _log_nop(enum log_category_t cat, enum log_level_t level,
 #define log_io(_fmt...)		log(LOG_CATEGORY, LOGL_DEBUG_IO, ##_fmt)
 #else
 #define _LOG_MAX_LEVEL LOGL_INFO
-#define log_err(_fmt...)	log_nop(LOG_CATEGORY, LOGL_ERR, ##_fmt)
-#define log_warning(_fmt...)	log_nop(LOG_CATEGORY, LOGL_WARNING, ##_fmt)
-#define log_notice(_fmt...)	log_nop(LOG_CATEGORY, LOGL_NOTICE, ##_fmt)
-#define log_info(_fmt...)	log_nop(LOG_CATEGORY, LOGL_INFO, ##_fmt)
-#define log_debug(_fmt...)	log_nop(LOG_CATEGORY, LOGL_DEBUG, ##_fmt)
+#define log_err(_fmt, ...)	printf(_fmt, ##__VA_ARGS__)
+#define log_warning(_fmt, ...)	printf(_fmt, ##__VA_ARGS__)
+#define log_notice(_fmt, ...)	printf(_fmt, ##__VA_ARGS__)
+#define log_info(_fmt, ...)	printf(_fmt, ##__VA_ARGS__)
+#define log_debug(_fmt, ...)	debug(_fmt, ##__VA_ARGS__)
 #define log_content(_fmt...)	log_nop(LOG_CATEGORY, \
 					LOGL_DEBUG_CONTENT, ##_fmt)
 #define log_io(_fmt...)		log_nop(LOG_CATEGORY, LOGL_DEBUG_IO, ##_fmt)
@@ -411,7 +416,7 @@ enum log_fmt {
 };
 
 /* Handle the 'log test' command */
-int do_log_test(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
+int do_log_test(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
 
 /**
  * log_add_filter() - Add a new filter to a log device

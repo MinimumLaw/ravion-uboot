@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <log.h>
 #include <serial.h>
 #include <dm.h>
 #include <dm/test.h>
@@ -29,6 +30,7 @@ static int dm_test_serial(struct unit_test_state *uts)
 	ut_assertok(serial_getinfo(dev_serial, &info_serial));
 	ut_assert(info_serial.type == SERIAL_CHIP_UNKNOWN);
 	ut_assert(info_serial.addr == SERIAL_DEFAULT_ADDRESS);
+	ut_assert(info_serial.clock == SERIAL_DEFAULT_CLOCK);
 	/*
 	 * test with a parameter which is NULL pointer
 	 */

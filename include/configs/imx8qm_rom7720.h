@@ -7,6 +7,7 @@
 #define __IMX8QM_ROM7720_H
 
 #include <linux/sizes.h>
+#include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>
 #define CONFIG_REMAKE_ELF
 
@@ -29,7 +30,6 @@
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 /* FUSE command */
-#define CONFIG_CMD_FUSE
 
 /* Boot M4 */
 #define M4_BOOT_ENV \
@@ -163,9 +163,6 @@
 /* LPDDR4 board total DDR is 6GB, DDR4 board total DDR is 4 GB */
 #define PHYS_SDRAM_2_SIZE		0x80000000	/* 2 GB */
 
-#define CONFIG_SYS_MEMTEST_START	0xA0000000
-#define CONFIG_SYS_MEMTEST_END      (CONFIG_SYS_MEMTEST_START + (PHYS_SDRAM_1_SIZE >> 2))
-
 /* Serial */
 #define CONFIG_BAUDRATE			115200
 
@@ -176,4 +173,5 @@
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define FEC_QUIRK_ENET_MAC
 
+#include <linux/stringify.h>
 #endif /* __IMX8QM_ROM7720_H */

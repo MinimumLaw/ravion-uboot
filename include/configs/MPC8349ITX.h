@@ -52,6 +52,7 @@
 #define CONFIG_SYS_USB_HOST	/* use the EHCI USB controller */
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_RTC_DS1337
 #define CONFIG_SYS_I2C
 
@@ -144,8 +145,6 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000 /* DDR is system memory*/
 #define CONFIG_SYS_83XX_DDR_USES_CS0
-#define CONFIG_SYS_MEMTEST_START	0x1000	/* memtest region */
-#define CONFIG_SYS_MEMTEST_END		0x2000
 
 #define CONFIG_SYS_DDR_SDRAM_CLK_CNTL	(DDR_SDRAM_CLK_CNTL_SS_EN \
 					| DDR_SDRAM_CLK_CNTL_CLK_ADJUST_075)

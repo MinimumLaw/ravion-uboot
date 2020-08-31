@@ -8,6 +8,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 #include "mx6_common.h"
 
 #undef CONFIG_DISPLAY_BOARDINFO
@@ -80,10 +82,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 /* Command definition */
-#undef CONFIG_CMD_LOADB
-#undef CONFIG_CMD_LOADS
-#undef CONFIG_CMD_NFS
-#undef CONFIG_CMD_FLASH
 
 #undef CONFIG_IPADDR
 #define CONFIG_IPADDR			192.168.10.2
@@ -95,9 +93,9 @@
 
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
-	func(MMC, mmc, 0) \
 	func(MMC, mmc, 1) \
 	func(MMC, mmc, 2) \
+	func(MMC, mmc, 0) \
 	func(USB, usb, 0) \
 	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
@@ -106,14 +104,6 @@
 #else /* CONFIG_SPL_BUILD */
 #define BOOTENV
 #endif /* CONFIG_SPL_BUILD */
-
-#define DFU_ALT_EMMC_INFO \
-	"u-boot.imx raw 0x2 0x3ff mmcpart 0;" \
-	"boot part 0 1;" \
-	"rootfs part 0 2;" \
-	"zImage fat 0 1;" \
-	"imx6q-apalis-eval.dtb fat 0 1;" \
-	"imx6q-apalis-cam-eval.dtb fat 0 1"
 
 #define UBOOT_UPDATE \
 	"uboot_hwpart=1\0" \
@@ -126,28 +116,9 @@
 	"update_spl=run set_blkcnt && mmc dev 0 ${uboot_hwpart} && " \
 		"mmc write ${loadaddr} ${uboot_spl_blk} ${blkcnt}\0"
 
-#define EMMC_BOOTCMD \
-	"set_emmcargs=setenv emmcargs ip=off root=PARTUUID=${uuid} " \
-		"ro,noatime rootfstype=ext4 rootwait\0" \
-	"emmcboot=run setup; run emmcfinduuid; run set_emmcargs; " \
-		"setenv bootargs ${defargs} ${emmcargs} ${setupargs} " \
-		"${vidargs}; echo Booting from internal eMMC chip...; "	\
-		"run emmcdtbload; load mmc ${emmcdev}:${emmcbootpart} " \
-		"${kernel_addr_r} ${boot_file} && run fdt_fixup && " \
-		"bootz ${kernel_addr_r} ${dtbparam}\0" \
-	"emmcbootpart=1\0" \
-	"emmcdev=0\0" \
-	"emmcdtbload=setenv dtbparam; load mmc ${emmcdev}:${emmcbootpart} " \
-		"${fdt_addr_r} ${fdt_file} && " \
-		"setenv dtbparam \" - ${fdt_addr_r}\" && true\0" \
-	"emmcfinduuid=part uuid mmc ${mmcdev}:${emmcrootpart} uuid\0" \
-	"emmcrootpart=2\0"
-
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"bootm_size=0x20000000\0" \
 	"fdt_addr_r=0x12100000\0" \
-	"fdt_high=0xffffffff\0" \
-	"initrd_high=0xffffffff\0" \
 	"kernel_addr_r=0x11000000\0" \
 	"pxefile_addr_r=0x17100000\0" \
 	"ramdisk_addr_r=0x12200000\0" \
@@ -173,12 +144,11 @@
 	BOOTENV \
 	"bootcmd=setenv fdtfile ${fdt_file}; run distro_bootcmd ; " \
 		"usb start ; " \
-		"setenv stdout serial,vga ; setenv stdin serial,usbkbd\0" \
+		"setenv stdout serial,vidconsole; " \
+		"setenv stdin serial,usbkbd\0" \
 	"boot_file=zImage\0" \
 	"console=ttymxc0\0" \
 	"defargs=enable_wait_mode=off vmalloc=400M\0" \
-	"dfu_alt_info=" DFU_ALT_EMMC_INFO "\0" \
-	EMMC_BOOTCMD \
 	"fdt_file=" FDT_FILE "\0" \
 	"fdt_fixup=;\0" \
 	MEM_LAYOUT_ENV_SETTINGS \
@@ -212,10 +182,6 @@
 #undef CONFIG_SYS_MAXARGS
 #define CONFIG_SYS_MAXARGS		48
 
-#define CONFIG_SYS_MEMTEST_START	0x10000000
-#define CONFIG_SYS_MEMTEST_END		0x10010000
-#define CONFIG_SYS_MEMTEST_SCRATCH	0x10800000
-
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
 /* Physical Memory Map */
@@ -237,7 +203,5 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_ENV_PART		1
 #endif
-
-#define CONFIG_CMD_TIME
 
 #endif	/* __CONFIG_H */

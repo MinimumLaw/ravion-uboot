@@ -145,6 +145,7 @@ F:	drivers/power/domain/meson-gx-pwrc-vpu.c
 F:	drivers/video/meson/
 F:	include/configs/meson64.h
 F:	include/configs/meson64_android.h
+F:	doc/board/amlogic/
 N:	meson
 
 ARM BROADCOM BCM283X
@@ -244,9 +245,12 @@ S:	Maintained
 F:	arch/arm/mach-mediatek/
 F:	arch/arm/include/asm/arch-mediatek/
 F:	board/mediatek/
+F:	doc/device-tree-bindings/phy/phy-mtk-*
+F:	doc/device-tree-bindings/usb/mediatek,*
 F:	doc/README.mediatek
 F:	drivers/clk/mediatek/
 F:	drivers/mmc/mtk-sd.c
+F:	drivers/phy/phy-mtk-*
 F:	drivers/pinctrl/mediatek/
 F:	drivers/power/domain/mtk-power-domain.c
 F:	drivers/ram/mediatek/
@@ -272,9 +276,12 @@ M:	Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 S:	Maintained
 F:	arch/arm/include/asm/arch-owl/
 F:	arch/arm/mach-owl/
-F:	board/ucRobotics/
+F:	doc/board/actions/
 F:	drivers/clk/owl/
 F:	drivers/serial/serial_owl.c
+F:	include/configs/owl-common.h
+F:	configs/bubblegum_96_defconfig
+F:	configs/cubieboard7_defconfig
 
 ARM RENESAS RMOBILE/R-CAR
 M:	Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
@@ -423,8 +430,33 @@ T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-ti.git
 F:	arch/arm/mach-davinci/
 F:	arch/arm/mach-k3/
 F:	arch/arm/mach-keystone/
+F:	arch/arm/mach-omap2/
 F:	arch/arm/include/asm/arch-omap*/
 F:	arch/arm/include/asm/ti-common/
+F:	board/ti/
+F:	drivers/dma/ti*
+F:	drivers/firmware/ti_sci.*
+F:	drivers/gpio/omap_gpio.c
+F:	drivers/memory/ti-aemif.c
+F:	drivers/misc/k3_avs.c
+F:	drivers/mailbox/k3-sec-procy.c
+F:	drivers/pci/pcie_dw_ti.c
+F:	drivers/phy/keystone-usb-phy.c
+F:	drivers/phy/omap-usb2-phy.c
+F:	drivers/phy/phy-ti-am654.c
+F:	drivers/phy/ti-pipe3-phy.c
+F:	drivers/ram/k3*
+F:	drivers/remoteproc/k3_system_controller.c
+F:	drivers/remoteproc/ti*
+F:	drivers/reset/reset-ti-sci.c
+F:	drivers/rtc/davinci.c
+F:	drivers/serial/serial_omap.c
+F:	drivers/soc/ti/
+F:	drivers/sysreset/sysreset-ti-sci.c
+F:	drivers/thermal/ti-bandgap.c
+F:	drivers/timer/omap-timer.c
+F:	drivers/watchdog/omap_wdt.c
+F:	include/linux/soc/ti/
 
 ARM U8500
 M:	Stephan Gerhold <stephan@gerhold.net>
@@ -447,6 +479,7 @@ M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-versal/
+F:	drivers/watchdog/xilinx_wwdt.c
 N:	(?<!uni)versal
 
 ARM VERSATILE EXPRESS DRIVERS
@@ -559,6 +592,7 @@ M:	Angelo Dureghello <angelo@sysam.it>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-coldfire.git
 F:	arch/m68k/
+F:	doc/arch/m68k.rst
 
 DFU
 M:	Lukasz Majewski <lukma@denx.de>
@@ -569,13 +603,16 @@ F:	cmd/usb_*.c
 F:	common/dfu.c
 F:	common/update.c
 F:	common/usb_storage.c
+F:	doc/api/dfu.rst
 F:	drivers/dfu/
 F:	drivers/usb/gadget/
+F:	include/dfu.h
 
 DRIVER MODEL
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-dm.git
+F:	doc/driver-model/
 F:	drivers/core/
 F:	include/dm/
 F:	test/dm/
@@ -597,11 +634,18 @@ F:	include/asm-generic/pe.h
 F:	lib/charset.c
 F:	lib/efi*/
 F:	test/py/tests/test_efi*
+F:	test/py/tests/test_efi*/
 F:	test/unicode_ut.c
 F:	cmd/bootefi.c
 F:	cmd/efidebug.c
 F:	cmd/nvedit_efi.c
 F:	tools/file2include.c
+
+EFI VARIABLES VIA OP-TEE
+M:	Ilias Apalodimas <ilias.apalodimas@linaro.org>
+S:	Maintained
+F:	lib/efi_loader/efi_variable_tee.c
+F:	include/mm_communication.h
 
 ENVIRONMENT
 M:	Joe Hershberger <joe.hershberger@ni.com>
@@ -653,9 +697,9 @@ LOGGING
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/u-boot.git
-F:	common/log.c
+F:	common/log*
 F:	cmd/log.c
-F:	test/log/log_test.c
+F:	test/log/
 F:	test/py/tests/test_log.py
 
 MALI DISPLAY PROCESSORS
@@ -786,7 +830,7 @@ S:	Maintained
 F:	arch/powerpc/
 
 POWERPC MPC8XX
-M:	Christophe Leroy <christophe.leroy@c-s.fr>
+M:	Christophe Leroy <christophe.leroy@csgroup.eu>
 S:	Maintained
 T:	git https://gitlab.denx.de/u-boot/custodians/u-boot-mpc8xx.git
 F:	arch/powerpc/cpu/mpc8xx/
@@ -834,6 +878,7 @@ M:	Sughosh Ganu <sughosh.ganu@linaro.org>
 R:	Heinrich Schuchardt <xypron.glpk@gmx.de>
 S:	Maintained
 F:	cmd/rng.c
+F:	doc/api/rng.rst
 F:	drivers/rng/
 F:	drivers/virtio/virtio_rng.c
 F:	include/rng.h

@@ -35,9 +35,10 @@ config ENV_SIZE
 
 config STM32MP15x
 	bool "Support STMicroelectronics STM32MP15x Soc"
-	select ARCH_SUPPORT_PSCI if !STM32MP1_TRUSTED
+	select ARCH_SUPPORT_PSCI if !TFABOOT
+	select ARM_SMCCC if TFABOOT
 	select CPU_V7A
-	select CPU_V7_HAS_NONSEC if !STM32MP1_TRUSTED
+	select CPU_V7_HAS_NONSEC if !TFABOOT
 	select CPU_V7_HAS_VIRT
 	select OF_BOARD_SETUP
 	select PINCTRL_STM32
@@ -45,8 +46,8 @@ config STM32MP15x
 	select STM32_RESET
 	select STM32_SERIAL
 	select SYS_ARCH_TIMER
-	imply SYSRESET_PSCI if STM32MP1_TRUSTED
-	imply SYSRESET_SYSCON if !STM32MP1_TRUSTED
+	imply SYSRESET_PSCI if TFABOOT
+	imply SYSRESET_SYSCON if !TFABOOT
 	help
 		support of STMicroelectronics SOC STM32MP15x family
 		STM32MP157, STM32MP153 or STM32MP151
@@ -62,7 +63,9 @@ config TARGET_ST_STM32MP15x
 	bool "STMicroelectronics STM32MP15x boards"
 	select STM32MP15x
 	imply BOOTCOUNT_LIMIT
+	imply BOOTSTAGE
 	imply CMD_BOOTCOUNT
+	imply CMD_BOOTSTAGE
 	imply CMD_CLS if CMD_BMP
 	imply DISABLE_CONSOLE
 	imply PRE_CONSOLE_BUFFER
@@ -82,26 +85,6 @@ config TARGET_DH_STM32MP1_PDK2
 		Target the DH PDK2 development kit with STM32MP15x SoM.
 
 endchoice
-
-config STM32MP1_TRUSTED
-	bool "Support trusted boot with TF-A"
-	default y if !SPL
-	select ARM_SMCCC
-	help
-		Say Y here to enable boot with TF-A
-		Trusted boot chain is :
-		BootRom => TF-A.stm32 (clock & DDR) => U-Boot.stm32
-		TF-A monitor provides proprietary SMC to manage secure devices
-
-config STM32MP1_OPTEE
-	bool "Support trusted boot with TF-A and OP-TEE"
-	depends on STM32MP1_TRUSTED
-	default n
-	help
-		Say Y here to enable boot with TF-A and OP-TEE
-		Trusted boot chain is :
-		BootRom => TF-A.stm32 (clock & DDR) => OP-TEE => U-Boot.stm32
-		OP-TEE monitor provides ST SMC to access to secure resources
 
 config SYS_TEXT_BASE
 	default 0xC0100000
@@ -124,14 +107,29 @@ config STM32_ETZPC
 	help
 	  Say y to enable STM32 Extended TrustZone Protection
 
+config CMD_STM32PROG
+	bool "command stm32prog for STM32CudeProgrammer"
+	select DFU
+	select DFU_RAM
+	select DFU_VIRT
+	select PARTITION_TYPE_GUID
+	imply CMD_GPT if MMC
+	imply CMD_MTD if MTD
+	imply DFU_MMC if MMC
+	imply DFU_MTD if MTD
+	help
+		activate a specific command stm32prog for STM32MP soc family
+		witch update the device with the tools STM32CubeProgrammer,
+		using UART with STM32 protocol or USB with DFU protocol
+		NB: access to not volatile memory (NOR/NAND/SD/eMMC) is based
+		    on U-Boot DFU framework
+
 config CMD_STM32KEY
 	bool "command stm32key to fuse public key hash"
 	default y
-	depends on CMD_FUSE
 	help
 		fuse public key hash in corresponding fuse used to authenticate
 		binary.
-
 
 config PRE_CON_BUF_ADDR
 	default 0xC02FF000

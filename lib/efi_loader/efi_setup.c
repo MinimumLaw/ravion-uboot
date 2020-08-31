@@ -82,6 +82,39 @@ out:
 	return ret;
 }
 
+#ifdef CONFIG_EFI_SECURE_BOOT
+/**
+ * efi_init_secure_boot - initialize secure boot state
+ *
+ * Return:	status code
+ */
+static efi_status_t efi_init_secure_boot(void)
+{
+	efi_guid_t signature_types[] = {
+		EFI_CERT_SHA256_GUID,
+		EFI_CERT_X509_GUID,
+	};
+	efi_status_t ret;
+
+	/* TODO: read-only */
+	ret = EFI_CALL(efi_set_variable(L"SignatureSupport",
+					&efi_global_variable_guid,
+					EFI_VARIABLE_BOOTSERVICE_ACCESS
+					 | EFI_VARIABLE_RUNTIME_ACCESS,
+					sizeof(signature_types),
+					&signature_types));
+	if (ret != EFI_SUCCESS)
+		printf("EFI: cannot initialize SignatureSupport variable\n");
+
+	return ret;
+}
+#else
+static efi_status_t efi_init_secure_boot(void)
+{
+	return EFI_SUCCESS;
+}
+#endif /* CONFIG_EFI_SECURE_BOOT */
+
 /**
  * efi_init_obj_list() - Initialize and populate EFI object list
  *
@@ -102,6 +135,16 @@ efi_status_t efi_init_obj_list(void)
 	/* On ARM switch from EL3 or secure mode to EL2 or non-secure mode */
 	switch_to_non_secure_mode();
 
+	/* Initialize root node */
+	ret = efi_root_node_register();
+	if (ret != EFI_SUCCESS)
+		goto out;
+
+#ifdef CONFIG_PARTITIONS
+	ret = efi_disk_register();
+	if (ret != EFI_SUCCESS)
+		goto out;
+#endif
 	/* Initialize variable services */
 	ret = efi_init_variables();
 	if (ret != EFI_SUCCESS)
@@ -127,13 +170,13 @@ efi_status_t efi_init_obj_list(void)
 	if (ret != EFI_SUCCESS)
 		goto out;
 
-	/* Indicate supported runtime services */
-	ret = efi_init_runtime_supported();
+	/* Secure boot */
+	ret = efi_init_secure_boot();
 	if (ret != EFI_SUCCESS)
 		goto out;
 
-	/* Initialize root node */
-	ret = efi_root_node_register();
+	/* Indicate supported runtime services */
+	ret = efi_init_runtime_supported();
 	if (ret != EFI_SUCCESS)
 		goto out;
 
@@ -145,11 +188,6 @@ efi_status_t efi_init_obj_list(void)
 	ret = efi_console_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
-#ifdef CONFIG_PARTITIONS
-	ret = efi_disk_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
 #if defined(CONFIG_LCD) || defined(CONFIG_DM_VIDEO)
 	ret = efi_gop_register();
 	if (ret != EFI_SUCCESS)

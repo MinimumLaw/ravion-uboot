@@ -113,6 +113,7 @@
 	DISTRO_BOOT_DEV_DHCP(func)
 
 #include <config_distro_bootcmd.h>
+#include <linux/stringify.h>
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"console=ttymxc1\0" \
@@ -130,9 +131,6 @@
 	BOOTENV
 
 /* Miscellaneous configurable options */
-#define CONFIG_SYS_MEMTEST_START       0x10000000
-#define CONFIG_SYS_MEMTEST_END	       0x10010000
-#define CONFIG_SYS_MEMTEST_SCRATCH     0x10800000
 
 /* Physical Memory Map */
 #define PHYS_SDRAM		       MMDC0_ARB_BASE_ADDR

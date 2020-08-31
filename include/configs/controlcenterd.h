@@ -26,6 +26,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 #ifdef CONFIG_SDCARD
 #define CONFIG_RAMBOOT_SDCARD
 #endif
@@ -120,9 +122,6 @@
 
 #define CONFIG_DIMM_SLOTS_PER_CTLR	1
 #define CONFIG_CHIP_SELECTS_PER_CTRL	(2 * CONFIG_DIMM_SLOTS_PER_CTLR)
-
-#define CONFIG_SYS_MEMTEST_START	0x00000000
-#define CONFIG_SYS_MEMTEST_END		0x3fffffff
 
 #ifdef CONFIG_TRAILBLAZER
 #define CONFIG_SPD_EEPROM
@@ -276,10 +275,6 @@
 #define CONFIG_FSL_FIXED_MMC_LOCATION
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #endif
-
-/*
- * Command line configuration.
- */
 
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 

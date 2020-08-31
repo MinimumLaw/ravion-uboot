@@ -7,6 +7,10 @@
 #ifndef _ASM_ARCH_HARDWARE_H
 #define _ASM_ARCH_HARDWARE_H
 
+#ifndef __ASSEMBLY__
+#include <linux/bitops.h>
+#endif
+
 #define ZYNQMP_TCM_BASE_ADDR	0xFFE00000
 #define ZYNQMP_TCM_SIZE		0x40000
 
@@ -128,7 +132,9 @@ struct apu_regs {
 #define ZYNQMP_SILICON_VER_SHIFT	12
 
 struct csu_regs {
-	u32 reserved0[17];
+	u32 reserved0[4];
+	u32 multi_boot;
+	u32 reserved1[12];
 	u32 version;
 };
 

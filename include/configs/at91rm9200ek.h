@@ -57,10 +57,6 @@
 #define CONFIG_SYS_SDRAM_BASE		0x20000000
 #define CONFIG_SYS_SDRAM_SIZE		SZ_32M
 
-#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_SYS_MEMTEST_END		\
-		(CONFIG_SYS_MEMTEST_START + CONFIG_SYS_SDRAM_SIZE - SZ_256K)
-
 /*
  * LowLevel Init
  */
@@ -103,10 +99,6 @@
 #define CONFIG_ATMEL_USART
 #define CONFIG_USART_BASE	ATMEL_BASE_DBGU
 #define CONFIG_USART_ID		0/* ignored in arm */
-
-/*
- * Command line configuration.
- */
 
 /*
  * Network Driver Setting

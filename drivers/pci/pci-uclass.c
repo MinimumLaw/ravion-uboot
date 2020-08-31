@@ -7,6 +7,8 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
+#include <init.h>
+#include <log.h>
 #include <malloc.h>
 #include <pci.h>
 #include <asm/io.h>
@@ -15,6 +17,7 @@
 #if defined(CONFIG_X86) && defined(CONFIG_HAVE_FSP)
 #include <asm/fsp/fsp_support.h>
 #endif
+#include <linux/delay.h>
 #include "pci_internal.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -536,6 +539,8 @@ int pci_auto_config_devices(struct udevice *bus)
 		int ret;
 
 		debug("%s: device %s\n", __func__, dev->name);
+		if (dev_read_bool(dev, "pci,no-autoconfig"))
+			continue;
 		ret = dm_pciauto_config_device(dev);
 		if (ret < 0)
 			return ret;
@@ -1007,7 +1012,7 @@ static int pci_uclass_post_probe(struct udevice *bus)
 	if (ret)
 		return ret;
 
-	if (CONFIG_IS_ENABLED(PCI_PNP) &&
+	if (CONFIG_IS_ENABLED(PCI_PNP) && ll_boot_init() &&
 	    (!hose->skip_auto_config_until_reloc ||
 	     (gd->flags & GD_FLG_RELOC))) {
 		ret = pci_auto_config_devices(bus);
@@ -1029,7 +1034,7 @@ static int pci_uclass_post_probe(struct udevice *bus)
 	 * Note we only call this 1) after U-Boot is relocated, and 2)
 	 * root bus has finished probing.
 	 */
-	if ((gd->flags & GD_FLG_RELOC) && (bus->seq == 0)) {
+	if ((gd->flags & GD_FLG_RELOC) && bus->seq == 0 && ll_boot_init()) {
 		ret = fsp_init_phase_pci();
 		if (ret)
 			return ret;
@@ -1211,7 +1216,14 @@ u32 dm_pci_read_bar32(const struct udevice *dev, int barnum)
 
 	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
 	dm_pci_read_config32(dev, bar, &addr);
-	if (addr & PCI_BASE_ADDRESS_SPACE_IO)
+
+	/*
+	 * If we get an invalid address, return this so that comparisons with
+	 * FDT_ADDR_T_NONE work correctly
+	 */
+	if (addr == 0xffffffff)
+		return addr;
+	else if (addr & PCI_BASE_ADDRESS_SPACE_IO)
 		return addr & PCI_BASE_ADDRESS_IO_MASK;
 	else
 		return addr & PCI_BASE_ADDRESS_MEM_MASK;

@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <asm/msr.h>
 #include <asm/mtrr.h>
 
@@ -43,7 +44,7 @@ static int do_mtrr_list(void)
 	return 0;
 }
 
-static int do_mtrr_set(uint reg, int argc, char * const argv[])
+static int do_mtrr_set(uint reg, int argc, char *const argv[])
 {
 	const char *typename = argv[0];
 	struct mtrr_state state;
@@ -72,7 +73,6 @@ static int do_mtrr_set(uint reg, int argc, char * const argv[])
 	if (valid)
 		mask |= MTRR_PHYS_MASK_VALID;
 
-	printf("base=%llx, mask=%llx\n", base, mask);
 	mtrr_open(&state, true);
 	wrmsrl(MTRR_PHYS_BASE_MSR(reg), base);
 	wrmsrl(MTRR_PHYS_MASK_MSR(reg), mask);
@@ -98,7 +98,8 @@ static int mtrr_set_valid(int reg, bool valid)
 	return 0;
 }
 
-static int do_mtrr(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtrr(struct cmd_tbl *cmdtp, int flag, int argc,
+		   char *const argv[])
 {
 	const char *cmd;
 	uint reg;

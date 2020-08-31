@@ -8,12 +8,15 @@
 #include <env.h>
 #include <fdt_support.h>
 #include <i2c.h>
+#include <image.h>
 #include <init.h>
 #include <irq_func.h>
+#include <log.h>
 #include <netdev.h>
 #include <linux/compiler.h>
 #include <asm/mmu.h>
 #include <asm/processor.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/cache.h>
 #include <asm/immap_85xx.h>
@@ -1216,7 +1219,9 @@ int ft_board_setup(void *blob, bd_t *bd)
 #endif
 
 #ifdef CONFIG_SYS_DPAA_FMAN
+#ifndef CONFIG_DM_ETH
 	fdt_fixup_fman_ethernet(blob);
+#endif
 	fdt_fixup_board_enet(blob);
 #endif
 

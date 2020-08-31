@@ -7,6 +7,7 @@
 #define _CONFIG_HELIOS4_H
 
 #include <linux/sizes.h>
+#include <linux/stringify.h>
 
 /*
  * High Level Configuration Options (easy to change)
@@ -18,10 +19,6 @@
  * U-Boot into it.
  */
 #define CONFIG_SYS_TCLK		250000000	/* 250MHz */
-
-/*
- * Commands configuration
- */
 
 /*
  * SDIO/MMC Card Configuration
@@ -52,7 +49,6 @@
 /* stay within first 1M */
 #endif
 
-#define CONFIG_PHY_MARVELL		/* there is a marvell phy */
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs a longer aneg time */
 
 /* Keep device tree and initrd in lower memory so the kernel can access them */
@@ -93,16 +89,11 @@
 #define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
 
 #if CONFIG_SPL_BOOT_DEVICE == SPL_BOOT_SPI_NOR_FLASH
-/* SPL related SPI defines */
-#define CONFIG_SPL_SPI_FLASH_SUPPORT
-#define CONFIG_SPL_SPI_LOAD
-#define CONFIG_SPL_SPI_SUPPORT
 #define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
 #endif
 
 #if CONFIG_SPL_BOOT_DEVICE == SPL_BOOT_SDIO_MMC_CARD
 /* SPL related MMC defines */
-#define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SYS_MMC_U_BOOT_OFFS		(160 << 10)
 #define CONFIG_SYS_U_BOOT_OFFS			CONFIG_SYS_MMC_U_BOOT_OFFS
 #ifdef CONFIG_SPL_BUILD

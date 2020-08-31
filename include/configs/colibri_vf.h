@@ -51,8 +51,6 @@
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"bootm_size=0x10000000\0" \
 	"fdt_addr_r=0x82000000\0" \
-	"fdt_high=0xffffffff\0" \
-	"initrd_high=0xffffffff\0" \
 	"kernel_addr_r=0x81000000\0" \
 	"pxefile_addr_r=0x87100000\0" \
 	"ramdisk_addr_r=0x82100000\0" \
@@ -70,21 +68,6 @@
 	"dhcp ${kernel_addr_r} && "	\
 	"tftp ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb && " \
 	"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
-
-#define SD_BOOTCMD \
-	"set_sdargs=setenv sdargs root=PARTUUID=${uuid} ro rootwait\0"	\
-	"sdboot=run setup; run sdfinduuid; run set_sdargs; " \
-	"setenv bootargs ${defargs} ${sdargs} ${mtdparts} " \
-	"${setupargs} ${vidargs}; echo Booting from MMC/SD card...; " \
-	"load mmc ${sddev}:${sdbootpart} ${kernel_addr_r} ${kernel_file} && " \
-	"load mmc ${sddev}:${sdbootpart} ${fdt_addr_r} " \
-		"${soc}-colibri-${fdt_board}.dtb && " \
-	"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
-	"sdbootpart=1\0" \
-	"sddev=0\0" \
-	"sdfinduuid=part uuid mmc ${sddev}:${sdrootpart} uuid\0" \
-	"sdrootpart=2\0"
-
 
 #define UBI_BOOTCMD \
 	"ubiargs=ubi.mtd=ubi root=ubi0:rootfs rootfstype=ubifs " \
@@ -114,7 +97,6 @@
 	BOOTENV \
 	MEM_LAYOUT_ENV_SETTINGS \
 	NFS_BOOTCMD \
-	SD_BOOTCMD \
 	UBI_BOOTCMD \
 	UBOOT_UPDATE \
 	"console=ttyLP0\0" \
@@ -122,7 +104,7 @@
 	"dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
 	"fdt_board=eval-v3\0" \
 	"fdt_fixup=;\0" \
-	"kernel_file=zImage\0" \
+	"kernel_image=zImage\0" \
 	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"setsdupdate=mmc rescan && set interface mmc && " \
 		"fatload ${interface} 0:1 ${loadaddr} flash_blk.img && " \
@@ -139,9 +121,6 @@
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-
-#define CONFIG_SYS_MEMTEST_START	0x80010000
-#define CONFIG_SYS_MEMTEST_END		0x87C00000
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_SYS_HZ			1000

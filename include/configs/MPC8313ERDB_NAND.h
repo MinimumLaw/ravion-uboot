@@ -9,6 +9,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 /*
  * High Level Configuration Options
  */
@@ -56,9 +58,6 @@
 #if !defined(CONFIG_SPL_BUILD)
 #define CONFIG_DEFAULT_IMMR	CONFIG_SYS_IMMR
 #endif
-
-#define CONFIG_SYS_MEMTEST_START	0x00001000
-#define CONFIG_SYS_MEMTEST_END		0x07f00000
 
 /* Early revs of this board will lock up hard when attempting
  * to access the PMC registers, unless a JTAG debugger is
@@ -305,10 +304,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-
-/*
- * Command line configuration.
- */
 
 /*
  * Miscellaneous configurable options

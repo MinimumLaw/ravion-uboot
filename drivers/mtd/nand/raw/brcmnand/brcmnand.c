@@ -19,6 +19,8 @@
 #include <clk.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
+#include <linux/bitops.h>
+#include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/ioport.h>
 #include <linux/completion.h>
@@ -2714,6 +2716,14 @@ int brcmnand_probe(struct udevice *dev, struct brcmnand_soc *soc)
 	}
 #endif /* __UBOOT__ */
 
+	/* No chip-selects could initialize properly */
+	if (list_empty(&ctrl->host_list)) {
+		ret = -ENODEV;
+		goto err;
+	}
+
+	return 0;
+
 err:
 #ifndef __UBOOT__
 	clk_disable_unprepare(ctrl->clk);
@@ -2722,7 +2732,6 @@ err:
 		clk_disable(ctrl->clk);
 #endif /* __UBOOT__ */
 	return ret;
-
 }
 EXPORT_SYMBOL_GPL(brcmnand_probe);
 

@@ -12,25 +12,24 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <flash.h>
 #include <malloc.h>
 #include <spi.h>
 #include <spi_flash.h>
 #include <search.h>
 #include <errno.h>
+#include <uuid.h>
+#include <asm/cache.h>
 #include <dm/device-internal.h>
 #include <u-boot/crc.h>
 
 #ifndef CONFIG_SPL_BUILD
-#define CMD_SAVEENV
 #define INITENV
 #endif
 
 #ifdef CONFIG_ENV_OFFSET_REDUND
-#ifdef CMD_SAVEENV
 static ulong env_offset		= CONFIG_ENV_OFFSET;
 static ulong env_new_offset	= CONFIG_ENV_OFFSET_REDUND;
-#endif
-
 #endif /* CONFIG_ENV_OFFSET_REDUND */
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -54,22 +53,20 @@ static int setup_flash_device(void)
 
 	env_flash = dev_get_uclass_priv(new);
 #else
+	if (env_flash)
+		spi_flash_free(env_flash);
 
+	env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+				    CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
 	if (!env_flash) {
-		env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS,
-			CONFIG_ENV_SPI_CS,
-			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
-		if (!env_flash) {
-			env_set_default("spi_flash_probe() failed", 0);
-			return -EIO;
-		}
+		env_set_default("spi_flash_probe() failed", 0);
+		return -EIO;
 	}
 #endif
 	return 0;
 }
 
 #if defined(CONFIG_ENV_OFFSET_REDUND)
-#ifdef CMD_SAVEENV
 static int env_sf_save(void)
 {
 	env_t	env_new;
@@ -148,7 +145,6 @@ static int env_sf_save(void)
 
 	return ret;
 }
-#endif /* CMD_SAVEENV */
 
 static int env_sf_load(void)
 {
@@ -187,7 +183,6 @@ out:
 	return ret;
 }
 #else
-#ifdef CMD_SAVEENV
 static int env_sf_save(void)
 {
 	u32	saved_size, saved_offset, sector;
@@ -247,7 +242,6 @@ static int env_sf_save(void)
 
 	return ret;
 }
-#endif /* CMD_SAVEENV */
 
 static int env_sf_load(void)
 {
@@ -313,9 +307,7 @@ U_BOOT_ENV_LOCATION(sf) = {
 	.location	= ENVL_SPI_FLASH,
 	ENV_NAME("SPI Flash")
 	.load		= env_sf_load,
-#ifdef CMD_SAVEENV
-	.save		= env_save_ptr(env_sf_save),
-#endif
+	.save		= CONFIG_IS_ENABLED(SAVEENV) ? ENV_SAVE_PTR(env_sf_save) : NULL,
 #if defined(INITENV) && (CONFIG_ENV_ADDR != 0x0)
 	.init		= env_sf_init,
 #endif

@@ -38,9 +38,6 @@
 #define CONFIG_ETHPRIME                 "FEC"
 #define CONFIG_FEC_MXC_PHYADDR          6
 
-#define CONFIG_SYS_MEMTEST_START	0x10000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 500 * SZ_1M)
-
 /* MMC Configuration */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
@@ -73,6 +70,7 @@
 	func(DHCP, dhcp, na)
 
 #include <config_distro_bootcmd.h>
+#include <linux/stringify.h>
 
 /* Physical Memory Map */
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR

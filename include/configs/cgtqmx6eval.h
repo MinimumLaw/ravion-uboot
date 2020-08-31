@@ -12,6 +12,8 @@
 #ifndef __CONFIG_CGTQMX6EVAL_H
 #define __CONFIG_CGTQMX6EVAL_H
 
+#include <linux/stringify.h>
+
 #include "mx6_common.h"
 
 #define CONFIG_MACH_TYPE	4122
@@ -79,7 +81,6 @@
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_ETHPRIME			"FEC"
 #define CONFIG_FEC_MXC_PHYADDR		6
-#define CONFIG_PHY_ATHEROS
 
 /* Command definition */
 
@@ -187,10 +188,6 @@
 			"fi; " \
 		"fi; " \
 	"else run netboot; fi"
-
-#define CONFIG_SYS_MEMTEST_START       0x10000000
-#define CONFIG_SYS_MEMTEST_END	       0x10010000
-#define CONFIG_SYS_MEMTEST_SCRATCH     0x10800000
 
 /* Physical Memory Map */
 #define PHYS_SDRAM		       MMDC0_ARB_BASE_ADDR

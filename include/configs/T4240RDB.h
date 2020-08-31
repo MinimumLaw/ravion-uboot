@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
+ * Copyright 2020 NXP
  */
 
 /*
@@ -8,6 +9,8 @@
  */
 #ifndef __CONFIG_H
 #define __CONFIG_H
+
+#include <linux/stringify.h>
 
 #define CONFIG_FSL_SATA_V2
 #define CONFIG_PCIE4
@@ -79,9 +82,6 @@
 
 #define CONFIG_ADDR_MAP
 #define CONFIG_SYS_NUM_ADDR_MAP		64	/* number of TLB1 entries */
-
-#define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest works on */
-#define CONFIG_SYS_MEMTEST_END		0x00400000
 
 /*
  *  Config the L3 Cache as L3 SRAM
@@ -159,12 +159,18 @@
 #define CONFIG_SYS_NS16550_COM4	(CONFIG_SYS_CCSRBAR+0x11D600)
 
 /* I2C */
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_FSL
 #define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
 #define CONFIG_SYS_FSL_I2C_OFFSET	0x118000
 #define CONFIG_SYS_FSL_I2C2_SLAVE	0x7F
 #define CONFIG_SYS_FSL_I2C2_OFFSET	0x118100
+#else
+#define CONFIG_I2C_SET_DEFAULT_BUS_NUM
+#define CONFIG_I2C_DEFAULT_BUS_NUMBER	0
+#endif
+
+#define CONFIG_SYS_I2C_FSL
 
 /*
  * General PCI
@@ -241,10 +247,6 @@
  */
 #define CONFIG_LOADS_ECHO		/* echo on for serial download */
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	/* allow baudrate change */
-
-/*
- * Command line configuration.
- */
 
 /*
  * Miscellaneous configurable options
@@ -546,11 +548,8 @@ unsigned long get_board_ddr_clk(void);
 #endif /* CONFIG_NOBQFMAN */
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#define CONFIG_PHYLIB_10G
-#define CONFIG_PHY_VITESSE
 #define CONFIG_CORTINA_FW_ADDR		0xefe00000
 #define CONFIG_CORTINA_FW_LENGTH	0x40000
-#define CONFIG_PHY_TERANETICS
 #define SGMII_PHY_ADDR1 0x0
 #define SGMII_PHY_ADDR2 0x1
 #define SGMII_PHY_ADDR3 0x2

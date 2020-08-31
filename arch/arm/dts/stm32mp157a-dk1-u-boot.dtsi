@@ -4,7 +4,7 @@
  */
 
 #include <dt-bindings/clock/stm32mp1-clksrc.h>
-#include "stm32mp157-u-boot.dtsi"
+#include "stm32mp15-u-boot.dtsi"
 #include "stm32mp15-ddr3-1x4Gb-1066-binG.dtsi"
 
 / {
@@ -20,16 +20,27 @@
 		st,fastboot-gpios = <&gpioa 13 GPIO_ACTIVE_LOW>;
 		st,stm32prog-gpios = <&gpioa 14 GPIO_ACTIVE_LOW>;
 	};
+
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
+
+	reserved-memory {
+		optee@de000000 {
+			reg = <0xde000000 0x02000000>;
+			no-map;
+		};
+	};
+
 	led {
 		red {
 			label = "error";
 			gpios = <&gpioa 13 GPIO_ACTIVE_LOW>;
 			default-state = "off";
 			status = "okay";
-		};
-
-		blue {
-			default-state = "on";
 		};
 	};
 };
@@ -160,11 +171,16 @@
 
 &sdmmc1 {
 	u-boot,dm-spl;
+	broken-cd;
+	/delete-property/ cd-gpios;
 };
 
 &sdmmc1_b4_pins_a {
 	u-boot,dm-spl;
-	pins {
+	pins1 {
+		u-boot,dm-spl;
+	};
+	pins2 {
 		u-boot,dm-spl;
 	};
 };

@@ -12,6 +12,7 @@
 #include <dm/devres.h>
 #include <dm/lists.h>
 #include <dm/util.h>
+#include <linux/bitops.h>
 
 #include <asm/arch/clock_manager.h>
 
@@ -258,7 +259,7 @@ static int socfpga_a10_clk_bind(struct udevice *dev)
 			continue;
 
 		if (pre_reloc_only &&
-		    !dm_ofnode_pre_reloc(offset_to_ofnode(offset)))
+		    !ofnode_pre_reloc(offset_to_ofnode(offset)))
 			continue;
 
 		ret = device_bind_driver_to_node(dev, "clk-a10", name,

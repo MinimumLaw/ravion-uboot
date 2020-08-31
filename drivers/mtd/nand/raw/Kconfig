@@ -121,15 +121,6 @@ config NAND_DENALI_DT
 	  Enable the driver for NAND flash on platforms using a Denali NAND
 	  controller as a DT device.
 
-config NAND_DENALI_SPARE_AREA_SKIP_BYTES
-	int "Number of bytes skipped in OOB area"
-	depends on NAND_DENALI
-	range 0 63
-	help
-	  This option specifies the number of bytes to skip from the beginning
-	  of OOB area before last ECC sector data starts.  This is potentially
-	  used to preserve the bad block marker in the OOB area.
-
 config NAND_LPC32XX_SLC
 	bool "Support LPC32XX_SLC controller"
 	help
@@ -259,12 +250,12 @@ config NAND_MXC
 
 config NAND_MXS
 	bool "MXS NAND support"
-	depends on MX23 || MX28 || MX6 || MX7
+	depends on MX23 || MX28 || MX6 || MX7 || IMX8 || IMX8M
 	select SYS_NAND_SELF_INIT
 	imply CMD_NAND
 	select APBH_DMA
-	select APBH_DMA_BURST if ARCH_MX6 || ARCH_MX7
-	select APBH_DMA_BURST8 if ARCH_MX6 || ARCH_MX7
+	select APBH_DMA_BURST if ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
+	select APBH_DMA_BURST8 if ARCH_MX6 || ARCH_MX7 || ARCH_IMX8 || ARCH_IMX8M
 	help
 	  This enables NAND driver for the NAND flash controller on the
 	  MXS processors.
@@ -403,6 +394,15 @@ config SPL_NAND_DENALI
 	help
 	  This is a small implementation of the Denali NAND controller
 	  for use on SPL.
+
+config NAND_DENALI_SPARE_AREA_SKIP_BYTES
+	int "Number of bytes skipped in OOB area"
+	depends on SPL_NAND_DENALI
+	range 0 63
+	help
+	  This option specifies the number of bytes to skip from the beginning
+	  of OOB area before last ECC sector data starts.  This is potentially
+	  used to preserve the bad block marker in the OOB area.
 
 config SPL_NAND_SIMPLE
 	bool "Use simple SPL NAND driver"

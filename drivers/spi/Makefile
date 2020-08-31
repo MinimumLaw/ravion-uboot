@@ -13,7 +13,6 @@ obj-$(CONFIG_TI_QSPI) += ti_qspi.o
 else
 obj-y += spi.o
 obj-$(CONFIG_SPI_MEM) += spi-mem-nodm.o
-obj-$(CONFIG_SOFT_SPI) += soft_spi_legacy.o
 endif
 
 obj-$(CONFIG_ALTERA_SPI) += altera_spi.o
@@ -33,7 +32,6 @@ obj-$(CONFIG_FSL_ESPI) += fsl_espi.o
 obj-$(CONFIG_FSL_QSPI) += fsl_qspi.o
 obj-$(CONFIG_ICH_SPI) +=  ich.o
 obj-$(CONFIG_KIRKWOOD_SPI) += kirkwood_spi.o
-obj-$(CONFIG_LPC32XX_SSP) += lpc32xx_ssp.o
 obj-$(CONFIG_MESON_SPIFC) += meson_spifc.o
 obj-$(CONFIG_MPC8XX_SPI) += mpc8xx_spi.o
 obj-$(CONFIG_MPC8XXX_SPI) += mpc8xxx_spi.o
@@ -53,7 +51,6 @@ obj-$(CONFIG_ROCKCHIP_SPI) += rk_spi.o
 obj-$(CONFIG_SANDBOX_SPI) += sandbox_spi.o
 obj-$(CONFIG_SPI_SIFIVE) += spi-sifive.o
 obj-$(CONFIG_SPI_SUNXI) += spi-sunxi.o
-obj-$(CONFIG_SH_SPI) += sh_spi.o
 obj-$(CONFIG_SH_QSPI) += sh_qspi.o
 obj-$(CONFIG_STM32_QSPI) += stm32_qspi.o
 obj-$(CONFIG_STM32_SPI) += stm32_spi.o

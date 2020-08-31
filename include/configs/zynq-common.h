@@ -33,8 +33,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE  \
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400}
 
-#define CONFIG_ARM_DCC
-
 /* Ethernet driver */
 #if defined(CONFIG_ZYNQ_GEM)
 # define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
@@ -43,14 +41,13 @@
 
 /* NOR */
 #ifdef CONFIG_MTD_NOR_FLASH
-# define CONFIG_SYS_FLASH_BASE		0xE2000000
-# define CONFIG_SYS_FLASH_SIZE		(16 * 1024 * 1024)
 # define CONFIG_SYS_MAX_FLASH_BANKS	1
 # define CONFIG_SYS_MAX_FLASH_SECT	512
 # define CONFIG_SYS_FLASH_ERASE_TOUT	1000
 # define CONFIG_SYS_FLASH_WRITE_TOUT	5000
 # define CONFIG_FLASH_SHOW_PROGRESS	10
 # undef CONFIG_SYS_FLASH_EMPTY_INFO
+# define CONFIG_SYS_FLASH_QUIET_TEST
 #endif
 
 #ifdef CONFIG_NAND_ZYNQ
@@ -153,7 +150,8 @@
 #define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
 	"bootcmd_qspi=sf probe 0 0 0 && " \
 		      "sf read ${scriptaddr} ${script_offset_f} ${script_size_f} && " \
-		      "source ${scriptaddr}; echo SCRIPT FAILED: continuing...;\0"
+		      "echo QSPI: Trying to boot script at ${scriptaddr} && " \
+		      "source ${scriptaddr}; echo QSPI: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_QSPI(devtypeu, devtypel, instance) \
 	"qspi "
@@ -161,7 +159,8 @@
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"bootcmd_nand=nand info && " \
 		      "nand read ${scriptaddr} ${script_offset_f} ${script_size_f} && " \
-		      "source ${scriptaddr}; echo SCRIPT FAILED: continuing...;\0"
+		      "echo NAND: Trying to boot script at ${scriptaddr} && " \
+		      "source ${scriptaddr}; echo NAND: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	"nand "
@@ -169,7 +168,8 @@
 #define BOOTENV_DEV_NOR(devtypeu, devtypel, instance) \
 	"script_offset_nor=0xE2FC0000\0"        \
 	"bootcmd_nor=cp.b ${script_offset_nor} ${scriptaddr} ${script_size_f} && " \
-		     "source ${scriptaddr}; echo SCRIPT FAILED: continuing...;\0"
+		     "echo NOR: Trying to boot script at ${scriptaddr} && " \
+		     "source ${scriptaddr}; echo NOR: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_NOR(devtypeu, devtypel, instance) \
 	"nor "
@@ -177,7 +177,8 @@
 #define BOOT_TARGET_DEVICES_JTAG(func)  func(JTAG, jtag, na)
 
 #define BOOTENV_DEV_JTAG(devtypeu, devtypel, instance) \
-	"bootcmd_jtag=source $scriptaddr; echo SCRIPT FAILED: continuing...;\0"
+	"bootcmd_jtag=echo JTAG: Trying to boot script at ${scriptaddr} && " \
+		"source ${scriptaddr}; echo JTAG: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_JTAG(devtypeu, devtypel, instance) \
 	"jtag "
@@ -199,7 +200,6 @@
 #ifndef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS	\
 	"fdt_high=0x20000000\0"		\
-	"initrd_high=0x20000000\0"	\
 	"scriptaddr=0x20000\0"	\
 	"script_size_f=0x40000\0"	\
 	"fdt_addr_r=0x1f00000\0"        \
@@ -216,9 +216,6 @@
 #define CONFIG_CLOCKS
 #define CONFIG_SYS_MAXARGS		32 /* max number of command args */
 #define CONFIG_SYS_CBSIZE		2048 /* Console I/O Buffer Size */
-
-#define CONFIG_SYS_MEMTEST_START	0
-#define CONFIG_SYS_MEMTEST_END		0x1000
 
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFFFF0000
 #define CONFIG_SYS_INIT_RAM_SIZE	0x2000

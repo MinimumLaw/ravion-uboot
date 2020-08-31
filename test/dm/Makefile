@@ -13,6 +13,7 @@ obj-$(CONFIG_UT_DM) += test-uclass.o
 # subsystem you must add sandbox tests here.
 obj-$(CONFIG_UT_DM) += core.o
 ifneq ($(CONFIG_SANDBOX),)
+obj-$(CONFIG_ACPIGEN) += acpi.o
 obj-$(CONFIG_SOUND) += audio.o
 obj-$(CONFIG_BLK) += blk.o
 obj-$(CONFIG_BOARD) += board.o
@@ -30,7 +31,9 @@ obj-y += irq.o
 obj-$(CONFIG_LED) += led.o
 obj-$(CONFIG_DM_MAILBOX) += mailbox.o
 obj-$(CONFIG_DM_MMC) += mmc.o
+obj-y += fdtdec.o
 obj-y += ofnode.o
+obj-y += ofread.o
 obj-$(CONFIG_OSD) += osd.o
 obj-$(CONFIG_DM_VIDEO) += panel.o
 obj-$(CONFIG_DM_PCI) += pci.o

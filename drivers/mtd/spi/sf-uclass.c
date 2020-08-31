@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <malloc.h>
 #include <spi.h>
 #include <spi_flash.h>
@@ -27,15 +28,6 @@ int spi_flash_write_dm(struct udevice *dev, u32 offset, size_t len,
 int spi_flash_erase_dm(struct udevice *dev, u32 offset, size_t len)
 {
 	return log_ret(sf_get_ops(dev)->erase(dev, offset, len));
-}
-
-int spl_flash_get_sw_write_prot(struct udevice *dev)
-{
-	struct dm_spi_flash_ops *ops = sf_get_ops(dev);
-
-	if (!ops->get_sw_write_prot)
-		return -ENOSYS;
-	return log_ret(ops->get_sw_write_prot(dev));
 }
 
 /*

@@ -9,11 +9,12 @@
 #include <test/suites.h>
 #include <test/test.h>
 
-static int do_ut_all(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+static int do_ut_all(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[]);
 
 int cmd_ut_category(const char *name, const char *prefix,
 		    struct unit_test *tests, int n_ents,
-		    int argc, char * const argv[])
+		    int argc, char *const argv[])
 {
 	struct unit_test_state uts = { .fail_count = 0 };
 	struct unit_test *test;
@@ -43,7 +44,7 @@ int cmd_ut_category(const char *name, const char *prefix,
 	return uts.fail_count ? CMD_RET_FAILURE : 0;
 }
 
-static cmd_tbl_t cmd_ut_sub[] = {
+static struct cmd_tbl cmd_ut_sub[] = {
 	U_BOOT_CMD_MKENT(all, CONFIG_SYS_MAXARGS, 1, do_ut_all, "", ""),
 #if defined(CONFIG_UT_DM)
 	U_BOOT_CMD_MKENT(dm, CONFIG_SYS_MAXARGS, 1, do_ut_dm, "", ""),
@@ -60,6 +61,9 @@ static cmd_tbl_t cmd_ut_sub[] = {
 #ifdef CONFIG_UT_LIB
 	U_BOOT_CMD_MKENT(lib, CONFIG_SYS_MAXARGS, 1, do_ut_lib, "", ""),
 #endif
+#ifdef CONFIG_UT_LOG
+	U_BOOT_CMD_MKENT(log, CONFIG_SYS_MAXARGS, 1, do_ut_log, "", ""),
+#endif
 #ifdef CONFIG_UT_TIME
 	U_BOOT_CMD_MKENT(time, CONFIG_SYS_MAXARGS, 1, do_ut_time, "", ""),
 #endif
@@ -71,10 +75,13 @@ static cmd_tbl_t cmd_ut_sub[] = {
 			 "", ""),
 	U_BOOT_CMD_MKENT(bloblist, CONFIG_SYS_MAXARGS, 1, do_ut_bloblist,
 			 "", ""),
+	U_BOOT_CMD_MKENT(str, CONFIG_SYS_MAXARGS, 1, do_ut_str,
+			 "", ""),
 #endif
 };
 
-static int do_ut_all(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_ut_all(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 	int i;
 	int retval;
@@ -90,9 +97,9 @@ static int do_ut_all(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return any_fail;
 }
 
-static int do_ut(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_ut(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	cmd_tbl_t *cp;
+	struct cmd_tbl *cp;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
@@ -125,11 +132,17 @@ static char ut_help_text[] =
 #ifdef CONFIG_UT_LIB
 	"ut lib [test-name] - test library functions\n"
 #endif
+#ifdef CONFIG_UT_LOG
+	"ut log [test-name] - test logging functions\n"
+#endif
 #ifdef CONFIG_UT_OPTEE
 	"ut optee [test-name]\n"
 #endif
 #ifdef CONFIG_UT_OVERLAY
 	"ut overlay [test-name]\n"
+#endif
+#ifdef CONFIG_SANDBOX
+	"ut str - Basic test of string functions\n"
 #endif
 #ifdef CONFIG_UT_TIME
 	"ut time - Very basic test of time functions\n"

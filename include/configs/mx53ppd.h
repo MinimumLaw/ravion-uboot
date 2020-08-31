@@ -20,7 +20,6 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * 1024 * 1024)
 
-#define CONFIG_BOARD_LATE_INIT
 #define CONFIG_REVISION_TAG
 
 /* USB Configs */
@@ -121,9 +120,6 @@
 #define CONFIG_SYS_MAXARGS	48	/* max number of command args */
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE /* Boot Argument Buffer Size */
 
-#define CONFIG_SYS_MEMTEST_START       0x70000000
-#define CONFIG_SYS_MEMTEST_END         0x70010000
-
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
 #define CONFIG_SYS_BOOTMAPSZ (256 << 20)     /* 256M */
@@ -147,7 +143,6 @@
 /* FLASH and environment organization */
 #define CONFIG_SYS_MMC_ENV_DEV 0
 
-#define CONFIG_CMD_FUSE
 #define CONFIG_FSL_IIM
 
 #define CONFIG_BCH

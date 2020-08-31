@@ -11,13 +11,13 @@
 #include <efi_loader.h>
 #include <exports.h>
 #include <hexdump.h>
+#include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <search.h>
 #include <linux/ctype.h>
 
 #define BS systab.boottime
-#define RT systab.runtime
 
 /**
  * efi_get_device_handle_info() - get information of UEFI device
@@ -61,15 +61,15 @@ static const char sep[] = "================";
  * Implement efidebug "devices" sub-command.
  * Show all UEFI devices and their information.
  */
-static int do_efi_show_devices(cmd_tbl_t *cmdtp, int flag,
-			       int argc, char * const argv[])
+static int do_efi_show_devices(struct cmd_tbl *cmdtp, int flag,
+			       int argc, char *const argv[])
 {
 	efi_handle_t *handles;
 	efi_uintn_t num, i;
 	u16 *dev_path_text;
 	efi_status_t ret;
 
-	ret = EFI_CALL(BS->locate_handle_buffer(ALL_HANDLES, NULL, NULL,
+	ret = EFI_CALL(efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL,
 						&num, &handles));
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
@@ -86,7 +86,7 @@ static int do_efi_show_devices(cmd_tbl_t *cmdtp, int flag,
 		}
 	}
 
-	EFI_CALL(BS->free_pool(handles));
+	efi_free_pool(handles);
 
 	return CMD_RET_SUCCESS;
 }
@@ -140,15 +140,15 @@ static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
  * Implement efidebug "drivers" sub-command.
  * Show all UEFI drivers and their information.
  */
-static int do_efi_show_drivers(cmd_tbl_t *cmdtp, int flag,
-			       int argc, char * const argv[])
+static int do_efi_show_drivers(struct cmd_tbl *cmdtp, int flag,
+			       int argc, char *const argv[])
 {
 	efi_handle_t *handles;
 	efi_uintn_t num, i;
 	u16 *driver_name, *image_path_text;
 	efi_status_t ret;
 
-	ret = EFI_CALL(BS->locate_handle_buffer(
+	ret = EFI_CALL(efi_locate_handle_buffer(
 				BY_PROTOCOL, &efi_guid_driver_binding_protocol,
 				NULL, &num, &handles));
 	if (ret != EFI_SUCCESS)
@@ -170,12 +170,12 @@ static int do_efi_show_drivers(cmd_tbl_t *cmdtp, int flag,
 			else
 				printf("%p %-20ls <built-in>\n",
 				       handles[i], driver_name);
-			EFI_CALL(BS->free_pool(driver_name));
-			EFI_CALL(BS->free_pool(image_path_text));
+			efi_free_pool(driver_name);
+			efi_free_pool(image_path_text);
 		}
 	}
 
-	EFI_CALL(BS->free_pool(handles));
+	efi_free_pool(handles);
 
 	return CMD_RET_SUCCESS;
 }
@@ -312,8 +312,8 @@ static const char *get_guid_text(const void *guid)
  * Show all UEFI handles and their information, currently all protocols
  * added to handle.
  */
-static int do_efi_show_handles(cmd_tbl_t *cmdtp, int flag,
-			       int argc, char * const argv[])
+static int do_efi_show_handles(struct cmd_tbl *cmdtp, int flag,
+			       int argc, char *const argv[])
 {
 	efi_handle_t *handles;
 	efi_guid_t **guid;
@@ -321,7 +321,7 @@ static int do_efi_show_handles(cmd_tbl_t *cmdtp, int flag,
 	const char *guid_text;
 	efi_status_t ret;
 
-	ret = EFI_CALL(BS->locate_handle_buffer(ALL_HANDLES, NULL, NULL,
+	ret = EFI_CALL(efi_locate_handle_buffer(ALL_HANDLES, NULL, NULL,
 						&num, &handles));
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
@@ -355,7 +355,7 @@ static int do_efi_show_handles(cmd_tbl_t *cmdtp, int flag,
 		putc('\n');
 	}
 
-	EFI_CALL(BS->free_pool(handles));
+	efi_free_pool(handles);
 
 	return CMD_RET_SUCCESS;
 }
@@ -372,8 +372,8 @@ static int do_efi_show_handles(cmd_tbl_t *cmdtp, int flag,
  * Implement efidebug "images" sub-command.
  * Show all UEFI loaded images and their information.
  */
-static int do_efi_show_images(cmd_tbl_t *cmdtp, int flag,
-			      int argc, char * const argv[])
+static int do_efi_show_images(struct cmd_tbl *cmdtp, int flag,
+			      int argc, char *const argv[])
 {
 	efi_print_image_infos(NULL);
 
@@ -395,6 +395,7 @@ static const char * const efi_mem_type_string[] = {
 	[EFI_MMAP_IO] = "IO",
 	[EFI_MMAP_IO_PORT] = "IO PORT",
 	[EFI_PAL_CODE] = "PAL",
+	[EFI_PERSISTENT_MEMORY_TYPE] = "PERSISTENT",
 };
 
 static const struct efi_mem_attrs {
@@ -413,6 +414,7 @@ static const struct efi_mem_attrs {
 	{EFI_MEMORY_NV, "NV"},
 	{EFI_MEMORY_MORE_RELIABLE, "REL"},
 	{EFI_MEMORY_RO, "RO"},
+	{EFI_MEMORY_SP, "SP"},
 	{EFI_MEMORY_RUNTIME, "RT"},
 };
 
@@ -453,8 +455,8 @@ static void print_memory_attributes(u64 attributes)
  * Implement efidebug "memmap" sub-command.
  * Show UEFI memory map.
  */
-static int do_efi_show_memmap(cmd_tbl_t *cmdtp, int flag,
-			      int argc, char * const argv[])
+static int do_efi_show_memmap(struct cmd_tbl *cmdtp, int flag,
+			      int argc, char *const argv[])
 {
 	struct efi_mem_desc *memmap = NULL, *map;
 	efi_uintn_t map_size = 0;
@@ -462,18 +464,17 @@ static int do_efi_show_memmap(cmd_tbl_t *cmdtp, int flag,
 	int i;
 	efi_status_t ret;
 
-	ret = EFI_CALL(BS->get_memory_map(&map_size, memmap, NULL, NULL, NULL));
+	ret = efi_get_memory_map(&map_size, memmap, NULL, NULL, NULL);
 	if (ret == EFI_BUFFER_TOO_SMALL) {
 		map_size += sizeof(struct efi_mem_desc); /* for my own */
-		ret = EFI_CALL(BS->allocate_pool(EFI_LOADER_DATA,
-						 map_size, (void *)&memmap));
+		ret = efi_allocate_pool(EFI_LOADER_DATA, map_size,
+					(void *)&memmap);
 		if (ret != EFI_SUCCESS)
 			return CMD_RET_FAILURE;
-		ret = EFI_CALL(BS->get_memory_map(&map_size, memmap,
-						  NULL, NULL, NULL));
+		ret = efi_get_memory_map(&map_size, memmap, NULL, NULL, NULL);
 	}
 	if (ret != EFI_SUCCESS) {
-		EFI_CALL(BS->free_pool(memmap));
+		efi_free_pool(memmap);
 		return CMD_RET_FAILURE;
 	}
 
@@ -481,8 +482,13 @@ static int do_efi_show_memmap(cmd_tbl_t *cmdtp, int flag,
 	       EFI_PHYS_ADDR_WIDTH - 5, spc, EFI_PHYS_ADDR_WIDTH - 3, spc);
 	printf("================ %.*s %.*s ==========\n",
 	       EFI_PHYS_ADDR_WIDTH, sep, EFI_PHYS_ADDR_WIDTH, sep);
+	/*
+	 * Coverity check: dereferencing null pointer "map."
+	 * This is a false positive as memmap will always be
+	 * populated by allocate_pool() above.
+	 */
 	for (i = 0, map = memmap; i < map_size / sizeof(*map); map++, i++) {
-		if (map->type < EFI_MAX_MEMORY_TYPE)
+		if (map->type < ARRAY_SIZE(efi_mem_type_string))
 			type = efi_mem_type_string[map->type];
 		else
 			type = "(unknown)";
@@ -500,7 +506,7 @@ static int do_efi_show_memmap(cmd_tbl_t *cmdtp, int flag,
 		putc('\n');
 	}
 
-	EFI_CALL(BS->free_pool(memmap));
+	efi_free_pool(memmap);
 
 	return CMD_RET_SUCCESS;
 }
@@ -517,8 +523,8 @@ static int do_efi_show_memmap(cmd_tbl_t *cmdtp, int flag,
  * Implement efidebug "tables" sub-command.
  * Show UEFI configuration tables.
  */
-static int do_efi_show_tables(cmd_tbl_t *cmdtp, int flag,
-			      int argc, char * const argv[])
+static int do_efi_show_tables(struct cmd_tbl *cmdtp, int flag,
+			      int argc, char *const argv[])
 {
 	efi_uintn_t i;
 	const char *guid_str;
@@ -547,8 +553,8 @@ static int do_efi_show_tables(cmd_tbl_t *cmdtp, int flag,
  *
  *     efidebug boot add <id> <label> <interface> <devnum>[:<part>] <file> <options>
  */
-static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
-			   int argc, char * const argv[])
+static int do_efi_boot_add(struct cmd_tbl *cmdtp, int flag,
+			   int argc, char *const argv[])
 {
 	int id;
 	char *endp;
@@ -603,7 +609,7 @@ static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 				+ sizeof(struct efi_device_path); /* for END */
 
 	/* optional data */
-	if (argc < 6)
+	if (argc == 6)
 		lo.optional_data = NULL;
 	else
 		lo.optional_data = (const u8 *)argv[6];
@@ -614,7 +620,7 @@ static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 		goto out;
 	}
 
-	ret = EFI_CALL(RT->set_variable(var_name16, &guid,
+	ret = EFI_CALL(efi_set_variable(var_name16, &guid,
 					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
@@ -646,8 +652,8 @@ out:
  *
  *     efidebug boot rm <id> ...
  */
-static int do_efi_boot_rm(cmd_tbl_t *cmdtp, int flag,
-			  int argc, char * const argv[])
+static int do_efi_boot_rm(struct cmd_tbl *cmdtp, int flag,
+			  int argc, char *const argv[])
 {
 	efi_guid_t guid;
 	int id, i;
@@ -669,7 +675,7 @@ static int do_efi_boot_rm(cmd_tbl_t *cmdtp, int flag,
 		p = var_name16;
 		utf8_utf16_strncpy(&p, var_name, 9);
 
-		ret = EFI_CALL(RT->set_variable(var_name16, &guid, 0, 0, NULL));
+		ret = EFI_CALL(efi_set_variable(var_name16, &guid, 0, 0, NULL));
 		if (ret) {
 			printf("Cannot remove %ls\n", var_name16);
 			return CMD_RET_FAILURE;
@@ -682,20 +688,25 @@ static int do_efi_boot_rm(cmd_tbl_t *cmdtp, int flag,
 /**
  * show_efi_boot_opt_data() - dump UEFI load option
  *
- * @id:		load option number
+ * @varname16:	variable name
  * @data:	value of UEFI load option variable
  * @size:	size of the boot option
  *
  * Decode the value of UEFI load option variable and print information.
  */
-static void show_efi_boot_opt_data(int id, void *data, size_t size)
+static void show_efi_boot_opt_data(u16 *varname16, void *data, size_t *size)
 {
 	struct efi_load_option lo;
 	char *label, *p;
 	size_t label_len16, label_len;
 	u16 *dp_str;
+	efi_status_t ret;
 
-	efi_deserialize_load_option(&lo, data);
+	ret = efi_deserialize_load_option(&lo, data, size);
+	if (ret != EFI_SUCCESS) {
+		printf("%ls: invalid load option\n", varname16);
+		return;
+	}
 
 	label_len16 = u16_strlen(lo.label);
 	label_len = utf16_utf8_strnlen(lo.label, label_len16);
@@ -705,8 +716,8 @@ static void show_efi_boot_opt_data(int id, void *data, size_t size)
 	p = label;
 	utf16_utf8_strncpy(&p, lo.label, label_len16);
 
-	printf("Boot%04X:\n", id);
-	printf("  attributes: %c%c%c (0x%08x)\n",
+	printf("%ls:\nattributes: %c%c%c (0x%08x)\n",
+	       varname16,
 	       /* ACTIVE */
 	       lo.attributes & LOAD_OPTION_ACTIVE ? 'A' : '-',
 	       /* FORCE RECONNECT */
@@ -722,45 +733,39 @@ static void show_efi_boot_opt_data(int id, void *data, size_t size)
 
 	printf("  data:\n");
 	print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-		       lo.optional_data, size + (u8 *)data -
-		       (u8 *)lo.optional_data, true);
+		       lo.optional_data, *size, true);
 	free(label);
 }
 
 /**
  * show_efi_boot_opt() - dump UEFI load option
  *
- * @id:		Load option number
+ * @varname16:	variable name
  *
  * Dump information defined by UEFI load option.
  */
-static void show_efi_boot_opt(int id)
+static void show_efi_boot_opt(u16 *varname16)
 {
-	char var_name[9];
-	u16 var_name16[9], *p;
-	efi_guid_t guid;
-	void *data = NULL;
+	void *data;
 	efi_uintn_t size;
 	efi_status_t ret;
 
-	sprintf(var_name, "Boot%04X", id);
-	p = var_name16;
-	utf8_utf16_strncpy(&p, var_name, 9);
-	guid = efi_global_variable_guid;
-
 	size = 0;
-	ret = EFI_CALL(RT->get_variable(var_name16, &guid, NULL, &size, NULL));
+	ret = EFI_CALL(efi_get_variable(varname16, &efi_global_variable_guid,
+					NULL, &size, NULL));
 	if (ret == EFI_BUFFER_TOO_SMALL) {
 		data = malloc(size);
-		ret = EFI_CALL(RT->get_variable(var_name16, &guid, NULL, &size,
-						data));
+		if (!data) {
+			printf("ERROR: Out of memory\n");
+			return;
+		}
+		ret = EFI_CALL(efi_get_variable(varname16,
+						&efi_global_variable_guid,
+						NULL, &size, data));
+		if (ret == EFI_SUCCESS)
+			show_efi_boot_opt_data(varname16, data, &size);
+		free(data);
 	}
-	if (ret == EFI_SUCCESS)
-		show_efi_boot_opt_data(id, data, size);
-	else if (ret == EFI_NOT_FOUND)
-		printf("Boot%04X: not found\n", id);
-
-	free(data);
 }
 
 static int u16_tohex(u16 c)
@@ -788,8 +793,8 @@ static int u16_tohex(u16 c)
  *
  *     efidebug boot dump
  */
-static int do_efi_boot_dump(cmd_tbl_t *cmdtp, int flag,
-			    int argc, char * const argv[])
+static int do_efi_boot_dump(struct cmd_tbl *cmdtp, int flag,
+			    int argc, char *const argv[])
 {
 	u16 *var_name16, *p;
 	efi_uintn_t buf_size, size;
@@ -839,7 +844,7 @@ static int do_efi_boot_dump(cmd_tbl_t *cmdtp, int flag,
 			id = (id << 4) + digit;
 		}
 		if (i == 4 && !var_name16[8])
-			show_efi_boot_opt(id);
+			show_efi_boot_opt(var_name16);
 	}
 
 	free(var_name16);
@@ -856,8 +861,7 @@ static int do_efi_boot_dump(cmd_tbl_t *cmdtp, int flag,
  */
 static int show_efi_boot_order(void)
 {
-	efi_guid_t guid;
-	u16 *bootorder = NULL;
+	u16 *bootorder;
 	efi_uintn_t size;
 	int num, i;
 	char var_name[9];
@@ -868,20 +872,25 @@ static int show_efi_boot_order(void)
 	size_t label_len16, label_len;
 	efi_status_t ret;
 
-	guid = efi_global_variable_guid;
 	size = 0;
-	ret = EFI_CALL(RT->get_variable(L"BootOrder", &guid, NULL, &size,
-					NULL));
-	if (ret == EFI_BUFFER_TOO_SMALL) {
-		bootorder = malloc(size);
-		ret = EFI_CALL(RT->get_variable(L"BootOrder", &guid, NULL,
-						&size, bootorder));
+	ret = EFI_CALL(efi_get_variable(L"BootOrder", &efi_global_variable_guid,
+					NULL, &size, NULL));
+	if (ret != EFI_BUFFER_TOO_SMALL) {
+		if (ret == EFI_NOT_FOUND) {
+			printf("BootOrder not defined\n");
+			return CMD_RET_SUCCESS;
+		} else {
+			return CMD_RET_FAILURE;
+		}
 	}
-	if (ret == EFI_NOT_FOUND) {
-		printf("BootOrder not defined\n");
-		ret = CMD_RET_SUCCESS;
-		goto out;
-	} else if (ret != EFI_SUCCESS) {
+	bootorder = malloc(size);
+	if (!bootorder) {
+		printf("ERROR: Out of memory\n");
+		return CMD_RET_FAILURE;
+	}
+	ret = EFI_CALL(efi_get_variable(L"BootOrder", &efi_global_variable_guid,
+					NULL, &size, bootorder));
+	if (ret != EFI_SUCCESS) {
 		ret = CMD_RET_FAILURE;
 		goto out;
 	}
@@ -893,11 +902,11 @@ static int show_efi_boot_order(void)
 		utf8_utf16_strncpy(&p16, var_name, 9);
 
 		size = 0;
-		ret = EFI_CALL(RT->get_variable(var_name16, &guid, NULL, &size,
-						NULL));
+		ret = EFI_CALL(efi_get_variable(var_name16,
+						&efi_global_variable_guid, NULL,
+						&size, NULL));
 		if (ret != EFI_BUFFER_TOO_SMALL) {
-			printf("%2d: Boot%04X: (not defined)\n",
-			       i + 1, bootorder[i]);
+			printf("%2d: %s: (not defined)\n", i + 1, var_name);
 			continue;
 		}
 
@@ -906,15 +915,21 @@ static int show_efi_boot_order(void)
 			ret = CMD_RET_FAILURE;
 			goto out;
 		}
-		ret = EFI_CALL(RT->get_variable(var_name16, &guid, NULL, &size,
-						data));
+		ret = EFI_CALL(efi_get_variable(var_name16,
+						&efi_global_variable_guid, NULL,
+						&size, data));
 		if (ret != EFI_SUCCESS) {
 			free(data);
 			ret = CMD_RET_FAILURE;
 			goto out;
 		}
 
-		efi_deserialize_load_option(&lo, data);
+		ret = efi_deserialize_load_option(&lo, data, &size);
+		if (ret != EFI_SUCCESS) {
+			printf("%ls: invalid load option\n", var_name16);
+			ret = CMD_RET_FAILURE;
+			goto out;
+		}
 
 		label_len16 = u16_strlen(lo.label);
 		label_len = utf16_utf8_strnlen(lo.label, label_len16);
@@ -926,7 +941,7 @@ static int show_efi_boot_order(void)
 		}
 		p = label;
 		utf16_utf8_strncpy(&p, lo.label, label_len16);
-		printf("%2d: Boot%04X: %s\n", i + 1, bootorder[i], label);
+		printf("%2d: %s: %s\n", i + 1, var_name, label);
 		free(label);
 
 		free(data);
@@ -952,8 +967,8 @@ out:
  *
  *     efidebug boot next <id>
  */
-static int do_efi_boot_next(cmd_tbl_t *cmdtp, int flag,
-			    int argc, char * const argv[])
+static int do_efi_boot_next(struct cmd_tbl *cmdtp, int flag,
+			    int argc, char *const argv[])
 {
 	u16 bootnext;
 	efi_uintn_t size;
@@ -966,7 +981,7 @@ static int do_efi_boot_next(cmd_tbl_t *cmdtp, int flag,
 		return CMD_RET_USAGE;
 
 	bootnext = (u16)simple_strtoul(argv[1], &endp, 16);
-	if (*endp != '\0' || bootnext > 0xffff) {
+	if (*endp) {
 		printf("invalid value: %s\n", argv[1]);
 		r = CMD_RET_FAILURE;
 		goto out;
@@ -974,7 +989,7 @@ static int do_efi_boot_next(cmd_tbl_t *cmdtp, int flag,
 
 	guid = efi_global_variable_guid;
 	size = sizeof(u16);
-	ret = EFI_CALL(RT->set_variable(L"BootNext", &guid,
+	ret = EFI_CALL(efi_set_variable(L"BootNext", &guid,
 					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
@@ -1001,8 +1016,8 @@ out:
  *
  *     efidebug boot order [<id> ...]
  */
-static int do_efi_boot_order(cmd_tbl_t *cmdtp, int flag,
-			     int argc, char * const argv[])
+static int do_efi_boot_order(struct cmd_tbl *cmdtp, int flag,
+			     int argc, char *const argv[])
 {
 	u16 *bootorder = NULL;
 	efi_uintn_t size;
@@ -1035,7 +1050,7 @@ static int do_efi_boot_order(cmd_tbl_t *cmdtp, int flag,
 	}
 
 	guid = efi_global_variable_guid;
-	ret = EFI_CALL(RT->set_variable(L"BootOrder", &guid,
+	ret = EFI_CALL(efi_set_variable(L"BootOrder", &guid,
 					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
@@ -1050,7 +1065,7 @@ out:
 	return r;
 }
 
-static cmd_tbl_t cmd_efidebug_boot_sub[] = {
+static struct cmd_tbl cmd_efidebug_boot_sub[] = {
 	U_BOOT_CMD_MKENT(add, CONFIG_SYS_MAXARGS, 1, do_efi_boot_add, "", ""),
 	U_BOOT_CMD_MKENT(rm, CONFIG_SYS_MAXARGS, 1, do_efi_boot_rm, "", ""),
 	U_BOOT_CMD_MKENT(dump, CONFIG_SYS_MAXARGS, 1, do_efi_boot_dump, "", ""),
@@ -1071,10 +1086,10 @@ static cmd_tbl_t cmd_efidebug_boot_sub[] = {
  *
  * Implement efidebug "boot" sub-command.
  */
-static int do_efi_boot_opt(cmd_tbl_t *cmdtp, int flag,
-			   int argc, char * const argv[])
+static int do_efi_boot_opt(struct cmd_tbl *cmdtp, int flag,
+			   int argc, char *const argv[])
 {
-	cmd_tbl_t *cp;
+	struct cmd_tbl *cp;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
@@ -1089,7 +1104,131 @@ static int do_efi_boot_opt(cmd_tbl_t *cmdtp, int flag,
 	return cp->cmd(cmdtp, flag, argc, argv);
 }
 
-static cmd_tbl_t cmd_efidebug_sub[] = {
+/**
+ * do_efi_test_bootmgr() - run simple bootmgr for test
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success,
+ *		CMD_RET_USAGE or CMD_RET_RET_FAILURE on failure
+ *
+ * Implement efidebug "test bootmgr" sub-command.
+ * Run simple bootmgr for test.
+ *
+ *     efidebug test bootmgr
+ */
+static int do_efi_test_bootmgr(struct cmd_tbl *cmdtp, int flag,
+			       int argc, char * const argv[])
+{
+	efi_handle_t image;
+	efi_uintn_t exit_data_size = 0;
+	u16 *exit_data = NULL;
+	efi_status_t ret;
+
+	ret = efi_bootmgr_load(&image);
+	printf("efi_bootmgr_load() returned: %ld\n", ret & ~EFI_ERROR_MASK);
+
+	/* We call efi_start_image() even if error for test purpose. */
+	ret = EFI_CALL(efi_start_image(image, &exit_data_size, &exit_data));
+	printf("efi_start_image() returned: %ld\n", ret & ~EFI_ERROR_MASK);
+	if (ret && exit_data)
+		efi_free_pool(exit_data);
+
+	efi_restore_gd();
+
+	return CMD_RET_SUCCESS;
+}
+
+static struct cmd_tbl cmd_efidebug_test_sub[] = {
+	U_BOOT_CMD_MKENT(bootmgr, CONFIG_SYS_MAXARGS, 1, do_efi_test_bootmgr,
+			 "", ""),
+};
+
+/**
+ * do_efi_test() - manage UEFI load options
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success,
+ *		CMD_RET_USAGE or CMD_RET_RET_FAILURE on failure
+ *
+ * Implement efidebug "test" sub-command.
+ */
+static int do_efi_test(struct cmd_tbl *cmdtp, int flag,
+		       int argc, char * const argv[])
+{
+	struct cmd_tbl *cp;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	argc--; argv++;
+
+	cp = find_cmd_tbl(argv[0], cmd_efidebug_test_sub,
+			  ARRAY_SIZE(cmd_efidebug_test_sub));
+	if (!cp)
+		return CMD_RET_USAGE;
+
+	return cp->cmd(cmdtp, flag, argc, argv);
+}
+
+/**
+ * do_efi_query_info() - QueryVariableInfo EFI service
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success,
+ *		CMD_RET_USAGE or CMD_RET_FAILURE on failure
+ *
+ * Implement efidebug "test" sub-command.
+ */
+
+static int do_efi_query_info(struct cmd_tbl *cmdtp, int flag,
+			     int argc, char * const argv[])
+{
+	efi_status_t ret;
+	u32 attr = 0;
+	u64 max_variable_storage_size;
+	u64 remain_variable_storage_size;
+	u64 max_variable_size;
+	int i;
+
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-bs"))
+			attr |= EFI_VARIABLE_BOOTSERVICE_ACCESS;
+		else if (!strcmp(argv[i], "-rt"))
+			attr |= EFI_VARIABLE_RUNTIME_ACCESS;
+		else if (!strcmp(argv[i], "-nv"))
+			attr |= EFI_VARIABLE_NON_VOLATILE;
+		else if (!strcmp(argv[i], "-at"))
+			attr |=
+				EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS;
+	}
+
+	ret = EFI_CALL(efi_query_variable_info(attr,
+					       &max_variable_storage_size,
+					       &remain_variable_storage_size,
+					       &max_variable_size));
+	if (ret != EFI_SUCCESS) {
+		printf("Error: Cannot query UEFI variables, r = %lu\n",
+		       ret & ~EFI_ERROR_MASK);
+		return CMD_RET_FAILURE;
+	}
+
+	printf("Max storage size %llu\n", max_variable_storage_size);
+	printf("Remaining storage size %llu\n", remain_variable_storage_size);
+	printf("Max variable size %llu\n", max_variable_size);
+
+	return CMD_RET_SUCCESS;
+}
+
+static struct cmd_tbl cmd_efidebug_sub[] = {
 	U_BOOT_CMD_MKENT(boot, CONFIG_SYS_MAXARGS, 1, do_efi_boot_opt, "", ""),
 	U_BOOT_CMD_MKENT(devices, CONFIG_SYS_MAXARGS, 1, do_efi_show_devices,
 			 "", ""),
@@ -1102,6 +1241,10 @@ static cmd_tbl_t cmd_efidebug_sub[] = {
 	U_BOOT_CMD_MKENT(memmap, CONFIG_SYS_MAXARGS, 1, do_efi_show_memmap,
 			 "", ""),
 	U_BOOT_CMD_MKENT(tables, CONFIG_SYS_MAXARGS, 1, do_efi_show_tables,
+			 "", ""),
+	U_BOOT_CMD_MKENT(test, CONFIG_SYS_MAXARGS, 1, do_efi_test,
+			 "", ""),
+	U_BOOT_CMD_MKENT(query, CONFIG_SYS_MAXARGS, 1, do_efi_query_info,
 			 "", ""),
 };
 
@@ -1118,10 +1261,10 @@ static cmd_tbl_t cmd_efidebug_sub[] = {
  * Implement efidebug command which allows us to display and
  * configure UEFI environment.
  */
-static int do_efidebug(cmd_tbl_t *cmdtp, int flag,
-		       int argc, char * const argv[])
+static int do_efidebug(struct cmd_tbl *cmdtp, int flag,
+		       int argc, char *const argv[])
 {
-	cmd_tbl_t *cp;
+	struct cmd_tbl *cp;
 	efi_status_t r;
 
 	if (argc < 2)
@@ -1172,7 +1315,11 @@ static char efidebug_help_text[] =
 	"efidebug memmap\n"
 	"  - show UEFI memory map\n"
 	"efidebug tables\n"
-	"  - show UEFI configuration tables\n";
+	"  - show UEFI configuration tables\n"
+	"efidebug test bootmgr\n"
+	"  - run simple bootmgr for test\n"
+	"efidebug query [-nv][-bs][-rt][-at]\n"
+	"  - show size of UEFI variables store\n";
 #endif
 
 U_BOOT_CMD(

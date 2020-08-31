@@ -91,6 +91,7 @@ obj-y += dfu/
 obj-$(CONFIG_PCH) += pch/
 obj-y += phy/allwinner/
 obj-y += phy/marvell/
+obj-y += phy/rockchip/
 obj-y += rtc/
 obj-y += scsi/
 obj-y += sound/
@@ -107,7 +108,6 @@ obj-y += reset/
 obj-y += input/
 # SOC specific infrastructure drivers.
 obj-y += smem/
-obj-y += soc/
 obj-y += thermal/
 obj-$(CONFIG_TEE) += tee/
 obj-y += axi/
@@ -119,3 +119,5 @@ obj-$(CONFIG_MACH_PIC32) += ddr/microchip/
 obj-$(CONFIG_DM_HWSPINLOCK) += hwspinlock/
 obj-$(CONFIG_DM_RNG) += rng/
 endif
+
+obj-y += soc/

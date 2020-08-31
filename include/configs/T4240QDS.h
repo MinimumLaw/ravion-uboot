@@ -9,6 +9,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <linux/stringify.h>
+
 #define CONFIG_FSL_SATA_V2
 #define CONFIG_PCIE4
 
@@ -280,6 +282,19 @@ unsigned long get_board_ddr_clk(void);
 #endif
 
 /* I2C */
+#ifndef CONFIG_DM_I2C
+#define CONFIG_SYS_I2C
+#else
+#undef CONFIG_SYS_I2C
+#undef CONFIG_SYS_FSL_I2C2_OFFSET
+#undef CONFIG_SYS_FSL_I2C2_SLAVE
+#undef CONFIG_SYS_FSL_I2C2_SPEED
+#undef CONFIG_SYS_FSL_I2C_SLAVE
+#undef CONFIG_SYS_FSL_I2C_SPEED
+#undef CONFIG_SYS_FSL_I2C_OFFSET
+#endif
+
+#define CONFIG_SYS_I2C_FSL
 #define CONFIG_SYS_FSL_I2C_SPEED	100000	/* I2C speed */
 #define CONFIG_SYS_FSL_I2C2_SPEED	100000	/* I2C2 speed */
 #define I2C_MUX_PCA_ADDR_PRI		0x77 /* I2C bus multiplexer,primary */
@@ -404,9 +419,6 @@ unsigned long get_board_ddr_clk(void);
 #endif /* CONFIG_NOBQFMAN */
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#define CONFIG_PHYLIB_10G
-#define CONFIG_PHY_VITESSE
-#define CONFIG_PHY_TERANETICS
 #define SGMII_CARD_PORT1_PHY_ADDR 0x1C
 #define SGMII_CARD_PORT2_PHY_ADDR 0x1D
 #define SGMII_CARD_PORT3_PHY_ADDR 0x1E

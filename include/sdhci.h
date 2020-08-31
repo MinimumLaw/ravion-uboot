@@ -9,6 +9,7 @@
 #ifndef __SDHCI_HW_H
 #define __SDHCI_HW_H
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 #include <asm/io.h>
 #include <mmc.h>
@@ -243,7 +244,6 @@
 #define SDHCI_QUIRK_BROKEN_HISPD_MODE	BIT(5)
 #define SDHCI_QUIRK_WAIT_SEND_CMD	(1 << 6)
 #define SDHCI_QUIRK_USE_WIDE8		(1 << 8)
-#define SDHCI_QUIRK_NO_1_8_V		(1 << 9)
 
 /* to make gcc happy */
 struct sdhci_host;

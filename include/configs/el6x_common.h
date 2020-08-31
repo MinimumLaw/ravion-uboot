@@ -8,6 +8,8 @@
 #ifndef __EL6Q_COMMON_CONFIG_H
 #define __EL6Q_COMMON_CONFIG_H
 
+#include <linux/stringify.h>
+
 #define CONFIG_BOARD_NAME		EL6Q
 
 #include "mx6_common.h"
@@ -73,10 +75,6 @@
 #include <config_distro_bootcmd.h>
 
 #define CONFIG_ARP_TIMEOUT     200UL
-
-#define CONFIG_SYS_MEMTEST_START       0x10000000
-#define CONFIG_SYS_MEMTEST_END         0x10800000
-#define CONFIG_SYS_MEMTEST_SCRATCH     0x10800000
 
 /* Physical Memory Map */
 #define PHYS_SDRAM                     MMDC0_ARB_BASE_ADDR

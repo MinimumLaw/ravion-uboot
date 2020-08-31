@@ -98,8 +98,6 @@
  * Memory test
  */
 #undef CONFIG_SYS_DRAM_TEST		/* memory test, takes time */
-#define CONFIG_SYS_MEMTEST_START	0x00040000 /* memtest region */
-#define CONFIG_SYS_MEMTEST_END		0x00140000
 
 /*
  * The reserved memory
@@ -305,10 +303,6 @@
  * BOOTP options
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
-
-/*
- * Command line configuration.
- */
 
 #undef CONFIG_WATCHDOG		/* watchdog disabled */
 

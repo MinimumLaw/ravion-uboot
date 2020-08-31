@@ -17,7 +17,6 @@
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
-#define CONFIG_MXC_UART
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 /* SATA Configs */
@@ -28,9 +27,6 @@
 #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 #define CONFIG_LBA48
 #endif
-
-#define CONFIG_SYS_MEMTEST_START	0x10000000
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 500 * SZ_1M)
 
 /* MMC Configuration */
 #define CONFIG_SYS_FSL_USDHC_NUM	2
@@ -110,6 +106,7 @@
 	func(DHCP, dhcp, na)
 
 #include <config_distro_bootcmd.h>
+#include <linux/stringify.h>
 
 /* Physical Memory Map */
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR

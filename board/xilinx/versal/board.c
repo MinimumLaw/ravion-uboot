@@ -6,17 +6,20 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <env.h>
 #include <fdtdec.h>
 #include <init.h>
+#include <log.h>
 #include <malloc.h>
 #include <time.h>
+#include <asm/cache.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <versalpl.h>
-#include <linux/sizes.h>
+#include "../common/board.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -82,9 +85,23 @@ int board_early_init_r(void)
 	return 0;
 }
 
+static u8 versal_get_bootmode(void)
+{
+	u8 bootmode;
+	u32 reg = 0;
+
+	reg = readl(&crp_base->boot_mode_usr);
+
+	if (reg >> BOOT_MODE_ALT_SHIFT)
+		reg >>= BOOT_MODE_ALT_SHIFT;
+
+	bootmode = reg & BOOT_MODES_MASK;
+
+	return bootmode;
+}
+
 int board_late_init(void)
 {
-	u32 reg = 0;
 	u8 bootmode;
 	struct udevice *dev;
 	int bootseq = -1;
@@ -93,19 +110,13 @@ int board_late_init(void)
 	const char *mode;
 	char *new_targets;
 	char *env_targets;
-	ulong initrd_hi;
 
 	if (!(gd->flags & GD_FLG_ENV_DEFAULT)) {
 		debug("Saved variables - Skipping\n");
 		return 0;
 	}
 
-	reg = readl(&crp_base->boot_mode_usr);
-
-	if (reg >> BOOT_MODE_ALT_SHIFT)
-		reg >>= BOOT_MODE_ALT_SHIFT;
-
-	bootmode = reg & BOOT_MODES_MASK;
+	bootmode = versal_get_bootmode();
 
 	puts("Bootmode: ");
 	switch (bootmode) {
@@ -200,13 +211,7 @@ int board_late_init(void)
 
 	env_set("boot_targets", new_targets);
 
-	initrd_hi = gd->start_addr_sp - CONFIG_STACK_SIZE;
-	initrd_hi = round_down(initrd_hi, SZ_16M);
-	env_set_addr("initrd_high", (void *)initrd_hi);
-
-	env_set_hex("script_offset_f", CONFIG_BOOT_SCRIPT_OFFSET);
-
-	return 0;
+	return board_late_init_xilinx();
 }
 
 int dram_init_banksize(void)

@@ -276,7 +276,6 @@ unsigned long get_board_ddr_clk(void);
 #define I2C_MUX_CH_DEFAULT      0x8
 
 /* SPI */
-#if defined(CONFIG_FSL_QSPI) || defined(CONFIG_FSL_DSPI)
 #ifdef CONFIG_FSL_DSPI
 #define CONFIG_SPI_FLASH_STMICRO
 #define CONFIG_SPI_FLASH_SST
@@ -285,8 +284,6 @@ unsigned long get_board_ddr_clk(void);
 
 #ifdef CONFIG_FSL_QSPI
 #define CONFIG_SPI_FLASH_SPANSION
-#define FSL_QSPI_FLASH_SIZE		(1 << 26) /* 64MB */
-#define FSL_QSPI_FLASH_NUM		4
 #endif
 /*
  * Verify QSPI when boot from NAND, QIXIS brdcfg9 need configure.
@@ -294,8 +291,6 @@ unsigned long get_board_ddr_clk(void);
  * If boot from IFCCard NAND, ISO1 = 0, ISO2 = 0, IBOOT = 1
  */
 #define FSL_QIXIS_BRDCFG9_QSPI		0x1
-
-#endif
 
 /*
  * MMC
@@ -479,10 +474,6 @@ unsigned long get_board_ddr_clk(void);
 
 #if defined(CONFIG_FSL_MC_ENET) && !defined(CONFIG_SPL_BUILD)
 #define CONFIG_FSL_MEMAC
-#define CONFIG_PHYLIB_10G
-#define CONFIG_PHY_VITESSE
-#define CONFIG_PHY_REALTEK
-#define CONFIG_PHY_TERANETICS
 #define SGMII_CARD_PORT1_PHY_ADDR 0x1C
 #define SGMII_CARD_PORT2_PHY_ADDR 0x1d
 #define SGMII_CARD_PORT3_PHY_ADDR 0x1E

@@ -19,13 +19,6 @@
 #define GICD_BASE	0xF9010000
 #define GICC_BASE	0xF9020000
 
-#ifndef CONFIG_SYS_MEMTEST_SCRATCH
-# define CONFIG_SYS_MEMTEST_SCRATCH	0x10800000
-#endif
-
-#define CONFIG_SYS_MEMTEST_START	0
-#define CONFIG_SYS_MEMTEST_END		1000
-
 #define CONFIG_SYS_INIT_SP_ADDR		CONFIG_SYS_TEXT_BASE
 
 /* Generic Timer Definitions - setup in EL3. Setup by ATF for other cases */
@@ -37,7 +30,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 0x2000000)
 
 /* Serial setup */
-#define CONFIG_ARM_DCC
 #define CONFIG_CPU_ARMV8
 
 #define CONFIG_SYS_BAUDRATE_TABLE \
@@ -160,7 +152,8 @@
 #define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
 	"bootcmd_" #devtypel #instance "=sf probe " #instance " 0 0 && " \
 		       "sf read $scriptaddr $script_offset_f $script_size_f && " \
-		       "source ${scriptaddr}; echo SCRIPT FAILED: continuing...;\0"
+		       "echo QSPI: Trying to boot script at ${scriptaddr} && " \
+		       "source ${scriptaddr}; echo QSPI: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_QSPI(devtypeu, devtypel, instance) \
 	#devtypel #instance " "
@@ -168,7 +161,8 @@
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"bootcmd_" #devtypel #instance "= nand info && " \
 		       "nand read $scriptaddr $script_offset_f $script_size_f && " \
-		       "source ${scriptaddr}; echo SCRIPT FAILED: continuing...;\0"
+		       "echo NAND: Trying to boot script at ${scriptaddr} && " \
+		       "source ${scriptaddr}; echo NAND: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	#devtypel #instance " "
@@ -176,7 +170,8 @@
 #define BOOT_TARGET_DEVICES_JTAG(func)	func(JTAG, jtag, na)
 
 #define BOOTENV_DEV_JTAG(devtypeu, devtypel, instance) \
-	"bootcmd_jtag=source $scriptaddr; echo SCRIPT FAILED: continuing...;\0"
+	"bootcmd_jtag=echo JTAG: Trying to boot script at ${scriptaddr} && " \
+		"source ${scriptaddr}; echo JTAG: SCRIPT FAILED: continuing...;\0"
 
 #define BOOTENV_DEV_NAME_JTAG(devtypeu, devtypel, instance) \
 	"jtag "
@@ -249,7 +244,6 @@
 #endif
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_DFU)
-# undef CONFIG_CMD_BOOTD
 # define CONFIG_SPL_ENV_SUPPORT
 # define CONFIG_SPL_HASH_SUPPORT
 # define CONFIG_ENV_MAX_ENTRIES	10

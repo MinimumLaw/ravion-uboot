@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <malloc.h>
 #include <remoteproc.h>
 #include <errno.h>
@@ -543,6 +544,7 @@ static int k3_r5f_rproc_configure(struct k3_r5f_core *core)
 {
 	struct k3_r5f_cluster *cluster = core->cluster;
 	u32 set_cfg = 0, clr_cfg = 0, cfg, ctrl, sts;
+	bool lockstep_permitted;
 	u64 boot_vec = 0;
 	int ret;
 
@@ -560,8 +562,9 @@ static int k3_r5f_rproc_configure(struct k3_r5f_core *core)
 		goto out;
 
 	/* Sanity check for Lockstep mode */
-	if (cluster->mode && is_primary_core(core) &&
-	    !(sts & PROC_BOOT_STATUS_FLAG_R5_LOCKSTEP_PERMITTED)) {
+	lockstep_permitted = !!(sts &
+				PROC_BOOT_STATUS_FLAG_R5_LOCKSTEP_PERMITTED);
+	if (cluster->mode && is_primary_core(core) && !lockstep_permitted) {
 		dev_err(core->dev, "LockStep mode not permitted on this device\n");
 		ret = -EINVAL;
 		goto out;
@@ -573,7 +576,7 @@ static int k3_r5f_rproc_configure(struct k3_r5f_core *core)
 		clr_cfg |= PROC_BOOT_CFG_FLAG_R5_TEINIT;
 		if (cluster->mode == CLUSTER_MODE_LOCKSTEP)
 			set_cfg |= PROC_BOOT_CFG_FLAG_R5_LOCKSTEP;
-		else
+		else if (lockstep_permitted)
 			clr_cfg |= PROC_BOOT_CFG_FLAG_R5_LOCKSTEP;
 	}
 
@@ -816,4 +819,5 @@ U_BOOT_DRIVER(k3_r5fss) = {
 	.id = UCLASS_MISC,
 	.probe = k3_r5f_cluster_probe,
 	.priv_auto_alloc_size = sizeof(struct k3_r5f_cluster),
+	.flags = DM_FLAG_DEFAULT_PD_CTRL_OFF,
 };

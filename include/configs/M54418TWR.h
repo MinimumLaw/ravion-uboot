@@ -13,6 +13,8 @@
 #ifndef _M54418TWR_H
 #define _M54418TWR_H
 
+#include <linux/stringify.h>
+
 /*
  * High Level Configuration Options
  * (easy to change)
@@ -178,8 +180,6 @@
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define CONFIG_SYS_SDRAM_SIZE		128	/* SDRAM size in MB */
 
-#define CONFIG_SYS_MEMTEST_START	(CONFIG_SYS_SDRAM_BASE + 0x400)
-#define CONFIG_SYS_MEMTEST_END		((CONFIG_SYS_SDRAM_SIZE - 3) << 20)
 #define CONFIG_SYS_DRAM_TEST
 
 #if defined(CONFIG_CF_SBF) || defined(CONFIG_SYS_NAND_BOOT)

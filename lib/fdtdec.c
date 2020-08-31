@@ -9,7 +9,9 @@
 #include <dm.h>
 #include <hang.h>
 #include <init.h>
+#include <log.h>
 #include <malloc.h>
+#include <net.h>
 #include <dm/of_extra.h>
 #include <env.h>
 #include <errno.h>
@@ -810,17 +812,6 @@ int fdtdec_parse_phandle_with_args(const void *blob, int src_node,
 	return rc;
 }
 
-int fdtdec_get_child_count(const void *blob, int node)
-{
-	int subnode;
-	int num = 0;
-
-	fdt_for_each_subnode(subnode, blob, node)
-		num++;
-
-	return num;
-}
-
 int fdtdec_get_byte_array(const void *blob, int node, const char *prop_name,
 			  u8 *array, int count)
 {
@@ -1311,7 +1302,8 @@ int fdtdec_add_reserved_memory(void *blob, const char *basename,
 			continue;
 		}
 
-		if (addr == carveout->start && (addr + size) == carveout->end) {
+		if (addr == carveout->start && (addr + size - 1) ==
+						carveout->end) {
 			if (phandlep)
 				*phandlep = fdt_get_phandle(blob, node);
 			return 0;
@@ -1433,14 +1425,9 @@ int fdtdec_set_carveout(void *blob, const char *node, const char *prop_name,
 			const struct fdt_memory *carveout)
 {
 	uint32_t phandle;
-	int err, offset;
+	int err, offset, len;
 	fdt32_t value;
-
-	/* XXX implement support for multiple phandles */
-	if (index > 0) {
-		debug("invalid index %u\n", index);
-		return -FDT_ERR_BADOFFSET;
-	}
+	void *prop;
 
 	err = fdtdec_add_reserved_memory(blob, name, carveout, &phandle);
 	if (err < 0) {
@@ -1456,18 +1443,45 @@ int fdtdec_set_carveout(void *blob, const char *node, const char *prop_name,
 
 	value = cpu_to_fdt32(phandle);
 
-	err = fdt_setprop(blob, offset, prop_name, &value, sizeof(value));
+	if (!fdt_getprop(blob, offset, prop_name, &len)) {
+		if (len == -FDT_ERR_NOTFOUND)
+			len = 0;
+		else
+			return len;
+	}
+
+	if ((index + 1) * sizeof(value) > len) {
+		err = fdt_setprop_placeholder(blob, offset, prop_name,
+					      (index + 1) * sizeof(value),
+					      &prop);
+		if (err < 0) {
+			debug("failed to resize reserved memory property: %s\n",
+			      fdt_strerror(err));
+			return err;
+		}
+	}
+
+	err = fdt_setprop_inplace_namelen_partial(blob, offset, prop_name,
+						  strlen(prop_name),
+						  index * sizeof(value),
+						  &value, sizeof(value));
 	if (err < 0) {
-		debug("failed to set %s property for node %s: %d\n", prop_name,
-		      node, err);
+		debug("failed to update %s property for node %s: %s\n",
+		      prop_name, node, fdt_strerror(err));
 		return err;
 	}
 
 	return 0;
 }
 
+__weak int fdtdec_board_setup(const void *fdt_blob)
+{
+	return 0;
+}
+
 int fdtdec_setup(void)
 {
+	int ret;
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 # if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
 	void *fdt_blob;
@@ -1520,7 +1534,10 @@ int fdtdec_setup(void)
 # endif
 #endif
 
-	return fdtdec_prepare_fdt();
+	ret = fdtdec_prepare_fdt();
+	if (!ret)
+		ret = fdtdec_board_setup(gd->fdt_blob);
+	return ret;
 }
 
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
