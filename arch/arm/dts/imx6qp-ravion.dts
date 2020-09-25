@@ -15,11 +15,11 @@
 #include "imx6qdl-ravion.dtsi"
 
 / {
-	model = "ravion:evaltest";
+	model = "ravion:generic";
 	compatible = "ravion,imx6qp", "fsl,imx6qp";
 
 	chosen {
-		stdout-path = &uart1;
+		stdout-path = "serial0:115200n8";
 	};
 
 	gpio-keys {
