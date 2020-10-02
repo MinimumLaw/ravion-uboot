@@ -2,10 +2,10 @@
 # SPDX-License-Identifier:	GPL-2.0+
 
 menuconfig RAVION_CFG_BLOCK
-	bool "Enable Toradex config block support"
+	bool "Enable Ravion config block support"
 	select OF_BOARD_SETUP
 	help
-	  The Toradex config block stored production data on the on-module
+	  The Ravion config block stored production data on the on-module
 	  flash device (NAND, NOR or eMMC). The area is normally preserved by
 	  software and contains the serial number (out of which the MAC
 	  address is generated) and the exact module type.
@@ -19,20 +19,6 @@ config RAVION_HAVE_NAND
 
 config RAVION_HAVE_NOR
 	bool
-
-config RAVION_DISPLAY_KOE
-	bool "KOE display connected to ravion board"
-	help
-	  Build uboot command for KOE display init with
-	  bitbanged SPI 9bits bus on SoDIMM pins 56,63,69,77.
-	  (SCL - 69,MOSI 63, MISO - 69, CS - 77)
-	default y
-
-config RAVION_NEED_RECOVERY
-	bool "Check for recovery boot on ravion board"
-	help
-	  Build uboot command for check recovery boot mode.
-	default y
 
 if RAVION_CFG_BLOCK
 
@@ -52,24 +38,24 @@ config RAVION_CFG_BLOCK_IS_IN_NOR
 	default y
 
 config RAVION_CFG_BLOCK_DEV
-	int "Toradex config block eMMC device ID"
+	int "Ravion config block eMMC device ID"
 	depends on RAVION_CFG_BLOCK_IS_IN_MMC
 
 config RAVION_CFG_BLOCK_PART
-	int "Toradex config block eMMC partition ID"
+	int "Ravion config block eMMC partition ID"
 	depends on RAVION_CFG_BLOCK_IS_IN_MMC
 
 config RAVION_CFG_BLOCK_OFFSET
-	int "Toradex config block offset"
+	int "Ravion config block offset"
 	help
-	  Specify the byte offset of the Toradex config block within the flash
+	  Specify the byte offset of the Ravion config block within the flash
 	  device the config block is stored on.
 
 config RAVION_CFG_BLOCK_OFFSET2
-	int "Toradex config block offset, second instance"
+	int "Ravion config block offset, second instance"
 	default 0
 	help
-	  Specify the byte offset of the 2nd instance of the Toradex config block
+	  Specify the byte offset of the 2nd instance of the Ravion config block
 	  within the flash device the config block is stored on.
 	  Set to 0 on modules which have no 2nd instance.
 

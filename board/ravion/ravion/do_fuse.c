@@ -90,9 +90,12 @@ U_BOOT_CMD(
 	""
 );
 
+#if 0 /* FixMe: We really not wan't fast boot mode ???? */
 U_BOOT_CMD(
 	updt_fuse, 2, 0, do_updt_fuse,
 	"OTP fusing during module update",
 	"updt_fuse [-n] [-y] - boot cfg fast boot mode fusing"
 );
+#endif
+
 #endif /* CONFIG_SPL_BUILD */
