@@ -68,6 +68,14 @@ int spl_start_uboot(void)
 }
 #endif /* CONFIG_SPL_OS_BOOT*/
 
+void board_boot_order(u32 *spl_boot_list)
+{
+	spl_boot_list[0] = BOOT_DEVICE_MMC1;
+	spl_boot_list[1] = BOOT_DEVICE_MMC2;
+	spl_boot_list[2] = BOOT_DEVICE_SATA;
+	spl_boot_list[3] = BOOT_DEVICE_BOARD;
+}
+
 static void ccgr_init(void)
 {
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;

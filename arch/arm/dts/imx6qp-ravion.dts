@@ -13,6 +13,7 @@
 #include <dt-bindings/clock/imx6qdl-clock.h>
 #include "imx6qp.dtsi"
 #include "imx6qdl-ravion.dtsi"
+#include "imx6qp-ravion-u-boot.dtsi"
 
 / {
 	model = "ravion:generic";
