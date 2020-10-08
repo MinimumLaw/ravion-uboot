@@ -98,7 +98,7 @@ int board_late_init(void)
 /*
  * ToDo: Place FDT patches here. Applyed for U-Boot FDT
  */
-int ft_board_setup(void *blob, bd_t *bd)
+int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	return ft_common_board_setup(blob, bd);
 }

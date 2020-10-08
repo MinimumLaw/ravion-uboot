@@ -71,7 +71,8 @@ dtb-$(CONFIG_MACH_S700) += \
 
 dtb-$(CONFIG_ROCKCHIP_PX30) += \
 	px30-evb.dtb \
-	px30-firefly.dtb
+	px30-firefly.dtb \
+	rk3326-odroid-go2.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RK3036) += \
 	rk3036-sdk.dtb
@@ -92,6 +93,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3288) += \
 	rk3288-phycore-rdk.dtb \
 	rk3288-popmetal.dtb \
 	rk3288-rock2-square.dtb \
+	rk3288-rock-pi-n8.dtb \
 	rk3288-tinker.dtb \
 	rk3288-tinker-s.dtb \
 	rk3288-veyron-jerry.dtb \
@@ -134,13 +136,19 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399-puma-haikou.dtb \
 	rk3399-roc-pc.dtb \
 	rk3399-roc-pc-mezzanine.dtb \
-	rk3399-rock-pi-4.dtb \
+	rk3399-rock-pi-4a.dtb \
+	rk3399-rock-pi-4b.dtb \
+	rk3399-rock-pi-4c.dtb \
 	rk3399-rock960.dtb \
-	rk3399-rockpro64.dtb
+	rk3399-rockpro64.dtb \
+	rk3399pro-rock-pi-n10.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RV1108) += \
 	rv1108-elgin-r1.dtb \
 	rv1108-evb.dtb
+
+dtb-$(CONFIG_ARCH_S5P4418) += \
+	s5p4418-nanopi2.dtb
 
 dtb-$(CONFIG_ARCH_MESON) += \
 	meson-gxbb-nanopi-k2.dtb \
@@ -161,6 +169,7 @@ dtb-$(CONFIG_ARCH_MESON) += \
 	meson-g12b-odroid-n2.dtb \
 	meson-g12b-a311d-khadas-vim3.dtb \
 	meson-sm1-khadas-vim3l.dtb \
+	meson-sm1-odroid-c4.dtb \
 	meson-sm1-sei610.dtb
 dtb-$(CONFIG_ARCH_TEGRA) += tegra20-harmony.dtb \
 	tegra20-medcom-wide.dtb \
@@ -210,6 +219,11 @@ dtb-$(CONFIG_ARCH_MVEBU) +=			\
 	armada-8040-db.dtb			\
 	armada-8040-mcbin.dtb			\
 	armada-xp-crs305-1g-4s.dtb		\
+	armada-xp-crs305-1g-4s-bit.dtb		\
+	armada-xp-crs326-24g-2s.dtb		\
+	armada-xp-crs326-24g-2s-bit.dtb		\
+	armada-xp-crs328-4c-20s-4s.dtb		\
+	armada-xp-crs328-4c-20s-4s-bit.dtb	\
 	armada-xp-db-xc3-24g4xg.dtb		\
 	armada-xp-gp.dtb			\
 	armada-xp-maxbcm.dtb			\
@@ -280,6 +294,7 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-mini-emmc1.dtb			\
 	zynqmp-mini-nand.dtb			\
 	zynqmp-mini-qspi.dtb			\
+	zynqmp-topic-miamimp-xilinx-xdp-v1r1.dtb	\
 	zynqmp-zcu100-revC.dtb			\
 	zynqmp-zcu102-revA.dtb			\
 	zynqmp-zcu102-revB.dtb			\
@@ -674,6 +689,7 @@ dtb-y += \
 	imx6q-nitrogen6x.dtb \
 	imx6q-novena.dtb \
 	imx6q-pico.dtb \
+	imx6q-phytec-mira-rdk-nand.dtb \
 	imx6q-sabreauto.dtb \
 	imx6q-sabrelite.dtb \
 	imx6q-sabresd.dtb \
@@ -710,6 +726,7 @@ dtb-$(CONFIG_MX6UL) += \
 dtb-$(CONFIG_MX6ULL) += \
 	imx6ull-14x14-evk.dtb \
 	imx6ull-colibri.dtb \
+	imx6ull-myir-mys-6ulx-eval.dtb \
 	imx6ull-phytec-segin-ff-rdk-emmc.dtb \
 	imx6ull-dart-6ul.dtb \
 	imx6ull-somlabs-visionsom.dtb \
@@ -768,6 +785,7 @@ dtb-$(CONFIG_RCAR_GEN2) += \
 	r8a7794-silk-u-boot.dtb
 
 dtb-$(CONFIG_RCAR_GEN3) += \
+	r8a774a1-beacon-rzg2m-kit.dtb \
 	r8a77950-ulcb-u-boot.dtb \
 	r8a77950-salvator-x-u-boot.dtb \
 	r8a77960-ulcb-u-boot.dtb \
@@ -850,6 +868,17 @@ dtb-$(CONFIG_TARGET_OMAP3_BEAGLE) += \
 dtb-$(CONFIG_TARGET_OMAP3_IGEP00X0) += \
 	omap3-igep0020.dtb
 
+dtb-$(CONFIG_TARGET_OMAP4_PANDA) += \
+	omap4-panda.dtb \
+	omap4-panda-es.dtb
+
+dtb-$(CONFIG_TARGET_OMAP4_SDP4430) += \
+	omap4-sdp.dtb \
+	omap4-sdp-es23plus.dtb
+
+dtb-$(CONFIG_TARGET_OMAP5_UEVM) += \
+	omap5-uevm.dtb
+
 dtb-$(CONFIG_TARGET_SAMA5D2_PTC_EK) += \
 	at91-sama5d2_ptc_ek.dtb
 
@@ -909,6 +938,8 @@ dtb-$(CONFIG_ARCH_BCM68360) += \
 dtb-$(CONFIG_ARCH_BCM6858) += \
 	bcm968580xref.dtb
 
+dtb-$(CONFIG_TARGET_BCMNS3) += ns3-board.dtb
+
 dtb-$(CONFIG_ARCH_ASPEED) += ast2500-evb.dtb
 
 dtb-$(CONFIG_ARCH_STI) += stih410-b2260.dtb
@@ -919,15 +950,21 @@ dtb-$(CONFIG_STM32MP15x) += \
 	stm32mp157c-dk2.dtb \
 	stm32mp157c-ed1.dtb \
 	stm32mp157c-ev1.dtb \
+	stm32mp157c-odyssey.dtb \
+	stm32mp15xx-dhcom-drc02.dtb \
 	stm32mp15xx-dhcom-pdk2.dtb \
 	stm32mp15xx-dhcor-avenger96.dtb
 
 dtb-$(CONFIG_SOC_K3_AM6) += k3-am654-base-board.dtb k3-am654-r5-base-board.dtb
 dtb-$(CONFIG_SOC_K3_J721E) += k3-j721e-common-proc-board.dtb \
-			      k3-j721e-r5-common-proc-board.dtb
+			      k3-j721e-r5-common-proc-board.dtb \
+			      k3-j7200-common-proc-board.dtb \
+			      k3-j7200-r5-common-proc-board.dtb
 
 dtb-$(CONFIG_ARCH_MEDIATEK) += \
 	mt7622-rfb.dtb \
+	mt7623a-unielec-u7623-02-emmc.dtb \
+	mt7622-bananapi-bpi-r64.dtb \
 	mt7623n-bananapi-bpi-r2.dtb \
 	mt7629-rfb.dtb \
 	mt8512-bm1-emmc.dtb \
@@ -945,6 +982,8 @@ dtb-$(CONFIG_TARGET_MX53PPD) += imx53-ppd.dtb
 dtb-$(CONFIG_TARGET_VEXPRESS_CA5X2) += vexpress-v2p-ca5s.dtb
 dtb-$(CONFIG_TARGET_VEXPRESS_CA9X4) += vexpress-v2p-ca9.dtb
 dtb-$(CONFIG_TARGET_VEXPRESS_CA15_TC2) += vexpress-v2p-ca15_a7.dtb
+
+dtb-$(CONFIG_TARGET_TOTAL_COMPUTE) += total_compute.dtb
 
 dtb-$(CONFIG_TARGET_DURIAN) += phytium-durian.dtb
 
