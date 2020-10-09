@@ -172,19 +172,4 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#if defined(CONFIG_ENV_IS_IN_MMC)
-#if 0 /* ENV_OFFSET & ENV_SIZE now in .config */
-/* environment organization */
-#define CONFIG_ENV_SIZE			(8 * 1024)
-/* Environment in eMMC, before config block at the end of 1st "boot sector" */
-#define CONFIG_ENV_OFFSET		(-CONFIG_ENV_SIZE + \
-					 CONFIG_RAVION_CFG_BLOCK_OFFSET)
-#endif
-#define CONFIG_SYS_MMC_ENV_DEV		0
-#define CONFIG_SYS_MMC_ENV_PART		1
-#endif
-
-
-#define CONFIG_CMD_TIME
-
 #endif	/* __CONFIG_H */
