@@ -4,6 +4,23 @@
 
 #include <imx6qdl-u-boot.dtsi> 
 
+/ {
+	chosen {
+		u-boot,dm-pre-reloc;
+		stdout-path = &uart1;
+	};
+
+	wdt-reboot {
+		compatible = "wdt-reboot";
+		wdt = <&wdog1>;
+	};
+
+	clocks {
+		u-boot,dm-spl;
+	}; /* Clocks */
+
+};
+
 /* keep specific devices for SPL */
 
 &uart1	{ u-boot,dm-spl; };	/* Console */
@@ -11,5 +28,10 @@
 &pmic	{ u-boot,dm-spl; };	/* PMIC chip */
 &usdhc3	{ u-boot,dm-spl; };	/* eMMC */
 &usdhc2	{ u-boot,dm-spl; };	/* compat MMC */
+&wdog1	{ u-boot,dm-spl; };	/* WatchDog */
 &sata	{ u-boot,dm-spl; };	/* mSATA */
-&usbotg	{ u-boot,dm-spl; };	/* OTG */
+&usbh1	{ u-boot,dm-spl; };	/* HOST */
+&usbotg	{
+    u-boot,dm-spl;
+    dr_mode ="device";
+};	/* OTG */
