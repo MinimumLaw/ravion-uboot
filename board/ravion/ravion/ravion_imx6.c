@@ -83,13 +83,6 @@ int board_late_init(void)
 	env_set("board_rev", env_str);
 #endif
 
-#ifdef CONFIG_USB
-	usb_init();
-#ifdef CONFIG_USB_STORAGE
-	/* try to recognize storage devices immediately */
-	usb_stor_scan(1);
-#endif
-#endif
 	return 0;
 }
 #endif /* CONFIG_BOARD_LATE_INIT */
