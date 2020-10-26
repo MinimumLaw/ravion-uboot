@@ -111,6 +111,11 @@
 	"check_recovery=echo Boot into recovery mode disabled\0"
 #endif
 
+#define BOOTMENU_BOOTCMD \
+	"bootmenu_0=Normal boot=run bootcmd\0" \
+	"bootmenu_1=Recovery boot=run recovery\0" \
+	"bootmenu_2=TFTP/NFS boot=run tftpboot\0"
+
 #ifdef CONFIG_MX6Q
 #define VARIANT	"variant=qp\0"
 #else
@@ -144,6 +149,7 @@
 	"u-boot-name=u-boot-ravion.imx\0" \
 	UBOOT_UPDATE \
 	RECOVERY_BOOTCMD \
+	BOOTMENU_BOOTCMD \
 	"splashpos=m,m\0" \
 
 /* Miscellaneous configurable options */
