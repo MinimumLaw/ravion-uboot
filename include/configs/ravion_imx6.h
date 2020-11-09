@@ -33,6 +33,8 @@
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	(CONFIG_CMD_SPL_WRITE_SIZE / 512)
 #define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1000 /* 2MB */
 
+#define CONFIG_SYS_USB_FAT_BOOT_PARTITION	1
+
 #endif
 
 #define CONFIG_CMDLINE_TAG
@@ -70,7 +72,9 @@
 	"initrd_high=0xffffffff\0"
 
 #define BLKDEV_BOOTCMD \
-	"blkdevboot=load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
+	"blkdevboot=sysboot ${blkname} ${blkdev} any " \
+	"${script_addr_r} syslinux.conf || " \
+	"load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
 	"source ${script_addr_r}\0" \
 
 #define USB_BOOTCMD \
@@ -97,11 +101,18 @@
 	"setenv blkdev 0:1 && " \
 	"run blkdevboot\0" \
 
-#define UBOOT_UPDATE \
+#define SATA_BOOTCMD \
+	"sataboot=setenv boot_script_file bscript.img; "\
+	"setenv blkname sata; " \
+	"setenv blkdev 0:1; " \
+	"sata init; " \
+	"run blkdevboot\0" \
+
+#define SPL_UPDATE \
 	"bootcmd_mfg=run usbboot\0" \
-	"ubootupdate=if env exists ethaddr; then; else "\
+	"spl-update=if env exists ethaddr; then; else "\
 	"setenv ethaddr 00:14:2d:00:00:00; fi; " \
-	"tftp ${kernel_addr_r} ${serverip}:${u-boot-name} && " \
+	"tftp ${kernel_addr_r} ${serverip}:${spl-file} && " \
 	"setexpr blkcnt ${filesize} + 0x1ff && " \
 	"setexpr blkcnt ${blkcnt} / 0x200 && " \
 	"mmc dev 0 1 && " \
@@ -110,14 +121,10 @@
 	"mmc partconf 0 1 1 0 && " \
 	"mmc rst-function 0 1\0"
 
-#ifdef CONFIG_RAVION_NEED_RECOVERY
-#define RECOVERY_BOOTCMD \
-	"recovery=setenv boot_script_file /boot/rescue.bscript.img\0" \
-	"check_recovery=need_recovery || run recovery\0"
-#else
-#define RECOVERY_BOOTCMD \
-	"check_recovery=echo Boot into recovery mode disabled\0"
-#endif
+#define BOOTMENU_BOOTCMD \
+	"bootmenu_0=Normal boot=run bootcmd\0" \
+	"bootmenu_1=TFTP boot=run tftpboot\0" \
+	"bootmenu_2=NFS boot=run nfsboot\0"
 
 #ifdef CONFIG_MX6Q
 #define VARIANT	"variant=qp\0"
@@ -126,14 +133,13 @@
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"ethaddr=00:14:2d:00:00:00\0" \
 	VARIANT \
-	"board=evaltest\0" \
+	"board=common\0" \
 	"bootcmd=" \
-	    "run check_recovery; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
+	    "run sataboot; " \
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=/boot/bscript.img\0" \
@@ -147,9 +153,10 @@
 	NFS_BOOTCMD \
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
-	"u-boot-name=u-boot-with-spl.imx\0" \
-	UBOOT_UPDATE \
-	RECOVERY_BOOTCMD \
+	SATA_BOOTCMD \
+	BOOTMENU_BOOTCMD \
+	"spl-file=SPL\0" \
+	SPL_UPDATE \
 	"splashpos=m,m\0" \
 
 /* Miscellaneous configurable options */

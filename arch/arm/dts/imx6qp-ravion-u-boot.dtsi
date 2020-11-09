@@ -10,6 +10,14 @@
 		stdout-path = &uart1;
 	};
 
+	soc {
+		u-boot,dm-pre-reloc;
+
+		aips-bus@2100000 {
+			u-boot,dm-pre-reloc;
+		};
+	};
+
 	wdt-reboot {
 		compatible = "wdt-reboot";
 		wdt = <&wdog1>;
@@ -17,21 +25,38 @@
 
 	clocks {
 		u-boot,dm-spl;
+		ckil {	/* 32768 */
+			u-boot,dm-spl;
+		};
+		osc {	/* 24000000 */
+			u-boot,dm-spl;
+		};
 	}; /* Clocks */
-
 };
 
-/* keep specific devices for SPL */
+/* keep specific clocks for SPL */
+&clks	{ u-boot,dm-spl; };
 
+/* keep specific devices for SPL */
+&pinctrl_hog	{ u-boot,dm-spl; };
 &uart1	{ u-boot,dm-spl; };	/* Console */
 &i2c1	{ u-boot,dm-spl; };	/* PMIC interface */
-&pmic	{ u-boot,dm-spl; };	/* PMIC chip */
+&pinctrl_i2c_int	{ u-boot,dm-spl; };
+&pmic { /* PMIC chip */
+	u-boot,dm-spl;
+
+	regulators {
+		u-boot,dm-spl;
+	};
+};
+&pinctrl_pmic	{ u-boot,dm-spl; };
 &usdhc3	{ u-boot,dm-spl; };	/* eMMC */
-&usdhc2	{ u-boot,dm-spl; };	/* compat MMC */
+&pinctrl_emmc	{ u-boot,dm-spl; };
 &wdog1	{ u-boot,dm-spl; };	/* WatchDog */
-&sata	{ u-boot,dm-spl; };	/* mSATA */
 &usbh1	{ u-boot,dm-spl; };	/* HOST */
-&usbotg	{
-    u-boot,dm-spl;
-    dr_mode ="device";
-};	/* OTG */
+&usbotg	{ u-boot,dm-spl; };	/* OTG */
+&usbphy1 { u-boot,dm-spl; };
+&usbphy2 { u-boot,dm-spl; };
+&usbmisc { u-boot,dm-spl; };
+&anatop  { u-boot,dm-spl; };
+&pinctrl_i2c_int	{ u-boot,dm-spl; };

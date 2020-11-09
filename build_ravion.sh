@@ -11,6 +11,6 @@ else
 	make $*
 fi
 
-if [ -f u-boot-with-spl.imx ]; then
-	cp -f u-boot-with-spl.imx /cimc/exporttftp/u-boot-with-spl.imx
+if [ -f SPL ]; then
+	cp -f SPL /cimc/exporttftp/SPL
 fi
