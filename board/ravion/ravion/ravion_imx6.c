@@ -64,19 +64,8 @@ int board_init(void)
 }
 
 #ifdef CONFIG_BOARD_EARLY_INIT_F
-#define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
-	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm |	\
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-
-static iomux_v3_cfg_t const uart1_pads[] = {
-	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-};
-
-
 int board_early_init_f(void)
 {
-	SETUP_IOMUX_PADS(uart1_pads);
 	return 0;
 }
 #endif /* CONFIG_BOARD_EARLY_INIT_F */
@@ -101,13 +90,6 @@ int board_late_init(void)
 	env_set("board_rev", env_str);
 #endif
 
-#ifdef CONFIG_USB
-	usb_init();
-#ifdef CONFIG_USB_STORAGE
-	/* try to recognize storage devices immediately */
-	usb_stor_scan(1);
-#endif
-#endif
 	return 0;
 }
 #endif /* CONFIG_BOARD_LATE_INIT */

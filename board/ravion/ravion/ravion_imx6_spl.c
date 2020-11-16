@@ -38,6 +38,8 @@
 #include "ravion_qp_2048.h"
 #include "ravion_dl_2048.h"
 
+#define KITSBIMX6_BUILD
+
 void reset_cpu(ulong addr)
 {
 }
@@ -45,41 +47,12 @@ void reset_cpu(ulong addr)
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | \
 	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-#if 0 /* FixMe: _MUST_ be removed later */
-#define MMC_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
-	PAD_CTL_SPEED_HIGH | PAD_CTL_DSE_40ohm |\
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-#define I2C_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
-	PAD_CTL_SPEED_HIGH | PAD_CTL_DSE_40ohm |\
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-#define GPI_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
-	PAD_CTL_SPEED_LOW | PAD_CTL_DSE_40ohm |	\
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-#endif /* FixMe: _MUST_ be removed later */
 
 static iomux_v3_cfg_t const ravion_pads[] = {
 	/* UART */
 	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-#if 0 /* FixMe: _MUST_ be removed later */
-	/* I2C (internal) */
-	MX6_PAD_EIM_D17__I2C3_SCL	| MUX_PAD_CTRL(I2C_PAD_CTRL),
-	MX6_PAD_EIM_D18__I2C3_SDA	| MUX_PAD_CTRL(I2C_PAD_CTRL),
-	/* Power switch */
-	MX6_PAD_NANDF_D7__GPIO2_IO07	| MUX_PAD_CTRL(GPI_PAD_CTRL),
-	/* eMMC */
-	MX6_PAD_SD3_CLK__SD3_CLK	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_CMD__SD3_CMD	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT0__SD3_DATA0	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT1__SD3_DATA1	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT2__SD3_DATA2	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT3__SD3_DATA3	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT4__SD3_DATA4	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT5__SD3_DATA5	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT6__SD3_DATA6	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_DAT7__SD3_DATA7	| MUX_PAD_CTRL(MMC_PAD_CTRL),
-	MX6_PAD_SD3_RST__SD3_RESET	| MUX_PAD_CTRL(UART_PAD_CTRL),
-#endif /* FixMe: _MUST_ be removed later */
+	/* PWRBTN */
 };
 
 int board_early_init_f(void)
@@ -102,15 +75,20 @@ int spl_start_uboot(void)
 {
 	struct gpio_desc pwrbtn_gpio;
 	int ret = SPL_LOAD_UBOOT;
-	printf("Need legacy boot mode?\n");
 
-
+#ifdef KITSBIMX6_BUILD
 	ret = dm_gpio_lookup_name("GPIO2_8", &pwrbtn_gpio);
 	if (ret) {
 		printf("GPIO2_8 lookup failed (%d)!\n", ret);
 		return SPL_LOAD_UBOOT;
 	}
-
+#else
+	ret = dm_gpio_lookup_name("GPIO2_7", &pwrbtn_gpio);
+	if (ret) {
+		printf("GPIO2_7 lookup failed (%d)!\n", ret);
+		return SPL_LOAD_UBOOT;
+	}
+#endif
 	ret = dm_gpio_request(&pwrbtn_gpio, "PWRBTN");
 	if(ret) {
 		printf("PWRBTN request failed (%d)!\n", ret);
@@ -124,20 +102,13 @@ int spl_start_uboot(void)
 		printf("PWRBTN get value failed (%d)!\n", ret);
 		return SPL_LOAD_UBOOT;
 	};
-	printf("Power button %d\n", ret);
-	/*
-	 * FixMe: if (!is_pwr_btn()) ret = SPL_LOAD_SYSTEM;
-	 */
+
+	/* Power button pulled UP, unpressed read "1", pressed "0" */
+	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
 	printf(ret == SPL_LOAD_SYSTEM ? "No, T-50 mode started...\n" : "Yes, tortoise mode started...");
 	return !!ret;
 }
 #endif /* CONFIG_SPL_OS_BOOT*/
-
-/* #define PWRBTN_GPIO	IMX_GPIO_NR(2, 8)
-	gpio_request(PWRBTN_GPIO, "power button");
-	gpio_direction_input(PWRBTN_GPIO);
-	ret = gpio_get_value(PWRBTN_GPIO);
-	printf("Power button %d\n", ret); */
 
 void board_boot_order(u32 *spl_boot_list)
 {
