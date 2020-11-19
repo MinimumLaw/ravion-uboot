@@ -28,9 +28,8 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC3_BASE_ADDR
 
 /* Falcon Mode - MMC support: args@1MB kernel@2MB */
-#define CONFIG_CMD_SPL_WRITE_SIZE	(128 * SZ_1K)
-#define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x0800 /* 1MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	(CONFIG_CMD_SPL_WRITE_SIZE / 512)
+#define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x0800 /* 1MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1000 /* 2MB */
 
 #define CONFIG_SYS_USB_FAT_BOOT_PARTITION	1
@@ -60,8 +59,6 @@
 #define CONFIG_NETMASK			255.255.255.0
 #undef CONFIG_SERVERIP
 #define CONFIG_SERVERIP			192.168.5.254
-
-#define CONFIG_LOADADDR			0x12000000
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"kernel_addr_r=0x11000000\0" \
@@ -124,7 +121,6 @@
 #define BOOTMENU_BOOTCMD \
 	"bootmenu_0=Normal boot=run bootcmd\0" \
 	"bootmenu_1=TFTP boot=run tftpboot\0" \
-	"bootmenu_2=NFS boot=run nfsboot\0"
 
 #ifdef CONFIG_MX6Q
 #define VARIANT	"variant=qp\0"

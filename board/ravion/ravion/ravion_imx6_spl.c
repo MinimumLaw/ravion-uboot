@@ -76,6 +76,15 @@ int spl_start_uboot(void)
 	struct gpio_desc pwrbtn_gpio;
 	int ret = SPL_LOAD_UBOOT;
 
+#ifdef CONFIG_SPL_ENV_SUPPORT
+	env_init();
+	env_load();
+	if (env_get_yesno("boot_os") != 1) {
+		printf("Enverooment disable T50 boot mode!\n");
+		return SPL_LOAD_UBOOT;
+	}
+#endif
+
 #ifdef KITSBIMX6_BUILD
 	ret = dm_gpio_lookup_name("GPIO2_8", &pwrbtn_gpio);
 	if (ret) {
@@ -105,7 +114,8 @@ int spl_start_uboot(void)
 
 	/* Power button pulled UP, unpressed read "1", pressed "0" */
 	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
-	printf(ret == SPL_LOAD_SYSTEM ? "No, T-50 mode started...\n" : "Yes, tortoise mode started...");
+	printf(ret == SPL_LOAD_SYSTEM ? "Nice, T-50 mode started...\n" : "OK, tortoise mode started...\n");
+
 	return !!ret;
 }
 #endif /* CONFIG_SPL_OS_BOOT*/

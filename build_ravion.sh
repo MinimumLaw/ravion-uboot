@@ -14,3 +14,7 @@ fi
 if [ -f SPL ]; then
 	cp -f SPL /cimc/exporttftp/SPL
 fi
+
+if [ -f u-boot-dtb.img ]; then
+	sudo cp -f u-boot-dtb.img /cimc/root/colibri-imx6/boot/
+fi
