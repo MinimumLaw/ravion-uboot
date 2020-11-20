@@ -3,7 +3,6 @@
 
 menuconfig RAVION_CFG_BLOCK
 	bool "Enable Ravion config block support"
-	select OF_BOARD_SETUP
 	help
 	  The Ravion config block stored production data on the on-module
 	  flash device (NAND, NOR or eMMC). The area is normally preserved by

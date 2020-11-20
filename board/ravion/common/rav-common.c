@@ -8,6 +8,7 @@
 #include <common.h>
 #include <g_dnl.h>
 #include <linux/libfdt.h>
+#include <init.h>
 #include <env.h>
 
 #include "rav-cfg-block.h"
@@ -19,58 +20,24 @@
 static char rav_serial_str[9];
 static char rav_board_rev_str[6];
 
-#warning ToDo: Serial and Revision Tags MUST be applyed for board, not for CPU module
-
-#ifdef CONFIG_REVISION_TAG
-u32 get_board_rev(void)
-{
-	/* Check validity */
-	if (!rav_hw_tag.ver_major)
-		return 0;
-
-	return ((rav_hw_tag.ver_major & 0xff) << 8) |
-		((rav_hw_tag.ver_minor & 0xf) << 4) |
-		((rav_hw_tag.ver_assembly & 0xf) + 0xa);
-}
-#endif /* CONFIG_REVISION_TAG */
-
-#ifdef CONFIG_SERIAL_TAG
-void get_board_serial(struct tag_serialnr *serialnr)
-{
-	int array[8];
-	unsigned int serial = rav_serial;
-	int i;
-
-	serialnr->low = 0;
-	serialnr->high = 0;
-
-	/* Check validity */
-	if (serial) {
-		/*
-		 * Convert to Linux serial number format (hexadecimal coded
-		 * decimal)
-		 */
-		i = 7;
-		while (serial) {
-			array[i--] = serial % 10;
-			serial /= 10;
-		}
-		while (i >= 0)
-			array[i--] = 0;
-		serial = array[0];
-		for (i = 1; i < 8; i++) {
-			serial *= 16;
-			serial += array[i];
-		}
-
-		serialnr->low = serial;
-	}
-}
-#endif /* CONFIG_SERIAL_TAG */
-
-#if defined(CONFIG_OF_LIBFDT)
+#if defined(CONFIG_OF_LIBFDT) || defined(CONFIG_SPL_OF_LIBFDT)
 int ft_common_board_setup(void *blob, struct bd_info *bd)
 {
+	printf("SPL/U-BOOT FDT patch start.\n");
+	/* ToDo: need setup:
+	    {
+		ravion,serial-number; string: done;
+		ravion,product-id; string: done;
+		ravion,board-rev; string: done;
+
+		chosen {
+			bootards; string
+		};
+
+		fec {
+			local-mac-address; 6 byte array
+		};
+	 */
 	if (rav_serial) {
 		fdt_setprop(blob, 0, "ravion,serial-number", rav_serial_str,
 			    strlen(rav_serial_str) + 1);
@@ -85,10 +52,11 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 		fdt_setprop(blob, 0, "ravion,board-rev", rav_board_rev_str,
 			    strlen(rav_board_rev_str) + 1);
 	}
+	printf("SPL/U-BOOT FDT patch end.\n");
 
 	return 0;
 }
-#endif
+#endif /* CONFIG_OF_LIBFDT */
 
 int show_board_info(void)
 {
@@ -124,22 +92,8 @@ int show_board_info(void)
 
 #else /* CONFIG_RAVION_CFG_BLOCK */
 
-#ifdef CONFIG_REVISION_TAG
-u32 get_board_rev(void)
-{
-	return 0;
-}
-#endif /* CONFIG_REVISION_TAG */
-
-#ifdef CONFIG_SERIAL_TAG
-u32 get_board_serial(void)
-{
-	return 0;
-}
-#endif /* CONFIG_SERIAL_TAG */
-
-#if defined(CONFIG_OF_LIBFDT)
-int ft_common_board_setup(void *blob, bd_t *bd)
+#if defined(CONFIG_OF_LIBFDT) || defined(CONFIG_SPL_OF_LIBFDT)
+int ft_common_board_setup(void *blob, struct bd_info *bd)
 {
 	return 0;
 }

@@ -8,9 +8,6 @@
 #ifndef _RAVION_COMMON_H
 #define _RAVION_COMMON_H
 
-#define TORADEX_USB_PRODUCT_NUM_OFFSET	0x4000
-#define RAVION_USB_VID			0x1B67
-
 int ft_common_board_setup(void *blob, struct bd_info *bd);
 
 #endif /* _RAVION_COMMON_H */

@@ -544,7 +544,6 @@ config TARGET_PFLA02
 config TARGET_RAVION_IMX6
 	bool "OAO Radioavionica Ravion200 iMX6 QuadPlus/DualLite module"
 	depends on MX6Q || MX6QDL
-	select BOARD_LATE_INIT
 	select DM
 	select DM_GPIO
 	select DM_I2C

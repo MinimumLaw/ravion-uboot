@@ -24,6 +24,7 @@
 #include <asm/mach-imx/video.h>
 #include <asm/io.h>
 #include <dm/platdata.h>
+#include <init.h>
 #include <input.h>
 #include <imx_thermal.h>
 #include <linux/errno.h>
@@ -42,88 +43,17 @@ int dram_init(void)
 	/* use the DDR controllers configured size */
 	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
 				    (ulong)imx_ddr_size());
-
 	return 0;
-}
-
-/*
- * Do not overwrite the console
- * Use always serial for U-Boot console
- */
-int overwrite_console(void)
-{
-	return 1;
 }
 
 int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
-
-	return 0;
-}
-
-#ifdef CONFIG_BOARD_EARLY_INIT_F
-int board_early_init_f(void)
-{
-	return 0;
-}
-#endif /* CONFIG_BOARD_EARLY_INIT_F */
-
-#ifdef CONFIG_BOARD_LATE_INIT
-int board_late_init(void)
-{
-#ifdef CONFIG_FEC_MXC
-	/* enable FEC clock */
+#ifdef CONFIG_FEC_MXC /* enable FEC clock */
 	struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	enable_fec_anatop_clock(0, ENET_50MHZ);
 	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_ENET_CLK_SEL_MASK);
 #endif /* CONFIG_FEC_MXC */
-
-#if defined(CONFIG_REVISION_TAG) && \
-    defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
-	char env_str[256];
-	u32 rev;
-
-	rev = get_board_rev();
-	snprintf(env_str, ARRAY_SIZE(env_str), "%.4x", rev);
-	env_set("board_rev", env_str);
-#endif
-
 	return 0;
 }
-#endif /* CONFIG_BOARD_LATE_INIT */
-
-#if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
-/*
- * ToDo: Place FDT patches here. Applyed for U-Boot FDT
- */
-int ft_board_setup(void *blob, struct bd_info *bd)
-{
-	return ft_common_board_setup(blob, bd);
-}
-#endif
-
-int misc_init_r(void)
-{
-#ifdef CONFIG_CMD_BMODE
-	/* no need fixup plaftorm bootmodes */
-	add_board_boot_modes(NULL);
-#endif
-	return 0;
-}
-
-#ifdef CONFIG_MULTI_DTB_FIT
-int board_fit_config_name_match(const char *name)
-{
-	if (is_mx6dq()) {
-		if (!strcmp(name, "imx6qp-ravion"))
-			return 0;
-	} else if (is_mx6dl()) {
-		if (!strcmp(name, "imx6dl-ravion"))
-			return 0;
-	}
-
-	return -1;
-}
-#endif

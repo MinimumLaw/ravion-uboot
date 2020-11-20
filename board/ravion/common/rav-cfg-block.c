@@ -52,9 +52,9 @@ u32 rav_serial;
 
 const char * const ravion_modules[] = {
 	 [0] = "UNKNOWN MODULE",
-	 [1] = "Ravion-v2 iMX6 QuadPlus 2GB IT",
-	 [2] = "Ravion-v2 iMX6 DualLite 2GB IT",
-	 [3] = "Ravion-v2 iMX6 DualLite 512MB IT",
+	 [1] = "Ravion-v2 iMX6 QuadPlus 2Gb IT",
+	 [2] = "Ravion-v2 iMX6 DualLite 2Gb IT",
+	 [3] = "Ravion-v2 iMX6 DualLite 512Mb IT",
 };
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC
