@@ -4,8 +4,8 @@
 # Common for all Toradex modules
 ifeq ($(CONFIG_SPL_BUILD),y)
 # Necessary to create built-in.o
-obj- := __dummy__.o
+obj-$(CONFIG_RAVION_CFG_BLOCK) += spl-cfg-block.o
 else
 obj-$(CONFIG_RAVION_CFG_BLOCK) += rav-cfg-block.o
-obj-y += rav-common.o
 endif
+obj-y += rav-common.o

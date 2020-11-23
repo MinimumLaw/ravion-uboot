@@ -23,21 +23,30 @@ static char rav_board_rev_str[6];
 #if defined(CONFIG_OF_LIBFDT) || defined(CONFIG_SPL_OF_LIBFDT)
 int ft_common_board_setup(void *blob, struct bd_info *bd)
 {
-	printf("SPL/U-BOOT FDT patch start.\n");
-	/* ToDo: need setup:
-	    {
-		ravion,serial-number; string: done;
-		ravion,product-id; string: done;
-		ravion,board-rev; string: done;
+	int node;
+	char *bootargs;
+	char *board;
+	debug("SPL/U-BOOT FDT patch start.\n");
 
-		chosen {
-			bootards; string
-		};
+	bootargs = env_get("bootargs");
+	if (bootargs) {
+	    debug("bootargs set to %s\n", bootargs);
+	    node = fdt_find_or_add_subnode(blob, 0, "chosen");
+	    if (node > 0) {
+		fdt_setprop_string(blob, node, "bootargs", bootargs);
+	    };
+	} else {
+	    printf("bootargs enverooment not set\n");
+	};
 
-		fec {
-			local-mac-address; 6 byte array
-		};
-	 */
+	node = fdt_node_offset_by_compatible(blob, 0, "fsl,imx6q-fec");
+	if (node > 0) {
+		if ( fdt_setprop(blob, node, "local-mac-address", &rav_eth_addr, 6) )
+			printf("Ethernet MAC-address not set!\n");
+	} else {
+		printf("FEC node not found in device-tree!\n");
+	};
+
 	if (rav_serial) {
 		fdt_setprop(blob, 0, "ravion,serial-number", rav_serial_str,
 			    strlen(rav_serial_str) + 1);
@@ -52,7 +61,12 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 		fdt_setprop(blob, 0, "ravion,board-rev", rav_board_rev_str,
 			    strlen(rav_board_rev_str) + 1);
 	}
-	printf("SPL/U-BOOT FDT patch end.\n");
+
+	board = env_get("board");
+	if (board)
+		fdt_setprop_string(blob, 0, "ravion,board", board);
+
+	debug("SPL/U-BOOT FDT patch end.\n");
 
 	return 0;
 }

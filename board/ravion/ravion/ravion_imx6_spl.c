@@ -39,13 +39,7 @@
 #include "ravion_qp_2048.h"
 #include "ravion_dl_2048.h"
 
-#define KITSBIMX6_BUILD
-
-#ifdef KITSBIMX6_BUILD
-#define PWRBTN_GPIO "GPIO2_8"
-#else
-#define PWRBTN_GPIO "GPIO2_7"
-#endif
+#include "../common/rav-cfg-block.h"
 
 #ifdef CONFIG_SPL_OS_BOOT
 #define SPL_LOAD_SYSTEM	0
@@ -54,13 +48,25 @@
 /* called BEFORE load system */
 void spl_board_prepare_for_linux(void)
 {
-	printf("T-50 mode: load system...\n");
+    int ret;
+
+    show_board_info();
+    ret = ft_common_board_setup(CONFIG_SYS_SPL_ARGS_ADDR, NULL);
+    if(ret) {
+	printf("SPL: Device-tree fixup failed.\n");
+    };
+    printf("Falcon mode: load system...\n");
 }
+
+static const char PBTNGPIO_KITSB[] = "GPIO2_8";
+static const char PBTNGPIO_OTHER[] = "GPIO2_7";
 
 int spl_start_uboot(void)
 {
+	const char* pwr_gpio;
 	struct gpio_desc pwrbtn_gpio;
 	int ret = SPL_LOAD_UBOOT;
+	char *board = env_get("board");
 
 #ifdef CONFIG_SPL_ENV_SUPPORT
 	env_init();
@@ -71,7 +77,15 @@ int spl_start_uboot(void)
 	}
 #endif
 
-	ret = dm_gpio_lookup_name(PWRBTN_GPIO, &pwrbtn_gpio);
+	if (board) {
+	    if(!strncmp(board,"kitsbimx6", 9))
+		pwr_gpio = PBTNGPIO_OTHER;
+	    else
+		pwr_gpio = PBTNGPIO_KITSB;
+	} else
+	    pwr_gpio = PBTNGPIO_KITSB;
+
+	ret = dm_gpio_lookup_name(pwr_gpio, &pwrbtn_gpio);
 	if (ret) {
 		printf("Power button GPIO lookup failed (%d)!\n", ret);
 		return SPL_LOAD_UBOOT;
@@ -93,7 +107,7 @@ int spl_start_uboot(void)
 
 	/* Power button pulled UP, unpressed read "1", pressed "0" */
 	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
-	printf(ret == SPL_LOAD_SYSTEM ? "Nice, T-50 mode started...\n" : "OK, tortoise mode started...\n");
+	printf(ret == SPL_LOAD_SYSTEM ? "Falcon mode started...\n" : "Tortoise mode started...\n");
 
 	return !!ret;
 }
