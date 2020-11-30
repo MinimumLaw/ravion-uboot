@@ -48,14 +48,11 @@
 /* called BEFORE load system */
 void spl_board_prepare_for_linux(void)
 {
-    int ret;
-
     show_board_info();
-    ret = ft_common_board_setup(CONFIG_SYS_SPL_ARGS_ADDR, NULL);
-    if(ret) {
+    if (ft_common_board_setup((void *)CONFIG_SYS_SPL_ARGS_ADDR, NULL)) {
 	printf("SPL: Device-tree fixup failed.\n");
     };
-    printf("Falcon mode: load system...\n");
+    debug("Falcon mode: load system...\n");
 }
 
 static const char PBTNGPIO_KITSB[] = "GPIO2_8";
@@ -72,7 +69,7 @@ int spl_start_uboot(void)
 	env_init();
 	env_load();
 	if (env_get_yesno("boot_os") != 1) {
-		printf("Enverooment disable T50 boot mode!\n");
+		printf("Falcon bootmode not allowed by environment!\n");
 		return SPL_LOAD_UBOOT;
 	}
 #endif
@@ -107,7 +104,7 @@ int spl_start_uboot(void)
 
 	/* Power button pulled UP, unpressed read "1", pressed "0" */
 	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
-	printf(ret == SPL_LOAD_SYSTEM ? "Falcon mode started...\n" : "Tortoise mode started...\n");
+	debug(ret == SPL_LOAD_SYSTEM ? "Falcon mode\n" : "Tortoise mode\n");
 
 	return !!ret;
 }

@@ -178,10 +178,3 @@ out:
 	free(config_block);
 	return ret;
 }
-
-/*
- * ToDo: Build fixme
- */
-void checkboard(void)
-{
-}

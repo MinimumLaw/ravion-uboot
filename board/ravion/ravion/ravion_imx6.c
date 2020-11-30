@@ -38,6 +38,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	return ft_common_board_setup(blob, bd);
+}
+#endif
+
 int dram_init(void)
 {
 	/* use the DDR controllers configured size */

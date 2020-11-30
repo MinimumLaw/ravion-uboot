@@ -10,6 +10,7 @@
 #include <linux/libfdt.h>
 #include <init.h>
 #include <env.h>
+#include <fdt_support.h>
 
 #include "rav-cfg-block.h"
 #include <asm/setup.h>
@@ -74,12 +75,11 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 
 int show_board_info(void)
 {
-	unsigned char ethaddr[6];
-
+	/* check config bloack present and valid */
 	if (read_rav_cfg_block()) {
-		printf("Missing Ravion config block\n");
-		checkboard();
-		return 0;
+		printf( "No config block found!\n"
+			"Module personalisation required!\n");
+		return -1;
 	}
 
 	/* board serial-number */
@@ -89,13 +89,10 @@ int show_board_info(void)
 		rav_hw_tag.ver_minor,
 		(char)rav_hw_tag.ver_assembly + 'A');
 
-	/*
-	 * Check if environment contains a valid MAC address,
-	 * set the one from config block if not
-	 */
-	if (!eth_env_get_enetaddr("ethaddr", ethaddr))
-		eth_env_set_enetaddr("ethaddr", (u8 *)&rav_eth_addr);
+	/* Environment ethaddress setup */
+	eth_env_set_enetaddr("ethaddr", (u8 *)&rav_eth_addr);
 
+	/* Show board label */
 	printf("Model: %s %s, Serial# %s\n",
 	       ravion_modules[rav_hw_tag.prodid],
 	       rav_board_rev_str,
@@ -116,7 +113,7 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 int show_board_info(void)
 {
 	printf("Bootloader not report board info!\n");
-	return 0;
+	return -1;
 }
 
 #endif /* CONFIG_RAVION_CFG_BLOCK */
