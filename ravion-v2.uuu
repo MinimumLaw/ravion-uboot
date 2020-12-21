@@ -6,6 +6,8 @@ uuu_version 1.2.135
 #   And files required for Falcon Mode working
 ##############################################
 SDP: boot -f SPL
+# First - write SPL into OCRAM_2/OCRAM_3 sectors
+SDPV: write -f SPL -addr 0x940000
 SDPV: write -f u-boot-dtb.img -addr 0x177fffc0
 SDPV: jump -addr 0x177fffc0
 SDPV: done

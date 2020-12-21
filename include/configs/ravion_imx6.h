@@ -53,9 +53,10 @@
 #define CONFIG_MXC_USB_PORTSC          (PORT_PTS_UTMI | PORT_PTS_PTW)
 
 #undef CONFIG_IPADDR
+#undef CONFIG_NETMASK
+#undef CONFIG_SERVERIP
 #define CONFIG_IPADDR			192.168.5.101
 #define CONFIG_NETMASK			255.255.255.0
-#undef CONFIG_SERVERIP
 #define CONFIG_SERVERIP			192.168.5.254
 
 #define MEM_LAYOUT_ENV_SETTINGS \
@@ -67,25 +68,20 @@
 	"initrd_high=0xffffffff\0"
 
 #define BLKDEV_BOOTCMD \
-	"blkdevboot=sysboot ${blkname} ${blkdev} any " \
-	"${script_addr_r} syslinux.conf || " \
-	"load ${blkname} ${blkdev} ${script_addr_r} ${boot_script_file} && " \
-	"source ${script_addr_r}\0" \
+	"_blkdevboot=sysboot ${blkname} ${blkdev} any " \
+	"${script_addr_r} syslinux.conf\0" \
+	"_scriptboot=load ${blkname} ${blkdev} ${script_addr_r} " \
+	"${boot_script_file} && source ${script_addr_r}\0" \
 
 #define USB_BOOTCMD \
 	"usbboot=setenv blkname usb && " \
 	"setenv blkdev 0:1 && " \
-	"run blkdevboot\0" \
+	"run _blkdevboot; run _scriptboot\0" \
 
 #define SD_BOOTCMD \
 	"sdboot=setenv blkname mmc && " \
 	"setenv blkdev 1:1 && " \
-	"run blkdevboot\0" \
-
-#define NFS_BOOTCMD \
-	"nfsboot=nfs ${script_addr_r} " \
-	"${serverip}:${server_path}${boot_script_file} && " \
-	"source ${script_addr_r}\0" \
+	"run _blkdevboot\0" \
 
 #define TFTP_BOOTCMD \
 	"tftpboot=tftp ${script_addr_r} ${serverip}:${boot_script_file} && " \
@@ -94,31 +90,31 @@
 #define EMMC_BOOTCMD \
 	"emmcboot=setenv blkname mmc && " \
 	"setenv blkdev 0:1 && " \
-	"run blkdevboot\0" \
+	"run _blkdevboot\0" \
 
 #define SATA_BOOTCMD \
 	"sataboot=setenv boot_script_file bscript.img; "\
 	"setenv blkname sata; " \
 	"setenv blkdev 0:1; " \
 	"sata init; " \
-	"run blkdevboot\0" \
+	"run _blkdevboot\0" \
 
 #define SPL_UPDATE \
-	"bootcmd_mfg=run usbboot\0" \
-	"spl-update=if env exists ethaddr; then; else "\
-	"setenv ethaddr 00:14:2d:00:00:00; fi; " \
-	"tftp ${kernel_addr_r} ${serverip}:${spl-file} && " \
-	"setexpr blkcnt ${filesize} + 0x1ff && " \
-	"setexpr blkcnt ${blkcnt} / 0x200 && " \
+	"prepare_module=mfgr_fuse; " \
 	"mmc dev 0 1 && " \
-	"mmc write ${kernel_addr_r} 2 ${blkcnt} && " \
+	"mmc write 0x00940000 2 100 && " \
 	"mmc bootbus 0 2 0 1 && " \
 	"mmc partconf 0 1 1 0 && " \
-	"mmc rst-function 0 1\0"
+	"mmc rst-function 0 1 && " \
+	"mmc dev 0 0 && "\
+	"cfgblock create\0"
 
 #define BOOTMENU_BOOTCMD \
 	"bootmenu_0=Normal boot=run bootcmd\0" \
 	"bootmenu_1=TFTP boot=run tftpboot\0" \
+	"bootmenu_2=eMMC as USB Storage=ums 0 mmc 0\0" \
+	"bootmenu_3=SATA as USB Storage=sata init; ums 0 sata 0\0" \
+	"bootmenu_4=Personalise module interactive=run prepare_module\0" \
 
 #ifdef CONFIG_MX6Q
 #define VARIANT	"variant=qp\0"
@@ -127,8 +123,11 @@
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	VARIANT \
-	"board=common\0" \
+	"__INF0__=Ravion-V2 I.MX6 CPU Module BSP package\0" \
+	"__INF1__=Created: Alex A. Mihaylov AKA MinimumLaw, MinimumLaw@Rambler.Ru\0" \
+	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2020\0" \
+	"__INF3__=License: GPL v2 and above, https://github.com/MinimumLaw\0" \
+	"board=kitsbimx6\0" \
 	"bootcmd=" \
 	    "run usbboot; " \
 	    "run sdboot; " \
@@ -137,19 +136,16 @@
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=/boot/bscript.img\0" \
-	"debug=setenv bootargs \"${bootargs} ${defargs} " \
-	    "console=tty0 console=${console},${baudrate}n8 \"; " \
-	    "printenv bootargs\0" \
+	"board_name=\0" \
+	VARIANT \
 	MEM_LAYOUT_ENV_SETTINGS \
 	BLKDEV_BOOTCMD \
 	USB_BOOTCMD \
 	SD_BOOTCMD \
-	NFS_BOOTCMD \
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
 	SATA_BOOTCMD \
 	BOOTMENU_BOOTCMD \
-	"spl-file=SPL\0" \
 	SPL_UPDATE \
 	"splashpos=m,m\0" \
 

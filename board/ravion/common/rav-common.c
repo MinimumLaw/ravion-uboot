@@ -79,7 +79,7 @@ int show_board_info(void)
 	if (read_rav_cfg_block()) {
 		printf( "No config block found!\n"
 			"Module personalisation required!\n");
-		return -1;
+		return 0; /* Return 0 - no block personalisation process */
 	}
 
 	/* board serial-number */

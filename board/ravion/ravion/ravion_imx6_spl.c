@@ -76,9 +76,9 @@ int spl_start_uboot(void)
 
 	if (board) {
 	    if(!strncmp(board,"kitsbimx6", 9))
-		pwr_gpio = PBTNGPIO_OTHER;
-	    else
 		pwr_gpio = PBTNGPIO_KITSB;
+	    else
+		pwr_gpio = PBTNGPIO_OTHER;
 	} else
 	    pwr_gpio = PBTNGPIO_KITSB;
 
