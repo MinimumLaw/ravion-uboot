@@ -63,7 +63,7 @@ int spl_start_uboot(void)
 	const char* pwr_gpio;
 	struct gpio_desc pwrbtn_gpio;
 	int ret = SPL_LOAD_UBOOT;
-	char *board = env_get("board");
+	char *board = NULL;
 
 #ifdef CONFIG_SPL_ENV_SUPPORT
 	env_init();
@@ -72,9 +72,8 @@ int spl_start_uboot(void)
 		printf("Falcon bootmode not allowed by environment!\n");
 		return SPL_LOAD_UBOOT;
 	}
-#endif
 
-	if (board) {
+	if (board = env_get("board")) {
 	    if(!strncmp(board,"kitsbimx6", 9))
 		pwr_gpio = PBTNGPIO_KITSB;
 	    else
@@ -105,6 +104,7 @@ int spl_start_uboot(void)
 	/* Power button pulled UP, unpressed read "1", pressed "0" */
 	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
 	debug(ret == SPL_LOAD_SYSTEM ? "Falcon mode\n" : "Tortoise mode\n");
+#endif
 
 	return !!ret;
 }
