@@ -27,6 +27,7 @@
 #include <input.h>
 #include <init.h>
 #include <imx_thermal.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/libfdt.h>
 #include <malloc.h>
@@ -45,6 +46,16 @@
 #define SPL_LOAD_SYSTEM	0
 #define SPL_LOAD_UBOOT	1
 
+/*
+ *   Turn  device on  by pressing  power button,  folowed
+ * by quick press and release them switch off FalconMode.
+ *   Default  use 3/4sec (750mS or 750000uS) delay before
+ * read power button state after system reinit.
+ */
+#ifndef PWRBTN_DETECT_DELAY
+#define PWRBTN_DETECT_DELAY	750000
+#endif
+
 /* called BEFORE load system */
 void spl_board_prepare_for_linux(void)
 {
@@ -60,7 +71,7 @@ static const char PBTNGPIO_OTHER[] = "GPIO2_7";
 
 int spl_start_uboot(void)
 {
-	const char* pwr_gpio;
+	const char* pwr_gpio = PBTNGPIO_OTHER;
 	struct gpio_desc pwrbtn_gpio;
 	int ret = SPL_LOAD_UBOOT;
 	char *board = NULL;
@@ -73,13 +84,12 @@ int spl_start_uboot(void)
 		return SPL_LOAD_UBOOT;
 	}
 
-	if (board = env_get("board")) {
+	board = env_get("board");
+	if (board) {
 	    if(!strncmp(board,"kitsbimx6", 9))
 		pwr_gpio = PBTNGPIO_KITSB;
-	    else
-		pwr_gpio = PBTNGPIO_OTHER;
-	} else
-	    pwr_gpio = PBTNGPIO_KITSB;
+	}
+#endif
 
 	ret = dm_gpio_lookup_name(pwr_gpio, &pwrbtn_gpio);
 	if (ret) {
@@ -95,6 +105,9 @@ int spl_start_uboot(void)
 
 	dm_gpio_set_dir_flags(&pwrbtn_gpio, GPIOD_IS_IN);
 
+	/* Yep, we must wait power button RELEASE and PRESS again */
+	udelay(PWRBTN_DETECT_DELAY);
+
 	ret = dm_gpio_get_value(&pwrbtn_gpio);
 	if(ret < 0) {
 		printf("PWRBTN get value failed (%d)!\n", ret);
@@ -104,7 +117,6 @@ int spl_start_uboot(void)
 	/* Power button pulled UP, unpressed read "1", pressed "0" */
 	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
 	debug(ret == SPL_LOAD_SYSTEM ? "Falcon mode\n" : "Tortoise mode\n");
-#endif
 
 	return !!ret;
 }
@@ -112,8 +124,8 @@ int spl_start_uboot(void)
 
 void board_boot_order(u32 *spl_boot_list)
 {
-	spl_boot_list[0] = BOOT_DEVICE_USB;
-	spl_boot_list[1] = BOOT_DEVICE_MMC1;
+	spl_boot_list[0] = BOOT_DEVICE_MMC1;
+	spl_boot_list[1] = BOOT_DEVICE_USB;
 	spl_boot_list[2] = BOOT_DEVICE_BOARD;
 	spl_boot_list[3] = BOOT_DEVICE_NONE;
 }
