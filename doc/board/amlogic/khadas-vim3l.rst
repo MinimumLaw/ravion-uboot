@@ -18,8 +18,37 @@ Technology Co., Ltd. with the following specifications:
 
 Schematics are available on the manufacturer website.
 
+PCIe Setup
+----------
+The VIM3 on-board  MCU can mux the PCIe/USB3.0 shared differential
+lines using a FUSB340TMX USB 3.1 SuperSpeed Data Switch between
+an USB3.0 Type A connector and a M.2 Key M slot.
+The PHY driving these differential lines is shared between
+the USB3.0 controller and the PCIe Controller, thus only
+a single controller can use it.
+
+To setup for PCIe, run the following commands from U-Boot:
+
+.. code-block:: none
+
+    i2c dev i2c@5000
+    i2c mw 0x18 0x33 1
+
+Then power-cycle the board.
+
+To set back to USB3.0, run the following commands from U-Boot:
+
+.. code-block:: none
+
+    i2c dev i2c@5000
+    i2c mw 0x18 0x33 0
+
+Then power-cycle the board.
+
 U-Boot compilation
 ------------------
+
+.. code-block:: bash
 
     $ export CROSS_COMPILE=aarch64-none-elf-
     $ make khadas-vim3l_defconfig
@@ -47,15 +76,16 @@ the git tree published by the board vendor:
 
     $ cd vim3l-u-boot
     $ make kvim3l_defconfig
-    $ make
+    $ make CROSS_COMPILE=aarch64-none-elf-
     $ export UBOOTDIR=$PWD
 
- Go back to mainline U-Boot source tree then :
+Go back to mainline U-Boot source tree then :
 
 .. code-block:: bash
 
     $ mkdir fip
 
+    $ wget https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/blx_fix_g12a.sh -O fip/blx_fix.sh
     $ cp $UBOOTDIR/build/scp_task/bl301.bin fip/
     $ cp $UBOOTDIR/build/board/khadas/kvim3l/firmware/acs.bin fip/
     $ cp $UBOOTDIR/fip/g12a/bl2.bin fip/
@@ -72,7 +102,7 @@ the git tree published by the board vendor:
     $ cp $UBOOTDIR/fip/g12a/aml_ddr.fw fip/
     $ cp u-boot.bin fip/bl33.bin
 
-    $ sh fip/blx_fix.sh \
+    $ bash fip/blx_fix.sh \
     	fip/bl30.bin \
     	fip/zero_tmp \
     	fip/bl30_zero.bin \
@@ -81,7 +111,7 @@ the git tree published by the board vendor:
     	fip/bl30_new.bin \
     	bl30
 
-    $ sh fip/blx_fix.sh \
+    $ bash fip/blx_fix.sh \
     	fip/bl2.bin \
     	fip/zero_tmp \
     	fip/bl2_zero.bin \

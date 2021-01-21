@@ -314,7 +314,7 @@ static int board_check_usb_power(void)
 	 * for each of them
 	 */
 	adc_count = ofnode_count_phandle_with_args(node, "st,adc_usb_pd",
-						   "#io-channel-cells");
+						   "#io-channel-cells", 0);
 	if (adc_count < 0) {
 		if (adc_count == -ENOENT)
 			return 0;
@@ -827,11 +827,22 @@ const char *env_ext4_get_intf(void)
 
 const char *env_ext4_get_dev_part(void)
 {
+	static char *const env_dev_part =
+#ifdef CONFIG_ENV_EXT4_DEVICE_AND_PART
+		CONFIG_ENV_EXT4_DEVICE_AND_PART;
+#else
+		"";
+#endif
 	static char *const dev_part[] = {"0:auto", "1:auto", "2:auto"};
+
+	if (strlen(env_dev_part) > 0)
+		return env_dev_part;
+
 	u32 bootmode = get_bootmode();
 
 	return dev_part[(bootmode & TAMP_BOOT_INSTANCE_MASK) - 1];
 }
+
 int mmc_get_env_dev(void)
 {
 	u32 bootmode = get_bootmode();
@@ -848,9 +859,14 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 		{ "st,stm32mp15-fmc2",		MTD_DEV_TYPE_NAND, },
 		{ "st,stm32mp1-fmc2-nfc",	MTD_DEV_TYPE_NAND, },
 	};
+	char *boot_device;
 
-	if (IS_ENABLED(CONFIG_FDT_FIXUP_PARTITIONS))
-		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+	/* Check the boot-source and don't update MTD for serial or usb boot */
+	boot_device = env_get("boot_device");
+	if (!boot_device ||
+	    (strcmp(boot_device, "serial") && strcmp(boot_device, "usb")))
+		if (IS_ENABLED(CONFIG_FDT_FIXUP_PARTITIONS))
+			fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
 
 	return 0;
 }

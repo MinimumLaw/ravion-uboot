@@ -415,6 +415,21 @@ int cros_ec_scan_keyboard(struct udevice *dev, struct mbkp_keyscan *scan)
 	return 0;
 }
 
+int cros_ec_get_next_event(struct udevice *dev,
+			   struct ec_response_get_next_event *event)
+{
+	int ret;
+
+	ret = ec_command(dev, EC_CMD_GET_NEXT_EVENT, 0, NULL, 0,
+			 event, sizeof(*event));
+	if (ret < 0)
+		return ret;
+	else if (ret != sizeof(*event))
+		return -EC_RES_INVALID_RESPONSE;
+
+	return 0;
+}
+
 int cros_ec_read_id(struct udevice *dev, char *id, int maxlen)
 {
 	struct ec_response_get_version *r;
@@ -480,18 +495,18 @@ int cros_ec_read_current_image(struct udevice *dev,
 }
 
 static int cros_ec_wait_on_hash_done(struct udevice *dev,
+				     struct ec_params_vboot_hash *p,
 				     struct ec_response_vboot_hash *hash)
 {
-	struct ec_params_vboot_hash p;
 	ulong start;
 
 	start = get_timer(0);
 	while (hash->status == EC_VBOOT_HASH_STATUS_BUSY) {
 		mdelay(50);	/* Insert some reasonable delay */
 
-		p.cmd = EC_VBOOT_HASH_GET;
-		if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
-		       hash, sizeof(*hash)) < 0)
+		p->cmd = EC_VBOOT_HASH_GET;
+		if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, p, sizeof(*p), hash,
+			       sizeof(*hash)) < 0)
 			return -1;
 
 		if (get_timer(start) > CROS_EC_CMD_HASH_TIMEOUT_MS) {
@@ -515,7 +530,7 @@ int cros_ec_read_hash(struct udevice *dev, uint hash_offset,
 		return -1;
 
 	/* If the EC is busy calculating the hash, fidget until it's done. */
-	rv = cros_ec_wait_on_hash_done(dev, hash);
+	rv = cros_ec_wait_on_hash_done(dev, &p, hash);
 	if (rv)
 		return rv;
 
@@ -538,9 +553,13 @@ int cros_ec_read_hash(struct udevice *dev, uint hash_offset,
 		       hash, sizeof(*hash)) < 0)
 		return -1;
 
-	rv = cros_ec_wait_on_hash_done(dev, hash);
+	rv = cros_ec_wait_on_hash_done(dev, &p, hash);
 	if (rv)
 		return rv;
+	if (hash->status != EC_VBOOT_HASH_STATUS_DONE) {
+		log_err("Hash did not complete, status=%d\n", hash->status);
+		return -EIO;
+	}
 
 	debug("%s: hash done\n", __func__);
 

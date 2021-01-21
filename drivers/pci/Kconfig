@@ -179,6 +179,18 @@ config PCIE_LAYERSCAPE_RC
 	  configured to Root Complex mode by clearing the corresponding bit of
 	  RCW[HOST_AGT_PEX].
 
+config PCI_IOMMU_EXTRA_MAPPINGS
+	bool "Support for specifying extra IOMMU mappings for PCI"
+	depends on PCIE_LAYERSCAPE_RC
+	help
+	  Enable support for specifying extra IOMMU mappings for PCI
+	  controllers through a special env var called "pci_iommu_extra" or
+	  through a device tree property named "pci-iommu-extra" placed in
+	  the node describing the PCI controller.
+	  The intent is to cover SR-IOV scenarios which need mappings for VFs
+	  and PCI hot-plug scenarios. More documentation can be found under:
+	    arch/arm/cpu/armv8/fsl-layerscape/doc/README.pci_iommu_extra
+
 config PCIE_LAYERSCAPE_EP
 	bool "Layerscape PCIe Endpoint mode support"
 	depends on DM_PCI
@@ -207,7 +219,7 @@ config FSL_PCIE_COMPAT
 	default "fsl,ls1046a-pcie" if ARCH_LS1046A
 	default "fsl,ls2080a-pcie" if ARCH_LS2080A
 	default "fsl,ls1088a-pcie" if ARCH_LS1088A
-	default "fsl,lx2160a-pcie" if ARCH_LX2160A
+	default "fsl,lx2160a-pcie" if ARCH_LX2160A || ARCH_LX2162A
 	default "fsl,ls1021a-pcie" if ARCH_LS1021A
 	help
 	  This compatible is used to find pci controller node in Kernel DT
@@ -216,7 +228,7 @@ config FSL_PCIE_COMPAT
 config FSL_PCIE_EP_COMPAT
 	string "PCIe EP compatible of Kernel DT"
 	depends on PCIE_LAYERSCAPE_RC || PCIE_LAYERSCAPE_GEN4
-	default "fsl,lx2160a-pcie-ep" if ARCH_LX2160A
+	default "fsl,lx2160a-pcie-ep" if ARCH_LX2160A || ARCH_LX2162A
 	default "fsl,ls-pcie-ep"
 	help
 	  This compatible is used to find pci controller ep node in Kernel DT

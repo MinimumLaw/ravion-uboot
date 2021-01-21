@@ -30,8 +30,6 @@ source "drivers/ddr/Kconfig"
 
 source "drivers/demo/Kconfig"
 
-source "drivers/board/Kconfig"
-
 source "drivers/ddr/fsl/Kconfig"
 
 source "drivers/dfu/Kconfig"
@@ -63,6 +61,8 @@ source "drivers/misc/Kconfig"
 source "drivers/mmc/Kconfig"
 
 source "drivers/mtd/Kconfig"
+
+source "drivers/mux/Kconfig"
 
 source "drivers/net/Kconfig"
 
@@ -111,6 +111,8 @@ source "drivers/soc/Kconfig"
 source "drivers/spi/Kconfig"
 
 source "drivers/spmi/Kconfig"
+
+source "drivers/sysinfo/Kconfig"
 
 source "drivers/sysreset/Kconfig"
 

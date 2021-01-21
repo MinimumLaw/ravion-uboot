@@ -5,6 +5,7 @@
 
 #include <dt-bindings/clock/k210-sysctl.h>
 #include <dt-bindings/mfd/k210-sysctl.h>
+#include <dt-bindings/pinctrl/k210-pinctrl.h>
 #include <dt-bindings/reset/k210-sysctl.h>
 
 / {
@@ -17,6 +18,8 @@
 	compatible = "kendryte,k210";
 
 	aliases {
+		cpu0 = &cpu0;
+		cpu1 = &cpu1;
 		dma0 = &dmac0;
 		gpio0 = &gpio0;
 		gpio1 = &gpio1_0;
@@ -126,14 +129,13 @@
 			read-only;
 		};
 
-		clint0: interrupt-controller@2000000 {
+		clint0: clint@2000000 {
 			#interrupt-cells = <1>;
 			compatible = "kendryte,k210-clint", "riscv,clint0";
 			reg = <0x2000000 0xC000>;
-			interrupt-controller;
 			interrupts-extended = <&cpu0_intc 3>, <&cpu0_intc 7>,
 					      <&cpu1_intc 3>, <&cpu1_intc 7>;
-			clocks = <&sysclk K210_CLK_CPU>;
+			clocks = <&sysclk K210_CLK_CLINT>;
 		};
 
 		plic0: interrupt-controller@C000000 {
@@ -198,8 +200,8 @@
 			dma-channels = <6>;
 			snps,dma-masters = <2>;
 			snps,data-width = <5>;
-			snps,block-size = <0x400000 0x400000 0x400000
-					   0x400000 0x400000 0x400000>;
+			snps,block-size = <0x200000 0x200000 0x200000
+					   0x200000 0x200000 0x200000>;
 			snps,axi-max-burst-len = <256>;
 			status = "disabled";
 		};
@@ -282,7 +284,8 @@
 			};
 
 			spi2: spi@50240000 {
-				compatible = "kendryte,k120-spislave",
+				compatible = "canaan,kendryte-k210-spi",
+					     "snps,dw-apb-ssi-4.01",
 					     "snps,dw-apb-ssi";
 				spi-slave;
 				reg = <0x50240000 0x100>;
@@ -367,7 +370,18 @@
 				reg = <0x502B0000 0x100>;
 				clocks = <&sysclk K210_CLK_FPIOA>;
 				resets = <&sysrst K210_RST_FPIOA>;
+				kendryte,sysctl = <&sysctl>;
+				kendryte,power-offset = <K210_SYSCTL_POWER_SEL>;
+				pinctrl-0 = <&fpioa_jtag>;
+				pinctrl-names = "default";
 				status = "disabled";
+
+				fpioa_jtag: jtag {
+					pinmux = <K210_FPIOA(0, K210_PCF_JTAG_TCLK)>,
+						 <K210_FPIOA(1, K210_PCF_JTAG_TDI)>,
+						 <K210_FPIOA(2, K210_PCF_JTAG_TMS)>,
+						 <K210_FPIOA(3, K210_PCF_JTAG_TDO)>;
+				};
 			};
 
 			sha256: sha256@502C0000 {
@@ -482,6 +496,8 @@
 				interrupts = <24>;
 				clocks = <&sysclk K210_CLK_DVP>;
 				resets = <&sysrst K210_RST_DVP>;
+				kendryte,sysctl = <&sysctl>;
+				kendryte,misc-offset = <K210_SYSCTL_MISC>;
 				status = "disabled";
 			};
 
@@ -544,7 +560,8 @@
 			spi0: spi@52000000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "kendryte,k210-spi",
+				compatible = "canaan,kendryte-k210-spi",
+					     "snps,dw-apb-ssi-4.01",
 					     "snps,dw-apb-ssi";
 				reg = <0x52000000 0x100>;
 				interrupts = <1>;
@@ -560,7 +577,8 @@
 			spi1: spi@53000000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "kendryte,k210-spi",
+				compatible = "canaan,kendryte-k210-spi",
+					     "snps,dw-apb-ssi-4.01",
 					     "snps,dw-apb-ssi";
 				reg = <0x53000000 0x100>;
 				interrupts = <2>;
@@ -576,8 +594,8 @@
 			spi3: spi@54000000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
-				compatible = "kendryte,k210-spi",
-					     "snps,dw-apb-ssi";
+				compatible = "canaan,kendryte-k210-ssi",
+					     "snps,dwc-ssi-1.01a";
 				reg = <0x54000000 0x200>;
 				interrupts = <4>;
 				clocks = <&sysclk K210_CLK_SPI3>;

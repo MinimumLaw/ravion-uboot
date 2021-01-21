@@ -12,8 +12,6 @@
 
 #include "mx6_common.h"
 
-#define CONFIG_IMX_THERMAL
-
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
@@ -169,8 +167,6 @@
 /* Environment organization */
 
 /* Framebuffer */
-#define CONFIG_VIDEO_BMP_RLE8
-#define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IMX_HDMI

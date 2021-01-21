@@ -407,6 +407,37 @@ config MT7628_ETH
 	  The MediaTek MT7628 ethernet interface is used on MT7628 and
 	  MT7688 based boards.
 
+config NET_OCTEONTX
+	bool "OcteonTX Ethernet support"
+	depends on ARCH_OCTEONTX
+	depends on PCI_SRIOV
+	help
+	  You must select Y to enable network device support for
+	  OcteonTX SoCs. If unsure, say n
+
+config NET_OCTEONTX2
+	bool "OcteonTX2 Ethernet support"
+	depends on ARCH_OCTEONTX2
+	select OCTEONTX2_CGX_INTF
+	help
+	  You must select Y to enable network device support for
+	  OcteonTX2 SoCs. If unsure, say n
+
+config OCTEONTX_SMI
+	bool "OcteonTX SMI Device support"
+	depends on ARCH_OCTEONTX || ARCH_OCTEONTX2
+	help
+	  You must select Y to enable SMI controller support for
+	  OcteonTX or OcteonTX2 SoCs. If unsure, say n
+
+config OCTEONTX2_CGX_INTF
+	bool "OcteonTX2 CGX ATF interface support"
+	depends on ARCH_OCTEONTX2
+	default y if ARCH_OCTEONTX2
+	help
+	  You must select Y to enable CGX ATF interface support for
+	  OcteonTX2 SoCs. If unsure, say n
+
 config PCH_GBE
 	bool "Intel Platform Controller Hub EG20T GMAC driver"
 	depends on DM_ETH && DM_PCI
@@ -431,6 +462,8 @@ config PCNET
 	help
 	  This driver supports AMD PCnet series fast ethernet family of
 	  PCI chipsets/adapters.
+
+source "drivers/net/qe/Kconfig"
 
 config RTL8139
 	bool "Realtek 8139 series Ethernet controller driver"
@@ -698,6 +731,13 @@ config MDIO_MUX_I2CREG
 	  This driver is used for MDIO muxes driven by writing to a register of
 	  an I2C chip.  The board it was developed for uses a mux controlled by
 	  on-board FPGA which in turn is accessed as a chip over I2C.
+
+config MDIO_IPQ4019
+	bool "Qualcomm IPQ4019 MDIO interface support"
+	depends on DM_MDIO
+	help
+	  This driver supports the MDIO interface found in Qualcomm
+	  IPQ40xx series Soc-s.
 
 config MVMDIO
 	bool "Marvell MDIO interface support"

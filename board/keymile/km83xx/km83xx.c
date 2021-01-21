@@ -36,70 +36,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static uchar ivm_content[CONFIG_SYS_IVM_EEPROM_MAX_LEN];
 
-const qe_iop_conf_t qe_iop_conf_tab[] = {
-	/* port pin dir open_drain assign */
-#if defined(CONFIG_ARCH_MPC8360)
-	/* MDIO */
-	{0,  1, 3, 0, 2}, /* MDIO */
-	{0,  2, 1, 0, 1}, /* MDC */
-
-	/* UCC4 - UEC */
-	{1, 14, 1, 0, 1}, /* TxD0 */
-	{1, 15, 1, 0, 1}, /* TxD1 */
-	{1, 20, 2, 0, 1}, /* RxD0 */
-	{1, 21, 2, 0, 1}, /* RxD1 */
-	{1, 18, 1, 0, 1}, /* TX_EN */
-	{1, 26, 2, 0, 1}, /* RX_DV */
-	{1, 27, 2, 0, 1}, /* RX_ER */
-	{1, 24, 2, 0, 1}, /* COL */
-	{1, 25, 2, 0, 1}, /* CRS */
-	{2, 15, 2, 0, 1}, /* TX_CLK - CLK16 */
-	{2, 16, 2, 0, 1}, /* RX_CLK - CLK17 */
-
-	/* DUART - UART2 */
-	{5,  0, 1, 0, 2}, /* UART2_SOUT */
-	{5,  2, 1, 0, 1}, /* UART2_RTS */
-	{5,  3, 2, 0, 2}, /* UART2_SIN */
-	{5,  1, 2, 0, 3}, /* UART2_CTS */
-#elif !defined(CONFIG_ARCH_MPC8309)
-	/* Local Bus */
-	{0, 16, 1, 0, 3}, /* LA00 */
-	{0, 17, 1, 0, 3}, /* LA01 */
-	{0, 18, 1, 0, 3}, /* LA02 */
-	{0, 19, 1, 0, 3}, /* LA03 */
-	{0, 20, 1, 0, 3}, /* LA04 */
-	{0, 21, 1, 0, 3}, /* LA05 */
-	{0, 22, 1, 0, 3}, /* LA06 */
-	{0, 23, 1, 0, 3}, /* LA07 */
-	{0, 24, 1, 0, 3}, /* LA08 */
-	{0, 25, 1, 0, 3}, /* LA09 */
-	{0, 26, 1, 0, 3}, /* LA10 */
-	{0, 27, 1, 0, 3}, /* LA11 */
-	{0, 28, 1, 0, 3}, /* LA12 */
-	{0, 29, 1, 0, 3}, /* LA13 */
-	{0, 30, 1, 0, 3}, /* LA14 */
-	{0, 31, 1, 0, 3}, /* LA15 */
-
-	/* MDIO */
-	{3,  4, 3, 0, 2}, /* MDIO */
-	{3,  5, 1, 0, 2}, /* MDC */
-
-	/* UCC4 - UEC */
-	{1, 18, 1, 0, 1}, /* TxD0 */
-	{1, 19, 1, 0, 1}, /* TxD1 */
-	{1, 22, 2, 0, 1}, /* RxD0 */
-	{1, 23, 2, 0, 1}, /* RxD1 */
-	{1, 26, 2, 0, 1}, /* RxER */
-	{1, 28, 2, 0, 1}, /* Rx_DV */
-	{1, 30, 1, 0, 1}, /* TxEN */
-	{1, 31, 2, 0, 1}, /* CRS */
-	{3, 10, 2, 0, 3}, /* TxCLK->CLK17 */
-#endif
-
-	/* END of table */
-	{0,  0, 0, 0, QE_IOP_TAB_END},
-};
-
 static int piggy_present(void)
 {
 	struct km_bec_fpga __iomem *base =
@@ -249,7 +185,7 @@ int dram_init(void)
 
 int checkboard(void)
 {
-	puts("Board: ABB " CONFIG_SYS_CONFIG_NAME);
+	puts("Board: Hitachi " CONFIG_SYS_CONFIG_NAME);
 
 	if (piggy_present())
 		puts(" with PIGGY.");
@@ -300,12 +236,8 @@ void post_word_store(ulong value)
 
 int arch_memory_test_prepare(u32 *vstart, u32 *size, phys_addr_t *phys_offset)
 {
-	/*
-	 * These match CONFIG_SYS_MEMTEST_START and
-	 * (CONFIG_SYS_MEMTEST_END - CONFIG_SYS_MEMTEST_START)
-	 */
-	*vstart = 0x00100000;
-	*size = 0xe00000;
+	*vstart = CONFIG_SYS_MEMTEST_START;
+	*size = CONFIG_SYS_MEMTEST_END - CONFIG_SYS_MEMTEST_START;
 	debug("arch_memory_test_prepare 0x%08X 0x%08X\n", *vstart, *size);
 
 	return 0;

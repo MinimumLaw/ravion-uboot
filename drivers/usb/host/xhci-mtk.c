@@ -7,15 +7,16 @@
 #include <clk.h>
 #include <common.h>
 #include <dm.h>
+#include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <generic-phy.h>
 #include <malloc.h>
+#include <power/regulator.h>
 #include <usb.h>
+#include <usb/xhci.h>
 #include <linux/errno.h>
 #include <linux/compat.h>
-#include <power/regulator.h>
 #include <linux/iopoll.h>
-#include <usb/xhci.h>
 
 /* IPPC (IP Port Control) registers */
 #define IPPC_IP_PW_CTRL0		0x00
@@ -258,6 +259,7 @@ static int xhci_mtk_probe(struct udevice *dev)
 	if (ret)
 		goto ssusb_init_err;
 
+	mtk->ctrl.quirks = XHCI_MTK_HOST;
 	hcor = (struct xhci_hcor *)((uintptr_t)mtk->hcd +
 			HC_LENGTH(xhci_readl(&mtk->hcd->cr_capbase)));
 

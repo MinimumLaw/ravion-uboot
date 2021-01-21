@@ -4,6 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY UCLASS_SYSCON
+
 #include <common.h>
 #include <log.h>
 #include <syscon.h>
@@ -18,12 +20,16 @@
 
 /*
  * Caution:
- * This API requires the given device has alerady been bound to syscon driver.
- * For example,
+ * This API requires the given device has already been bound to the syscon
+ * driver. For example,
+ *
  *    compatible = "syscon", "simple-mfd";
+ *
  * works, but
+ *
  *    compatible = "simple-mfd", "syscon";
- * does not.  The behavior is different from Linux.
+ *
+ * does not. The behavior is different from Linux.
  */
 struct regmap *syscon_get_regmap(struct udevice *dev)
 {
@@ -66,7 +72,7 @@ static int syscon_probe_by_ofnode(ofnode node, struct udevice **devp)
 
 	/* found node with "syscon" compatible, not bounded to SYSCON UCLASS */
 	if (!ofnode_device_is_compatible(node, "syscon")) {
-		dev_dbg(dev, "invalid compatible for syscon device\n");
+		log_debug("invalid compatible for syscon device\n");
 		return -EINVAL;
 	}
 
@@ -136,7 +142,7 @@ int syscon_get_by_driver_data(ulong driver_data, struct udevice **devp)
 
 	ret = uclass_first_device_drvdata(UCLASS_SYSCON, driver_data, devp);
 	if (ret)
-		return log_msg_ret("find", ret);
+		return ret;
 
 	return 0;
 }

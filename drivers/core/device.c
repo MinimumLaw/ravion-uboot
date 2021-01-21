@@ -249,7 +249,7 @@ int device_bind_ofnode(struct udevice *parent, const struct driver *drv,
 }
 
 int device_bind_by_name(struct udevice *parent, bool pre_reloc_only,
-			struct driver_info *info, struct udevice **devp)
+			const struct driver_info *info, struct udevice **devp)
 {
 	struct driver *drv;
 	uint platdata_size = 0;
@@ -269,11 +269,30 @@ int device_bind_by_name(struct udevice *parent, bool pre_reloc_only,
 				 platdata_size, devp);
 	if (ret)
 		return ret;
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-	info->dev = *devp;
-#endif
 
 	return ret;
+}
+
+int device_reparent(struct udevice *dev, struct udevice *new_parent)
+{
+	struct udevice *pos, *n;
+
+	assert(dev);
+	assert(new_parent);
+
+	list_for_each_entry_safe(pos, n, &dev->parent->child_head,
+				 sibling_node) {
+		if (pos->driver != dev->driver)
+			continue;
+
+		list_del(&dev->sibling_node);
+		list_add_tail(&dev->sibling_node, &new_parent->child_head);
+		dev->parent = new_parent;
+
+		break;
+	}
+
+	return 0;
 }
 
 static void *alloc_priv(int size, uint flags)
@@ -742,9 +761,25 @@ int device_get_global_by_ofnode(ofnode ofnode, struct udevice **devp)
 int device_get_by_driver_info(const struct driver_info *info,
 			      struct udevice **devp)
 {
+	struct driver_info *info_base =
+		ll_entry_start(struct driver_info, driver_info);
+	int idx = info - info_base;
+	struct driver_rt *drt = gd_dm_driver_rt() + idx;
 	struct udevice *dev;
 
-	dev = info->dev;
+	dev = drt->dev;
+	*devp = NULL;
+
+	return device_get_device_tail(dev, dev ? 0 : -ENOENT, devp);
+}
+
+int device_get_by_driver_info_idx(uint idx, struct udevice **devp)
+{
+	struct driver_rt *drt = gd_dm_driver_rt() + idx;
+	struct udevice *dev;
+
+	dev = drt->dev;
+	*devp = NULL;
 
 	return device_get_device_tail(dev, dev ? 0 : -ENOENT, devp);
 }

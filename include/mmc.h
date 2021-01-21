@@ -360,6 +360,19 @@ enum mmc_voltage {
 #define MMC_NUM_BOOT_PARTITION	2
 #define MMC_PART_RPMB           3       /* RPMB partition number */
 
+/* timing specification used */
+#define MMC_TIMING_LEGACY	0
+#define MMC_TIMING_MMC_HS	1
+#define MMC_TIMING_SD_HS	2
+#define MMC_TIMING_UHS_SDR12	3
+#define MMC_TIMING_UHS_SDR25	4
+#define MMC_TIMING_UHS_SDR50	5
+#define MMC_TIMING_UHS_SDR104	6
+#define MMC_TIMING_UHS_DDR50	7
+#define MMC_TIMING_MMC_DDR52	8
+#define MMC_TIMING_MMC_HS200	9
+#define MMC_TIMING_MMC_HS400	10
+
 /* Driver model support */
 
 /**
@@ -421,6 +434,14 @@ struct dm_mmc_ops {
 	 * @return 0 if Ok, -ve if error
 	 */
 	int (*deferred_probe)(struct udevice *dev);
+	/**
+	 * reinit() - Re-initialization to clear old configuration for
+	 * mmc rescan.
+	 *
+	 * @dev:	Device to reinit
+	 * @return 0 if Ok, -ve if error
+	 */
+	int (*reinit)(struct udevice *dev);
 	/**
 	 * send_cmd() - Send a command to the MMC device
 	 *
@@ -505,6 +526,14 @@ struct dm_mmc_ops {
 	 * @return maximum number of blocks for this transfer
 	 */
 	int (*get_b_max)(struct udevice *dev, void *dst, lbaint_t blkcnt);
+
+	/**
+	 * hs400_prepare_ddr - prepare to switch to DDR mode
+	 *
+	 * @dev:	Device to check
+	 * @return 0 if success, -ve on error
+	 */
+	int (*hs400_prepare_ddr)(struct udevice *dev);
 };
 
 #define mmc_get_ops(dev)        ((struct dm_mmc_ops *)(dev)->driver->ops)
@@ -518,6 +547,7 @@ int dm_mmc_execute_tuning(struct udevice *dev, uint opcode);
 int dm_mmc_wait_dat0(struct udevice *dev, int state, int timeout_us);
 int dm_mmc_host_power_cycle(struct udevice *dev);
 int dm_mmc_deferred_probe(struct udevice *dev);
+int dm_mmc_reinit(struct udevice *dev);
 int dm_mmc_get_b_max(struct udevice *dev, void *dst, lbaint_t blkcnt);
 
 /* Transition functions for compatibility */
@@ -529,8 +559,9 @@ int mmc_wait_dat0(struct mmc *mmc, int state, int timeout_us);
 int mmc_set_enhanced_strobe(struct mmc *mmc);
 int mmc_host_power_cycle(struct mmc *mmc);
 int mmc_deferred_probe(struct mmc *mmc);
+int mmc_reinit(struct mmc *mmc);
 int mmc_get_b_max(struct mmc *mmc, void *dst, lbaint_t blkcnt);
-
+int mmc_hs400_prepare_ddr(struct mmc *mmc);
 #else
 struct mmc_ops {
 	int (*send_cmd)(struct mmc *mmc,
@@ -542,6 +573,11 @@ struct mmc_ops {
 	int (*host_power_cycle)(struct mmc *mmc);
 	int (*get_b_max)(struct mmc *mmc, void *dst, lbaint_t blkcnt);
 };
+
+static inline int mmc_hs400_prepare_ddr(struct mmc *mmc)
+{
+	return 0;
+}
 #endif
 
 struct mmc_config {
@@ -697,6 +733,7 @@ struct mmc {
 				  * accessing the boot partitions
 				  */
 	u32 quirks;
+	u8 hs400_tuning;
 };
 
 struct mmc_hwpart_conf {
@@ -887,6 +924,8 @@ void mmc_set_preinit(struct mmc *mmc, int preinit);
 #else
 #define mmc_host_is_spi(mmc)	0
 #endif
+
+#define mmc_dev(x)	((x)->dev)
 
 void board_mmc_power_init(void);
 int board_mmc_init(struct bd_info *bis);

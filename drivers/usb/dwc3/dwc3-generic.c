@@ -10,7 +10,6 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <log.h>
-#include <asm-generic/io.h>
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
@@ -75,7 +74,7 @@ static int dwc3_generic_probe(struct udevice *dev,
 	}
 
 	rc = dwc3_setup_phy(dev, &priv->phys);
-	if (rc)
+	if (rc && rc != -ENOTSUPP)
 		return rc;
 
 	if (device_is_compatible(dev->parent, "rockchip,rk3399-dwc3"))
@@ -449,6 +448,8 @@ static const struct udevice_id dwc3_glue_ids[] = {
 	{ .compatible = "ti,am654-dwc3" },
 	{ .compatible = "rockchip,rk3328-dwc3" },
 	{ .compatible = "rockchip,rk3399-dwc3" },
+	{ .compatible = "qcom,dwc3" },
+	{ .compatible = "intel,tangier-dwc3" },
 	{ }
 };
 

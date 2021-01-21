@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-VERSION = 2020
-PATCHLEVEL = 10
+VERSION = 2021
+PATCHLEVEL = 01
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -795,6 +795,7 @@ libs-y += drivers/usb/eth/
 libs-$(CONFIG_USB_GADGET) += drivers/usb/gadget/
 libs-$(CONFIG_USB_GADGET) += drivers/usb/gadget/udc/
 libs-y += drivers/usb/host/
+libs-y += drivers/usb/mtu3/
 libs-y += drivers/usb/musb/
 libs-y += drivers/usb/musb-new/
 libs-y += drivers/usb/phy/
@@ -806,7 +807,7 @@ libs-$(CONFIG_API) += api/
 ifdef CONFIG_POST
 libs-y += post/
 endif
-libs-$(CONFIG_UNIT_TEST) += test/ test/dm/
+libs-$(CONFIG_UNIT_TEST) += test/
 libs-$(CONFIG_UT_ENV) += test/env/
 libs-$(CONFIG_UT_OPTEE) += test/optee/
 libs-$(CONFIG_UT_OVERLAY) += test/overlay/
@@ -859,13 +860,13 @@ else
 BOARD_SIZE_CHECK =
 endif
 
-ifneq ($(CONFIG_SPL_SIZE_LIMIT),0)
+ifneq ($(CONFIG_SPL_SIZE_LIMIT),0x0)
 SPL_SIZE_CHECK = @$(call size_check,$@,$$(tools/spl_size_limit))
 else
 SPL_SIZE_CHECK =
 endif
 
-ifneq ($(CONFIG_TPL_SIZE_LIMIT),0)
+ifneq ($(CONFIG_TPL_SIZE_LIMIT),0x0)
 TPL_SIZE_CHECK = @$(call size_check,$@,$(CONFIG_TPL_SIZE_LIMIT))
 else
 TPL_SIZE_CHECK =
@@ -884,7 +885,7 @@ cmd_static_rela = \
 	tools/relocate-rela $(3) $(4) $$start $$end
 else
 quiet_cmd_static_rela =
-cmd_static_rela =
+cmd_static_rela = true
 endif
 
 # Always append INPUTS so that arch config.mk's can add custom ones
@@ -922,11 +923,6 @@ endif
 INPUTS-$(CONFIG_REMAKE_ELF) += u-boot.elf
 INPUTS-$(CONFIG_EFI_APP) += u-boot-app.efi
 INPUTS-$(CONFIG_EFI_STUB) += u-boot-payload.efi
-
-# Build a combined spl + u-boot image for sunxi
-ifeq ($(CONFIG_ARCH_SUNXI)$(CONFIG_ARM64)$(CONFIG_SPL),yyy)
-INPUTS-y += u-boot-sunxi-with-spl.bin
-endif
 
 # Generate this input file for binman
 ifeq ($(CONFIG_SPL),)
@@ -1024,12 +1020,8 @@ PHONY += inputs
 inputs: $(INPUTS-y)
 
 all: .binman_stamp inputs
-# Hack for sunxi which doesn't have a proper binman definition for
-# 64-bit boards
-ifneq ($(CONFIG_ARCH_SUNXI)$(CONFIG_ARM64),yy)
 ifeq ($(CONFIG_BINMAN),y)
 	$(call if_changed,binman)
-endif
 endif
 
 # Timestamp file to make sure that binman always runs
@@ -1317,9 +1309,13 @@ init_sp_bss_offset_check: u-boot.dtb FORCE
 	fi
 endif
 
+shell_cmd = { $(call echo-cmd,$(1)) $(cmd_$(1)); }
+
+quiet_cmd_objcopy_uboot = OBJCOPY $@
+cmd_objcopy_uboot = $(cmd_objcopy) && $(call shell_cmd,static_rela,$<,$@,$(CONFIG_SYS_TEXT_BASE)) || rm -f $@
+
 u-boot-nodtb.bin: u-boot FORCE
-	$(call if_changed,objcopy)
-	$(call cmd,static_rela,$<,$@,$(CONFIG_SYS_TEXT_BASE))
+	$(call if_changed,objcopy_uboot)
 	$(BOARD_SIZE_CHECK)
 
 u-boot.ldr:	u-boot
@@ -1330,13 +1326,17 @@ u-boot.ldr:	u-boot
 # binman
 # ---------------------------------------------------------------------------
 # Use 'make BINMAN_DEBUG=1' to enable debugging
+default_dt := $(if $(DEVICE_TREE),$(DEVICE_TREE),$(CONFIG_DEFAULT_DEVICE_TREE))
 quiet_cmd_binman = BINMAN  $@
 cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
                 --toolpath $(objtree)/tools \
 		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
-		build -u -d u-boot.dtb -O . \
-		$(if $(BUILD_ROM),,-m --allow-missing) \
+		build -u -d u-boot.dtb -O . -m --allow-missing \
 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
+		-I arch/$(ARCH)/dts -a of-list=$(CONFIG_OF_LIST) \
+		-a atf-bl31-path=${BL31} \
+		-a default-dt=$(default_dt) \
+		-a scp-path=$(SCP) \
 		$(BINMAN_$(@F))
 
 OBJCOPYFLAGS_u-boot.ldr.hex := -I binary -O ihex
@@ -1446,11 +1446,13 @@ else
 MKIMAGEFLAGS_u-boot.itb = -E
 endif
 
+ifdef U_BOOT_ITS
 u-boot.itb: u-boot-nodtb.bin \
 		$(if $(CONFIG_OF_SEPARATE)$(CONFIG_OF_EMBED)$(CONFIG_OF_HOSTFILE),dts/dt.dtb) \
 		$(U_BOOT_ITS) FORCE
 	$(call if_changed,mkfitimage)
 	$(BOARD_SIZE_CHECK)
+endif
 
 u-boot-spl.kwb: u-boot.img spl/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
@@ -1580,21 +1582,30 @@ u-boot.spr: spl/u-boot-spl.img u-boot.img FORCE
 	$(call if_changed,pad_cat)
 
 ifneq ($(CONFIG_ARCH_SOCFPGA),)
+quiet_cmd_gensplx4 = GENSPLX4 $@
+cmd_gensplx4 = cat	spl/u-boot-spl.sfp spl/u-boot-spl.sfp	\
+			spl/u-boot-spl.sfp spl/u-boot-spl.sfp > $@ || rm -f $@
+spl/u-boot-splx4.sfp: spl/u-boot-spl.sfp FORCE
+	$(call if_changed,gensplx4)
+
 quiet_cmd_socboot = SOCBOOT $@
-cmd_socboot = cat	spl/u-boot-spl.sfp spl/u-boot-spl.sfp	\
-			spl/u-boot-spl.sfp spl/u-boot-spl.sfp	\
-			u-boot.img > $@ || rm -f $@
-u-boot-with-spl.sfp: spl/u-boot-spl.sfp u-boot.img FORCE
+cmd_socboot = cat	spl/u-boot-splx4.sfp u-boot.img > $@ || rm -f $@
+u-boot-with-spl.sfp: spl/u-boot-splx4.sfp u-boot.img FORCE
 	$(call if_changed,socboot)
 
-quiet_cmd_socnandboot = SOCNANDBOOT $@
-cmd_socnandboot =  dd if=/dev/zero of=spl/u-boot-spl.pad bs=64 count=1024 ; \
+quiet_cmd_gensplpadx4 = GENSPLPADX4 $@
+cmd_gensplpadx4 =  dd if=/dev/zero of=spl/u-boot-spl.pad bs=64 count=1024 ; \
 		   cat	spl/u-boot-spl.sfp spl/u-boot-spl.pad \
 			spl/u-boot-spl.sfp spl/u-boot-spl.pad \
 			spl/u-boot-spl.sfp spl/u-boot-spl.pad \
-			spl/u-boot-spl.sfp spl/u-boot-spl.pad \
-			u-boot.img > $@ || rm -f $@ spl/u-boot-spl.pad
-u-boot-with-nand-spl.sfp: spl/u-boot-spl.sfp u-boot.img FORCE
+			spl/u-boot-spl.sfp spl/u-boot-spl.pad > $@ || \
+			rm -f $@ spl/u-boot-spl.pad
+u-boot-spl-padx4.sfp: spl/u-boot-spl.sfp FORCE
+	$(call if_changed,gensplpadx4)
+
+quiet_cmd_socnandboot = SOCNANDBOOT $@
+cmd_socnandboot = cat	u-boot-spl-padx4.sfp u-boot.img > $@ || rm -f $@
+u-boot-with-nand-spl.sfp: u-boot-spl-padx4.sfp u-boot.img FORCE
 	$(call if_changed,socnandboot)
 
 endif
@@ -1625,13 +1636,6 @@ u-boot-x86-reset16.bin: u-boot FORCE
 	$(call if_changed,objcopy)
 
 endif # CONFIG_X86
-
-ifneq ($(CONFIG_ARCH_SUNXI),)
-ifeq ($(CONFIG_ARM64),y)
-u-boot-sunxi-with-spl.bin: spl/sunxi-spl.bin u-boot.itb FORCE
-	$(call if_changed,cat)
-endif
-endif
 
 OBJCOPYFLAGS_u-boot-app.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-app.efi: u-boot FORCE
@@ -1866,6 +1870,7 @@ define filechk_timestamp.h
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_TZ "%z"'; \
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_DMI_DATE "%m/%d/%Y"'; \
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_BUILD_DATE 0x%Y%m%d'; \
+			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_EPOCH %s'; \
 		else \
 			return 42; \
 		fi; \
@@ -1875,6 +1880,7 @@ define filechk_timestamp.h
 		LC_ALL=C date +'#define U_BOOT_TZ "%z"'; \
 		LC_ALL=C date +'#define U_BOOT_DMI_DATE "%m/%d/%Y"'; \
 		LC_ALL=C date +'#define U_BOOT_BUILD_DATE 0x%Y%m%d'; \
+		LC_ALL=C date +'#define U_BOOT_EPOCH %s'; \
 	fi)
 endef
 

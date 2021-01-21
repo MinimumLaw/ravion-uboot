@@ -50,8 +50,8 @@
 #include "armada-372x.dtsi"
 
 / {
-	model = "Marvell Armada 3720 Community Board ESPRESSOBin";
-	compatible = "marvell,armada-3720-espressobin", "marvell,armada3720", "marvell,armada3710";
+	model = "Globalscale Marvell ESPRESSOBin Board";
+	compatible = "globalscale,espressobin", "marvell,armada3720", "marvell,armada3710";
 
 	chosen {
 		stdout-path = "serial0:115200n8";
@@ -128,6 +128,28 @@
 	cd-gpios = <&gpionb 3 GPIO_ACTIVE_LOW>;
 	vqmmc-supply = <&vcc_sd_reg0>;
 	status = "okay";
+};
+
+/* U11 */
+&sdhci1 {
+	non-removable;
+	bus-width = <8>;
+	mmc-ddr-1_8v;
+	mmc-hs400-1_8v;
+	marvell,xenon-emmc;
+	marvell,xenon-tun-count = <9>;
+	marvell,pad-type = "fixed-1-8v";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc_pins>;
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	mmccard: mmccard@0 {
+		compatible = "mmc-card";
+		reg = <0>;
+	};
 };
 
 &spi0 {

@@ -35,18 +35,13 @@ static int log_syslog_emit(struct log_device *ldev, struct log_rec *rec)
 	char *log_msg;
 	int eth_hdr_size;
 	struct in_addr bcast_ip;
-	static int processing_msg;
 	unsigned int log_level;
 	char *log_hostname;
 
-	/* Fend off messages from the network stack while writing a message */
-	if (processing_msg)
-		return 0;
-
-	processing_msg = 1;
-
 	/* Setup packet buffers */
-	net_init();
+	ret = net_init();
+	if (ret)
+		return ret;
 	/* Disable hardware and put it into the reset state */
 	eth_halt();
 	/* Set current device according to environment variables */
@@ -108,7 +103,6 @@ static int log_syslog_emit(struct log_device *ldev, struct log_rec *rec)
 	net_send_packet((uchar *)msg, ptr - msg);
 
 out:
-	processing_msg = 0;
 	return ret;
 }
 
