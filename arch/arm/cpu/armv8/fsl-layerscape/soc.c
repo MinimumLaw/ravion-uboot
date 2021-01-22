@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2015 Freescale Semiconductor
- * Copyright 2019 NXP
+ * Copyright 2019-2020 NXP
  */
 
 #include <common.h>
@@ -33,12 +33,10 @@
 #include <fsl_validate.h>
 #endif
 #include <fsl_immap.h>
-#ifdef CONFIG_TFABOOT
-#include <env_internal.h>
-#endif
 #include <dm.h>
+#include <dm/device_compat.h>
 #include <linux/err.h>
-#if defined(CONFIG_TFABOOT) || defined(CONFIG_GIC_V3_ITS)
+#ifdef CONFIG_GIC_V3_ITS
 DECLARE_GLOBAL_DATA_PTR;
 #endif
 
@@ -56,7 +54,7 @@ int ls_gic_rd_tables_init(void *blob)
 
 	lpi_base.start = addr;
 	lpi_base.end = addr + size - 1;
-	ret = fdtdec_add_reserved_memory(blob, "lpi_rd_table", &lpi_base, NULL);
+	ret = fdtdec_add_reserved_memory(blob, "lpi_rd_table", &lpi_base, NULL, false);
 	if (ret) {
 		debug("%s: failed to add reserved memory\n", __func__);
 		return ret;
@@ -185,7 +183,8 @@ static void erratum_a008997(void)
 	out_be16((phy) + SCFG_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_4)
 
 #elif defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LS1088A) || \
-	defined(CONFIG_ARCH_LS1028A) || defined(CONFIG_ARCH_LX2160A)
+	defined(CONFIG_ARCH_LS1028A) || defined(CONFIG_ARCH_LX2160A) || \
+	defined(CONFIG_ARCH_LX2162A)
 
 #define PROGRAM_USB_PHY_RX_OVRD_IN_HI(phy)	\
 	out_le16((phy) + DCSR_USB_PHY_RX_OVRD_IN_HI, USB_PHY_RX_EQ_VAL_1); \
@@ -221,7 +220,7 @@ static void erratum_a009007(void)
 #if defined(CONFIG_FSL_LSCH3)
 static void erratum_a050106(void)
 {
-#if defined(CONFIG_ARCH_LX2160A)
+#if defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
 	void __iomem *dcsr = (void __iomem *)DCSR_BASE;
 
 	PROGRAM_USB_PHY_RX_OVRD_IN_HI(dcsr + DCSR_USB_PHY1);
@@ -391,7 +390,8 @@ void fsl_lsch3_early_init_f(void)
 #endif
 
 #if defined(CONFIG_ARCH_LS1088A) || defined(CONFIG_ARCH_LS1028A) || \
-	defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LX2160A)
+	defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LX2160A) || \
+	defined(CONFIG_ARCH_LX2162A)
 	set_icids();
 #endif
 }
@@ -953,28 +953,12 @@ int board_late_init(void)
 #endif
 #ifdef CONFIG_TFABOOT
 	/*
-	 * check if gd->env_addr is default_environment; then setenv bootcmd
-	 * and mcinitcmd.
+	 * Set bootcmd and mcinitcmd if they don't exist in the environment.
 	 */
-#ifdef CONFIG_SYS_RELOC_GD_ENV_ADDR
-	if (gd->env_addr == (ulong)&default_environment[0]) {
-#else
-	if (gd->env_addr + gd->reloc_off == (ulong)&default_environment[0]) {
-#endif
+	if (!env_get("bootcmd"))
 		fsl_setenv_bootcmd();
+	if (!env_get("mcinitcmd"))
 		fsl_setenv_mcinitcmd();
-	}
-
-	/*
-	 * If the boot mode is secure, default environment is not present then
-	 * setenv command needs to be run by default
-	 */
-#ifdef CONFIG_CHAIN_OF_TRUST
-	if ((fsl_check_boot_mode_secure() == 1)) {
-		fsl_setenv_bootcmd();
-		fsl_setenv_mcinitcmd();
-	}
-#endif
 #endif
 #ifdef CONFIG_QSPI_AHB_INIT
 	qspi_ahb_init();

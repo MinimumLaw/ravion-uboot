@@ -251,7 +251,7 @@ int dm_check_devices(struct unit_test_state *uts, int num_devices)
 /* Test that FDT-based binding works correctly */
 static int dm_test_fdt(struct unit_test_state *uts)
 {
-	const int num_devices = 8;
+	const int num_devices = 9;
 	struct udevice *dev;
 	struct uclass *uc;
 	int ret;
@@ -473,12 +473,12 @@ static int dm_test_uclass_foreach(struct unit_test_state *uts)
 	count = 0;
 	uclass_id_foreach_dev(UCLASS_TEST_FDT, dev, uc)
 		count++;
-	ut_asserteq(8, count);
+	ut_asserteq(9, count);
 
 	count = 0;
 	uclass_foreach_dev(dev, uc)
 		count++;
-	ut_asserteq(8, count);
+	ut_asserteq(9, count);
 
 	return 0;
 }
@@ -967,6 +967,71 @@ static int dm_test_read_int_index(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_read_int_index, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_read_phandle(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct ofnode_phandle_args args;
+	int ret;
+	const char prop[] = "test-gpios";
+	const char cell[] = "#gpio-cells";
+	const char prop2[] = "phandle-value";
+
+	ut_assertok(uclass_first_device_err(UCLASS_TEST_FDT, &dev));
+	ut_asserteq_str("a-test", dev->name);
+
+	/* Test dev_count_phandle_with_args with cell name */
+	ret = dev_count_phandle_with_args(dev, "missing", cell, 0);
+	ut_asserteq(-ENOENT, ret);
+	ret = dev_count_phandle_with_args(dev, prop, "#invalid", 0);
+	ut_asserteq(-EINVAL, ret);
+	ut_asserteq(5, dev_count_phandle_with_args(dev, prop, cell, 0));
+
+	/* Test dev_read_phandle_with_args with cell name */
+	ret = dev_read_phandle_with_args(dev, "missing", cell, 0, 0, &args);
+	ut_asserteq(-ENOENT, ret);
+	ret = dev_read_phandle_with_args(dev, prop, "#invalid", 0, 0, &args);
+	ut_asserteq(-EINVAL, ret);
+	ut_assertok(dev_read_phandle_with_args(dev, prop, cell, 0, 0, &args));
+	ut_asserteq(1, args.args_count);
+	ut_asserteq(1, args.args[0]);
+	ut_assertok(dev_read_phandle_with_args(dev, prop, cell, 0, 1, &args));
+	ut_asserteq(1, args.args_count);
+	ut_asserteq(4, args.args[0]);
+	ut_assertok(dev_read_phandle_with_args(dev, prop, cell, 0, 2, &args));
+	ut_asserteq(5, args.args_count);
+	ut_asserteq(5, args.args[0]);
+	ut_asserteq(1, args.args[4]);
+	ret = dev_read_phandle_with_args(dev, prop, cell, 0, 3, &args);
+	ut_asserteq(-ENOENT, ret);
+	ut_assertok(dev_read_phandle_with_args(dev, prop, cell, 0, 4, &args));
+	ut_asserteq(1, args.args_count);
+	ut_asserteq(12, args.args[0]);
+	ret = dev_read_phandle_with_args(dev, prop, cell, 0, 5, &args);
+	ut_asserteq(-ENOENT, ret);
+
+	/* Test dev_count_phandle_with_args with cell count */
+	ret = dev_count_phandle_with_args(dev, "missing", NULL, 2);
+	ut_asserteq(-ENOENT, ret);
+	ut_asserteq(3, dev_count_phandle_with_args(dev, prop2, NULL, 1));
+
+	/* Test dev_read_phandle_with_args with cell count */
+	ut_assertok(dev_read_phandle_with_args(dev, prop2, NULL, 1, 0, &args));
+	ut_asserteq(1, ofnode_valid(args.node));
+	ut_asserteq(1, args.args_count);
+	ut_asserteq(10, args.args[0]);
+	ret = dev_read_phandle_with_args(dev, prop2, NULL, 1, 1, &args);
+	ut_asserteq(-EINVAL, ret);
+	ut_assertok(dev_read_phandle_with_args(dev, prop2, NULL, 1, 2, &args));
+	ut_asserteq(1, ofnode_valid(args.node));
+	ut_asserteq(1, args.args_count);
+	ut_asserteq(30, args.args[0]);
+	ret = dev_read_phandle_with_args(dev, prop2, NULL, 1, 3, &args);
+	ut_asserteq(-ENOENT, ret);
+
+	return 0;
+}
+DM_TEST(dm_test_read_phandle, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test iteration through devices by drvdata */
 static int dm_test_uclass_drvdata(struct unit_test_state *uts)

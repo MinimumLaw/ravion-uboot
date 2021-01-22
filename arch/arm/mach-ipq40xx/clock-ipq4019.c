@@ -2,7 +2,7 @@
 /*
  * Clock drivers for Qualcomm IPQ40xx
  *
- * Copyright (c) 2019 Sartura Ltd.
+ * Copyright (c) 2020 Sartura Ltd.
  *
  * Author: Robert Marko <robert.marko@sartura.hr>
  *
@@ -13,6 +13,8 @@
 #include <dm.h>
 #include <errno.h>
 
+#include <dt-bindings/clock/qcom,ipq4019-gcc.h>
+
 struct msm_clk_priv {
 	phys_addr_t base;
 };
@@ -20,9 +22,9 @@ struct msm_clk_priv {
 ulong msm_set_rate(struct clk *clk, ulong rate)
 {
 	switch (clk->id) {
-	case 26: /*UART1*/
+	case GCC_BLSP1_UART1_APPS_CLK: /*UART1*/
 		/* This clock is already initialized by SBL1 */
-		return 0; 
+		return 0;
 		break;
 	default:
 		return 0;
@@ -45,8 +47,25 @@ static ulong msm_clk_set_rate(struct clk *clk, ulong rate)
 	return msm_set_rate(clk, rate);
 }
 
+static int msm_enable(struct clk *clk)
+{
+	switch (clk->id) {
+	case GCC_BLSP1_QUP1_SPI_APPS_CLK: /*SPI1*/
+		/* This clock is already initialized by SBL1 */
+		return 0;
+		break;
+	case GCC_PRNG_AHB_CLK: /*PRNG*/
+		/* This clock is already initialized by SBL1 */
+		return 0;
+		break;
+	default:
+		return 0;
+	}
+}
+
 static struct clk_ops msm_clk_ops = {
 	.set_rate = msm_clk_set_rate,
+	.enable = msm_enable,
 };
 
 static const struct udevice_id msm_clk_ids[] = {

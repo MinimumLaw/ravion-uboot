@@ -75,6 +75,9 @@ struct udevice *eth_get_dev(void)
 	struct eth_uclass_priv *uc_priv;
 
 	uc_priv = eth_get_uclass_priv();
+	if (!uc_priv)
+		return NULL;
+
 	if (!uc_priv->current)
 		eth_errno = uclass_first_device(UCLASS_ETH,
 				    &uc_priv->current);
@@ -273,7 +276,7 @@ int eth_init(void)
 	if (!current) {
 		current = eth_get_dev();
 		if (!current) {
-			printf("No ethernet found.\n");
+			log_err("No ethernet found.\n");
 			return -ENODEV;
 		}
 	}
@@ -380,7 +383,7 @@ int eth_rx(void)
 
 	/* Process up to 32 packets at one time */
 	flags = ETH_RECV_CHECK_DEVICE;
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < ETH_PACKETS_BATCH_RECV; i++) {
 		ret = eth_get_ops(current)->recv(current, flags, &packet);
 		flags = 0;
 		if (ret > 0)
@@ -414,7 +417,7 @@ int eth_initialize(void)
 	 */
 	uclass_first_device_check(UCLASS_ETH, &dev);
 	if (!dev) {
-		printf("No ethernet found.\n");
+		log_err("No ethernet found.\n");
 		bootstage_error(BOOTSTAGE_ID_NET_ETH_START);
 	} else {
 		char *ethprime = env_get("ethprime");
@@ -449,7 +452,7 @@ int eth_initialize(void)
 		} while (dev);
 
 		if (!num_devices)
-			printf("No ethernet found.\n");
+			log_err("No ethernet found.\n");
 		putc('\n');
 	}
 

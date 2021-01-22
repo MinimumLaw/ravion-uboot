@@ -13,8 +13,6 @@
 
 #include "imx6_spl.h"
 
-#define CONFIG_IMX_THERMAL
-
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
 /* MMC Configs */
@@ -29,8 +27,6 @@
 #endif
 
 /* Framebuffer */
-#define CONFIG_VIDEO_BMP_RLE8
-#define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IMX_HDMI

@@ -774,10 +774,12 @@ int designware_i2c_ofdata_to_platdata(struct udevice *bus)
 	dev_read_u32(bus, "i2c-sda-hold-time-ns", &priv->sda_hold_time_ns);
 
 	ret = reset_get_bulk(bus, &priv->resets);
-	if (ret)
-		dev_warn(bus, "Can't get reset: %d\n", ret);
-	else
+	if (ret) {
+		if (ret != -ENOTSUPP)
+			dev_warn(bus, "Can't get reset: %d\n", ret);
+	} else {
 		reset_deassert_bulk(&priv->resets);
+	}
 
 #if CONFIG_IS_ENABLED(CLK)
 	ret = clk_get_by_index(bus, 0, &priv->clk);
@@ -807,8 +809,8 @@ int designware_i2c_probe(struct udevice *bus)
 		return -ENXIO;
 	}
 
-	log_info("I2C bus %s version %#x\n", bus->name,
-		 readl(&priv->regs->comp_version));
+	log_debug("I2C bus %s version %#x\n", bus->name,
+		  readl(&priv->regs->comp_version));
 
 	return __dw_i2c_init(priv->regs, 0, 0);
 }

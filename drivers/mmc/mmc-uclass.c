@@ -142,6 +142,21 @@ int mmc_set_enhanced_strobe(struct mmc *mmc)
 }
 #endif
 
+int dm_mmc_hs400_prepare_ddr(struct udevice *dev)
+{
+	struct dm_mmc_ops *ops = mmc_get_ops(dev);
+
+	if (ops->hs400_prepare_ddr)
+		return ops->hs400_prepare_ddr(dev);
+
+	return 0;
+}
+
+int mmc_hs400_prepare_ddr(struct mmc *mmc)
+{
+	return dm_mmc_hs400_prepare_ddr(mmc->dev);
+}
+
 int dm_mmc_host_power_cycle(struct udevice *dev)
 {
 	struct dm_mmc_ops *ops = mmc_get_ops(dev);
@@ -171,6 +186,21 @@ int mmc_deferred_probe(struct mmc *mmc)
 	return dm_mmc_deferred_probe(mmc->dev);
 }
 
+int dm_mmc_reinit(struct udevice *dev)
+{
+	struct dm_mmc_ops *ops = mmc_get_ops(dev);
+
+	if (ops->reinit)
+		return ops->reinit(dev);
+
+	return 0;
+}
+
+int mmc_reinit(struct mmc *mmc)
+{
+	return dm_mmc_reinit(mmc->dev);
+}
+
 int mmc_of_parse(struct udevice *dev, struct mmc_config *cfg)
 {
 	int val;
@@ -198,7 +228,7 @@ int mmc_of_parse(struct udevice *dev, struct mmc_config *cfg)
 	if (dev_read_bool(dev, "cap-sd-highspeed"))
 		cfg->host_caps |= MMC_CAP(SD_HS);
 	if (dev_read_bool(dev, "cap-mmc-highspeed"))
-		cfg->host_caps |= MMC_CAP(MMC_HS);
+		cfg->host_caps |= MMC_CAP(MMC_HS) | MMC_CAP(MMC_HS_52);
 	if (dev_read_bool(dev, "sd-uhs-sdr12"))
 		cfg->host_caps |= MMC_CAP(UHS_SDR12);
 	if (dev_read_bool(dev, "sd-uhs-sdr25"))

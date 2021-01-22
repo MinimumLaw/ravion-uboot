@@ -4,6 +4,9 @@ config CREATE_ARCH_SYMLINK
 config HAVE_ARCH_IOREMAP
 	bool
 
+config NEEDS_MANUAL_RELOC
+	bool
+
 choice
 	prompt "Architecture select"
 	default SANDBOX
@@ -26,12 +29,14 @@ config ARM
 config M68K
 	bool "M68000 architecture"
 	select HAVE_PRIVATE_LIBGCC
+	select NEEDS_MANUAL_RELOC
 	select SYS_BOOT_GET_CMDLINE
 	select SYS_BOOT_GET_KBD
 	select SUPPORT_OF_CONTROL
 
 config MICROBLAZE
 	bool "MicroBlaze architecture"
+	select NEEDS_MANUAL_RELOC
 	select SUPPORT_OF_CONTROL
 	imply CMD_IRQ
 
@@ -87,6 +92,7 @@ config SANDBOX
 	bool "Sandbox"
 	select BOARD_LATE_INIT
 	select BZIP2
+	select CMD_POWEROFF
 	select DM
 	select DM_GPIO
 	select DM_I2C
@@ -102,7 +108,7 @@ config SANDBOX
 	select PCI_ENDPOINT
 	select SPI
 	select SUPPORT_OF_CONTROL
-	select SYSRESET_CMD_POWEROFF if CMD_POWEROFF
+	select SYSRESET_CMD_POWEROFF
 	imply BITREVERSE
 	select BLOBLIST
 	imply CMD_DM
@@ -193,6 +199,8 @@ config X86
 	imply RTC_MC146818
 	imply IRQ
 	imply ACPIGEN if !QEMU
+	imply SYSINFO if GENERATE_SMBIOS_TABLE
+	imply SYSINFO_SMBIOS if GENERATE_SMBIOS_TABLE
 
 	# Thing to enable for when SPL/TPL are enabled: SPL
 	imply SPL_DM

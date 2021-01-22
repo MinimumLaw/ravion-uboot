@@ -56,7 +56,7 @@ static int zynqmp_ipi_send(struct mbox_chan *chan, const void *data)
 
 	/* Wait until observation bit is cleared */
 	ret = wait_for_bit_le32(&ipi_int_apu->obs, IPI_BIT_MASK_PMU0, false,
-				100, false);
+				1000, false);
 
 	debug("%s, send %ld bytes\n", __func__, msg->len);
 	return ret;
@@ -133,7 +133,7 @@ struct mbox_ops zynqmp_ipi_mbox_ops = {
 };
 
 U_BOOT_DRIVER(zynqmp_ipi) = {
-	.name = "zynqmp-ipi",
+	.name = "zynqmp_ipi",
 	.id = UCLASS_MAILBOX,
 	.of_match = zynqmp_ipi_ids,
 	.probe = zynqmp_ipi_probe,

@@ -16,8 +16,6 @@
 
 #define CONFIG_SYS_HZ			1000
 
-#define CONFIG_IMX_THERMAL
-
 /* Physical Memory Map */
 #define CONFIG_SYS_SDRAM_BASE		MMDC0_ARB_BASE_ADDR
 
@@ -36,7 +34,6 @@
 #define CONFIG_MXC_UART_BASE		UART1_BASE /* select UART1/UART2 */
 
 /* Framebuffer */
-#define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 

@@ -293,8 +293,8 @@ static int fit_image_read_data(char *filename, unsigned char *data,
 
 	/* Check file size */
 	if (sbuf.st_size != expected_size) {
-		printf("File %s don't have the expected size (size=%ld, expected=%d)\n",
-		       filename, sbuf.st_size, expected_size);
+		printf("File %s don't have the expected size (size=%lld, expected=%d)\n",
+		       filename, (long long)sbuf.st_size, expected_size);
 		goto err;
 	}
 
@@ -308,8 +308,8 @@ static int fit_image_read_data(char *filename, unsigned char *data,
 
 	/* Check that we have read all the file */
 	if (n != sbuf.st_size) {
-		printf("Can't read all file %s (read %zd bytes, expexted %ld)\n",
-		       filename, n, sbuf.st_size);
+		printf("Can't read all file %s (read %zd bytes, expexted %lld)\n",
+		       filename, n, (long long)sbuf.st_size);
 		goto err;
 	}
 
@@ -317,6 +317,36 @@ static int fit_image_read_data(char *filename, unsigned char *data,
 
 err:
 	close(fd);
+	return ret;
+}
+
+static int get_random_data(void *data, int size)
+{
+	unsigned char *tmp = data;
+	struct timespec date;
+	int i, ret = 0;
+
+	if (!tmp) {
+		printf("%s: pointer data is NULL\n", __func__);
+		ret = -1;
+		goto out;
+	}
+
+	ret = clock_gettime(CLOCK_MONOTONIC, &date);
+	if (ret < 0) {
+		printf("%s: clock_gettime has failed (err=%d, str=%s)\n",
+		       __func__, ret, strerror(errno));
+		goto out;
+	}
+
+	srandom(date.tv_nsec);
+
+	for (i = 0; i < size; i++) {
+		*tmp = random() & 0xff;
+		tmp++;
+	}
+
+ out:
 	return ret;
 }
 
@@ -345,13 +375,13 @@ static int fit_image_setup_cipher(struct image_cipher_info *info,
 		goto out;
 	}
 
-	/* Read the IV name */
+	/*
+	 * Read the IV name
+	 *
+	 * If this property is not provided then mkimage will generate
+	 * a random IV and store it in the FIT image
+	 */
 	info->ivname = fdt_getprop(fit, noffset, "iv-name-hint", NULL);
-	if (!info->ivname) {
-		printf("Can't get iv name for cipher in image '%s'\n",
-		       image_name);
-		goto out;
-	}
 
 	info->fit = fit;
 	info->node_noffset = noffset;
@@ -377,17 +407,23 @@ static int fit_image_setup_cipher(struct image_cipher_info *info,
 	if (ret < 0)
 		goto out;
 
-	/* Read the IV in the file */
-	snprintf(filename, sizeof(filename), "%s/%s%s",
-		 info->keydir, info->ivname, ".bin");
 	info->iv = malloc(info->cipher->iv_len);
 	if (!info->iv) {
 		printf("Can't allocate memory for iv\n");
 		ret = -1;
 		goto out;
 	}
-	ret = fit_image_read_data(filename, (unsigned char *)info->iv,
-				  info->cipher->iv_len);
+
+	if (info->ivname) {
+		/* Read the IV in the file */
+		snprintf(filename, sizeof(filename), "%s/%s%s",
+			 info->keydir, info->ivname, ".bin");
+		ret = fit_image_read_data(filename, (unsigned char *)info->iv,
+					  info->cipher->iv_len);
+	} else {
+		/* Generate an ramdom IV */
+		ret = get_random_data((void *)info->iv, info->cipher->iv_len);
+	}
 
  out:
 	return ret;
@@ -453,9 +489,10 @@ fit_image_process_cipher(const char *keydir, void *keydest, void *fit,
 	 * Write the public key into the supplied FDT file; this might fail
 	 * several times, since we try signing with successively increasing
 	 * size values
+	 * And, if needed, write the iv in the FIT file
 	 */
 	if (keydest) {
-		ret = info.cipher->add_cipher_data(&info, keydest);
+		ret = info.cipher->add_cipher_data(&info, keydest, fit, node_noffset);
 		if (ret) {
 			printf("Failed to add verification data for cipher '%s' in image '%s'\n",
 			       info.keyname, image_name);

@@ -46,6 +46,15 @@ config USB_XHCI_MVEBU
 	  SoCs, which includes Armada8K, Armada3700 and other Armada
 	  family SoCs.
 
+config USB_XHCI_OCTEON
+	bool "Support for Marvell Octeon family on-chip xHCI USB controller"
+	depends on ARCH_OCTEON
+	default y
+	help
+	  Enables support for the on-chip xHCI controller on Marvell Octeon
+	  family SoCs. This is a driver for the dwc3 to provide the glue logic
+	  to configure the controller.
+
 config USB_XHCI_PCI
 	bool "Support for PCI-based xHCI USB controller"
 	depends on DM_USB
@@ -200,8 +209,7 @@ config USB_EHCI_TEGRA
 
 config USB_EHCI_ZYNQ
 	bool "Support for Xilinx Zynq on-chip EHCI USB controller"
-	depends on ARCH_ZYNQ
-	default y
+	default y if ARCH_ZYNQ
 	---help---
 	  Enable support for Zynq on-chip EHCI USB controller
 

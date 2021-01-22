@@ -35,7 +35,6 @@
 #define CONFIG_SPI_FLASH_SST
 
 /* Thermal support */
-#define CONFIG_IMX_THERMAL
 
 /* I2C Configs */
 #define CONFIG_SYS_I2C
@@ -60,8 +59,6 @@
 #define CONFIG_USBD_HS
 
 /* Framebuffer */
-#define CONFIG_VIDEO_BMP_RLE8
-#define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IMX_HDMI

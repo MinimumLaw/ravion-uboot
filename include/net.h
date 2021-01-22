@@ -44,6 +44,9 @@ struct udevice;
 
 #define PKTALIGN	ARCH_DMA_MINALIGN
 
+/* Number of packets processed together */
+#define ETH_PACKETS_BATCH_RECV	32
+
 /* ARP hardware address length */
 #define ARP_HLEN 6
 /*
@@ -551,7 +554,7 @@ extern int		net_restart_wrap;	/* Tried all network devices */
 
 enum proto_t {
 	BOOTP, RARP, ARP, TFTPGET, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP,
-	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL
+	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL, UDP
 };
 
 extern char	net_boot_file_name[1024];/* Boot File name */
@@ -593,7 +596,7 @@ extern int net_ntp_time_offset;			/* offset time from UTC */
 #endif
 
 /* Initialize the network adapter */
-void net_init(void);
+int net_init(void);
 int net_loop(enum proto_t);
 
 /* Load failed.	 Start again. */

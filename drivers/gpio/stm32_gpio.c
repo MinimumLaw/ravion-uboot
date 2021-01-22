@@ -18,6 +18,8 @@
 #include <linux/errno.h>
 #include <linux/io.h>
 
+#define STM32_GPIOS_PER_BANK		16
+
 #define MODE_BITS(gpio_pin)		((gpio_pin) * 2)
 #define MODE_BITS_MASK			3
 #define BSRR_BIT(gpio_pin, value)	BIT((gpio_pin) + (value ? 0 : 16))
@@ -210,11 +212,11 @@ static int stm32_gpio_set_dir_flags(struct udevice *dev, unsigned int offset,
 
 	} else if (flags & GPIOD_IS_IN) {
 		stm32_gpio_set_moder(regs, idx, STM32_GPIO_MODE_IN);
-		if (flags & GPIOD_PULL_UP)
-			stm32_gpio_set_pupd(regs, idx, STM32_GPIO_PUPD_UP);
-		else if (flags & GPIOD_PULL_DOWN)
-			stm32_gpio_set_pupd(regs, idx, STM32_GPIO_PUPD_DOWN);
 	}
+	if (flags & GPIOD_PULL_UP)
+		stm32_gpio_set_pupd(regs, idx, STM32_GPIO_PUPD_UP);
+	else if (flags & GPIOD_PULL_DOWN)
+		stm32_gpio_set_pupd(regs, idx, STM32_GPIO_PUPD_DOWN);
 
 	return 0;
 }
@@ -241,16 +243,16 @@ static int stm32_gpio_get_dir_flags(struct udevice *dev, unsigned int offset,
 		break;
 	case STM32_GPIO_MODE_IN:
 		dir_flags |= GPIOD_IS_IN;
-		switch (stm32_gpio_get_pupd(regs, idx)) {
-		case STM32_GPIO_PUPD_UP:
-			dir_flags |= GPIOD_PULL_UP;
-			break;
-		case STM32_GPIO_PUPD_DOWN:
-			dir_flags |= GPIOD_PULL_DOWN;
-			break;
-		default:
-			break;
-		}
+		break;
+	default:
+		break;
+	}
+	switch (stm32_gpio_get_pupd(regs, idx)) {
+	case STM32_GPIO_PUPD_UP:
+		dir_flags |= GPIOD_PULL_UP;
+		break;
+	case STM32_GPIO_PUPD_DOWN:
+		dir_flags |= GPIOD_PULL_DOWN;
 		break;
 	default:
 		break;
@@ -273,20 +275,18 @@ static const struct dm_gpio_ops gpio_stm32_ops = {
 static int gpio_stm32_probe(struct udevice *dev)
 {
 	struct stm32_gpio_priv *priv = dev_get_priv(dev);
+	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+	struct ofnode_phandle_args args;
+	const char *name;
 	struct clk clk;
 	fdt_addr_t addr;
-	int ret;
+	int ret, i;
 
 	addr = dev_read_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
 	priv->regs = (struct stm32_gpio_regs *)addr;
-
-	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
-	struct ofnode_phandle_args args;
-	const char *name;
-	int i;
 
 	name = dev_read_string(dev, "st,bank-name");
 	if (!name)
@@ -296,6 +296,9 @@ static int gpio_stm32_probe(struct udevice *dev)
 	i = 0;
 	ret = dev_read_phandle_with_args(dev, "gpio-ranges",
 					 NULL, 3, i, &args);
+
+	if (!ret && args.args_count < 3)
+		return -EINVAL;
 
 	if (ret == -ENOENT) {
 		uc_priv->gpio_count = STM32_GPIOS_PER_BANK;
@@ -310,6 +313,8 @@ static int gpio_stm32_probe(struct udevice *dev)
 
 		ret = dev_read_phandle_with_args(dev, "gpio-ranges", NULL, 3,
 						 ++i, &args);
+		if (!ret && args.args_count < 3)
+			return -EINVAL;
 	}
 
 	dev_dbg(dev, "addr = 0x%p bank_name = %s gpio_count = %d gpio_range = 0x%x\n",

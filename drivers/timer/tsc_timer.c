@@ -386,13 +386,11 @@ void __udelay(unsigned long usec)
 #endif
 }
 
-static int tsc_timer_get_count(struct udevice *dev, u64 *count)
+static u64 tsc_timer_get_count(struct udevice *dev)
 {
 	u64 now_tick = rdtsc();
 
-	*count = now_tick - gd->arch.tsc_base;
-
-	return 0;
+	return now_tick - gd->arch.tsc_base;
 }
 
 static void tsc_timer_ensure_setup(bool early)
@@ -484,8 +482,8 @@ static const struct udevice_id tsc_timer_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(tsc_timer) = {
-	.name	= "tsc_timer",
+U_BOOT_DRIVER(x86_tsc_timer) = {
+	.name	= "x86_tsc_timer",
 	.id	= UCLASS_TIMER,
 	.of_match = tsc_timer_ids,
 	.probe = tsc_timer_probe,

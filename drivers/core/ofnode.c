@@ -409,7 +409,8 @@ int ofnode_parse_phandle_with_args(ofnode node, const char *list_name,
 		int ret;
 
 		ret = of_parse_phandle_with_args(ofnode_to_np(node),
-						 list_name, cells_name, index,
+						 list_name, cells_name,
+						 cell_count, index,
 						 &args);
 		if (ret)
 			return ret;
@@ -431,15 +432,15 @@ int ofnode_parse_phandle_with_args(ofnode node, const char *list_name,
 }
 
 int ofnode_count_phandle_with_args(ofnode node, const char *list_name,
-				   const char *cells_name)
+				   const char *cells_name, int cell_count)
 {
 	if (ofnode_is_np(node))
 		return of_count_phandle_with_args(ofnode_to_np(node),
-				list_name, cells_name);
+				list_name, cells_name, cell_count);
 	else
 		return fdtdec_parse_phandle_with_args(gd->fdt_blob,
 				ofnode_to_offset(node), list_name, cells_name,
-				0, -1, NULL);
+				cell_count, -1, NULL);
 }
 
 ofnode ofnode_path(const char *path)
@@ -471,6 +472,28 @@ ofnode ofnode_get_chosen_node(const char *name)
 	prop = ofnode_read_chosen_prop(name, NULL);
 	if (!prop)
 		return ofnode_null();
+
+	return ofnode_path(prop);
+}
+
+const void *ofnode_read_aliases_prop(const char *propname, int *sizep)
+{
+	ofnode node;
+
+	node = ofnode_path("/aliases");
+
+	return ofnode_read_prop(node, propname, sizep);
+}
+
+ofnode ofnode_get_aliases_node(const char *name)
+{
+	const char *prop;
+
+	prop = ofnode_read_aliases_prop(name, NULL);
+	if (!prop)
+		return ofnode_null();
+
+	debug("%s: node_path: %s\n", __func__, prop);
 
 	return ofnode_path(prop);
 }

@@ -6,18 +6,20 @@
  */
 
 #include <common.h>
+#include <bootm.h>
 #include <div64.h>
+#include <dm/device.h>
+#include <dm/root.h>
 #include <efi_loader.h>
 #include <irq_func.h>
 #include <log.h>
 #include <malloc.h>
-#include <time.h>
-#include <linux/libfdt_env.h>
-#include <u-boot/crc.h>
-#include <bootm.h>
 #include <pe.h>
+#include <time.h>
 #include <u-boot/crc.h>
+#include <usb.h>
 #include <watchdog.h>
+#include <linux/libfdt_env.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,6 +37,9 @@ LIST_HEAD(efi_event_queue);
 
 /* Flag to disable timer activity in ExitBootServices() */
 static bool timers_enabled = true;
+
+/* Flag used by the selftest to avoid detaching devices in ExitBootServices() */
+bool efi_st_keep_devices;
 
 /* List of all events registered by RegisterProtocolNotify() */
 LIST_HEAD(efi_register_notify_events);
@@ -266,8 +271,8 @@ efi_status_t is_valid_tpl(efi_uintn_t tpl)
  * efi_signal_event() - signal an EFI event
  * @event:     event to signal
  *
- * This function signals an event. If the event belongs to an event group all
- * events of the group are signaled. If they are of type EVT_NOTIFY_SIGNAL
+ * This function signals an event. If the event belongs to an event group, all
+ * events of the group are signaled. If they are of type EVT_NOTIFY_SIGNAL,
  * their notification function is queued.
  *
  * For the SignalEvent service see efi_signal_event_ext.
@@ -1994,7 +1999,12 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 			list_del(&evt->link);
 	}
 
-	board_quiesce_devices();
+	if (!efi_st_keep_devices) {
+		if (IS_ENABLED(CONFIG_USB_DEVICE))
+			udc_disconnect();
+		board_quiesce_devices();
+		dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL);
+	}
 
 	/* Patch out unsupported runtime function */
 	efi_runtime_detach();
@@ -2889,6 +2899,8 @@ efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 	efi_status_t ret;
 	void *info;
 	efi_handle_t parent_image = current_image;
+	efi_status_t exit_status;
+	struct jmp_buf_data exit_jmp;
 
 	EFI_ENTRY("%p, %p, %p", image_handle, exit_data_size, exit_data);
 
@@ -2910,9 +2922,11 @@ efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 
 	image_obj->exit_data_size = exit_data_size;
 	image_obj->exit_data = exit_data;
+	image_obj->exit_status = &exit_status;
+	image_obj->exit_jmp = &exit_jmp;
 
 	/* call the image! */
-	if (setjmp(&image_obj->exit_jmp)) {
+	if (setjmp(&exit_jmp)) {
 		/*
 		 * We called the entry point of the child image with EFI_CALL
 		 * in the lines below. The child image called the Exit() boot
@@ -2934,10 +2948,10 @@ efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 		 */
 		assert(__efi_entry_check());
 		EFI_PRINT("%lu returned by started image\n",
-			  (unsigned long)((uintptr_t)image_obj->exit_status &
+			  (unsigned long)((uintptr_t)exit_status &
 			  ~EFI_ERROR_MASK));
 		current_image = parent_image;
-		return EFI_EXIT(image_obj->exit_status);
+		return EFI_EXIT(exit_status);
 	}
 
 	current_image = image_handle;
@@ -3120,6 +3134,7 @@ static efi_status_t EFIAPI efi_exit(efi_handle_t image_handle,
 	struct efi_loaded_image *loaded_image_protocol;
 	struct efi_loaded_image_obj *image_obj =
 		(struct efi_loaded_image_obj *)image_handle;
+	struct jmp_buf_data *exit_jmp;
 
 	EFI_ENTRY("%p, %ld, %zu, %p", image_handle, exit_status,
 		  exit_data_size, exit_data);
@@ -3161,6 +3176,9 @@ static efi_status_t EFIAPI efi_exit(efi_handle_t image_handle,
 		if (ret != EFI_SUCCESS)
 			EFI_PRINT("%s: out of memory\n", __func__);
 	}
+	/* efi_delete_image() frees image_obj. Copy before the call. */
+	exit_jmp = image_obj->exit_jmp;
+	*image_obj->exit_status = exit_status;
 	if (image_obj->image_type == IMAGE_SUBSYSTEM_EFI_APPLICATION ||
 	    exit_status != EFI_SUCCESS)
 		efi_delete_image(image_obj, loaded_image_protocol);
@@ -3174,8 +3192,7 @@ static efi_status_t EFIAPI efi_exit(efi_handle_t image_handle,
 	 */
 	efi_restore_gd();
 
-	image_obj->exit_status = exit_status;
-	longjmp(&image_obj->exit_jmp, 1);
+	longjmp(exit_jmp, 1);
 
 	panic("EFI application exited");
 out:
@@ -3518,6 +3535,7 @@ static efi_status_t EFIAPI efi_disconnect_controller(
 	size_t number_of_children = 0;
 	efi_status_t r;
 	struct efi_object *efiobj;
+	bool sole_child;
 
 	EFI_ENTRY("%p, %p, %p", controller_handle, driver_image_handle,
 		  child_handle);
@@ -3540,16 +3558,18 @@ static efi_status_t EFIAPI efi_disconnect_controller(
 	}
 
 	/* Create list of child handles */
+	r = efi_get_child_controllers(efiobj,
+				      driver_image_handle,
+				      &number_of_children,
+				      &child_handle_buffer);
+	if (r != EFI_SUCCESS)
+		return r;
+	sole_child = (number_of_children == 1);
+
 	if (child_handle) {
 		number_of_children = 1;
+		free(child_handle_buffer);
 		child_handle_buffer = &child_handle;
-	} else {
-		r = efi_get_child_controllers(efiobj,
-					      driver_image_handle,
-					      &number_of_children,
-					      &child_handle_buffer);
-		if (r != EFI_SUCCESS)
-			return r;
 	}
 
 	/* Get the driver binding protocol */
@@ -3574,7 +3594,7 @@ static efi_status_t EFIAPI efi_disconnect_controller(
 		}
 	}
 	/* Remove the driver */
-	if (!child_handle) {
+	if (!child_handle || sole_child) {
 		r = EFI_CALL(binding_protocol->stop(binding_protocol,
 						    controller_handle,
 						    0, NULL));

@@ -23,6 +23,8 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 struct rk3399_clk_plat {
 	struct dtd_rockchip_rk3399_cru dtd;
@@ -50,10 +52,9 @@ struct pll_div {
 	.fbdiv = (u32)((u64)hz * _refdiv * _postdiv1 * _postdiv2 / OSC_HZ),\
 	.postdiv1 = _postdiv1, .postdiv2 = _postdiv2};
 
-#if defined(CONFIG_SPL_BUILD)
 static const struct pll_div gpll_init_cfg = PLL_DIVISORS(GPLL_HZ, 2, 2, 1);
 static const struct pll_div cpll_init_cfg = PLL_DIVISORS(CPLL_HZ, 1, 2, 2);
-#else
+#if !defined(CONFIG_SPL_BUILD)
 static const struct pll_div ppll_init_cfg = PLL_DIVISORS(PPLL_HZ, 2, 2, 1);
 #endif
 
@@ -232,6 +233,10 @@ enum {
 	DCLK_VOP_PLL_SEL_VPLL           = 0,
 	DCLK_VOP_DIV_CON_MASK           = 0xff,
 	DCLK_VOP_DIV_CON_SHIFT          = 0,
+
+	/* CLKSEL_CON57 */
+	PCLK_ALIVE_DIV_CON_SHIFT        = 0,
+	PCLK_ALIVE_DIV_CON_MASK         = 0x1f << PCLK_ALIVE_DIV_CON_SHIFT,
 
 	/* CLKSEL_CON58 */
 	CLK_SPI_PLL_SEL_WIDTH = 1,
@@ -867,6 +872,17 @@ static ulong rk3399_ddr_set_clk(struct rockchip_cru *cru,
 	return set_rate;
 }
 
+static ulong rk3399_alive_get_clk(struct rockchip_cru *cru)
+{
+        u32 div, val;
+
+        val = readl(&cru->clksel_con[57]);
+        div = (val & PCLK_ALIVE_DIV_CON_MASK) >>
+	       PCLK_ALIVE_DIV_CON_SHIFT;
+
+        return DIV_TO_RATE(GPLL_HZ, div);
+}
+
 static ulong rk3399_saradc_get_clk(struct rockchip_cru *cru)
 {
 	u32 div, val;
@@ -935,6 +951,10 @@ static ulong rk3399_clk_get_rate(struct clk *clk)
 	case ACLK_HDCP:
 	case ACLK_GIC_PRE:
 	case PCLK_DDR:
+		break;
+	case PCLK_ALIVE:
+	case PCLK_WDT:
+		rate = rk3399_alive_get_clk(priv->cru);
 		break;
 	default:
 		log_debug("Unknown clock %lu\n", clk->id);
@@ -1274,7 +1294,6 @@ static struct clk_ops rk3399_clk_ops = {
 	.disable = rk3399_clk_disable,
 };
 
-#ifdef CONFIG_SPL_BUILD
 static void rkclk_init(struct rockchip_cru *cru)
 {
 	u32 aclk_div;
@@ -1352,20 +1371,30 @@ static void rkclk_init(struct rockchip_cru *cru)
 		     hclk_div << HCLK_PERILP1_DIV_CON_SHIFT |
 		     HCLK_PERILP1_PLL_SEL_GPLL << HCLK_PERILP1_PLL_SEL_SHIFT);
 }
-#endif
 
 static int rk3399_clk_probe(struct udevice *dev)
 {
-#ifdef CONFIG_SPL_BUILD
 	struct rk3399_clk_priv *priv = dev_get_priv(dev);
+	bool init_clocks = false;
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct rk3399_clk_plat *plat = dev_get_platdata(dev);
 
 	priv->cru = map_sysmem(plat->dtd.reg[0], plat->dtd.reg[1]);
 #endif
-	rkclk_init(priv->cru);
+
+#if defined(CONFIG_SPL_BUILD)
+	init_clocks = true;
+#elif CONFIG_IS_ENABLED(HANDOFF)
+	if (!(gd->flags & GD_FLG_RELOC)) {
+		if (!(gd->spl_handoff))
+			init_clocks = true;
+	}
 #endif
+
+	if (init_clocks)
+		rkclk_init(priv->cru);
+
 	return 0;
 }
 
@@ -1502,6 +1531,7 @@ static ulong rk3399_pmuclk_get_rate(struct clk *clk)
 	case PLL_PPLL:
 		return PPLL_HZ;
 	case PCLK_RKPWM_PMU:
+	case PCLK_WDT_M0_PMU:
 		rate = rk3399_pwm_get_clk(priv->pmucru);
 		break;
 	case SCLK_I2C0_PMU:
@@ -1592,7 +1622,7 @@ static int rk3399_pmuclk_ofdata_to_platdata(struct udevice *dev)
 
 static int rk3399_pmuclk_bind(struct udevice *dev)
 {
-#if CONFIG_IS_ENABLED(CONFIG_RESET_ROCKCHIP)
+#if CONFIG_IS_ENABLED(RESET_ROCKCHIP)
 	int ret;
 
 	ret = offsetof(struct rk3399_pmucru, pmucru_softrst_con[0]);

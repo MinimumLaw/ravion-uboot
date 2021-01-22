@@ -62,7 +62,6 @@
 
 /* JFFS2 */
 #ifdef CONFIG_CMD_JFFS2
-#define CONFIG_JFFS2_CMDLINE
 #define CONFIG_JFFS2_NAND
 #endif
 
@@ -92,7 +91,6 @@
 
 /* RTC */
 #if defined(CONFIG_CMD_DATE) || defined(CONFIG_CMD_SNTP)
-#define CONFIG_RTC_PCF8563
 #define CONFIG_SYS_I2C_RTC_ADDR		0x51
 #endif
 

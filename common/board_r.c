@@ -46,6 +46,7 @@
 #include <miiphy.h>
 #endif
 #include <mmc.h>
+#include <mux.h>
 #include <nand.h>
 #include <of_live.h>
 #include <onenand_uboot.h>
@@ -71,6 +72,9 @@
 #include <wdt.h>
 #if defined(CONFIG_GPIO_HOG)
 #include <asm/gpio.h>
+#endif
+#ifdef CONFIG_EFI_SETUP_EARLY
+#include <efi_loader.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -295,20 +299,21 @@ static int initr_noncached(void)
 }
 #endif
 
-#ifdef CONFIG_OF_LIVE
 static int initr_of_live(void)
 {
-	int ret;
+	if (CONFIG_IS_ENABLED(OF_LIVE)) {
+		int ret;
 
-	bootstage_start(BOOTSTAGE_ID_ACCUM_OF_LIVE, "of_live");
-	ret = of_live_build(gd->fdt_blob, (struct device_node **)&gd->of_root);
-	bootstage_accum(BOOTSTAGE_ID_ACCUM_OF_LIVE);
-	if (ret)
-		return ret;
+		bootstage_start(BOOTSTAGE_ID_ACCUM_OF_LIVE, "of_live");
+		ret = of_live_build(gd->fdt_blob,
+				    (struct device_node **)gd_of_root_ptr());
+		bootstage_accum(BOOTSTAGE_ID_ACCUM_OF_LIVE);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
-#endif
 
 #ifdef CONFIG_DM
 static int initr_dm(void)
@@ -337,6 +342,17 @@ static int initr_dm_devices(void)
 
 	if (IS_ENABLED(CONFIG_TIMER_EARLY)) {
 		ret = dm_timer_init();
+		if (ret)
+			return ret;
+	}
+
+	if (IS_ENABLED(CONFIG_MULTIPLEXER)) {
+		/*
+		 * Initialize the multiplexer controls to their default state.
+		 * This must be done early as other drivers may unknowingly
+		 * rely on it.
+		 */
+		ret = dm_mux_init();
 		if (ret)
 			return ret;
 	}
@@ -701,9 +717,7 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_SYS_NONCACHED_MEMORY
 	initr_noncached,
 #endif
-#ifdef CONFIG_OF_LIVE
 	initr_of_live,
-#endif
 #ifdef CONFIG_DM
 	initr_dm,
 #endif
@@ -877,6 +891,9 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #if defined(CONFIG_PRAM)
 	initr_mem,
+#endif
+#ifdef CONFIG_EFI_SETUP_EARLY
+	(init_fnc_t)efi_init_obj_list,
 #endif
 	run_main_loop,
 };

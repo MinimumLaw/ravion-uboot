@@ -27,6 +27,10 @@ config EFI_LOADER
 
 if EFI_LOADER
 
+config EFI_SETUP_EARLY
+	bool
+	default n
+
 choice
 	prompt "Store for non-volatile UEFI variables"
 	default EFI_VARIABLE_FILE_STORE
@@ -73,6 +77,20 @@ config EFI_VAR_SEED_FILE
 
 endif
 
+config EFI_VAR_BUF_SIZE
+	int "Memory size of the UEFI variable store"
+	default 16384
+	range 4096 2147483647
+	help
+	  This defines the size in bytes of the memory area reserved for keeping
+	  UEFI variables.
+
+	  When using StandAloneMM (CONFIG_EFI_MM_COMM_TEE=y) this value should
+	  match the value of PcdFlashNvStorageVariableSize used to compile the
+	  StandAloneMM module.
+
+	  Minimum 4096, default 16384.
+
 config EFI_GET_TIME
 	bool "GetTime() runtime service"
 	depends on DM_RTC
@@ -84,6 +102,7 @@ config EFI_GET_TIME
 config EFI_SET_TIME
 	bool "SetTime() runtime service"
 	depends on EFI_GET_TIME
+	default y if ARCH_QEMU || SANDBOX
 	default n
 	help
 	  Provide the SetTime() runtime service at boottime. This service
@@ -164,6 +183,7 @@ config EFI_HAVE_RUNTIME_RESET
 
 config EFI_GRUB_ARM32_WORKAROUND
 	bool "Workaround for GRUB on 32bit ARM"
+	default n if ARCH_QEMU
 	default y
 	depends on ARM && !ARM64
 	help
@@ -178,6 +198,13 @@ config EFI_RNG_PROTOCOL
 	help
 	  Provide a EFI_RNG_PROTOCOL implementation using the hardware random
 	  number generator of the platform.
+
+config EFI_TCG2_PROTOCOL
+	bool "EFI_TCG2_PROTOCOL support"
+	depends on TPM_V2
+	help
+	  Provide a EFI_TCG2_PROTOCOL implementation using the TPM hardware
+	  of the platform.
 
 config EFI_LOAD_FILE2_INITRD
 	bool "EFI_FILE_LOAD2_PROTOCOL for Linux initial ramdisk"

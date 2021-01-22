@@ -244,6 +244,7 @@
 #define SDHCI_QUIRK_BROKEN_HISPD_MODE	BIT(5)
 #define SDHCI_QUIRK_WAIT_SEND_CMD	(1 << 6)
 #define SDHCI_QUIRK_USE_WIDE8		(1 << 8)
+#define SDHCI_QUIRK_NO_1_8_V		(1 << 9)
 
 /* to make gcc happy */
 struct sdhci_host;
@@ -271,7 +272,6 @@ struct sdhci_ops {
 	int	(*deferred_probe)(struct sdhci_host *host);
 };
 
-#if CONFIG_IS_ENABLED(MMC_SDHCI_ADMA)
 #define ADMA_MAX_LEN	65532
 #ifdef CONFIG_DMA_ADDR_T_64BIT
 #define ADMA_DESC_LEN	16
@@ -302,7 +302,7 @@ struct sdhci_adma_desc {
 	u32 addr_hi;
 #endif
 } __packed;
-#endif
+
 struct sdhci_host {
 	const char *name;
 	void *ioaddr;
@@ -334,7 +334,6 @@ struct sdhci_host {
 	dma_addr_t adma_addr;
 #if CONFIG_IS_ENABLED(MMC_SDHCI_ADMA)
 	struct sdhci_adma_desc *adma_desc_table;
-	uint desc_slot;
 #endif
 };
 
@@ -495,5 +494,9 @@ int sdhci_set_clock(struct mmc *mmc, unsigned int clock);
 extern const struct dm_mmc_ops sdhci_ops;
 #else
 #endif
+
+struct sdhci_adma_desc *sdhci_adma_init(void);
+void sdhci_prepare_adma_table(struct sdhci_adma_desc *table,
+			      struct mmc_data *data, dma_addr_t addr);
 
 #endif /* __SDHCI_HW_H */

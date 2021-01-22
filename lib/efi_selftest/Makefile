@@ -8,6 +8,8 @@
 asflags-y += -DHOST_ARCH="$(HOST_ARCH)"
 ccflags-y += -DHOST_ARCH="$(HOST_ARCH)"
 
+CFLAGS_dtbdump_exit.o := $(CFLAGS_EFI) -Os -ffreestanding
+CFLAGS_REMOVE_dtbdump.o := $(CFLAGS_NON_EFI)
 CFLAGS_efi_selftest_miniapp_exit.o := $(CFLAGS_EFI) -Os -ffreestanding
 CFLAGS_REMOVE_efi_selftest_miniapp_exit.o := $(CFLAGS_NON_EFI)
 CFLAGS_efi_selftest_miniapp_return.o := $(CFLAGS_EFI) -Os -ffreestanding
@@ -53,6 +55,7 @@ obj-$(CONFIG_EFI_LOADER_HII) += efi_selftest_hii.o
 obj-$(CONFIG_EFI_RNG_PROTOCOL) += efi_selftest_rng.o
 obj-$(CONFIG_EFI_GET_TIME) += efi_selftest_rtc.o
 obj-$(CONFIG_EFI_LOAD_FILE2_INITRD) += efi_selftest_load_initrd.o
+obj-$(CONFIG_EFI_TCG2_PROTOCOL) += efi_selftest_tcg2.o
 
 ifeq ($(CONFIG_GENERATE_ACPI_TABLE),)
 obj-y += efi_selftest_fdt.o
@@ -75,6 +78,9 @@ efi_miniapp_file_image_return.h \
 efi_selftest_miniapp_exception.efi \
 efi_selftest_miniapp_exit.efi \
 efi_selftest_miniapp_return.efi
+
+always += \
+dtbdump.efi
 
 $(obj)/efi_miniapp_file_image_exception.h: $(obj)/efi_selftest_miniapp_exception.efi
 	$(obj)/../../tools/file2include $(obj)/efi_selftest_miniapp_exception.efi > \

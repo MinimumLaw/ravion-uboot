@@ -563,10 +563,20 @@ int genimg_get_cat_count(enum ih_category category);
 /**
  * genimg_get_cat_desc() - Get the description of a category
  *
+ * @category:	Category to check
  * @return the description of a category, e.g. "architecture". This
  * effectively converts the enum to a string.
  */
 const char *genimg_get_cat_desc(enum ih_category category);
+
+/**
+ * genimg_cat_has_id() - Check whether a category has an item
+ *
+ * @category:	Category to check
+ * @id:		Item ID
+ * @return true or false as to whether a category has an item
+ */
+bool genimg_cat_has_id(enum ih_category category, uint id);
 
 int genimg_get_os_id(const char *name);
 int genimg_get_arch_id(const char *name);
@@ -1463,7 +1473,7 @@ struct cipher_algo {
 		       unsigned char **cipher, int *cipher_len);
 
 	int (*add_cipher_data)(struct image_cipher_info *info,
-			       void *keydest);
+			       void *keydest, void *fit, int node_noffset);
 
 	int (*decrypt)(struct image_cipher_info *info,
 		       const void *cipher, size_t cipher_len,
@@ -1542,6 +1552,10 @@ int board_fit_config_name_match(const char *name);
  * @return no return value (failure should be handled internally)
  */
 void board_fit_image_post_process(void **p_image, size_t *p_size);
+#else
+static inline void board_fit_image_post_process(void **p_image, size_t *p_size)
+{
+}
 #endif /* CONFIG_SPL_FIT_IMAGE_POST_PROCESS */
 
 #define FDT_ERROR	((ulong)(-1))
@@ -1591,5 +1605,17 @@ struct fit_loadable_tbl {
 		.type = _type, \
 		.handler = _handler, \
 	}
+
+/**
+ * fit_update - update storage with FIT image
+ * @fit:        Pointer to FIT image
+ *
+ * Update firmware on storage using FIT image as input.
+ * The storage area to be update will be identified by the name
+ * in FIT and matching it to "dfu_alt_info" variable.
+ *
+ * Return:      0 on success, non-zero otherwise
+ */
+int fit_update(const void *fit);
 
 #endif	/* __IMAGE_H__ */

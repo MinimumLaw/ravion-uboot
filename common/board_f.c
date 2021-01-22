@@ -215,8 +215,6 @@ static int announce_dram_init(void)
 static int show_dram_config(void)
 {
 	unsigned long long size;
-
-#ifdef CONFIG_NR_DRAM_BANKS
 	int i;
 
 	debug("\nRAM Configuration:\n");
@@ -229,9 +227,6 @@ static int show_dram_config(void)
 #endif
 	}
 	debug("\nDRAM:  ");
-#else
-	size = gd->ram_size;
-#endif
 
 	print_size(size, "");
 	board_add_ram_info(0);
@@ -242,10 +237,8 @@ static int show_dram_config(void)
 
 __weak int dram_init_banksize(void)
 {
-#if defined(CONFIG_NR_DRAM_BANKS) && defined(CONFIG_SYS_SDRAM_BASE)
-	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_dram[0].start = gd->ram_base;
 	gd->bd->bi_dram[0].size = get_effective_memsize();
-#endif
 
 	return 0;
 }
@@ -399,6 +392,8 @@ static int reserve_video(void)
 	ret = video_reserve(&addr);
 	if (ret)
 		return ret;
+	debug("Reserving %luk for video at: %08lx\n",
+	      (unsigned long)gd->relocaddr - addr, addr);
 	gd->relocaddr = addr;
 #elif defined(CONFIG_LCD)
 #  ifdef CONFIG_FB_ADDR
@@ -580,7 +575,9 @@ static int reserve_stacks(void)
 static int reserve_bloblist(void)
 {
 #ifdef CONFIG_BLOBLIST
-	gd->start_addr_sp = reserve_stack_aligned(CONFIG_BLOBLIST_SIZE);
+	/* Align to a 4KB boundary for easier reading of addresses */
+	gd->start_addr_sp = ALIGN_DOWN(gd->start_addr_sp - CONFIG_BLOBLIST_SIZE,
+				       0x1000);
 	gd->new_bloblist = map_sysmem(gd->start_addr_sp, CONFIG_BLOBLIST_SIZE);
 #endif
 
@@ -602,9 +599,6 @@ __weak int arch_setup_bdinfo(void)
 int setup_bdinfo(void)
 {
 	struct bd_info *bd = gd->bd;
-
-	bd->bi_memstart = gd->ram_base;  /* start of memory */
-	bd->bi_memsize = gd->ram_size;   /* size in bytes */
 
 	if (IS_ENABLED(CONFIG_SYS_HAS_SRAM)) {
 		bd->bi_sramstart = CONFIG_SYS_SRAM_BASE; /* start of SRAM */

@@ -16,8 +16,6 @@ from patman import tout
 
 modules = {}
 
-our_path = os.path.dirname(os.path.realpath(__file__))
-
 
 # An argument which can be passed to entries on the command line, in lieu of
 # device-tree properties.
@@ -50,15 +48,29 @@ class Entry(object):
         uncomp_size: Size of uncompressed data in bytes, if the entry is
             compressed, else None
         contents_size: Size of contents in bytes, 0 by default
-        align: Entry start offset alignment, or None
+        align: Entry start offset alignment relative to the start of the
+            containing section, or None
         align_size: Entry size alignment, or None
-        align_end: Entry end offset alignment, or None
-        pad_before: Number of pad bytes before the contents, 0 if none
-        pad_after: Number of pad bytes after the contents, 0 if none
-        data: Contents of entry (string of bytes)
+        align_end: Entry end offset alignment relative to the start of the
+            containing section, or None
+        pad_before: Number of pad bytes before the contents when it is placed
+            in the containing section, 0 if none. The pad bytes become part of
+            the entry.
+        pad_after: Number of pad bytes after the contents when it is placed in
+            the containing section, 0 if none. The pad bytes become part of
+            the entry.
+        data: Contents of entry (string of bytes). This does not include
+            padding created by pad_before or pad_after. If the entry is
+            compressed, this contains the compressed data.
+        uncomp_data: Original uncompressed data, if this entry is compressed,
+            else None
         compress: Compression algoithm used (e.g. 'lz4'), 'none' if none
         orig_offset: Original offset value read from node
         orig_size: Original size value read from node
+        missing: True if this entry is missing its contents
+        allow_missing: Allow children of this entry to be missing (used by
+            subclasses such as Entry_section)
+        external: True if this entry contains an external binary blob
     """
     def __init__(self, section, etype, node, name_prefix=''):
         # Put this here to allow entry-docs and help to work without libfdt
@@ -74,6 +86,7 @@ class Entry(object):
         self.pre_reset_size = None
         self.uncomp_size = None
         self.data = None
+        self.uncomp_data = None
         self.contents_size = 0
         self.align = None
         self.align_size = None
@@ -85,6 +98,8 @@ class Entry(object):
         self._expand_size = False
         self.compress = 'none'
         self.missing = False
+        self.external = False
+        self.allow_missing = False
 
     @staticmethod
     def Lookup(node_path, etype):
@@ -174,6 +189,10 @@ class Entry(object):
         self.align_end = fdt_util.GetInt(self._node, 'align-end')
         self.offset_unset = fdt_util.GetBool(self._node, 'offset-unset')
         self.expand_size = fdt_util.GetBool(self._node, 'expand-size')
+        self.missing_msg = fdt_util.GetString(self._node, 'missing-msg')
+
+        # This is only supported by blobs and sections at present
+        self.compress = fdt_util.GetString(self._node, 'compress', 'none')
 
     def GetDefaultFilename(self):
         return None
@@ -194,11 +213,20 @@ class Entry(object):
     def ExpandEntries(self):
         pass
 
-    def AddMissingProperties(self):
-        """Add new properties to the device tree as needed for this entry"""
-        for prop in ['offset', 'size', 'image-pos']:
+    def AddMissingProperties(self, have_image_pos):
+        """Add new properties to the device tree as needed for this entry
+
+        Args:
+            have_image_pos: True if this entry has an image position. This can
+                be False if its parent section is compressed, since compression
+                groups all entries together into a compressed block of data,
+                obscuring the start of each individual child entry
+        """
+        for prop in ['offset', 'size']:
             if not prop in self._node.props:
                 state.AddZeroProp(self._node, prop)
+        if have_image_pos and 'image-pos' not in self._node.props:
+            state.AddZeroProp(self._node, 'image-pos')
         if self.GetImage().allow_repack:
             if self.orig_offset is not None:
                 state.AddZeroProp(self._node, 'orig-offset', True)
@@ -216,7 +244,8 @@ class Entry(object):
         state.SetInt(self._node, 'offset', self.offset)
         state.SetInt(self._node, 'size', self.size)
         base = self.section.GetRootSkipAtStart() if self.section else 0
-        state.SetInt(self._node, 'image-pos', self.image_pos - base)
+        if self.image_pos is not None:
+            state.SetInt(self._node, 'image-pos', self.image_pos - base)
         if self.GetImage().allow_repack:
             if self.orig_offset is not None:
                 state.SetInt(self._node, 'orig-offset', self.orig_offset, True)
@@ -418,8 +447,30 @@ class Entry(object):
         return self._node.path
 
     def GetData(self):
+        """Get the contents of an entry
+
+        Returns:
+            bytes content of the entry, excluding any padding. If the entry is
+                compressed, the compressed data is returned
+        """
         self.Detail('GetData: size %s' % ToHexSize(self.data))
         return self.data
+
+    def GetPaddedData(self, data=None):
+        """Get the data for an entry including any padding
+
+        Gets the entry data and uses its section's pad-byte value to add padding
+        before and after as defined by the pad-before and pad-after properties.
+
+        This does not consider alignment.
+
+        Returns:
+            Contents of the entry along with any pad bytes before and
+            after it (bytes)
+        """
+        if data is None:
+            data = self.GetData()
+        return self.section.GetPaddedDataForEntry(self, data)
 
     def GetOffsets(self):
         """Get the offsets for siblings
@@ -485,7 +536,7 @@ class Entry(object):
         """
         pass
 
-    def CheckOffset(self):
+    def CheckEntries(self):
         """Check that the entry offsets are correct
 
         This is used for entries which have extra offset requirements (other
@@ -815,3 +866,34 @@ features to produce new behaviours.
         """
         if self.missing:
             missing_list.append(self)
+
+    def GetAllowMissing(self):
+        """Get whether a section allows missing external blobs
+
+        Returns:
+            True if allowed, False if not allowed
+        """
+        return self.allow_missing
+
+    def GetHelpTags(self):
+        """Get the tags use for missing-blob help
+
+        Returns:
+            list of possible tags, most desirable first
+        """
+        return list(filter(None, [self.missing_msg, self.name, self.etype]))
+
+    def CompressData(self, indata):
+        """Compress data according to the entry's compression method
+
+        Args:
+            indata: Data to compress
+
+        Returns:
+            Compressed data (first word is the compressed size)
+        """
+        self.uncomp_data = indata
+        if self.compress != 'none':
+            self.uncomp_size = len(indata)
+        data = tools.Compress(indata, self.compress)
+        return data
