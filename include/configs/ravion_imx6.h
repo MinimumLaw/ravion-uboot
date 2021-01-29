@@ -67,37 +67,70 @@
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0"
 
+/*
+ *     Default do FAST (falcon) mode from 1-st eMMC partition
+ * with  kernel  "zImage",  DTB  "imx6xx-ravion-${board}.dtb"
+ * and rootfs on SECOND SATA disk partition. Console enabled.
+ */
+#define FALCON_ENV_DEFAULT \
+	"bootargs=console=ttymxc0,115200n8 root=/dev/sda2 ro\0" \
+	"falcon_image_file=set.kernel.board\0" \
+	"falcon_args_file=set.device-tree.board\0" \
+	"boot_os=0\0"
+
 #define BLKDEV_BOOTCMD \
 	"_blkdevboot=sysboot ${blkname} ${blkdev} any " \
 	"${script_addr_r} syslinux.conf\0" \
 	"_scriptboot=load ${blkname} ${blkdev} ${script_addr_r} " \
-	"${boot_script_file} && source ${script_addr_r}\0" \
+	"${boot_script_file} && source ${script_addr_r}\0"
 
+/*
+ * USB storage.
+ * Boot script & syslinux.conf from SECOND partition (slow).
+ * 1-st partition may contents recovery mode falcon files,
+ * u-boot-dtb.img
+ */
 #define USB_BOOTCMD \
 	"usbboot=setenv blkname usb && " \
-	"setenv blkdev 0:1 && " \
-	"run _blkdevboot; run _scriptboot\0" \
+	"setenv blkdev 0:2 && " \
+	"run _scriptboot; run _blkdevboot\0"
 
+/*
+ * SD/MMC card removable storage
+ */
 #define SD_BOOTCMD \
 	"sdboot=setenv blkname mmc && " \
 	"setenv blkdev 1:1 && " \
-	"run _blkdevboot\0" \
+	"run _scriptboot; run _blkdevboot\0"
 
+/*
+ * Network/TFTP - only bootscript allowed.
+ */
 #define TFTP_BOOTCMD \
 	"tftpboot=tftp ${script_addr_r} ${serverip}:${boot_script_file} && " \
-	"source ${script_addr_r}\0" \
+	"source ${script_addr_r}\0"
 
+/*
+ * eMMC storage.
+ * Boot syslinux.conf & script from SECOND partition (slow).
+ * 1-st partition MUST contents working mode falcon files,
+ * u-boot-dtb.img an uboot.env platform file
+ */
 #define EMMC_BOOTCMD \
 	"emmcboot=setenv blkname mmc && " \
-	"setenv blkdev 0:1 && " \
-	"run _blkdevboot\0" \
+	"setenv blkdev 0:2 && " \
+	"run _scriptboot; run _blkdevboot\0"
 
+/*
+ * SATA storage.
+ * Boot syslinux.conf & script from FIRST partition (slow).
+ */
 #define SATA_BOOTCMD \
 	"sataboot=setenv boot_script_file bscript.img; "\
 	"setenv blkname sata; " \
 	"setenv blkdev 0:1; " \
 	"sata init; " \
-	"run _blkdevboot\0" \
+	"run _scriptboot; run _blkdevboot\0"
 
 #define SPL_UPDATE \
 	"prepare_module=mfgr_fuse; " \
@@ -114,7 +147,7 @@
 	"bootmenu_1=TFTP boot=run tftpboot\0" \
 	"bootmenu_2=eMMC as USB Storage=ums 0 mmc 0\0" \
 	"bootmenu_3=SATA as USB Storage=sata init; ums 0 sata 0\0" \
-	"bootmenu_4=Personalise module interactive=run prepare_module\0" \
+	"bootmenu_4=Personalise module interactive=run prepare_module\0"
 
 #ifdef CONFIG_MX6Q
 #define VARIANT	"variant=qp\0"
@@ -125,7 +158,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"__INF0__=Ravion-V2 I.MX6 CPU Module BSP package\0" \
 	"__INF1__=Created: Alex A. Mihaylov AKA MinimumLaw, MinimumLaw@Rambler.Ru\0" \
-	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2020\0" \
+	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2021\0" \
 	"__INF3__=License: GPL v2 and above, https://github.com/MinimumLaw\0" \
 	"board=kitsbimx6\0" \
 	"bootcmd=" \
@@ -137,6 +170,7 @@
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=/boot/bscript.img\0" \
 	"board_name=\0" \
+	FALCON_ENV_DEFAULT \
 	VARIANT \
 	MEM_LAYOUT_ENV_SETTINGS \
 	BLKDEV_BOOTCMD \
@@ -147,7 +181,7 @@
 	SATA_BOOTCMD \
 	BOOTMENU_BOOTCMD \
 	SPL_UPDATE \
-	"splashpos=m,m\0" \
+	"splashpos=m,m\0"
 
 /* Miscellaneous configurable options */
 #undef CONFIG_SYS_CBSIZE
