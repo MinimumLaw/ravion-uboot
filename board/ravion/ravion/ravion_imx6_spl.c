@@ -55,6 +55,7 @@
 #ifndef PWRBTN_DETECT_DELAY
 #define PWRBTN_DETECT_DELAY	750000
 #endif
+static const char POWERBUTTON_GPIO[] = "GPIO2_7";
 
 /* called BEFORE load system */
 void spl_board_prepare_for_linux(void)
@@ -66,15 +67,11 @@ void spl_board_prepare_for_linux(void)
     debug("Falcon mode: load system...\n");
 }
 
-static const char PBTNGPIO_KITSB[] = "GPIO2_8";
-static const char PBTNGPIO_OTHER[] = "GPIO2_7";
-
 int spl_start_uboot(void)
 {
-	const char* pwr_gpio = PBTNGPIO_OTHER;
+	const char* pwr_gpio = POWERBUTTON_GPIO;
 	struct gpio_desc pwrbtn_gpio;
 	int ret = SPL_LOAD_UBOOT;
-	char *board = NULL;
 
 #ifdef CONFIG_SPL_ENV_SUPPORT
 	env_init();
@@ -83,14 +80,7 @@ int spl_start_uboot(void)
 		printf("Falcon bootmode not allowed by environment!\n");
 		return SPL_LOAD_UBOOT;
 	}
-
-	board = env_get("board");
-	if (board) {
-	    if(!strncmp(board,"kitsbimx6", 9))
-		pwr_gpio = PBTNGPIO_KITSB;
-	}
 #endif
-
 	ret = dm_gpio_lookup_name(pwr_gpio, &pwrbtn_gpio);
 	if (ret) {
 		printf("Power button GPIO lookup failed (%d)!\n", ret);
