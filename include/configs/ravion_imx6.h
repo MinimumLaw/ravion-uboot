@@ -69,19 +69,21 @@
 
 /*
  *     Default do FAST (falcon) mode from 1-st eMMC partition
- * with  kernel  "zImage",  DTB  "imx6xx-ravion-${board}.dtb"
+ * with  kernel  "board.kernel",  DTB  "board.dtb"
  * and rootfs on SECOND SATA disk partition. Console enabled.
  */
 #define FALCON_ENV_DEFAULT \
 	"bootargs=console=ttymxc0,115200n8 root=/dev/sda2 ro\0" \
-	"falcon_image_file=set.kernel.board\0" \
-	"falcon_args_file=set.device-tree.board\0" \
+	"falcon_image_file=board.kernel\0" \
+	"falcon_args_file=board.dtb\0" \
 	"boot_os=0\0"
 
 #define BLKDEV_BOOTCMD \
-	"_blkdevboot=sysboot ${blkname} ${blkdev} any " \
+	"_blkdevboot=" \
+	"sysboot ${blkname} ${blkdev} any " \
 	"${script_addr_r} syslinux.conf\0" \
-	"_scriptboot=load ${blkname} ${blkdev} ${script_addr_r} " \
+	"_scriptboot=" \
+	"load ${blkname} ${blkdev} ${script_addr_r} " \
 	"${boot_script_file} && source ${script_addr_r}\0"
 
 /*
@@ -91,15 +93,17 @@
  * u-boot-dtb.img
  */
 #define USB_BOOTCMD \
-	"usbboot=setenv blkname usb && " \
-	"setenv blkdev 0:2 && " \
+	"usbboot=" \
+	"setenv blkname usb && " \
+	"setenv blkdev 0:1 && " \
 	"run _scriptboot; run _blkdevboot\0"
 
 /*
  * SD/MMC card removable storage
  */
 #define SD_BOOTCMD \
-	"sdboot=setenv blkname mmc && " \
+	"sdboot=" \
+	"setenv blkname mmc && " \
 	"setenv blkdev 1:1 && " \
 	"run _scriptboot; run _blkdevboot\0"
 
@@ -107,8 +111,10 @@
  * Network/TFTP - only bootscript allowed.
  */
 #define TFTP_BOOTCMD \
-	"tftpboot=tftp ${script_addr_r} ${serverip}:${boot_script_file} && " \
-	"source ${script_addr_r}\0"
+	"tftpboot=" \
+	"setenv boot_script_file /boot/bscript.img; "\
+	"tftp ${script_addr_r} ${serverip}:${boot_script_file} && " \
+	"source ${script_addr_r} || env default boot_script_file\0"
 
 /*
  * eMMC storage.
@@ -117,7 +123,8 @@
  * u-boot-dtb.img an uboot.env platform file
  */
 #define EMMC_BOOTCMD \
-	"emmcboot=setenv blkname mmc && " \
+	"emmcboot=" \
+	"setenv blkname mmc && " \
 	"setenv blkdev 0:2 && " \
 	"run _scriptboot; run _blkdevboot\0"
 
@@ -126,7 +133,7 @@
  * Boot syslinux.conf & script from FIRST partition (slow).
  */
 #define SATA_BOOTCMD \
-	"sataboot=setenv boot_script_file bscript.img; "\
+	"sataboot="\
 	"setenv blkname sata; " \
 	"setenv blkdev 0:1; " \
 	"sata init; " \
@@ -168,7 +175,7 @@
 	    "run sataboot; " \
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
-	"boot_script_file=/boot/bscript.img\0" \
+	"boot_script_file=bscript.img\0" \
 	"board_name=\0" \
 	FALCON_ENV_DEFAULT \
 	VARIANT \
