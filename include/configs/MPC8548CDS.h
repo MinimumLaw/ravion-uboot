@@ -23,8 +23,6 @@
 
 #define CONFIG_INTERRUPTS		/* enable pci, srio, ddr interrupts */
 
-#define CONFIG_FSL_VIA
-
 #ifndef __ASSEMBLY__
 #include <linux/stringify.h>
 extern unsigned long get_clock_freq(void);
@@ -296,7 +294,7 @@ extern unsigned long get_clock_freq(void);
 /*
  * I2C
  */
-#ifndef CONFIG_DM_I2C
+#if !CONFIG_IS_ENABLED(DM_I2C)
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_FSL_I2C_SPEED	400000
 #define CONFIG_SYS_FSL_I2C_SLAVE	0x7F

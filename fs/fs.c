@@ -20,6 +20,7 @@
 #include <sandboxfs.h>
 #include <ubifs_uboot.h>
 #include <btrfs.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <div64.h>
 #include <linux/math64.h>
@@ -194,7 +195,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 #endif
-		.uuid = fs_uuid_unsupported,
+		.uuid = fat_uuid,
 		.opendir = fat_opendir,
 		.readdir = fat_readdir,
 		.closedir = fat_closedir,
@@ -710,8 +711,10 @@ int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	if (argc > 7)
 		return CMD_RET_USAGE;
 
-	if (fs_set_blk_dev(argv[1], (argc >= 3) ? argv[2] : NULL, fstype))
+	if (fs_set_blk_dev(argv[1], (argc >= 3) ? argv[2] : NULL, fstype)) {
+		log_err("Can't set block device\n");
 		return 1;
+	}
 
 	if (argc >= 4) {
 		addr = simple_strtoul(argv[3], &ep, 16);
@@ -752,7 +755,8 @@ int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 
 	if (IS_ENABLED(CONFIG_CMD_BOOTEFI))
 		efi_set_bootdev(argv[1], (argc > 2) ? argv[2] : "",
-				(argc > 4) ? argv[4] : "");
+				(argc > 4) ? argv[4] : "", map_sysmem(addr, 0),
+				len_read);
 
 	printf("%llu bytes read in %lu ms", len_read, time);
 	if (time > 0) {

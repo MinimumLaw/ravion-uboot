@@ -3,6 +3,8 @@
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  */
 
+#define LOG_CATEGORY LOGC_ARCH
+
 #include <common.h>
 #include <cpu_func.h>
 #include <dm.h>
@@ -11,6 +13,7 @@
 #include <log.h>
 #include <spl.h>
 #include <asm/cache.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <linux/libfdt.h>
@@ -80,7 +83,7 @@ void spl_display_print(void)
 	 */
 	model = fdt_getprop(gd->fdt_blob, 0, "model", NULL);
 	if (model)
-		printf("Model: %s\n", model);
+		log_info("Model: %s\n", model);
 }
 #endif
 
@@ -98,25 +101,25 @@ void board_init_f(ulong dummy)
 
 	ret = spl_early_init();
 	if (ret) {
-		debug("spl_early_init() failed: %d\n", ret);
+		log_debug("spl_early_init() failed: %d\n", ret);
 		hang();
 	}
 
 	ret = uclass_get_device(UCLASS_CLK, 0, &dev);
 	if (ret) {
-		debug("Clock init failed: %d\n", ret);
+		log_debug("Clock init failed: %d\n", ret);
 		hang();
 	}
 
 	ret = uclass_get_device(UCLASS_RESET, 0, &dev);
 	if (ret) {
-		debug("Reset init failed: %d\n", ret);
+		log_debug("Reset init failed: %d\n", ret);
 		hang();
 	}
 
 	ret = uclass_get_device(UCLASS_PINCTRL, 0, &dev);
 	if (ret) {
-		debug("%s: Cannot find pinctrl device\n", __func__);
+		log_debug("%s: Cannot find pinctrl device\n", __func__);
 		hang();
 	}
 
@@ -125,13 +128,13 @@ void board_init_f(ulong dummy)
 
 	ret = board_early_init_f();
 	if (ret) {
-		debug("board_early_init_f() failed: %d\n", ret);
+		log_debug("board_early_init_f() failed: %d\n", ret);
 		hang();
 	}
 
 	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
 	if (ret) {
-		printf("DRAM init failed: %d\n", ret);
+		log_err("DRAM init failed: %d\n", ret);
 		hang();
 	}
 

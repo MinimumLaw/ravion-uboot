@@ -12,6 +12,7 @@
 #include <init.h>
 #include <log.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include "common.h"
 #include <dm.h>
 #include <remoteproc.h>
@@ -33,7 +34,7 @@ struct ti_sci_handle *get_ti_sci_handle(void)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_FIRMWARE,
-					  DM_GET_DRIVER(ti_sci), &dev);
+					  DM_DRIVER_GET(ti_sci), &dev);
 	if (ret)
 		panic("Failed to get SYSFW (%d)\n", ret);
 

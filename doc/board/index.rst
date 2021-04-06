@@ -17,7 +17,7 @@ Board-specific doc
    google/index
    intel/index
    kontron/index
-   renesas/index
+   microchip/index
    rockchip/index
    sifive/index
    sipeed/index

@@ -15,6 +15,8 @@ obj-$(CONFIG_UT_DM) += test-fdt.o
 obj-$(CONFIG_UT_DM) += test-uclass.o
 
 obj-$(CONFIG_UT_DM) += core.o
+obj-$(CONFIG_UT_DM) += read.o
+obj-$(CONFIG_UT_DM) += phys2bus.o
 ifneq ($(CONFIG_SANDBOX),)
 obj-$(CONFIG_ACPIGEN) += acpi.o
 obj-$(CONFIG_ACPIGEN) += acpigen.o
@@ -24,6 +26,7 @@ obj-$(CONFIG_BLK) += blk.o
 obj-$(CONFIG_BUTTON) += button.o
 obj-$(CONFIG_DM_BOOTCOUNT) += bootcount.o
 obj-$(CONFIG_CLK) += clk.o clk_ccf.o
+obj-$(CONFIG_CROS_EC) += cros_ec.o
 obj-$(CONFIG_DEVRES) += devres.o
 obj-$(CONFIG_VIDEO_MIPI_DSI) += dsi_host.o
 obj-$(CONFIG_DM_ETH) += eth.o
@@ -41,6 +44,7 @@ obj-y += fdtdec.o
 obj-$(CONFIG_UT_DM) += nop.o
 obj-y += ofnode.o
 obj-y += ofread.o
+obj-y += of_extra.o
 obj-$(CONFIG_OSD) += osd.o
 obj-$(CONFIG_DM_VIDEO) += panel.o
 obj-$(CONFIG_DM_PCI) += pci.o
@@ -90,6 +94,9 @@ obj-$(CONFIG_RESET_SYSCON) += syscon-reset.o
 obj-$(CONFIG_SCMI_FIRMWARE) += scmi.o
 ifneq ($(CONFIG_PINMUX),)
 obj-$(CONFIG_PINCONF) += pinmux.o
+endif
+ifneq ($(CONFIG_EFI_PARTITION),)
+obj-$(CONFIG_FASTBOOT_FLASH_MMC) += fastboot.o
 endif
 endif
 endif # !SPL

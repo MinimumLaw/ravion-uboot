@@ -16,6 +16,7 @@
 #include <watchdog.h>
 #include <wdt.h>
 #include <zynqpl.h>
+#include <asm/global_data.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include "../common/board.h"
@@ -24,6 +25,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int board_init(void)
 {
+	if (IS_ENABLED(CONFIG_SPL_BUILD))
+		printf("Silicon version:\t%d\n", zynq_get_silicon_version());
+
 	return 0;
 }
 

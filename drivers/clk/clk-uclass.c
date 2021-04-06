@@ -20,6 +20,7 @@
 #include <linux/bug.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
+#include <asm/global_data.h>
 
 static inline const struct clk_ops *clk_dev_ops(struct udevice *dev)
 {
@@ -83,7 +84,7 @@ static int clk_get_by_index_tail(int ret, ofnode node,
 	if (ret) {
 		debug("%s: uclass_get_device_by_of_offset failed: err=%d\n",
 		      __func__, ret);
-		return ret;
+		return log_msg_ret("get", ret);
 	}
 
 	clk->dev = dev_clk;
@@ -96,14 +97,15 @@ static int clk_get_by_index_tail(int ret, ofnode node,
 		ret = clk_of_xlate_default(clk, args);
 	if (ret) {
 		debug("of_xlate() failed: %d\n", ret);
-		return ret;
+		return log_msg_ret("xlate", ret);
 	}
 
 	return clk_request(dev_clk, clk);
 err:
 	debug("%s: Node '%s', property '%s', failed to request CLK index %d: %d\n",
 	      __func__, ofnode_get_name(node), list_name, index, ret);
-	return ret;
+
+	return log_msg_ret("prop", ret);
 }
 
 static int clk_get_by_indexed_prop(struct udevice *dev, const char *prop_name,
@@ -122,7 +124,7 @@ static int clk_get_by_indexed_prop(struct udevice *dev, const char *prop_name,
 	if (ret) {
 		debug("%s: fdtdec_parse_phandle_with_args failed: err=%d\n",
 		      __func__, ret);
-		return ret;
+		return log_ret(ret);
 	}
 
 
@@ -345,7 +347,7 @@ int clk_set_defaults(struct udevice *dev, int stage)
 {
 	int ret;
 
-	if (!dev_of_valid(dev))
+	if (!dev_has_ofnode(dev))
 		return 0;
 
 	/* If this not in SPL and pre-reloc state, don't take any action. */
@@ -470,6 +472,7 @@ int clk_free(struct clk *clk)
 ulong clk_get_rate(struct clk *clk)
 {
 	const struct clk_ops *ops;
+	int ret;
 
 	debug("%s(clk=%p)\n", __func__, clk);
 	if (!clk_valid(clk))
@@ -479,7 +482,11 @@ ulong clk_get_rate(struct clk *clk)
 	if (!ops->get_rate)
 		return -ENOSYS;
 
-	return ops->get_rate(clk);
+	ret = ops->get_rate(clk);
+	if (ret)
+		return log_ret(ret);
+
+	return 0;
 }
 
 struct clk *clk_get_parent(struct clk *clk)
@@ -521,6 +528,21 @@ long long clk_get_parent_rate(struct clk *clk)
 		pclk->rate = clk_get_rate(pclk);
 
 	return pclk->rate;
+}
+
+ulong clk_round_rate(struct clk *clk, ulong rate)
+{
+	const struct clk_ops *ops;
+
+	debug("%s(clk=%p, rate=%lu)\n", __func__, clk, rate);
+	if (!clk_valid(clk))
+		return 0;
+
+	ops = clk_dev_ops(clk->dev);
+	if (!ops->round_rate)
+		return -ENOSYS;
+
+	return ops->round_rate(clk, rate);
 }
 
 ulong clk_set_rate(struct clk *clk, ulong rate)

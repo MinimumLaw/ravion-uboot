@@ -17,6 +17,7 @@
 #include <lmb.h>
 #include <log.h>
 #include <malloc.h>
+#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <mapmem.h>
 #include <asm/io.h>
@@ -399,13 +400,16 @@ int boot_get_fdt(int flag, int argc, char *const argv[], uint8_t arch,
 			 */
 #if CONFIG_IS_ENABLED(FIT)
 			/* check FDT blob vs FIT blob */
-			if (fit_check_format(buf)) {
+			if (!fit_check_format(buf, IMAGE_SIZE_INVAL)) {
 				ulong load, len;
 
 				fdt_noffset = boot_get_fdt_fit(images,
 					fdt_addr, &fit_uname_fdt,
 					&fit_uname_config,
 					arch, &load, &len);
+
+				if (fdt_noffset < 0)
+					goto error;
 
 				images->fit_hdr_fdt = map_sysmem(fdt_addr, 0);
 				images->fit_uname_fdt = fit_uname_fdt;
@@ -572,11 +576,18 @@ int image_setup_libfdt(bootm_headers_t *images, void *blob,
 	fdt_fixup_pstore(blob);
 #endif
 	if (IMAGE_OF_BOARD_SETUP) {
-		fdt_ret = ft_board_setup(blob, gd->bd);
-		if (fdt_ret) {
-			printf("ERROR: board-specific fdt fixup failed: %s\n",
-			       fdt_strerror(fdt_ret));
-			goto err;
+		const char *skip_board_fixup;
+
+		skip_board_fixup = env_get("skip_board_fixup");
+		if (skip_board_fixup && ((int)simple_strtol(skip_board_fixup, NULL, 10) == 1)) {
+			printf("skip board fdt fixup\n");
+		} else {
+			fdt_ret = ft_board_setup(blob, gd->bd);
+			if (fdt_ret) {
+				printf("ERROR: board-specific fdt fixup failed: %s\n",
+				       fdt_strerror(fdt_ret));
+				goto err;
+			}
 		}
 	}
 	if (IMAGE_OF_SYSTEM_SETUP) {

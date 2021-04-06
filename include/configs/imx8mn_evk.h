@@ -20,16 +20,11 @@
 	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
 #ifdef CONFIG_SPL_BUILD
-#define CONFIG_SPL_STACK		0x95fff0
-#define CONFIG_SPL_BSS_START_ADDR	0x00950000
+#define CONFIG_SPL_STACK		0x980000
+#define CONFIG_SPL_BSS_START_ADDR	0x950000
 #define CONFIG_SPL_BSS_MAX_SIZE		SZ_8K	/* 8 KB */
 #define CONFIG_SYS_SPL_MALLOC_START	0x42200000
 #define CONFIG_SYS_SPL_MALLOC_SIZE	SZ_512K	/* 512 KB */
-#define CONFIG_SYS_ICACHE_OFF
-#define CONFIG_SYS_DCACHE_OFF
-
-/* malloc f used before GD_FLG_FULL_MALLOC_INIT set */
-#define CONFIG_MALLOC_F_ADDR		0x00940000
 
 /* For RAW image gives a error info not panic */
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
@@ -39,10 +34,10 @@
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"script=boot.scr\0" \
-	"image=Image.itb\0" \
+	"image=Image\0" \
 	"console=ttymxc1,115200\0" \
 	"fdt_addr=0x43000000\0"			\
-	"boot_fit=try\0" \
+	"boot_fit=no\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"initrd_addr=0x43800000\0"		\
 	"bootm_size=0x10000000\0" \
@@ -124,7 +119,6 @@
 #define CONFIG_MXC_UART_BASE		UART2_BASE_ADDR
 
 /* Monitor Command Prompt */
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_CBSIZE		2048
 #define CONFIG_SYS_MAXARGS		64
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE

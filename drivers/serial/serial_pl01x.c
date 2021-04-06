@@ -11,6 +11,7 @@
 /* Simple U-Boot driver for the PrimeCell PL010/PL011 UARTs */
 
 #include <common.h>
+#include <asm/global_data.h>
 /* For get_bus_freq() */
 #include <clock_legacy.h>
 #include <dm.h>
@@ -281,7 +282,7 @@ __weak struct serial_device *default_serial_console(void)
 
 int pl01x_serial_setbrg(struct udevice *dev, int baudrate)
 {
-	struct pl01x_serial_platdata *plat = dev_get_platdata(dev);
+	struct pl01x_serial_plat *plat = dev_get_plat(dev);
 	struct pl01x_priv *priv = dev_get_priv(dev);
 
 	if (!plat->skip_init) {
@@ -294,7 +295,7 @@ int pl01x_serial_setbrg(struct udevice *dev, int baudrate)
 
 int pl01x_serial_probe(struct udevice *dev)
 {
-	struct pl01x_serial_platdata *plat = dev_get_platdata(dev);
+	struct pl01x_serial_plat *plat = dev_get_plat(dev);
 	struct pl01x_priv *priv = dev_get_priv(dev);
 
 	priv->regs = (struct pl01x_regs *)plat->base;
@@ -348,9 +349,9 @@ static const struct udevice_id pl01x_serial_id[] ={
 #define CONFIG_PL011_CLOCK 0
 #endif
 
-int pl01x_serial_ofdata_to_platdata(struct udevice *dev)
+int pl01x_serial_of_to_plat(struct udevice *dev)
 {
-	struct pl01x_serial_platdata *plat = dev_get_platdata(dev);
+	struct pl01x_serial_plat *plat = dev_get_plat(dev);
 	struct clk clk;
 	fdt_addr_t addr;
 	int ret;
@@ -387,12 +388,12 @@ U_BOOT_DRIVER(serial_pl01x) = {
 	.name	= "serial_pl01x",
 	.id	= UCLASS_SERIAL,
 	.of_match = of_match_ptr(pl01x_serial_id),
-	.ofdata_to_platdata = of_match_ptr(pl01x_serial_ofdata_to_platdata),
-	.platdata_auto_alloc_size = sizeof(struct pl01x_serial_platdata),
+	.of_to_plat = of_match_ptr(pl01x_serial_of_to_plat),
+	.plat_auto	= sizeof(struct pl01x_serial_plat),
 	.probe = pl01x_serial_probe,
 	.ops	= &pl01x_serial_ops,
 	.flags = DM_FLAG_PRE_RELOC,
-	.priv_auto_alloc_size = sizeof(struct pl01x_priv),
+	.priv_auto	= sizeof(struct pl01x_priv),
 };
 
 #endif

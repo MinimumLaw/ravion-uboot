@@ -29,7 +29,7 @@ static inline void ls1012ardb_reset_phy(void)
 {
 #ifdef CONFIG_TARGET_LS1012ARDB
 	/* Through reset IO expander reset both RGMII and SGMII PHYs */
-#ifdef CONFIG_DM_I2C
+#if CONFIG_IS_ENABLED(DM_I2C)
 	struct udevice *dev;
 	int ret;
 
@@ -160,12 +160,12 @@ static struct pfe_eth_pdata pfe_pdata1 = {
 	},
 };
 
-U_BOOT_DEVICE(ls1012a_pfe0) = {
+U_BOOT_DRVINFO(ls1012a_pfe0) = {
 	.name = "pfe_eth",
-	.platdata = &pfe_pdata0,
+	.plat = &pfe_pdata0,
 };
 
-U_BOOT_DEVICE(ls1012a_pfe1) = {
+U_BOOT_DRVINFO(ls1012a_pfe1) = {
 	.name = "pfe_eth",
-	.platdata = &pfe_pdata1,
+	.plat = &pfe_pdata1,
 };

@@ -7,7 +7,7 @@
 #include <bloblist.h>
 #include <log.h>
 #include <mapmem.h>
-#include <asm/state.h>
+#include <asm/global_data.h>
 #include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>
@@ -240,7 +240,6 @@ BLOBLIST_TEST(bloblist_test_checksum, 0);
 /* Test the 'bloblist info' command */
 static int bloblist_test_cmd_info(struct unit_test_state *uts)
 {
-	struct sandbox_state *state = state_get_current();
 	struct bloblist_hdr *hdr;
 	char *data, *data2;
 
@@ -250,8 +249,7 @@ static int bloblist_test_cmd_info(struct unit_test_state *uts)
 	data2 = bloblist_ensure(TEST_TAG2, TEST_SIZE2);
 
 	console_record_reset_enable();
-	if (!state->show_test_output)
-		gd->flags |= GD_FLG_SILENT;
+	ut_silence_console(uts);
 	console_record_reset();
 	run_command("bloblist info", 0);
 	ut_assert_nextline("base:     %lx", (ulong)map_to_sysmem(hdr));
@@ -259,7 +257,7 @@ static int bloblist_test_cmd_info(struct unit_test_state *uts)
 	ut_assert_nextline("alloced:  70     112 Bytes");
 	ut_assert_nextline("free:     390    912 Bytes");
 	ut_assert_console_end();
-	gd->flags &= ~(GD_FLG_SILENT | GD_FLG_RECORD);
+	ut_unsilence_console(uts);
 
 	return 0;
 }
@@ -268,7 +266,6 @@ BLOBLIST_TEST(bloblist_test_cmd_info, 0);
 /* Test the 'bloblist list' command */
 static int bloblist_test_cmd_list(struct unit_test_state *uts)
 {
-	struct sandbox_state *state = state_get_current();
 	struct bloblist_hdr *hdr;
 	char *data, *data2;
 
@@ -278,8 +275,7 @@ static int bloblist_test_cmd_list(struct unit_test_state *uts)
 	data2 = bloblist_ensure(TEST_TAG2, TEST_SIZE2);
 
 	console_record_reset_enable();
-	if (!state->show_test_output)
-		gd->flags |= GD_FLG_SILENT;
+	ut_silence_console(uts);
 	console_record_reset();
 	run_command("bloblist list", 0);
 	ut_assert_nextline("Address       Size  Tag Name");
@@ -288,7 +284,7 @@ static int bloblist_test_cmd_list(struct unit_test_state *uts)
 	ut_assert_nextline("%08lx  %8x    2 SPL hand-off",
 			   (ulong)map_to_sysmem(data2), TEST_SIZE2);
 	ut_assert_console_end();
-	gd->flags &= ~(GD_FLG_SILENT | GD_FLG_RECORD);
+	ut_unsilence_console(uts);
 
 	return 0;
 }
@@ -351,6 +347,42 @@ static int bloblist_test_align(struct unit_test_state *uts)
 	return 0;
 }
 BLOBLIST_TEST(bloblist_test_align, 0);
+
+/* Test relocation of a bloblist */
+static int bloblist_test_reloc(struct unit_test_state *uts)
+{
+	const uint large_size = TEST_BLOBLIST_SIZE;
+	const uint small_size = 0x20;
+	void *old_ptr, *new_ptr;
+	void *blob1, *blob2;
+	ulong new_addr;
+	ulong new_size;
+
+	ut_assertok(bloblist_new(TEST_ADDR, TEST_BLOBLIST_SIZE, 0));
+	old_ptr = map_sysmem(TEST_ADDR, TEST_BLOBLIST_SIZE);
+
+	/* Add one blob and then one that won't fit */
+	blob1 = bloblist_add(TEST_TAG, small_size, 0);
+	ut_assertnonnull(blob1);
+	blob2 = bloblist_add(TEST_TAG2, large_size, 0);
+	ut_assertnull(blob2);
+
+	/* Relocate the bloblist somewhere else, a bit larger */
+	new_addr = TEST_ADDR + TEST_BLOBLIST_SIZE;
+	new_size = TEST_BLOBLIST_SIZE + 0x100;
+	new_ptr = map_sysmem(new_addr, TEST_BLOBLIST_SIZE);
+	bloblist_reloc(new_ptr, new_size, old_ptr, TEST_BLOBLIST_SIZE);
+	gd->bloblist = new_ptr;
+
+	/* Check the old blob is there and that we can now add the bigger one */
+	ut_assertnonnull(bloblist_find(TEST_TAG, small_size));
+	ut_assertnull(bloblist_find(TEST_TAG2, small_size));
+	blob2 = bloblist_add(TEST_TAG2, large_size, 0);
+	ut_assertnonnull(blob2);
+
+	return 0;
+}
+BLOBLIST_TEST(bloblist_test_reloc, 0);
 
 int do_ut_bloblist(struct cmd_tbl *cmdtp, int flag, int argc,
 		   char *const argv[])

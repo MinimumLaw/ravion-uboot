@@ -58,8 +58,8 @@ Where to get source code:
 =========================
 
 The U-Boot source code is maintained in the Git repository at
-https://gitlab.denx.de/u-boot/u-boot.git ; you can browse it online at
-https://gitlab.denx.de/u-boot/u-boot
+https://source.denx.de/u-boot/u-boot.git ; you can browse it online at
+https://source.denx.de/u-boot/u-boot
 
 The "Tags" links on this page allow you to download tarballs of
 any version you might be interested in. Official releases are also
@@ -575,7 +575,6 @@ The following options need to be configured:
 		 * The bootm command automatically updates the fdt
 
 		OF_TBCLK - The timebase frequency.
-		OF_STDOUT_PATH - The path to the console device
 
 		boards with QUICC Engines require OF_QE to set UCC MAC
 		addresses
@@ -1925,13 +1924,6 @@ The following options need to be configured:
 		try longer timeout such as
 		#define CONFIG_NFS_TIMEOUT 10000UL
 
-- Command Interpreter:
-		CONFIG_SYS_PROMPT_HUSH_PS2
-
-		This defines the secondary prompt string, which is
-		printed when the command interpreter needs more input
-		to complete a command. Usually "> ".
-
 	Note:
 
 		In the current implementation, the local variables
@@ -2777,13 +2769,6 @@ Low Level (hardware related) configuration options:
   CONFIG_SYS_OR3_PRELIM, CONFIG_SYS_BR3_PRELIM:
 		Memory Controller Definitions: BR2/3 and OR2/3 (SDRAM)
 
-- CONFIG_PCI_ENUM_ONLY
-		Only scan through and get the devices on the buses.
-		Don't do any setup work, presumably because someone or
-		something has already done it, and we don't need to do it
-		a second time.	Useful for platforms that are pre-booted
-		by coreboot or similar.
-
 - CONFIG_PCI_INDIRECT_BRIDGE:
 		Enable support for indirect PCI bridges.
 
@@ -3160,6 +3145,7 @@ i2c	- I2C sub-system
 sspi	- SPI utility commands
 base	- print or set address offset
 printenv- print environment variables
+pwm	- control pwm channels
 setenv	- set environment variables
 saveenv - save environment variables to persistent storage
 protect - enable or disable FLASH write protection

@@ -18,6 +18,7 @@
 #include <dm.h>
 #include <pwm.h>
 #include <regmap.h>
+#include <asm/global_data.h>
 #include <linux/io.h>
 #include <linux/log2.h>
 #include <linux/bitfield.h>
@@ -115,7 +116,7 @@ static int pwm_sifive_set_enable(struct udevice *dev, uint channel, bool enable)
 	return 0;
 }
 
-static int pwm_sifive_ofdata_to_platdata(struct udevice *dev)
+static int pwm_sifive_of_to_plat(struct udevice *dev)
 {
 	struct pwm_sifive_priv *priv = dev_get_priv(dev);
 
@@ -166,7 +167,7 @@ U_BOOT_DRIVER(pwm_sifive) = {
 	.id	= UCLASS_PWM,
 	.of_match = pwm_sifive_ids,
 	.ops	= &pwm_sifive_ops,
-	.ofdata_to_platdata     = pwm_sifive_ofdata_to_platdata,
+	.of_to_plat     = pwm_sifive_of_to_plat,
 	.probe		= pwm_sifive_probe,
-	.priv_auto_alloc_size	= sizeof(struct pwm_sifive_priv),
+	.priv_auto	= sizeof(struct pwm_sifive_priv),
 };

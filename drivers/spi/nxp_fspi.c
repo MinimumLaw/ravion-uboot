@@ -320,6 +320,14 @@ static const struct nxp_fspi_devtype_data lx2160a_data = {
 	.little_endian = true,  /* little-endian    */
 };
 
+static const struct nxp_fspi_devtype_data imx8mm_data = {
+	.rxfifo = SZ_512,       /* (64  * 64 bits)  */
+	.txfifo = SZ_1K,        /* (128 * 64 bits)  */
+	.ahb_buf_size = SZ_2K,  /* (256 * 64 bits)  */
+	.quirks = 0,
+	.little_endian = true,  /* little-endian    */
+};
+
 struct nxp_fspi {
 	struct udevice *dev;
 	void __iomem *iobase;
@@ -815,7 +823,7 @@ static int nxp_fspi_default_setup(struct nxp_fspi *f)
 
 	/* the default frequency, we will change it later if necessary. */
 	ret = clk_set_rate(&f->clk, 20000000);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	ret = nxp_fspi_clk_prep_enable(f);
@@ -887,7 +895,7 @@ static int nxp_fspi_claim_bus(struct udevice *dev)
 {
 	struct nxp_fspi *f;
 	struct udevice *bus;
-	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
+	struct dm_spi_slave_plat *slave_plat = dev_get_parent_plat(dev);
 
 	bus = dev->parent;
 	f = dev_get_priv(bus);
@@ -906,7 +914,7 @@ static int nxp_fspi_set_speed(struct udevice *bus, uint speed)
 	nxp_fspi_clk_disable_unprep(f);
 
 	ret = clk_set_rate(&f->clk, speed);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	ret = nxp_fspi_clk_prep_enable(f);
@@ -922,7 +930,7 @@ static int nxp_fspi_set_mode(struct udevice *bus, uint mode)
 	return 0;
 }
 
-static int nxp_fspi_ofdata_to_platdata(struct udevice *bus)
+static int nxp_fspi_of_to_plat(struct udevice *bus)
 {
 	struct nxp_fspi *f = dev_get_priv(bus);
 #if CONFIG_IS_ENABLED(CLK)
@@ -985,6 +993,7 @@ static const struct dm_spi_ops nxp_fspi_ops = {
 
 static const struct udevice_id nxp_fspi_ids[] = {
 	{ .compatible = "nxp,lx2160a-fspi", .data = (ulong)&lx2160a_data, },
+	{ .compatible = "nxp,imx8mm-fspi", .data = (ulong)&imx8mm_data, },
 	{ }
 };
 
@@ -993,7 +1002,7 @@ U_BOOT_DRIVER(nxp_fspi) = {
 	.id	= UCLASS_SPI,
 	.of_match = nxp_fspi_ids,
 	.ops	= &nxp_fspi_ops,
-	.ofdata_to_platdata = nxp_fspi_ofdata_to_platdata,
-	.priv_auto_alloc_size = sizeof(struct nxp_fspi),
+	.of_to_plat = nxp_fspi_of_to_plat,
+	.priv_auto	= sizeof(struct nxp_fspi),
 	.probe	= nxp_fspi_probe,
 };

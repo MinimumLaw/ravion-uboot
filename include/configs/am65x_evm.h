@@ -30,7 +30,7 @@
  * our memory footprint. The less we use for BSS the more we have available
  * for everything else.
  */
-#define CONFIG_SPL_BSS_MAX_SIZE		0x5000
+#define CONFIG_SPL_BSS_MAX_SIZE		0xc00
 /*
  * Link BSS to be within SPL in a dedicated region located near the top of
  * the MCU SRAM, this way making it available also before relocation. Note
@@ -55,6 +55,12 @@
 #ifndef CONFIG_CPU_V7R
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #endif
+
+/*
+ * If the maximum size is not declared then it is defined as
+ * CONFIG_SYS_DFU_DATA_BUF_SIZE.
+ */
+#define CONFIG_SYS_DFU_MAX_FILE_SIZE	(1024 * 1024 * 8)   /* 8 MiB */
 
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_K3_MAX_DOWNLODABLE_IMAGE_SIZE
 

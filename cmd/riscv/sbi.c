@@ -9,9 +9,23 @@
 #include <command.h>
 #include <asm/sbi.h>
 
+struct sbi_imp {
+	const long id;
+	const char *name;
+};
+
 struct sbi_ext {
 	const u32 id;
 	const char *name;
+};
+
+static struct sbi_imp implementations[] = {
+	{ 0, "Berkeley Boot Loader (BBL)" },
+	{ 1, "OpenSBI" },
+	{ 2, "Xvisor" },
+	{ 3, "KVM" },
+	{ 4, "RustSBI" },
+	{ 5, "Diosix" },
 };
 
 static struct sbi_ext extensions[] = {
@@ -29,6 +43,7 @@ static struct sbi_ext extensions[] = {
 	{ 0x00735049, "IPI Extension" },
 	{ 0x52464E43, "RFENCE Extension" },
 	{ 0x0048534D, "Hart State Management Extension" },
+	{ 0x53525354, "System Reset Extension" },
 };
 
 static int do_sbi(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -42,23 +57,14 @@ static int do_sbi(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("SBI %ld.%ld\n", ret >> 24, ret & 0xffffff);
 	ret = sbi_get_impl_id();
 	if (ret >= 0) {
-		switch (ret) {
-		case 0:
-			printf("Berkeley Boot Loader (BBL)\n");
-			break;
-		case 1:
-			printf("OpenSBI\n");
-			break;
-		case 2:
-			printf("Xvisor\n");
-			break;
-		case 3:
-			printf("KVM\n");
-			break;
-		default:
-			printf("Unknown implementation\n");
-			break;
+		for (i = 0; i < ARRAY_SIZE(implementations); ++i) {
+			if (ret == implementations[i].id) {
+				printf("%s\n", implementations[i].name);
+				break;
+			}
 		}
+		if (i == ARRAY_SIZE(implementations))
+			printf("Unknown implementation ID %ld\n", ret);
 	}
 	printf("Extensions:\n");
 	for (i = 0; i < ARRAY_SIZE(extensions); ++i) {

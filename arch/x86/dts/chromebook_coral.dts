@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /dts-v1/;
 
+#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/gpio/x86-gpio.h>
 
 /include/ "skeleton.dtsi"
@@ -99,15 +100,17 @@
 	clk: clock {
 		compatible = "intel,apl-clk";
 		#clock-cells = <1>;
+		u-boot,dm-pre-reloc;
 	};
 
 	cpus {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-pre-proper;
 		#address-cells = <1>;
 		#size-cells = <0>;
 
 		cpu_0: cpu@0 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
+			u-boot,dm-spl;
 			device_type = "cpu";
 			compatible = "intel,apl-cpu";
 			reg = <0>;
@@ -138,6 +141,7 @@
 	};
 
 	acpi_gpe: general-purpose-events {
+		u-boot,dm-pre-reloc;
 		reg = <IOMAP_ACPI_BASE IOMAP_ACPI_SIZE>;
 		compatible = "intel,acpi-gpe";
 		interrupt-controller;
@@ -174,6 +178,9 @@
 			 */
 			fsp_s: fsp-s {
 			};
+			fsp_m: fsp-m {
+				u-boot,dm-spl;
+			};
 
 			nhlt {
 				intel,dmic-channels = <4>;
@@ -181,12 +188,14 @@
 		};
 
 		punit@0,1 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
+			u-boot,dm-spl;
 			reg = <0x00000800 0 0 0 0>;
 			compatible = "intel,apl-punit";
 		};
 
 		gma@2,0 {
+			u-boot,dm-pre-proper;
 			reg = <0x00001000 0 0 0 0>;
 			compatible = "fsp-fb";
 		};
@@ -321,7 +330,8 @@
 		};
 
 		spi: fast-spi@d,2 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
+			u-boot,dm-spl;
 			reg = <0x02006a10 0 0 0 0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -332,7 +342,8 @@
 			fwstore_spi: spi-flash@0 {
 				#size-cells = <1>;
 				#address-cells = <1>;
-				u-boot,dm-pre-reloc;
+				u-boot,dm-pre-proper;
+				u-boot,dm-spl;
 				reg = <0>;
 				compatible = "winbond,w25q128fw",
 					 "jedec,spi-nor";
@@ -409,8 +420,10 @@
 		};
 
 		i2c_2: i2c2@16,2 {
-			compatible = "intel,apl-i2c";
+			compatible = "intel,apl-i2c", "snps,designware-i2c-pci";
 			reg = <0x0200b210 0 0 0 0>;
+			early-regs = <IOMAP_I2C2_BASE 0x1000>;
+			u-boot,dm-pre-reloc;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			clock-frequency = <400000>;
@@ -421,6 +434,7 @@
 			tpm: tpm@50 {
 				reg = <0x50>;
 				compatible = "google,cr50";
+				u-boot,dm-pre-reloc;
 				u-boot,i2c-offset-len = <0>;
 				ready-gpios = <&gpio_n 28 GPIO_ACTIVE_LOW>;
 				interrupts-extended = <&acpi_gpe GPIO_28_IRQ
@@ -561,6 +575,12 @@
 			acpi,name = "SDCD";
 		};
 
+		emmc: emmc@1c,0 {
+			reg = <0x0000e000 0 0 0 0>;
+			compatible = "intel,apl-emmc";
+			non-removable;
+		};
+
 		pch: pch@1f,0 {
 			reg = <0x0000f800 0 0 0 0>;
 			compatible = "intel,apl-pch";
@@ -574,7 +594,8 @@
 				#size-cells = <0>;
 				u-boot,dm-pre-reloc;
 				cros_ec: cros-ec {
-					u-boot,dm-pre-reloc;
+					u-boot,dm-pre-proper;
+					u-boot,dm-vpl;
 					compatible = "google,cros-ec-lpc";
 					reg = <0x204 1 0x200 1 0x880 0x80>;
 
@@ -629,6 +650,7 @@
 				PAD_CFG0_TX_DISABLE | PAD_CFG0_ROUTE_IOAPIC |
 				PAD_CFG0_TRIG_LEVEL | PAD_CFG0_RX_POL_INVERT)
 			(PAD_CFG1_PULL_NONE | PAD_CFG1_IOSSTATE_TXD_RXE)
+		PAD_CFG_GPI(GPIO_25, UP_20K, DEEP)	 /* unused */
 
 		/*
 		 * WLAN_PE_RST - default to deasserted just in case FSP
@@ -649,8 +671,15 @@
 		PAD_CFG_NF(LPC_AD3, UP_20K, DEEP, NF1)	 /* LPC_AD3 */
 		PAD_CFG_NF(LPC_CLKRUNB, UP_20K, DEEP, NF1) /* LPC_CLKRUN_N */
 		PAD_CFG_NF(LPC_FRAMEB, NATIVE, DEEP, NF1) /* LPC_FRAME_N */
-		>;
 
+		PAD_CFG_GPI(GPIO_101, NONE, DEEP) /* FST_IO2 -- MEM_CONFIG0 */
+		PAD_CFG_GPI(GPIO_102, NONE, DEEP) /* FST_IO3 -- MEM_CONFIG1 */
+		PAD_CFG_GPI(GPIO_38, NONE, DEEP) /* LPSS_UART0_RXD - MEM_CONFIG2*/
+		PAD_CFG_GPI(GPIO_45, NONE, DEEP) /* LPSS_UART1_CTS - MEM_CONFIG3 */
+		>;
+};
+
+&fsp_m {
 	fspm,package = <PACKAGE_BGA>;
 	fspm,profile = <PROFILE_LPDDR4_2400_24_22_22>;
 	fspm,memory-down = <MEMORY_DOWN_YES>;
@@ -1199,4 +1228,10 @@
 		PAD_CFG_GPI(GPIO_72, UP_20K, DEEP)	 /* GP_CAMERASB10 */
 		PAD_CFG_GPI(GPIO_73, UP_20K, DEEP)	 /* GP_CAMERASB11 */
 	>;
+};
+
+&rtc {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	u-boot,dm-pre-reloc;
 };

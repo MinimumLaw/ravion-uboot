@@ -447,8 +447,11 @@ static int rsa_verify_with_keynode(struct image_sign_info *info,
 	}
 
 	algo = fdt_getprop(blob, node, "algo", NULL);
-	if (strcmp(info->name, algo))
+	if (strcmp(info->name, algo)) {
+		debug("%s: Wrong algo: have %s, expected %s", __func__,
+		      info->name, algo);
 		return -EFAULT;
+	}
 
 	prop.num_bits = fdtdec_get_int(blob, node, "rsa,num-bits", 0);
 
@@ -522,10 +525,10 @@ int rsa_verify_hash(struct image_sign_info *info,
 			return ret;
 
 		/* No luck, so try each of the keys in turn */
-		for (ndepth = 0, noffset = fdt_next_node(info->fit, sig_node,
+		for (ndepth = 0, noffset = fdt_next_node(blob, sig_node,
 							 &ndepth);
 		     (noffset >= 0) && (ndepth > 0);
-		     noffset = fdt_next_node(info->fit, noffset, &ndepth)) {
+		     noffset = fdt_next_node(blob, noffset, &ndepth)) {
 			if (ndepth == 1 && noffset != node) {
 				ret = rsa_verify_with_keynode(info, hash,
 							      sig, sig_len,

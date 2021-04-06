@@ -22,6 +22,7 @@
 #include <acpi/acpi_table.h>
 #include <asm/acpi/global_nvs.h>
 #include <asm/ioapic.h>
+#include <asm/global_data.h>
 #include <asm/lapic.h>
 #include <asm/mpspec.h>
 #include <asm/tables.h>
@@ -74,7 +75,7 @@ int acpi_create_madt_lapics(u32 current)
 	for (uclass_find_first_device(UCLASS_CPU, &dev);
 	     dev;
 	     uclass_find_next_device(&dev)) {
-		struct cpu_platdata *plat = dev_get_parent_platdata(dev);
+		struct cpu_plat *plat = dev_get_parent_plat(dev);
 		int length;
 
 		length = acpi_create_madt_lapic(

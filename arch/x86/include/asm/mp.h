@@ -11,6 +11,8 @@
 #include <asm/atomic.h>
 #include <asm/cache.h>
 
+struct udevice;
+
 enum {
 	/* Indicates that the function should run on all CPUs */
 	MP_SELECT_ALL	= -1,
@@ -114,7 +116,7 @@ typedef void (*mp_run_func)(void *arg);
  * Running on anything other than the boot CPU is only supported if
  * CONFIG_SMP_AP_WORK is enabled
  *
- * @cpu_select: CPU to run on (its dev->req_seq value), or MP_SELECT_ALL for
+ * @cpu_select: CPU to run on (its dev_seq() value), or MP_SELECT_ALL for
  *	all, or MP_SELECT_BSP for BSP
  * @func: Function to run
  * @arg: Argument to pass to the function

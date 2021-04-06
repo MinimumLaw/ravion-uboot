@@ -22,6 +22,7 @@
 #include <mapmem.h>
 #include <rand.h>
 #include <watchdog.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
@@ -393,7 +394,7 @@ static int do_mem_search(struct cmd_tbl *cmdtp, int flag, int argc,
 		 * Defaults to long if no or incorrect specification.
 		 */
 		size = cmd_get_data_size(argv[0], 4);
-		if (size < 0 && size != -2 /* string */)
+		if (size < 0 && size != CMD_DATA_SIZE_STR)
 			return 1;
 
 		argc--;

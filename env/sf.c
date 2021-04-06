@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <uuid.h>
 #include <asm/cache.h>
+#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include <u-boot/crc.h>
 
@@ -139,7 +140,7 @@ static int env_sf_save(void)
 
 	printf("Valid environment: %d\n", (int)gd->env_valid);
 
- done:
+done:
 	if (saved_buffer)
 		free(saved_buffer);
 
@@ -236,7 +237,7 @@ static int env_sf_save(void)
 	ret = 0;
 	puts("done\n");
 
- done:
+done:
 	if (saved_buffer)
 		free(saved_buffer);
 

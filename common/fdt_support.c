@@ -20,6 +20,8 @@
 #include <exports.h>
 #include <fdtdec.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /**
  * fdt_getprop_u32_default_node - Return a node's property or a default
  *
@@ -125,14 +127,7 @@ int fdt_find_or_add_subnode(void *fdt, int parentoffset, const char *name)
 	return offset;
 }
 
-/* rename to CONFIG_OF_STDOUT_PATH ? */
-#if defined(OF_STDOUT_PATH)
-static int fdt_fixup_stdout(void *fdt, int chosenoff)
-{
-	return fdt_setprop(fdt, chosenoff, "linux,stdout-path",
-			      OF_STDOUT_PATH, strlen(OF_STDOUT_PATH) + 1);
-}
-#elif defined(CONFIG_OF_STDOUT_VIA_ALIAS) && defined(CONFIG_CONS_INDEX)
+#if defined(CONFIG_OF_STDOUT_VIA_ALIAS) && defined(CONFIG_CONS_INDEX)
 static int fdt_fixup_stdout(void *fdt, int chosenoff)
 {
 	int err;
@@ -996,8 +991,8 @@ void fdt_del_node_and_alias(void *blob, const char *alias)
 /* Max address size we deal with */
 #define OF_MAX_ADDR_CELLS	4
 #define OF_BAD_ADDR	FDT_ADDR_T_NONE
-#define OF_CHECK_COUNTS(na, ns)	((na) > 0 && (na) <= OF_MAX_ADDR_CELLS && \
-			(ns) > 0)
+#define OF_CHECK_COUNTS(na, ns) (((na) > 0 && (na) <= OF_MAX_ADDR_CELLS) && \
+			 ((ns) > 0 || gd_size_cells_0()))
 
 /* Debug utility */
 #ifdef DEBUG
@@ -1342,6 +1337,79 @@ u64 fdt_translate_dma_address(const void *blob, int node_offset,
 	return __of_translate_address(blob, node_offset, in_addr, "dma-ranges");
 }
 
+int fdt_get_dma_range(const void *blob, int node, phys_addr_t *cpu,
+		      dma_addr_t *bus, u64 *size)
+{
+	bool found_dma_ranges = false;
+	struct of_bus *bus_node;
+	const fdt32_t *ranges;
+	int na, ns, pna, pns;
+	int parent = node;
+	int ret = 0;
+	int len;
+
+	/* Find the closest dma-ranges property */
+	while (parent >= 0) {
+		ranges = fdt_getprop(blob, parent, "dma-ranges", &len);
+
+		/* Ignore empty ranges, they imply no translation required */
+		if (ranges && len > 0)
+			break;
+
+		/* Once we find 'dma-ranges', then a missing one is an error */
+		if (found_dma_ranges && !ranges) {
+			ret = -EINVAL;
+			goto out;
+		}
+
+		if (ranges)
+			found_dma_ranges = true;
+
+		parent = fdt_parent_offset(blob, parent);
+	}
+
+	if (!ranges || parent < 0) {
+		debug("no dma-ranges found for node %s\n",
+		      fdt_get_name(blob, node, NULL));
+		ret = -ENOENT;
+		goto out;
+	}
+
+	/* switch to that node */
+	node = parent;
+	parent = fdt_parent_offset(blob, node);
+	if (parent < 0) {
+		printf("Found dma-ranges in root node, shoudln't happen\n");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	/* Get the address sizes both for the bus and its parent */
+	bus_node = of_match_bus(blob, node);
+	bus_node->count_cells(blob, node, &na, &ns);
+	if (!OF_CHECK_COUNTS(na, ns)) {
+		printf("%s: Bad cell count for %s\n", __FUNCTION__,
+		       fdt_get_name(blob, node, NULL));
+		return -EINVAL;
+		goto out;
+	}
+
+	bus_node = of_match_bus(blob, parent);
+	bus_node->count_cells(blob, parent, &pna, &pns);
+	if (!OF_CHECK_COUNTS(pna, pns)) {
+		printf("%s: Bad cell count for %s\n", __FUNCTION__,
+		       fdt_get_name(blob, parent, NULL));
+		return -EINVAL;
+		goto out;
+	}
+
+	*bus = fdt_read_number(ranges, na);
+	*cpu = fdt_translate_dma_address(blob, node, ranges + na);
+	*size = fdt_read_number(ranges + na + pna, ns);
+out:
+	return ret;
+}
+
 /**
  * fdt_node_offset_by_compat_reg: Find a node that matches compatiable and
  * who's reg property matches a physical cpu address
@@ -1600,22 +1668,36 @@ u64 fdt_get_base_address(const void *fdt, int node)
 }
 
 /*
- * Read a property of size <prop_len>. Currently only supports 1 or 2 cells.
+ * Read a property of size <prop_len>. Currently only supports 1 or 2 cells,
+ * or 3 cells specially for a PCI address.
  */
 static int fdt_read_prop(const fdt32_t *prop, int prop_len, int cell_off,
 			 uint64_t *val, int cells)
 {
-	const fdt32_t *prop32 = &prop[cell_off];
-	const unaligned_fdt64_t *prop64 = (const fdt64_t *)&prop[cell_off];
+	const fdt32_t *prop32;
+	const unaligned_fdt64_t *prop64;
 
 	if ((cell_off + cells) > prop_len)
 		return -FDT_ERR_NOSPACE;
+
+	prop32 = &prop[cell_off];
+
+	/*
+	 * Special handling for PCI address in PCI bus <ranges>
+	 *
+	 * PCI child address is made up of 3 cells. Advance the cell offset
+	 * by 1 so that the PCI child address can be correctly read.
+	 */
+	if (cells == 3)
+		cell_off += 1;
+	prop64 = (const fdt64_t *)&prop[cell_off];
 
 	switch (cells) {
 	case 1:
 		*val = fdt32_to_cpu(*prop32);
 		break;
 	case 2:
+	case 3:
 		*val = fdt64_to_cpu(*prop64);
 		break;
 	default:

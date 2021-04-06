@@ -7,6 +7,11 @@
 #ifndef	__ASM_GBL_DATA_H
 #define __ASM_GBL_DATA_H
 
+#ifndef __ASSEMBLY__
+
+#include <asm/types.h>
+#include <linux/types.h>
+
 /* Architecture-specific global data */
 struct arch_global_data {
 #if defined(CONFIG_FSL_ESDHC) || defined(CONFIG_FSL_ESDHC_IMX)
@@ -121,5 +126,7 @@ static inline void set_gd(volatile gd_t *gd_ptr)
 	__asm__ volatile("ldr r9, %0\n" : : "m"(gd_ptr));
 #endif
 }
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* __ASM_GBL_DATA_H */

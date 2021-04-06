@@ -9,6 +9,7 @@
 #include <common.h>
 #include <log.h>
 #include <malloc.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <linux/types.h>
@@ -438,6 +439,6 @@ U_BOOT_DRIVER(k3_sec_proxy) = {
 	.of_match = k3_sec_proxy_ids,
 	.probe = k3_sec_proxy_probe,
 	.remove = k3_sec_proxy_remove,
-	.priv_auto_alloc_size = sizeof(struct k3_sec_proxy_mbox),
+	.priv_auto	= sizeof(struct k3_sec_proxy_mbox),
 	.ops = &k3_sec_proxy_mbox_ops,
 };

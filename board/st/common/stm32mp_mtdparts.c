@@ -8,11 +8,13 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <log.h>
 #include <mtd.h>
 #include <mtd_node.h>
 #include <tee.h>
 #include <asm/arch/stm32prog.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/global_data.h>
 
 #define MTDPARTS_LEN		256
 #define MTDIDS_LEN		128
@@ -117,31 +119,27 @@ void board_mtdparts_default(const char **mtdids, const char **mtdparts)
 	for (uclass_first_device(UCLASS_MTD, &dev);
 	     dev;
 	     uclass_next_device(&dev)) {
-		pr_debug("mtd device = %s\n", dev->name);
+		log_debug("mtd device = %s\n", dev->name);
 	}
 
-	if (nor || nand) {
+	if (nand) {
 		mtd = get_mtd_device_nm("nand0");
 		if (!IS_ERR_OR_NULL(mtd)) {
-			const char *mtd_boot = CONFIG_MTDPARTS_NAND0_BOOT;
 			const char *mtd_tee = CONFIG_MTDPARTS_NAND0_TEE;
-
 			board_set_mtdparts("nand0", ids, parts,
-					   !nor ? mtd_boot : NULL,
+					   CONFIG_MTDPARTS_NAND0_BOOT,
 					   !nor && tee ? mtd_tee : NULL,
 					   "-(UBI)");
 			put_mtd_device(mtd);
 		}
 	}
 
-	if (nor || spinand) {
+	if (spinand) {
 		mtd = get_mtd_device_nm("spi-nand0");
 		if (!IS_ERR_OR_NULL(mtd)) {
-			const char *mtd_boot = CONFIG_MTDPARTS_SPINAND0_BOOT;
 			const char *mtd_tee = CONFIG_MTDPARTS_SPINAND0_TEE;
-
 			board_set_mtdparts("spi-nand0", ids, parts,
-					   !nor ? mtd_boot : NULL,
+					   CONFIG_MTDPARTS_SPINAND0_BOOT,
 					   !nor && tee ? mtd_tee : NULL,
 					   "-(UBI)");
 			put_mtd_device(mtd);
@@ -150,11 +148,9 @@ void board_mtdparts_default(const char **mtdids, const char **mtdparts)
 
 	if (nor) {
 		if (!uclass_get_device(UCLASS_SPI_FLASH, 0, &dev)) {
-			const char *mtd_boot = CONFIG_MTDPARTS_NOR0_BOOT;
 			const char *mtd_tee = CONFIG_MTDPARTS_NOR0_TEE;
-
 			board_set_mtdparts("nor0", ids, parts,
-					   mtd_boot,
+					   CONFIG_MTDPARTS_NOR0_BOOT,
 					   tee ? mtd_tee : NULL,
 					   "-(nor_user)");
 		}
@@ -163,5 +159,5 @@ void board_mtdparts_default(const char **mtdids, const char **mtdparts)
 	mtd_initialized = true;
 	*mtdids = ids;
 	*mtdparts = parts;
-	debug("%s:mtdids=%s & mtdparts=%s\n", __func__, ids, parts);
+	log_debug("mtdids=%s & mtdparts=%s\n", ids, parts);
 }

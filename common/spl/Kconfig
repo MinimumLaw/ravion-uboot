@@ -113,11 +113,20 @@ config SPL_FSL_PBL
 	  Create boot binary having SPL binary in PBI format concatenated with
 	  u-boot binary.
 
+config SPL_ALLOC_BD
+	bool "Allocate memory for bd_info"
+	default y if X86 || SANDBOX
+	help
+	  Some boards don't allocate space for this in their board_init_f()
+	  code. In this case U-Boot can allocate space for gd->bd in the
+	  standard SPL flow (board_init_r()). Enable this option to support
+	  this feature.
+
 endmenu
 
 config HANDOFF
 	bool "Pass hand-off information from SPL to U-Boot proper"
-	depends on BLOBLIST
+	depends on SPL && BLOBLIST
 	help
 	  It is useful to be able to pass information from SPL to U-Boot
 	  proper to preserve state that is known in SPL and is needed in U-Boot.
@@ -150,7 +159,7 @@ config SPL_TEXT_BASE
 	hex "SPL Text Base"
 	default ISW_ENTRY_ADDR if AM43XX || AM33XX || OMAP54XX || ARCH_KEYSTONE
 	default 0x10060 if MACH_SUN50I || MACH_SUN50I_H5 || MACH_SUN9I
-	default 0x20060 if MACH_SUN50I_H6
+	default 0x20060 if SUN50I_GEN_H6
 	default 0x00060 if ARCH_SUNXI
 	default 0xfffc0000 if ARCH_ZYNQMP
 	default 0x0
@@ -177,7 +186,7 @@ config SPL_BOOTROM_SUPPORT
 
 config SPL_BOOTCOUNT_LIMIT
 	bool "Support bootcount in SPL"
-	depends on SPL_ENV_SUPPORT
+	depends on SPL_ENV_SUPPORT && !TPL_BOOTCOUNT_LIMIT
 	help
 	  On some boards, which use 'falcon' mode, it is necessary to check
 	  and increment the number of boot attempts. Such boards do not
@@ -316,7 +325,7 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
 	hex "Address on the MMC to load U-Boot from"
 	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
-	default 0x50 if ARCH_SUNXI
+	default 0x40 if ARCH_SUNXI
 	default 0x75 if ARCH_DAVINCI
 	default 0x8a if ARCH_MX6 || ARCH_MX7
 	default 0x100 if ARCH_UNIPHIER
@@ -333,6 +342,7 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
 config SYS_MMCSD_RAW_MODE_U_BOOT_DATA_PART_OFFSET
 	hex "U-Boot main hardware partition image offset"
 	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+	default 0x10 if ARCH_SUNXI
 	default 0x0
 	help
 	  On some platforms SPL location depends on hardware partition. The ROM
@@ -459,7 +469,7 @@ config SPL_SHA512_SUPPORT
 config SPL_FIT_IMAGE_TINY
 	bool "Remove functionality from SPL FIT loading to reduce size"
 	depends on SPL_FIT
-	default y if MACH_SUN50I || MACH_SUN50I_H5 || MACH_SUN50I_H6
+	default y if MACH_SUN50I || MACH_SUN50I_H5 || SUN50I_GEN_H6
 	default y if ARCH_IMX8M
 	help
 	  Enable this to reduce the size of the FIT image loading code
@@ -1276,6 +1286,15 @@ config SPL_ATF
 	  is loaded by SPL (which is considered as BL2 in ATF terminology).
 	  More detail at: https://github.com/ARM-software/arm-trusted-firmware
 
+config SPL_ATF_LOAD_IMAGE_V2
+	bool "Use the new LOAD_IMAGE_V2 parameter passing"
+	depends on SPL_ATF
+	help
+	  Some platforms use the newer LOAD_IMAGE_V2 parameter passing.
+
+	  If you want to load a bl31 image from the SPL and need the new
+	  method, say Y.
+
 config SPL_ATF_NO_PLATFORM_PARAM
         bool "Pass no platform parameter"
 	depends on SPL_ATF
@@ -1362,6 +1381,13 @@ config TPL_BOARD_INIT
 	  If this option is enabled, U-Boot will call the function
 	  spl_board_init() from board_init_r(). This function should be
 	  provided by the board.
+
+config TPL_BOOTCOUNT_LIMIT
+	bool "Support bootcount in TPL"
+	depends on TPL_ENV_SUPPORT
+	help
+	  If this option is enabled, the TPL will support bootcount.
+	  For example, it may be useful to choose the device to boot.
 
 config TPL_LDSCRIPT
         string "Linker script for the TPL stage"

@@ -7,6 +7,7 @@
 #include <clk.h>
 #include <dm.h>
 #include <malloc.h>
+#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <dm/pinctrl.h>
 #include <errno.h>
@@ -189,6 +190,6 @@ U_BOOT_DRIVER(rcar_gpio) = {
 	.id	= UCLASS_GPIO,
 	.of_match = rcar_gpio_ids,
 	.ops	= &rcar_gpio_ops,
-	.priv_auto_alloc_size = sizeof(struct rcar_gpio_priv),
+	.priv_auto	= sizeof(struct rcar_gpio_priv),
 	.probe	= rcar_gpio_probe,
 };

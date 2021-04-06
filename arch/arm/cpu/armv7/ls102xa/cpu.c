@@ -9,6 +9,7 @@
 #include <net.h>
 #include <vsprintf.h>
 #include <asm/arch/clock.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/immap_ls102xa.h>
 #include <asm/cache.h>
@@ -315,6 +316,8 @@ int arch_cpu_init(void)
 		(void *)(CONFIG_SYS_DCSRBAR + DCSR_RCPM2_BLOCK_OFFSET);
 	struct ccsr_scfg *scfg = (void *)CONFIG_SYS_FSL_SCFG_ADDR;
 	u32 state;
+
+	icache_enable();
 
 	/*
 	 * The RCPM FSM state may not be reset after power-on.

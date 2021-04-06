@@ -18,6 +18,7 @@
 #include <log.h>
 #include <serial.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <nand.h>
 #include <fat.h>
@@ -52,9 +53,6 @@ binman_sym_declare(ulong, u_boot_any, size);
 binman_sym_declare(ulong, spl, image_pos);
 binman_sym_declare(ulong, spl, size);
 #endif
-
-/* Define board data structure */
-static struct bd_info bdata __attribute__ ((section(".data")));
 
 /*
  * Board-specific Platform code can reimplement show_boot_progress () if needed
@@ -145,6 +143,12 @@ ulong spl_get_image_size(void)
 	return spl_phase() == PHASE_TPL ?
 		binman_sym(ulong, spl, size) :
 		binman_sym(ulong, u_boot_any, size);
+}
+
+ulong spl_get_image_text_base(void)
+{
+	return spl_phase() == PHASE_TPL ? CONFIG_SPL_TEXT_BASE :
+		CONFIG_SYS_TEXT_BASE;
 }
 
 /*
@@ -443,14 +447,19 @@ static int spl_common_init(bool setup_malloc)
 	return 0;
 }
 
-void spl_set_bd(void)
+int spl_alloc_bd(void)
 {
 	/*
 	 * NOTE: On some platforms (e.g. x86) bdata may be in flash and not
 	 * writeable.
 	 */
-	if (!gd->bd)
-		gd->bd = &bdata;
+	if (!gd->bd) {
+		gd->bd = malloc(sizeof(*gd->bd));
+		if (!gd->bd)
+			return -ENOMEM;
+	}
+
+	return 0;
 }
 
 int spl_early_init(void)
@@ -600,8 +609,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 	debug(">>" SPL_TPL_PROMPT "board_init_r()\n");
 
-	spl_set_bd();
-
 #if defined(CONFIG_SYS_SPL_MALLOC_START)
 	mem_malloc_init(CONFIG_SYS_SPL_MALLOC_START,
 			CONFIG_SYS_SPL_MALLOC_SIZE);
@@ -610,6 +617,10 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	if (!(gd->flags & GD_FLG_SPL_INIT)) {
 		if (spl_init())
 			hang();
+	}
+	if (IS_ENABLED(CONFIG_SPL_ALLOC_BD) && spl_alloc_bd()) {
+		puts("Cannot alloc bd\n");
+		hang();
 	}
 #if !defined(CONFIG_PPC) && !defined(CONFIG_ARCH_MX6)
 	/*
@@ -730,7 +741,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		debug("Failed to stash bootstage: err=%d\n", ret);
 #endif
 
-	debug("loaded - jumping to U-Boot...\n");
+	debug("loaded - jumping to %s...\n", spl_phase_name(spl_next_phase()));
 	spl_board_prepare_for_boot();
 	jump_to_image_no_args(&spl_image);
 }
@@ -833,7 +844,9 @@ ulong spl_relocate_stack_gd(void)
 #endif
 }
 
-#if defined(CONFIG_BOOTCOUNT_LIMIT) && !defined(CONFIG_SPL_BOOTCOUNT_LIMIT)
+#if defined(CONFIG_BOOTCOUNT_LIMIT) && \
+	((!defined(CONFIG_TPL_BUILD) && !defined(CONFIG_SPL_BOOTCOUNT_LIMIT)) || \
+	 (defined(CONFIG_TPL_BUILD) && !defined(CONFIG_TPL_BOOTCOUNT_LIMIT)))
 void bootcount_store(ulong a)
 {
 }

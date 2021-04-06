@@ -2,8 +2,9 @@
 #
 # (C) Copyright 2012 The Chromium Authors
 
-ifneq ($(CONFIG_SANDBOX),)
+ifneq ($(CONFIG_$(SPL_)BLOBLIST),)
 obj-$(CONFIG_$(SPL_)CMDLINE) += bloblist.o
+obj-$(CONFIG_$(SPL_)CMDLINE) += bootm.o
 endif
 obj-$(CONFIG_$(SPL_)CMDLINE) += cmd/
 obj-$(CONFIG_$(SPL_)CMDLINE) += cmd_ut.o
