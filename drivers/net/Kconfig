@@ -37,6 +37,21 @@ config DM_MDIO_MUX
 	  This is currently implemented in net/mdio-mux-uclass.c
 	  Look in include/miiphy.h for details.
 
+config DM_DSA
+	bool "Enable Driver Model for DSA switches"
+	depends on DM_ETH && DM_MDIO
+	depends on PHY_FIXED
+	help
+	  Enable driver model for DSA switches
+
+	  Adds UCLASS_DSA class supporting switches that follow the Distributed
+	  Switch Architecture (DSA).  These switches rely on the presence of a
+	  management switch port connected to an Ethernet controller capable of
+	  receiving frames from the switch.  This host Ethernet controller is
+	  called the "master" Ethernet interface in DSA terminology.
+	  This is currently implemented in net/dsa-uclass.c, refer to
+	  include/net/dsa.h for API details.
+
 config MDIO_SANDBOX
 	depends on DM_MDIO && SANDBOX
 	default y
@@ -148,6 +163,13 @@ config BCMGENET
 	select PHYLIB
 	help
 	  This driver supports the BCMGENET Ethernet MAC.
+
+config CORTINA_NI_ENET
+	bool "Cortina-Access Ethernet driver"
+	depends on DM_ETH && CORTINA_PLATFORM
+	help
+	  This driver supports the Cortina-Access Ethernet MAC for
+	  all supported CAxxxx SoCs.
 
 config DWC_ETH_QOS
 	bool "Synopsys DWC Ethernet QOS device support"
@@ -398,6 +420,18 @@ config MACB_ZYNQ
 	help
 	  The Cadence MACB ethernet interface was used on Zynq platform.
 	  Say Y to enable support for the MACB/GEM in Zynq chip.
+
+config MT7620_ETH
+	bool "MediaTek MT7620 Ethernet Interface"
+	depends on SOC_MT7620
+	select PHYLIB
+	select DM_RESET
+	select DM_GPIO
+	select CLK
+	help
+	  The MediaTek MT7620 ethernet interface is used on MT7620 based
+	  boards. It has a built-in switch with two configurable ports which
+	  can connect to external PHY/MACs.
 
 config MT7628_ETH
 	bool "MediaTek MT7628 Ethernet Interface"

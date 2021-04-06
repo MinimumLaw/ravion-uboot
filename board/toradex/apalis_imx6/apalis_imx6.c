@@ -12,6 +12,7 @@
 #include <image.h>
 #include <init.h>
 #include <net.h>
+#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 
@@ -1144,12 +1145,12 @@ void reset_cpu(ulong addr)
 
 #endif /* CONFIG_SPL_BUILD */
 
-static struct mxc_serial_platdata mxc_serial_plat = {
+static struct mxc_serial_plat mxc_serial_plat = {
 	.reg = (struct mxc_uart *)UART1_BASE,
 	.use_dte = true,
 };
 
-U_BOOT_DEVICE(mxc_serial) = {
+U_BOOT_DRVINFO(mxc_serial) = {
 	.name = "serial_mxc",
-	.platdata = &mxc_serial_plat,
+	.plat = &mxc_serial_plat,
 };

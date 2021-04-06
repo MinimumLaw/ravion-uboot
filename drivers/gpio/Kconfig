@@ -374,7 +374,7 @@ config SIFIVE_GPIO
 
 config MVEBU_GPIO
 	bool "Marvell MVEBU GPIO driver"
-	depends on DM_GPIO && ARCH_MVEBU
+	depends on DM_GPIO && (ARCH_MVEBU || ARCH_KIRKWOOD)
 	default y
 	help
 	  Say yes here to support Marvell MVEBU (Armada XP/38x) GPIOs.
@@ -470,6 +470,14 @@ config MPC83XX_SPISEL_BOOT
 	  GPIO driver to set/clear dedicated SPISEL_BOOT output on MPC83XX.
 
 	  This pin is typically used as spi chip select to a spi nor flash.
+
+config MT7620_GPIO
+	bool "MediaTek MT7620 GPIO driver"
+	depends on DM_GPIO && SOC_MT7620
+	default y
+	help
+	  Device model driver for GPIO controller present in MediaTek MT7620
+	  and earlier SoCs.
 
 config MT7621_GPIO
 	bool "MediaTek MT7621 GPIO driver"

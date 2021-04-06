@@ -117,6 +117,9 @@
 #ifdef CONFIG_TARGET_VEXPRESS64_JUNO
 #define PHYS_SDRAM_2			(0x880000000)
 #define PHYS_SDRAM_2_SIZE		0x180000000
+#elif CONFIG_TARGET_VEXPRESS64_BASE_FVP && CONFIG_NR_DRAM_BANKS == 2
+#define PHYS_SDRAM_2			(0x880000000)
+#define PHYS_SDRAM_2_SIZE		0x80000000
 #endif
 
 /* Enable memtest */
@@ -137,6 +140,7 @@
 				"fdt_alt_name=juno\0" \
 				"fdt_addr_r=0x80000000\0" \
 
+#ifndef CONFIG_BOOTCOMMAND
 /* Copy the kernel and FDT to DRAM memory and boot */
 #define CONFIG_BOOTCOMMAND	"afs load ${kernel_name} ${kernel_addr_r} ;"\
 				"if test $? -eq 1; then "\
@@ -157,6 +161,7 @@
 				"  else setenv ramdisk_param -; "\
 				"fi ; " \
 				"booti ${kernel_addr_r} ${ramdisk_param} ${fdt_addr_r}"
+#endif
 
 
 #elif CONFIG_TARGET_VEXPRESS64_BASE_FVP
@@ -170,6 +175,7 @@
 				"boot_name=boot.img\0"		\
 				"boot_addr=0x8007f800\0"
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"if smhload ${boot_name} ${boot_addr}; then " \
 				"  set bootargs; " \
 				"  abootimg addr ${boot_addr}; " \
@@ -187,8 +193,7 @@
 				"  fdt chosen ${initrd_addr} ${initrd_end}; " \
 				"  booti $kernel_addr - $fdt_addr; " \
 				"fi"
-
-
+#endif
 #endif
 
 /* Monitor Command Prompt */

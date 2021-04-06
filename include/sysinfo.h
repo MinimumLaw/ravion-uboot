@@ -4,6 +4,8 @@
  * Mario Six,  Guntermann & Drunck GmbH, mario.six@gdsys.cc
  */
 
+struct udevice;
+
 /*
  * This uclass encapsulates hardware methods to gather information about a
  * sysinfo or a specific device such as hard-wired GPIOs on GPIO expanders,
@@ -31,7 +33,17 @@
  * to read the serial number.
  */
 
-#if CONFIG_IS_ENABLED(SYSINFO)
+/** enum sysinfo_id - Standard IDs defined by U-Boot */
+enum sysinfo_id {
+	SYSINFO_ID_NONE,
+
+	SYSINFO_ID_SMBIOS_SYSTEM_VERSION,
+	SYSINFO_ID_SMBIOS_BASEBOARD_VERSION,
+
+	/* First value available for downstream/board used */
+	SYSINFO_ID_USER = 0x1000,
+};
+
 struct sysinfo_ops {
 	/**
 	 * detect() - Run the hardware info detection procedure for this
@@ -102,6 +114,7 @@ struct sysinfo_ops {
 
 #define sysinfo_get_ops(dev)	((struct sysinfo_ops *)(dev)->driver->ops)
 
+#if CONFIG_IS_ENABLED(SYSINFO)
 /**
  * sysinfo_detect() - Run the hardware info detection procedure for this device.
  *

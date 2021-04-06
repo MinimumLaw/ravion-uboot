@@ -12,6 +12,7 @@
 #include <mapmem.h>
 #include <watchdog.h>
 #include <asm/cache.h>
+#include <asm/global_data.h>
 #include <linux/list_sort.h>
 #include <linux/sizes.h>
 
@@ -541,8 +542,6 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 
 	ret = efi_add_memory_map_pg(memory, pages, EFI_CONVENTIONAL_MEMORY,
 				    false);
-	/* Merging of adjacent free regions is missing */
-
 	if (ret != EFI_SUCCESS)
 		return EFI_NOT_FOUND;
 

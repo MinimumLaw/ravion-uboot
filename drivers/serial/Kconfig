@@ -134,6 +134,22 @@ config SERIAL_SEARCH_ALL
 
 	  If unsure, say N.
 
+config SERIAL_PROBE_ALL
+	bool "Probe all available serial devices"
+	depends on DM_SERIAL
+	default n
+	help
+	  The serial subsystem only probes for a single serial device,
+	  but does not probe for other remaining serial devices.
+	  With this option set, we make probing and searching for
+	  all available devices optional.
+	  Normally, U-Boot talks to one serial port at a time, but SBSA
+	  compliant UART devices like PL011 require initialization
+	  by firmware and to let the kernel use serial port for sending
+	  and receiving the characters.
+
+	  If unsure, say N.
+
 config SPL_DM_SERIAL
 	bool "Enable Driver Model for serial drivers in SPL"
 	depends on DM_SERIAL && SPL_DM
@@ -401,6 +417,16 @@ config DEBUG_UART_MTK
 	  driver will be available until the real driver model serial is
 	  running.
 
+config DEBUG_UART_MT7620
+	bool "UART driver for MediaTek MT7620 and earlier SoCs"
+	depends on MT7620_SERIAL
+	help
+	  Select this to enable a debug UART using the UART driver for
+	  MediaTek MT7620 and earlier SoCs.
+	  You will need to provide parameters to make this work. The
+	  driver will be available until the real driver model serial is
+	  running.
+
 endchoice
 
 config DEBUG_UART_BASE
@@ -609,7 +635,7 @@ config MCFUART
 
 config MXC_UART
 	bool "IMX serial port support"
-	depends on ARCH_MX25 || ARCH_MX31 || TARGET_APF27 || TARGET_FLEA3 || TARGET_MX35PDK \
+	depends on ARCH_MX25 || ARCH_MX31 || TARGET_APF27 || TARGET_FLEA3 \
 		|| MX5 || MX6 || MX7 || IMX8M
 	help
 	  If you have a machine based on a Motorola IMX CPU you
@@ -695,6 +721,13 @@ config ROCKCHIP_SERIAL
 	  CONFIG_SPL_OF_PLATDATA (i.e. a compiled-in device tree replacemenmt).
 	  This uses the ns16550 driver, converting the platdata from of-platdata
 	  to the ns16550 format.
+
+config S5P_SERIAL
+	bool "Support for Samsung S5P UART"
+	depends on ARCH_EXYNOS || ARCH_S5PC1XX
+	default y
+	help
+	  Select this to enable Samsung S5P UART support.
 
 config SANDBOX_SERIAL
 	bool "Sandbox UART support"
@@ -816,6 +849,16 @@ config MTK_SERIAL
 	  tree binding to operate.
 	  The High-speed UART is compatible with the ns16550a UART and have
 	  its own high-speed registers.
+
+config MT7620_SERIAL
+	bool "UART driver for MediaTek MT7620 and earlier SoCs"
+	depends on DM_SERIAL
+	help
+	  Select this to enable UART support for MediaTek MT7620 and earlier
+	  SoCs. This driver uses driver model and requires a device tree
+	  binding to operate.
+	  The UART driver for MediaTek MT7620 and earlier SoCs is *NOT*
+	  compatible with the ns16550a UART.
 
 config MPC8XX_CONS
 	bool "Console driver for MPC8XX"

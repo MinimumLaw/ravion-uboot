@@ -6,12 +6,15 @@
 #include <common.h>
 #include <command.h>
 #include <dm/root.h>
+#include <efi_loader.h>
 #include <errno.h>
 #include <init.h>
+#include <log.h>
 #include <os.h>
 #include <cli.h>
 #include <sort.h>
 #include <asm/getopt.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/malloc.h>
 #include <asm/sections.h>
@@ -213,7 +216,7 @@ static int sandbox_cmdline_cb_test_fdt(struct sandbox_state *state,
 	if (!p)
 		p = fname + strlen(fname);
 	len -= p - fname;
-	snprintf(p, len, fmt, p);
+	snprintf(p, len, fmt);
 	state->fdt_fname = fname;
 
 	return 0;
@@ -406,6 +409,15 @@ void state_show(struct sandbox_state *state)
 	printf("\n");
 }
 
+void __efi_runtime EFIAPI efi_reset_system(
+		enum efi_reset_type reset_type,
+		efi_status_t reset_status,
+		unsigned long data_size, void *reset_data)
+{
+	os_fd_restore();
+	os_relaunch(os_argv);
+}
+
 void sandbox_reset(void)
 {
 	/* Do this here while it still has an effect */
@@ -447,7 +459,18 @@ int main(int argc, char *argv[])
 	if (os_parse_args(state, argc, argv))
 		return 1;
 
+	/* Remove old memory file if required */
+	if (state->ram_buf_rm && state->ram_buf_fname) {
+		os_unlink(state->ram_buf_fname);
+		state->write_ram_buf = false;
+		state->ram_buf_fname = NULL;
+	}
+
 	ret = sandbox_read_state(state, state->state_fname);
+	if (ret)
+		goto err;
+
+	ret = os_setup_signal_handlers();
 	if (ret)
 		goto err;
 
@@ -464,6 +487,10 @@ int main(int argc, char *argv[])
 	 * relocated by the OS before sandbox is entered.
 	 */
 	gd->reloc_off = (ulong)gd->arch.text_base;
+
+	/* sandbox test: log functions called before log_init in board_init_f */
+	log_info("sandbox: starting...\n");
+	log_debug("debug: %s\n", __func__);
 
 	/* Do pre- and post-relocation init */
 	board_init_f(0);

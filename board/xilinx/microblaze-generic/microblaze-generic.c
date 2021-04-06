@@ -15,6 +15,7 @@
 #include <env.h>
 #include <init.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <dm/lists.h>
 #include <fdtdec.h>
 #include <linux/sizes.h>
@@ -67,7 +68,10 @@ int board_late_init(void)
 
 	status |= env_set_hex("ramdisk_addr_r",
 			       gd->ram_base + SZ_32M + SZ_4M + SZ_2M);
-
+	if (IS_ENABLED(CONFIG_MTD_NOR_FLASH))
+		status |= env_set_hex("script_offset_nor",
+				       gd->bd->bi_flashstart +
+				       CONFIG_BOOT_SCRIPT_OFFSET);
 	if (status)
 		printf("%s: Saving run time variables FAILED\n", __func__);
 

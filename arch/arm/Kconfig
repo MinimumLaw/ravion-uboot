@@ -621,11 +621,6 @@ config TARGET_FLEA3
 	bool "Support flea3"
 	select CPU_ARM1136
 
-config TARGET_MX35PDK
-	bool "Support mx35pdk"
-	select BOARD_LATE_INIT
-	select CPU_ARM1136
-
 config ARCH_BCM283X
 	bool "Broadcom BCM283X family"
 	select DM
@@ -799,6 +794,7 @@ config ARCH_OMAP2PLUS
 	select SPL_BOARD_INIT if SPL
 	select SPL_STACK_R if SPL
 	select SUPPORT_SPL
+	imply TI_SYSC if DM && OF_CONTROL
 	imply FIT
 
 config ARCH_MESON
@@ -974,7 +970,7 @@ config ARCH_SOCFPGA
 	bool "Altera SOCFPGA family"
 	select ARCH_EARLY_INIT_R
 	select ARCH_MISC_INIT if !TARGET_SOCFPGA_ARRIA10
-	select ARM64 if TARGET_SOCFPGA_STRATIX10 || TARGET_SOCFPGA_AGILEX
+	select ARM64 if TARGET_SOCFPGA_SOC64
 	select CPU_V7A if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
 	select DM
 	select DM_SERIAL
@@ -986,7 +982,7 @@ config ARCH_SOCFPGA
 	select SPL_LIBGENERIC_SUPPORT
 	select SPL_NAND_SUPPORT if SPL_NAND_DENALI
 	select SPL_OF_CONTROL
-	select SPL_SEPARATE_BSS if TARGET_SOCFPGA_STRATIX10 || TARGET_SOCFPGA_AGILEX
+	select SPL_SEPARATE_BSS if TARGET_SOCFPGA_SOC64
 	select SPL_SERIAL_SUPPORT
 	select SPL_SYSRESET
 	select SPL_WATCHDOG_SUPPORT
@@ -995,7 +991,7 @@ config ARCH_SOCFPGA
 	select SYS_THUMB_BUILD if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
 	select SYSRESET
 	select SYSRESET_SOCFPGA if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
-	select SYSRESET_SOCFPGA_SOC64 if TARGET_SOCFPGA_STRATIX10 || TARGET_SOCFPGA_AGILEX
+	select SYSRESET_SOCFPGA_SOC64 if TARGET_SOCFPGA_SOC64
 	imply CMD_DM
 	imply CMD_MTDPARTS
 	imply CRC32_VERIFY
@@ -1045,6 +1041,7 @@ config ARCH_SUNXI
 	select SPL_USE_TINY_PRINTF
 	select USE_PREBOOT
 	select SYS_RELOC_GD_ENV_ADDR
+	imply BOARD_LATE_INIT
 	imply CMD_DM
 	imply CMD_GPT
 	imply CMD_UBI if MTD_RAW_NAND
@@ -1221,18 +1218,6 @@ config TARGET_LS2080A_EMU
 	help
 	  Support for Freescale LS2080A_EMU platform.
 	  The LS2080A Development System (EMULATOR) is a pre-silicon
-	  development platform that supports the QorIQ LS2080A
-	  Layerscape Architecture processor.
-
-config TARGET_LS2080A_SIMU
-	bool "Support ls2080a_simu"
-	select ARCH_LS2080A
-	select ARM64
-	select ARMV8_MULTIENTRY
-	select BOARD_LATE_INIT
-	help
-	  Support for Freescale LS2080A_SIMU platform.
-	  The LS2080A Development System (QDS) is a pre silicon
 	  development platform that supports the QorIQ LS2080A
 	  Layerscape Architecture processor.
 
@@ -1995,7 +1980,6 @@ source "board/cavium/thunderx/Kconfig"
 source "board/cirrus/edb93xx/Kconfig"
 source "board/eets/pdu001/Kconfig"
 source "board/emulation/qemu-arm/Kconfig"
-source "board/freescale/ls2080a/Kconfig"
 source "board/freescale/ls2080aqds/Kconfig"
 source "board/freescale/ls2080ardb/Kconfig"
 source "board/freescale/ls1088a/Kconfig"
@@ -2013,7 +1997,6 @@ source "board/freescale/ls1012aqds/Kconfig"
 source "board/freescale/ls1012ardb/Kconfig"
 source "board/freescale/ls1012afrdm/Kconfig"
 source "board/freescale/lx2160a/Kconfig"
-source "board/freescale/mx35pdk/Kconfig"
 source "board/freescale/s32v234evb/Kconfig"
 source "board/grinn/chiliboard/Kconfig"
 source "board/hisilicon/hikey/Kconfig"

@@ -4,6 +4,8 @@
  * Author(s): Vikas Manocha, <vikas.manocha@st.com> for STMicroelectronics.
  */
 
+#define LOG_CATEGORY UCLASS_GPIO
+
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -331,7 +333,7 @@ static int gpio_stm32_probe(struct udevice *dev)
 		dev_err(dev, "failed to enable clock\n");
 		return ret;
 	}
-	debug("clock enabled for device %s\n", dev->name);
+	dev_dbg(dev, "clock enabled\n");
 
 	return 0;
 }
@@ -342,5 +344,5 @@ U_BOOT_DRIVER(gpio_stm32) = {
 	.probe	= gpio_stm32_probe,
 	.ops	= &gpio_stm32_ops,
 	.flags	= DM_UC_FLAG_SEQ_ALIAS,
-	.priv_auto_alloc_size	= sizeof(struct stm32_gpio_priv),
+	.priv_auto	= sizeof(struct stm32_gpio_priv),
 };

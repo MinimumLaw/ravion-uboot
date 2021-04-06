@@ -6,6 +6,8 @@ config ADDR_MAP
 	  Enables helper code for implementing non-identity virtual-physical
 	  memory mappings for 32bit CPUs.
 
+	  This library only works in the post-relocation phase.
+
 config SYS_NUM_ADDR_MAP
 	int "Size of the address-map table"
 	depends on ADDR_MAP
@@ -22,7 +24,7 @@ config BCH
 
 config BINMAN_FDT
 	bool "Allow access to binman information in the device tree"
-	depends on BINMAN && OF_CONTROL
+	depends on BINMAN && DM && OF_CONTROL
 	default y
 	help
 	  This enables U-Boot to access information about binman entries,
@@ -168,7 +170,7 @@ config REGEX
 choice
 	prompt "Pseudo-random library support type"
 	depends on NET_RANDOM_ETHADDR || RANDOM_UUID || CMD_UUID || \
-		   RNG_SANDBOX || UT_LIB && AES
+		   RNG_SANDBOX || UT_LIB && AES || FAT_WRITE
 	default LIB_RAND
 	help
 	  Select the library to provide pseudo-random number generator
@@ -210,6 +212,7 @@ config BITREVERSE
 config TRACE
 	bool "Support for tracing of function calls and timing"
 	imply CMD_TRACE
+	select TIMER_EARLY
 	help
 	  Enables function tracing within U-Boot. This allows recording of call
 	  traces including timing information. The command can write data to
@@ -695,7 +698,15 @@ config LIB_DATE
 config LIB_ELF
 	bool
 	help
-	  Supoort basic elf loading/validating functions.
-	  This supports fir 32 bit and 64 bit versions.
+	  Support basic elf loading/validating functions.
+	  This supports for 32 bit and 64 bit versions.
 
 endmenu
+
+config PHANDLE_CHECK_SEQ
+	bool "Enable phandle check while getting sequence number"
+	default n
+	help
+	  When there are multiple device tree nodes with same name,
+          enable this config option to distinguish them using
+	  phandles in fdtdec_get_alias_seq() function.

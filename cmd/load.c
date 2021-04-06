@@ -11,15 +11,18 @@
 #include <command.h>
 #include <console.h>
 #include <cpu_func.h>
+#include <efi_loader.h>
 #include <env.h>
+#include <exports.h>
 #include <flash.h>
 #include <image.h>
-#include <s_record.h>
+#include <mapmem.h>
 #include <net.h>
-#include <exports.h>
+#include <s_record.h>
 #include <serial.h>
 #include <xyzModem.h>
 #include <asm/cache.h>
+#include <asm/global_data.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -228,12 +231,11 @@ static int read_record(char *buf, ulong len)
 			*p = c;
 		}
 
-	    /* Check for the console hangup (if any different from serial) */
-	    if (gd->jt->getc != getchar) {
-		if (ctrlc()) {
-		    return (-1);
+		/* Check for the console hangup (if any different from serial) */
+		if (gd->jt->getc != getchar) {
+			if (ctrlc())
+				return (-1);
 		}
-	    }
 	}
 
 	/* line too long - truncate */
@@ -996,6 +998,10 @@ static ulong load_serial_ymodem(ulong offset, int mode)
 			}
 
 		}
+		if (IS_ENABLED(CONFIG_CMD_BOOTEFI))
+			efi_set_bootdev("Uart", "", "",
+					map_sysmem(offset, 0), size);
+
 	} else {
 		printf("%s\n", xyzModem_error(err));
 	}
@@ -1066,25 +1072,25 @@ U_BOOT_CMD(
 U_BOOT_CMD(
 	loadb, 3, 0,	do_load_serial_bin,
 	"load binary file over serial line (kermit mode)",
-	"[ off ] [ baud ]\n"
+	"[ addr [ baud ] ]\n"
 	"    - load binary file over serial line"
-	" with offset 'off' and baudrate 'baud'"
+	" at address 'addr' with baudrate 'baud'"
 );
 
 U_BOOT_CMD(
 	loadx, 3, 0,	do_load_serial_bin,
 	"load binary file over serial line (xmodem mode)",
-	"[ off ] [ baud ]\n"
+	"[ addr [ baud ] ]\n"
 	"    - load binary file over serial line"
-	" with offset 'off' and baudrate 'baud'"
+	" at address 'addr' with baudrate 'baud'"
 );
 
 U_BOOT_CMD(
 	loady, 3, 0,	do_load_serial_bin,
 	"load binary file over serial line (ymodem mode)",
-	"[ off ] [ baud ]\n"
+	"[ addr [ baud ] ]\n"
 	"    - load binary file over serial line"
-	" with offset 'off' and baudrate 'baud'"
+	" at address 'addr' with baudrate 'baud'"
 );
 
 #endif	/* CONFIG_CMD_LOADB */

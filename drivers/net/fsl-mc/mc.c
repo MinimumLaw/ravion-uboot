@@ -11,6 +11,7 @@
 #include <image.h>
 #include <log.h>
 #include <malloc.h>
+#include <asm/global_data.h>
 #include <linux/bug.h>
 #include <asm/io.h>
 #include <linux/delay.h>
@@ -141,7 +142,7 @@ int parse_mc_firmware_fit_image(u64 mc_fw_addr,
 		return -EINVAL;
 	}
 
-	if (!fit_check_format(fit_hdr)) {
+	if (fit_check_format(fit_hdr, IMAGE_SIZE_INVAL)) {
 		printf("fsl-mc: ERR: Bad firmware image (bad FIT header)\n");
 		return -EINVAL;
 	}
@@ -185,9 +186,9 @@ static int mc_fixup_mac_addr(void *blob, int nodeoffset,
 			     enum mc_fixup_type type)
 {
 #ifdef CONFIG_DM_ETH
-	struct eth_pdata *plat = dev_get_platdata(eth_dev);
+	struct eth_pdata *plat = dev_get_plat(eth_dev);
 	unsigned char *enetaddr = plat->enetaddr;
-	int eth_index = eth_dev->seq;
+	int eth_index = dev_seq(eth_dev);
 #else
 	unsigned char *enetaddr = eth_dev->enetaddr;
 	int eth_index = eth_dev->index;

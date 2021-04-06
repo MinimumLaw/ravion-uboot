@@ -14,6 +14,7 @@
 #include <time.h>
 #include <timer.h>
 #include <asm/cpu.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/i8254.h>
 #include <asm/ibmpc.h>
@@ -372,7 +373,7 @@ void __udelay(unsigned long usec)
 	u64 now = get_ticks();
 	u64 stop;
 
-	stop = now + usec * get_tbclk_mhz();
+	stop = now + (u64)usec * get_tbclk_mhz();
 
 	while ((int64_t)(stop - get_ticks()) > 0)
 #if defined(CONFIG_QEMU) && defined(CONFIG_SMP)
@@ -477,15 +478,17 @@ static const struct timer_ops tsc_timer_ops = {
 	.get_count = tsc_timer_get_count,
 };
 
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 static const struct udevice_id tsc_timer_ids[] = {
 	{ .compatible = "x86,tsc-timer", },
 	{ }
 };
+#endif
 
 U_BOOT_DRIVER(x86_tsc_timer) = {
 	.name	= "x86_tsc_timer",
 	.id	= UCLASS_TIMER,
-	.of_match = tsc_timer_ids,
+	.of_match = of_match_ptr(tsc_timer_ids),
 	.probe = tsc_timer_probe,
 	.ops	= &tsc_timer_ops,
 };

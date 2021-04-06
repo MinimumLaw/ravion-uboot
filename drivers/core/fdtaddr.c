@@ -12,6 +12,7 @@
 #include <dm.h>
 #include <fdt_support.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/device-internal.h>
 
@@ -49,7 +50,7 @@ fdt_addr_t devfdt_get_addr_index(const struct udevice *dev, int index)
 
 		reg += index * (na + ns);
 
-		if (ns) {
+		if (ns || gd_size_cells_0()) {
 			/*
 			 * Use the full-fledged translate function for complex
 			 * bus setups.

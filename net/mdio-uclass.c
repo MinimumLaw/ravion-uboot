@@ -40,8 +40,8 @@ static int dm_mdio_post_bind(struct udevice *dev)
 	const char *dt_name;
 
 	/* set a custom name for the MDIO device, if present in DT */
-	if (ofnode_valid(dev->node)) {
-		dt_name = ofnode_read_string(dev->node, "device-name");
+	if (dev_has_ofnode(dev)) {
+		dt_name = dev_read_string(dev, "device-name");
 		if (dt_name) {
 			debug("renaming dev %s to %s\n", dev->name, dt_name);
 			device_set_name(dev, dt_name);
@@ -139,6 +139,12 @@ static struct phy_device *dm_eth_connect_phy_handle(struct udevice *ethdev,
 	struct ofnode_phandle_args phandle = {.node = ofnode_null()};
 	int i;
 
+	if (CONFIG_IS_ENABLED(PHY_FIXED) &&
+	    ofnode_valid(dev_read_subnode(ethdev, "fixed-link"))) {
+		phy = phy_connect(NULL, -1, ethdev, interface);
+		goto out;
+	}
+
 	for (i = 0; i < PHY_HANDLE_STR_CNT; i++)
 		if (!dev_read_phandle_with_args(ethdev, phy_handle_str[i], NULL,
 						0, 0, &phandle))
@@ -168,6 +174,7 @@ static struct phy_device *dm_eth_connect_phy_handle(struct udevice *ethdev,
 
 	phy = dm_mdio_phy_connect(mdiodev, phy_addr, ethdev, interface);
 
+out:
 	if (phy)
 		phy->node = phandle.node;
 
@@ -182,14 +189,14 @@ struct phy_device *dm_eth_phy_connect(struct udevice *ethdev)
 	struct phy_device *phy;
 	int i;
 
-	if (!ofnode_valid(ethdev->node)) {
+	if (!dev_has_ofnode(ethdev)) {
 		debug("%s: supplied eth dev has no DT node!\n", ethdev->name);
 		return NULL;
 	}
 
 	interface = PHY_INTERFACE_MODE_NONE;
 	for (i = 0; i < PHY_MODE_STR_CNT; i++) {
-		if_str = ofnode_read_string(ethdev->node, phy_mode_str[i]);
+		if_str = dev_read_string(ethdev, phy_mode_str[i]);
 		if (if_str) {
 			interface = phy_get_interface_by_name(if_str);
 			break;
@@ -216,5 +223,5 @@ UCLASS_DRIVER(mdio) = {
 	.post_bind  = dm_mdio_post_bind,
 	.post_probe = dm_mdio_post_probe,
 	.pre_remove = dm_mdio_pre_remove,
-	.per_device_auto_alloc_size = sizeof(struct mdio_perdev_priv),
+	.per_device_auto	= sizeof(struct mdio_perdev_priv),
 };

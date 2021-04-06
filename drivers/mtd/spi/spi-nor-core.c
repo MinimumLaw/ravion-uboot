@@ -11,6 +11,7 @@
 
 #include <common.h>
 #include <log.h>
+#include <watchdog.h>
 #include <dm.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
@@ -566,6 +567,7 @@ static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
 	len = instr->len;
 
 	while (len) {
+		WATCHDOG_RESET();
 #ifdef CONFIG_SPI_FLASH_BAR
 		ret = write_bar(nor, addr);
 		if (ret < 0)
@@ -1250,6 +1252,7 @@ static int spi_nor_write(struct mtd_info *mtd, loff_t to, size_t len,
 	for (i = 0; i < len; ) {
 		ssize_t written;
 		loff_t addr = to + i;
+		WATCHDOG_RESET();
 
 		/*
 		 * If page_size is a power of two, the offset can be quickly
@@ -2443,10 +2446,11 @@ static int spi_nor_init(struct spi_nor *nor)
 	 * Atmel, SST, Intel/Numonyx, and others serial NOR tend to power up
 	 * with the software protection bits set
 	 */
-	if (JEDEC_MFR(nor->info) == SNOR_MFR_ATMEL ||
-	    JEDEC_MFR(nor->info) == SNOR_MFR_INTEL ||
-	    JEDEC_MFR(nor->info) == SNOR_MFR_SST ||
-	    nor->info->flags & SPI_NOR_HAS_LOCK) {
+	if (IS_ENABLED(CONFIG_SPI_FLASH_UNLOCK_ALL) &&
+	    (JEDEC_MFR(nor->info) == SNOR_MFR_ATMEL ||
+	     JEDEC_MFR(nor->info) == SNOR_MFR_INTEL ||
+	     JEDEC_MFR(nor->info) == SNOR_MFR_SST ||
+	     nor->info->flags & SPI_NOR_HAS_LOCK)) {
 		write_enable(nor);
 		write_sr(nor, 0);
 		spi_nor_wait_till_ready(nor);

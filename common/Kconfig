@@ -17,6 +17,14 @@ config CONSOLE_RECORD
 	  To enable console recording, call console_record_reset_enable()
 	  from your code.
 
+config CONSOLE_RECORD_INIT_F
+	bool "Enable console recording during pre-relocation init"
+	depends on CONSOLE_RECORD && SYS_MALLOC_F
+	default y
+	help
+	  This option enables console recording during pre-relocation init.
+	  CONFIG_SYS_MALLOC_F must be enabled to use this feature.
+
 config CONSOLE_RECORD_OUT_SIZE
 	hex "Output buffer size"
 	depends on CONSOLE_RECORD
@@ -553,6 +561,7 @@ config HASH
 config AVB_VERIFY
 	bool "Build Android Verified Boot operations"
 	depends on LIBAVB
+	depends on MMC
 	depends on PARTITION_UUIDS
 	help
 	  This option enables compilation of bootloader-dependent operations,
@@ -688,6 +697,16 @@ config BLOBLIST_ADDR
 	help
 	  Sets the address of the bloblist, set up by the first part of U-Boot
 	  which runs. Subsequent U-Boot stages typically use the same address.
+
+config BLOBLIST_SIZE_RELOC
+	hex "Size of bloblist after relocation"
+	depends on BLOBLIST
+	default BLOBLIST_SIZE
+	help
+	  Sets the size of the bloblist in bytes after relocation. Since U-Boot
+	  has a lot more memory available then, it is possible to use a larger
+	  size than the one set up by SPL. This bloblist is set up during the
+	  relocation process.
 
 endmenu
 

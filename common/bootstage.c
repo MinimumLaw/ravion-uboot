@@ -16,6 +16,7 @@
 #include <malloc.h>
 #include <sort.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include <linux/compiler.h>
 #include <linux/libfdt.h>
 
@@ -348,7 +349,7 @@ void bootstage_report(void)
 	}
 	if (data->rec_count > RECORD_COUNT)
 		printf("Overflowed internal boot id table by %d entries\n"
-		       "Please increase CONFIG_(SPL_)BOOTSTAGE_RECORD_COUNT\n",
+		       "Please increase CONFIG_(SPL_TPL_)BOOTSTAGE_RECORD_COUNT\n",
 		       data->rec_count - RECORD_COUNT);
 
 	puts("\nAccumulated time:\n");

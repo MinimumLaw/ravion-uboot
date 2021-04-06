@@ -732,8 +732,7 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 		return fs_info->chunk_root;
 	if (location->objectid == BTRFS_CSUM_TREE_OBJECTID)
 		return fs_info->csum_root;
-	BUG_ON(location->objectid == BTRFS_TREE_RELOC_OBJECTID ||
-	       location->offset != (u64)-1);
+	BUG_ON(location->objectid == BTRFS_TREE_RELOC_OBJECTID);
 
 	node = rb_search(&fs_info->fs_root_tree, (void *)&objectid,
 			 btrfs_fs_roots_compare_objectids, NULL);
@@ -1030,7 +1029,6 @@ out:
 int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 {
 	int ret;
-	int err = 0;
 
 	free_fs_roots_tree(&fs_info->fs_root_tree);
 
@@ -1038,9 +1036,7 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	ret = btrfs_close_devices(fs_info->fs_devices);
 	btrfs_cleanup_all_caches(fs_info);
 	btrfs_free_fs_info(fs_info);
-	if (!err)
-		err = ret;
-	return err;
+	return ret;
 }
 
 int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid)

@@ -14,6 +14,7 @@
 #include <init.h>
 #include <net.h>
 #include <asm/arch/hardware.h>
+#include <asm/global_data.h>
 #include <asm/ti-common/davinci_nand.h>
 #include <asm/io.h>
 #include <ns16550.h>
@@ -356,19 +357,19 @@ int board_mmc_init(struct bd_info *bis)
 #endif
 
 #ifdef CONFIG_SPL_BUILD
-static const struct ns16550_platdata serial_pdata = {
+static const struct ns16550_plat serial_pdata = {
 	.base = DAVINCI_UART2_BASE,
 	.reg_shift = 2,
 	.clock = 228000000,
 	.fcr = UART_FCR_DEFVAL,
 };
 
-U_BOOT_DEVICE(omapl138_uart) = {
+U_BOOT_DRVINFO(omapl138_uart) = {
 	.name = "ns16550_serial",
-	.platdata = &serial_pdata,
+	.plat = &serial_pdata,
 };
 
-static const struct davinci_mmc_plat mmc_platdata = {
+static const struct davinci_mmc_plat mmc_plat = {
 	.reg_base = (struct davinci_mmc_regs *)DAVINCI_MMC_SD0_BASE,
 	.cfg = {
 		.f_min = 200000,
@@ -379,9 +380,9 @@ static const struct davinci_mmc_plat mmc_platdata = {
 		.name = "da830-mmc",
 	},
 };
-U_BOOT_DEVICE(omapl138_mmc) = {
+U_BOOT_DRVINFO(omapl138_mmc) = {
 	.name = "ti_da830_mmc",
-	.platdata = &mmc_platdata,
+	.plat = &mmc_plat,
 };
 
 void spl_board_init(void)

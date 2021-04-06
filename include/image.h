@@ -134,6 +134,9 @@ extern ulong image_load_addr;		/* Default Load Address */
 extern ulong image_save_addr;		/* Default Save Address */
 extern ulong image_save_size;		/* Default Save Size */
 
+/* An invalid size, meaning that the image size is not known */
+#define IMAGE_SIZE_INVAL	(-1UL)
+
 enum ih_category {
 	IH_ARCH,
 	IH_COMP,
@@ -308,6 +311,7 @@ enum {
 	IH_TYPE_IMX8MIMAGE,		/* Freescale IMX8MBoot Image	*/
 	IH_TYPE_IMX8IMAGE,		/* Freescale IMX8Boot Image	*/
 	IH_TYPE_COPRO,			/* Coprocessor Image for remoteproc*/
+	IH_TYPE_SUNXI_EGON,		/* Allwinner eGON Boot Image */
 
 	IH_TYPE_COUNT,			/* Number of image types */
 };
@@ -1141,7 +1145,23 @@ int fit_image_check_os(const void *fit, int noffset, uint8_t os);
 int fit_image_check_arch(const void *fit, int noffset, uint8_t arch);
 int fit_image_check_type(const void *fit, int noffset, uint8_t type);
 int fit_image_check_comp(const void *fit, int noffset, uint8_t comp);
-int fit_check_format(const void *fit);
+
+/**
+ * fit_check_format() - Check that the FIT is valid
+ *
+ * This performs various checks on the FIT to make sure it is suitable for
+ * use, looking for mandatory properties, nodes, etc.
+ *
+ * If FIT_FULL_CHECK is enabled, it also runs it through libfdt to make
+ * sure that there are no strange tags or broken nodes in the FIT.
+ *
+ * @fit: pointer to the FIT format image header
+ * @return 0 if OK, -ENOEXEC if not an FDT file, -EINVAL if the full FDT check
+ *	failed (e.g. due to bad structure), -ENOMSG if the description is
+ *	missing, -EBADMSG if the timestamp is missing, -ENOENT if the /images
+ *	path is missing
+ */
+int fit_check_format(const void *fit, ulong size);
 
 int fit_conf_find_compat(const void *fit, const void *fdt);
 
@@ -1536,8 +1556,6 @@ bool android_image_print_dtb_contents(ulong hdr_addr);
  */
 int board_fit_config_name_match(const char *name);
 
-#if defined(CONFIG_SPL_FIT_IMAGE_POST_PROCESS) || \
-	defined(CONFIG_FIT_IMAGE_POST_PROCESS)
 /**
  * board_fit_image_post_process() - Do any post-process on FIT binary data
  *
@@ -1552,11 +1570,6 @@ int board_fit_config_name_match(const char *name);
  * @return no return value (failure should be handled internally)
  */
 void board_fit_image_post_process(void **p_image, size_t *p_size);
-#else
-static inline void board_fit_image_post_process(void **p_image, size_t *p_size)
-{
-}
-#endif /* CONFIG_SPL_FIT_IMAGE_POST_PROCESS */
 
 #define FDT_ERROR	((ulong)(-1))
 

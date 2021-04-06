@@ -58,6 +58,7 @@ static inline bool u_boot_first_phase(void)
 }
 
 enum u_boot_phase {
+	PHASE_NONE,	/* Invalid phase, signifying before U-Boot */
 	PHASE_TPL,	/* Running in TPL */
 	PHASE_SPL,	/* Running in SPL */
 	PHASE_BOARD_F,	/* Running in U-Boot before relocation */
@@ -121,6 +122,58 @@ static inline enum u_boot_phase spl_phase(void)
 	else
 		return PHASE_BOARD_R;
 #endif
+}
+
+/**
+ * spl_prev_phase() - Figure out the previous U-Boot phase
+ *
+ * @return the previous phase from this one, e.g. if called in SPL this returns
+ *	PHASE_TPL, if TPL is enabled
+ */
+static inline enum u_boot_phase spl_prev_phase(void)
+{
+#ifdef CONFIG_TPL_BUILD
+	return PHASE_NONE;
+#elif defined(CONFIG_SPL_BUILD)
+	return IS_ENABLED(CONFIG_TPL) ? PHASE_TPL : PHASE_NONE;
+#else
+	return IS_ENABLED(CONFIG_SPL) ? PHASE_SPL : PHASE_NONE;
+#endif
+}
+
+/**
+ * spl_next_phase() - Figure out the next U-Boot phase
+ *
+ * @return the next phase from this one, e.g. if called in TPL this returns
+ *	PHASE_SPL
+ */
+static inline enum u_boot_phase spl_next_phase(void)
+{
+#ifdef CONFIG_TPL_BUILD
+	return PHASE_SPL;
+#else
+	return PHASE_BOARD_F;
+#endif
+}
+
+/**
+ * spl_phase_name() - Get the name of the current phase
+ *
+ * @return phase name
+ */
+static inline const char *spl_phase_name(enum u_boot_phase phase)
+{
+	switch (phase) {
+	case PHASE_TPL:
+		return "TPL";
+	case PHASE_SPL:
+		return "SPL";
+	case PHASE_BOARD_F:
+	case PHASE_BOARD_R:
+		return "U-Boot";
+	default:
+		return "phase?";
+	}
 }
 
 /* A string name for SPL or TPL */
@@ -200,6 +253,16 @@ ulong spl_get_image_pos(void);
  * This returns the size to use to load the next phase of U-Boot
  */
 ulong spl_get_image_size(void);
+
+/**
+ * spl_get_image_text_base() - get the text base of the next phase
+ *
+ * This returns the address that the next stage is linked to run at, i.e.
+ * CONFIG_SPL_TEXT_BASE or CONFIG_SYS_TEXT_BASE
+ *
+ * @return text-base address
+ */
+ulong spl_get_image_text_base(void);
 
 /**
  * spl_load_simple_fit_skip_processing() - Hook to allow skipping the FIT
@@ -285,7 +348,15 @@ u32 spl_mmc_boot_mode(const u32 boot_device);
  * If not overridden, it is weakly defined in common/spl/spl_mmc.c.
  */
 int spl_mmc_boot_partition(const u32 boot_device);
-void spl_set_bd(void);
+
+/**
+ * spl_alloc_bd() - Allocate space for bd_info
+ *
+ * This sets up the gd->bd pointer by allocating memory for it
+ *
+ * @return 0 if OK, -ENOMEM if out of memory
+ */
+int spl_alloc_bd(void);
 
 /**
  * spl_set_header_raw_uboot() - Set up a standard SPL image structure
@@ -526,25 +597,79 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 void spl_invoke_atf(struct spl_image_info *spl_image);
 
 /**
- * bl2_plat_get_bl31_params() - prepare params for bl31.
- * @bl32_entry	address of BL32 executable (secure)
- * @bl33_entry	address of BL33 executable (non secure)
- * @fdt_addr	address of Flat Device Tree
+ * bl2_plat_get_bl31_params() - return params for bl31.
+ * @bl32_entry:	address of BL32 executable (secure)
+ * @bl33_entry:	address of BL33 executable (non secure)
+ * @fdt_addr:	address of Flat Device Tree
  *
- * This function assigns a pointer to the memory that the platform has kept
- * aside to pass platform specific and trusted firmware related information
- * to BL31. This memory is allocated by allocating memory to
- * bl2_to_bl31_params_mem structure which is a superset of all the
- * structure whose information is passed to BL31
- * NOTE: This function should be called only once and should be done
- * before generating params to BL31
+ * This is a weak function which might be overridden by the board code. By
+ * default it will just call bl2_plat_get_bl31_params_default().
  *
- * @return bl31 params structure pointer
+ * If you just want to manipulate or add some parameters, you can override
+ * this function, call bl2_plat_get_bl31_params_default and operate on the
+ * returned bl31 params.
+ *
+ * Return: bl31 params structure pointer
  */
 struct bl31_params *bl2_plat_get_bl31_params(uintptr_t bl32_entry,
 					     uintptr_t bl33_entry,
 					     uintptr_t fdt_addr);
 
+/**
+ * bl2_plat_get_bl31_params_default() - prepare params for bl31.
+ * @bl32_entry:	address of BL32 executable (secure)
+ * @bl33_entry:	address of BL33 executable (non secure)
+ * @fdt_addr:	address of Flat Device Tree
+ *
+ * This is the default implementation of bl2_plat_get_bl31_params(). It assigns
+ * a pointer to the memory that the platform has kept aside to pass platform
+ * specific and trusted firmware related information to BL31. This memory is
+ * allocated by allocating memory to bl2_to_bl31_params_mem structure which is
+ * a superset of all the structure whose information is passed to BL31
+ *
+ * NOTE: The memory is statically allocated, thus this function should be
+ * called only once. All subsequent calls will overwrite any changes.
+ *
+ * Return: bl31 params structure pointer
+ */
+struct bl31_params *bl2_plat_get_bl31_params_default(uintptr_t bl32_entry,
+						     uintptr_t bl33_entry,
+						     uintptr_t fdt_addr);
+
+/**
+ * bl2_plat_get_bl31_params_v2() - return params for bl31
+ * @bl32_entry:	address of BL32 executable (secure)
+ * @bl33_entry:	address of BL33 executable (non secure)
+ * @fdt_addr:	address of Flat Device Tree
+ *
+ * This function does the same as bl2_plat_get_bl31_params() except that is is
+ * used for the new LOAD_IMAGE_V2 option, which uses a slightly different
+ * method to pass the parameters.
+ *
+ * Return: bl31 params structure pointer
+ */
+struct bl_params *bl2_plat_get_bl31_params_v2(uintptr_t bl32_entry,
+					      uintptr_t bl33_entry,
+					      uintptr_t fdt_addr);
+
+/**
+ * bl2_plat_get_bl31_params_v2_default() - prepare params for bl31.
+ * @bl32_entry:	address of BL32 executable (secure)
+ * @bl33_entry:	address of BL33 executable (non secure)
+ * @fdt_addr:	address of Flat Device Tree
+ *
+ * This is the default implementation of bl2_plat_get_bl31_params_v2(). It
+ * prepares the linked list of the bl31 params, populates the image types and
+ * set the entry points for bl32 and bl33 (if available).
+ *
+ * NOTE: The memory is statically allocated, thus this function should be
+ * called only once. All subsequent calls will overwrite any changes.
+ *
+ * Return: bl31 params structure pointer
+ */
+struct bl_params *bl2_plat_get_bl31_params_v2_default(uintptr_t bl32_entry,
+						      uintptr_t bl33_entry,
+						      uintptr_t fdt_addr);
 /**
  * spl_optee_entry - entry function for optee
  *
@@ -576,9 +701,9 @@ int board_return_to_bootrom(struct spl_image_info *spl_image,
 
 /**
  * board_spl_fit_post_load - allow process images after loading finished
- *
+ * @fit: Pointer to a valid Flattened Image Tree blob
  */
-void board_spl_fit_post_load(ulong load_addr, size_t length);
+void board_spl_fit_post_load(const void *fit);
 
 /**
  * board_spl_fit_size_align - specific size align before processing payload

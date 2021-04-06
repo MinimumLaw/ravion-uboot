@@ -3,6 +3,8 @@
  * Copyright (C) 2020, Linaro Limited
  */
 
+#define LOG_CATEGORY UCLASS_MISC
+
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -49,6 +51,9 @@ static int sandbox_scmi_devices_remove(struct udevice *dev)
 	struct sandbox_scmi_devices *devices = sandbox_scmi_devices_ctx(dev);
 	int ret = 0;
 	size_t n;
+
+	if (!devices)
+		return 0;
 
 	for (n = 0; n < SCMI_TEST_DEVICES_RD_COUNT; n++) {
 		int ret2 = reset_free(devices->reset + n);
@@ -107,7 +112,7 @@ U_BOOT_DRIVER(sandbox_scmi_devices) = {
 	.name = "sandbox-scmi_devices",
 	.id = UCLASS_MISC,
 	.of_match = sandbox_scmi_devices_ids,
-	.priv_auto_alloc_size = sizeof(struct sandbox_scmi_device_priv),
+	.priv_auto	= sizeof(struct sandbox_scmi_device_priv),
 	.remove = sandbox_scmi_devices_remove,
 	.probe = sandbox_scmi_devices_probe,
 };

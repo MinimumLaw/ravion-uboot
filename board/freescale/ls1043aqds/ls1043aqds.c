@@ -10,6 +10,7 @@
 #include <fsl_ddr_sdram.h>
 #include <init.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
@@ -282,7 +283,7 @@ int select_i2c_ch_pca9547(u8 ch, int bus_num)
 {
 	int ret;
 
-#ifdef CONFIG_DM_I2C
+#if CONFIG_IS_ENABLED(DM_I2C)
 	struct udevice *dev;
 
 	ret = i2c_get_chip_for_busnum(bus_num, I2C_MUX_PCA_ADDR_PRI,
@@ -337,7 +338,7 @@ void board_retimer_init(void)
 	/* Retimer is connected to I2C1_CH7_CH5 */
 	select_i2c_ch_pca9547(I2C_MUX_CH7, bus_num);
 	reg = I2C_MUX_CH5;
-#ifdef CONFIG_DM_I2C
+#if CONFIG_IS_ENABLED(DM_I2C)
 	struct udevice *dev;
 	int ret;
 
