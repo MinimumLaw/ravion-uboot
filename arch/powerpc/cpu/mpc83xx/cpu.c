@@ -18,7 +18,6 @@
 #include <watchdog.h>
 #include <command.h>
 #include <mpc83xx.h>
-#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>

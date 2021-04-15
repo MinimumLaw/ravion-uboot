@@ -1,12 +1,10 @@
 .. SPDX-License-Identifier: GPL-2.0+
 
-U-Boot for LibreTech CCs
-========================
+U-Boot for LibreTech CC
+=======================
 
 LibreTech CC is a single board computer manufactured by Libre Technology
 with the following specifications:
-
-V1:
 
  - Amlogic S905X ARM Cortex-A53 quad-core SoC @ 1.5GHz
  - ARM Mali 450 GPU
@@ -17,12 +15,6 @@ V1:
  - 4 x USB 2.0 Host
  - eMMC, microSD
  - Infrared receiver
- - Jack for CVBS and Audio
-
-V2:
-
- - Added SPI NOR
- - Removed Jack
 
 Schematics are available on the manufacturer website.
 
@@ -34,8 +26,6 @@ U-Boot compilation
     $ export CROSS_COMPILE=aarch64-none-elf-
     $ make libretech-cc_defconfig
     $ make
-
-Use libretech-cc_v2_defconfig for v2.
 
 Image creation
 --------------
@@ -51,8 +41,7 @@ bootloaders:
 * acs.bin: built from vendor u-boot source
 
 These binaries and the tools required below have been collected and prebuilt
-for convenience at <https://github.com/BayLibre/u-boot/releases/>. These
-apply to both v1 and v2.
+for convenience at <https://github.com/BayLibre/u-boot/releases/>
 
 Download and extract the libretech-cc release from there, and set FIPDIR to
 point to the `fip` subdirectory.

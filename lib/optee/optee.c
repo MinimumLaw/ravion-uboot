@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <fdtdec.h>
 #include <image.h>
 #include <log.h>
 #include <malloc.h>

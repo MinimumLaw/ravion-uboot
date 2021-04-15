@@ -19,7 +19,6 @@
 #include <vsprintf.h>
 #include <watchdog.h>
 #include <command.h>
-#include <asm/global_data.h>
 #include <asm/immap.h>
 #include <asm/io.h>
 #include <netdev.h>

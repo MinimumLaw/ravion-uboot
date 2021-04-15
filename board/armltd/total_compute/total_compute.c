@@ -8,17 +8,16 @@
 #include <dm.h>
 #include <dm/platform_data/serial_pl01x.h>
 #include <asm/armv8/mmu.h>
-#include <asm/global_data.h>
 
-static const struct pl01x_serial_plat serial_plat = {
+static const struct pl01x_serial_platdata serial_platdata = {
 	.base = UART0_BASE,
 	.type = TYPE_PL011,
 	.clock = CONFIG_PL011_CLOCK,
 };
 
-U_BOOT_DRVINFO(total_compute_serials) = {
+U_BOOT_DEVICE(total_compute_serials) = {
 	.name = "serial_pl01x",
-	.plat = &serial_plat,
+	.platdata = &serial_platdata,
 };
 
 static struct mm_region total_compute_mem_map[] = {

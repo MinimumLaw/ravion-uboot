@@ -12,7 +12,6 @@
 #include <hang.h>
 #include <image.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <u-boot/zlib.h>
 #include <asm/byteorder.h>
 #include <asm/bootm.h>

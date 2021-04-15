@@ -18,7 +18,6 @@
 #include <asm/cpu_common.h>
 #include <asm/cpu_x86.h>
 #include <asm/fast_spi.h>
-#include <asm/global_data.h>
 #include <asm/intel_pinctrl.h>
 #include <asm/intel_regs.h>
 #include <asm/io.h>

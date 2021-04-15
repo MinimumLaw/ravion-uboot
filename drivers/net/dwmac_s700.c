@@ -6,7 +6,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm.h>
 #include <clk.h>
@@ -45,9 +44,9 @@ static int dwmac_s700_probe(struct udevice *dev)
 	return designware_eth_probe(dev);
 }
 
-static int dwmac_s700_of_to_plat(struct udevice *dev)
+static int dwmac_s700_ofdata_to_platdata(struct udevice *dev)
 {
-	return designware_eth_of_to_plat(dev);
+	return designware_eth_ofdata_to_platdata(dev);
 }
 
 static const struct udevice_id dwmac_s700_ids[] = {
@@ -59,10 +58,10 @@ U_BOOT_DRIVER(dwmac_s700) = {
 	.name   = "dwmac_s700",
 	.id     = UCLASS_ETH,
 	.of_match = dwmac_s700_ids,
-	.of_to_plat = dwmac_s700_of_to_plat,
+	.ofdata_to_platdata = dwmac_s700_ofdata_to_platdata,
 	.probe  = dwmac_s700_probe,
 	.ops    = &designware_eth_ops,
-	.priv_auto	= sizeof(struct dw_eth_dev),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct dw_eth_dev),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 	.flags = DM_FLAG_ALLOC_PRIV_DMA,
 };

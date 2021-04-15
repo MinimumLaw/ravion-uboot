@@ -11,7 +11,6 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch-tegra/ap.h>
 #include <asm/arch-tegra/tegra.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <dm.h>

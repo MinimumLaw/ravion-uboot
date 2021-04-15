@@ -7,7 +7,6 @@
 #include <dm.h>
 #include <i2c.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>

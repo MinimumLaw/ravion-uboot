@@ -7,10 +7,8 @@
 #ifndef __CPU_H
 #define __CPU_H
 
-struct udevice;
-
 /**
- * struct cpu_plat - platform data for a CPU
+ * struct cpu_platdata - platform data for a CPU
  * @cpu_id:	   Platform-specific way of identifying the CPU.
  * @ucode_version: Microcode version, if CPU_FEAT_UCODE is set
  * @device_id:     Driver-defined device identifier
@@ -19,10 +17,10 @@ struct udevice;
  * @timebase_freq: the current frequency at which the cpu timer timebase
  *		   registers are updated (in Hz)
  *
- * This can be accessed with dev_get_parent_plat() for any UCLASS_CPU
+ * This can be accessed with dev_get_parent_platdata() for any UCLASS_CPU
  * device.
  */
-struct cpu_plat {
+struct cpu_platdata {
 	int cpu_id;
 	int ucode_version;
 	ulong device_id;

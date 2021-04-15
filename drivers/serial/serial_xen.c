@@ -8,7 +8,6 @@
 #include <dm.h>
 #include <serial.h>
 #include <watchdog.h>
-#include <asm/global_data.h>
 
 #include <linux/bug.h>
 
@@ -173,7 +172,7 @@ U_BOOT_DRIVER(serial_xen) = {
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 	.of_match		= xen_serial_ids,
 #endif
-	.priv_auto	= sizeof(struct xen_uart_priv),
+	.priv_auto_alloc_size	= sizeof(struct xen_uart_priv),
 	.probe			= xen_serial_probe,
 	.ops			= &xen_serial_ops,
 #if !CONFIG_IS_ENABLED(OF_CONTROL)

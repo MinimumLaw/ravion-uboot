@@ -50,10 +50,9 @@ static void i2c_gpio_sda_set(struct i2c_gpio_bus *bus, int bit)
 	struct gpio_desc *sda = &bus->gpios[PIN_SDA];
 
 	if (bit)
-		sda->flags = (sda->flags & ~GPIOD_IS_OUT) | GPIOD_IS_IN;
+		dm_gpio_set_dir_flags(sda, GPIOD_IS_IN);
 	else
-		sda->flags = (sda->flags & (~GPIOD_IS_IN & ~GPIOD_IS_OUT_ACTIVE)) | GPIOD_IS_OUT;
-	dm_gpio_set_dir(sda);
+		dm_gpio_set_dir_flags(sda, GPIOD_IS_OUT);
 }
 
 static void i2c_gpio_scl_set(struct i2c_gpio_bus *bus, int bit)
@@ -62,16 +61,14 @@ static void i2c_gpio_scl_set(struct i2c_gpio_bus *bus, int bit)
 	int count = 0;
 
 	if (bit) {
-		scl->flags = (scl->flags & ~GPIOD_IS_OUT) | GPIOD_IS_IN;
-		dm_gpio_set_dir(scl);
+		dm_gpio_set_dir_flags(scl, GPIOD_IS_IN);
 		while (!dm_gpio_get_value(scl) && count++ < 100000)
 			udelay(1);
 
 		if (!dm_gpio_get_value(scl))
 			pr_err("timeout waiting on slave to release scl\n");
 	} else {
-		scl->flags = (scl->flags & (~GPIOD_IS_IN & ~GPIOD_IS_OUT_ACTIVE)) | GPIOD_IS_OUT;
-		dm_gpio_set_dir(scl);
+		dm_gpio_set_dir_flags(scl, GPIOD_IS_OUT);
 	}
 }
 
@@ -79,11 +76,11 @@ static void i2c_gpio_scl_set(struct i2c_gpio_bus *bus, int bit)
 static void i2c_gpio_scl_set_output_only(struct i2c_gpio_bus *bus, int bit)
 {
 	struct gpio_desc *scl = &bus->gpios[PIN_SCL];
-	scl->flags = (scl->flags & (~GPIOD_IS_IN & ~GPIOD_IS_OUT_ACTIVE)) | GPIOD_IS_OUT;
+	ulong flags = GPIOD_IS_OUT;
 
 	if (bit)
-		scl->flags |= GPIOD_IS_OUT_ACTIVE;
-	dm_gpio_set_dir(scl);
+		flags |= GPIOD_IS_OUT_ACTIVE;
+	dm_gpio_set_dir_flags(scl, flags);
 }
 
 static void i2c_gpio_write_bit(struct i2c_gpio_bus *bus, int delay, uchar bit)
@@ -301,7 +298,7 @@ static int i2c_gpio_probe(struct udevice *dev, uint chip, uint chip_flags)
 	i2c_gpio_send_stop(bus, delay);
 
 	debug("%s: bus: %d (%s) chip: %x flags: %x ret: %d\n",
-	      __func__, dev_seq(dev), dev->name, chip, chip_flags, ret);
+	      __func__, dev->seq, dev->name, chip, chip_flags, ret);
 
 	return ret;
 }
@@ -332,7 +329,7 @@ static int i2c_gpio_drv_probe(struct udevice *dev)
 	return 0;
 }
 
-static int i2c_gpio_of_to_plat(struct udevice *dev)
+static int i2c_gpio_ofdata_to_platdata(struct udevice *dev)
 {
 	struct i2c_gpio_bus *bus = dev_get_priv(dev);
 	int ret;
@@ -374,7 +371,7 @@ U_BOOT_DRIVER(i2c_gpio) = {
 	.id	= UCLASS_I2C,
 	.of_match = i2c_gpio_ids,
 	.probe	= i2c_gpio_drv_probe,
-	.of_to_plat = i2c_gpio_of_to_plat,
-	.priv_auto	= sizeof(struct i2c_gpio_bus),
+	.ofdata_to_platdata = i2c_gpio_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct i2c_gpio_bus),
 	.ops	= &i2c_gpio_ops,
 };

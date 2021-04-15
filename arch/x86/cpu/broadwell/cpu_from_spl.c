@@ -11,7 +11,6 @@
 #include <handoff.h>
 #include <init.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <asm/mtrr.h>
 
 int misc_init_r(void)

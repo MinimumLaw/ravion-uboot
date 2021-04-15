@@ -23,7 +23,6 @@
 #include <common.h>
 #include <init.h>
 #include <time.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/timer_defs.h>
 #include <div64.h>

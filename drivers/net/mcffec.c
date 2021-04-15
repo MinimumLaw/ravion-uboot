@@ -18,7 +18,6 @@
 #include <net.h>
 #include <miiphy.h>
 #include <asm/fec.h>
-#include <asm/global_data.h>
 #include <asm/immap.h>
 #include <linux/delay.h>
 #include <linux/mii.h>
@@ -126,7 +125,7 @@ static void set_fec_duplex_speed(volatile fec_t *fecp, int dup_spd)
 #ifdef ET_DEBUG
 static void dbg_fec_regs(struct udevice *dev)
 {
-	struct fec_info_s *info = dev_get_priv(dev);
+	struct fec_info_s *info = dev->priv;
 	volatile fec_t *fecp = (fec_t *)(info->iobase);
 
 	printf("=====\n");
@@ -276,7 +275,7 @@ static void dbg_fec_regs(struct udevice *dev)
 
 int mcffec_init(struct udevice *dev)
 {
-	struct fec_info_s *info = dev_get_priv(dev);
+	struct fec_info_s *info = dev->priv;
 	volatile fec_t *fecp = (fec_t *) (info->iobase);
 	int rval, i;
 	uchar ea[6];
@@ -375,7 +374,7 @@ int mcffec_init(struct udevice *dev)
 
 static int mcffec_send(struct udevice *dev, void *packet, int length)
 {
-	struct fec_info_s *info = dev_get_priv(dev);
+	struct fec_info_s *info = dev->priv;
 	volatile fec_t *fecp = (fec_t *)info->iobase;
 	int j, rc;
 	u16 phy_status;
@@ -441,7 +440,7 @@ static int mcffec_send(struct udevice *dev, void *packet, int length)
 
 static int mcffec_recv(struct udevice *dev, int flags, uchar **packetp)
 {
-	struct fec_info_s *info = dev_get_priv(dev);
+	struct fec_info_s *info = dev->priv;
 	volatile fec_t *fecp = (fec_t *)info->iobase;
 	int length = -1;
 
@@ -493,7 +492,7 @@ static int mcffec_recv(struct udevice *dev, int flags, uchar **packetp)
 
 static void mcffec_halt(struct udevice *dev)
 {
-	struct fec_info_s *info = dev_get_priv(dev);
+	struct fec_info_s *info = dev->priv;
 
 	fec_reset(info);
 	fecpin_setclear(info, 0);
@@ -514,18 +513,18 @@ static const struct eth_ops mcffec_ops = {
 };
 
 /*
- * Boot sequence, called just after mcffec_of_to_plat,
+ * Boot sequence, called just after mcffec_ofdata_to_platdata,
  * as DM way, it replaces old mcffec_initialize.
  */
 static int mcffec_probe(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
-	struct fec_info_s *info = dev_get_priv(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
+	struct fec_info_s *info = dev->priv;
 	int node = dev_of_offset(dev);
 	int retval, fec_idx;
 	const u32 *val;
 
-	info->index = dev_seq(dev);
+	info->index = dev->seq;
 	info->iobase = pdata->iobase;
 	info->phy_addr = -1;
 
@@ -585,9 +584,9 @@ static int mcffec_remove(struct udevice *dev)
 /*
  * Boot sequence, called 1st
  */
-static int mcffec_of_to_plat(struct udevice *dev)
+static int mcffec_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	const u32 *val;
 
 	pdata->iobase = dev_read_addr(dev);
@@ -611,10 +610,10 @@ U_BOOT_DRIVER(mcffec) = {
 	.name	= "mcffec",
 	.id	= UCLASS_ETH,
 	.of_match = mcffec_ids,
-	.of_to_plat = mcffec_of_to_plat,
+	.ofdata_to_platdata = mcffec_ofdata_to_platdata,
 	.probe	= mcffec_probe,
 	.remove	= mcffec_remove,
 	.ops	= &mcffec_ops,
-	.priv_auto	= sizeof(struct fec_info_s),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct fec_info_s),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };

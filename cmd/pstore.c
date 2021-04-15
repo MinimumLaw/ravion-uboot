@@ -5,7 +5,6 @@
 
 #include <config.h>
 #include <command.h>
-#include <fdtdec.h>
 #include <fs.h>
 #include <log.h>
 #include <mapmem.h>

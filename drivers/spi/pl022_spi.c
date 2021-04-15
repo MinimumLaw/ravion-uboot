@@ -14,7 +14,6 @@
 #include <dm.h>
 #include <dm/platform_data/spi_pl022.h>
 #include <linux/io.h>
-#include <asm/global_data.h>
 #include <spi.h>
 
 #define SSP_CR0		0x000
@@ -90,7 +89,7 @@ static int pl022_is_supported(struct pl022_spi_slave *ps)
 
 static int pl022_spi_probe(struct udevice *bus)
 {
-	struct pl022_spi_pdata *plat = dev_get_plat(bus);
+	struct pl022_spi_pdata *plat = dev_get_platdata(bus);
 	struct pl022_spi_slave *ps = dev_get_priv(bus);
 
 	ps->base = ioremap(plat->addr, plat->size);
@@ -287,9 +286,9 @@ static const struct dm_spi_ops pl022_spi_ops = {
 };
 
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
-static int pl022_spi_of_to_plat(struct udevice *bus)
+static int pl022_spi_ofdata_to_platdata(struct udevice *bus)
 {
-	struct pl022_spi_pdata *plat = dev_get_plat(bus);
+	struct pl022_spi_pdata *plat = bus->platdata;
 	const void *fdt = gd->fdt_blob;
 	int node = dev_of_offset(bus);
 	struct clk clkdev;
@@ -317,10 +316,10 @@ U_BOOT_DRIVER(pl022_spi) = {
 	.id     = UCLASS_SPI,
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.of_match = pl022_spi_ids,
-	.of_to_plat = pl022_spi_of_to_plat,
+	.ofdata_to_platdata = pl022_spi_ofdata_to_platdata,
 #endif
 	.ops    = &pl022_spi_ops,
-	.plat_auto	= sizeof(struct pl022_spi_pdata),
-	.priv_auto	= sizeof(struct pl022_spi_slave),
+	.platdata_auto_alloc_size = sizeof(struct pl022_spi_pdata),
+	.priv_auto_alloc_size = sizeof(struct pl022_spi_slave),
 	.probe  = pl022_spi_probe,
 };

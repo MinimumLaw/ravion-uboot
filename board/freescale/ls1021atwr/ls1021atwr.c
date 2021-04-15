@@ -11,7 +11,6 @@
 #include <i2c.h>
 #include <init.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/immap_ls102xa.h>
 #include <asm/arch/clock.h>
@@ -458,7 +457,7 @@ void ls1twr_program_regulator(void)
 #define MC34VR500_ADDR			0x8
 #define MC34VR500_DEVICEID		0x4
 #define MC34VR500_DEVICEID_MASK		0x0f
-#if CONFIG_IS_ENABLED(DM_I2C)
+#ifdef CONFIG_DM_I2C
 	struct udevice *dev;
 	int ret;
 

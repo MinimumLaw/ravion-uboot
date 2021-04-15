@@ -32,10 +32,7 @@ int fspm_update_config(struct udevice *dev, struct fspm_upd *upd)
 
 	node = dev_ofnode(dev);
 	if (!ofnode_valid(node))
-		return log_msg_ret("node", -ENOENT);
-	node = ofnode_find_subnode(node, "fsp-m");
-	if (!ofnode_valid(node))
-		return log_msg_ret("fspm", -ENOENT);
+		return log_msg_ret("fsp-m settings", -ENOENT);
 
 	ret = fsp_m_update_config_from_dtb(node, cfg);
 	if (ret)

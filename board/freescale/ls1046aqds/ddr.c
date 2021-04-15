@@ -11,7 +11,6 @@
 #endif
 #include <log.h>
 #include <asm/arch/clock.h>
-#include <asm/global_data.h>
 #include "ddr.h"
 
 DECLARE_GLOBAL_DATA_PTR;

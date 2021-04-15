@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  */
-
-#define LOG_CATEGORY LOGC_ARCH
-
 #include <common.h>
 #include <clk.h>
 #include <cpu_func.h>
@@ -18,7 +15,6 @@
 #include <asm/arch/bsec.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/global_data.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <linux/bitops.h>
@@ -223,10 +219,8 @@ static void early_enable_caches(void)
 	if (CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
 		return;
 
-	if (!(CONFIG_IS_ENABLED(SYS_ICACHE_OFF) && CONFIG_IS_ENABLED(SYS_DCACHE_OFF))) {
-		gd->arch.tlb_size = PGTABLE_SIZE;
-		gd->arch.tlb_addr = (unsigned long)&early_tlb;
-	}
+	gd->arch.tlb_size = PGTABLE_SIZE;
+	gd->arch.tlb_addr = (unsigned long)&early_tlb;
 
 	dcache_enable();
 
@@ -267,8 +261,7 @@ int arch_cpu_init(void)
 
 	boot_mode = get_bootmode();
 
-	if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) &&
-	    (boot_mode & TAMP_BOOT_DEVICE_MASK) == BOOT_SERIAL_UART)
+	if ((boot_mode & TAMP_BOOT_DEVICE_MASK) == BOOT_SERIAL_UART)
 		gd->flags |= GD_FLG_SILENT | GD_FLG_DISABLE_CONSOLE;
 #if defined(CONFIG_DEBUG_UART) && \
 	!defined(CONFIG_TFABOOT) && \
@@ -325,7 +318,7 @@ static u32 get_otp(int index, int shift, int mask)
 	u32 otp = 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 
 	if (!ret)
@@ -468,30 +461,27 @@ static void setup_boot_mode(void)
 	unsigned int instance = (boot_mode & TAMP_BOOT_INSTANCE_MASK) - 1;
 	u32 forced_mode = (boot_ctx & TAMP_BOOT_FORCED_MASK);
 	struct udevice *dev;
+	int alias;
 
-	log_debug("%s: boot_ctx=0x%x => boot_mode=%x, instance=%d forced=%x\n",
-		  __func__, boot_ctx, boot_mode, instance, forced_mode);
+	pr_debug("%s: boot_ctx=0x%x => boot_mode=%x, instance=%d forced=%x\n",
+		 __func__, boot_ctx, boot_mode, instance, forced_mode);
 	switch (boot_mode & TAMP_BOOT_DEVICE_MASK) {
 	case BOOT_SERIAL_UART:
 		if (instance > ARRAY_SIZE(serial_addr))
 			break;
-		/* serial : search associated node in devicetree */
+		/* serial : search associated alias in devicetree */
 		sprintf(cmd, "serial@%x", serial_addr[instance]);
-		if (uclass_get_device_by_name(UCLASS_SERIAL, cmd, &dev)) {
-			/* restore console on error */
-			if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL))
-				gd->flags &= ~(GD_FLG_SILENT |
-					       GD_FLG_DISABLE_CONSOLE);
-			printf("uart%d = %s not found in device tree!\n",
-			       instance, cmd);
+		if (uclass_get_device_by_name(UCLASS_SERIAL, cmd, &dev))
 			break;
-		}
-		sprintf(cmd, "%d", dev_seq(dev));
+		if (fdtdec_get_alias_seq(gd->fdt_blob, "serial",
+					 dev_of_offset(dev), &alias))
+			break;
+		sprintf(cmd, "%d", alias);
 		env_set("boot_device", "serial");
 		env_set("boot_instance", cmd);
 
 		/* restore console on uart when not used */
-		if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) && gd->cur_serial_dev != dev) {
+		if (gd->cur_serial_dev != dev) {
 			gd->flags &= ~(GD_FLG_SILENT |
 				       GD_FLG_DISABLE_CONSOLE);
 			printf("serial boot with console enabled!\n");
@@ -520,7 +510,7 @@ static void setup_boot_mode(void)
 		env_set("boot_instance", "0");
 		break;
 	default:
-		log_debug("unexpected boot mode = %x\n", boot_mode);
+		pr_debug("unexpected boot mode = %x\n", boot_mode);
 		break;
 	}
 
@@ -547,7 +537,7 @@ static void setup_boot_mode(void)
 	case BOOT_NORMAL:
 		break;
 	default:
-		log_debug("unexpected forced boot mode = %x\n", forced_mode);
+		pr_debug("unexpected forced boot mode = %x\n", forced_mode);
 		break;
 	}
 
@@ -573,7 +563,7 @@ __weak int setup_mac_address(void)
 		return 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 	if (ret)
 		return ret;
@@ -587,13 +577,14 @@ __weak int setup_mac_address(void)
 		enetaddr[i] = ((uint8_t *)&otp)[i];
 
 	if (!is_valid_ethaddr(enetaddr)) {
-		log_err("invalid MAC address in OTP %pM\n", enetaddr);
+		pr_err("invalid MAC address in OTP %pM\n", enetaddr);
 		return -EINVAL;
 	}
-	log_debug("OTP MAC address = %pM\n", enetaddr);
+	pr_debug("OTP MAC address = %pM\n", enetaddr);
 	ret = eth_env_set_enetaddr("ethaddr", enetaddr);
 	if (ret)
-		log_err("Failed to set mac address %pM from OTP: %d\n", enetaddr, ret);
+		pr_err("Failed to set mac address %pM from OTP: %d\n",
+		       enetaddr, ret);
 #endif
 
 	return 0;
@@ -610,7 +601,7 @@ static int setup_serial_number(void)
 		return 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 	if (ret)
 		return ret;

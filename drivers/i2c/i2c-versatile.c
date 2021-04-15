@@ -252,6 +252,11 @@ static int versatile_i2c_probe(struct udevice *dev)
 
 	priv->base = (phys_addr_t)dev_read_addr(dev);
 	priv->delay = 25;	/* 25us * 4 = 100kHz */
+	/*
+	 * U-Boot still doesn't assign automatically
+	 * sequence numbers to devices
+	 */
+	dev->req_seq = 1;
 
 	return 0;
 }
@@ -272,6 +277,6 @@ U_BOOT_DRIVER(versatile_i2c) = {
 	.id = UCLASS_I2C,
 	.of_match = versatile_i2c_of_match,
 	.probe = versatile_i2c_probe,
-	.priv_auto	= sizeof(struct versatile_i2c_priv),
+	.priv_auto_alloc_size = sizeof(struct versatile_i2c_priv),
 	.ops = &versatile_i2c_ops,
 };

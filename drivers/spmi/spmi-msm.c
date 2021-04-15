@@ -11,7 +11,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <spmi/spmi.h>
@@ -195,5 +194,5 @@ U_BOOT_DRIVER(msm_spmi) = {
 	.of_match = msm_spmi_ids,
 	.ops = &msm_spmi_ops,
 	.probe = msm_spmi_probe,
-	.priv_auto	= sizeof(struct msm_spmi_priv),
+	.priv_auto_alloc_size = sizeof(struct msm_spmi_priv),
 };

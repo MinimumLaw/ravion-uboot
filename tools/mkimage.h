@@ -29,8 +29,6 @@
 #define debug(fmt,args...)
 #endif /* MKIMAGE_DEBUG */
 
-#define log_debug(fmt, args...)	debug(fmt, ##args)
-
 static inline void *map_sysmem(ulong paddr, unsigned long len)
 {
 	return (void *)(uintptr_t)paddr;

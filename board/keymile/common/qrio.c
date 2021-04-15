@@ -5,27 +5,14 @@
  */
 
 #include <common.h>
-#include <asm/io.h>
 #include <linux/bitops.h>
 
 #include "common.h"
 #include "qrio.h"
 
-/* QRIO ID register offset */
-#define ID_REV_OFF		0x00
-
 /* QRIO GPIO register offsets */
 #define DIRECT_OFF		0x18
 #define GPRT_OFF		0x1c
-
-void show_qrio(void)
-{
-	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
-	u16 id_rev = in_be16(qrio_base + ID_REV_OFF);
-
-	printf("QRIO: id = %u, revision = %u\n",
-	       (id_rev >> 8) & 0xff, id_rev & 0xff);
-}
 
 int qrio_get_gpio(u8 port_off, u8 gpio_nr)
 {
@@ -142,7 +129,7 @@ void qrio_prst(u8 bit, bool en, bool wden)
 
 void qrio_prstcfg(u8 bit, u8 mode)
 {
-	unsigned long prstcfg;
+	u32 prstcfg;
 	u8 i;
 	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
 
@@ -150,9 +137,9 @@ void qrio_prstcfg(u8 bit, u8 mode)
 
 	for (i = 0; i < 2; i++) {
 		if (mode & (1 << i))
-			__set_bit(2 * bit + i, &prstcfg);
+			set_bit(2 * bit + i, &prstcfg);
 		else
-			__clear_bit(2 * bit + i, &prstcfg);
+			clear_bit(2 * bit + i, &prstcfg);
 	}
 
 	out_be32(qrio_base + PRSTCFG_OFF, prstcfg);

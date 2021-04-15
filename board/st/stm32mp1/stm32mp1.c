@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  */
-
-#define LOG_CATEGORY LOGC_BOARD
-
 #include <common.h>
 #include <adc.h>
 #include <bootm.h>
@@ -32,7 +29,6 @@
 #include <syscon.h>
 #include <usb.h>
 #include <watchdog.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <asm/arch/stm32.h>
@@ -110,27 +106,28 @@ int checkboard(void)
 	else
 		mode = "basic";
 
+	printf("Board: stm32mp1 in %s mode", mode);
 	fdt_compat = fdt_getprop(gd->fdt_blob, 0, "compatible",
 				 &fdt_compat_len);
-
-	log_info("Board: stm32mp1 in %s mode (%s)\n", mode,
-		 fdt_compat && fdt_compat_len ? fdt_compat : "");
+	if (fdt_compat && fdt_compat_len)
+		printf(" (%s)", fdt_compat);
+	puts("\n");
 
 	/* display the STMicroelectronics board identification */
 	if (CONFIG_IS_ENABLED(CMD_STBOARD)) {
 		ret = uclass_get_device_by_driver(UCLASS_MISC,
-						  DM_DRIVER_GET(stm32mp_bsec),
+						  DM_GET_DRIVER(stm32mp_bsec),
 						  &dev);
 		if (!ret)
 			ret = misc_read(dev, STM32_BSEC_SHADOW(BSEC_OTP_BOARD),
 					&otp, sizeof(otp));
 		if (ret > 0 && otp)
-			log_info("Board: MB%04x Var%d.%d Rev.%c-%02d\n",
-				 otp >> 16,
-				 (otp >> 12) & 0xF,
-				 (otp >> 4) & 0xF,
-				 ((otp >> 8) & 0xF) - 1 + 'A',
-				 otp & 0xF);
+			printf("Board: MB%04x Var%d.%d Rev.%c-%02d\n",
+			       otp >> 16,
+			       (otp >> 12) & 0xF,
+			       (otp >> 4) & 0xF,
+			       ((otp >> 8) & 0xF) - 1 + 'A',
+			       otp & 0xF);
 	}
 
 	return 0;
@@ -147,16 +144,17 @@ static void board_key_check(void)
 
 	node = ofnode_path("/config");
 	if (!ofnode_valid(node)) {
-		log_debug("no /config node?\n");
+		debug("%s: no /config node?\n", __func__);
 		return;
 	}
 	if (IS_ENABLED(CONFIG_FASTBOOT)) {
 		if (gpio_request_by_name_nodev(node, "st,fastboot-gpios", 0,
 					       &gpio, GPIOD_IS_IN)) {
-			log_debug("could not find a /config/st,fastboot-gpios\n");
+			debug("%s: could not find a /config/st,fastboot-gpios\n",
+			      __func__);
 		} else {
 			if (dm_gpio_get_value(&gpio)) {
-				log_notice("Fastboot key pressed, ");
+				puts("Fastboot key pressed, ");
 				boot_mode = BOOT_FASTBOOT;
 			}
 
@@ -166,17 +164,18 @@ static void board_key_check(void)
 	if (IS_ENABLED(CONFIG_CMD_STM32PROG)) {
 		if (gpio_request_by_name_nodev(node, "st,stm32prog-gpios", 0,
 					       &gpio, GPIOD_IS_IN)) {
-			log_debug("could not find a /config/st,stm32prog-gpios\n");
+			debug("%s: could not find a /config/st,stm32prog-gpios\n",
+			      __func__);
 		} else {
 			if (dm_gpio_get_value(&gpio)) {
-				log_notice("STM32Programmer key pressed, ");
+				puts("STM32Programmer key pressed, ");
 				boot_mode = BOOT_STM32PROG;
 			}
 			dm_gpio_free(NULL, &gpio);
 		}
 	}
 	if (boot_mode != BOOT_NORMAL) {
-		log_notice("entering download mode...\n");
+		puts("entering download mode...\n");
 		clrsetbits_le32(TAMP_BOOT_CONTEXT,
 				TAMP_BOOT_FORCED_MASK,
 				boot_mode);
@@ -197,12 +196,10 @@ int g_dnl_board_usb_cable_connected(void)
 		return ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_USB_GADGET_GENERIC,
-					  DM_DRIVER_GET(dwc2_udc_otg),
+					  DM_GET_DRIVER(dwc2_udc_otg),
 					  &dwc2_udc_otg);
-	if (ret) {
-		log_debug("dwc2_udc_otg init failed\n");
-		return ret;
-	}
+	if (!ret)
+		debug("dwc2_udc_otg init failed\n");
 
 	return dwc2_udc_B_session_valid(dwc2_udc_otg);
 }
@@ -234,12 +231,13 @@ static int get_led(struct udevice **dev, char *led_string)
 
 	led_name = fdtdec_get_config_string(gd->fdt_blob, led_string);
 	if (!led_name) {
-		log_debug("could not find %s config string\n", led_string);
+		pr_debug("%s: could not find %s config string\n",
+			 __func__, led_string);
 		return -ENOENT;
 	}
 	ret = led_get_by_label(led_name, dev);
 	if (ret) {
-		log_debug("get=%d\n", ret);
+		debug("%s: get=%d\n", __func__, ret);
 		return ret;
 	}
 
@@ -290,66 +288,24 @@ static void __maybe_unused led_error_blink(u32 nb_blink)
 		hang();
 }
 
-static int adc_measurement(ofnode node, int adc_count, int *min_uV, int *max_uV)
+static int board_check_usb_power(void)
 {
 	struct ofnode_phandle_args adc_args;
 	struct udevice *adc;
-	unsigned int raw;
-	int ret, uV;
-	int i;
-
-	for (i = 0; i < adc_count; i++) {
-		if (ofnode_parse_phandle_with_args(node, "st,adc_usb_pd",
-						   "#io-channel-cells", 0, i,
-						   &adc_args)) {
-			log_debug("can't find /config/st,adc_usb_pd\n");
-			return 0;
-		}
-
-		ret = uclass_get_device_by_ofnode(UCLASS_ADC, adc_args.node,
-						  &adc);
-
-		if (ret) {
-			log_err("Can't get adc device(%d)\n", ret);
-			return ret;
-		}
-
-		ret = adc_channel_single_shot(adc->name, adc_args.args[0],
-					      &raw);
-		if (ret) {
-			log_err("single shot failed for %s[%d]!\n",
-				adc->name, adc_args.args[0]);
-			return ret;
-		}
-		/* Convert to uV */
-		if (!adc_raw_to_uV(adc, raw, &uV)) {
-			if (uV > *max_uV)
-				*max_uV = uV;
-			if (uV < *min_uV)
-				*min_uV = uV;
-			log_debug("%s[%02d] = %u, %d uV\n",
-				  adc->name, adc_args.args[0], raw, uV);
-		} else {
-			log_err("Can't get uV value for %s[%d]\n",
-				adc->name, adc_args.args[0]);
-		}
-	}
-
-	return 0;
-}
-
-static int board_check_usb_power(void)
-{
 	ofnode node;
+	unsigned int raw;
 	int max_uV = 0;
 	int min_uV = USB_START_HIGH_THRESHOLD_UV;
-	int adc_count, ret;
+	int ret, uV, adc_count;
 	u32 nb_blink;
 	u8 i;
 
+	if (!IS_ENABLED(CONFIG_ADC))
+		return -ENODEV;
+
 	node = ofnode_path("/config");
 	if (!ofnode_valid(node)) {
-		log_debug("no /config node?\n");
+		debug("%s: no /config node?\n", __func__);
 		return -ENOENT;
 	}
 
@@ -363,38 +319,63 @@ static int board_check_usb_power(void)
 		if (adc_count == -ENOENT)
 			return 0;
 
-		log_err("Can't find adc channel (%d)\n", adc_count);
+		pr_err("%s: can't find adc channel (%d)\n", __func__,
+		       adc_count);
 
 		return adc_count;
 	}
 
-	/* perform maximum of 2 ADC measurements to detect power supply current */
-	for (i = 0; i < 2; i++) {
-		if (IS_ENABLED(CONFIG_ADC))
-			ret = adc_measurement(node, adc_count, &min_uV, &max_uV);
-		else
-			ret = -ENODEV;
-
-		if (ret)
-			return ret;
-
-		/*
-		 * If highest value is inside 1.23 Volts and 2.10 Volts, that means
-		 * board is plugged on an USB-C 3A power supply and boot process can
-		 * continue.
-		 */
-		if (max_uV > USB_START_LOW_THRESHOLD_UV &&
-		    max_uV <= USB_START_HIGH_THRESHOLD_UV &&
-		    min_uV <= USB_LOW_THRESHOLD_UV)
+	for (i = 0; i < adc_count; i++) {
+		if (ofnode_parse_phandle_with_args(node, "st,adc_usb_pd",
+						   "#io-channel-cells", 0, i,
+						   &adc_args)) {
+			pr_debug("%s: can't find /config/st,adc_usb_pd\n",
+				 __func__);
 			return 0;
+		}
 
-		if (i == 0) {
-			log_err("Previous ADC measurements was not the one expected, retry in 20ms\n");
-			mdelay(20);  /* equal to max tPDDebounce duration (min 10ms - max 20ms) */
+		ret = uclass_get_device_by_ofnode(UCLASS_ADC, adc_args.node,
+						  &adc);
+
+		if (ret) {
+			pr_err("%s: Can't get adc device(%d)\n", __func__,
+			       ret);
+			return ret;
+		}
+
+		ret = adc_channel_single_shot(adc->name, adc_args.args[0],
+					      &raw);
+		if (ret) {
+			pr_err("%s: single shot failed for %s[%d]!\n",
+			       __func__, adc->name, adc_args.args[0]);
+			return ret;
+		}
+		/* Convert to uV */
+		if (!adc_raw_to_uV(adc, raw, &uV)) {
+			if (uV > max_uV)
+				max_uV = uV;
+			if (uV < min_uV)
+				min_uV = uV;
+			pr_debug("%s: %s[%02d] = %u, %d uV\n", __func__,
+				 adc->name, adc_args.args[0], raw, uV);
+		} else {
+			pr_err("%s: Can't get uV value for %s[%d]\n",
+			       __func__, adc->name, adc_args.args[0]);
 		}
 	}
 
-	log_notice("****************************************************\n");
+	/*
+	 * If highest value is inside 1.23 Volts and 2.10 Volts, that means
+	 * board is plugged on an USB-C 3A power supply and boot process can
+	 * continue.
+	 */
+	if (max_uV > USB_START_LOW_THRESHOLD_UV &&
+	    max_uV <= USB_START_HIGH_THRESHOLD_UV &&
+	    min_uV <= USB_LOW_THRESHOLD_UV)
+		return 0;
+
+	pr_err("****************************************************\n");
+
 	/*
 	 * If highest and lowest value are either both below
 	 * USB_LOW_THRESHOLD_UV or both above USB_LOW_THRESHOLD_UV, that
@@ -405,8 +386,8 @@ static int board_check_usb_power(void)
 	     min_uV > USB_LOW_THRESHOLD_UV) ||
 	     (max_uV <= USB_LOW_THRESHOLD_UV &&
 	     min_uV <= USB_LOW_THRESHOLD_UV)) {
-		log_notice("* ERROR USB TYPE-C connection in unattached mode   *\n");
-		log_notice("* Check that USB TYPE-C cable is correctly plugged *\n");
+		pr_err("* ERROR USB TYPE-C connection in unattached mode   *\n");
+		pr_err("* Check that USB TYPE-C cable is correctly plugged *\n");
 		/* with 125ms interval, led will blink for 17.02 years ....*/
 		nb_blink = U32_MAX;
 	}
@@ -414,14 +395,14 @@ static int board_check_usb_power(void)
 	if (max_uV > USB_LOW_THRESHOLD_UV &&
 	    max_uV <= USB_WARNING_LOW_THRESHOLD_UV &&
 	    min_uV <= USB_LOW_THRESHOLD_UV) {
-		log_notice("*        WARNING 500mA power supply detected       *\n");
+		pr_err("*        WARNING 500mA power supply detected       *\n");
 		nb_blink = 2;
 	}
 
 	if (max_uV > USB_WARNING_LOW_THRESHOLD_UV &&
 	    max_uV <= USB_START_LOW_THRESHOLD_UV &&
 	    min_uV <= USB_LOW_THRESHOLD_UV) {
-		log_notice("*       WARNING 1.5A power supply detected        *\n");
+		pr_err("*       WARNING 1.5A power supply detected        *\n");
 		nb_blink = 3;
 	}
 
@@ -430,14 +411,14 @@ static int board_check_usb_power(void)
 	 * supplies more than 3 Amp, this is not compliant with TypeC specification
 	 */
 	if (max_uV > USB_START_HIGH_THRESHOLD_UV) {
-		log_notice("*      USB TYPE-C charger not compliant with       *\n");
-		log_notice("*                   specification                  *\n");
-		log_notice("****************************************************\n\n");
+		pr_err("*      USB TYPE-C charger not compliant with       *\n");
+		pr_err("*                   specification                  *\n");
+		pr_err("****************************************************\n\n");
 		/* with 125ms interval, led will blink for 17.02 years ....*/
 		nb_blink = U32_MAX;
 	} else {
-		log_notice("*     Current too low, use a 3A power supply!      *\n");
-		log_notice("****************************************************\n\n");
+		pr_err("*     Current too low, use a 3A power supply!      *\n");
+		pr_err("****************************************************\n\n");
 	}
 
 	led_error_blink(nb_blink);
@@ -483,14 +464,14 @@ static void sysconf_init(void)
 	 *      but this value need to be consistent with board design
 	 */
 	ret = uclass_get_device_by_driver(UCLASS_PMIC,
-					  DM_DRIVER_GET(stm32mp_pwr_pmic),
+					  DM_GET_DRIVER(stm32mp_pwr_pmic),
 					  &pwr_dev);
 	if (!ret && IS_ENABLED(CONFIG_DM_REGULATOR)) {
 		ret = uclass_get_device_by_driver(UCLASS_MISC,
-						  DM_DRIVER_GET(stm32mp_bsec),
+						  DM_GET_DRIVER(stm32mp_bsec),
 						  &dev);
 		if (ret) {
-			log_err("Can't find stm32mp_bsec driver\n");
+			pr_err("Can't find stm32mp_bsec driver\n");
 			return;
 		}
 
@@ -513,13 +494,13 @@ static void sysconf_init(void)
 				       syscfg + SYSCFG_IOCTRLSETR);
 
 				if (!otp)
-					log_err("product_below_2v5=0: HSLVEN protected by HW\n");
+					pr_err("product_below_2v5=0: HSLVEN protected by HW\n");
 			} else {
 				if (otp)
-					log_err("product_below_2v5=1: HSLVEN update is destructive, no update as VDD>2.7V\n");
+					pr_err("product_below_2v5=1: HSLVEN update is destructive, no update as VDD>2.7V\n");
 			}
 		} else {
-			log_debug("VDD unknown");
+			debug("VDD unknown");
 		}
 	}
 
@@ -533,7 +514,7 @@ static void sysconf_init(void)
 				 val & SYSCFG_CMPCR_READY,
 				 1000000);
 	if (ret) {
-		log_err("SYSCFG: I/O compensation failed, timeout.\n");
+		pr_err("SYSCFG: I/O compensation failed, timeout.\n");
 		led_error_blink(10);
 	}
 
@@ -552,37 +533,39 @@ static int dk2_i2c1_fix(void)
 
 	node = ofnode_path("/soc/i2c@40012000/hdmi-transmitter@39");
 	if (!ofnode_valid(node)) {
-		log_debug("no hdmi-transmitter@39 ?\n");
+		pr_debug("%s: no hdmi-transmitter@39 ?\n", __func__);
 		return -ENOENT;
 	}
 
 	if (gpio_request_by_name_nodev(node, "reset-gpios", 0,
 				       &hdmi, GPIOD_IS_OUT)) {
-		log_debug("could not find reset-gpios\n");
+		pr_debug("%s: could not find reset-gpios\n",
+			 __func__);
 		return -ENOENT;
 	}
 
 	node = ofnode_path("/soc/i2c@40012000/cs42l51@4a");
 	if (!ofnode_valid(node)) {
-		log_debug("no cs42l51@4a ?\n");
+		pr_debug("%s: no cs42l51@4a ?\n", __func__);
 		return -ENOENT;
 	}
 
 	if (gpio_request_by_name_nodev(node, "reset-gpios", 0,
 				       &audio, GPIOD_IS_OUT)) {
-		log_debug("could not find reset-gpios\n");
+		pr_debug("%s: could not find reset-gpios\n",
+			 __func__);
 		return -ENOENT;
 	}
 
 	/* before power up, insure that HDMI and AUDIO IC is under reset */
 	ret = dm_gpio_set_value(&hdmi, 1);
 	if (ret) {
-		log_err("can't set_value for hdmi_nrst gpio");
+		pr_err("%s: can't set_value for hdmi_nrst gpio", __func__);
 		goto error;
 	}
 	ret = dm_gpio_set_value(&audio, 1);
 	if (ret) {
-		log_err("can't set_value for audio_nrst gpio");
+		pr_err("%s: can't set_value for audio_nrst gpio", __func__);
 		goto error;
 	}
 
@@ -635,7 +618,7 @@ static void board_ev1_init(void)
 	struct udevice *dev;
 
 	/* configure IRQ line on EV1 for touchscreen before LCD reset */
-	uclass_get_device_by_driver(UCLASS_NOP, DM_DRIVER_GET(goodix), &dev);
+	uclass_get_device_by_driver(UCLASS_NOP, DM_GET_DRIVER(goodix), &dev);
 }
 
 /* board dependent setup after realloc */
@@ -697,7 +680,7 @@ int board_late_init(void)
 			}
 		}
 		ret = uclass_get_device_by_driver(UCLASS_MISC,
-						  DM_DRIVER_GET(stm32mp_bsec),
+						  DM_GET_DRIVER(stm32mp_bsec),
 						  &dev);
 
 		if (!ret)
@@ -749,7 +732,7 @@ int board_interface_eth_init(struct udevice *dev,
 	case PHY_INTERFACE_MODE_MII:
 		value = SYSCFG_PMCSETR_ETH_SEL_GMII_MII |
 			SYSCFG_PMCSETR_ETH_REF_CLK_SEL;
-		log_debug("PHY_INTERFACE_MODE_MII\n");
+		debug("%s: PHY_INTERFACE_MODE_MII\n", __func__);
 		break;
 	case PHY_INTERFACE_MODE_GMII:
 		if (eth_clk_sel_reg)
@@ -757,7 +740,7 @@ int board_interface_eth_init(struct udevice *dev,
 				SYSCFG_PMCSETR_ETH_CLK_SEL;
 		else
 			value = SYSCFG_PMCSETR_ETH_SEL_GMII_MII;
-		log_debug("PHY_INTERFACE_MODE_GMII\n");
+		debug("%s: PHY_INTERFACE_MODE_GMII\n", __func__);
 		break;
 	case PHY_INTERFACE_MODE_RMII:
 		if (eth_ref_clk_sel_reg)
@@ -765,7 +748,7 @@ int board_interface_eth_init(struct udevice *dev,
 				SYSCFG_PMCSETR_ETH_REF_CLK_SEL;
 		else
 			value = SYSCFG_PMCSETR_ETH_SEL_RMII;
-		log_debug("PHY_INTERFACE_MODE_RMII\n");
+		debug("%s: PHY_INTERFACE_MODE_RMII\n", __func__);
 		break;
 	case PHY_INTERFACE_MODE_RGMII:
 	case PHY_INTERFACE_MODE_RGMII_ID:
@@ -776,11 +759,11 @@ int board_interface_eth_init(struct udevice *dev,
 				SYSCFG_PMCSETR_ETH_CLK_SEL;
 		else
 			value = SYSCFG_PMCSETR_ETH_SEL_RGMII;
-		log_debug("PHY_INTERFACE_MODE_RGMII\n");
+		debug("%s: PHY_INTERFACE_MODE_RGMII\n", __func__);
 		break;
 	default:
-		log_debug("Do not manage %d interface\n",
-			  interface_type);
+		debug("%s: Do not manage %d interface\n",
+		      __func__, interface_type);
 		/* Do not manage others interfaces */
 		return -EINVAL;
 	}
@@ -862,14 +845,8 @@ const char *env_ext4_get_dev_part(void)
 
 int mmc_get_env_dev(void)
 {
-	u32 bootmode;
+	u32 bootmode = get_bootmode();
 
-	if (CONFIG_SYS_MMC_ENV_DEV >= 0)
-		return CONFIG_SYS_MMC_ENV_DEV;
-
-	bootmode = get_bootmode();
-
-	/* use boot instance to select the correct mmc device identifier */
 	return (bootmode & TAMP_BOOT_INSTANCE_MASK) - 1;
 }
 
@@ -901,14 +878,14 @@ static void board_copro_image_process(ulong fw_image, size_t fw_size)
 
 	if (!rproc_is_initialized())
 		if (rproc_init()) {
-			log_err("Remote Processor %d initialization failed\n",
-				id);
+			printf("Remote Processor %d initialization failed\n",
+			       id);
 			return;
 		}
 
 	ret = rproc_load(id, fw_image, fw_size);
-	log_err("Load Remote Processor %d with data@addr=0x%08lx %u bytes:%s\n",
-		id, fw_image, fw_size, ret ? " Failed!" : " Success!");
+	printf("Load Remote Processor %d with data@addr=0x%08lx %u bytes:%s\n",
+	       id, fw_image, fw_size, ret ? " Failed!" : " Success!");
 
 	if (!ret)
 		rproc_start(id);

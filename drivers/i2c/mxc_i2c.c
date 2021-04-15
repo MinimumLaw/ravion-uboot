@@ -18,7 +18,6 @@
 #include <log.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
-#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -394,7 +393,7 @@ static struct mxc_i2c_bus mxc_i2c_buses[] = {
 #endif
 };
 
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 int i2c_idle_bus(struct mxc_i2c_bus *i2c_bus)
 {
 	if (i2c_bus && i2c_bus->idle_bus_fn)
@@ -646,7 +645,7 @@ int __enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 int enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 	__attribute__((weak, alias("__enable_i2c_clk")));
 
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 /*
  * Read data from I2C device
  *
@@ -915,7 +914,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 	}
 
 	i2c_bus->base = addr;
-	i2c_bus->index = dev_seq(bus);
+	i2c_bus->index = bus->seq;
 	i2c_bus->bus = bus;
 
 	/* Enable clk */
@@ -931,7 +930,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 		return ret;
 	}
 #else
-	ret = enable_i2c_clk(1, dev_seq(bus));
+	ret = enable_i2c_clk(1, bus->seq);
 	if (ret < 0)
 		return ret;
 #endif
@@ -943,7 +942,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 	ret = fdt_stringlist_search(fdt, node, "pinctrl-names", "gpio");
 	if (ret < 0) {
 		debug("i2c bus %d at 0x%2lx, no gpio pinctrl state.\n",
-		      dev_seq(bus), i2c_bus->base);
+		      bus->seq, i2c_bus->base);
 	} else {
 		ret = gpio_request_by_name_nodev(offset_to_ofnode(node),
 				"scl-gpios", 0, &i2c_bus->scl_gpio,
@@ -956,7 +955,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 		    ret || ret2) {
 			dev_err(bus,
 				"i2c bus %d at 0x%2lx, fail to request scl/sda gpio\n",
-				dev_seq(bus), i2c_bus->base);
+				bus->seq, i2c_bus->base);
 			return -EINVAL;
 		}
 	}
@@ -967,7 +966,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 	 */
 
 	debug("i2c : controller bus %d at %lu , speed %d: ",
-	      dev_seq(bus), i2c_bus->base,
+	      bus->seq, i2c_bus->base,
 	      i2c_bus->speed);
 
 	return 0;
@@ -1073,7 +1072,7 @@ U_BOOT_DRIVER(i2c_mxc) = {
 	.id = UCLASS_I2C,
 	.of_match = mxc_i2c_ids,
 	.probe = mxc_i2c_probe,
-	.priv_auto	= sizeof(struct mxc_i2c_bus),
+	.priv_auto_alloc_size = sizeof(struct mxc_i2c_bus),
 	.ops = &mxc_i2c_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };

@@ -1,13 +1,9 @@
 // SPDX-License-Identifier:     GPL-2.0+
 /*
- * EFI Human Interface Infrastructure ... Configuration
+ *  EFI Human Interface Infrastructure ... Configuration
  *
- * Copyright (c) 2017 Leif Lindholm
- * Copyright (c) 2018 AKASHI Takahiro, Linaro Limited
- *
- * As this is still a non-working stub and the protocol is neither required
- * by the EFI shell nor by the UEFI SCT this module has been removed from
- * the Makefile.
+ *  Copyright (c) 2017 Leif Lindholm
+ *  Copyright (c) 2018 AKASHI Takahiro, Linaro Limited
  */
 
 #include <common.h>

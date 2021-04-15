@@ -10,8 +10,6 @@
 #include <tpm-common.h>
 #include <linux/bitops.h>
 
-struct udevice;
-
 /* Useful constants */
 enum {
 	TPM_REQUEST_HEADER_LENGTH	= 10,

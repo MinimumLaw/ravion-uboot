@@ -14,17 +14,16 @@
 int ofnode_read_fmap_entry(ofnode node, struct fmap_entry *entry)
 {
 	const char *prop;
-	ofnode subnode;
 
 	if (ofnode_read_u32(node, "image-pos", &entry->offset)) {
 		debug("Node '%s' has bad/missing 'image-pos' property\n",
 		      ofnode_get_name(node));
-		return log_msg_ret("image-pos", -ENOENT);
+		return log_ret(-ENOENT);
 	}
 	if (ofnode_read_u32(node, "size", &entry->length)) {
 		debug("Node '%s' has bad/missing 'size' property\n",
 		      ofnode_get_name(node));
-		return log_msg_ret("size", -ENOENT);
+		return log_ret(-ENOENT);
 	}
 	entry->used = ofnode_read_s32_default(node, "used", entry->length);
 	prop = ofnode_read_string(node, "compress");
@@ -32,20 +31,18 @@ int ofnode_read_fmap_entry(ofnode node, struct fmap_entry *entry)
 		if (!strcmp(prop, "lz4"))
 			entry->compress_algo = FMAP_COMPRESS_LZ4;
 		else
-			return log_msg_ret("compression algo", -EINVAL);
+			return log_msg_ret("Unknown compression algo",
+					   -EINVAL);
 	} else {
 		entry->compress_algo = FMAP_COMPRESS_NONE;
 	}
 	entry->unc_length = ofnode_read_s32_default(node, "uncomp-size",
 						    entry->length);
-	subnode = ofnode_find_subnode(node, "hash");
-	if (ofnode_valid(subnode)) {
-		prop = ofnode_read_prop(subnode, "value", &entry->hash_size);
-
-		/* Assume it is sha256 */
-		entry->hash_algo = prop ? FMAP_HASH_SHA256 : FMAP_HASH_NONE;
-		entry->hash = (uint8_t *)prop;
-	}
+	prop = ofnode_read_string(node, "hash");
+	if (prop)
+		entry->hash_size = strlen(prop);
+	entry->hash_algo = prop ? FMAP_HASH_SHA256 : FMAP_HASH_NONE;
+	entry->hash = (uint8_t *)prop;
 
 	return 0;
 }

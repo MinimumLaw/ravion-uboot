@@ -434,7 +434,8 @@ class Entry(object):
                 missing.append(prop.name)
             values.append(value)
         if missing:
-            self.GetImage().MissingArgs(self, missing)
+            self.Raise('Missing required properties/entry args: %s' %
+                       (', '.join(missing)))
         return values
 
     def GetPath(self):

@@ -7,7 +7,6 @@
 #include <common.h>
 #include <asm/arch/fsl_serdes.h>
 #include <pci.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <malloc.h>
@@ -131,13 +130,13 @@ static int ls_pcie_addr_valid(struct ls_pcie_rc *pcie_rc, pci_dev_t bdf)
 	if (!pcie_rc->enabled)
 		return -ENXIO;
 
-	if (PCI_BUS(bdf) < dev_seq(bus))
+	if (PCI_BUS(bdf) < bus->seq)
 		return -EINVAL;
 
-	if ((PCI_BUS(bdf) > dev_seq(bus)) && (!ls_pcie_link_up(pcie)))
+	if ((PCI_BUS(bdf) > bus->seq) && (!ls_pcie_link_up(pcie)))
 		return -EINVAL;
 
-	if (PCI_BUS(bdf) <= (dev_seq(bus) + 1) && (PCI_DEV(bdf) > 0))
+	if (PCI_BUS(bdf) <= (bus->seq + 1) && (PCI_DEV(bdf) > 0))
 		return -EINVAL;
 
 	return 0;
@@ -153,16 +152,16 @@ int ls_pcie_conf_address(const struct udevice *bus, pci_dev_t bdf,
 	if (ls_pcie_addr_valid(pcie_rc, bdf))
 		return -EINVAL;
 
-	if (PCI_BUS(bdf) == dev_seq(bus)) {
+	if (PCI_BUS(bdf) == bus->seq) {
 		*paddress = pcie->dbi + offset;
 		return 0;
 	}
 
-	busdev = PCIE_ATU_BUS(PCI_BUS(bdf) - dev_seq(bus)) |
+	busdev = PCIE_ATU_BUS(PCI_BUS(bdf) - bus->seq) |
 		 PCIE_ATU_DEV(PCI_DEV(bdf)) |
 		 PCIE_ATU_FUNC(PCI_FUNC(bdf));
 
-	if (PCI_BUS(bdf) == dev_seq(bus) + 1) {
+	if (PCI_BUS(bdf) == bus->seq + 1) {
 		ls_pcie_cfg0_set_busdev(pcie_rc, busdev);
 		*paddress = pcie_rc->cfg0 + offset;
 	} else {
@@ -254,7 +253,7 @@ static int ls_pcie_probe(struct udevice *dev)
 
 	pcie_rc->bus = dev;
 
-	pcie = devm_kzalloc(dev, sizeof(*pcie), GFP_KERNEL);
+	pcie = devm_kmalloc(dev, sizeof(*pcie), GFP_KERNEL);
 	if (!pcie)
 		return -ENOMEM;
 
@@ -384,5 +383,5 @@ U_BOOT_DRIVER(pci_layerscape) = {
 	.of_match = ls_pcie_ids,
 	.ops = &ls_pcie_ops,
 	.probe	= ls_pcie_probe,
-	.priv_auto	= sizeof(struct ls_pcie_rc),
+	.priv_auto_alloc_size = sizeof(struct ls_pcie_rc),
 };

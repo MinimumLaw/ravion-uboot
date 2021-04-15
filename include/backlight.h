@@ -7,8 +7,6 @@
 #ifndef _BACKLIGHT_H
 #define _BACKLIGHT_H
 
-struct udevice;
-
 enum {
 	BACKLIGHT_MAX		= 100,
 	BACKLIGHT_MIN		= 0,

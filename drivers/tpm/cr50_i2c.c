@@ -183,31 +183,23 @@ static int cr50_i2c_write(struct udevice *dev, u8 addr, const u8 *buffer,
 	return cr50_i2c_wait_tpm_ready(dev);
 }
 
-static inline u8 tpm_access(int locality)
+static inline u8 tpm_access(u8 locality)
 {
-	if (locality == -1)
-		locality = 0;
 	return 0x0 | (locality << 4);
 }
 
-static inline u8 tpm_sts(int locality)
+static inline u8 tpm_sts(u8 locality)
 {
-	if (locality == -1)
-		locality = 0;
 	return 0x1 | (locality << 4);
 }
 
-static inline u8 tpm_data_fifo(int locality)
+static inline u8 tpm_data_fifo(u8 locality)
 {
-	if (locality == -1)
-		locality = 0;
 	return 0x5 | (locality << 4);
 }
 
-static inline u8 tpm_did_vid(int locality)
+static inline u8 tpm_did_vid(u8 locality)
 {
-	if (locality == -1)
-		locality = 0;
 	return 0x6 | (locality << 4);
 }
 
@@ -380,6 +372,7 @@ out_err:
 static int cr50_i2c_send(struct udevice *dev, const u8 *buf, size_t len)
 {
 	struct cr50_priv *priv = dev_get_priv(dev);
+
 	int status;
 	size_t burstcnt, limit, sent = 0;
 	u8 tpm_go[4] = { TPM_STS_GO };
@@ -554,25 +547,11 @@ static int claim_locality(struct udevice *dev, int loc)
 
 static int cr50_i2c_get_desc(struct udevice *dev, char *buf, int size)
 {
-	struct dm_i2c_chip *chip = dev_get_parent_plat(dev);
+	struct dm_i2c_chip *chip = dev_get_parent_platdata(dev);
 	struct cr50_priv *priv = dev_get_priv(dev);
-	int len;
 
-	len = snprintf(buf, size, "cr50 TPM 2.0 (i2c %02x id %x), ",
-		       chip->chip_addr, priv->vendor >> 16);
-	if (priv->use_irq) {
-		len += snprintf(buf + len, size - len, "irq=%s/%ld",
-				priv->irq.dev->name, priv->irq.id);
-	} else if (dm_gpio_is_valid(&priv->ready_gpio)) {
-		len += snprintf(buf + len, size - len, "gpio=%s/%u",
-				priv->ready_gpio.dev->name,
-				priv->ready_gpio.offset);
-	} else {
-		len += snprintf(buf + len, size - len, "delay=%d",
-				TIMEOUT_NO_IRQ_US);
-	}
-
-	return len;
+	return snprintf(buf, size, "cr50 TPM 2.0 (i2c %02x id %x) irq=%d",
+			chip->chip_addr, priv->vendor >> 16, priv->use_irq);
 }
 
 static int cr50_i2c_open(struct udevice *dev)
@@ -658,7 +637,7 @@ enum {
 	LONG_TIMEOUT_MS		= 2000,
 };
 
-static int cr50_i2c_of_to_plat(struct udevice *dev)
+static int cr50_i2c_ofdata_to_platdata(struct udevice *dev)
 {
 	struct tpm_chip_priv *upriv = dev_get_uclass_priv(dev);
 	struct cr50_priv *priv = dev_get_priv(dev);
@@ -715,12 +694,11 @@ static int cr50_i2c_probe(struct udevice *dev)
 		mdelay(10);
 	}
 	if (vendor != CR50_DID_VID) {
-		log_warning("DID_VID %08x not recognised\n", vendor);
+		log_debug("DID_VID %08x not recognised\n", vendor);
 		return log_msg_ret("vendor-id", -EXDEV);
 	}
 	priv->vendor = vendor;
 	priv->locality = -1;
-	log_debug("Cr50 ready\n");
 
 	return 0;
 }
@@ -742,15 +720,15 @@ static const struct udevice_id cr50_i2c_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(google_cr50) = {
-	.name   = "google_cr50",
+U_BOOT_DRIVER(cr50_i2c) = {
+	.name   = "cr50_i2c",
 	.id     = UCLASS_TPM,
 	.of_match = cr50_i2c_ids,
 	.ops    = &cr50_i2c_ops,
-	.of_to_plat	= cr50_i2c_of_to_plat,
+	.ofdata_to_platdata	= cr50_i2c_ofdata_to_platdata,
 	.probe	= cr50_i2c_probe,
 	.remove	= cr50_i2c_cleanup,
-	.priv_auto	= sizeof(struct cr50_priv),
+	.priv_auto_alloc_size = sizeof(struct cr50_priv),
 	ACPI_OPS_PTR(&cr50_acpi_ops)
 	.flags		= DM_FLAG_OS_PREPARE,
 };

@@ -67,7 +67,7 @@ void putc(const char ch)
 		putc('\r');
 
 	if (use_uart) {
-		struct ns16550 *com_port = (struct ns16550 *)0x3f8;
+		NS16550_t com_port = (NS16550_t)0x3f8;
 
 		while ((inb((ulong)&com_port->lsr) & UART_LSR_THRE) == 0)
 			;

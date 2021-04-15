@@ -9,7 +9,6 @@
 #include <common.h>
 #include <hang.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <jffs2/jffs2.h>
 #include <nand.h>
 #include <netdev.h>

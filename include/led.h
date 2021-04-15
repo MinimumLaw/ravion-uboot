@@ -7,8 +7,6 @@
 #ifndef __LED_H
 #define __LED_H
 
-struct udevice;
-
 /**
  * struct led_uc_plat - Platform data the uclass stores about each device
  *

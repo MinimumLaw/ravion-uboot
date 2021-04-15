@@ -8,7 +8,6 @@
 #include <init.h>
 #include <log.h>
 #include <usb.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/dwmmc.h>
@@ -73,6 +72,19 @@ int dram_init_banksize(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_MMC
+int board_mmc_init(struct bd_info *bis)
+{
+	int ret;
+	/* dwmmc initializattion for available channels */
+	ret = exynos_dwmmc_init(gd->fdt_blob);
+	if (ret)
+		debug("dwmmc init failed\n");
+
+	return ret;
+}
+#endif
 
 static int board_uart_init(void)
 {

@@ -5,7 +5,6 @@
 
 #include <dm.h>
 #include <i2c_eeprom.h>
-#include <asm/global_data.h>
 #include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;

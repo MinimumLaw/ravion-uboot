@@ -10,7 +10,6 @@
 #include <log.h>
 #include <ram.h>
 #include <asm/bitops.h>
-#include <asm/global_data.h>
 #include <dt-bindings/memory/mpc83xx-sdram.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -306,7 +305,7 @@ static int mpc83xx_sdram_spd_init(ofnode node, u32 cs, u32 mapaddr, u32 size)
 	return 0;
 }
 
-static int mpc83xx_sdram_of_to_plat(struct udevice *dev)
+static int mpc83xx_sdram_ofdata_to_platdata(struct udevice *dev)
 {
 	return 0;
 }
@@ -1094,7 +1093,7 @@ U_BOOT_DRIVER(mpc83xx_sdram) = {
 	.id = UCLASS_RAM,
 	.of_match = mpc83xx_sdram_ids,
 	.ops = &mpc83xx_sdram_ops,
-	.of_to_plat = mpc83xx_sdram_of_to_plat,
+	.ofdata_to_platdata = mpc83xx_sdram_ofdata_to_platdata,
 	.probe = mpc83xx_sdram_probe,
-	.priv_auto	= sizeof(struct mpc83xx_sdram_priv),
+	.priv_auto_alloc_size = sizeof(struct mpc83xx_sdram_priv),
 };

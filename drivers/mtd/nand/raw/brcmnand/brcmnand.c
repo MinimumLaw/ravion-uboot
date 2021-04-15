@@ -2526,7 +2526,10 @@ int brcmnand_probe(struct udevice *dev, struct brcmnand_soc *soc)
 		if (ret)
 			return ret;
 	} else {
-		/* Ignore PTR_ERR(ctrl->clk) */
+		ret = PTR_ERR(ctrl->clk);
+		if (ret == -EPROBE_DEFER)
+			return ret;
+
 		ctrl->clk = NULL;
 	}
 

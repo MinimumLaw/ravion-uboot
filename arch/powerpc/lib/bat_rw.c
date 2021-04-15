@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/mmu.h>
 #include <asm/io.h>

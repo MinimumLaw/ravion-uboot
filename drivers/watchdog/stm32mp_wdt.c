@@ -3,8 +3,6 @@
  * Copyright (C) 2019, STMicroelectronics - All Rights Reserved
  */
 
-#define LOG_CATEGORY UCLASS_WDT
-
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -12,7 +10,6 @@
 #include <syscon.h>
 #include <wdt.h>
 #include <asm/io.h>
-#include <dm/device_compat.h>
 #include <linux/bitops.h>
 #include <linux/iopoll.h>
 
@@ -80,7 +77,7 @@ static int stm32mp_wdt_start(struct udevice *dev, u64 timeout_ms, ulong flags)
 				 val & (SR_PVU | SR_RVU), CONFIG_SYS_HZ);
 
 	if (ret < 0) {
-		dev_err(dev, "Updating IWDG registers timeout");
+		pr_err("Updating IWDG registers timeout");
 		return -ETIMEDOUT;
 	}
 
@@ -93,7 +90,7 @@ static int stm32mp_wdt_probe(struct udevice *dev)
 	struct clk clk;
 	int ret;
 
-	dev_dbg(dev, "IWDG init\n");
+	debug("IWDG init\n");
 
 	priv->base = dev_read_addr(dev);
 	if (priv->base == FDT_ADDR_T_NONE)
@@ -115,7 +112,7 @@ static int stm32mp_wdt_probe(struct udevice *dev)
 
 	priv->wdt_clk_rate = clk_get_rate(&clk);
 
-	dev_dbg(dev, "IWDG init done\n");
+	debug("IWDG init done\n");
 
 	return 0;
 }
@@ -134,7 +131,7 @@ U_BOOT_DRIVER(stm32mp_wdt) = {
 	.name = "stm32mp-wdt",
 	.id = UCLASS_WDT,
 	.of_match = stm32mp_wdt_match,
-	.priv_auto	= sizeof(struct stm32mp_wdt_priv),
+	.priv_auto_alloc_size = sizeof(struct stm32mp_wdt_priv),
 	.probe = stm32mp_wdt_probe,
 	.ops = &stm32mp_wdt_ops,
 };

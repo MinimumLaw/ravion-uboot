@@ -9,7 +9,6 @@
 #include <led.h>
 #include <log.h>
 #include <syscon.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch-rockchip/bootrom.h>
 #include <asm/arch-rockchip/clock.h>

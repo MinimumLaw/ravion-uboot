@@ -12,7 +12,6 @@
 #include <regmap.h>
 #include <video.h>
 #include <asm/arch-rockchip/hardware.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include "rk_vop.h"
 
@@ -100,5 +99,5 @@ U_BOOT_DRIVER(rk3399_vop) = {
 	.ops	= &rk3399_vop_ops,
 	.bind	= rk_vop_bind,
 	.probe	= rk3399_vop_probe,
-	.priv_auto	= sizeof(struct rk_vop_priv),
+	.priv_auto_alloc_size	= sizeof(struct rk_vop_priv),
 };

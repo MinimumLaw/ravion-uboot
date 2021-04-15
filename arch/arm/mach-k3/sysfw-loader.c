@@ -14,7 +14,6 @@
 #include <malloc.h>
 #include <remoteproc.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
 #include <g_dnl.h>
 #include <usb.h>
@@ -224,7 +223,7 @@ static void *k3_sysfw_get_spi_addr(void)
 	int ret;
 
 	ret = uclass_find_device_by_seq(UCLASS_SPI, CONFIG_SF_DEFAULT_BUS,
-					&dev);
+					true, &dev);
 	if (ret)
 		return NULL;
 

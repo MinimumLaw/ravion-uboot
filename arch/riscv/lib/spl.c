@@ -9,7 +9,6 @@
 #include <init.h>
 #include <log.h>
 #include <spl.h>
-#include <asm/global_data.h>
 #include <asm/smp.h>
 
 DECLARE_GLOBAL_DATA_PTR;

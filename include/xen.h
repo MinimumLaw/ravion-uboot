@@ -11,7 +11,7 @@
  * Map Xen memory pages, initialize event handler and xenbus,
  * setup the grant table.
  */
-int xen_init(void);
+void xen_init(void);
 
 /**
  * xen_fini() - Board cleanup before Linux kernel start

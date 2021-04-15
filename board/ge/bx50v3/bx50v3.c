@@ -12,7 +12,6 @@
 #include <asm/arch/iomux.h>
 #include <asm/arch/mx6-pins.h>
 #include <env.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/libfdt.h>

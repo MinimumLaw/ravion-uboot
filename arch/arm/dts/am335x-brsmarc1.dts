@@ -59,6 +59,7 @@
 		/*backlight = <&tps_bl>; */
 		compatible = "ti,tilcdc,panel";
 		status = "okay";
+		u-boot,dm-pre-reloc;
 
 		panel-info {
 			ac-bias		= <255>;
@@ -297,21 +298,10 @@
 	status = "okay";
 };
 
-&l4_per {
-
-	segment@300000 {
-
-		target-module@e000 {
-			u-boot,dm-pre-reloc;
-
-			lcdc: lcdc@0 {
-				u-boot,dm-pre-reloc;
-				status = "okay";
-				ti,no-reset-on-init;
-				ti,no-idle-on-init;
-			};
-		};
-	};
+&lcdc {
+	status = "okay";
+	ti,no-reset-on-init;
+	ti,no-idle-on-init;
 };
 
 &elm {

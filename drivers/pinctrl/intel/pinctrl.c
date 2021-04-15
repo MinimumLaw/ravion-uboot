@@ -143,7 +143,7 @@ static int pinctrl_get_device(uint pad, struct udevice **devp)
 
 	/*
 	 * We have to probe each one of these since the community link is only
-	 * attached in intel_pinctrl_of_to_plat().
+	 * attached in intel_pinctrl_ofdata_to_platdata().
 	 */
 	uclass_foreach_dev_probe(UCLASS_PINCTRL, dev) {
 		struct intel_pinctrl_priv *priv = dev_get_priv(dev);
@@ -274,9 +274,7 @@ static int pinctrl_configure_itss(struct udevice *dev,
 	irq = pcr_read32(dev, PAD_CFG1_OFFSET(pad_cfg_offset));
 	irq &= PAD_CFG1_IRQ_MASK;
 	if (!irq) {
-		if (spl_phase() > PHASE_TPL)
-			log_err("GPIO %u doesn't support APIC routing\n",
-				cfg->pad);
+		log_err("GPIO %u doesn't support APIC routing\n", cfg->pad);
 
 		return -EPROTONOSUPPORT;
 	}
@@ -316,8 +314,7 @@ static int pinctrl_pad_reset_config_override(const struct pad_community *comm,
 			return config_value;
 		}
 	}
-	if (spl_phase() > PHASE_TPL)
-		log_err("Logical-to-Chipset mapping not found\n");
+	log_err("Logical-to-Chipset mapping not found\n");
 
 	return -ENOENT;
 }
@@ -616,16 +613,15 @@ int pinctrl_config_pads_for_node(struct udevice *dev, ofnode node)
 	return 0;
 }
 
-int intel_pinctrl_of_to_plat(struct udevice *dev,
-			     const struct pad_community *comm, int num_cfgs)
+int intel_pinctrl_ofdata_to_platdata(struct udevice *dev,
+				     const struct pad_community *comm,
+				     int num_cfgs)
 {
-	struct p2sb_child_plat *pplat = dev_get_parent_plat(dev);
+	struct p2sb_child_platdata *pplat = dev_get_parent_platdata(dev);
 	struct intel_pinctrl_priv *priv = dev_get_priv(dev);
 
 	if (!comm) {
-		if (spl_phase() > PHASE_TPL)
-			log_err("Cannot find community for pid %d\n",
-				pplat->pid);
+		log_err("Cannot find community for pid %d\n", pplat->pid);
 		return -EDOM;
 	}
 	priv->comm = comm;

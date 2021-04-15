@@ -8,7 +8,6 @@
 #include <image.h>
 #include <log.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/system.h>
 #include <asm/arch/mp.h>

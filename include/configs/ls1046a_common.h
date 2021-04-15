@@ -16,6 +16,7 @@
 #define SPL_NO_QSPI
 #define SPL_NO_USB
 #define SPL_NO_SATA
+#undef CONFIG_DM_I2C
 #endif
 #if defined(CONFIG_SPL_BUILD) && \
 	(defined(CONFIG_NAND_BOOT) || defined(CONFIG_QSPI_BOOT))
@@ -125,15 +126,8 @@
 #define CONFIG_SYS_MONITOR_LEN		0xa0000
 #endif
 
-/* GPIO */
-#ifdef CONFIG_DM_GPIO
-#ifndef CONFIG_MPC8XXX_GPIO
-#define CONFIG_MPC8XXX_GPIO
-#endif
-#endif
-
 /* I2C */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */

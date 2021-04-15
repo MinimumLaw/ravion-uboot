@@ -20,7 +20,6 @@
 /kwboot
 /lib/
 /mips-relocs
-/mkeficapsule
 /mkenvimage
 /mkexynosspl
 /mkimage

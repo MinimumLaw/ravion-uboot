@@ -9,7 +9,6 @@
 #include <errno.h>
 #include <fsl_ddr.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <hwconfig.h>
 #include <fdt_support.h>
@@ -92,7 +91,7 @@ int board_init(void)
 #if defined(CONFIG_TARGET_LS1028ARDB)
 	u8 val = I2C_MUX_CH_DEFAULT;
 
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_MUX_PCA_ADDR_PRI, 0x0b, 1, &val, 1);
 #else
 	struct udevice *dev;

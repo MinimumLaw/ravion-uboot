@@ -10,7 +10,6 @@
 #include <i2c.h>
 #include <ram.h>
 #include <time.h>
-#include <asm/global_data.h>
 
 #include <asm/sections.h>
 #include <linux/io.h>
@@ -2725,5 +2724,5 @@ U_BOOT_DRIVER(octeon_ddr) = {
 	.of_match = octeon_ids,
 	.ops = &octeon_ops,
 	.probe = octeon_ddr_probe,
-	.plat_auto = sizeof(struct ddr_priv),
+	.priv_auto_alloc_size = sizeof(struct ddr_priv),
 };

@@ -29,7 +29,6 @@
 #include <log.h>
 #include <spi.h>
 #include <spi-mem.h>
-#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
@@ -260,6 +259,14 @@ static const struct fsl_qspi_devtype_data ls1021a_data = {
 	.little_endian = false,
 };
 
+static const struct fsl_qspi_devtype_data ls1088a_data = {
+	.rxfifo = SZ_128,
+	.txfifo = SZ_128,
+	.ahb_buf_size = SZ_1K,
+	.quirks = QUADSPI_QUIRK_TKT253890,
+	.little_endian = true,
+};
+
 static const struct fsl_qspi_devtype_data ls2080a_data = {
 	.rxfifo = SZ_128,
 	.txfifo = SZ_64,
@@ -402,7 +409,7 @@ static bool fsl_qspi_supports_op(struct spi_slave *slave,
 	    op->data.nbytes > q->devtype_data->txfifo)
 		return false;
 
-	return spi_mem_default_supports_op(slave, op);
+	return true;
 }
 
 static void fsl_qspi_prepare_lut(struct fsl_qspi *q,
@@ -508,8 +515,8 @@ static void fsl_qspi_invalidate(struct fsl_qspi *q)
 
 static void fsl_qspi_select_mem(struct fsl_qspi *q, struct spi_slave *slave)
 {
-	struct dm_spi_slave_plat *plat =
-		dev_get_parent_plat(slave->dev);
+	struct dm_spi_slave_platdata *plat =
+		dev_get_parent_platdata(slave->dev);
 
 	if (q->selected == plat->cs)
 		return;
@@ -788,7 +795,7 @@ static const struct spi_controller_mem_ops fsl_qspi_mem_ops = {
 
 static int fsl_qspi_probe(struct udevice *bus)
 {
-	struct dm_spi_bus *dm_bus = dev_get_uclass_priv(bus);
+	struct dm_spi_bus *dm_bus = bus->uclass_priv;
 	struct fsl_qspi *q = dev_get_priv(bus);
 	const void *blob = gd->fdt_blob;
 	int node = dev_of_offset(bus);
@@ -870,7 +877,7 @@ static const struct udevice_id fsl_qspi_ids[] = {
 	{ .compatible = "fsl,imx7d-qspi", .data = (ulong)&imx7d_data, },
 	{ .compatible = "fsl,imx7ulp-qspi", .data = (ulong)&imx7ulp_data, },
 	{ .compatible = "fsl,ls1021a-qspi", .data = (ulong)&ls1021a_data, },
-	{ .compatible = "fsl,ls1088a-qspi", .data = (ulong)&ls2080a_data, },
+	{ .compatible = "fsl,ls1088a-qspi", .data = (ulong)&ls1088a_data, },
 	{ .compatible = "fsl,ls2080a-qspi", .data = (ulong)&ls2080a_data, },
 	{ }
 };
@@ -880,6 +887,6 @@ U_BOOT_DRIVER(fsl_qspi) = {
 	.id	= UCLASS_SPI,
 	.of_match = fsl_qspi_ids,
 	.ops	= &fsl_qspi_ops,
-	.priv_auto	= sizeof(struct fsl_qspi),
+	.priv_auto_alloc_size = sizeof(struct fsl_qspi),
 	.probe	= fsl_qspi_probe,
 };

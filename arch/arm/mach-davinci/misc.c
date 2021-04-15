@@ -15,7 +15,6 @@
 #include <log.h>
 #include <net.h>
 #include <asm/arch/hardware.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/davinci_misc.h>
 

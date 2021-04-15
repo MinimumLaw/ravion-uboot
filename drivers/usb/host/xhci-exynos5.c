@@ -16,7 +16,6 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <malloc.h>
@@ -35,7 +34,7 @@
 /* Declare global data pointer */
 DECLARE_GLOBAL_DATA_PTR;
 
-struct exynos_xhci_plat {
+struct exynos_xhci_platdata {
 	fdt_addr_t hcd_base;
 	fdt_addr_t phy_base;
 	struct gpio_desc vbus_gpio;
@@ -46,16 +45,16 @@ struct exynos_xhci_plat {
  * for the usb controller.
  */
 struct exynos_xhci {
-	struct usb_plat usb_plat;
+	struct usb_platdata usb_plat;
 	struct xhci_ctrl ctrl;
 	struct exynos_usb3_phy *usb3_phy;
 	struct xhci_hccr *hcd;
 	struct dwc3 *dwc3_reg;
 };
 
-static int xhci_usb_of_to_plat(struct udevice *dev)
+static int xhci_usb_ofdata_to_platdata(struct udevice *dev)
 {
-	struct exynos_xhci_plat *plat = dev_get_plat(dev);
+	struct exynos_xhci_platdata *plat = dev_get_platdata(dev);
 	const void *blob = gd->fdt_blob;
 	unsigned int node;
 	int depth;
@@ -206,7 +205,7 @@ static void exynos_xhci_core_exit(struct exynos_xhci *exynos)
 
 static int xhci_usb_probe(struct udevice *dev)
 {
-	struct exynos_xhci_plat *plat = dev_get_plat(dev);
+	struct exynos_xhci_platdata *plat = dev_get_platdata(dev);
 	struct exynos_xhci *ctx = dev_get_priv(dev);
 	struct xhci_hcor *hcor;
 	int ret;
@@ -252,11 +251,11 @@ U_BOOT_DRIVER(usb_xhci) = {
 	.name	= "xhci_exynos",
 	.id	= UCLASS_USB,
 	.of_match = xhci_usb_ids,
-	.of_to_plat = xhci_usb_of_to_plat,
+	.ofdata_to_platdata = xhci_usb_ofdata_to_platdata,
 	.probe = xhci_usb_probe,
 	.remove = xhci_usb_remove,
 	.ops	= &xhci_usb_ops,
-	.plat_auto	= sizeof(struct exynos_xhci_plat),
-	.priv_auto	= sizeof(struct exynos_xhci),
+	.platdata_auto_alloc_size = sizeof(struct exynos_xhci_platdata),
+	.priv_auto_alloc_size = sizeof(struct exynos_xhci),
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };

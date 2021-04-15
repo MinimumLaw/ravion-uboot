@@ -12,7 +12,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include <asm/ptrace.h>
 #include <command.h>
 #include <kgdb.h>

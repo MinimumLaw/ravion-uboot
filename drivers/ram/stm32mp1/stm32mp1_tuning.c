@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2019, STMicroelectronics - All Rights Reserved
  */
-
-#define LOG_CATEGORY UCLASS_RAM
-
 #include <common.h>
 #include <console.h>
 #include <clk.h>
@@ -230,7 +227,8 @@ static u8 DQ_unit_index(struct stm32mp1_ddrphy *phy, u8 byte, u8 bit)
 	index = (readl(addr) >> DDRPHYC_DXNDQTR_DQDLY_SHIFT(bit))
 		& DDRPHYC_DXNDQTR_DQDLY_LOW_MASK;
 
-	log_debug("[%x]: %x => DQ unit index = %x\n", addr, readl(addr), index);
+	pr_debug("%s: [%x]: %x => DQ unit index = %x\n",
+		 __func__, addr, readl(addr), index);
 
 	return index;
 }
@@ -472,13 +470,13 @@ static void apply_deskew_results(struct stm32mp1_ddrphy *phy, u8 byte,
 	for (bit_i = 0; bit_i < 8; bit_i++) {
 		set_DQ_unit_delay(phy, byte, bit_i, deskew_delay[byte][bit_i]);
 		index = DQ_unit_index(phy, byte, bit_i);
-		log_debug("Byte %d ; bit %d : The new DQ delay (%d) index=%d [delta=%d, 3 is the default]",
-			  byte, bit_i, deskew_delay[byte][bit_i],
-			  index, index - 3);
+		pr_debug("Byte %d ; bit %d : The new DQ delay (%d) index=%d [delta=%d, 3 is the default]",
+			 byte, bit_i, deskew_delay[byte][bit_i],
+			 index, index - 3);
 		printf("Byte %d, bit %d, DQ delay = %d",
 		       byte, bit_i, deskew_delay[byte][bit_i]);
 		if (deskew_non_converge[byte][bit_i] == 1)
-			log_debug(" - not converged : still more skew");
+			pr_debug(" - not converged : still more skew");
 		printf("\n");
 	}
 }
@@ -538,7 +536,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 
 	/* Config the BIST block */
 	config_BIST(ctl, phy);
-	log_debug("BIST Config done.\n");
+	pr_debug("BIST Config done.\n");
 
 	/* Train each byte */
 	for (datx8 = 0; datx8 < nb_bytes; datx8++) {
@@ -547,9 +545,9 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 				datx8 + 1, nb_bytes, error);
 			return TEST_FAILED;
 		}
-		log_debug("\n======================\n");
-		log_debug("Start deskew byte %d .\n", datx8);
-		log_debug("======================\n");
+		pr_debug("\n======================\n");
+		pr_debug("Start deskew byte %d .\n", datx8);
+		pr_debug("======================\n");
 		/* Enable Byte (DXNGCR, bit DXEN) */
 		setbits_le32(DXNGCR(phy, datx8), DDRPHYC_DXNGCR_DXEN);
 
@@ -586,7 +584,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 		 * Else, look for Pass init condition
 		 */
 		if (!success) {
-			log_debug("Fail at init condtion. Let's look for a good init condition.\n");
+			pr_debug("Fail at init condtion. Let's look for a good init condition.\n");
 			success = 0; /* init */
 			/* Make sure we start with a PASS condition before
 			 * looking for a fail condition.
@@ -594,7 +592,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 			 */
 
 			/* escape if we find a PASS */
-			log_debug("increase Phase idx\n");
+			pr_debug("increase Phase idx\n");
 			while (!success && (phase_idx <= MAX_DQS_PHASE_IDX)) {
 				DQS_phase_delay(phy, datx8, phase_idx);
 				BIST_test(phy, datx8, &result);
@@ -620,7 +618,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 			 * we have hold violation, lets try reduce DQS_unit
 			 * Delay
 			 */
-			log_debug("Still fail. Try decrease DQS Unit delay\n");
+			pr_debug("Still fail. Try decrease DQS Unit delay\n");
 
 			phase_idx = 0;
 			dqs_unit_delay_index = 0;
@@ -667,9 +665,9 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 			return TEST_FAILED;
 		}
 
-		log_debug("there is a pass region for phase idx %d\n",
-			  phase_idx);
-		log_debug("Step1: Find the first failing condition\n");
+		pr_debug("there is a pass region for phase idx %d\n",
+			 phase_idx);
+		pr_debug("Step1: Find the first failing condition\n");
 		/* Look for the first failing condition by PHASE stepping.
 		 * This part of the algo can finish without converging.
 		 */
@@ -694,9 +692,9 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 		 * stepping (minimal delay)
 		 */
 		if (!success) {
-			log_debug("Fail region (PHASE) found phase idx %d\n",
-				  phase_idx);
-			log_debug("Let's look for first success by DQS Unit steps\n");
+			pr_debug("Fail region (PHASE) found phase idx %d\n",
+				 phase_idx);
+			pr_debug("Let's look for first success by DQS Unit steps\n");
 			/* This part, the algo always converge */
 			phase_idx--;
 
@@ -723,7 +721,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 				/*+1 to get back to current condition */
 				last_right_ok.unit = dqs_unit_delay_index + 1;
 				last_right_ok.bits_delay = 0xFFFFFFFF;
-				log_debug("Found %d\n", dqs_unit_delay_index);
+				pr_debug("Found %d\n", dqs_unit_delay_index);
 			} else {
 				/* the last OK condition is then with the
 				 * previous phase_idx.
@@ -737,8 +735,8 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 				 */
 				last_right_ok.unit = 1;
 				last_right_ok.bits_delay = 0xFFFFFFFF;
-				log_debug("Not Found : try previous phase %d\n",
-					  phase_idx - 1);
+				pr_debug("Not Found : try previous phase %d\n",
+					 phase_idx - 1);
 
 				DQS_phase_delay(phy, datx8, phase_idx - 1);
 				dqs_unit_delay_index = 0;
@@ -751,8 +749,8 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 					BIST_test(phy, datx8, &result);
 					success = result.test_result;
 					dqs_unit_delay_index++;
-					log_debug("dqs_unit_delay_index = %d, result = %d\n",
-						  dqs_unit_delay_index, success);
+					pr_debug("dqs_unit_delay_index = %d, result = %d\n",
+						 dqs_unit_delay_index, success);
 				}
 
 				if (!success) {
@@ -760,7 +758,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 						 dqs_unit_delay_index - 1;
 				} else {
 					last_right_ok.unit = 0;
-					log_debug("ERROR: failed region not FOUND");
+					pr_debug("ERROR: failed region not FOUND");
 				}
 			}
 		} else {
@@ -777,7 +775,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 			last_right_ok.phase = MAX_DQS_PHASE_IDX;
 			last_right_ok.unit = MAX_DQS_UNIT_IDX;
 			last_right_ok.bits_delay = 0xFFFFFFFF;
-			log_debug("Can't find the a fail condition\n");
+			pr_debug("Can't find the a fail condition\n");
 		}
 
 		/* step 2:
@@ -789,9 +787,9 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 		 */
 		printf("Byte %d, DQS unit = %d, phase = %d\n",
 		       datx8, last_right_ok.unit, last_right_ok.phase);
-		log_debug("Step2, unit = %d, phase = %d, bits delay=%x\n",
-			  last_right_ok.unit, last_right_ok.phase,
-			  last_right_ok.bits_delay);
+		pr_debug("Step2, unit = %d, phase = %d, bits delay=%x\n",
+			 last_right_ok.unit, last_right_ok.phase,
+			 last_right_ok.bits_delay);
 
 		/* Restore the last_right_ok condtion. */
 		DQS_unit_delay(phy, datx8, last_right_ok.unit);
@@ -814,7 +812,7 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 					datx8 + 1, nb_bytes, error);
 				return error;
 			}
-			log_debug("deskewing bit %d:\n", bit_i);
+			pr_debug("deskewing bit %d:\n", bit_i);
 			success = 1; /* init */
 			/* Set all DQDLYn to maximum value.
 			 * Only bit_i will be down-delayed
@@ -857,10 +855,10 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 				 * at one bit.
 				 */
 				fail_found = 1;
-				log_debug("Fail found on bit %d, for delay = %d => deskew[%d][%d] = %d\n",
-					  bit_i, bit_i_delay_index + 1,
-					  datx8, bit_i,
-					  deskew_delay[datx8][bit_i]);
+				pr_debug("Fail found on bit %d, for delay = %d => deskew[%d][%d] = %d\n",
+					 bit_i, bit_i_delay_index + 1,
+					 datx8, bit_i,
+					 deskew_delay[datx8][bit_i]);
 			} else {
 				/* if we can find a success condition by
 				 * back-delaying this bit, just set the delay
@@ -872,20 +870,20 @@ static enum test_result bit_deskew(struct stm32mp1_ddrctl *ctl,
 				 * in the report.
 				 */
 				deskew_non_converge[datx8][bit_i] = 1;
-				log_debug("Fail not found on bit %d => deskew[%d][%d] = %d\n",
-					  bit_i, datx8, bit_i,
-					  deskew_delay[datx8][bit_i]);
+				pr_debug("Fail not found on bit %d => deskew[%d][%d] = %d\n",
+					 bit_i, datx8, bit_i,
+					 deskew_delay[datx8][bit_i]);
 			}
 		}
-		log_debug("**********byte %d tuning complete************\n",
-			  datx8);
+		pr_debug("**********byte %d tuning complete************\n",
+			 datx8);
 		/* If we can't find any failure by back delaying DQ lines,
 		 * hold the default values
 		 */
 		if (!fail_found) {
 			for (bit_i = 0; bit_i < 8; bit_i++)
 				deskew_delay[datx8][bit_i] = 0;
-			log_debug("The Deskew algorithm can't converge, there is too much margin in your design. Good job!\n");
+			pr_debug("The Deskew algorithm can't converge, there is too much margin in your design. Good job!\n");
 		}
 
 		apply_deskew_results(phy, datx8, deskew_delay,
@@ -988,7 +986,7 @@ static enum test_result eye_training(struct stm32mp1_ddrctl *ctl,
 		dqs_unit_delay_index_pass = dqs_unit_delay_index;
 		success = 0;
 
-		log_debug("STEP0: Find Init delay\n");
+		pr_debug("STEP0: Find Init delay\n");
 		/* STEP0: Find Init delay: a delay that put the system
 		 * in a "Pass" condition then (TODO) update
 		 * dqs_unit_delay_index_pass & phase_idx_pass
@@ -1037,7 +1035,7 @@ static enum test_result eye_training(struct stm32mp1_ddrctl *ctl,
 				byte + 1, nb_bytes, error);
 			return TEST_FAILED;
 		}
-		log_debug("STEP1: Find LEFT PHASE DQS Bound\n");
+		pr_debug("STEP1: Find LEFT PHASE DQS Bound\n");
 		/* STEP1: Find LEFT PHASE DQS Bound */
 		while ((phase_idx >= 0) &&
 		       (phase_idx <= MAX_DQS_PHASE_IDX) &&
@@ -1071,7 +1069,7 @@ static enum test_result eye_training(struct stm32mp1_ddrctl *ctl,
 				byte + 1, nb_bytes, error);
 			return TEST_FAILED;
 		}
-		log_debug("STEP2: Find UNIT left bound\n");
+		pr_debug("STEP2: Find UNIT left bound\n");
 		/* STEP2: Find UNIT left bound */
 		while ((dqs_unit_delay_index >= 0) &&
 		       !left_unit_bound_found) {
@@ -1099,7 +1097,7 @@ static enum test_result eye_training(struct stm32mp1_ddrctl *ctl,
 				byte + 1, nb_bytes, error);
 			return TEST_FAILED;
 		}
-		log_debug("STEP3: Find PHase right bound\n");
+		pr_debug("STEP3: Find PHase right bound\n");
 		/* STEP3: Find PHase right bound, start with "pass"
 		 * condition
 		 */
@@ -1137,7 +1135,7 @@ static enum test_result eye_training(struct stm32mp1_ddrctl *ctl,
 				byte + 1, nb_bytes, error);
 			return TEST_FAILED;
 		}
-		log_debug("STEP4: Find UNIT right bound\n");
+		pr_debug("STEP4: Find UNIT right bound\n");
 		/* STEP4: Find UNIT right bound */
 		while ((dqs_unit_delay_index <= MAX_DQS_UNIT_IDX) &&
 		       !right_unit_bound_found) {
@@ -1176,12 +1174,12 @@ static enum test_result eye_training(struct stm32mp1_ddrctl *ctl,
 			if (((right_bound.phase + left_bound.phase) % 2 == 1) &&
 			    eye_training_val[byte][1] != MAX_DQS_UNIT_IDX)
 				eye_training_val[byte][1]++;
-			log_debug("** found phase : %d -  %d & unit %d - %d\n",
-				  right_bound.phase, left_bound.phase,
-				  right_bound.unit, left_bound.unit);
-			log_debug("** calculating mid region: phase: %d  unit: %d (nominal is 3)\n",
-				  eye_training_val[byte][0],
-				  eye_training_val[byte][1]);
+			pr_debug("** found phase : %d -  %d & unit %d - %d\n",
+				 right_bound.phase, left_bound.phase,
+				 right_bound.unit, left_bound.unit);
+			pr_debug("** calculating mid region: phase: %d  unit: %d (nominal is 3)\n",
+				 eye_training_val[byte][0],
+				 eye_training_val[byte][1]);
 		} else {
 			/* PPPPPPPPPP, we're already good.
 			 * Set nominal values.
@@ -1282,11 +1280,11 @@ static u8 set_midpoint_read_dqs_gating(struct stm32mp1_ddrphy *phy, u8 byte,
 		 * or pppppff  or ffppppp
 		 */
 		if (left_bound_found || right_bound_found) {
-			log_debug("idx0(%d): %d %d      idx1(%d) : %d %d\n",
-				  left_bound_found,
-				  right_bound_idx[0], left_bound_idx[0],
-				  right_bound_found,
-				  right_bound_idx[1], left_bound_idx[1]);
+			pr_debug("idx0(%d): %d %d      idx1(%d) : %d %d\n",
+				 left_bound_found,
+				 right_bound_idx[0], left_bound_idx[0],
+				 right_bound_found,
+				 right_bound_idx[1], left_bound_idx[1]);
 			dqs_gate_values[byte][0] =
 				(right_bound_idx[0] + left_bound_idx[0]) / 2;
 			dqs_gate_values[byte][1] =
@@ -1321,14 +1319,14 @@ static u8 set_midpoint_read_dqs_gating(struct stm32mp1_ddrphy *phy, u8 byte,
 						left_bound_idx[0];
 				}
 			}
-			log_debug("*******calculating mid region: system latency: %d  phase: %d********\n",
-				  dqs_gate_values[byte][0],
-				  dqs_gate_values[byte][1]);
-			log_debug("*******the nominal values were system latency: 0  phase: 2*******\n");
+			pr_debug("*******calculating mid region: system latency: %d  phase: %d********\n",
+				 dqs_gate_values[byte][0],
+				 dqs_gate_values[byte][1]);
+			pr_debug("*******the nominal values were system latency: 0  phase: 2*******\n");
 		}
 	} else {
 		/* if intermitant, restore defaut values */
-		log_debug("dqs gating:no regular fail/pass/fail found. defaults values restored.\n");
+		pr_debug("dqs gating:no regular fail/pass/fail found. defaults values restored.\n");
 		dqs_gate_values[byte][0] = 0;
 		dqs_gate_values[byte][1] = 2;
 	}

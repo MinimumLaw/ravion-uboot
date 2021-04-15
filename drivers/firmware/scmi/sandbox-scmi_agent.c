@@ -3,8 +3,6 @@
  * Copyright (C) 2020, Linaro Limited
  */
 
-#define LOG_CATEGORY UCLASS_SCMI_AGENT
-
 #include <common.h>
 #include <dm.h>
 #include <malloc.h>
@@ -405,7 +403,7 @@ U_BOOT_DRIVER(sandbox_scmi_agent) = {
 	.name = "sandbox-scmi_agent",
 	.id = UCLASS_SCMI_AGENT,
 	.of_match = sandbox_scmi_test_ids,
-	.priv_auto	= sizeof(struct sandbox_scmi_agent),
+	.priv_auto_alloc_size = sizeof(struct sandbox_scmi_agent),
 	.probe = sandbox_scmi_test_probe,
 	.remove = sandbox_scmi_test_remove,
 	.ops = &sandbox_scmi_test_ops,

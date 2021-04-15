@@ -56,7 +56,7 @@ enum sig_type {
 
 /*
  * With driver model (CONFIG_BLK) this is uclass platform data, accessible
- * with dev_get_uclass_plat(dev)
+ * with dev_get_uclass_platdata(dev)
  */
 struct blk_desc {
 	/*

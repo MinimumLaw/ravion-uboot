@@ -10,7 +10,6 @@
 #include <pwm.h>
 #include <regmap.h>
 #include <syscon.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/pwm.h>
 #include <asm/arch/gpio.h>
@@ -149,7 +148,7 @@ static int sunxi_pwm_set_enable(struct udevice *dev, uint channel, bool enable)
 	return 0;
 }
 
-static int sunxi_pwm_of_to_plat(struct udevice *dev)
+static int sunxi_pwm_ofdata_to_platdata(struct udevice *dev)
 {
 	struct sunxi_pwm_priv *priv = dev_get_priv(dev);
 
@@ -180,7 +179,7 @@ U_BOOT_DRIVER(sunxi_pwm) = {
 	.id	= UCLASS_PWM,
 	.of_match = sunxi_pwm_ids,
 	.ops	= &sunxi_pwm_ops,
-	.of_to_plat	= sunxi_pwm_of_to_plat,
+	.ofdata_to_platdata	= sunxi_pwm_ofdata_to_platdata,
 	.probe		= sunxi_pwm_probe,
-	.priv_auto	= sizeof(struct sunxi_pwm_priv),
+	.priv_auto_alloc_size	= sizeof(struct sunxi_pwm_priv),
 };

@@ -197,10 +197,10 @@ static int do_itest(struct cmd_tbl *cmdtp, int flag, int argc,
 #endif
 		value = binary_test (argv[2], argv[1], argv[3], w);
 		break;
-	case CMD_DATA_SIZE_STR:
+	case -2:
 		value = binary_test (argv[2], argv[1], argv[3], 0);
 		break;
-	case CMD_DATA_SIZE_ERR:
+	case -1:
 	default:
 		puts("Invalid data width specifier\n");
 		value = 0;

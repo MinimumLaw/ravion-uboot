@@ -8,7 +8,6 @@
 #include <common.h>
 #include <errno.h>
 #include <dm.h>
-#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <dm/of_access.h>
@@ -438,7 +437,7 @@ static int qcom_smem_alloc(unsigned int host, unsigned int item, size_t size)
 	int ret;
 
 	if (!__smem)
-		return -ENOMEM;
+		return -EPROBE_DEFER;
 
 	if (item < SMEM_ITEM_LAST_FIXED) {
 		dev_err(__smem->dev,
@@ -560,7 +559,7 @@ static void *qcom_smem_get(unsigned int host, unsigned int item, size_t *size)
 {
 	struct smem_partition_header *phdr;
 	size_t cacheln;
-	void *ptr = ERR_PTR(-ENOMEM);
+	void *ptr = ERR_PTR(-EPROBE_DEFER);
 
 	if (!__smem)
 		return ptr;
@@ -598,7 +597,7 @@ static int qcom_smem_get_free_space(unsigned int host)
 	unsigned int ret;
 
 	if (!__smem)
-		return -ENOMEM;
+		return -EPROBE_DEFER;
 
 	if (host < SMEM_HOST_COUNT && __smem->partitions[host]) {
 		phdr = __smem->partitions[host];

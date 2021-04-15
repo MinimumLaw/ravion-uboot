@@ -8,7 +8,6 @@
 #include <bootstage.h>
 #include <command.h>
 #include <time.h>
-#include <asm/global_data.h>
 #include <asm/system.h>
 #include <linux/bitops.h>
 

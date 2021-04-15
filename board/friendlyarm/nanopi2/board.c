@@ -12,7 +12,6 @@
 #ifdef CONFIG_PWM_NX
 #include <pwm.h>
 #endif
-#include <asm/global_data.h>
 #include <asm/io.h>
 
 #include <asm/arch/nexell.h>

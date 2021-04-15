@@ -8,7 +8,6 @@
 #include <fdt_support.h>
 #include <asm/cache.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
@@ -112,7 +111,7 @@ int misc_init_r(void)
 	u8 mux_sdhc_cd = 0x80;
 	int bus_num = 0;
 
-#if CONFIG_IS_ENABLED(DM_I2C)
+#ifdef CONFIG_DM_I2C
 	struct udevice *dev;
 	int ret;
 

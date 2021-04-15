@@ -10,7 +10,6 @@
 #include <errno.h>
 #include <dm.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <dm/pinctrl.h>
 #include <dm/root.h>
 #include <asm/system.h>
@@ -230,7 +229,7 @@ U_BOOT_DRIVER(pinctrl_mvebu) = {
 	.name		= "mvebu_pinctrl",
 	.id		= UCLASS_PINCTRL,
 	.of_match	= mvebu_pinctrl_ids,
-	.priv_auto	= sizeof(struct mvebu_pinctrl_priv),
+	.priv_auto_alloc_size = sizeof(struct mvebu_pinctrl_priv),
 	.ops		= &mvebu_pinctrl_ops,
 	.probe		= mvebu_pinctl_probe
 };

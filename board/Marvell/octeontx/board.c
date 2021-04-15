@@ -13,7 +13,6 @@
 #include <log.h>
 #include <netdev.h>
 #include <pci_ids.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/compiler.h>
 #include <linux/libfdt.h>

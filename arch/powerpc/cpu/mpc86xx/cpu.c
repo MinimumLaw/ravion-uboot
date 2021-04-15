@@ -13,7 +13,6 @@
 #include <watchdog.h>
 #include <command.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/mmu.h>
 #include <mpc86xx.h>
 #include <asm/fsl_law.h>

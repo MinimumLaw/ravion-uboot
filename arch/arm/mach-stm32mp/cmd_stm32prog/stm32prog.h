@@ -172,35 +172,14 @@ char *stm32prog_get_error(struct stm32prog_data *data);
 	if (data->phase != PHASE_RESET) { \
 		sprintf(data->error, args); \
 		data->phase = PHASE_RESET; \
-		log_err("Error: %s\n", data->error); } \
+		pr_err("Error: %s\n", data->error); } \
 	}
 
 /* Main function */
 int stm32prog_init(struct stm32prog_data *data, ulong addr, ulong size);
-void stm32prog_clean(struct stm32prog_data *data);
-
-#ifdef CONFIG_CMD_STM32PROG_SERIAL
 int stm32prog_serial_init(struct stm32prog_data *data, int link_dev);
 bool stm32prog_serial_loop(struct stm32prog_data *data);
-#else
-static inline int stm32prog_serial_init(struct stm32prog_data *data, int link_dev)
-{
-	return -ENOSYS;
-}
-
-static inline bool stm32prog_serial_loop(struct stm32prog_data *data)
-{
-	return false;
-}
-#endif
-
-#ifdef CONFIG_CMD_STM32PROG_USB
 bool stm32prog_usb_loop(struct stm32prog_data *data, int dev);
-#else
-static inline bool stm32prog_usb_loop(struct stm32prog_data *data, int dev)
-{
-	return false;
-}
-#endif
+void stm32prog_clean(struct stm32prog_data *data);
 
 #endif

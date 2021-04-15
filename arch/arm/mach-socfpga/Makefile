@@ -4,7 +4,6 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # Copyright (C) 2012-2017 Altera Corporation <www.altera.com>
-# Copyright (C) 2017-2020 Intel Corporation <www.intel.com>
 
 obj-y	+= board.o
 obj-y	+= clock_manager.o
@@ -30,7 +29,6 @@ endif
 
 ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
 obj-y	+= clock_manager_s10.o
-obj-y	+= lowlevel_init_soc64.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
@@ -43,15 +41,12 @@ endif
 
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= clock_manager_agilex.o
-obj-y	+= lowlevel_init_soc64.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
 obj-y	+= reset_manager_s10.o
-obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= secure_vab.o
 obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
-obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= vab.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
 endif
@@ -75,9 +70,6 @@ ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= firewall.o
 obj-y	+= spl_agilex.o
 endif
-else
-obj-$(CONFIG_SPL_ATF) += secure_reg_helper.o
-obj-$(CONFIG_SPL_ATF) += smc_api.o
 endif
 
 ifdef CONFIG_TARGET_SOCFPGA_GEN5

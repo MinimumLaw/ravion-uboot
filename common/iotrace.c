@@ -8,7 +8,6 @@
 #include <common.h>
 #include <mapmem.h>
 #include <time.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/bug.h>
 #include <u-boot/crc.h>

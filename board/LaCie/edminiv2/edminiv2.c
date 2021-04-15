@@ -11,7 +11,6 @@
 #include <miiphy.h>
 #include <net.h>
 #include <asm/arch/orion5x.h>
-#include <asm/global_data.h>
 #include "../common/common.h"
 #include <spl.h>
 #include <ns16550.h>

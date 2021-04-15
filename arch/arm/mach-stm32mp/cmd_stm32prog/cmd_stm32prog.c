@@ -50,13 +50,13 @@ static int do_stm32prog(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc < 3 ||  argc > 5)
 		return CMD_RET_USAGE;
 
-	if (IS_ENABLED(CONFIG_CMD_STM32PROG_USB) && !strcmp(argv[1], "usb"))
+	if (!strcmp(argv[1], "usb"))
 		link = LINK_USB;
-	else if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) && !strcmp(argv[1], "serial"))
+	else if (!strcmp(argv[1], "serial"))
 		link = LINK_SERIAL;
 
 	if (link == LINK_UNDEFINED) {
-		log_err("not supported link=%s\n", argv[1]);
+		pr_err("not supported link=%s\n", argv[1]);
 		return CMD_RET_USAGE;
 	}
 
@@ -90,7 +90,7 @@ static int do_stm32prog(struct cmd_tbl *cmdtp, int flag, int argc,
 	data = (struct stm32prog_data *)malloc(sizeof(*data));
 
 	if (!data) {
-		log_err("Alloc failed.");
+		pr_err("Alloc failed.");
 		return CMD_RET_FAILURE;
 	}
 	stm32prog_data = data;

@@ -3,8 +3,6 @@
  * Copyright (C) 2019 Heiko Schocher <hs@denx.de>
  */
 
-#include "am33xx-u-boot.dtsi"
-
 / {
 	ocp {
 		u-boot,dm-pre-reloc;

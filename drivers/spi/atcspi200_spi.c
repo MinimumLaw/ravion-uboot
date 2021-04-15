@@ -11,7 +11,6 @@
 #include <log.h>
 #include <malloc.h>
 #include <spi.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm.h>
 
@@ -310,8 +309,8 @@ static int atcspi200_spi_set_mode(struct udevice *bus, uint mode)
 
 static int atcspi200_spi_claim_bus(struct udevice *dev)
 {
-	struct dm_spi_slave_plat *slave_plat =
-		dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave_plat =
+		dev_get_parent_platdata(dev);
 	struct udevice *bus = dev->parent;
 	struct nds_spi_slave *ns = dev_get_priv(bus);
 
@@ -409,7 +408,7 @@ U_BOOT_DRIVER(atcspi200_spi) = {
 	.id = UCLASS_SPI,
 	.of_match = atcspi200_spi_ids,
 	.ops = &atcspi200_spi_ops,
-	.of_to_plat = atcspi200_ofdata_to_platadata,
-	.priv_auto	= sizeof(struct nds_spi_slave),
+	.ofdata_to_platdata = atcspi200_ofdata_to_platadata,
+	.priv_auto_alloc_size = sizeof(struct nds_spi_slave),
 	.probe = atcspi200_spi_probe,
 };

@@ -15,7 +15,6 @@
 #include <malloc.h>
 #include <part.h>
 #include <mmc.h>
-#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/io.h>
 #include <linux/errno.h>
@@ -390,7 +389,7 @@ static void ftsdc_setup_cfg(struct mmc_config *cfg, const char *name, int buswid
 	cfg->b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT;
 }
 
-static int ftsdc010_mmc_of_to_plat(struct udevice *dev)
+static int ftsdc010_mmc_ofdata_to_platdata(struct udevice *dev)
 {
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct ftsdc_priv *priv = dev_get_priv(dev);
@@ -425,7 +424,7 @@ static int ftsdc010_mmc_of_to_plat(struct udevice *dev)
 
 static int ftsdc010_mmc_probe(struct udevice *dev)
 {
-	struct ftsdc010_plat *plat = dev_get_plat(dev);
+	struct ftsdc010_plat *plat = dev_get_platdata(dev);
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct ftsdc_priv *priv = dev_get_priv(dev);
 	struct ftsdc010_chip *chip = &priv->chip;
@@ -460,7 +459,7 @@ static int ftsdc010_mmc_probe(struct udevice *dev)
 
 int ftsdc010_mmc_bind(struct udevice *dev)
 {
-	struct ftsdc010_plat *plat = dev_get_plat(dev);
+	struct ftsdc010_plat *plat = dev_get_platdata(dev);
 
 	return mmc_bind(dev, &plat->mmc, &plat->cfg);
 }
@@ -474,10 +473,10 @@ U_BOOT_DRIVER(ftsdc010_mmc) = {
 	.name		= "ftsdc010_mmc",
 	.id		= UCLASS_MMC,
 	.of_match	= ftsdc010_mmc_ids,
-	.of_to_plat = ftsdc010_mmc_of_to_plat,
+	.ofdata_to_platdata = ftsdc010_mmc_ofdata_to_platdata,
 	.ops		= &dm_ftsdc010_mmc_ops,
 	.bind		= ftsdc010_mmc_bind,
 	.probe		= ftsdc010_mmc_probe,
-	.priv_auto	= sizeof(struct ftsdc_priv),
-	.plat_auto	= sizeof(struct ftsdc010_plat),
+	.priv_auto_alloc_size = sizeof(struct ftsdc_priv),
+	.platdata_auto_alloc_size = sizeof(struct ftsdc010_plat),
 };

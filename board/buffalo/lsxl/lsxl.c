@@ -24,7 +24,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/mpp.h>
 #include <asm/arch/gpio.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 
 #include "lsxl.h"

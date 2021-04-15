@@ -9,7 +9,6 @@
 #include <common.h>
 #include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <asm/io.h>
@@ -151,7 +150,7 @@ DECLARE_GLOBAL_DATA_PTR;
  * Bank 4: 0-20 -> 21 PINS
  */
 
-struct mxs_gpio_plat {
+struct mxs_gpio_platdata {
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct dtd_fsl_imx23_gpio dtplat;
 #endif
@@ -236,7 +235,7 @@ static const struct dm_gpio_ops gpio_mxs_ops = {
 
 static int mxs_gpio_probe(struct udevice *dev)
 {
-	struct mxs_gpio_plat *plat = dev_get_plat(dev);
+	struct mxs_gpio_platdata *plat = dev_get_platdata(dev);
 	struct mxs_gpio_priv *priv = dev_get_priv(dev);
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
 	char name[16], *str;
@@ -263,9 +262,9 @@ static int mxs_gpio_probe(struct udevice *dev)
 }
 
 #if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
-static int mxs_of_to_plat(struct udevice *dev)
+static int mxs_ofdata_to_platdata(struct udevice *dev)
 {
-	struct mxs_gpio_plat *plat = dev_get_plat(dev);
+	struct mxs_gpio_platdata *plat = dev->platdata;
 	struct fdtdec_phandle_args args;
 	int node = dev_of_offset(dev);
 	int ret;
@@ -299,13 +298,13 @@ U_BOOT_DRIVER(fsl_imx23_gpio) = {
 	.id	= UCLASS_GPIO,
 	.ops	= &gpio_mxs_ops,
 	.probe	= mxs_gpio_probe,
-	.priv_auto	= sizeof(struct mxs_gpio_priv),
-	.plat_auto	= sizeof(struct mxs_gpio_plat),
+	.priv_auto_alloc_size = sizeof(struct mxs_gpio_priv),
+	.platdata_auto_alloc_size = sizeof(struct mxs_gpio_platdata),
 #if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.of_match = mxs_gpio_ids,
-	.of_to_plat = mxs_of_to_plat,
+	.ofdata_to_platdata = mxs_ofdata_to_platdata,
 #endif
 };
 
-DM_DRIVER_ALIAS(fsl_imx23_gpio, fsl_imx28_gpio)
+U_BOOT_DRIVER_ALIAS(fsl_imx23_gpio, fsl_imx28_gpio)
 #endif /* DM_GPIO */

@@ -3,8 +3,6 @@
  * Copyright (C) STMicroelectronics 2019 - All Rights Reserved
  */
 
-#define LOG_CATEGORY UCLASS_MAILBOX
-
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -46,11 +44,11 @@ static int stm32_ipcc_request(struct mbox_chan *chan)
 {
 	struct stm32_ipcc *ipcc = dev_get_priv(chan->dev);
 
-	dev_dbg(chan->dev, "chan=%p\n", chan);
+	debug("%s(chan=%p)\n", __func__, chan);
 
 	if (chan->id >= ipcc->n_chans) {
-		dev_dbg(chan->dev, "failed to request channel: %ld\n",
-			chan->id);
+		debug("%s failed to request channel: %ld\n",
+		      __func__, chan->id);
 		return -EINVAL;
 	}
 
@@ -59,7 +57,7 @@ static int stm32_ipcc_request(struct mbox_chan *chan)
 
 static int stm32_ipcc_free(struct mbox_chan *chan)
 {
-	dev_dbg(chan->dev, "chan=%p\n", chan);
+	debug("%s(chan=%p)\n", __func__, chan);
 
 	return 0;
 }
@@ -68,7 +66,7 @@ static int stm32_ipcc_send(struct mbox_chan *chan, const void *data)
 {
 	struct stm32_ipcc *ipcc = dev_get_priv(chan->dev);
 
-	dev_dbg(chan->dev, "chan=%p, data=%p\n", chan, data);
+	debug("%s(chan=%p, data=%p)\n", __func__, chan, data);
 
 	if (readl(ipcc->reg_proc + IPCC_XTOYSR) & BIT(chan->id))
 		return -EBUSY;
@@ -85,7 +83,7 @@ static int stm32_ipcc_recv(struct mbox_chan *chan, void *data)
 	u32 val;
 	int proc_offset;
 
-	dev_dbg(chan->dev, "chan=%p, data=%p\n", chan, data);
+	debug("%s(chan=%p, data=%p)\n", __func__, chan, data);
 
 	/* read 'channel occupied' status from other proc */
 	proc_offset = ipcc->proc_id ? -IPCC_PROC_OFFST : IPCC_PROC_OFFST;
@@ -106,7 +104,7 @@ static int stm32_ipcc_probe(struct udevice *dev)
 	struct clk clk;
 	int ret;
 
-	dev_dbg(dev, "\n");
+	debug("%s(dev=%p)\n", __func__, dev);
 
 	addr = dev_read_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
@@ -165,6 +163,6 @@ U_BOOT_DRIVER(stm32_ipcc) = {
 	.id = UCLASS_MAILBOX,
 	.of_match = stm32_ipcc_ids,
 	.probe = stm32_ipcc_probe,
-	.priv_auto	= sizeof(struct stm32_ipcc),
+	.priv_auto_alloc_size = sizeof(struct stm32_ipcc),
 	.ops = &stm32_ipcc_mbox_ops,
 };

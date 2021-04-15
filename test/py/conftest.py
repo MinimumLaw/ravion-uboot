@@ -554,10 +554,7 @@ def pytest_runtest_protocol(item, nextitem):
     """
 
     log.get_and_reset_warning()
-    ihook = item.ihook
-    ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
     reports = runtestprotocol(item, nextitem=nextitem)
-    ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     was_warning = log.get_and_reset_warning()
 
     # In pytest 3, runtestprotocol() may not call pytest_runtest_setup() if
@@ -626,4 +623,4 @@ def pytest_runtest_protocol(item, nextitem):
     if failure_cleanup:
         console.cleanup_spawn()
 
-    return True
+    return reports

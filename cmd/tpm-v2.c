@@ -116,8 +116,7 @@ static int do_tpm2_pcr_extend(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (index >= priv->pcr_count)
 		return -EINVAL;
 
-	rc = tpm2_pcr_extend(dev, index, TPM2_ALG_SHA256, digest,
-			     TPM2_DIGEST_LEN);
+	rc = tpm2_pcr_extend(dev, index, digest);
 
 	unmap_sysmem(digest);
 

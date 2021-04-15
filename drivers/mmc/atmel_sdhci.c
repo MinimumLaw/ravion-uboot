@@ -10,7 +10,6 @@
 #include <malloc.h>
 #include <sdhci.h>
 #include <asm/arch/clk.h>
-#include <asm/global_data.h>
 
 #define ATMEL_SDHC_MIN_FREQ	400000
 #define ATMEL_SDHC_GCK_RATE	240000000
@@ -55,7 +54,7 @@ struct atmel_sdhci_plat {
 static int atmel_sdhci_probe(struct udevice *dev)
 {
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
-	struct atmel_sdhci_plat *plat = dev_get_plat(dev);
+	struct atmel_sdhci_plat *plat = dev_get_platdata(dev);
 	struct sdhci_host *host = dev_get_priv(dev);
 	u32 max_clk;
 	struct clk clk;
@@ -113,7 +112,7 @@ static int atmel_sdhci_probe(struct udevice *dev)
 
 static int atmel_sdhci_bind(struct udevice *dev)
 {
-	struct atmel_sdhci_plat *plat = dev_get_plat(dev);
+	struct atmel_sdhci_plat *plat = dev_get_platdata(dev);
 
 	return sdhci_bind(dev, &plat->mmc, &plat->cfg);
 }
@@ -132,7 +131,7 @@ U_BOOT_DRIVER(atmel_sdhci_drv) = {
 	.ops		= &sdhci_ops,
 	.bind		= atmel_sdhci_bind,
 	.probe		= atmel_sdhci_probe,
-	.priv_auto	= sizeof(struct sdhci_host),
-	.plat_auto	= sizeof(struct atmel_sdhci_plat),
+	.priv_auto_alloc_size = sizeof(struct sdhci_host),
+	.platdata_auto_alloc_size = sizeof(struct atmel_sdhci_plat),
 };
 #endif

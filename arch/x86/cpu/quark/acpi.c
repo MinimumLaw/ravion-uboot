@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <acpi/acpi_table.h>
-#include <asm/processor.h>
 #include <asm/tables.h>
 #include <asm/arch/global_nvs.h>
 #include <asm/arch/iomap.h>

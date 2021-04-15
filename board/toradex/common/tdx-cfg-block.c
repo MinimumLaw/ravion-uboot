@@ -4,7 +4,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include "tdx-cfg-block.h"
 #include "tdx-eeprom.h"
 

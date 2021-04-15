@@ -332,14 +332,15 @@ struct mtd_info {
 };
 
 #if IS_ENABLED(CONFIG_DM)
-static inline void mtd_set_ofnode(struct mtd_info *mtd, ofnode node)
+static inline void mtd_set_of_node(struct mtd_info *mtd,
+				   const struct device_node *np)
 {
-	dev_set_ofnode(mtd->dev, node);
+	mtd->dev->node.np = np;
 }
 
-static inline const ofnode mtd_get_ofnode(struct mtd_info *mtd)
+static inline const struct device_node *mtd_get_of_node(struct mtd_info *mtd)
 {
-	return dev_ofnode(mtd->dev);
+	return mtd->dev->node.np;
 }
 #else
 struct device_node;

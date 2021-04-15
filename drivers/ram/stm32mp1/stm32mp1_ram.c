@@ -3,8 +3,6 @@
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  */
 
-#define LOG_CATEGORY UCLASS_RAM
-
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -14,7 +12,6 @@
 #include <regmap.h>
 #include <syscon.h>
 #include <asm/io.h>
-#include <dm/device_compat.h>
 #include "stm32mp1_ddr.h"
 
 static const char *const clkname[] = {
@@ -40,7 +37,7 @@ int stm32mp1_ddr_clk_enable(struct ddr_info *priv, uint32_t mem_speed)
 			ret = clk_enable(&clk);
 
 		if (ret) {
-			log_err("error for %s : %d\n", clkname[idx], ret);
+			printf("error for %s : %d\n", clkname[idx], ret);
 			return ret;
 		}
 	}
@@ -48,13 +45,13 @@ int stm32mp1_ddr_clk_enable(struct ddr_info *priv, uint32_t mem_speed)
 	priv->clk = clk;
 	ddrphy_clk = clk_get_rate(&priv->clk);
 
-	log_debug("DDR: mem_speed (%d kHz), RCC %d kHz\n",
-		  mem_speed, (u32)(ddrphy_clk / 1000));
+	debug("DDR: mem_speed (%d kHz), RCC %d kHz\n",
+	      mem_speed, (u32)(ddrphy_clk / 1000));
 	/* max 10% frequency delta */
 	ddr_clk = abs(ddrphy_clk - mem_speed * 1000);
 	if (ddr_clk > (mem_speed * 100)) {
-		log_err("DDR expected freq %d kHz, current is %d kHz\n",
-			mem_speed, (u32)(ddrphy_clk / 1000));
+		pr_err("DDR expected freq %d kHz, current is %d kHz\n",
+		       mem_speed, (u32)(ddrphy_clk / 1000));
 		return -EINVAL;
 	}
 
@@ -121,7 +118,7 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 	config.info.size = ofnode_read_u32_default(node, "st,mem-size", 0);
 	config.info.name = ofnode_read_string(node, "st,mem-name");
 	if (!config.info.name) {
-		dev_dbg(dev, "no st,mem-name\n");
+		debug("%s: no st,mem-name\n", __func__);
 		return -EINVAL;
 	}
 	printf("RAM: %s\n", config.info.name);
@@ -131,12 +128,12 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 					 (void *)((u32)&config +
 						  param[idx].offset),
 					 param[idx].size);
-		dev_dbg(dev, "%s: %s[0x%x] = %d\n", __func__,
-			param[idx].name, param[idx].size, ret);
+		debug("%s: %s[0x%x] = %d\n", __func__,
+		      param[idx].name, param[idx].size, ret);
 		if (ret &&
 		    (ret != -FDT_ERR_NOTFOUND || !param[idx].present)) {
-			dev_err(dev, "Cannot read %s, error=%d\n",
-				param[idx].name, ret);
+			pr_err("%s: Cannot read %s, error=%d\n",
+			       __func__, param[idx].name, ret);
 			return -EINVAL;
 		}
 		if (param[idx].present) {
@@ -156,7 +153,7 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 
 	ret = clk_get_by_name(dev, "axidcg", &axidcg);
 	if (ret) {
-		dev_dbg(dev, "%s: Cannot found axidcg\n", __func__);
+		debug("%s: Cannot found axidcg\n", __func__);
 		return -EINVAL;
 	}
 	clk_disable(&axidcg); /* disable clock gating during init */
@@ -166,13 +163,13 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 	clk_enable(&axidcg); /* enable clock gating */
 
 	/* check size */
-	dev_dbg(dev, "get_ram_size(%x, %x)\n",
-		(u32)priv->info.base, (u32)STM32_DDR_SIZE);
+	debug("%s : get_ram_size(%x, %x)\n", __func__,
+	      (u32)priv->info.base, (u32)STM32_DDR_SIZE);
 
 	priv->info.size = get_ram_size((long *)priv->info.base,
 				       STM32_DDR_SIZE);
 
-	dev_dbg(dev, "info.size: %x\n", (u32)priv->info.size);
+	debug("%s : %x\n", __func__, (u32)priv->info.size);
 
 	/* check memory access for all memory */
 	if (config.info.size != priv->info.size) {
@@ -189,11 +186,12 @@ static int stm32mp1_ddr_probe(struct udevice *dev)
 	struct regmap *map;
 	int ret;
 
+	debug("STM32MP1 DDR probe\n");
 	priv->dev = dev;
 
 	ret = regmap_init_mem(dev_ofnode(dev), &map);
 	if (ret)
-		return log_ret(ret);
+		return ret;
 
 	priv->ctl = regmap_get_range(map, 0);
 	priv->phy = regmap_get_range(map, 1);
@@ -205,9 +203,7 @@ static int stm32mp1_ddr_probe(struct udevice *dev)
 #if !defined(CONFIG_TFABOOT) && \
 	(!defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD))
 	priv->info.size = 0;
-	ret = stm32mp1_ddr_setup(dev);
-
-	return log_ret(ret);
+	return stm32mp1_ddr_setup(dev);
 #else
 	ofnode node = stm32mp1_ddr_get_ofnode(dev);
 	priv->info.size = ofnode_read_u32_default(node, "st,mem-size", 0);
@@ -239,5 +235,5 @@ U_BOOT_DRIVER(ddr_stm32mp1) = {
 	.of_match = stm32mp1_ddr_ids,
 	.ops = &stm32mp1_ddr_ops,
 	.probe = stm32mp1_ddr_probe,
-	.priv_auto	= sizeof(struct ddr_info),
+	.priv_auto_alloc_size = sizeof(struct ddr_info),
 };

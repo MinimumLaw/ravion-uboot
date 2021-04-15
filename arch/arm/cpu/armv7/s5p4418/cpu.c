@@ -8,7 +8,6 @@
 #include <command.h>
 #include <asm/system.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/sections.h>
 #include <asm/io.h>
 #include <asm/arch/nexell.h>

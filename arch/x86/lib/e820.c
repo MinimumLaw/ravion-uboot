@@ -6,7 +6,6 @@
 #include <common.h>
 #include <efi_loader.h>
 #include <asm/e820.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

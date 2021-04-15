@@ -14,7 +14,6 @@
 #include <mpc8xx.h>
 #include <fdt_support.h>
 #include <serial.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/uclass.h>
 #include <wdt.h>

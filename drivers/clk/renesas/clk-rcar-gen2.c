@@ -15,7 +15,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 
 #include <dt-bindings/clock/renesas-cpg-mssr.h>

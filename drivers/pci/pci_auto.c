@@ -18,10 +18,10 @@
 #define CONFIG_SYS_PCI_CACHE_LINE_SIZE	8
 #endif
 
-static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
-				    struct pci_region *mem,
-				    struct pci_region *prefetch,
-				    struct pci_region *io)
+void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
+			     struct pci_region *mem,
+			     struct pci_region *prefetch, struct pci_region *io,
+			     bool enum_only)
 {
 	u32 bar_response;
 	pci_size_t bar_size;
@@ -43,21 +43,22 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 		int ret = 0;
 
 		/* Tickle the BAR and get the response */
-		dm_pci_write_config32(dev, bar, 0xffffffff);
+		if (!enum_only)
+			dm_pci_write_config32(dev, bar, 0xffffffff);
 		dm_pci_read_config32(dev, bar, &bar_response);
 
-		/* If BAR is not implemented (or invalid) go to the next BAR */
-		if (!bar_response || bar_response == 0xffffffff)
+		/* If BAR is not implemented go to the next BAR */
+		if (!bar_response)
 			continue;
 
 		found_mem64 = 0;
 
 		/* Check the BAR type and set our address mask */
 		if (bar_response & PCI_BASE_ADDRESS_SPACE) {
-			bar_size = bar_response & PCI_BASE_ADDRESS_IO_MASK;
-			bar_size &= ~(bar_size - 1);
-
-			bar_res = io;
+			bar_size = ((~(bar_response & PCI_BASE_ADDRESS_IO_MASK))
+				   & 0xffff) + 1;
+			if (!enum_only)
+				bar_res = io;
 
 			debug("PCI Autoconfig: BAR %d, I/O, size=0x%llx, ",
 			      bar_nr, (unsigned long long)bar_size);
@@ -67,7 +68,10 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 				u32 bar_response_upper;
 				u64 bar64;
 
-				dm_pci_write_config32(dev, bar + 4, 0xffffffff);
+				if (!enum_only) {
+					dm_pci_write_config32(dev, bar + 4,
+							      0xffffffff);
+				}
 				dm_pci_read_config32(dev, bar + 4,
 						     &bar_response_upper);
 
@@ -76,29 +80,33 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 
 				bar_size = ~(bar64 & PCI_BASE_ADDRESS_MEM_MASK)
 						+ 1;
-				found_mem64 = 1;
+				if (!enum_only)
+					found_mem64 = 1;
 			} else {
 				bar_size = (u32)(~(bar_response &
 						PCI_BASE_ADDRESS_MEM_MASK) + 1);
 			}
-
-			if (prefetch &&
-			    (bar_response & PCI_BASE_ADDRESS_MEM_PREFETCH))
-				bar_res = prefetch;
-			else
-				bar_res = mem;
+			if (!enum_only) {
+				if (prefetch && (bar_response &
+					    PCI_BASE_ADDRESS_MEM_PREFETCH)) {
+					bar_res = prefetch;
+				} else {
+					bar_res = mem;
+				}
+			}
 
 			debug("PCI Autoconfig: BAR %d, %s, size=0x%llx, ",
 			      bar_nr, bar_res == prefetch ? "Prf" : "Mem",
 			      (unsigned long long)bar_size);
 		}
 
-		ret = pciauto_region_allocate(bar_res, bar_size,
-					      &bar_value, found_mem64);
-		if (ret)
-			printf("PCI: Failed autoconfig bar %x\n", bar);
-
-		if (!ret) {
+		if (!enum_only) {
+			ret = pciauto_region_allocate(bar_res, bar_size,
+						      &bar_value, found_mem64);
+			if (ret)
+				printf("PCI: Failed autoconfig bar %x\n", bar);
+		}
+		if (!enum_only && !ret) {
 			/* Write it out and update our limit */
 			dm_pci_write_config32(dev, bar, (u32)bar_value);
 
@@ -126,24 +134,28 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 		bar_nr++;
 	}
 
-	/* Configure the expansion ROM address */
-	dm_pci_read_config8(dev, PCI_HEADER_TYPE, &header_type);
-	header_type &= 0x7f;
-	if (header_type != PCI_HEADER_TYPE_CARDBUS) {
-		rom_addr = (header_type == PCI_HEADER_TYPE_NORMAL) ?
-			PCI_ROM_ADDRESS : PCI_ROM_ADDRESS1;
-		dm_pci_write_config32(dev, rom_addr, 0xfffffffe);
-		dm_pci_read_config32(dev, rom_addr, &bar_response);
-		if (bar_response) {
-			bar_size = -(bar_response & ~1);
-			debug("PCI Autoconfig: ROM, size=%#x, ",
-			      (unsigned int)bar_size);
-			if (pciauto_region_allocate(mem, bar_size, &bar_value,
-						    false) == 0) {
-				dm_pci_write_config32(dev, rom_addr, bar_value);
+	if (!enum_only) {
+		/* Configure the expansion ROM address */
+		dm_pci_read_config8(dev, PCI_HEADER_TYPE, &header_type);
+		header_type &= 0x7f;
+		if (header_type != PCI_HEADER_TYPE_CARDBUS) {
+			rom_addr = (header_type == PCI_HEADER_TYPE_NORMAL) ?
+				PCI_ROM_ADDRESS : PCI_ROM_ADDRESS1;
+			dm_pci_write_config32(dev, rom_addr, 0xfffffffe);
+			dm_pci_read_config32(dev, rom_addr, &bar_response);
+			if (bar_response) {
+				bar_size = -(bar_response & ~1);
+				debug("PCI Autoconfig: ROM, size=%#x, ",
+				      (unsigned int)bar_size);
+				if (pciauto_region_allocate(mem, bar_size,
+							    &bar_value,
+							    false) == 0) {
+					dm_pci_write_config32(dev, rom_addr,
+							      bar_value);
+				}
+				cmdstat |= PCI_COMMAND_MEMORY;
+				debug("\n");
 			}
-			cmdstat |= PCI_COMMAND_MEMORY;
-			debug("\n");
 		}
 	}
 
@@ -177,8 +189,8 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 
 	/* Configure bus number registers */
 	dm_pci_write_config8(dev, PCI_PRIMARY_BUS,
-			     PCI_BUS(dm_pci_get_bdf(dev)) - dev_seq(ctlr));
-	dm_pci_write_config8(dev, PCI_SECONDARY_BUS, sub_bus - dev_seq(ctlr));
+			     PCI_BUS(dm_pci_get_bdf(dev)) - ctlr->seq);
+	dm_pci_write_config8(dev, PCI_SECONDARY_BUS, sub_bus - ctlr->seq);
 	dm_pci_write_config8(dev, PCI_SUBORDINATE_BUS, 0xff);
 
 	if (pci_mem) {
@@ -253,7 +265,7 @@ void dm_pciauto_postscan_setup_bridge(struct udevice *dev, int sub_bus)
 	pci_io = ctlr_hose->pci_io;
 
 	/* Configure bus number registers */
-	dm_pci_write_config8(dev, PCI_SUBORDINATE_BUS, sub_bus - dev_seq(ctlr));
+	dm_pci_write_config8(dev, PCI_SUBORDINATE_BUS, sub_bus - ctlr->seq);
 
 	if (pci_mem) {
 		/* Round memory allocator to 1MB boundary */
@@ -306,9 +318,14 @@ int dm_pciauto_config_device(struct udevice *dev)
 	struct pci_region *pci_io;
 	unsigned int sub_bus = PCI_BUS(dm_pci_get_bdf(dev));
 	unsigned short class;
+	bool enum_only = false;
 	struct udevice *ctlr = pci_get_controller(dev);
 	struct pci_controller *ctlr_hose = dev_get_uclass_priv(ctlr);
-	int ret;
+	int n;
+
+#ifdef CONFIG_PCI_ENUM_ONLY
+	enum_only = true;
+#endif
 
 	pci_mem = ctlr_hose->pci_mem;
 	pci_prefetch = ctlr_hose->pci_prefetch;
@@ -321,12 +338,13 @@ int dm_pciauto_config_device(struct udevice *dev)
 		debug("PCI Autoconfig: Found P2P bridge, device %d\n",
 		      PCI_DEV(dm_pci_get_bdf(dev)));
 
-		dm_pciauto_setup_device(dev, 2, pci_mem, pci_prefetch, pci_io);
+		dm_pciauto_setup_device(dev, 2, pci_mem, pci_prefetch, pci_io,
+					enum_only);
 
-		ret = dm_pci_hose_probe_bus(dev);
-		if (ret < 0)
-			return log_msg_ret("probe", ret);
-		sub_bus = ret;
+		n = dm_pci_hose_probe_bus(dev);
+		if (n < 0)
+			return n;
+		sub_bus = (unsigned int)n;
 		break;
 
 	case PCI_CLASS_BRIDGE_CARDBUS:
@@ -334,7 +352,8 @@ int dm_pciauto_config_device(struct udevice *dev)
 		 * just do a minimal setup of the bridge,
 		 * let the OS take care of the rest
 		 */
-		dm_pciauto_setup_device(dev, 0, pci_mem, pci_prefetch, pci_io);
+		dm_pciauto_setup_device(dev, 0, pci_mem, pci_prefetch, pci_io,
+					enum_only);
 
 		debug("PCI Autoconfig: Found P2CardBus bridge, device %d\n",
 		      PCI_DEV(dm_pci_get_bdf(dev)));
@@ -358,7 +377,8 @@ int dm_pciauto_config_device(struct udevice *dev)
 		 */
 		debug("PCI Autoconfig: Broken bridge found, only minimal config\n");
 		dm_pciauto_setup_device(dev, 0, hose->pci_mem,
-					hose->pci_prefetch, hose->pci_io);
+					hose->pci_prefetch, hose->pci_io,
+					enum_only);
 		break;
 #endif
 
@@ -367,7 +387,8 @@ int dm_pciauto_config_device(struct udevice *dev)
 		/* fall through */
 
 	default:
-		dm_pciauto_setup_device(dev, 6, pci_mem, pci_prefetch, pci_io);
+		dm_pciauto_setup_device(dev, 6, pci_mem, pci_prefetch, pci_io,
+					enum_only);
 		break;
 	}
 

@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <console.h>
-#include <asm/global_data.h>
 #include <test/log.h>
 #include <test/test.h>
 #include <test/suites.h>

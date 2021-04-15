@@ -12,7 +12,6 @@
 #include <asm/arch/gx.h>
 #include <asm/arch/mem.h>
 #include <asm/arch/meson-vpu.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/armv8/mmu.h>
 #include <linux/sizes.h>

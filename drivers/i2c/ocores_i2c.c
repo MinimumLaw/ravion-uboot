@@ -13,7 +13,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <clk.h>
 #include <dm.h>
@@ -633,6 +632,6 @@ U_BOOT_DRIVER(i2c_ocores) = {
 	.id	= UCLASS_I2C,
 	.of_match = ocores_i2c_ids,
 	.probe = ocores_i2c_probe,
-	.priv_auto = sizeof(struct ocores_i2c_bus),
+	.priv_auto_alloc_size = sizeof(struct ocores_i2c_bus),
 	.ops	= &ocores_i2c_ops,
 };

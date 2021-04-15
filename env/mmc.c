@@ -6,7 +6,6 @@
 /* #define DEBUG */
 
 #include <common.h>
-#include <asm/global_data.h>
 
 #include <command.h>
 #include <env.h>

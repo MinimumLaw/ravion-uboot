@@ -20,7 +20,7 @@ enum pl01x_type {
  * @skip_init: Don't attempt to change port configuration (also means @clock
  * is ignored)
  */
-struct pl01x_serial_plat {
+struct pl01x_serial_platdata {
 	unsigned long base;
 	enum pl01x_type type;
 	unsigned int clock;

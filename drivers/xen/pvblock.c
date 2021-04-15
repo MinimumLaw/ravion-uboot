@@ -11,7 +11,6 @@
 #include <part.h>
 
 #include <asm/armv8/mmu.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/xen/system.h>
 
@@ -71,7 +70,7 @@ struct blkfront_dev {
 	u8 *bounce_buffer;
 };
 
-struct blkfront_plat {
+struct blkfront_platdata {
 	unsigned int devid;
 };
 
@@ -601,7 +600,7 @@ static ulong pvblock_iop(struct udevice *udev, lbaint_t blknr,
 			 lbaint_t blkcnt, void *buffer, int write)
 {
 	struct blkfront_dev *blk_dev = dev_get_priv(udev);
-	struct blk_desc *desc = dev_get_uclass_plat(udev);
+	struct blk_desc *desc = dev_get_uclass_platdata(udev);
 	struct blkfront_aiocb aiocb;
 	lbaint_t blocks_todo;
 	bool unaligned;
@@ -659,7 +658,7 @@ ulong pvblock_blk_write(struct udevice *udev, lbaint_t blknr, lbaint_t blkcnt,
 
 static int pvblock_blk_bind(struct udevice *udev)
 {
-	struct blk_desc *desc = dev_get_uclass_plat(udev);
+	struct blk_desc *desc = dev_get_uclass_platdata(udev);
 	int devnum;
 
 	desc->if_type = IF_TYPE_PVBLOCK;
@@ -686,12 +685,12 @@ static int pvblock_blk_bind(struct udevice *udev)
 static int pvblock_blk_probe(struct udevice *udev)
 {
 	struct blkfront_dev *blk_dev = dev_get_priv(udev);
-	struct blkfront_plat *plat = dev_get_plat(udev);
-	struct blk_desc *desc = dev_get_uclass_plat(udev);
+	struct blkfront_platdata *platdata = dev_get_platdata(udev);
+	struct blk_desc *desc = dev_get_uclass_platdata(udev);
 	int ret, devid;
 
-	devid = plat->devid;
-	free(plat);
+	devid = platdata->devid;
+	free(platdata);
 
 	ret = init_blkfront(devid, blk_dev);
 	if (ret < 0)
@@ -724,7 +723,7 @@ U_BOOT_DRIVER(pvblock_blk) = {
 	.bind			= pvblock_blk_bind,
 	.probe			= pvblock_blk_probe,
 	.remove			= pvblock_blk_remove,
-	.priv_auto	= sizeof(struct blkfront_dev),
+	.priv_auto_alloc_size	= sizeof(struct blkfront_dev),
 	.flags			= DM_FLAG_OS_PREPARE,
 };
 
@@ -738,27 +737,27 @@ static int on_new_vbd(struct udevice *parent, unsigned int devid)
 {
 	struct driver_info info;
 	struct udevice *udev;
-	struct blkfront_plat *plat;
+	struct blkfront_platdata *platdata;
 	int ret;
 
 	debug("New " DRV_NAME_BLK ", device ID %d\n", devid);
 
-	plat = malloc(sizeof(struct blkfront_plat));
-	if (!plat) {
+	platdata = malloc(sizeof(struct blkfront_platdata));
+	if (!platdata) {
 		printf("Failed to allocate platform data\n");
 		return -ENOMEM;
 	}
 
-	plat->devid = devid;
+	platdata->devid = devid;
 
 	info.name = DRV_NAME_BLK;
-	info.plat = plat;
+	info.platdata = platdata;
 
 	ret = device_bind_by_name(parent, false, &info, &udev);
 	if (ret < 0) {
 		printf("Failed to bind " DRV_NAME_BLK " to device with ID %d, ret: %d\n",
 		       devid, ret);
-		free(plat);
+		free(platdata);
 	}
 	return ret;
 }
@@ -803,7 +802,7 @@ static void print_pvblock_devices(void)
 	class_name = uclass_get_name(UCLASS_PVBLOCK);
 	for (blk_first_device(IF_TYPE_PVBLOCK, &udev); udev;
 	     blk_next_device(&udev), first = false) {
-		struct blk_desc *desc = dev_get_uclass_plat(udev);
+		struct blk_desc *desc = dev_get_uclass_platdata(udev);
 
 		if (!first)
 			puts(", ");

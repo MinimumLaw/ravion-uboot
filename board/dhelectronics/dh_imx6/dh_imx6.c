@@ -11,7 +11,6 @@
 #include <image.h>
 #include <init.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/crm_regs.h>

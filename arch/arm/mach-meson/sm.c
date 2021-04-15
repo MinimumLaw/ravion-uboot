@@ -11,7 +11,6 @@
 #include <log.h>
 #include <asm/arch/sm.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/ptrace.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

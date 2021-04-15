@@ -10,7 +10,6 @@
 #include <ioports.h>
 #include <log.h>
 #include <mpc83xx.h>
-#include <asm/global_data.h>
 #include <asm/mpc8349_pci.h>
 #include <i2c.h>
 #include <miiphy.h>

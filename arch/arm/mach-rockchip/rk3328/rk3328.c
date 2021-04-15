@@ -10,7 +10,6 @@
 #include <asm/arch-rockchip/grf_rk3328.h>
 #include <asm/arch-rockchip/uart.h>
 #include <asm/armv8/mmu.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;

@@ -18,7 +18,6 @@
 #include <irq.h>
 #include <irq_func.h>
 #include <asm/control_regs.h>
-#include <asm/global_data.h>
 #include <asm/i8259.h>
 #include <asm/interrupt.h>
 #include <asm/io.h>

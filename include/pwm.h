@@ -10,8 +10,6 @@
 #ifndef _pwm_h_
 #define _pwm_h_
 
-struct udevice;
-
 /* struct pwm_ops: Operations for the PWM uclass */
 struct pwm_ops {
 	/**

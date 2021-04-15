@@ -10,7 +10,6 @@
 #include <getopt.h>
 #include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 
 static char log_fmt_chars[LOGF_COUNT] = "clFLfm";
 

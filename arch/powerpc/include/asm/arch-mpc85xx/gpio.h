@@ -18,7 +18,7 @@
 #endif
 
 struct mpc8xxx_gpio_plat {
-	phys_addr_t addr;
+	ulong addr;
 	unsigned long size;
 	uint ngpios;
 };

@@ -6,7 +6,11 @@
 #include <common.h>
 #include <addr_map.h>
 
-struct addrmap address_map[CONFIG_SYS_NUM_ADDR_MAP];
+static struct {
+	phys_addr_t paddr;
+	phys_size_t size;
+	unsigned long vaddr;
+} address_map[CONFIG_SYS_NUM_ADDR_MAP];
 
 phys_addr_t addrmap_virt_to_phys(void * vaddr)
 {

@@ -18,7 +18,7 @@ struct gpio_bank {
 };
 
 /* Information about a GPIO bank */
-struct hikey_gpio_plat {
+struct hikey_gpio_platdata {
 	int bank_index;
 	ulong base;     /* address of registers in physical memory */
 };

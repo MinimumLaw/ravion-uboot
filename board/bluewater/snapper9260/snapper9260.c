@@ -10,7 +10,6 @@
 #include <common.h>
 #include <dm.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <asm/mach-types.h>
@@ -144,11 +143,11 @@ void reset_phy(void)
 {
 }
 
-static struct atmel_serial_plat at91sam9260_serial_plat = {
+static struct atmel_serial_platdata at91sam9260_serial_plat = {
 	.base_addr = ATMEL_BASE_DBGU,
 };
 
-U_BOOT_DRVINFO(at91sam9260_serial) = {
+U_BOOT_DEVICE(at91sam9260_serial) = {
 	.name	= "serial_atmel",
-	.plat = &at91sam9260_serial_plat,
+	.platdata = &at91sam9260_serial_plat,
 };

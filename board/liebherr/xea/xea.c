@@ -18,7 +18,6 @@
 #include <init.h>
 #include <log.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>

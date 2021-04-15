@@ -6,12 +6,10 @@
  */
 
 #include <android_bootloader_message.h>
-#include <bcb.h>
 #include <command.h>
 #include <common.h>
 #include <log.h>
 #include <part.h>
-#include <malloc.h>
 
 enum bcb_cmd {
 	BCB_CMD_LOAD,
@@ -112,7 +110,8 @@ static int bcb_field_get(char *name, char **fieldp, int *sizep)
 	return 0;
 }
 
-static int __bcb_load(int devnum, const char *partp)
+static int do_bcb_load(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
 {
 	struct blk_desc *desc;
 	struct disk_partition info;
@@ -120,19 +119,17 @@ static int __bcb_load(int devnum, const char *partp)
 	char *endp;
 	int part, ret;
 
-	desc = blk_get_devnum_by_type(IF_TYPE_MMC, devnum);
-	if (!desc) {
-		ret = -ENODEV;
+	ret = blk_get_device_by_str("mmc", argv[1], &desc);
+	if (ret < 0)
 		goto err_read_fail;
-	}
 
-	part = simple_strtoul(partp, &endp, 0);
+	part = simple_strtoul(argv[2], &endp, 0);
 	if (*endp == '\0') {
 		ret = part_get_info(desc, part, &info);
 		if (ret)
 			goto err_read_fail;
 	} else {
-		part = part_get_info_by_name(desc, partp, &info);
+		part = part_get_info_by_name(desc, argv[2], &info);
 		if (part < 0) {
 			ret = part;
 			goto err_read_fail;
@@ -154,10 +151,10 @@ static int __bcb_load(int devnum, const char *partp)
 
 	return CMD_RET_SUCCESS;
 err_read_fail:
-	printf("Error: mmc %d:%s read failed (%d)\n", devnum, partp, ret);
+	printf("Error: mmc %s:%s read failed (%d)\n", argv[1], argv[2], ret);
 	goto err;
 err_too_small:
-	printf("Error: mmc %d:%s too small!", devnum, partp);
+	printf("Error: mmc %s:%s too small!", argv[1], argv[2]);
 	goto err;
 err:
 	bcb_dev = -1;
@@ -166,56 +163,31 @@ err:
 	return CMD_RET_FAILURE;
 }
 
-static int do_bcb_load(struct cmd_tbl *cmdtp, int flag, int argc,
-		       char * const argv[])
-{
-	char *endp;
-	int devnum = simple_strtoul(argv[1], &endp, 0);
-
-	if (*endp != '\0') {
-		printf("Error: Device id '%s' not a number\n", argv[1]);
-		return CMD_RET_FAILURE;
-	}
-
-	return __bcb_load(devnum, argv[2]);
-}
-
-static int __bcb_set(char *fieldp, const char *valp)
+static int do_bcb_set(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	int size, len;
-	char *field, *str, *found, *tmp;
+	char *field, *str, *found;
 
-	if (bcb_field_get(fieldp, &field, &size))
+	if (bcb_field_get(argv[1], &field, &size))
 		return CMD_RET_FAILURE;
 
-	len = strlen(valp);
+	len = strlen(argv[2]);
 	if (len >= size) {
 		printf("Error: sizeof('%s') = %d >= %d = sizeof(bcb.%s)\n",
-		       valp, len, size, fieldp);
+		       argv[2], len, size, argv[1]);
 		return CMD_RET_FAILURE;
 	}
-	str = strdup(valp);
-	if (!str) {
-		printf("Error: Out of memory while strdup\n");
-		return CMD_RET_FAILURE;
-	}
+	str = argv[2];
 
-	tmp = str;
 	field[0] = '\0';
-	while ((found = strsep(&tmp, ":"))) {
+	while ((found = strsep(&str, ":"))) {
 		if (field[0] != '\0')
 			strcat(field, "\n");
 		strcat(field, found);
 	}
-	free(str);
 
 	return CMD_RET_SUCCESS;
-}
-
-static int do_bcb_set(struct cmd_tbl *cmdtp, int flag, int argc,
-		      char * const argv[])
-{
-	return __bcb_set(argv[1], argv[2]);
 }
 
 static int do_bcb_clear(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -278,7 +250,8 @@ static int do_bcb_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int __bcb_store(void)
+static int do_bcb_store(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
 {
 	struct blk_desc *desc;
 	struct disk_partition info;
@@ -307,31 +280,6 @@ err:
 	printf("Error: mmc %d:%d write failed (%d)\n", bcb_dev, bcb_part, ret);
 
 	return CMD_RET_FAILURE;
-}
-
-static int do_bcb_store(struct cmd_tbl *cmdtp, int flag, int argc,
-			char * const argv[])
-{
-	return __bcb_store();
-}
-
-int bcb_write_reboot_reason(int devnum, char *partp, const char *reasonp)
-{
-	int ret;
-
-	ret = __bcb_load(devnum, partp);
-	if (ret != CMD_RET_SUCCESS)
-		return ret;
-
-	ret = __bcb_set("command", reasonp);
-	if (ret != CMD_RET_SUCCESS)
-		return ret;
-
-	ret = __bcb_store();
-	if (ret != CMD_RET_SUCCESS)
-		return ret;
-
-	return 0;
 }
 
 static struct cmd_tbl cmd_bcb_sub[] = {

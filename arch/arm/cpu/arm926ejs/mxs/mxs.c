@@ -15,7 +15,6 @@
 #include <hang.h>
 #include <init.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/io.h>

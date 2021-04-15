@@ -14,7 +14,6 @@
 #include <regmap.h>
 #include <reset-uclass.h>
 #include <syscon.h>
-#include <dm/device-internal.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 
@@ -93,7 +92,7 @@ int mediatek_reset_bind(struct udevice *pdev, u32 regofs, u32 num_regs)
 	priv = malloc(sizeof(struct mediatek_reset_priv));
 	priv->regofs = regofs;
 	priv->nr_resets = num_regs * 32;
-	dev_set_priv(rst_dev, priv);
+	rst_dev->priv = priv;
 
 	return 0;
 }
@@ -103,5 +102,5 @@ U_BOOT_DRIVER(mediatek_reset) = {
 	.id = UCLASS_RESET,
 	.probe = mediatek_reset_probe,
 	.ops = &mediatek_reset_ops,
-	.priv_auto	= sizeof(struct mediatek_reset_priv),
+	.priv_auto_alloc_size = sizeof(struct mediatek_reset_priv),
 };

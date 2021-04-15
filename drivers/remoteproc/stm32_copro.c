@@ -2,8 +2,7 @@
 /*
  * Copyright (C) 2019, STMicroelectronics - All Rights Reserved
  */
-#define LOG_CATEGORY UCLASS_REMOTEPROC
-
+#define pr_fmt(fmt) "%s: " fmt, __func__
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
@@ -223,5 +222,5 @@ U_BOOT_DRIVER(stm32_copro) = {
 	.id = UCLASS_REMOTEPROC,
 	.ops = &stm32_copro_ops,
 	.probe = stm32_copro_probe,
-	.priv_auto	= sizeof(struct stm32_copro_privdata),
+	.priv_auto_alloc_size = sizeof(struct stm32_copro_privdata),
 };

@@ -41,7 +41,10 @@
 &spi0 {
 	u-boot,dm-pre-reloc;
 
-	spi-nor@0 {
+	spi-flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <40000000>;
 		u-boot,dm-pre-reloc;
 	};
 };

@@ -35,8 +35,6 @@
 			"setenv name_fdt keystone-k2g-evm.dtb; " \
 		"else if test $board_name = 66AK2GIC; then " \
 			 "setenv name_fdt keystone-k2g-ice.dtb; " \
-		"else if test $board_name = 66AK2GI1; then " \
-			 "setenv name_fdt keystone-k2g-ice.dtb; " \
 		"else if test $name_fdt = undefined; then " \
 			"echo WARNING: Could not determine device tree to use;"\
 		"fi;fi;fi;fi; setenv fdtfile ${name_fdt}\0" \

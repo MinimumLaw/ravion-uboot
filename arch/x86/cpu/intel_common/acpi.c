@@ -17,7 +17,6 @@
 #include <asm/acpi_table.h>
 #include <asm/cpu.h>
 #include <asm/cpu_common.h>
-#include <asm/global_data.h>
 #include <asm/intel_acpi.h>
 #include <asm/ioapic.h>
 #include <asm/mpspec.h>

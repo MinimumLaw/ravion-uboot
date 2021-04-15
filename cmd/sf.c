@@ -344,11 +344,8 @@ static int do_spi_flash_erase(int argc, char *const argv[])
 	}
 
 	ret = spi_flash_erase(flash, offset, size);
-	printf("SF: %zu bytes @ %#x Erased: ", (size_t)size, (u32)offset);
-	if (ret)
-		printf("ERROR %d\n", ret);
-	else
-		printf("OK\n");
+	printf("SF: %zu bytes @ %#x Erased: %s\n", (size_t)size, (u32)offset,
+	       ret ? "ERROR" : "OK");
 
 	return ret == 0 ? 0 : 1;
 }
@@ -445,22 +442,20 @@ static int spi_flash_test(struct spi_flash *flash, uint8_t *buf, ulong len,
 			   ulong offset, uint8_t *vbuf)
 {
 	struct test_info test;
-	int err, i;
+	int i;
 
 	printf("SPI flash test:\n");
 	memset(&test, '\0', sizeof(test));
 	test.base_ms = get_timer(0);
 	test.bytes = len;
-	err = spi_flash_erase(flash, offset, len);
-	if (err) {
-		printf("Erase failed (err = %d)\n", err);
+	if (spi_flash_erase(flash, offset, len)) {
+		printf("Erase failed\n");
 		return -1;
 	}
 	spi_test_next_stage(&test);
 
-	err = spi_flash_read(flash, offset, len, vbuf);
-	if (err) {
-		printf("Check read failed (err = %d)\n", err);
+	if (spi_flash_read(flash, offset, len, vbuf)) {
+		printf("Check read failed\n");
 		return -1;
 	}
 	for (i = 0; i < len; i++) {
@@ -473,17 +468,15 @@ static int spi_flash_test(struct spi_flash *flash, uint8_t *buf, ulong len,
 	}
 	spi_test_next_stage(&test);
 
-	err = spi_flash_write(flash, offset, len, buf);
-	if (err) {
-		printf("Write failed (err = %d)\n", err);
+	if (spi_flash_write(flash, offset, len, buf)) {
+		printf("Write failed\n");
 		return -1;
 	}
 	memset(vbuf, '\0', len);
 	spi_test_next_stage(&test);
 
-	err = spi_flash_read(flash, offset, len, vbuf);
-	if (err) {
-		printf("Read failed (ret = %d)\n", err);
+	if (spi_flash_read(flash, offset, len, vbuf)) {
+		printf("Read failed\n");
 		return -1;
 	}
 	spi_test_next_stage(&test);

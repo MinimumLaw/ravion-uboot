@@ -35,9 +35,6 @@ typedef void (*mc_reset_t)(int assert);
 struct mc_ddr_init_param {
 	void __iomem *memc;
 
-	u32 sdr_cfg0;
-	u32 sdr_cfg1;
-
 	u32 dq_dly;
 	u32 dqs_dly;
 
@@ -48,7 +45,6 @@ struct mc_ddr_init_param {
 	u32 bus_width;
 };
 
-void sdr_init(struct mc_ddr_init_param *param);
 void ddr1_init(struct mc_ddr_init_param *param);
 void ddr2_init(struct mc_ddr_init_param *param);
 void ddr_calibrate(void __iomem *memc, u32 memsize, u32 bw);

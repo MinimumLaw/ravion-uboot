@@ -3,8 +3,6 @@
 #ifndef __PXE_UTILS_H
 #define __PXE_UTILS_H
 
-#include <linux/list.h>
-
 /*
  * A note on the pxe file parser.
  *
@@ -45,7 +43,6 @@ struct pxe_label {
 	char *initrd;
 	char *fdt;
 	char *fdtdir;
-	char *fdtoverlays;
 	int ipappend;
 	int attempted;
 	int localboot;

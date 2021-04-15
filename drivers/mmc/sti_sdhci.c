@@ -11,7 +11,6 @@
 #include <reset-uclass.h>
 #include <sdhci.h>
 #include <asm/arch/sdhci.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -36,7 +35,7 @@ struct sti_sdhci_plat {
  */
 static int sti_mmc_core_config(struct udevice *dev)
 {
-	struct sti_sdhci_plat *plat = dev_get_plat(dev);
+	struct sti_sdhci_plat *plat = dev_get_platdata(dev);
 	struct sdhci_host *host = dev_get_priv(dev);
 	int ret;
 
@@ -72,7 +71,7 @@ static int sti_mmc_core_config(struct udevice *dev)
 static int sti_sdhci_probe(struct udevice *dev)
 {
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
-	struct sti_sdhci_plat *plat = dev_get_plat(dev);
+	struct sti_sdhci_plat *plat = dev_get_platdata(dev);
 	struct sdhci_host *host = dev_get_priv(dev);
 	int ret;
 
@@ -112,7 +111,7 @@ static int sti_sdhci_probe(struct udevice *dev)
 	return sdhci_probe(dev);
 }
 
-static int sti_sdhci_of_to_plat(struct udevice *dev)
+static int sti_sdhci_ofdata_to_platdata(struct udevice *dev)
 {
 	struct sdhci_host *host = dev_get_priv(dev);
 
@@ -127,7 +126,7 @@ static int sti_sdhci_of_to_plat(struct udevice *dev)
 
 static int sti_sdhci_bind(struct udevice *dev)
 {
-	struct sti_sdhci_plat *plat = dev_get_plat(dev);
+	struct sti_sdhci_plat *plat = dev_get_platdata(dev);
 
 	return sdhci_bind(dev, &plat->mmc, &plat->cfg);
 }
@@ -143,8 +142,8 @@ U_BOOT_DRIVER(sti_mmc) = {
 	.of_match = sti_sdhci_ids,
 	.bind = sti_sdhci_bind,
 	.ops = &sdhci_ops,
-	.of_to_plat = sti_sdhci_of_to_plat,
+	.ofdata_to_platdata = sti_sdhci_ofdata_to_platdata,
 	.probe = sti_sdhci_probe,
-	.priv_auto	= sizeof(struct sdhci_host),
-	.plat_auto	= sizeof(struct sti_sdhci_plat),
+	.priv_auto_alloc_size = sizeof(struct sdhci_host),
+	.platdata_auto_alloc_size = sizeof(struct sti_sdhci_plat),
 };

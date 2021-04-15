@@ -9,7 +9,6 @@
 #include <malloc.h>
 #include <spi.h>
 #include <spi_flash.h>
-#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include "sf_internal.h"
 
@@ -101,5 +100,5 @@ UCLASS_DRIVER(spi_flash) = {
 	.id		= UCLASS_SPI_FLASH,
 	.name		= "spi_flash",
 	.post_bind	= spi_flash_post_bind,
-	.per_device_auto	= sizeof(struct spi_nor),
+	.per_device_auto_alloc_size = sizeof(struct spi_flash),
 };

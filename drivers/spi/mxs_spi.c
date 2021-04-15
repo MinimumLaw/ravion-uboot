@@ -41,7 +41,7 @@
 #define MXS_SSP_IMX23_CLKID_SSP0 33
 #define MXS_SSP_IMX28_CLKID_SSP0 46
 
-struct mxs_spi_plat {
+struct mxs_spi_platdata {
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct dtd_fsl_imx23_spi dtplat;
 #endif
@@ -311,7 +311,7 @@ int mxs_spi_xfer(struct udevice *dev, unsigned int bitlen,
 
 static int mxs_spi_probe(struct udevice *bus)
 {
-	struct mxs_spi_plat *plat = dev_get_plat(bus);
+	struct mxs_spi_platdata *plat = dev_get_platdata(bus);
 	struct mxs_spi_priv *priv = dev_get_priv(bus);
 	int ret;
 
@@ -441,9 +441,9 @@ static const struct dm_spi_ops mxs_spi_ops = {
 };
 
 #if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
-static int mxs_of_to_plat(struct udevice *bus)
+static int mxs_ofdata_to_platdata(struct udevice *bus)
 {
-	struct mxs_spi_plat *plat = dev_get_plat(bus);
+	struct mxs_spi_platdata *plat = bus->platdata;
 	u32 prop[2];
 	int ret;
 
@@ -485,12 +485,12 @@ U_BOOT_DRIVER(fsl_imx23_spi) = {
 	.id	= UCLASS_SPI,
 #if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.of_match = mxs_spi_ids,
-	.of_to_plat = mxs_of_to_plat,
+	.ofdata_to_platdata = mxs_ofdata_to_platdata,
 #endif
-	.plat_auto	= sizeof(struct mxs_spi_plat),
+	.platdata_auto_alloc_size = sizeof(struct mxs_spi_platdata),
 	.ops	= &mxs_spi_ops,
-	.priv_auto	= sizeof(struct mxs_spi_priv),
+	.priv_auto_alloc_size = sizeof(struct mxs_spi_priv),
 	.probe	= mxs_spi_probe,
 };
 
-DM_DRIVER_ALIAS(fsl_imx23_spi, fsl_imx28_spi)
+U_BOOT_DRIVER_ALIAS(fsl_imx23_spi, fsl_imx28_spi)

@@ -13,7 +13,6 @@
 #include <env.h>
 #include <init.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <asm/mach-types.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>

@@ -8,7 +8,6 @@
 #include <dm.h>
 #include <dfu.h>
 #include <env.h>
-#include <log.h>
 #include <memalign.h>
 #include <misc.h>
 #include <mtd.h>
@@ -143,8 +142,7 @@ void set_dfu_alt_info(char *interface, char *devstr)
 			board_get_alt_info_mtd(mtd, buf);
 	}
 
-	if (IS_ENABLED(CONFIG_DFU_VIRT) &&
-	    IS_ENABLED(CMD_STM32PROG_USB)) {
+	if (IS_ENABLED(CONFIG_DFU_VIRT)) {
 		strncat(buf, "&virt 0=OTP", DFU_ALT_BUF_LEN);
 
 		if (IS_ENABLED(CONFIG_PMIC_STPMIC1))
@@ -165,7 +163,7 @@ static int dfu_otp_read(u64 offset, u8 *buffer, long *size)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 	if (ret)
 		return ret;
@@ -186,7 +184,7 @@ static int dfu_pmic_read(u64 offset, u8 *buffer, long *size)
 	struct udevice *dev;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stpmic1_nvm),
+					  DM_GET_DRIVER(stpmic1_nvm),
 					  &dev);
 	if (ret)
 		return ret;
@@ -201,7 +199,7 @@ static int dfu_pmic_read(u64 offset, u8 *buffer, long *size)
 		ret = 0;
 	}
 #else
-	log_err("PMIC update not supported");
+	pr_err("PMIC update not supported");
 	ret = -EOPNOTSUPP;
 #endif
 
@@ -218,7 +216,7 @@ int dfu_read_medium_virt(struct dfu_entity *dfu, u64 offset,
 		return dfu_pmic_read(offset, buf, len);
 	}
 
-	if (IS_ENABLED(CONFIG_CMD_STM32PROG_USB) &&
+	if (CONFIG_IS_ENABLED(CMD_STM32PROG) &&
 	    dfu->data.virt.dev_num >= STM32PROG_VIRT_FIRST_DEV_NUM)
 		return stm32prog_read_medium_virt(dfu, offset, buf, len);
 
@@ -229,7 +227,7 @@ int dfu_read_medium_virt(struct dfu_entity *dfu, u64 offset,
 int dfu_write_medium_virt(struct dfu_entity *dfu, u64 offset,
 			  void *buf, long *len)
 {
-	if (IS_ENABLED(CONFIG_CMD_STM32PROG_USB) &&
+	if (CONFIG_IS_ENABLED(CMD_STM32PROG) &&
 	    dfu->data.virt.dev_num >= STM32PROG_VIRT_FIRST_DEV_NUM)
 		return stm32prog_write_medium_virt(dfu, offset, buf, len);
 
@@ -238,7 +236,7 @@ int dfu_write_medium_virt(struct dfu_entity *dfu, u64 offset,
 
 int __weak dfu_get_medium_size_virt(struct dfu_entity *dfu, u64 *size)
 {
-	if (IS_ENABLED(CONFIG_CMD_STM32PROG_USB) &&
+	if (CONFIG_IS_ENABLED(CMD_STM32PROG) &&
 	    dfu->data.virt.dev_num >= STM32PROG_VIRT_FIRST_DEV_NUM)
 		return stm32prog_get_medium_size_virt(dfu, size);
 

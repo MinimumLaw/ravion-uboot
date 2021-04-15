@@ -20,7 +20,6 @@
 #include <asm/cache.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 
 #ifdef CONFIG_DM_ETH
@@ -745,7 +744,7 @@ static int sh_ether_write_hwaddr(struct udevice *dev)
 	struct sh_ether_priv *priv = dev_get_priv(dev);
 	struct sh_eth_dev *eth = &priv->shdev;
 	struct sh_eth_info *port_info = &eth->port_info[eth->port];
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 
 	sh_eth_write_hwaddr(port_info, pdata->enetaddr);
 
@@ -755,7 +754,7 @@ static int sh_ether_write_hwaddr(struct udevice *dev)
 static int sh_eth_phy_config(struct udevice *dev)
 {
 	struct sh_ether_priv *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct sh_eth_dev *eth = &priv->shdev;
 	int ret = 0;
 	struct sh_eth_info *port_info = &eth->port_info[eth->port];
@@ -777,7 +776,7 @@ static int sh_eth_phy_config(struct udevice *dev)
 static int sh_ether_start(struct udevice *dev)
 {
 	struct sh_ether_priv *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct sh_eth_dev *eth = &priv->shdev;
 	int ret;
 
@@ -809,7 +808,7 @@ static void sh_ether_stop(struct udevice *dev)
 
 static int sh_ether_probe(struct udevice *udev)
 {
-	struct eth_pdata *pdata = dev_get_plat(udev);
+	struct eth_pdata *pdata = dev_get_platdata(udev);
 	struct sh_ether_priv *priv = dev_get_priv(udev);
 	struct sh_eth_dev *eth = &priv->shdev;
 	struct ofnode_phandle_args phandle_args;
@@ -912,9 +911,9 @@ static const struct eth_ops sh_ether_ops = {
 	.write_hwaddr		= sh_ether_write_hwaddr,
 };
 
-int sh_ether_of_to_plat(struct udevice *dev)
+int sh_ether_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	const char *phy_mode;
 	const fdt32_t *cell;
 	int ret = 0;
@@ -954,12 +953,12 @@ U_BOOT_DRIVER(eth_sh_ether) = {
 	.name		= "sh_ether",
 	.id		= UCLASS_ETH,
 	.of_match	= sh_ether_ids,
-	.of_to_plat = sh_ether_of_to_plat,
+	.ofdata_to_platdata = sh_ether_ofdata_to_platdata,
 	.probe		= sh_ether_probe,
 	.remove		= sh_ether_remove,
 	.ops		= &sh_ether_ops,
-	.priv_auto	= sizeof(struct sh_ether_priv),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct sh_ether_priv),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 	.flags		= DM_FLAG_ALLOC_PRIV_DMA,
 };
 #endif

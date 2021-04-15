@@ -48,14 +48,15 @@ struct rockchip_dmc_plat {
 };
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-static int conv_of_plat(struct udevice *dev)
+static int conv_of_platdata(struct udevice *dev)
 {
-	struct rockchip_dmc_plat *plat = dev_get_plat(dev);
+	struct rockchip_dmc_plat *plat = dev_get_platdata(dev);
 	struct dtd_rockchip_rk3328_dmc *dtplat = &plat->dtplat;
 	int ret;
 
-	ret = regmap_init_mem_plat(dev, dtplat->reg,
-				   ARRAY_SIZE(dtplat->reg) / 2, &plat->map);
+	ret = regmap_init_mem_platdata(dev, dtplat->reg,
+				       ARRAY_SIZE(dtplat->reg) / 2,
+				       &plat->map);
 	if (ret)
 		return ret;
 
@@ -514,7 +515,7 @@ static int sdram_init_detect(struct dram_info *dram,
 static int rk3328_dmc_init(struct udevice *dev)
 {
 	struct dram_info *priv = dev_get_priv(dev);
-	struct rockchip_dmc_plat *plat = dev_get_plat(dev);
+	struct rockchip_dmc_plat *plat = dev_get_platdata(dev);
 	int ret;
 
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
@@ -524,7 +525,7 @@ static int rk3328_dmc_init(struct udevice *dev)
 	struct rk3328_sdram_params *params =
 					(void *)dtplat->rockchip_sdram_params;
 
-	ret = conv_of_plat(dev);
+	ret = conv_of_platdata(dev);
 	if (ret)
 		return ret;
 #endif
@@ -547,10 +548,10 @@ static int rk3328_dmc_init(struct udevice *dev)
 	return 0;
 }
 
-static int rk3328_dmc_of_to_plat(struct udevice *dev)
+static int rk3328_dmc_ofdata_to_platdata(struct udevice *dev)
 {
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct rockchip_dmc_plat *plat = dev_get_plat(dev);
+	struct rockchip_dmc_plat *plat = dev_get_platdata(dev);
 	int ret;
 
 	ret = dev_read_u32_array(dev, "rockchip,sdram-params",
@@ -611,11 +612,11 @@ U_BOOT_DRIVER(rockchip_rk3328_dmc) = {
 	.of_match = rk3328_dmc_ids,
 	.ops = &rk3328_dmc_ops,
 #ifdef CONFIG_TPL_BUILD
-	.of_to_plat = rk3328_dmc_of_to_plat,
+	.ofdata_to_platdata = rk3328_dmc_ofdata_to_platdata,
 #endif
 	.probe = rk3328_dmc_probe,
-	.priv_auto	= sizeof(struct dram_info),
+	.priv_auto_alloc_size = sizeof(struct dram_info),
 #ifdef CONFIG_TPL_BUILD
-	.plat_auto	= sizeof(struct rockchip_dmc_plat),
+	.platdata_auto_alloc_size = sizeof(struct rockchip_dmc_plat),
 #endif
 };

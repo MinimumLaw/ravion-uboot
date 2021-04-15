@@ -4,7 +4,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include "emc.h"
 #include <asm/io.h>
 #include <asm/arch/clock.h>

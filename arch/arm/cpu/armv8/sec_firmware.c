@@ -10,7 +10,6 @@
 #include <image.h>
 #include <log.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/ptrace.h>
 #include <linux/kernel.h>
 #include <asm/io.h>
@@ -317,7 +316,7 @@ __weak bool sec_firmware_is_valid(const void *sec_firmware_img)
 		return false;
 	}
 
-	if (fit_check_format(sec_firmware_img, IMAGE_SIZE_INVAL)) {
+	if (!fit_check_format(sec_firmware_img)) {
 		printf("SEC Firmware: Bad firmware image (bad FIT header)\n");
 		return false;
 	}

@@ -3,10 +3,7 @@
  * Copyright (C) 2019-2020, STMicroelectronics - All Rights Reserved
  */
 
-#define LOG_CATEGORY LOGC_ARCH
-
 #include <common.h>
-#include <fdtdec.h>
 #include <fdt_support.h>
 #include <log.h>
 #include <tee.h>
@@ -175,15 +172,15 @@ static int stm32_fdt_fixup_etzpc(void *fdt, int soc_node)
 		status = (decprot[offset] >> shift) & DECPROT_MASK;
 		addr = array[i];
 
-		log_debug("ETZPC: 0x%08x decprot %d=%d\n", addr, i, status);
+		debug("ETZPC: 0x%08x decprot %d=%d\n", addr, i, status);
 
 		if (addr == ETZPC_RESERVED ||
 		    status == DECPROT_NON_SECURED)
 			continue;
 
 		if (fdt_disable_subnode_by_address(fdt, soc_node, addr))
-			log_notice("ETZPC: 0x%08x node disabled, decprot %d=%d\n",
-				   addr, i, status);
+			printf("ETZPC: 0x%08x node disabled, decprot %d=%d\n",
+			       addr, i, status);
 	}
 
 	return 0;
@@ -197,7 +194,7 @@ static void stm32_fdt_fixup_cpu(void *blob, char *name)
 
 	off = fdt_path_offset(blob, "/cpus");
 	if (off < 0) {
-		log_warning("%s: couldn't find /cpus node\n", __func__);
+		printf("%s: couldn't find /cpus node\n", __func__);
 		return;
 	}
 
@@ -206,8 +203,7 @@ static void stm32_fdt_fixup_cpu(void *blob, char *name)
 		reg = fdtdec_get_addr(blob, off, "reg");
 		if (reg != 0) {
 			fdt_del_node(blob, off);
-			log_notice("FDT: cpu %d node remove for %s\n",
-				   reg, name);
+			printf("FDT: cpu %d node remove for %s\n", reg, name);
 			/* after delete we can't trust the offsets anymore */
 			off = -1;
 		}
@@ -220,8 +216,8 @@ static void stm32_fdt_disable(void *fdt, int offset, u32 addr,
 			      const char *string, const char *name)
 {
 	if (fdt_disable_subnode_by_address(fdt, offset, addr))
-		log_notice("FDT: %s@%08x node disabled for %s\n",
-			   string, addr, name);
+		printf("FDT: %s@%08x node disabled for %s\n",
+		       string, addr, name);
 }
 
 static void stm32_fdt_disable_optee(void *blob)

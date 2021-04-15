@@ -9,7 +9,6 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <sound.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

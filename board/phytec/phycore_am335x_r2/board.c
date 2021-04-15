@@ -17,7 +17,6 @@
 #include <asm/arch/ddr_defs.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/global_data.h>
 #include <power/tps65910.h>
 #include <jffs2/load_kernel.h>
 #include <mtd_node.h>

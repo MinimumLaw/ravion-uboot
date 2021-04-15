@@ -57,7 +57,7 @@ struct cortina_led_cfg {
 };
 
 /* LED_control structures */
-struct cortina_led_plat {
+struct cortina_led_platdata {
 	void __iomem *ctrl_regs;
 	u16 rate1;	/* blink rate setting 0 */
 	u16 rate2;	/* blink rate setting 1 */
@@ -130,13 +130,13 @@ static const struct led_ops cortina_led_ops = {
 	.set_state = cortina_led_set_state,
 };
 
-static int ca_led_of_to_plat(struct udevice *dev)
+static int ca_led_ofdata_to_platdata(struct udevice *dev)
 {
-	struct led_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct led_uc_plat *uc_plat = dev_get_uclass_platdata(dev);
 
 	/* Top-level LED node */
 	if (!uc_plat->label) {
-		struct cortina_led_plat *plt = dev_get_plat(dev);
+		struct cortina_led_platdata *plt = dev_get_platdata(dev);
 
 		plt->rate1 =
 			dev_read_u32_default(dev, "Cortina,blink-rate1", 256);
@@ -165,22 +165,22 @@ static int ca_led_of_to_plat(struct udevice *dev)
 
 static int cortina_led_probe(struct udevice *dev)
 {
-	struct led_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct led_uc_plat *uc_plat = dev_get_uclass_platdata(dev);
 
 	/* Top-level LED node */
 	if (!uc_plat->label) {
-		struct cortina_led_plat *plat = dev_get_plat(dev);
+		struct cortina_led_platdata *platdata = dev_get_platdata(dev);
 		u32 reg_value, val;
 		u16 rate1, rate2;
 
-		if (!plat->ctrl_regs)
+		if (!platdata->ctrl_regs)
 			return -EINVAL;
 
 		reg_value = 0;
 		reg_value |= LED_CLK_POLARITY;
 
-		rate1 = plat->rate1;
-		rate2 = plat->rate2;
+		rate1 = platdata->rate1;
+		rate2 = platdata->rate2;
 
 		val = rate1 / 16 - 1;
 		rate1 = val > LED_MAX_HW_BLINK ?
@@ -194,7 +194,7 @@ static int cortina_led_probe(struct udevice *dev)
 		reg_value |= (rate2 & LED_BLINK_RATE2_MASK) <<
 					LED_BLINK_RATE2_SHIFT;
 
-		cortina_led_write(plat->ctrl_regs, reg_value);
+		cortina_led_write(platdata->ctrl_regs, reg_value);
 
 	} else {
 		struct cortina_led_cfg *priv = dev_get_priv(dev);
@@ -273,7 +273,7 @@ static int cortina_led_bind(struct udevice *parent)
 						 node, &dev);
 		if (ret)
 			return ret;
-		uc_plat = dev_get_uclass_plat(dev);
+		uc_plat = dev_get_uclass_platdata(dev);
 		uc_plat->label = label;
 	}
 
@@ -289,10 +289,10 @@ U_BOOT_DRIVER(cortina_led) = {
 	.name = "ca-leds",
 	.id = UCLASS_LED,
 	.of_match = ca_led_ids,
-	.of_to_plat = ca_led_of_to_plat,
+	.ofdata_to_platdata = ca_led_ofdata_to_platdata,
 	.bind = cortina_led_bind,
 	.probe = cortina_led_probe,
-	.plat_auto	= sizeof(struct cortina_led_plat),
-	.priv_auto	= sizeof(struct cortina_led_cfg),
+	.platdata_auto_alloc_size = sizeof(struct cortina_led_platdata),
+	.priv_auto_alloc_size = sizeof(struct cortina_led_cfg),
 	.ops = &cortina_led_ops,
 };

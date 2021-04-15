@@ -23,12 +23,7 @@ _default_settings = {
     "u-boot": {},
     "linux": {
         "process_tags": "False",
-    },
-    "gcc": {
-        "process_tags": "False",
-        "add_signoff": "False",
-        "check_patch": "False",
-    },
+    }
 }
 
 class _ProjectConfigParser(ConfigParser.SafeConfigParser):
@@ -117,7 +112,7 @@ class _ProjectConfigParser(ConfigParser.SafeConfigParser):
             val = ConfigParser.SafeConfigParser.get(
                 self, section, option, *args, **kwargs
             )
-        return val
+        return tools.ToUnicode(val)
 
     def items(self, section, *args, **kwargs):
         """Extend SafeConfigParser to add project_section to section.
@@ -152,7 +147,8 @@ class _ProjectConfigParser(ConfigParser.SafeConfigParser):
 
         item_dict = dict(top_items)
         item_dict.update(project_items)
-        return {(item, val) for item, val in item_dict.items()}
+        return {(tools.ToUnicode(item), tools.ToUnicode(val))
+                for item, val in item_dict.items()}
 
 def ReadGitAliases(fname):
     """Read a git alias file. This is in the form used by git:

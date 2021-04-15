@@ -7,8 +7,6 @@
 #ifndef __RAM_H
 #define __RAM_H
 
-struct udevice;
-
 struct ram_info {
 	phys_addr_t base;
 	size_t size;

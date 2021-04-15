@@ -19,7 +19,6 @@
 #include <i2c.h>
 #include <miiphy.h>
 #include <command.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <u-boot/crc.h>

@@ -12,7 +12,6 @@
 #include <net.h>
 #include <netdev.h>
 #include <scsi.h>
-#include <asm/global_data.h>
 
 #include <linux/sizes.h>
 #include <asm/io.h>

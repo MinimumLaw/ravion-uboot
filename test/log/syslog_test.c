@@ -11,7 +11,6 @@
 #define LOG_DEBUG
 
 #include <common.h>
-#include <asm/global_data.h>
 #include <dm/device.h>
 #include <hexdump.h>
 #include <test/log.h>

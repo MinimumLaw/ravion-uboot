@@ -131,9 +131,8 @@
 &ethmac {
 	clocks = <&clkc CLKID_ETH>,
 		 <&clkc CLKID_FCLK_DIV2>,
-		 <&clkc CLKID_MPLL2>,
-		 <&clkc CLKID_FCLK_DIV2>;
-	clock-names = "stmmaceth", "clkin0", "clkin1", "timing-adjustment";
+		 <&clkc CLKID_MPLL2>;
+	clock-names = "stmmaceth", "clkin0", "clkin1";
 
 	mdio0: mdio {
 		#address-cells = <1>;
@@ -336,11 +335,6 @@
 		clocks = <&xtal>;
 		clock-names = "xtal";
 	};
-};
-
-&hwrng {
-	clocks = <&clkc CLKID_RNG0>;
-	clock-names = "core";
 };
 
 &i2c_A {
@@ -788,7 +782,7 @@
 	};
 };
 
-&pwrc {
+&pwrc_vpu {
 	resets = <&reset RESET_VIU>,
 		 <&reset RESET_VENC>,
 		 <&reset RESET_VCBUS>,
@@ -801,9 +795,6 @@
 		 <&reset RESET_VDI6>,
 		 <&reset RESET_VENCL>,
 		 <&reset RESET_VID_LOCK>;
-	reset-names = "viu", "venc", "vcbus", "bt656",
-		      "dvin", "rdma", "venci", "vencp",
-		      "vdac", "vdi6", "vencl", "vid_lock";
 	clocks = <&clkc CLKID_VPU>,
 	         <&clkc CLKID_VAPB>;
 	clock-names = "vpu", "vapb";
@@ -910,7 +901,7 @@
 
 &vpu {
 	compatible = "amlogic,meson-gxl-vpu", "amlogic,meson-gx-vpu";
-	power-domains = <&pwrc PWRC_GXBB_VPU_ID>;
+	power-domains = <&pwrc_vpu>;
 };
 
 &vdec {

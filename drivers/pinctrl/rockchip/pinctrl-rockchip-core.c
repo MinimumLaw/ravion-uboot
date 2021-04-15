@@ -12,7 +12,6 @@
 #include <fdtdec.h>
 #include <linux/bitops.h>
 #include <linux/libfdt.h>
-#include <asm/global_data.h>
 
 #include "pinctrl-rockchip.h"
 

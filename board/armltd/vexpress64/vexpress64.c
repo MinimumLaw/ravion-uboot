@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <net.h>
 #include <netdev.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/compiler.h>
 #include <dm/platform_data/serial_pl01x.h>
@@ -21,15 +20,15 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct pl01x_serial_plat serial_plat = {
+static const struct pl01x_serial_platdata serial_platdata = {
 	.base = V2M_UART0,
 	.type = TYPE_PL011,
 	.clock = CONFIG_PL011_CLOCK,
 };
 
-U_BOOT_DRVINFO(vexpress_serials) = {
+U_BOOT_DEVICE(vexpress_serials) = {
 	.name = "serial_pl01x",
-	.plat = &serial_plat,
+	.platdata = &serial_platdata,
 };
 
 static struct mm_region vexpress64_mem_map[] = {

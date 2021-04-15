@@ -8,7 +8,6 @@
 #include <env.h>
 #include <errno.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <fsl_esdhc_imx.h>

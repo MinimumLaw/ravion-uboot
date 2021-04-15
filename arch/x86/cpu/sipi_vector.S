@@ -11,6 +11,7 @@
  * C code
  */
 
+#include <asm/global_data.h>
 #include <asm/msr-index.h>
 #include <asm/processor.h>
 #include <asm/processor-flags.h>

@@ -13,7 +13,6 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/mx6-ddr.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <spl.h>

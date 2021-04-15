@@ -13,7 +13,6 @@
 #include <fdt_support.h>
 #include <hang.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <dm/root.h>
 #include <image.h>
 #include <asm/byteorder.h>

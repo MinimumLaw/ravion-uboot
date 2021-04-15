@@ -496,13 +496,8 @@ static int dwmci_set_ios(struct mmc *mmc)
 
 	dwmci_writel(host, DWMCI_UHS_REG, regs);
 
-	if (host->clksel) {
-		int ret;
-
-		ret = host->clksel(host);
-		if (ret)
-			return ret;
-	}
+	if (host->clksel)
+		host->clksel(host);
 
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	if (mmc->vqmmc_supply) {

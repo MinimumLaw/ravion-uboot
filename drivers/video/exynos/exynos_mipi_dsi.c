@@ -10,7 +10,6 @@
 #include <log.h>
 #include <malloc.h>
 #include <fdtdec.h>
-#include <asm/global_data.h>
 #include <dm/devres.h>
 #include <linux/libfdt.h>
 #include <linux/compat.h>

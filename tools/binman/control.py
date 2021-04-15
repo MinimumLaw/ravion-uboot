@@ -244,8 +244,7 @@ def ExtractEntries(image_fname, output_fname, outdir, entry_paths,
             if not os.path.exists(fname):
                 os.makedirs(fname)
             fname = os.path.join(fname, 'root')
-        tout.Notice("Write entry '%s' size %x to '%s'" %
-                    (entry.GetPath(), len(data), fname))
+        tout.Notice("Write entry '%s' to '%s'" % (entry.GetPath(), fname))
         tools.WriteFile(fname, data)
     return einfos
 

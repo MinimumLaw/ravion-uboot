@@ -11,7 +11,6 @@
 #include <dm/of_access.h>
 #include <dm/ofnode.h>
 #include <linux/delay.h>
-#include <asm/global_data.h>
 
 #include "../xusb-padctl-common.h"
 

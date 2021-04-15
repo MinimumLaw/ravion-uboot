@@ -18,7 +18,6 @@
 #include <net.h>
 #include <netdev.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <power/regulator.h>
 
@@ -416,7 +415,7 @@ static int fec_set_hwaddr(struct eth_device *dev)
 {
 #ifdef CONFIG_DM_ETH
 	struct fec_priv *fec = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	uchar *mac = pdata->enetaddr;
 #else
 	uchar *mac = dev->enetaddr;
@@ -1273,7 +1272,7 @@ int fecmxc_register_mii_postcall(struct eth_device *dev, int (*cb)(int))
 static int fecmxc_read_rom_hwaddr(struct udevice *dev)
 {
 	struct fec_priv *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 
 	return fec_get_hwaddr(priv->dev_id, pdata->enetaddr);
 }
@@ -1352,7 +1351,7 @@ static void fec_gpio_reset(struct fec_priv *priv)
 
 static int fecmxc_probe(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct fec_priv *priv = dev_get_priv(dev);
 	struct mii_dev *bus = NULL;
 	uint32_t start;
@@ -1457,7 +1456,7 @@ static int fecmxc_probe(struct udevice *dev)
 
 	fec_reg_setup(priv);
 
-	priv->dev_id = dev_seq(dev);
+	priv->dev_id = dev->seq;
 
 #ifdef CONFIG_DM_ETH_PHY
 	bus = eth_phy_get_mdio_bus(dev);
@@ -1465,10 +1464,9 @@ static int fecmxc_probe(struct udevice *dev)
 
 	if (!bus) {
 #ifdef CONFIG_FEC_MXC_MDIO_BASE
-		bus = fec_get_miibus((ulong)CONFIG_FEC_MXC_MDIO_BASE,
-				     dev_seq(dev));
+		bus = fec_get_miibus((ulong)CONFIG_FEC_MXC_MDIO_BASE, dev->seq);
 #else
-		bus = fec_get_miibus((ulong)priv->eth, dev_seq(dev));
+		bus = fec_get_miibus((ulong)priv->eth, dev->seq);
 #endif
 	}
 	if (!bus) {
@@ -1534,10 +1532,10 @@ static int fecmxc_remove(struct udevice *dev)
 	return 0;
 }
 
-static int fecmxc_of_to_plat(struct udevice *dev)
+static int fecmxc_ofdata_to_platdata(struct udevice *dev)
 {
 	int ret = 0;
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct fec_priv *priv = dev_get_priv(dev);
 	const char *phy_mode;
 
@@ -1600,11 +1598,11 @@ U_BOOT_DRIVER(fecmxc_gem) = {
 	.name	= "fecmxc",
 	.id	= UCLASS_ETH,
 	.of_match = fecmxc_ids,
-	.of_to_plat = fecmxc_of_to_plat,
+	.ofdata_to_platdata = fecmxc_ofdata_to_platdata,
 	.probe	= fecmxc_probe,
 	.remove	= fecmxc_remove,
 	.ops	= &fecmxc_ops,
-	.priv_auto	= sizeof(struct fec_priv),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct fec_priv),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };
 #endif

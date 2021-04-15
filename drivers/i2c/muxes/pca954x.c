@@ -11,7 +11,6 @@
 #include <i2c.h>
 #include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 
 #include <asm-generic/gpio.h>
 
@@ -109,7 +108,7 @@ static const struct udevice_id pca954x_ids[] = {
 	{ }
 };
 
-static int pca954x_of_to_plat(struct udevice *dev)
+static int pca954x_ofdata_to_platdata(struct udevice *dev)
 {
 	struct pca954x_priv *priv = dev_get_priv(dev);
 	const struct chip_desc *chip = &chips[dev_get_driver_data(dev)];
@@ -172,6 +171,6 @@ U_BOOT_DRIVER(pca954x) = {
 	.probe = pca954x_probe,
 	.remove = pca954x_remove,
 	.ops = &pca954x_ops,
-	.of_to_plat = pca954x_of_to_plat,
-	.priv_auto	= sizeof(struct pca954x_priv),
+	.ofdata_to_platdata = pca954x_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct pca954x_priv),
 };

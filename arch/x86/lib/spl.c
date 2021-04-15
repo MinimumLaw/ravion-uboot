@@ -17,7 +17,6 @@
 #include <syscon.h>
 #include <asm/cpu.h>
 #include <asm/cpu_common.h>
-#include <asm/global_data.h>
 #include <asm/mrccache.h>
 #include <asm/mtrr.h>
 #include <asm/pci.h>
@@ -116,8 +115,8 @@ static int x86_spl_init(void)
 	}
 
 #ifndef CONFIG_SYS_COREBOOT
-	memset(&__bss_start, 0, (ulong)&__bss_end - (ulong)&__bss_start);
 # ifndef CONFIG_TPL
+	memset(&__bss_start, 0, (ulong)&__bss_end - (ulong)&__bss_start);
 
 	/* TODO(sjg@chromium.org): Consider calling cpu_init_r() here */
 	ret = interrupt_init();

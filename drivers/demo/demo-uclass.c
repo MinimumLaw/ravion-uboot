@@ -13,7 +13,6 @@
 #include <fdtdec.h>
 #include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/list.h>
 
@@ -66,7 +65,7 @@ int demo_set_light(struct udevice *dev, int light)
 
 int demo_parse_dt(struct udevice *dev)
 {
-	struct dm_demo_pdata *pdata = dev_get_plat(dev);
+	struct dm_demo_pdata *pdata = dev_get_platdata(dev);
 	int dn = dev_of_offset(dev);
 
 	pdata->sides = fdtdec_get_int(gd->fdt_blob, dn, "sides", 0);

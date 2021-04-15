@@ -16,7 +16,6 @@ enum uclass_id {
 	UCLASS_DEMO,
 	UCLASS_TEST,
 	UCLASS_TEST_FDT,
-	UCLASS_TEST_FDT_MANUAL,
 	UCLASS_TEST_BUS,
 	UCLASS_TEST_PROBE,
 	UCLASS_TEST_DUMMY,
@@ -46,7 +45,6 @@ enum uclass_id {
 	UCLASS_DISPLAY,		/* Display (e.g. DisplayPort, HDMI) */
 	UCLASS_DSI_HOST,	/* Display Serial Interface host */
 	UCLASS_DMA,		/* Direct Memory Access */
-	UCLASS_DSA,		/* Distributed (Ethernet) Switch Architecture */
 	UCLASS_EFI,		/* EFI managed devices */
 	UCLASS_ETH,		/* Ethernet device */
 	UCLASS_ETH_PHY,		/* Ethernet PHY device */

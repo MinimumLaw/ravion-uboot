@@ -14,7 +14,6 @@
 #include <net.h>
 #include <vsprintf.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/ptrace.h>
 #include <linux/errno.h>

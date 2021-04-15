@@ -24,7 +24,6 @@
 #include <status_led.h>
 #endif
 #include <twl4030.h>
-#include <asm/global_data.h>
 #include <linux/mtd/rawnand.h>
 #include <asm/io.h>
 #include <asm/arch/mmc_host_def.h>

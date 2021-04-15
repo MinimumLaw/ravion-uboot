@@ -13,7 +13,6 @@
 #include <regmap.h>
 #include <syscon.h>
 #include <video.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/arch-rockchip/clock.h>
@@ -284,7 +283,7 @@ static int rk_display_init(struct udevice *dev, ulong fbbase, ofnode ep_node)
 			break;
 	};
 
-	disp_uc_plat = dev_get_uclass_plat(disp);
+	disp_uc_plat = dev_get_uclass_platdata(disp);
 	debug("Found device '%s', disp_uc_priv=%p\n", disp->name, disp_uc_plat);
 	if (display_in_use(disp)) {
 		debug("   - device in use\n");
@@ -365,7 +364,7 @@ void rk_vop_probe_regulators(struct udevice *dev,
 
 int rk_vop_probe(struct udevice *dev)
 {
-	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
 	struct rk_vop_priv *priv = dev_get_priv(dev);
 	int ret = 0;
 	ofnode port, node;
@@ -407,7 +406,7 @@ int rk_vop_probe(struct udevice *dev)
 
 int rk_vop_bind(struct udevice *dev)
 {
-	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
 
 	plat->size = 4 * (CONFIG_VIDEO_ROCKCHIP_MAX_XRES *
 			  CONFIG_VIDEO_ROCKCHIP_MAX_YRES);

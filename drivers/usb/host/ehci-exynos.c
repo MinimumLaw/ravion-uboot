@@ -10,7 +10,6 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <malloc.h>
@@ -27,8 +26,8 @@
 /* Declare global data pointer */
 DECLARE_GLOBAL_DATA_PTR;
 
-struct exynos_ehci_plat {
-	struct usb_plat usb_plat;
+struct exynos_ehci_platdata {
+	struct usb_platdata usb_plat;
 	fdt_addr_t hcd_base;
 	fdt_addr_t phy_base;
 	struct gpio_desc vbus_gpio;
@@ -44,9 +43,9 @@ struct exynos_ehci {
 	struct ehci_hccr *hcd;
 };
 
-static int ehci_usb_of_to_plat(struct udevice *dev)
+static int ehci_usb_ofdata_to_platdata(struct udevice *dev)
 {
-	struct exynos_ehci_plat *plat = dev_get_plat(dev);
+	struct exynos_ehci_platdata *plat = dev_get_platdata(dev);
 	const void *blob = gd->fdt_blob;
 	unsigned int node;
 	int depth;
@@ -215,7 +214,7 @@ static void reset_usb_phy(struct exynos_usb_phy *usb)
 
 static int ehci_usb_probe(struct udevice *dev)
 {
-	struct exynos_ehci_plat *plat = dev_get_plat(dev);
+	struct exynos_ehci_platdata *plat = dev_get_platdata(dev);
 	struct exynos_ehci *ctx = dev_get_priv(dev);
 	struct ehci_hcor *hcor;
 
@@ -255,11 +254,11 @@ U_BOOT_DRIVER(usb_ehci) = {
 	.name	= "ehci_exynos",
 	.id	= UCLASS_USB,
 	.of_match = ehci_usb_ids,
-	.of_to_plat = ehci_usb_of_to_plat,
+	.ofdata_to_platdata = ehci_usb_ofdata_to_platdata,
 	.probe = ehci_usb_probe,
 	.remove = ehci_usb_remove,
 	.ops	= &ehci_usb_ops,
-	.priv_auto	= sizeof(struct exynos_ehci),
-	.plat_auto	= sizeof(struct exynos_ehci_plat),
+	.priv_auto_alloc_size = sizeof(struct exynos_ehci),
+	.platdata_auto_alloc_size = sizeof(struct exynos_ehci_platdata),
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };

@@ -60,7 +60,6 @@
 #include <i2c.h>
 #include <mmc.h>
 #include <atmel_mci.h>
-#include <asm/global_data.h>
 
 #include <asm/arch/at91sam9260.h>
 #include <asm/arch/at91sam9260_matrix.h>

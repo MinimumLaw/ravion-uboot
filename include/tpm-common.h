@@ -9,8 +9,6 @@
 
 #include <command.h>
 
-struct udevice;
-
 enum tpm_duration {
 	TPM_SHORT = 0,
 	TPM_MEDIUM = 1,

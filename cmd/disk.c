@@ -114,12 +114,13 @@ int common_diskboot(struct cmd_tbl *cmdtp, const char *intf, int argc,
 	/* This cannot be done earlier,
 	 * we need complete FIT image in RAM first */
 	if (genimg_get_format((void *) addr) == IMAGE_FORMAT_FIT) {
-		if (fit_check_format(fit_hdr, IMAGE_SIZE_INVAL)) {
+		if (!fit_check_format(fit_hdr)) {
 			bootstage_error(BOOTSTAGE_ID_IDE_FIT_READ);
 			puts("** Bad FIT image format\n");
 			return 1;
 		}
 		bootstage_mark(BOOTSTAGE_ID_IDE_FIT_READ_OK);
+		fit_print_contents(fit_hdr);
 	}
 #endif
 

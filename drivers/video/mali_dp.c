@@ -13,7 +13,6 @@
 #include <display.h>
 #endif
 #include <fdtdec.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <os.h>
 #include <fdt_support.h>
@@ -261,7 +260,7 @@ static int malidp_update_timings_from_edid(struct udevice *dev,
 static int malidp_probe(struct udevice *dev)
 {
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
 	ofnode framebuffer = ofnode_find_subnode(dev_ofnode(dev), "framebuffer");
 	struct malidp_priv *priv = dev_get_priv(dev);
 	struct display_timing timings;
@@ -383,7 +382,7 @@ fail_aclk:
 
 static int malidp_bind(struct udevice *dev)
 {
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
 
 	/* choose max possible size: 2K x 2K, XRGB888 framebuffer */
 	uc_plat->size = 4 * 2048 * 2048;
@@ -404,6 +403,6 @@ U_BOOT_DRIVER(mali_dp) = {
 	.of_match	= malidp_ids,
 	.bind		= malidp_bind,
 	.probe		= malidp_probe,
-	.priv_auto	= sizeof(struct malidp_priv),
+	.priv_auto_alloc_size	= sizeof(struct malidp_priv),
 	.ops		= &malidp_ops,
 };

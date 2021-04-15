@@ -60,14 +60,13 @@ int cli_simple_parse_line(char *line, char *argv[])
 	return nargs;
 }
 
-int cli_simple_process_macros(const char *input, char *output, int max_size)
+void cli_simple_process_macros(const char *input, char *output)
 {
 	char c, prev;
 	const char *varname_start = NULL;
 	int inputcnt = strlen(input);
-	int outputcnt = max_size;
+	int outputcnt = CONFIG_SYS_CBSIZE;
 	int state = 0;		/* 0 = waiting for '$'  */
-	int ret;
 
 	/* 1 = waiting for '(' or '{' */
 	/* 2 = waiting for ')' or '}' */
@@ -158,18 +157,13 @@ int cli_simple_process_macros(const char *input, char *output, int max_size)
 		prev = c;
 	}
 
-	ret = inputcnt ? -ENOSPC : 0;
-	if (outputcnt) {
+	if (outputcnt)
 		*output = 0;
-	} else {
+	else
 		*(output - 1) = 0;
-		ret = -ENOSPC;
-	}
 
 	debug_parser("[PROCESS_MACROS] OUTPUT len %zd: \"%s\"\n",
 		     strlen(output_start), output_start);
-
-	return ret;
 }
 
  /*
@@ -245,8 +239,7 @@ int cli_simple_run_command(const char *cmd, int flag)
 		debug_parser("token: \"%s\"\n", token);
 
 		/* find macros in this token and replace them */
-		cli_simple_process_macros(token, finaltoken,
-					  sizeof(finaltoken));
+		cli_simple_process_macros(token, finaltoken);
 
 		/* Extract arguments */
 		argc = cli_simple_parse_line(finaltoken, argv);

@@ -23,7 +23,6 @@
 #include <asm/arch/mx6-pins.h>
 #include <asm/arch/mxc_hdmi.h>
 #include <env.h>
-#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/gpio.h>

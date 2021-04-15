@@ -21,7 +21,6 @@
 # include <asm/arch/mx6-ddr.h>
 #endif
 #include <asm/arch/clock.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 

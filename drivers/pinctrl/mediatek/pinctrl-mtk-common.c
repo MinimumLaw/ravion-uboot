@@ -615,7 +615,6 @@ static int mtk_gpiochip_register(struct udevice *parent)
 	if (!drv)
 		return -ENOENT;
 
-	ret = -ENOENT;
 	dev_for_each_subnode(node, parent)
 		if (ofnode_read_bool(node, "gpio-controller")) {
 			ret = 0;

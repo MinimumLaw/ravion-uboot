@@ -15,7 +15,6 @@
 #include <asm/arch/misc.h>
 #include <asm/armv8/mmu.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/sections.h>
 #include <dm/uclass.h>
 #include <dt-bindings/clock/mt8516-clk.h>
@@ -53,7 +52,7 @@ int mtk_pll_early_init(void)
 	int ret, i;
 
 	ret = uclass_get_device_by_driver(UCLASS_CLK,
-			DM_DRIVER_GET(mtk_clk_apmixedsys), &dev);
+			DM_GET_DRIVER(mtk_clk_apmixedsys), &dev);
 	if (ret)
 		return ret;
 

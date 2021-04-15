@@ -9,7 +9,6 @@
 #include <common.h>
 #include <bloblist.h>
 #include <command.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

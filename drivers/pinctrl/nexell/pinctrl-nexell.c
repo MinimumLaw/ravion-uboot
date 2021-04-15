@@ -8,7 +8,6 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include "pinctrl-nexell.h"
 #include "pinctrl-s5pxx18.h"

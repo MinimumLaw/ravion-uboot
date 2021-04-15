@@ -46,10 +46,11 @@ static void mac(void *pointer, u16 **buf)
 /*
  * printx() - print hexadecimal number to an u16 string
  *
- * @p:		value to print
+ * @pointer:	pointer
  * @prec:	minimum number of digits to print
  * @buf:	pointer to buffer address,
  *		on return position of terminating zero word
+ * @size:	size of value to be printed in bytes
  */
 static void printx(u64 p, int prec, u16 **buf)
 {

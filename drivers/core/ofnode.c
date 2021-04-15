@@ -16,7 +16,6 @@
 #include <dm/ofnode.h>
 #include <linux/err.h>
 #include <linux/ioport.h>
-#include <asm/global_data.h>
 
 int ofnode_read_u32(ofnode node, const char *propname, u32 *outp)
 {
@@ -227,17 +226,6 @@ int ofnode_read_u32_array(ofnode node, const char *propname,
 	}
 }
 
-#if !CONFIG_IS_ENABLED(DM_INLINE_OFNODE)
-bool ofnode_is_enabled(ofnode node)
-{
-	if (ofnode_is_np(node)) {
-		return of_device_is_available(ofnode_to_np(node));
-	} else {
-		return fdtdec_get_is_enabled(gd->fdt_blob,
-					     ofnode_to_offset(node));
-	}
-}
-
 ofnode ofnode_first_subnode(ofnode node)
 {
 	assert(ofnode_valid(node));
@@ -257,7 +245,6 @@ ofnode ofnode_next_subnode(ofnode node)
 	return offset_to_ofnode(
 		fdt_next_subnode(gd->fdt_blob, ofnode_to_offset(node)));
 }
-#endif /* !DM_INLINE_OFNODE */
 
 ofnode ofnode_get_parent(ofnode node)
 {
@@ -317,8 +304,7 @@ fdt_addr_t ofnode_get_addr_size_index(ofnode node, int index, fdt_size_t *size)
 
 		ns = of_n_size_cells(ofnode_to_np(node));
 
-		if (IS_ENABLED(CONFIG_OF_TRANSLATE) &&
-		    (ns > 0 || gd_size_cells_0())) {
+		if (IS_ENABLED(CONFIG_OF_TRANSLATE) && ns > 0) {
 			return of_translate_address(ofnode_to_np(node), prop_val);
 		} else {
 			na = of_n_addr_cells(ofnode_to_np(node));
@@ -692,10 +678,8 @@ fdt_addr_t ofnode_get_addr_size(ofnode node, const char *property,
 		ns = of_n_size_cells(np);
 		*sizep = of_read_number(prop + na, ns);
 
-		if (CONFIG_IS_ENABLED(OF_TRANSLATE) &&
-		    (ns > 0 || gd_size_cells_0())) {
+		if (CONFIG_IS_ENABLED(OF_TRANSLATE) && ns > 0)
 			return of_translate_address(np, prop);
-		}
 		else
 			return of_read_number(prop, na);
 	} else {
@@ -925,15 +909,6 @@ u64 ofnode_translate_dma_address(ofnode node, const fdt32_t *in_addr)
 		return of_translate_dma_address(ofnode_to_np(node), in_addr);
 	else
 		return fdt_translate_dma_address(gd->fdt_blob, ofnode_to_offset(node), in_addr);
-}
-
-int ofnode_get_dma_range(ofnode node, phys_addr_t *cpu, dma_addr_t *bus, u64 *size)
-{
-	if (ofnode_is_np(node))
-		return of_get_dma_range(ofnode_to_np(node), cpu, bus, size);
-	else
-		return fdt_get_dma_range(gd->fdt_blob, ofnode_to_offset(node),
-					 cpu, bus, size);
 }
 
 int ofnode_device_is_compatible(ofnode node, const char *compat)

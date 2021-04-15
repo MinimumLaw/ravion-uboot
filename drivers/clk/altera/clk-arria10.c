@@ -13,7 +13,6 @@
 #include <dm/lists.h>
 #include <dm/util.h>
 #include <linux/bitops.h>
-#include <asm/global_data.h>
 
 #include <asm/arch/clock_manager.h>
 
@@ -25,7 +24,7 @@ enum socfpga_a10_clk_type {
 	SOCFPGA_A10_CLK_UNKNOWN_CLK,
 };
 
-struct socfpga_a10_clk_plat {
+struct socfpga_a10_clk_platdata {
 	enum socfpga_a10_clk_type type;
 	struct clk_bulk	clks;
 	u32		regs;
@@ -44,7 +43,7 @@ struct socfpga_a10_clk_plat {
 
 static int socfpga_a10_clk_get_upstream(struct clk *clk, struct clk **upclk)
 {
-	struct socfpga_a10_clk_plat *plat = dev_get_plat(clk->dev);
+	struct socfpga_a10_clk_platdata *plat = dev_get_platdata(clk->dev);
 	u32 reg, maxval;
 
 	if (plat->clks.count == 0)
@@ -85,7 +84,7 @@ static int socfpga_a10_clk_get_upstream(struct clk *clk, struct clk **upclk)
 
 static int socfpga_a10_clk_endisable(struct clk *clk, bool enable)
 {
-	struct socfpga_a10_clk_plat *plat = dev_get_plat(clk->dev);
+	struct socfpga_a10_clk_platdata *plat = dev_get_platdata(clk->dev);
 	struct clk *upclk = NULL;
 	int ret;
 
@@ -121,7 +120,7 @@ static int socfpga_a10_clk_disable(struct clk *clk)
 
 static ulong socfpga_a10_clk_get_rate(struct clk *clk)
 {
-	struct socfpga_a10_clk_plat *plat = dev_get_plat(clk->dev);
+	struct socfpga_a10_clk_platdata *plat = dev_get_platdata(clk->dev);
 	struct clk *upclk = NULL;
 	ulong rate = 0, reg, numer, denom;
 	int ret;
@@ -191,7 +190,7 @@ static struct clk_ops socfpga_a10_clk_ops = {
  */
 static void socfpga_a10_handoff_workaround(struct udevice *dev)
 {
-	struct socfpga_a10_clk_plat *plat = dev_get_plat(dev);
+	struct socfpga_a10_clk_platdata *plat = dev_get_platdata(dev);
 	const void *fdt = gd->fdt_blob;
 	struct clk_bulk	*bulk = &plat->clks;
 	int i, ret, offset = dev_of_offset(dev);
@@ -275,8 +274,8 @@ static int socfpga_a10_clk_bind(struct udevice *dev)
 
 static int socfpga_a10_clk_probe(struct udevice *dev)
 {
-	struct socfpga_a10_clk_plat *plat = dev_get_plat(dev);
-	struct socfpga_a10_clk_plat *pplat;
+	struct socfpga_a10_clk_platdata *plat = dev_get_platdata(dev);
+	struct socfpga_a10_clk_platdata *pplat;
 	struct udevice *pdev;
 	const void *fdt = gd->fdt_blob;
 	int offset = dev_of_offset(dev);
@@ -292,7 +291,7 @@ static int socfpga_a10_clk_probe(struct udevice *dev)
 		if (!pdev)
 			return -ENODEV;
 
-		pplat = dev_get_plat(pdev);
+		pplat = dev_get_platdata(pdev);
 		if (!pplat)
 			return -EINVAL;
 
@@ -320,9 +319,9 @@ static int socfpga_a10_clk_probe(struct udevice *dev)
 	return 0;
 }
 
-static int socfpga_a10_of_to_plat(struct udevice *dev)
+static int socfpga_a10_ofdata_to_platdata(struct udevice *dev)
 {
-	struct socfpga_a10_clk_plat *plat = dev_get_plat(dev);
+	struct socfpga_a10_clk_platdata *plat = dev_get_platdata(dev);
 	unsigned int divreg[3], gatereg[2];
 	int ret;
 
@@ -358,7 +357,7 @@ U_BOOT_DRIVER(socfpga_a10_clk) = {
 	.ops		= &socfpga_a10_clk_ops,
 	.bind		= socfpga_a10_clk_bind,
 	.probe		= socfpga_a10_clk_probe,
-	.of_to_plat = socfpga_a10_of_to_plat,
+	.ofdata_to_platdata = socfpga_a10_ofdata_to_platdata,
 
-	.plat_auto	= sizeof(struct socfpga_a10_clk_plat),
+	.platdata_auto_alloc_size = sizeof(struct socfpga_a10_clk_platdata),
 };

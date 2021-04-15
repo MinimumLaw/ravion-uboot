@@ -17,7 +17,6 @@
 #include <splash.h>
 #include <st_logo_data.h>
 #include <video.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/armv7m.h>
 #include <asm/arch/stm32.h>
@@ -46,6 +45,11 @@ int dram_init(void)
 int dram_init_banksize(void)
 {
 	return fdtdec_setup_memory_banksize();
+}
+
+int board_early_init_f(void)
+{
+	return 0;
 }
 
 #ifdef CONFIG_SPL_BUILD

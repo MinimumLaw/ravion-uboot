@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <asm/armv8/mmu.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

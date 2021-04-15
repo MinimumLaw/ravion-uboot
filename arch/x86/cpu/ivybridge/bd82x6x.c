@@ -10,7 +10,6 @@
 #include <malloc.h>
 #include <pch.h>
 #include <asm/cpu.h>
-#include <asm/global_data.h>
 #include <asm/intel_regs.h>
 #include <asm/io.h>
 #include <asm/lapic.h>

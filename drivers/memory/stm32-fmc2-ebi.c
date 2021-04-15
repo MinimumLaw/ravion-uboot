@@ -3,13 +3,10 @@
  * Copyright (C) STMicroelectronics 2020
  */
 
-#define LOG_CATEGORY UCLASS_NOP
-
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
 #include <reset.h>
-#include <dm/device_compat.h>
 #include <linux/bitfield.h>
 #include <linux/err.h>
 #include <linux/iopoll.h>
@@ -863,7 +860,7 @@ static int stm32_fmc2_ebi_parse_prop(struct stm32_fmc2_ebi *ebi,
 	u32 setup = 0;
 
 	if (!prop->set) {
-		log_err("property %s is not well defined\n", prop->name);
+		pr_err("property %s is not well defined\n", prop->name);
 		return -EINVAL;
 	}
 
@@ -876,8 +873,8 @@ static int stm32_fmc2_ebi_parse_prop(struct stm32_fmc2_ebi *ebi,
 
 		bprop = ofnode_read_bool(node, prop->name);
 		if (prop->mprop && !bprop) {
-			log_err("mandatory property %s not defined in the device tree\n",
-				prop->name);
+			pr_err("mandatory property %s not defined in the device tree\n",
+			       prop->name);
 			return -EINVAL;
 		}
 
@@ -889,8 +886,8 @@ static int stm32_fmc2_ebi_parse_prop(struct stm32_fmc2_ebi *ebi,
 
 		ret = ofnode_read_u32(node, prop->name, &val);
 		if (prop->mprop && ret) {
-			log_err("mandatory property %s not defined in the device tree\n",
-				prop->name);
+			pr_err("mandatory property %s not defined in the device tree\n",
+			       prop->name);
 			return ret;
 		}
 
@@ -952,8 +949,8 @@ static int stm32_fmc2_ebi_setup_cs(struct stm32_fmc2_ebi *ebi,
 
 		ret = stm32_fmc2_ebi_parse_prop(ebi, node, p, cs);
 		if (ret) {
-			log_err("property %s could not be set: %d\n",
-				p->name, ret);
+			pr_err("property %s could not be set: %d\n",
+			       p->name, ret);
 			return ret;
 		}
 	}
@@ -974,24 +971,25 @@ static int stm32_fmc2_ebi_parse_dt(struct udevice *dev,
 	dev_for_each_subnode(child, dev) {
 		ret = ofnode_read_u32(child, "reg", &bank);
 		if (ret) {
-			dev_err(dev, "could not retrieve reg property: %d\n", ret);
+			pr_err("could not retrieve reg property: %d\n", ret);
 			return ret;
 		}
 
 		if (bank >= FMC2_MAX_BANKS) {
-			dev_err(dev, "invalid reg value: %d\n", bank);
+			pr_err("invalid reg value: %d\n", bank);
 			return -EINVAL;
 		}
 
 		if (ebi->bank_assigned & BIT(bank)) {
-			dev_err(dev, "bank already assigned: %d\n", bank);
+			pr_err("bank already assigned: %d\n", bank);
 			return -EINVAL;
 		}
 
 		if (bank < FMC2_MAX_EBI_CE) {
 			ret = stm32_fmc2_ebi_setup_cs(ebi, child, bank);
 			if (ret) {
-				dev_err(dev, "setup chip select %d failed: %d\n", bank, ret);
+				pr_err("setup chip select %d failed: %d\n",
+				       bank, ret);
 				return ret;
 			}
 		}
@@ -1001,12 +999,12 @@ static int stm32_fmc2_ebi_parse_dt(struct udevice *dev,
 	}
 
 	if (!child_found) {
-		dev_warn(dev, "no subnodes found, disable the driver.\n");
+		pr_warn("no subnodes found, disable the driver.\n");
 		return -ENODEV;
 	}
 
 	if (stm32_fmc2_ebi_nwait_used_by_ctrls(ebi)) {
-		dev_err(dev, "NWAIT signal connected to EBI and NAND controllers\n");
+		pr_err("NWAIT signal connected to EBI and NAND controllers\n");
 		return -EINVAL;
 	}
 
@@ -1053,6 +1051,6 @@ U_BOOT_DRIVER(stm32_fmc2_ebi) = {
 	.id = UCLASS_NOP,
 	.of_match = stm32_fmc2_ebi_match,
 	.probe = stm32_fmc2_ebi_probe,
-	.priv_auto	= sizeof(struct stm32_fmc2_ebi),
+	.priv_auto_alloc_size = sizeof(struct stm32_fmc2_ebi),
 	.bind = dm_scan_fdt_dev,
 };

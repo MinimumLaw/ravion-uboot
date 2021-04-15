@@ -13,8 +13,6 @@
 #include <linux/errno.h>
 #include <linux/types.h>
 
-struct udevice;
-
 /*
  * enum dma_direction - dma transfer direction indicator
  * @DMA_MEM_TO_MEM: Memcpy mode

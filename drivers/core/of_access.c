@@ -22,7 +22,6 @@
 #include <common.h>
 #include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <linux/bug.h>
 #include <linux/libfdt.h>
 #include <dm/of_access.h>

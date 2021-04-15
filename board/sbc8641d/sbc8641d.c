@@ -16,7 +16,6 @@
 #include <init.h>
 #include <log.h>
 #include <pci.h>
-#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/immap_86xx.h>
 #include <asm/fsl_pci.h>

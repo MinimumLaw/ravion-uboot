@@ -12,7 +12,7 @@
  * - added inflateIncomp
  */
 
-#include <compiler.h>
+#include <common.h>
 
 #ifdef CONFIG_GZIP_COMPRESSED
 #define NO_DUMMY_DECL

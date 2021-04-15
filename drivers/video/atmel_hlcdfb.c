@@ -10,7 +10,6 @@
 #include <log.h>
 #include <malloc.h>
 #include <part.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/clk.h>
@@ -294,7 +293,7 @@ static int at91_hlcdc_enable_clk(struct udevice *dev)
 
 static void atmel_hlcdc_init(struct udevice *dev)
 {
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
 	struct atmel_hlcdc_priv *priv = dev_get_priv(dev);
 	struct atmel_hlcd_regs *regs = priv->regs;
 	struct display_timing *timing = &priv->timing;
@@ -502,7 +501,7 @@ static int atmel_hlcdc_probe(struct udevice *dev)
 	return 0;
 }
 
-static int atmel_hlcdc_of_to_plat(struct udevice *dev)
+static int atmel_hlcdc_ofdata_to_platdata(struct udevice *dev)
 {
 	struct atmel_hlcdc_priv *priv = dev_get_priv(dev);
 	const void *blob = gd->fdt_blob;
@@ -540,7 +539,7 @@ static int atmel_hlcdc_of_to_plat(struct udevice *dev)
 
 static int atmel_hlcdc_bind(struct udevice *dev)
 {
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
 
 	uc_plat->size = LCD_MAX_WIDTH * LCD_MAX_HEIGHT *
 				(1 << LCD_MAX_LOG2_BPP) / 8;
@@ -562,8 +561,8 @@ U_BOOT_DRIVER(atmel_hlcdfb) = {
 	.of_match = atmel_hlcdc_ids,
 	.bind	= atmel_hlcdc_bind,
 	.probe	= atmel_hlcdc_probe,
-	.of_to_plat = atmel_hlcdc_of_to_plat,
-	.priv_auto	= sizeof(struct atmel_hlcdc_priv),
+	.ofdata_to_platdata = atmel_hlcdc_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct atmel_hlcdc_priv),
 };
 
 #endif

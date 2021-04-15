@@ -12,7 +12,6 @@
 #include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
-#include <dm/device-internal.h>
 #include <dm/test.h>
 #include <test/test.h>
 #include <test/ut.h>
@@ -22,7 +21,7 @@ static struct unit_test_state *uts = &global_dm_test_state;
 
 static int testdrv_ping(struct udevice *dev, int pingval, int *pingret)
 {
-	const struct dm_test_pdata *pdata = dev_get_plat(dev);
+	const struct dm_test_pdata *pdata = dev_get_platdata(dev);
 	struct dm_test_priv *priv = dev_get_priv(dev);
 
 	*pingret = pingval + pdata->ping_add;
@@ -68,7 +67,7 @@ static int test_remove(struct udevice *dev)
 static int test_unbind(struct udevice *dev)
 {
 	/* Private data should not be allocated */
-	ut_assert(!dev_get_priv(dev));
+	ut_assert(!dev->priv);
 
 	dm_testdrv_op_count[DM_TEST_OP_UNBIND]++;
 	return 0;
@@ -82,7 +81,7 @@ U_BOOT_DRIVER(test_drv) = {
 	.probe	= test_probe,
 	.remove	= test_remove,
 	.unbind	= test_unbind,
-	.priv_auto	= sizeof(struct dm_test_priv),
+	.priv_auto_alloc_size = sizeof(struct dm_test_priv),
 };
 
 U_BOOT_DRIVER(test2_drv) = {
@@ -93,7 +92,7 @@ U_BOOT_DRIVER(test2_drv) = {
 	.probe	= test_probe,
 	.remove	= test_remove,
 	.unbind	= test_unbind,
-	.priv_auto	= sizeof(struct dm_test_priv),
+	.priv_auto_alloc_size = sizeof(struct dm_test_priv),
 };
 
 static int test_manual_drv_ping(struct udevice *dev, int pingval, int *pingret)
@@ -120,8 +119,8 @@ static int test_manual_probe(struct udevice *dev)
 
 	dm_testdrv_op_count[DM_TEST_OP_PROBE]++;
 	if (!dms->force_fail_alloc)
-		dev_set_priv(dev, calloc(1, sizeof(struct dm_test_priv)));
-	if (!dev_get_priv(dev))
+		dev->priv = calloc(1, sizeof(struct dm_test_priv));
+	if (!dev->priv)
 		return -ENOMEM;
 
 	return 0;
@@ -169,26 +168,4 @@ U_BOOT_DRIVER(test_act_dma_drv) = {
 	.remove	= test_manual_remove,
 	.unbind	= test_manual_unbind,
 	.flags	= DM_FLAG_ACTIVE_DMA,
-};
-
-U_BOOT_DRIVER(test_vital_clk_drv) = {
-	.name	= "test_vital_clk_drv",
-	.id	= UCLASS_TEST,
-	.ops	= &test_manual_ops,
-	.bind	= test_manual_bind,
-	.probe	= test_manual_probe,
-	.remove	= test_manual_remove,
-	.unbind	= test_manual_unbind,
-	.flags	= DM_FLAG_VITAL,
-};
-
-U_BOOT_DRIVER(test_act_dma_vital_clk_drv) = {
-	.name	= "test_act_dma_vital_clk_drv",
-	.id	= UCLASS_TEST,
-	.ops	= &test_manual_ops,
-	.bind	= test_manual_bind,
-	.probe	= test_manual_probe,
-	.remove	= test_manual_remove,
-	.unbind	= test_manual_unbind,
-	.flags	= DM_FLAG_VITAL | DM_FLAG_ACTIVE_DMA,
 };

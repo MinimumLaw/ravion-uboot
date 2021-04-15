@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <asm/unaligned.h>
 #include <mapmem.h>
-#include <linux/libfdt.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 

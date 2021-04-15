@@ -15,8 +15,6 @@
 #include <asm/io.h>
 #include <part_efi.h>
 #include <malloc.h>
-#include <dm/uclass.h>
-#include <rng.h>
 
 /*
  * UUID - Universally Unique IDentifier - 128 bits unique number.
@@ -98,8 +96,7 @@ static const struct {
 	{"linux",	PARTITION_LINUX_FILE_SYSTEM_DATA_GUID},
 	{"raid",	PARTITION_LINUX_RAID_GUID},
 	{"swap",	PARTITION_LINUX_SWAP_GUID},
-	{"lvm",		PARTITION_LINUX_LVM_GUID},
-	{"u-boot-env",	PARTITION_U_BOOT_ENVIRONMENT},
+	{"lvm",		PARTITION_LINUX_LVM_GUID}
 };
 
 /*
@@ -125,19 +122,20 @@ int uuid_guid_get_bin(const char *guid_str, unsigned char *guid_bin)
  * uuid_guid_get_str() - this function get string for GUID.
  *
  * @param guid_bin - pointer to string with partition type guid [16B]
- *
- * Returns NULL if the type GUID is not known.
+ * @param guid_str - pointer to allocated partition type string [7B]
  */
-const char *uuid_guid_get_str(const unsigned char *guid_bin)
+int uuid_guid_get_str(const unsigned char *guid_bin, char *guid_str)
 {
 	int i;
 
+	*guid_str = 0;
 	for (i = 0; i < ARRAY_SIZE(list_guid); i++) {
 		if (!memcmp(list_guid[i].guid.b, guid_bin, 16)) {
-			return list_guid[i].string;
+			strcpy(guid_str, list_guid[i].string);
+			return 0;
 		}
 	}
-	return NULL;
+	return -ENODEV;
 }
 #endif
 
@@ -251,22 +249,9 @@ void gen_rand_uuid(unsigned char *uuid_bin)
 {
 	u32 ptr[4];
 	struct uuid *uuid = (struct uuid *)ptr;
-	int i, ret;
-	struct udevice *devp;
-	u32 randv = 0;
+	int i;
 
-	if (IS_ENABLED(CONFIG_DM_RNG)) {
-		ret = uclass_get_device(UCLASS_RNG, 0, &devp);
-		if (ret) {
-			ret = dm_rng_read(devp, &randv, sizeof(randv));
-			if (ret < 0)
-				randv = 0;
-		}
-	}
-	if (randv)
-		srand(randv);
-	else
-		srand(get_ticks() + rand());
+	srand(get_ticks() + rand());
 
 	/* Set all fields randomly */
 	for (i = 0; i < 4; i++)

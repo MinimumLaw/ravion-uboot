@@ -28,7 +28,6 @@
 #if !defined(__ACPI__)
 
 struct nhlt;
-struct udevice;
 
 /** enum acpi_dump_option - selects what ACPI information to dump */
 enum acpi_dump_option {

@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <fdt_support.h>
-#include <asm/global_data.h>
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {

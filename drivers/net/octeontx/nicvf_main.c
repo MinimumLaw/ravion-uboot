@@ -105,7 +105,7 @@ static int nicvf_check_pf_ready(struct nicvf *nic)
 static void  nicvf_handle_mbx_intr(struct nicvf *nic)
 {
 	union nic_mbx mbx = {};
-	struct eth_pdata *pdata = dev_get_plat(nic->dev);
+	struct eth_pdata *pdata = dev_get_platdata(nic->dev);
 	u64 *mbx_data;
 	u64 mbx_addr;
 	int i;
@@ -165,7 +165,7 @@ static void  nicvf_handle_mbx_intr(struct nicvf *nic)
 static int nicvf_hw_set_mac_addr(struct nicvf *nic, struct udevice *dev)
 {
 	union nic_mbx mbx = {};
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 
 	mbx.mac.msg = NIC_MBOX_MSG_SET_MAC;
 	mbx.mac.vf_id = nic->vf_id;
@@ -445,19 +445,18 @@ int nicvf_open(struct udevice *dev)
 int nicvf_write_hwaddr(struct udevice *dev)
 {
 	unsigned char ethaddr[ARP_HLEN];
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct nicvf *nic = dev_get_priv(dev);
 
 	/* If lower level firmware fails to set proper MAC
 	 * u-boot framework updates MAC to random address.
 	 * Use this hook to update mac address in environment.
 	 */
-	if (!eth_env_get_enetaddr_by_index("eth", dev_seq(dev), ethaddr)) {
-		eth_env_set_enetaddr_by_index("eth", dev_seq(dev),
-					      pdata->enetaddr);
+	if (!eth_env_get_enetaddr_by_index("eth", dev->seq, ethaddr)) {
+		eth_env_set_enetaddr_by_index("eth", dev->seq, pdata->enetaddr);
 		debug("%s: pMAC %pM\n", __func__, pdata->enetaddr);
 	}
-	eth_env_get_enetaddr_by_index("eth", dev_seq(dev), ethaddr);
+	eth_env_get_enetaddr_by_index("eth", dev->seq, ethaddr);
 	if (memcmp(ethaddr, pdata->enetaddr, ARP_HLEN)) {
 		debug("%s: pMAC %pM\n", __func__, pdata->enetaddr);
 		nicvf_hw_set_mac_addr(nic, dev);
@@ -485,7 +484,7 @@ static void nicvf_probe_mdio_devices(void)
 int nicvf_initialize(struct udevice *dev)
 {
 	struct nicvf *nicvf = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	int    ret = 0, bgx, lmac;
 	char   name[16];
 	unsigned char ethaddr[ARP_HLEN];
@@ -541,7 +540,7 @@ int nicvf_initialize(struct udevice *dev)
 
 	if (is_valid_ethaddr(ethaddr)) {
 		memcpy(pdata->enetaddr, ethaddr, ARP_HLEN);
-		eth_env_set_enetaddr_by_index("eth", dev_seq(dev), ethaddr);
+		eth_env_set_enetaddr_by_index("eth", dev->seq, ethaddr);
 	}
 	debug("%s enetaddr %pM ethaddr %pM\n", __func__,
 	      pdata->enetaddr, ethaddr);
@@ -569,8 +568,8 @@ U_BOOT_DRIVER(octeontx_vnic) = {
 	.id	= UCLASS_ETH,
 	.probe	= octeontx_vnic_probe,
 	.ops	= &octeontx_vnic_ops,
-	.priv_auto	= sizeof(struct nicvf),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct nicvf),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };
 
 static struct pci_device_id octeontx_vnic_supported[] = {

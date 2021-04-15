@@ -73,7 +73,7 @@ supported by U-Boot. Clone the OpenSBI repository and run the following command.
 
     git clone https://github.com/riscv/opensbi.git
     cd opensbi
-    make PLATFORM=generic
+    make PLATFORM=qemu/virt
 
 See the OpenSBI documentation for full details:
 https://github.com/riscv/opensbi/blob/master/docs/platform/qemu_virt.md

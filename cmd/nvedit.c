@@ -35,7 +35,6 @@
 #include <errno.h>
 #include <malloc.h>
 #include <mapmem.h>
-#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <u-boot/crc.h>
 #include <watchdog.h>
@@ -267,9 +266,7 @@ static int _do_env_set(int flag, int argc, char *const argv[], int env_flag)
 	/* Delete only ? */
 	if (argc < 3 || argv[2] == NULL) {
 		int rc = hdelete_r(name, &env_htab, env_flag);
-
-		/* If the variable didn't exist, don't report an error */
-		return rc && rc != -ENOENT ? 1 : 0;
+		return !rc;
 	}
 
 	/*
@@ -898,7 +895,7 @@ static int do_env_delete(struct cmd_tbl *cmdtp, int flag,
 	while (--argc > 0) {
 		char *name = *++argv;
 
-		if (hdelete_r(name, &env_htab, env_flag))
+		if (!hdelete_r(name, &env_htab, env_flag))
 			ret = 1;
 	}
 

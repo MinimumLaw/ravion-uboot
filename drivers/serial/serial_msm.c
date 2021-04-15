@@ -15,7 +15,6 @@
 #include <malloc.h>
 #include <serial.h>
 #include <watchdog.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/compiler.h>
 #include <dm/pinctrl.h>
@@ -217,7 +216,7 @@ static int msm_serial_probe(struct udevice *dev)
 	return 0;
 }
 
-static int msm_serial_of_to_plat(struct udevice *dev)
+static int msm_serial_ofdata_to_platdata(struct udevice *dev)
 {
 	struct msm_serial_data *priv = dev_get_priv(dev);
 
@@ -240,8 +239,8 @@ U_BOOT_DRIVER(serial_msm) = {
 	.name	= "serial_msm",
 	.id	= UCLASS_SERIAL,
 	.of_match = msm_serial_ids,
-	.of_to_plat = msm_serial_of_to_plat,
-	.priv_auto	= sizeof(struct msm_serial_data),
+	.ofdata_to_platdata = msm_serial_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct msm_serial_data),
 	.probe = msm_serial_probe,
 	.ops	= &msm_serial_ops,
 };

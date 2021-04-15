@@ -9,7 +9,6 @@
 #include <env.h>
 #include <fdtdec.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <i2c.h>

@@ -6,8 +6,6 @@
 #include <common.h>
 #include <init.h>
 #include <malloc.h>
-#include <asm/addrspace.h>
-#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/io.h>
 #include <linux/sizes.h>
@@ -16,7 +14,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((void *)KSEG1, SZ_256M);
+#ifdef CONFIG_SKIP_LOWLEVEL_INIT
+	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE, SZ_256M);
+#endif
 
 	return 0;
 }

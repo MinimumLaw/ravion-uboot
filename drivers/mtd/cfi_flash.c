@@ -26,7 +26,6 @@
 #include <init.h>
 #include <irq_func.h>
 #include <log.h>
-#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <asm/byteorder.h>

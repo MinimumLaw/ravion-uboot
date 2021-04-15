@@ -12,7 +12,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <usb.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <dm/lists.h>
@@ -367,7 +366,7 @@ static int octeon_dwc3_glue_bind(struct udevice *dev)
 
 	/* Find snps,dwc3 node from subnode */
 	dwc3_node = ofnode_null();
-	ofnode_for_each_subnode(node, dev_ofnode(dev)) {
+	ofnode_for_each_subnode(node, dev->node) {
 		if (ofnode_device_is_compatible(node, "snps,dwc3"))
 			dwc3_node = node;
 	}

@@ -154,11 +154,10 @@
 #endif
 #endif
 
-/* GPIO */
-#ifdef CONFIG_DM_GPIO
-#ifndef CONFIG_MPC8XXX_GPIO
-#define CONFIG_MPC8XXX_GPIO
-#endif
+/* FlexSPI */
+#ifdef CONFIG_NXP_FSPI
+#define NXP_FSPI_FLASH_SIZE		SZ_64M
+#define NXP_FSPI_FLASH_NUM		1
 #endif
 
 #ifndef __ASSEMBLY__

@@ -8,7 +8,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <asm/global_data.h>
 #include <linux/usb/otg.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/phy.h>

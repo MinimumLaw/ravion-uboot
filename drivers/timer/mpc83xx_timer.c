@@ -14,7 +14,6 @@
 #include <time.h>
 #include <timer.h>
 #include <watchdog.h>
-#include <asm/global_data.h>
 #include <asm/ptrace.h>
 #include <linux/bitops.h>
 
@@ -207,7 +206,7 @@ static u64 mpc83xx_timer_get_count(struct udevice *dev)
 
 static int mpc83xx_timer_probe(struct udevice *dev)
 {
-	struct timer_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+	struct timer_dev_priv *uc_priv = dev->uclass_priv;
 	struct clk clock;
 	int ret;
 
@@ -245,5 +244,5 @@ U_BOOT_DRIVER(mpc83xx_timer) = {
 	.of_match = mpc83xx_timer_ids,
 	.probe = mpc83xx_timer_probe,
 	.ops	= &mpc83xx_timer_ops,
-	.priv_auto	= sizeof(struct mpc83xx_timer_priv),
+	.priv_auto_alloc_size = sizeof(struct mpc83xx_timer_priv),
 };

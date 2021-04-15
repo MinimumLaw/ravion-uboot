@@ -7,7 +7,6 @@
 #include <common.h>
 #include <dwmmc.h>
 #include <fdtdec.h>
-#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <malloc.h>
 #include <errno.h>
@@ -41,7 +40,7 @@ struct ca_dwmmc_priv_data {
 	u8 ds;
 };
 
-static int ca_dwmci_clksel(struct dwmci_host *host)
+static void ca_dwmci_clksel(struct dwmci_host *host)
 {
 	struct ca_dwmmc_priv_data *priv = host->priv;
 	u32 val = readl(priv->sd_dll_reg);
@@ -53,8 +52,6 @@ static int ca_dwmci_clksel(struct dwmci_host *host)
 		val |= SD_CLK_SEL_100MHZ;
 
 	writel(val, priv->sd_dll_reg);
-
-	return 0;
 }
 
 static void ca_dwmci_board_init(struct dwmci_host *host)
@@ -90,7 +87,7 @@ unsigned int ca_dwmci_get_mmc_clock(struct dwmci_host *host, uint freq)
 	return SD_SCLK_MAX / clk_div / (host->div + 1);
 }
 
-static int ca_dwmmc_of_to_plat(struct udevice *dev)
+static int ca_dwmmc_ofdata_to_platdata(struct udevice *dev)
 {
 	struct ca_dwmmc_priv_data *priv = dev_get_priv(dev);
 	struct dwmci_host *host = &priv->host;
@@ -127,7 +124,7 @@ struct dm_mmc_ops ca_dwmci_dm_ops;
 
 static int ca_dwmmc_probe(struct udevice *dev)
 {
-	struct ca_mmc_plat *plat = dev_get_plat(dev);
+	struct ca_mmc_plat *plat = dev_get_platdata(dev);
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct ca_dwmmc_priv_data *priv = dev_get_priv(dev);
 	struct dwmci_host *host = &priv->host;
@@ -151,7 +148,7 @@ static int ca_dwmmc_probe(struct udevice *dev)
 
 static int ca_dwmmc_bind(struct udevice *dev)
 {
-	struct ca_mmc_plat *plat = dev_get_plat(dev);
+	struct ca_mmc_plat *plat = dev_get_platdata(dev);
 
 	return dwmci_bind(dev, &plat->mmc, &plat->cfg);
 }
@@ -165,10 +162,10 @@ U_BOOT_DRIVER(ca_dwmmc_drv) = {
 	.name		= "cortina_dwmmc",
 	.id		= UCLASS_MMC,
 	.of_match	= ca_dwmmc_ids,
-	.of_to_plat = ca_dwmmc_of_to_plat,
+	.ofdata_to_platdata = ca_dwmmc_ofdata_to_platdata,
 	.bind		= ca_dwmmc_bind,
 	.ops		= &ca_dwmci_dm_ops,
 	.probe		= ca_dwmmc_probe,
-	.priv_auto	= sizeof(struct ca_dwmmc_priv_data),
-	.plat_auto	= sizeof(struct ca_mmc_plat),
+	.priv_auto_alloc_size	= sizeof(struct ca_dwmmc_priv_data),
+	.platdata_auto_alloc_size = sizeof(struct ca_mmc_plat),
 };

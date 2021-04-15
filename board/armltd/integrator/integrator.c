@@ -24,7 +24,6 @@
 #include <init.h>
 #include <net.h>
 #include <netdev.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/platform_data/serial_pl01x.h>
 #include "arm-ebi.h"
@@ -33,7 +32,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct pl01x_serial_plat serial_plat = {
+static const struct pl01x_serial_platdata serial_platdata = {
 	.base = 0x16000000,
 #ifdef CONFIG_ARCH_CINTEGRATOR
 	.type = TYPE_PL011,
@@ -44,9 +43,9 @@ static const struct pl01x_serial_plat serial_plat = {
 #endif
 };
 
-U_BOOT_DRVINFO(integrator_serials) = {
+U_BOOT_DEVICE(integrator_serials) = {
 	.name = "serial_pl01x",
-	.plat = &serial_plat,
+	.platdata = &serial_platdata,
 };
 
 void peripheral_power_enable (void);

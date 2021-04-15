@@ -27,7 +27,7 @@ enum sh_serial_type {
  * @clk_mode:	Clock mode, set internal (INT) or external (EXT)
  * @type:	Type of SCIF
  */
-struct sh_serial_plat {
+struct sh_serial_platdata {
 	unsigned long base;
 	unsigned int clk;
 	enum sh_clk_mode clk_mode;

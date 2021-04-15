@@ -25,20 +25,12 @@ static inline int board_is_k2g_ice(void)
 {
 	return board_ti_is("66AK2GIC");
 }
-static inline int board_is_k2g_i1(void)
-{
-	return board_ti_is("66AK2GI1");
-}
 #else
 static inline int board_is_k2g_gp(void)
 {
 	return false;
 }
 static inline int board_is_k2g_ice(void)
-{
-	return false;
-}
-static inline int board_is_k2g_i1(void)
 {
 	return false;
 }

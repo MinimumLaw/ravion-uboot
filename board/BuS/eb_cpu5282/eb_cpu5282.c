@@ -9,7 +9,6 @@
 
 #include <common.h>
 #include <command.h>
-#include <asm/global_data.h>
 #include "asm/m5282.h"
 #include <bmp_layout.h>
 #include <env.h>

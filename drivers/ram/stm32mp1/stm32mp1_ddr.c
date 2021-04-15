@@ -3,8 +3,6 @@
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  */
 
-#define LOG_CATEGORY UCLASS_RAM
-
 #include <common.h>
 #include <clk.h>
 #include <log.h>
@@ -313,17 +311,17 @@ static void set_reg(const struct ddr_info *priv,
 	u32 base_addr = get_base_addr(priv, base);
 	const struct reg_desc *desc = ddr_registers[type].desc;
 
-	log_debug("init %s\n", ddr_registers[type].name);
+	debug("init %s\n", ddr_registers[type].name);
 	for (i = 0; i < ddr_registers[type].size; i++) {
 		ptr = (unsigned int *)(base_addr + desc[i].offset);
 		if (desc[i].par_offset == INVALID_OFFSET) {
-			log_err("invalid parameter offset for %s", desc[i].name);
+			pr_err("invalid parameter offset for %s", desc[i].name);
 		} else {
 			value = *((u32 *)((u32)param +
 					       desc[i].par_offset));
 			writel(value, ptr);
-			log_debug("[0x%x] %s= 0x%08x\n",
-				  (u32)ptr, desc[i].name, value);
+			debug("[0x%x] %s= 0x%08x\n",
+			      (u32)ptr, desc[i].name, value);
 		}
 	}
 }
@@ -566,16 +564,16 @@ static void ddrphy_idone_wait(struct stm32mp1_ddrphy *phy)
 					 DDRPHYC_PGSR_RVERR |
 					 DDRPHYC_PGSR_RVEIRR),
 				1000000);
-	log_debug("\n[0x%08x] pgsr = 0x%08x ret=%d\n",
-		  (u32)&phy->pgsr, pgsr, ret);
+	debug("\n[0x%08x] pgsr = 0x%08x ret=%d\n",
+	      (u32)&phy->pgsr, pgsr, ret);
 }
 
 void stm32mp1_ddrphy_init(struct stm32mp1_ddrphy *phy, u32 pir)
 {
 	pir |= DDRPHYC_PIR_INIT;
 	writel(pir, &phy->pir);
-	log_debug("[0x%08x] pir = 0x%08x -> 0x%08x\n",
-		  (u32)&phy->pir, pir, readl(&phy->pir));
+	debug("[0x%08x] pir = 0x%08x -> 0x%08x\n",
+	      (u32)&phy->pir, pir, readl(&phy->pir));
 
 	/* need to wait 10 configuration clock before start polling */
 	udelay(10);
@@ -605,7 +603,7 @@ static void wait_sw_done_ack(struct stm32mp1_ddrctl *ctl)
 		panic("Timeout initialising DRAM : DDR->swstat = %x\n",
 		      swstat);
 
-	log_debug("[0x%08x] swstat = 0x%08x\n", (u32)&ctl->swstat, swstat);
+	debug("[0x%08x] swstat = 0x%08x\n", (u32)&ctl->swstat, swstat);
 }
 
 /* wait quasi dynamic register update */
@@ -636,7 +634,7 @@ static void wait_operating_mode(struct ddr_info *priv, int mode)
 	if (ret)
 		panic("Timeout DRAM : DDR->stat = %x\n", stat);
 
-	log_debug("[0x%08x] stat = 0x%08x\n", (u32)&priv->ctl->stat, stat);
+	debug("[0x%08x] stat = 0x%08x\n", (u32)&priv->ctl->stat, stat);
 }
 
 void stm32mp1_refresh_disable(struct stm32mp1_ddrctl *ctl)
@@ -708,9 +706,9 @@ void stm32mp1_ddr_init(struct ddr_info *priv,
 		panic("ddr power init failed\n");
 
 start:
-	log_debug("name = %s\n", config->info.name);
-	log_debug("speed = %d kHz\n", config->info.speed);
-	log_debug("size  = 0x%x\n", config->info.size);
+	debug("name = %s\n", config->info.name);
+	debug("speed = %d kHz\n", config->info.speed);
+	debug("size  = 0x%x\n", config->info.size);
 /*
  * 1. Program the DWC_ddr_umctl2 registers
  * 1.1 RESETS: presetn, core_ddrc_rstn, aresetn
@@ -747,8 +745,8 @@ start:
 /* 1.5. initialize registers ddr_umctl2 */
 	/* Stop uMCTL2 before PHY is ready */
 	clrbits_le32(&priv->ctl->dfimisc, DDRCTRL_DFIMISC_DFI_INIT_COMPLETE_EN);
-	log_debug("[0x%08x] dfimisc = 0x%08x\n",
-		  (u32)&priv->ctl->dfimisc, readl(&priv->ctl->dfimisc));
+	debug("[0x%08x] dfimisc = 0x%08x\n",
+	      (u32)&priv->ctl->dfimisc, readl(&priv->ctl->dfimisc));
 
 	set_reg(priv, REG_REG, &config->c_reg);
 	set_reg(priv, REG_TIMING, &config->c_timing);
@@ -811,9 +809,9 @@ start:
 	wait_operating_mode(priv, DDRCTRL_STAT_OPERATING_MODE_NORMAL);
 
 	if (config->p_cal_present) {
-		log_debug("DDR DQS training skipped.\n");
+		debug("DDR DQS training skipped.\n");
 	} else {
-		log_debug("DDR DQS training : ");
+		debug("DDR DQS training : ");
 /*  8. Disable Auto refresh and power down by setting
  *    - RFSHCTL3.dis_au_refresh = 1
  *    - PWRCTL.powerdown_en = 0

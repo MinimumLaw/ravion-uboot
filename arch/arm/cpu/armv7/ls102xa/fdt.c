@@ -6,7 +6,6 @@
 #include <common.h>
 #include <clock_legacy.h>
 #include <net.h>
-#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <asm/io.h>
@@ -53,11 +52,7 @@ void ft_fixup_enet_phy_connect_type(void *fdt)
 			continue;
 		}
 
-#ifdef CONFIG_DM_ETH
-		priv = dev_get_priv(dev);
-#else
 		priv = dev->priv;
-#endif
 		if (priv->flags & TSEC_SGMII)
 			continue;
 

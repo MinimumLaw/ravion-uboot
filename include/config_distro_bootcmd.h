@@ -123,20 +123,14 @@
 #endif
 #endif
 
-#ifdef CONFIG_CMD_BOOTEFI_BOOTMGR
-#define BOOTENV_EFI_BOOTMGR                                               \
+
+#define BOOTENV_SHARED_EFI                                                \
 	"boot_efi_bootmgr="                                               \
 		"if fdt addr ${fdt_addr_r}; then "                        \
 			"bootefi bootmgr ${fdt_addr_r};"                  \
 		"else "                                                   \
 			"bootefi bootmgr;"                                \
-		"fi\0"
-#else
-#define BOOTENV_EFI_BOOTMGR
-#endif
-
-#define BOOTENV_SHARED_EFI                                                \
-	BOOTENV_EFI_BOOTMGR                                               \
+		"fi\0"                                                    \
 	\
 	"boot_efi_binary="                                                \
 		"load ${devtype} ${devnum}:${distro_bootpart} "           \

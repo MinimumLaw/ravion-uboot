@@ -22,13 +22,9 @@
 	};
 
 	aliases {
-		/* So that mvebu u-boot can update the MAC address */
+		/* So that mvebu u-boot can update the MAC addresses */
 		ethernet1 = &eth0;
-		spi1 = &spi1;
-		i2c0 = &i2c0;
-		i2c1 = &i2c1;
 	};
-
 
 	chosen {
 		stdout-path = "serial0:115200n8";
@@ -309,12 +305,4 @@
 			};
 		};
 	};
-};
-
-&w25q32 {
-	status = "okay";
-};
-
-&spi1 {
-	status = "okay";
 };

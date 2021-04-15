@@ -9,7 +9,6 @@
 #include <common.h>
 #include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <dm/uclass.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -199,10 +198,9 @@ static bool log_passes_filters(struct log_device *ldev, struct log_rec *rec)
  * @rec:	log record to dispatch
  * Return:	0 msg sent, 1 msg not sent while already dispatching another msg
  */
-static int log_dispatch(struct log_rec *rec, const char *fmt, va_list args)
+static int log_dispatch(struct log_rec *rec)
 {
 	struct log_device *ldev;
-	char buf[CONFIG_SYS_CBSIZE];
 
 	/*
 	 * When a log driver writes messages (e.g. via the network stack) this
@@ -216,13 +214,8 @@ static int log_dispatch(struct log_rec *rec, const char *fmt, va_list args)
 	gd->processing_msg = true;
 	list_for_each_entry(ldev, &gd->log_head, sibling_node) {
 		if ((ldev->flags & LOGDF_ENABLE) &&
-		    log_passes_filters(ldev, rec)) {
-			if (!rec->msg) {
-				vsnprintf(buf, sizeof(buf), fmt, args);
-				rec->msg = buf;
-			}
+		    log_passes_filters(ldev, rec))
 			ldev->drv->emit(ldev, rec);
-		}
 	}
 	gd->processing_msg = false;
 	return 0;
@@ -231,11 +224,9 @@ static int log_dispatch(struct log_rec *rec, const char *fmt, va_list args)
 int _log(enum log_category_t cat, enum log_level_t level, const char *file,
 	 int line, const char *func, const char *fmt, ...)
 {
+	char buf[CONFIG_SYS_CBSIZE];
 	struct log_rec rec;
 	va_list args;
-
-	if (!gd)
-		return -ENOSYS;
 
 	/* Check for message continuation */
 	if (cat == LOGC_CONT)
@@ -249,29 +240,19 @@ int _log(enum log_category_t cat, enum log_level_t level, const char *file,
 	rec.file = file;
 	rec.line = line;
 	rec.func = func;
-	rec.msg = NULL;
-
-	if (!(gd->flags & GD_FLG_LOG_READY)) {
-		gd->log_drop_count++;
-
-		/* display dropped traces with console puts and DEBUG_UART */
-		if (rec.level <= CONFIG_LOG_DEFAULT_LEVEL || rec.force_debug) {
-			char buf[CONFIG_SYS_CBSIZE];
-
-			va_start(args, fmt);
-			vsnprintf(buf, sizeof(buf), fmt, args);
-			puts(buf);
-			va_end(args);
-		}
-
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	rec.msg = buf;
+	if (!gd || !(gd->flags & GD_FLG_LOG_READY)) {
+		if (gd)
+			gd->log_drop_count++;
 		return -ENOSYS;
 	}
-	va_start(args, fmt);
-	if (!log_dispatch(&rec, fmt, args)) {
+	if (!log_dispatch(&rec)) {
 		gd->logc_prev = cat;
 		gd->logl_prev = level;
 	}
-	va_end(args);
 
 	return 0;
 }

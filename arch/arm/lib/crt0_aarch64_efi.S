@@ -18,8 +18,7 @@
 	.globl	ImageBase
 ImageBase:
 	.short	IMAGE_DOS_SIGNATURE		/* 'MZ' */
-	.skip	54				/* 'MZ' + pad + offset == 64 */
-	.long   LINUX_ARM64_MAGIC		/* For GRUB's linux command */
+	.skip	58				/* 'MZ' + pad + offset == 64 */
 	.long	pe_header - ImageBase		/* Offset to the PE header */
 pe_header:
 	.long	IMAGE_NT_SIGNATURE		/* 'PE' */

@@ -3,14 +3,13 @@
  * Copyright (C) 2020 Linaro Limited.
  */
 
-#define LOG_CATEGORY UCLASS_SCMI_AGENT
-
 #include <common.h>
 #include <dm.h>
+#include <dm/device_compat.h>
 #include <errno.h>
 #include <scmi_agent-uclass.h>
 #include <scmi_protocols.h>
-#include <dm/device_compat.h>
+
 #include <dm/device-internal.h>
 #include <linux/compat.h>
 
@@ -74,11 +73,11 @@ static int scmi_bind_protocols(struct udevice *dev)
 		switch (protocol_id) {
 		case SCMI_PROTOCOL_ID_CLOCK:
 			if (IS_ENABLED(CONFIG_CLK_SCMI))
-				drv = DM_DRIVER_GET(scmi_clock);
+				drv = DM_GET_DRIVER(scmi_clock);
 			break;
 		case SCMI_PROTOCOL_ID_RESET_DOMAIN:
 			if (IS_ENABLED(CONFIG_RESET_SCMI))
-				drv = DM_DRIVER_GET(scmi_reset_domain);
+				drv = DM_GET_DRIVER(scmi_reset_domain);
 			break;
 		default:
 			break;
@@ -90,8 +89,8 @@ static int scmi_bind_protocols(struct udevice *dev)
 			continue;
 		}
 
-		ret = device_bind(dev, drv, ofnode_get_name(node), NULL, node,
-				  NULL);
+		ret = device_bind_ofnode(dev, drv, ofnode_get_name(node),
+					 NULL, node, NULL);
 		if (ret)
 			break;
 	}

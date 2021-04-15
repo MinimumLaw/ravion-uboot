@@ -294,7 +294,7 @@ def DoBuildman(options, args, toolchains=None, make_func=None, boards=None,
 
     # By default we have one thread per CPU. But if there are not enough jobs
     # we can have fewer threads and use a high '-j' value for make.
-    if options.threads is None:
+    if not options.threads:
         options.threads = min(multiprocessing.cpu_count(), len(selected))
     if not options.jobs:
         options.jobs = max(1, (multiprocessing.cpu_count() +

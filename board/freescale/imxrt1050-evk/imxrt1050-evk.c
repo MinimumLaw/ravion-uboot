@@ -10,7 +10,6 @@
 #include <log.h>
 #include <ram.h>
 #include <spl.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/armv7m.h>
 

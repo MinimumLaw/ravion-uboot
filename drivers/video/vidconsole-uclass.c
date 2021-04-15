@@ -89,7 +89,9 @@ static int vidconsole_back(struct udevice *dev)
 		if (priv->ycur < 0)
 			priv->ycur = 0;
 	}
-	return video_sync(dev->parent, false);
+	video_sync(dev->parent, false);
+
+	return 0;
 }
 
 /* Move to a newline, scrolling the display if necessary */
@@ -99,7 +101,7 @@ static void vidconsole_newline(struct udevice *dev)
 	struct udevice *vid_dev = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
 	const int rows = CONFIG_CONSOLE_SCROLL_LINES;
-	int i, ret;
+	int i;
 
 	priv->xcur_frac = priv->xstart_frac;
 	priv->ycur += priv->y_charsize;
@@ -114,12 +116,7 @@ static void vidconsole_newline(struct udevice *dev)
 	}
 	priv->last_ch = 0;
 
-	ret = video_sync(dev->parent, false);
-	if (ret) {
-#ifdef DEBUG
-		console_puts_select_stderr(true, "[vc err: video_sync]");
-#endif
-	}
+	video_sync(dev->parent, false);
 }
 
 static const struct vid_rgb colors[VID_COLOR_COUNT] = {
@@ -351,15 +348,8 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
 		parsenum(priv->escape_buf + 1, &mode);
 
 		if (mode == 2) {
-			int ret;
-
 			video_clear(dev->parent);
-			ret = video_sync(dev->parent, false);
-			if (ret) {
-#ifdef DEBUG
-				console_puts_select_stderr(true, "[vc err: video_sync]");
-#endif
-			}
+			video_sync(dev->parent, false);
 			priv->ycur = 0;
 			priv->xcur_frac = priv->xstart_frac;
 		} else {
@@ -575,12 +565,7 @@ static void vidconsole_putc(struct stdio_dev *sdev, const char ch)
 		console_puts_select_stderr(true, "[vc err: putc]");
 #endif
 	}
-	ret = video_sync(dev->parent, false);
-	if (ret) {
-#ifdef DEBUG
-		console_puts_select_stderr(true, "[vc err: video_sync]");
-#endif
-	}
+	video_sync(dev->parent, false);
 }
 
 static void vidconsole_puts(struct stdio_dev *sdev, const char *s)
@@ -597,12 +582,7 @@ static void vidconsole_puts(struct stdio_dev *sdev, const char *s)
 		console_puts_select_stderr(true, str);
 #endif
 	}
-	ret = video_sync(dev->parent, false);
-	if (ret) {
-#ifdef DEBUG
-		console_puts_select_stderr(true, "[vc err: video_sync]");
-#endif
-	}
+	video_sync(dev->parent, false);
 }
 
 /* Set up the number of rows and colours (rotated drivers override this) */
@@ -626,9 +606,9 @@ static int vidconsole_post_probe(struct udevice *dev)
 	if (!priv->tab_width_frac)
 		priv->tab_width_frac = VID_TO_POS(priv->x_charsize) * 8;
 
-	if (dev_seq(dev)) {
+	if (dev->seq) {
 		snprintf(sdev->name, sizeof(sdev->name), "vidconsole%d",
-			 dev_seq(dev));
+			 dev->seq);
 	} else {
 		strcpy(sdev->name, "vidconsole");
 	}
@@ -646,7 +626,7 @@ UCLASS_DRIVER(vidconsole) = {
 	.name		= "vidconsole0",
 	.pre_probe	= vidconsole_pre_probe,
 	.post_probe	= vidconsole_post_probe,
-	.per_device_auto	= sizeof(struct vidconsole_priv),
+	.per_device_auto_alloc_size	= sizeof(struct vidconsole_priv),
 };
 
 #ifdef CONFIG_VIDEO_COPY
@@ -711,7 +691,9 @@ static int do_video_puts(struct cmd_tbl *cmdtp, int flag, int argc,
 	for (s = argv[1]; *s; s++)
 		vidconsole_put_char(dev, *s);
 
-	return video_sync(dev->parent, false);
+	video_sync(dev->parent, false);
+
+	return 0;
 }
 
 U_BOOT_CMD(

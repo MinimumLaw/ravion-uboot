@@ -11,7 +11,6 @@
 #include <led.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/clk.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

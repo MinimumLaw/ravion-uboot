@@ -8,7 +8,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 
@@ -37,7 +36,7 @@ struct nx_alive_gpio_regs {
 	u32	pad;		/* Alive GPIO Input Value Register */
 };
 
-struct nx_gpio_plat {
+struct nx_gpio_platdata {
 	void *regs;
 	int gpio_count;
 	const char *bank_name;
@@ -45,7 +44,7 @@ struct nx_gpio_plat {
 
 static int nx_alive_gpio_is_check(struct udevice *dev)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	const char *bank_name = plat->bank_name;
 
 	if (!strcmp(bank_name, "gpio_alv"))
@@ -56,7 +55,7 @@ static int nx_alive_gpio_is_check(struct udevice *dev)
 
 static int nx_alive_gpio_direction_input(struct udevice *dev, unsigned int pin)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_alive_gpio_regs *const regs = plat->regs;
 
 	setbits_le32(&regs->outputenb_reset, 1 << pin);
@@ -67,7 +66,7 @@ static int nx_alive_gpio_direction_input(struct udevice *dev, unsigned int pin)
 static int nx_alive_gpio_direction_output(struct udevice *dev, unsigned int pin,
 					  int val)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_alive_gpio_regs *const regs = plat->regs;
 
 	if (val)
@@ -82,7 +81,7 @@ static int nx_alive_gpio_direction_output(struct udevice *dev, unsigned int pin,
 
 static int nx_alive_gpio_get_value(struct udevice *dev, unsigned int pin)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_alive_gpio_regs *const regs = plat->regs;
 	unsigned int mask = 1UL << pin;
 	unsigned int value;
@@ -95,7 +94,7 @@ static int nx_alive_gpio_get_value(struct udevice *dev, unsigned int pin)
 static int nx_alive_gpio_set_value(struct udevice *dev, unsigned int pin,
 				   int val)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_alive_gpio_regs *const regs = plat->regs;
 
 	if (val)
@@ -108,7 +107,7 @@ static int nx_alive_gpio_set_value(struct udevice *dev, unsigned int pin,
 
 static int nx_alive_gpio_get_function(struct udevice *dev, unsigned int pin)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_alive_gpio_regs *const regs = plat->regs;
 	unsigned int mask = (1UL << pin);
 	unsigned int output;
@@ -123,7 +122,7 @@ static int nx_alive_gpio_get_function(struct udevice *dev, unsigned int pin)
 
 static int nx_gpio_direction_input(struct udevice *dev, unsigned int pin)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_gpio_regs *const regs = plat->regs;
 
 	if (nx_alive_gpio_is_check(dev))
@@ -137,7 +136,7 @@ static int nx_gpio_direction_input(struct udevice *dev, unsigned int pin)
 static int nx_gpio_direction_output(struct udevice *dev, unsigned int pin,
 				    int val)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_gpio_regs *const regs = plat->regs;
 
 	if (nx_alive_gpio_is_check(dev))
@@ -155,7 +154,7 @@ static int nx_gpio_direction_output(struct udevice *dev, unsigned int pin,
 
 static int nx_gpio_get_value(struct udevice *dev, unsigned int pin)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_gpio_regs *const regs = plat->regs;
 	unsigned int mask = 1UL << pin;
 	unsigned int value;
@@ -170,7 +169,7 @@ static int nx_gpio_get_value(struct udevice *dev, unsigned int pin)
 
 static int nx_gpio_set_value(struct udevice *dev, unsigned int pin, int val)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_gpio_regs *const regs = plat->regs;
 
 	if (nx_alive_gpio_is_check(dev))
@@ -186,7 +185,7 @@ static int nx_gpio_set_value(struct udevice *dev, unsigned int pin, int val)
 
 static int nx_gpio_get_function(struct udevice *dev, unsigned int pin)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 	struct nx_gpio_regs *const regs = plat->regs;
 	unsigned int mask = (1UL << pin);
 	unsigned int output;
@@ -205,7 +204,7 @@ static int nx_gpio_get_function(struct udevice *dev, unsigned int pin)
 static int nx_gpio_probe(struct udevice *dev)
 {
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 
 	uc_priv->gpio_count = plat->gpio_count;
 	uc_priv->bank_name = plat->bank_name;
@@ -213,9 +212,9 @@ static int nx_gpio_probe(struct udevice *dev)
 	return 0;
 }
 
-static int nx_gpio_of_to_plat(struct udevice *dev)
+static int nx_gpio_ofdata_to_platdata(struct udevice *dev)
 {
-	struct nx_gpio_plat *plat = dev_get_plat(dev);
+	struct nx_gpio_platdata *plat = dev_get_platdata(dev);
 
 	plat->regs = map_physmem(devfdt_get_addr(dev),
 				 sizeof(struct nx_gpio_regs),
@@ -245,7 +244,7 @@ U_BOOT_DRIVER(nx_gpio) = {
 	.id		= UCLASS_GPIO,
 	.of_match	= nx_gpio_ids,
 	.ops		= &nx_gpio_ops,
-	.of_to_plat = nx_gpio_of_to_plat,
-	.plat_auto	= sizeof(struct nx_gpio_plat),
+	.ofdata_to_platdata = nx_gpio_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct nx_gpio_platdata),
 	.probe		= nx_gpio_probe,
 };

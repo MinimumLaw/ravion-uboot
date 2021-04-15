@@ -11,7 +11,6 @@
 #include <netdev.h>
 #include <fsl_ifc.h>
 #include <fsl_ddr.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <hwconfig.h>
 #include <fdt_support.h>
@@ -42,48 +41,6 @@ enum {
 	MUX_TYPE_SDHC,
 	MUX_TYPE_DSPI,
 };
-
-#ifdef CONFIG_VID
-u16 soc_get_fuse_vid(int vid_index)
-{
-	static const u16 vdd[32] = {
-		10500,
-		0,      /* reserved */
-		9750,
-		0,      /* reserved */
-		9500,
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		9000,   /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		10000,  /* 1.0000V */
-		0,      /* reserved */
-		10250,
-		0,      /* reserved */
-		10500,
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-	};
-
-	return vdd[vid_index];
-};
-#endif
 
 unsigned long long get_qixis_addr(void)
 {
@@ -209,7 +166,7 @@ int select_i2c_ch_pca9547(u8 ch)
 {
 	int ret;
 
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	ret = i2c_write(I2C_MUX_PCA_ADDR_PRI, 0, 1, &ch, 1);
 #else
 	struct udevice *dev;

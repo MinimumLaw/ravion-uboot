@@ -8,7 +8,6 @@
 #include <dm.h>
 #include <init.h>
 #include <log.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -36,7 +35,17 @@ int dram_init_banksize(void)
 	return 0;
 }
 
+int board_early_init_f(void)
+{
+	return 0;
+}
+
 u32 get_board_rev(void)
+{
+	return 0;
+}
+
+int board_late_init(void)
 {
 	return 0;
 }

@@ -46,7 +46,6 @@
 *		BIOS in u-boot.
 ****************************************************************************/
 #include <common.h>
-#include <compiler.h>
 #include <bios_emul.h>
 #include <errno.h>
 #include <log.h>

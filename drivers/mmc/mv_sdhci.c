@@ -7,7 +7,6 @@
 #include <dm.h>
 #include <malloc.h>
 #include <sdhci.h>
-#include <asm/global_data.h>
 #include <linux/mbus.h>
 
 #define MVSDH_NAME "mv_sdh"
@@ -108,7 +107,7 @@ struct mv_sdhci_plat {
 static int mv_sdhci_probe(struct udevice *dev)
 {
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
-	struct mv_sdhci_plat *plat = dev_get_plat(dev);
+	struct mv_sdhci_plat *plat = dev_get_platdata(dev);
 	struct sdhci_host *host = dev_get_priv(dev);
 	int ret;
 
@@ -118,10 +117,6 @@ static int mv_sdhci_probe(struct udevice *dev)
 	host->mmc = &plat->mmc;
 	host->mmc->dev = dev;
 	host->mmc->priv = host;
-
-	ret = mmc_of_parse(dev, &plat->cfg);
-	if (ret)
-		return ret;
 
 	ret = sdhci_setup_cfg(&plat->cfg, host, 0, 0);
 	if (ret)
@@ -139,7 +134,7 @@ static int mv_sdhci_probe(struct udevice *dev)
 
 static int mv_sdhci_bind(struct udevice *dev)
 {
-	struct mv_sdhci_plat *plat = dev_get_plat(dev);
+	struct mv_sdhci_plat *plat = dev_get_platdata(dev);
 
 	return sdhci_bind(dev, &plat->mmc, &plat->cfg);
 }
@@ -156,7 +151,7 @@ U_BOOT_DRIVER(mv_sdhci_drv) = {
 	.bind		= mv_sdhci_bind,
 	.probe		= mv_sdhci_probe,
 	.ops		= &sdhci_ops,
-	.priv_auto	= sizeof(struct sdhci_host),
-	.plat_auto	= sizeof(struct mv_sdhci_plat),
+	.priv_auto_alloc_size = sizeof(struct sdhci_host),
+	.platdata_auto_alloc_size = sizeof(struct mv_sdhci_plat),
 };
 #endif /* CONFIG_DM_MMC */
