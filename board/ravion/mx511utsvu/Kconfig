@@ -1,0 +1,15 @@
+if TARGET_MX511UTSVU
+
+config SYS_BOARD
+	default "mx511utsvu"
+
+config SYS_VENDOR
+	default "ravion"
+
+config SYS_SOC
+	default "mx5"
+
+config SYS_CONFIG_NAME
+	default "mx511utsvu"
+
+endif

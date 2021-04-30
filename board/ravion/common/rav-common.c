@@ -113,7 +113,7 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 int show_board_info(void)
 {
 	printf("Bootloader not report board info!\n");
-	return -1;
+	return 0; /* FixMe: UTSVU */
 }
 
 #endif /* CONFIG_RAVION_CFG_BLOCK */

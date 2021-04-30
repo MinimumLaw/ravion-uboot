@@ -44,6 +44,11 @@ config TARGET_MX51EVK
 	select BOARD_LATE_INIT
 	select MX51
 
+config TARGET_MX511UTSVU
+	bool "Support OAO Radioavionica I.MX511 UTSVU board"
+	select BOARD_LATE_INIT
+	select MX51
+
 config TARGET_MX53CX9020
 	bool "Support CX9020"
 	select BOARD_LATE_INIT
@@ -89,6 +94,7 @@ source "board/ge/mx53ppd/Kconfig"
 source "board/inversepath/usbarmory/Kconfig"
 source "board/k+p/kp_imx53/Kconfig"
 source "board/menlo/m53menlo/Kconfig"
+source "board/ravion/mx511utsvu/Kconfig"
 source "board/technologic/ts4800/Kconfig"
 
 endif

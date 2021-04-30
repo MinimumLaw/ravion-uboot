@@ -1,0 +1,6 @@
+MX51UTSVU BOARD
+M:	Alex A. Mihaylov <minimumlaw@rambler.ru>
+S:	Maintained
+F:	board/ravion/mx511utsvu/
+F:	include/configs/mx511utsvu.h
+F:	configs/ravion_mx511_defconfig

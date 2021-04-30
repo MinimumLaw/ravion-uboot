@@ -1,0 +1,73 @@
+  Bootscript for update serial flash from mmc0 (bscript.txt)
+
+************** cut here **************
+echo --=={{[[ UPDATE SERIAL FLASH BOOTLOADER ]]}}==--
+echo 1. Loading u-boot binary from SD/MMC card 0
+if ext2load mmc 0:1 0x90800000 u-boot.imx; then
+ echo 2. Serial flash probe
+ if sf probe; then
+  echo 3. Erase first 1M from serial flash
+  if sf erase 0 0x100000; then
+   echo 4. Write u-boot to serial flash with offset 0x400
+   if sf write 0x90800000 0x400 $filesize; then
+    echo 5. Reset enverooments to default
+    if env default -f -a; then
+     echo 6. Save enverooments to serial flash
+     if saveenv; then
+      echo 7. Update done
+      echo -------------------------------------------------------------
+      echo Next steps:
+      echo  - power off board
+      echo  - repalce or remove SD/MMC card
+      echo  - set dip switches 3,4,5 to on state
+      echo  - power on board (board will be booted from serial flash)
+      echo  - configure u-boot enverooment
+      echo  - use you board =)
+      echo -------------------------------------------------------------
+      sleep 65534
+      exit 0
+      echo FixMe: exit not return to u-boot console, only CURRENT script exit.
+     else
+      echo Khm... Default enverooments NOT saved to flash! I not know why!
+     fi
+    else
+     echo Khm... Not reset enverooments to default??? Why??
+    fi
+   else
+    echo Serial flash write failed! Check soldering and WP pin!
+   fi
+  else
+   echo Serial flash erase failed! Check soldering!
+  fi
+ else
+  echo No serial flash found on you board! Check soldering!
+ fi
+else
+ echo No u-boot.imx file on SD/MMC card 0
+fi
+************** cut here **************
+
+  Shell script to build bscript.img (placed on SD/MMC with u-boot.imx)
+from bscript.txt above
+
+************** cut here **************
+#!/bin/sh
+
+mkimage \
+	-C none \
+	-T script \
+	-n 'I.MX 515 U-Boot update script' \
+	-d bscript.txt \
+	bscript.img
+************** cut here **************
+
+  Update procedure:
+- set dip switch to factory default SA1 - 1..6:off; 7,8:on. SA2 - 1,2:on
+- partition SD/MMC card, format first partition as ext2 or ext3
+- copy u-boot.imx to this SD/MMC boot sector (skip first 512 bytes)
+- copy u-boot.imx and bscript.img files to first partition (ext2/ext3)
+- put card into XS1 slot
+- boot from this card and wait for script done with "- use you board =)"
+- power off board, set SA1 switches 3,4,5 to on
+- power on board and boot from serial flash
+- configure u-boot enverooment and use you board =)
