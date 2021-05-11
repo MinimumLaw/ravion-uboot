@@ -21,4 +21,5 @@ fi
 
 if [ -f u-boot-dtb.imx ]; then
 	dd if=u-boot-dtb.imx of=utsvu_sdcard.img seek=2 bs=512
+	echo Use off-tree genimage to build realy bootable sdcard
 fi
