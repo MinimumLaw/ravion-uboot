@@ -56,6 +56,7 @@
 #define PWRBTN_DETECT_DELAY	750000
 #endif
 static const char POWERBUTTON_GPIO[] = "GPIO2_7";
+static const char nRESETOUT_GPIO[] = "GPIO2_5";
 
 /* called BEFORE load system */
 void spl_board_prepare_for_linux(void)
@@ -70,14 +71,29 @@ void spl_board_prepare_for_linux(void)
 int spl_start_uboot(void)
 {
 	const char* pwr_gpio = POWERBUTTON_GPIO;
+	const char* rst_gpio = nRESETOUT_GPIO;
 	struct gpio_desc pwrbtn_gpio;
+	struct gpio_desc nrstout_gpio;
 	int ret = SPL_LOAD_UBOOT;
+
+	if (dm_gpio_lookup_name(rst_gpio, &nrstout_gpio))
+		printf("nRESET lookup failed!\n");
+	if (dm_gpio_request(&nrstout_gpio, "nRSTOUT"))
+		printf("nRESET request failed!\n");
+	if (dm_gpio_set_dir_flags(&nrstout_gpio, GPIOD_IS_OUT))
+		printf("nRESET configure output failed!\n");
+	if (dm_gpio_set_value(&nrstout_gpio, 0))
+		printf("nRESET deassert failed!\n");
 
 #ifdef CONFIG_SPL_ENV_SUPPORT
 	env_init();
 	env_load();
 	if (env_get_yesno("boot_os") != 1) {
 		printf("Falcon bootmode not allowed by environment!\n");
+		/* Yep, we must wait power button RELEASE and PRESS time */
+		udelay(PWRBTN_DETECT_DELAY);
+		if (dm_gpio_set_value(&nrstout_gpio, 1))
+			printf("nRESET assert failed!\n");
 		return SPL_LOAD_UBOOT;
 	}
 #endif
@@ -107,6 +123,9 @@ int spl_start_uboot(void)
 	/* Power button pulled UP, unpressed read "1", pressed "0" */
 	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
 	debug(ret == SPL_LOAD_SYSTEM ? "Falcon mode\n" : "Tortoise mode\n");
+
+	if (dm_gpio_set_value(&nrstout_gpio, 1))
+		printf("nRESET assert failed!\n");
 
 	return !!ret;
 }
@@ -160,6 +179,8 @@ static iomux_v3_cfg_t const ravion_pads[] = {
 	/* UART */
 	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
+	/* nRESET_OUT */
+	MX6_PAD_NANDF_D5__GPIO2_IO05 | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 void board_init_f(ulong dummy)
