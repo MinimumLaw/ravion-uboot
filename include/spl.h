@@ -222,6 +222,15 @@ struct spl_load_info {
 	void *priv;
 	int bl_len;
 	const char *filename;
+	/**
+	 * read() - Read from device
+	 *
+	 * @load: Information about the load state
+	 * @sector: Sector number to read from (each @load->bl_len bytes)
+	 * @count: Number of sectors to read
+	 * @buf: Buffer to read into
+	 * @return number of sectors read, 0 on error
+	 */
 	ulong (*read)(struct spl_load_info *load, ulong sector, ulong count,
 		      void *buf);
 };
@@ -348,15 +357,7 @@ u32 spl_mmc_boot_mode(const u32 boot_device);
  * If not overridden, it is weakly defined in common/spl/spl_mmc.c.
  */
 int spl_mmc_boot_partition(const u32 boot_device);
-
-/**
- * spl_alloc_bd() - Allocate space for bd_info
- *
- * This sets up the gd->bd pointer by allocating memory for it
- *
- * @return 0 if OK, -ENOMEM if out of memory
- */
-int spl_alloc_bd(void);
+void spl_set_bd(void);
 
 /**
  * spl_set_header_raw_uboot() - Set up a standard SPL image structure

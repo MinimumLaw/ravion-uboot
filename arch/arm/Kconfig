@@ -67,6 +67,7 @@ config GIC_V3_ITS
 	bool "ARM GICV3 ITS"
 	select REGMAP
 	select SYSCON
+	select IRQ
 	help
 	  ARM GICV3 Interrupt translation service (ITS).
 	  Basic support for programming locality specific peripheral
@@ -346,7 +347,7 @@ config SYS_CACHELINE_SIZE
 choice
 	prompt "Select the ARM data write cache policy"
 	default SYS_ARM_CACHE_WRITETHROUGH if TARGET_BCMCYGNUS || \
-					      TARGET_BCMNSP || CPU_PXA || RZA1
+					      CPU_PXA || RZA1
 	default SYS_ARM_CACHE_WRITEBACK
 
 config SYS_ARM_CACHE_WRITEBACK
@@ -561,11 +562,6 @@ config ARCH_MVEBU
 	select SPI
 	imply CMD_DM
 
-config TARGET_APF27
-	bool "Support apf27"
-	select CPU_ARM926EJS
-	select SUPPORT_SPL
-
 config ARCH_ORION5X
 	bool "Marvell Orion"
 	select CPU_ARM926EJS
@@ -650,13 +646,6 @@ config ARCH_BCM6858
 	select OF_CONTROL
 	imply CMD_DM
 
-config TARGET_VEXPRESS_CA15_TC2
-	bool "Support vexpress_ca15_tc2"
-	select CPU_V7A
-	select CPU_V7_HAS_NONSEC
-	select CPU_V7_HAS_VIRT
-	select PL011_SERIAL
-
 config ARCH_BCMSTB
 	bool "Broadcom BCM7XXX family"
 	select CPU_V7A
@@ -668,28 +657,6 @@ config ARCH_BCMSTB
 	  This enables support for Broadcom ARM-based set-top box
 	  chipsets, including the 7445 family of chips.
 
-config TARGET_VEXPRESS_CA5X2
-	bool "Support vexpress_ca5x2"
-	select CPU_V7A
-	select PL011_SERIAL
-
-config TARGET_VEXPRESS_CA9X4
-	bool "Support vexpress_ca9x4"
-	select CPU_V7A
-	select PL011_SERIAL
-
-config TARGET_BCM23550_W1D
-	bool "Support bcm23550_w1d"
-	select CPU_V7A
-	imply CRC32_VERIFY
-	imply FAT_WRITE
-
-config TARGET_BCM28155_AP
-	bool "Support bcm28155_ap"
-	select CPU_V7A
-	imply CRC32_VERIFY
-	imply FAT_WRITE
-
 config TARGET_BCMCYGNUS
 	bool "Support bcmcygnus"
 	select CPU_V7A
@@ -700,10 +667,6 @@ config TARGET_BCMCYGNUS
 	imply FAT_WRITE
 	imply HASH_VERIFY
 	imply NETDEVICES
-
-config TARGET_BCMNSP
-	bool "Support bcmnsp"
-	select CPU_V7A
 
 config TARGET_BCMNS2
 	bool "Support Broadcom Northstar2"
@@ -748,7 +711,16 @@ config ARCH_S5PC1XX
 config ARCH_HIGHBANK
 	bool "Calxeda Highbank"
 	select CPU_V7A
-	select PL011_SERIAL
+	select PL01X_SERIAL
+	select DM
+	select DM_SERIAL
+	select OF_CONTROL
+	select OF_BOARD
+	select CLK
+	select CLK_CCF
+	select AHCI
+	select DM_ETH
+	select PHYS_64BIT
 
 config ARCH_INTEGRATOR
 	bool "ARM Ltd. Integrator family"
@@ -839,6 +811,9 @@ config ARCH_IMX8
 config ARCH_IMX8M
 	bool "NXP i.MX8M platform"
 	select ARM64
+	select SYS_FSL_HAS_SEC if IMX_HAB
+	select SYS_FSL_SEC_COMPAT_4
+	select SYS_FSL_SEC_LE
 	select DM
 	select SUPPORT_SPL
 	imply CMD_DM
@@ -875,6 +850,9 @@ config ARCH_MX31
 config ARCH_MX7ULP
 	bool "NXP MX7ULP"
 	select CPU_V7A
+	select SYS_FSL_HAS_SEC if IMX_HAB
+	select SYS_FSL_SEC_COMPAT_4
+	select SYS_FSL_SEC_LE
 	select ROM_UNIFIED_SECTIONS
 	imply MXC_GPIO
 	imply SYS_THUMB_BUILD
@@ -947,11 +925,6 @@ config ARCH_RMOBILE
 	imply FAT_WRITE
 	imply SYS_THUMB_BUILD
 	imply ARCH_MISC_INIT if DISPLAY_CPUINFO
-
-config TARGET_S32V234EVB
-	bool "Support s32v234evb"
-	select ARM64
-	select SYS_FSL_ERRATUM_ESDHC111
 
 config ARCH_SNAPDRAGON
 	bool "Qualcomm Snapdragon SoCs"
@@ -1500,6 +1473,42 @@ config TARGET_LS1021ATWR
 	select DM_SPI_FLASH if FSL_DSPI || FSL_QSPI
 	imply SCSI
 
+config TARGET_PG_WCOM_SELI8
+	bool "Support Hitachi-Powergrids SELI8 service unit card"
+	select ARCH_LS1021A
+	select ARCH_SUPPORT_PSCI
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	select CPU_V7A
+	select CPU_V7_HAS_NONSEC
+	select CPU_V7_HAS_VIRT
+	select SYS_FSL_DDR
+	select FSL_DDR_INTERACTIVE
+	select VENDOR_KM
+	imply SCSI
+	help
+	 Support for Hitachi-Powergrids SELI8 service unit card.
+	 SELI8 is a QorIQ LS1021a based service unit card used
+	 in XMC20 and FOX615 product families.
+
+config TARGET_PG_WCOM_EXPU1
+	bool "Support Hitachi-Powergrids EXPU1 service unit card"
+	select ARCH_LS1021A
+	select ARCH_SUPPORT_PSCI
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	select CPU_V7A
+	select CPU_V7_HAS_NONSEC
+	select CPU_V7_HAS_VIRT
+	select SYS_FSL_DDR
+	select FSL_DDR_INTERACTIVE
+	select VENDOR_KM
+	imply SCSI
+	help
+	 Support for Hitachi-Powergrids EXPU1 service unit card.
+	 EXPU1 is a QorIQ LS1021a based service unit card used
+	 in XMC20 and FOX615 product families.
+
 config TARGET_LS1021ATSN
 	bool "Support ls1021atsn"
 	select ARCH_LS1021A
@@ -1624,6 +1633,26 @@ config TARGET_SL28
 	select ARMV8_MULTIENTRY
 	select SUPPORT_SPL
 	select BINMAN
+	select DM
+	select DM_GPIO
+	select DM_I2C
+	select DM_MMC
+	select DM_SPI_FLASH
+	select DM_ETH
+	select DM_MDIO
+	select DM_PCI
+	select DM_RNG
+	select DM_RTC
+	select DM_SCSI
+	select DM_SERIAL
+	select DM_SPI
+	select DM_USB
+	select SPL_DM if SPL
+	select SPL_DM_SPI if SPL
+	select SPL_DM_SPI_FLASH if SPL
+	select SPL_DM_I2C if SPL
+	select SPL_DM_MMC if SPL
+	select SPL_DM_SERIAL if SPL
 	help
 	  Support for Kontron SMARC-sAL28 board.
 
@@ -1963,18 +1992,11 @@ source "board/Marvell/aspenite/Kconfig"
 source "board/Marvell/gplugd/Kconfig"
 source "board/Marvell/octeontx/Kconfig"
 source "board/Marvell/octeontx2/Kconfig"
-source "board/armadeus/apf27/Kconfig"
-source "board/armltd/vexpress/Kconfig"
 source "board/armltd/vexpress64/Kconfig"
 source "board/cortina/presidio-asic/Kconfig"
-source "board/broadcom/bcm23550_w1d/Kconfig"
-source "board/broadcom/bcm28155_ap/Kconfig"
 source "board/broadcom/bcm963158/Kconfig"
 source "board/broadcom/bcm968360bg/Kconfig"
 source "board/broadcom/bcm968580xref/Kconfig"
-source "board/broadcom/bcmcygnus/Kconfig"
-source "board/broadcom/bcmnsp/Kconfig"
-source "board/broadcom/bcmns2/Kconfig"
 source "board/broadcom/bcmns3/Kconfig"
 source "board/cavium/thunderx/Kconfig"
 source "board/cirrus/edb93xx/Kconfig"
@@ -1997,7 +2019,6 @@ source "board/freescale/ls1012aqds/Kconfig"
 source "board/freescale/ls1012ardb/Kconfig"
 source "board/freescale/ls1012afrdm/Kconfig"
 source "board/freescale/lx2160a/Kconfig"
-source "board/freescale/s32v234evb/Kconfig"
 source "board/grinn/chiliboard/Kconfig"
 source "board/hisilicon/hikey/Kconfig"
 source "board/hisilicon/hikey960/Kconfig"
@@ -2005,6 +2026,7 @@ source "board/hisilicon/poplar/Kconfig"
 source "board/isee/igep003x/Kconfig"
 source "board/kontron/sl28/Kconfig"
 source "board/myir/mys_6ulx/Kconfig"
+source "board/seeed/npi_imx6ull/Kconfig"
 source "board/spear/spear300/Kconfig"
 source "board/spear/spear310/Kconfig"
 source "board/spear/spear320/Kconfig"
@@ -2017,6 +2039,7 @@ source "board/variscite/dart_6ul/Kconfig"
 source "board/vscom/baltos/Kconfig"
 source "board/phytium/durian/Kconfig"
 source "board/xen/xenguest_arm64/Kconfig"
+source "board/keymile/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 

@@ -1512,6 +1512,10 @@ int fit_image_check_arch(const void *fit, int noffset, uint8_t arch)
 	uint8_t image_arch;
 	int aarch32_support = 0;
 
+	/* Let's assume that sandbox can load any architecture */
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return true;
+
 	if (IS_ENABLED(CONFIG_ARM64_SUPPORT_AARCH32))
 		aarch32_support = 1;
 
@@ -1955,6 +1959,8 @@ static const char *fit_get_image_type_property(int type)
 		return FIT_FDT_PROP;
 	case IH_TYPE_KERNEL:
 		return FIT_KERNEL_PROP;
+	case IH_TYPE_FIRMWARE:
+		return FIT_FIRMWARE_PROP;
 	case IH_TYPE_RAMDISK:
 		return FIT_RAMDISK_PROP;
 	case IH_TYPE_X86_SETUP:
@@ -2087,6 +2093,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL);
 	type_ok = fit_image_check_type(fit, noffset, image_type) ||
 		  fit_image_check_type(fit, noffset, IH_TYPE_FIRMWARE) ||
+		  fit_image_check_type(fit, noffset, IH_TYPE_TEE) ||
 		  (image_type == IH_TYPE_KERNEL &&
 		   fit_image_check_type(fit, noffset, IH_TYPE_KERNEL_NOLOAD));
 
@@ -2094,6 +2101,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 		image_type == IH_TYPE_FPGA ||
 		fit_image_check_os(fit, noffset, IH_OS_LINUX) ||
 		fit_image_check_os(fit, noffset, IH_OS_U_BOOT) ||
+		fit_image_check_os(fit, noffset, IH_OS_TEE) ||
 		fit_image_check_os(fit, noffset, IH_OS_OPENRTOS) ||
 		fit_image_check_os(fit, noffset, IH_OS_EFI) ||
 		fit_image_check_os(fit, noffset, IH_OS_VXWORKS);

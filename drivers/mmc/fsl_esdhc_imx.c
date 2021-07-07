@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2007, 2010-2011 Freescale Semiconductor, Inc
- * Copyright 2019 NXP Semiconductors
+ * Copyright 2019, 2021 NXP
  * Andy Fleming
  * Yangbo Lu <yangbo.lu@nxp.com>
  *
@@ -146,6 +146,7 @@ struct esdhc_soc_data {
  * @start_tuning_tap: the start point for tuning in tuning_ctrl register
  * @strobe_dll_delay_target: settings in strobe_dllctrl
  * @signal_voltage: indicating the current voltage
+ * @signal_voltage_switch_extra_delay_ms: extra delay for IO voltage switch
  * @cd_gpio: gpio for card detection
  * @wp_gpio: gpio for write protection
  */
@@ -170,6 +171,7 @@ struct fsl_esdhc_priv {
 	u32 tuning_start_tap;
 	u32 strobe_dll_delay_target;
 	u32 signal_voltage;
+	u32 signal_voltage_switch_extra_delay_ms;
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *vqmmc_dev;
 	struct udevice *vmmc_dev;
@@ -521,15 +523,6 @@ static int esdhc_send_cmd_common(struct fsl_esdhc_priv *priv, struct mmc *mmc,
 		goto out;
 	}
 
-	/* Switch voltage to 1.8V if CMD11 succeeded */
-	if (cmd->cmdidx == SD_CMD_SWITCH_UHS18V) {
-		esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
-
-		printf("Run CMD11 1.8V switch\n");
-		/* Sleep for 5 ms - max time for card to switch to 1.8V */
-		udelay(5000);
-	}
-
 	/* Workaround for ESDHC errata ENGcm03648 */
 	if (!data && (cmd->resp_type & MMC_RSP_BUSY)) {
 		int timeout = 50000;
@@ -835,6 +828,14 @@ static int esdhc_set_voltage(struct mmc *mmc)
 		}
 #endif
 		esdhc_setbits32(&regs->vendorspec, ESDHC_VENDORSPEC_VSELECT);
+		/*
+		 * some board like imx8mm-evk need about 18ms to switch
+		 * the IO voltage from 3.3v to 1.8v, common code only
+		 * delay 10ms, so need to delay extra time to make sure
+		 * the IO voltage change to 1.8v.
+		 */
+		if (priv->signal_voltage_switch_extra_delay_ms)
+			mdelay(priv->signal_voltage_switch_extra_delay_ms);
 		if (esdhc_read32(&regs->vendorspec) & ESDHC_VENDORSPEC_VSELECT)
 			return 0;
 
@@ -854,7 +855,7 @@ static void esdhc_stop_tuning(struct mmc *mmc)
 	cmd.cmdarg = 0;
 	cmd.resp_type = MMC_RSP_R1b;
 
-	dm_mmc_send_cmd(mmc->dev, &cmd, NULL);
+	mmc_send_cmd(mmc, &cmd, NULL);
 }
 
 static int fsl_esdhc_execute_tuning(struct udevice *dev, uint32_t opcode)
@@ -1220,11 +1221,6 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv,
 			ESDHC_HOSTCAPBLT_VS18 | ESDHC_HOSTCAPBLT_VS30);
 #endif
 
-/* T4240 host controller capabilities register should have VS33 bit */
-#ifdef CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
-	caps = caps | ESDHC_HOSTCAPBLT_VS33;
-#endif
-
 	if (caps & ESDHC_HOSTCAPBLT_VS18)
 		voltage_caps |= MMC_VDD_165_195;
 	if (caps & ESDHC_HOSTCAPBLT_VS30)
@@ -1446,6 +1442,8 @@ static int fsl_esdhc_of_to_plat(struct udevice *dev)
 	val = fdtdec_get_int(fdt, node, "fsl,strobe-dll-delay-target",
 			     ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_DEFAULT);
 	priv->strobe_dll_delay_target = val;
+	val = fdtdec_get_int(fdt, node, "fsl,signal-voltage-switch-extra-delay-ms", 0);
+	priv->signal_voltage_switch_extra_delay_ms = val;
 
 	if (dev_read_bool(dev, "broken-cd"))
 		priv->broken_cd = 1;
@@ -1530,8 +1528,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 	if (CONFIG_IS_ENABLED(DM_GPIO) && !priv->non_removable) {
 		struct udevice *gpiodev;
 
-		ret = device_get_by_driver_info_idx(dtplat->cd_gpios->idx,
-						    &gpiodev);
+		ret = device_get_by_ofplat_idx(dtplat->cd_gpios->idx, &gpiodev);
 		if (ret)
 			return ret;
 

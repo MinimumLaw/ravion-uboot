@@ -214,9 +214,11 @@ extern const efi_guid_t efi_guid_rng_protocol;
 extern const efi_guid_t efi_guid_capsule_report;
 /* GUID of firmware management protocol */
 extern const efi_guid_t efi_guid_firmware_management_protocol;
+/* GUID for the ESRT */
+extern const efi_guid_t efi_esrt_guid;
 
-extern unsigned int __efi_runtime_start, __efi_runtime_stop;
-extern unsigned int __efi_runtime_rel_start, __efi_runtime_rel_stop;
+extern char __efi_runtime_start[], __efi_runtime_stop[];
+extern char __efi_runtime_rel_start[], __efi_runtime_rel_stop[];
 
 /**
  * struct efi_open_protocol_info_item - open protocol info item
@@ -424,6 +426,10 @@ efi_status_t efi_disk_register(void);
 efi_status_t efi_rng_register(void);
 /* Called by efi_init_obj_list() to install EFI_TCG2_PROTOCOL */
 efi_status_t efi_tcg2_register(void);
+/* measure the pe-coff image, extend PCR and add Event Log */
+efi_status_t tcg2_measure_pe_image(void *efi, u64 efi_size,
+				   struct efi_loaded_image_obj *handle,
+				   struct efi_loaded_image *loaded_image_info);
 /* Create handles and protocols for the partitions of a block device */
 int efi_disk_create_partitions(efi_handle_t parent, struct blk_desc *desc,
 			       const char *if_typename, int diskid,
@@ -437,6 +443,7 @@ efi_status_t efi_net_register(void);
 /* Called by bootefi to make the watchdog available */
 efi_status_t efi_watchdog_register(void);
 efi_status_t efi_initrd_register(void);
+void efi_initrd_deregister(void);
 /* Called by bootefi to make SMBIOS tables available */
 /**
  * efi_acpi_register() - write out ACPI tables
@@ -558,6 +565,15 @@ struct efi_simple_file_system_protocol *efi_simple_file_system(
 /* open file from device-path: */
 struct efi_file_handle *efi_file_from_path(struct efi_device_path *fp);
 
+/* Registers a callback function for a notification event. */
+efi_status_t EFIAPI efi_register_protocol_notify(const efi_guid_t *protocol,
+						 struct efi_event *event,
+						 void **registration);
+efi_status_t efi_file_size(struct efi_file_handle *fh, efi_uintn_t *size);
+
+/* get a device path from a Boot#### option */
+struct efi_device_path *efi_get_dp_from_boot(const efi_guid_t guid);
+
 /**
  * efi_size_in_pages() - convert size in bytes to size in pages
  *
@@ -666,12 +682,51 @@ ssize_t efi_dp_check_length(const struct efi_device_path *dp,
 	(((_dp)->type == DEVICE_PATH_TYPE_##_type) && \
 	 ((_dp)->sub_type == DEVICE_PATH_SUB_TYPE_##_subtype))
 
-/*
- * Use these to indicate that your code / data should go into the EFI runtime
- * section and thus still be available when the OS is running
+/**
+ * __efi_runtime_data - declares a non-const variable for EFI runtime section
+ *
+ * This macro indicates that a variable is non-const and should go into the
+ * EFI runtime section, and thus still be available when the OS is running.
+ *
+ * Only use on variables not declared const.
+ *
+ * Example:
+ *
+ * ::
+ *
+ *   static __efi_runtime_data my_computed_table[256];
  */
-#define __efi_runtime_data __attribute__ ((section (".data.efi_runtime")))
-#define __efi_runtime __attribute__ ((section (".text.efi_runtime")))
+#define __efi_runtime_data __section(".data.efi_runtime")
+
+/**
+ * __efi_runtime_rodata - declares a read-only variable for EFI runtime section
+ *
+ * This macro indicates that a variable is read-only (const) and should go into
+ * the EFI runtime section, and thus still be available when the OS is running.
+ *
+ * Only use on variables also declared const.
+ *
+ * Example:
+ *
+ * ::
+ *
+ *   static const __efi_runtime_rodata my_const_table[] = { 1, 2, 3 };
+ */
+#define __efi_runtime_rodata __section(".rodata.efi_runtime")
+
+/**
+ * __efi_runtime - declares a function for EFI runtime section
+ *
+ * This macro indicates that a function should go into the EFI runtime section,
+ * and thus still be available when the OS is running.
+ *
+ * Example:
+ *
+ * ::
+ *
+ *   static __efi_runtime compute_my_table(void);
+ */
+#define __efi_runtime __section(".text.efi_runtime")
 
 /* Indicate supported runtime services */
 efi_status_t efi_init_runtime_supported(void);
@@ -723,6 +778,8 @@ efi_status_t EFIAPI efi_query_variable_info(
 			u64 *remaining_variable_storage_size,
 			u64 *maximum_variable_size);
 
+void *efi_get_var(u16 *name, const efi_guid_t *vendor, efi_uintn_t *size);
+
 /*
  * See section 3.1.3 in the v2.7 UEFI spec for more details on
  * the layout of EFI_LOAD_OPTION.  In short it is:
@@ -744,6 +801,10 @@ struct efi_load_option {
 	const u8 *optional_data;
 };
 
+struct efi_device_path *efi_dp_from_lo(struct efi_load_option *lo,
+				       efi_uintn_t *size, efi_guid_t guid);
+struct efi_device_path *efi_dp_concat(const struct efi_device_path *dp1,
+				      const struct efi_device_path *dp2);
 efi_status_t efi_deserialize_load_option(struct efi_load_option *lo, u8 *data,
 					 efi_uintn_t *size);
 unsigned long efi_serialize_load_option(struct efi_load_option *lo, u8 **data);
@@ -829,6 +890,8 @@ bool efi_secure_boot_enabled(void);
 
 bool efi_capsule_auth_enabled(void);
 
+void *efi_prepare_aligned_image(void *efi, u64 *efi_size);
+
 bool efi_image_parse(void *efi, size_t len, struct efi_image_regions **regp,
 		     WIN_CERTIFICATE **auth, size_t *auth_len);
 
@@ -870,6 +933,7 @@ efi_status_t efi_launch_capsules(void);
 
 /* Without CONFIG_EFI_LOADER we don't have a runtime section, stub it out */
 #define __efi_runtime_data
+#define __efi_runtime_rodata
 #define __efi_runtime
 static inline efi_status_t efi_add_runtime_mmio(void *mmio_ptr, u64 len)
 {
@@ -890,4 +954,23 @@ static inline efi_status_t efi_launch_capsules(void)
 
 #endif /* CONFIG_IS_ENABLED(EFI_LOADER) */
 
+/**
+ * Install the ESRT system table.
+ *
+ * @return	status code
+ */
+efi_status_t efi_esrt_register(void);
+
+/**
+ * efi_esrt_populate() - Populates the ESRT entries from the FMP instances
+ * present in the system.
+ * If an ESRT already exists, the old ESRT is replaced in the system table.
+ * The memory of the old ESRT is deallocated.
+ *
+ * Return:
+ * - EFI_SUCCESS if the ESRT is correctly created
+ * - error code otherwise.
+ */
+efi_status_t efi_esrt_populate(void);
+efi_status_t efi_load_capsule_drivers(void);
 #endif /* _EFI_LOADER_H */

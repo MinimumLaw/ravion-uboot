@@ -58,7 +58,8 @@ static int h_compare_opt(const void *p1, const void *p2)
 int sandbox_early_getopt_check(void)
 {
 	struct sandbox_state *state = state_get_current();
-	struct sandbox_cmdline_option **sb_opt = __u_boot_sandbox_option_start;
+	struct sandbox_cmdline_option **sb_opt =
+		__u_boot_sandbox_option_start();
 	size_t num_options = __u_boot_sandbox_option_count();
 	size_t i;
 	int max_arg_len, max_noarg_len;
@@ -88,7 +89,7 @@ int sandbox_early_getopt_check(void)
 
 	/* Sort the options */
 	size = sizeof(*sorted_opt) * num_options;
-	sorted_opt = malloc(size);
+	sorted_opt = os_malloc(size);
 	if (!sorted_opt) {
 		printf("No memory to sort options\n");
 		os_exit(1);
@@ -188,7 +189,7 @@ static int sandbox_cmdline_cb_default_fdt(struct sandbox_state *state,
 	int len;
 
 	len = strlen(state->argv[0]) + strlen(fmt) + 1;
-	fname = malloc(len);
+	fname = os_malloc(len);
 	if (!fname)
 		return -ENOMEM;
 	snprintf(fname, len, fmt, state->argv[0]);
@@ -208,7 +209,7 @@ static int sandbox_cmdline_cb_test_fdt(struct sandbox_state *state,
 	int len;
 
 	len = strlen(state->argv[0]) + strlen(fmt) + 1;
-	fname = malloc(len);
+	fname = os_malloc(len);
 	if (!fname)
 		return -ENOMEM;
 	strcpy(fname, state->argv[0]);
@@ -435,21 +436,26 @@ void sandbox_reset(void)
 int main(int argc, char *argv[])
 {
 	struct sandbox_state *state;
+	void * text_base;
 	gd_t data;
+	int size;
 	int ret;
+
+	text_base = os_find_text_base();
 
 	/*
 	 * Copy argv[] so that we can pass the arguments in the original
 	 * sequence when resetting the sandbox.
 	 */
-	os_argv = calloc(argc + 1, sizeof(char *));
+	size = sizeof(char *) * (argc + 1);
+	os_argv = os_malloc(size);
 	if (!os_argv)
 		os_exit(1);
-	memcpy(os_argv, argv, sizeof(char *) * (argc + 1));
+	memcpy(os_argv, argv, size);
 
 	memset(&data, '\0', sizeof(data));
 	gd = &data;
-	gd->arch.text_base = os_find_text_base();
+	gd->arch.text_base = text_base;
 
 	ret = state_init();
 	if (ret)
@@ -489,7 +495,6 @@ int main(int argc, char *argv[])
 	gd->reloc_off = (ulong)gd->arch.text_base;
 
 	/* sandbox test: log functions called before log_init in board_init_f */
-	log_info("sandbox: starting...\n");
 	log_debug("debug: %s\n", __func__);
 
 	/* Do pre- and post-relocation init */
