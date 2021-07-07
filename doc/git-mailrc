@@ -29,7 +29,7 @@ alias jaehoon        Jaehoon Chung <jh80.chung@samsung.com>
 alias jagan          Jagan Teki <jagan@amarulasolutions.com>
 alias jhersh         Joe Hershberger <joe.hershberger@ni.com>
 alias kevery         Kever Yang <kever.yang@rock-chips.com>
-alias leyfoon        Ley Foon Tan <ley.foon.tan@intel.com>
+alias leyfoon        Ley Foon Tan <lftan.linux@gmail.com>
 alias lokeshvutla    Lokesh Vutla <lokeshvutla@ti.com>
 alias lukma          Lukasz Majewski <lukma@denx.de>
 alias macpaul        Macpaul Lin <macpaul@andestech.com>
@@ -119,7 +119,7 @@ alias kerneldoc      uboot, marex
 alias fdt            uboot, sjg
 alias i2c            uboot, hs
 alias kconfig        uboot, masahiro
-alias mmc            uboot, freenix
+alias mmc            uboot, freenix, jaehoon
 alias nand           uboot
 alias net            uboot, jhersh
 alias phy            uboot, jhersh

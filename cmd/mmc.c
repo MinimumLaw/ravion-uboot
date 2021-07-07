@@ -735,8 +735,45 @@ static int do_mmc_bootbus(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_FAILURE;
 	}
 
+	/*
+	 * BOOT_BUS_CONDITIONS[177]
+	 * BOOT_MODE[4:3]
+	 * 0x0 : Use SDR + Backward compatible timing in boot operation
+	 * 0x1 : Use SDR + High Speed Timing in boot operation mode
+	 * 0x2 : Use DDR in boot operation
+	 * RESET_BOOT_BUS_CONDITIONS
+	 * 0x0 : Reset bus width to x1, SDR, Backward compatible
+	 * 0x1 : Retain BOOT_BUS_WIDTH and BOOT_MODE
+	 * BOOT_BUS_WIDTH
+	 * 0x0 : x1(sdr) or x4 (ddr) buswidth
+	 * 0x1 : x4(sdr/ddr) buswith
+	 * 0x2 : x8(sdr/ddr) buswith
+	 *
+	 */
+	if (width >= 0x3) {
+		printf("boot_bus_width %d is invalid\n", width);
+		return CMD_RET_FAILURE;
+	}
+
+	if (reset >= 0x2) {
+		printf("reset_boot_bus_width %d is invalid\n", reset);
+		return CMD_RET_FAILURE;
+	}
+
+	if (mode >= 0x3) {
+		printf("reset_boot_bus_width %d is invalid\n", mode);
+		return CMD_RET_FAILURE;
+	}
+
 	/* acknowledge to be sent during boot operation */
-	return mmc_set_boot_bus_width(mmc, width, reset, mode);
+	if (mmc_set_boot_bus_width(mmc, width, reset, mode)) {
+		puts("BOOT_BUS_WIDTH is failed to change.\n");
+		return CMD_RET_FAILURE;
+	}
+
+	printf("Set to BOOT_BUS_WIDTH = 0x%x, RESET = 0x%x, BOOT_MODE = 0x%x\n",
+			width, reset, mode);
+	return CMD_RET_SUCCESS;
 }
 
 static int do_mmc_boot_resize(struct cmd_tbl *cmdtp, int flag,
@@ -771,7 +808,7 @@ static int do_mmc_boot_resize(struct cmd_tbl *cmdtp, int flag,
 	return CMD_RET_SUCCESS;
 }
 
-static int mmc_partconf_print(struct mmc *mmc)
+static int mmc_partconf_print(struct mmc *mmc, const char *varname)
 {
 	u8 ack, access, part;
 
@@ -783,6 +820,9 @@ static int mmc_partconf_print(struct mmc *mmc)
 	access = EXT_CSD_EXTRACT_PARTITION_ACCESS(mmc->part_config);
 	ack = EXT_CSD_EXTRACT_BOOT_ACK(mmc->part_config);
 	part = EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config);
+
+	if(varname)
+		env_set_hex(varname, part);
 
 	printf("EXT_CSD[179], PARTITION_CONFIG:\n"
 		"BOOT_ACK: 0x%x\n"
@@ -799,7 +839,7 @@ static int do_mmc_partconf(struct cmd_tbl *cmdtp, int flag,
 	struct mmc *mmc;
 	u8 ack, part_num, access;
 
-	if (argc != 2 && argc != 5)
+	if (argc != 2 && argc != 3 && argc != 5)
 		return CMD_RET_USAGE;
 
 	dev = simple_strtoul(argv[1], NULL, 10);
@@ -813,8 +853,8 @@ static int do_mmc_partconf(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_FAILURE;
 	}
 
-	if (argc == 2)
-		return mmc_partconf_print(mmc);
+	if (argc == 2 || argc == 3)
+		return mmc_partconf_print(mmc, argc == 3 ? argv[2] : NULL);
 
 	ack = simple_strtoul(argv[2], NULL, 10);
 	part_num = simple_strtoul(argv[3], NULL, 10);
@@ -1008,11 +1048,14 @@ U_BOOT_CMD(
 	"mmc list - lists available devices\n"
 	"mmc wp - power on write protect boot partitions\n"
 #if CONFIG_IS_ENABLED(MMC_HW_PARTITIONING)
-	"mmc hwpartition [args...] - does hardware partitioning\n"
+	"mmc hwpartition <USER> <GP> <MODE> - does hardware partitioning\n"
 	"  arguments (sizes in 512-byte blocks):\n"
-	"    [user [enh start cnt] [wrrel {on|off}]] - sets user data area attributes\n"
-	"    [gp1|gp2|gp3|gp4 cnt [enh] [wrrel {on|off}]] - general purpose partition\n"
-	"    [check|set|complete] - mode, complete set partitioning completed\n"
+	"   USER - <user> <enh> <start> <cnt> <wrrel> <{on|off}>\n"
+	"	: sets user data area attributes\n"
+	"   GP - <{gp1|gp2|gp3|gp4}> <cnt> <enh> <wrrel> <{on|off}>\n"
+	"	: general purpose partition\n"
+	"   MODE - <{check|set|complete}>\n"
+	"	: mode, complete set partitioning completed\n"
 	"  WARNING: Partitioning is a write-once setting once it is set to complete.\n"
 	"  Power cycling is required to initialize partitions after set to complete.\n"
 #endif
@@ -1021,8 +1064,9 @@ U_BOOT_CMD(
 	" - Set the BOOT_BUS_WIDTH field of the specified device\n"
 	"mmc bootpart-resize <dev> <boot part size MB> <RPMB part size MB>\n"
 	" - Change sizes of boot and RPMB partitions of specified device\n"
-	"mmc partconf <dev> [boot_ack boot_partition partition_access]\n"
+	"mmc partconf <dev> [[varname] | [<boot_ack> <boot_partition> <partition_access>]]\n"
 	" - Show or change the bits of the PARTITION_CONFIG field of the specified device\n"
+	"   If showing the bits, optionally store the boot_partition field into varname\n"
 	"mmc rst-function <dev> <value>\n"
 	" - Change the RST_n_FUNCTION field of the specified device\n"
 	"   WARNING: This is a write-once field and 0 / 1 / 2 are the only valid values.\n"

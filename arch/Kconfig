@@ -33,6 +33,7 @@ config ARC
 
 config ARM
 	bool "ARM architecture"
+	select ARCH_SUPPORTS_LTO
 	select CREATE_ARCH_SYMLINK
 	select HAVE_PRIVATE_LIBGCC if !ARM64
 	select SUPPORT_OF_CONTROL
@@ -101,6 +102,7 @@ config RISCV
 
 config SANDBOX
 	bool "Sandbox"
+	select ARCH_SUPPORTS_LTO
 	select BOARD_LATE_INIT
 	select BZIP2
 	select CMD_POWEROFF
@@ -120,8 +122,11 @@ config SANDBOX
 	select SPI
 	select SUPPORT_OF_CONTROL
 	select SYSRESET_CMD_POWEROFF
+	select IRQ
+	select SUPPORT_EXTENSION_SCAN
 	imply BITREVERSE
 	select BLOBLIST
+	imply LTO
 	imply CMD_DM
 	imply CMD_EXCEPTION
 	imply CMD_GETTIME
@@ -142,6 +147,8 @@ config SANDBOX
 	imply AVB_VERIFY
 	imply LIBAVB
 	imply CMD_AVB
+	imply SCP03
+	imply CMD_SCP03
 	imply UDP_FUNCTION_FASTBOOT
 	imply VIRTIO_MMIO
 	imply VIRTIO_PCI
@@ -160,6 +167,9 @@ config SANDBOX
 	imply CMD_CLONE
 	imply SILENT_CONSOLE
 	imply BOOTARGS_SUBST
+	imply PHY_FIXED
+	imply DM_DSA
+	imply CMD_EXTENSION
 
 config SH
 	bool "SuperH architecture"
@@ -181,6 +191,7 @@ config X86
 	select TIMER
 	select USE_PRIVATE_LIBGCC
 	select X86_TSC_TIMER
+	select IRQ
 	imply HAS_ROM if X86_RESET_VECTOR
 	imply BLK
 	imply CMD_DM
@@ -211,7 +222,6 @@ config X86
 	imply USB_HOST_ETHER
 	imply PCH
 	imply RTC_MC146818
-	imply IRQ
 	imply ACPIGEN if !QEMU
 	imply SYSINFO if GENERATE_SMBIOS_TABLE
 	imply SYSINFO_SMBIOS if GENERATE_SMBIOS_TABLE

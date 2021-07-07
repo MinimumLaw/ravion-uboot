@@ -816,13 +816,14 @@ config VIDEO_SUNXI
 	depends on !MACH_SUN9I
 	depends on !MACH_SUN50I
 	depends on !SUN50I_GEN_H6
-	select VIDEO
+	select DM_VIDEO
+	select DISPLAY
 	imply VIDEO_DT_SIMPLEFB
 	default y
 	---help---
-	Say Y here to add support for using a cfb console on the HDMI, LCD
-	or VGA output found on most sunxi devices. See doc/README.video for
-	info on how to select the video output and mode.
+	Say Y here to add support for using a graphical console on the HDMI,
+	LCD or VGA output found on older sunxi devices. This will also provide
+	a simple_framebuffer device for Linux.
 
 config VIDEO_HDMI
 	bool "HDMI output support"
@@ -972,6 +973,7 @@ config VIDEO_DE2
 	depends on SUNXI_DE2
 	select DM_VIDEO
 	select DISPLAY
+	select VIDEO_DW_HDMI
 	imply VIDEO_DT_SIMPLEFB
 	default y
 	---help---
@@ -1087,3 +1089,12 @@ config BLUETOOTH_DT_DEVICE_FIXUP
 	  flipped elsewise.
 
 endif
+
+config CHIP_DIP_SCAN
+	bool "Enable DIPs detection for CHIP board"
+	select SUPPORT_EXTENSION_SCAN
+	select W1
+	select W1_GPIO
+	select W1_EEPROM
+	select W1_EEPROM_DS24XXX
+	select CMD_EXTENSION

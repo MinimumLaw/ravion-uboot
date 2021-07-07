@@ -45,7 +45,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct shc_eeprom __attribute__((section(".data"))) header;
+static struct shc_eeprom __section(".data") header;
 static int shc_eeprom_valid;
 
 /*
@@ -486,7 +486,7 @@ static void bosch_check_reset_pin(void)
 		printf("Resetting ...\n");
 		writel(RESET_MASK, GPIO1_BASE + OMAP_GPIO_IRQSTATUS_SET_0);
 		disable_interrupts();
-		reset_cpu(0);
+		reset_cpu();
 		/*NOTREACHED*/
 	}
 }

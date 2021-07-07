@@ -212,6 +212,35 @@ u32 get_bootmode(void)
 }
 
 /*
+ * weak function overidde: set the DDR/SYSRAM executable before to enable the
+ * MMU and configure DACR, for early early_enable_caches (SPL or pre-reloc)
+ */
+void dram_bank_mmu_setup(int bank)
+{
+	struct bd_info *bd = gd->bd;
+	int	i;
+	phys_addr_t start;
+	phys_size_t size;
+
+	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		start = ALIGN_DOWN(STM32_SYSRAM_BASE, MMU_SECTION_SIZE);
+		size = ALIGN(STM32_SYSRAM_SIZE, MMU_SECTION_SIZE);
+	} else if (gd->flags & GD_FLG_RELOC) {
+		/* bd->bi_dram is available only after relocation */
+		start = bd->bi_dram[bank].start;
+		size =  bd->bi_dram[bank].size;
+	} else {
+		/* mark cacheable and executable the beggining of the DDR */
+		start = STM32_DDR_BASE;
+		size = CONFIG_DDR_CACHEABLE_SIZE;
+	}
+
+	for (i = start >> MMU_SECTION_SHIFT;
+	     i < (start >> MMU_SECTION_SHIFT) + (size >> MMU_SECTION_SHIFT);
+	     i++)
+		set_section_dcache(i, DCACHE_DEFAULT_OPTION);
+}
+/*
  * initialize the MMU and activate cache in SPL or in U-Boot pre-reloc stage
  * MMU/TLB is updated in enable_caches() for U-Boot after relocation
  * or is deactivated in U-Boot entry function start.S::cpu_init_cp15
@@ -228,17 +257,8 @@ static void early_enable_caches(void)
 		gd->arch.tlb_addr = (unsigned long)&early_tlb;
 	}
 
+	/* enable MMU (default configuration) */
 	dcache_enable();
-
-	if (IS_ENABLED(CONFIG_SPL_BUILD))
-		mmu_set_region_dcache_behaviour(
-			ALIGN_DOWN(STM32_SYSRAM_BASE, MMU_SECTION_SIZE),
-			ALIGN(STM32_SYSRAM_SIZE, MMU_SECTION_SIZE),
-			DCACHE_DEFAULT_OPTION);
-	else
-		mmu_set_region_dcache_behaviour(STM32_DDR_BASE,
-						CONFIG_DDR_CACHEABLE_SIZE,
-						DCACHE_DEFAULT_OPTION);
 }
 
 /*
@@ -352,89 +372,78 @@ u32 get_cpu_package(void)
 	return get_otp(BSEC_OTP_PKG, PKG_SHIFT, PKG_MASK);
 }
 
-void get_soc_name(char name[SOC_NAME_SIZE])
-{
-	char *cpu_s, *cpu_r, *pkg;
+static const char * const soc_type[] = {
+	"????",
+	"151C", "151A", "151F", "151D",
+	"153C", "153A", "153F", "153D",
+	"157C", "157A", "157F", "157D"
+};
 
-	/* MPUs Part Numbers */
-	switch (get_cpu_type()) {
-	case CPU_STM32MP157Fxx:
-		cpu_s = "157F";
-		break;
-	case CPU_STM32MP157Dxx:
-		cpu_s = "157D";
-		break;
-	case CPU_STM32MP157Cxx:
-		cpu_s = "157C";
-		break;
-	case CPU_STM32MP157Axx:
-		cpu_s = "157A";
-		break;
-	case CPU_STM32MP153Fxx:
-		cpu_s = "153F";
-		break;
-	case CPU_STM32MP153Dxx:
-		cpu_s = "153D";
+static const char * const soc_pkg[] = { "??", "AD", "AC", "AB", "AA" };
+static const char * const soc_rev[] = { "?", "A", "B", "Z" };
+
+static void get_cpu_string_offsets(unsigned int *type, unsigned int *pkg,
+				   unsigned int *rev)
+{
+	u32 cpu_type = get_cpu_type();
+	u32 ct = cpu_type & ~(BIT(7) | BIT(0));
+	u32 cm = ((cpu_type & BIT(7)) >> 6) | (cpu_type & BIT(0));
+	u32 cp = get_cpu_package();
+
+	/* Bits 0 and 7 are the ACDF, 00:C 01:A 10:F 11:D */
+	switch (ct) {
+	case CPU_STM32MP151Cxx:
+		*type = cm + 1;
 		break;
 	case CPU_STM32MP153Cxx:
-		cpu_s = "153C";
+		*type = cm + 5;
 		break;
-	case CPU_STM32MP153Axx:
-		cpu_s = "153A";
-		break;
-	case CPU_STM32MP151Fxx:
-		cpu_s = "151F";
-		break;
-	case CPU_STM32MP151Dxx:
-		cpu_s = "151D";
-		break;
-	case CPU_STM32MP151Cxx:
-		cpu_s = "151C";
-		break;
-	case CPU_STM32MP151Axx:
-		cpu_s = "151A";
+	case CPU_STM32MP157Cxx:
+		*type = cm + 9;
 		break;
 	default:
-		cpu_s = "????";
+		*type = 0;
 		break;
 	}
 
 	/* Package */
-	switch (get_cpu_package()) {
+	switch (cp) {
 	case PKG_AA_LBGA448:
-		pkg = "AA";
-		break;
 	case PKG_AB_LBGA354:
-		pkg = "AB";
-		break;
 	case PKG_AC_TFBGA361:
-		pkg = "AC";
-		break;
 	case PKG_AD_TFBGA257:
-		pkg = "AD";
+		*pkg = cp;
 		break;
 	default:
-		pkg = "??";
+		*pkg = 0;
 		break;
 	}
 
-	/* REVISION */
+	/* Revision */
 	switch (get_cpu_rev()) {
 	case CPU_REVA:
-		cpu_r = "A";
+		*rev = 1;
 		break;
 	case CPU_REVB:
-		cpu_r = "B";
+		*rev = 2;
 		break;
 	case CPU_REVZ:
-		cpu_r = "Z";
+		*rev = 3;
 		break;
 	default:
-		cpu_r = "?";
+		*rev = 0;
 		break;
 	}
+}
 
-	snprintf(name, SOC_NAME_SIZE, "STM32MP%s%s Rev.%s", cpu_s, pkg, cpu_r);
+void get_soc_name(char name[SOC_NAME_SIZE])
+{
+	unsigned int type, pkg, rev;
+
+	get_cpu_string_offsets(&type, &pkg, &rev);
+
+	snprintf(name, SOC_NAME_SIZE, "STM32MP%s%s Rev.%s",
+		 soc_type[type], soc_pkg[pkg], soc_rev[rev]);
 }
 
 #if defined(CONFIG_DISPLAY_CPUINFO)
@@ -482,8 +491,8 @@ static void setup_boot_mode(void)
 			if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL))
 				gd->flags &= ~(GD_FLG_SILENT |
 					       GD_FLG_DISABLE_CONSOLE);
-			printf("uart%d = %s not found in device tree!\n",
-			       instance, cmd);
+			log_err("uart%d = %s not found in device tree!\n",
+				instance + 1, cmd);
 			break;
 		}
 		sprintf(cmd, "%d", dev_seq(dev));
@@ -494,7 +503,7 @@ static void setup_boot_mode(void)
 		if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) && gd->cur_serial_dev != dev) {
 			gd->flags &= ~(GD_FLG_SILENT |
 				       GD_FLG_DISABLE_CONSOLE);
-			printf("serial boot with console enabled!\n");
+			log_info("serial boot with console enabled!\n");
 		}
 		break;
 	case BOOT_SERIAL_USB:
@@ -526,7 +535,7 @@ static void setup_boot_mode(void)
 
 	switch (forced_mode) {
 	case BOOT_FASTBOOT:
-		printf("Enter fastboot!\n");
+		log_info("Enter fastboot!\n");
 		env_set("preboot", "env set preboot; fastboot 0");
 		break;
 	case BOOT_STM32PROG:
@@ -536,7 +545,7 @@ static void setup_boot_mode(void)
 	case BOOT_UMS_MMC0:
 	case BOOT_UMS_MMC1:
 	case BOOT_UMS_MMC2:
-		printf("Enter UMS!\n");
+		log_info("Enter UMS!\n");
 		instance = forced_mode - BOOT_UMS_MMC0;
 		sprintf(cmd, "env set preboot; ums 0 mmc %d", instance);
 		env_set("preboot", cmd);
@@ -626,11 +635,23 @@ static int setup_serial_number(void)
 	return 0;
 }
 
+static void setup_soc_type_pkg_rev(void)
+{
+	unsigned int type, pkg, rev;
+
+	get_cpu_string_offsets(&type, &pkg, &rev);
+
+	env_set("soc_type", soc_type[type]);
+	env_set("soc_pkg", soc_pkg[pkg]);
+	env_set("soc_rev", soc_rev[rev]);
+}
+
 int arch_misc_init(void)
 {
 	setup_boot_mode();
 	setup_mac_address();
 	setup_serial_number();
+	setup_soc_type_pkg_rev();
 
 	return 0;
 }
