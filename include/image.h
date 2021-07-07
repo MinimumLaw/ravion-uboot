@@ -434,7 +434,7 @@ typedef struct bootm_headers {
 #define	BOOTM_STATE_OS_GO	(0x00000400)
 	int		state;
 
-#ifdef CONFIG_LMB
+#if defined(CONFIG_LMB) && !defined(USE_HOSTCC)
 	struct lmb	lmb;		/* for memory mgmt */
 #endif
 } bootm_headers_t;
@@ -886,6 +886,11 @@ static inline int image_check_type(const image_header_t *hdr, uint8_t type)
 }
 static inline int image_check_arch(const image_header_t *hdr, uint8_t arch)
 {
+#ifndef USE_HOSTCC
+	/* Let's assume that sandbox can load any architecture */
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return true;
+#endif
 	return (image_get_arch(hdr) == arch) ||
 		(image_get_arch(hdr) == IH_ARCH_ARM && arch == IH_ARCH_ARM64);
 }
@@ -1131,9 +1136,10 @@ int fit_cipher_data(const char *keydir, void *keydest, void *fit,
  *     0, on success
  *     libfdt error code, on failure
  */
-int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
-			      const char *comment, int require_keys,
-			      const char *engine_id, const char *cmdname);
+int fit_add_verification_data(const char *keydir, const char *keyfile,
+			      void *keydest, void *fit, const char *comment,
+			      int require_keys, const char *engine_id,
+			      const char *cmdname);
 
 int fit_image_verify_with_data(const void *fit, int image_noffset,
 			       const void *data, size_t size);
@@ -1219,16 +1225,19 @@ int calculate_hash(const void *data, int data_len, const char *algo,
 # if defined(CONFIG_FIT_SIGNATURE)
 #  define IMAGE_ENABLE_SIGN	1
 #  define IMAGE_ENABLE_VERIFY	1
+#  define IMAGE_ENABLE_VERIFY_ECDSA	1
 #  define FIT_IMAGE_ENABLE_VERIFY	1
 #  include <openssl/evp.h>
 # else
 #  define IMAGE_ENABLE_SIGN	0
 #  define IMAGE_ENABLE_VERIFY	0
+# define IMAGE_ENABLE_VERIFY_ECDSA	0
 #  define FIT_IMAGE_ENABLE_VERIFY	0
 # endif
 #else
 # define IMAGE_ENABLE_SIGN	0
 # define IMAGE_ENABLE_VERIFY		CONFIG_IS_ENABLED(RSA_VERIFY)
+# define IMAGE_ENABLE_VERIFY_ECDSA	0
 # define FIT_IMAGE_ENABLE_VERIFY	CONFIG_IS_ENABLED(FIT_SIGNATURE)
 #endif
 
@@ -1248,10 +1257,17 @@ void image_set_host_blob(void *host_blob);
 #endif
 #endif /* IMAGE_ENABLE_FIT */
 
-/* Information passed to the signing routines */
+/*
+ * Information passed to the signing routines
+ *
+ * Either 'keydir',  'keyname', or 'keyfile' can be NULL. However, either
+ * 'keyfile', or both 'keydir' and 'keyname' should have valid values. If
+ * neither are valid, some operations might fail with EINVAL.
+ */
 struct image_sign_info {
 	const char *keydir;		/* Directory conaining keys */
 	const char *keyname;		/* Name of key to use */
+	const char *keyfile;		/* Filename of private or public key */
 	void *fit;			/* Pointer to FIT blob */
 	int node_offset;		/* Offset of signature node */
 	const char *name;		/* Algorithm name */
@@ -1278,7 +1294,7 @@ struct image_region {
 };
 
 #if IMAGE_ENABLE_VERIFY
-# include <u-boot/rsa-checksum.h>
+# include <u-boot/hash-checksum.h>
 #endif
 struct checksum_algo {
 	const char *name;

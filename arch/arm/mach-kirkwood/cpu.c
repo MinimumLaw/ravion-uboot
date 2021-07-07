@@ -19,7 +19,7 @@
 #include <asm/arch/soc.h>
 #include <mvebu_mmc.h>
 
-void reset_cpu(unsigned long ignored)
+void reset_cpu(void)
 {
 	struct kwcpu_registers *cpureg =
 	    (struct kwcpu_registers *)KW_CPU_REG_BASE;
@@ -279,10 +279,3 @@ int cpu_eth_init(struct bd_info *bis)
 }
 #endif
 
-#ifdef CONFIG_MVEBU_MMC
-int board_mmc_init(struct bd_info *bis)
-{
-	mvebu_mmc_init(bis);
-	return 0;
-}
-#endif /* CONFIG_MVEBU_MMC */

@@ -184,12 +184,6 @@ struct global_data {
 
 #ifdef CONFIG_DM
 	/**
-	 * @dm_flags: additional flags for Driver Model
-	 *
-	 * See &enum gd_dm_flags
-	 */
-	unsigned long dm_flags;
-	/**
 	 * @dm_root: root instance for Driver Model
 	 */
 	struct udevice *dm_root;
@@ -215,9 +209,19 @@ struct global_data {
 	 * @uclass_root_s.
 	 */
 	struct list_head *uclass_root;
-# if CONFIG_IS_ENABLED(OF_PLATDATA)
+# if CONFIG_IS_ENABLED(OF_PLATDATA_DRIVER_RT)
 	/** @dm_driver_rt: Dynamic info about the driver */
 	struct driver_rt *dm_driver_rt;
+# endif
+#if CONFIG_IS_ENABLED(OF_PLATDATA_RT)
+	/** @dm_udevice_rt: Dynamic info about the udevice */
+	struct udevice_rt *dm_udevice_rt;
+	/**
+	 * @dm_priv_base: Base address of the priv/plat region used when
+	 * udevices and uclasses are in read-only memory. This is NULL if not
+	 * used
+	 */
+	void *dm_priv_base;
 # endif
 #endif
 #ifdef CONFIG_TIMER
@@ -410,6 +414,12 @@ struct global_data {
 	 * This value is used as logging level for continuation messages.
 	 */
 	int logl_prev;
+	/**
+	 * @log_cont: Previous log line did not finished wtih \n
+	 *
+	 * This allows for chained log messages on the same line
+	 */
+	bool log_cont;
 #endif
 #if CONFIG_IS_ENABLED(BLOBLIST)
 	/**
@@ -477,7 +487,7 @@ struct global_data {
 #define gd_set_of_root(_root)
 #endif
 
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_PLATDATA_DRIVER_RT)
 #define gd_set_dm_driver_rt(dyn)	gd->dm_driver_rt = dyn
 #define gd_dm_driver_rt()		gd->dm_driver_rt
 #else
@@ -485,16 +495,22 @@ struct global_data {
 #define gd_dm_driver_rt()		NULL
 #endif
 
+#if CONFIG_IS_ENABLED(OF_PLATDATA_RT)
+#define gd_set_dm_udevice_rt(dyn)	gd->dm_udevice_rt = dyn
+#define gd_dm_udevice_rt()		gd->dm_udevice_rt
+#define gd_set_dm_priv_base(dyn)	gd->dm_priv_base = dyn
+#define gd_dm_priv_base()		gd->dm_priv_base
+#else
+#define gd_set_dm_udevice_rt(dyn)
+#define gd_dm_udevice_rt()		NULL
+#define gd_set_dm_priv_base(dyn)
+#define gd_dm_priv_base()		NULL
+#endif
+
 #ifdef CONFIG_GENERATE_ACPI_TABLE
 #define gd_acpi_ctx()		gd->acpi_ctx
 #else
 #define gd_acpi_ctx()		NULL
-#endif
-
-#if CONFIG_IS_ENABLED(DM)
-#define gd_size_cells_0()	(gd->dm_flags & GD_DM_FLG_SIZE_CELLS_0)
-#else
-#define gd_size_cells_0()	(0)
 #endif
 
 /**
@@ -579,18 +595,6 @@ enum gd_flags {
 	 * @GD_FLG_SMP_READY: SMP initialization is complete
 	 */
 	GD_FLG_SMP_READY = 0x40000,
-};
-
-/**
- * enum gd_dm_flags - global data flags for Driver Model
- *
- * See field dm_flags of &struct global_data.
- */
-enum gd_dm_flags {
-	/**
-	 * @GD_DM_FLG_SIZE_CELLS_0: Enable #size-cells=<0> translation
-	 */
-	GD_DM_FLG_SIZE_CELLS_0 = 0x00001,
 };
 
 #endif /* __ASSEMBLY__ */

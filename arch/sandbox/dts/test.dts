@@ -14,9 +14,11 @@
 
 	aliases {
 		console = &uart0;
-		eth0 = "/eth@10002000";
-		eth3 = &eth_3;
-		eth5 = &eth_5;
+		ethernet0 = "/eth@10002000";
+		ethernet2 = &swp_0;
+		ethernet3 = &eth_3;
+		ethernet4 = &dsa_eth0;
+		ethernet5 = &eth_5;
 		gpio1 = &gpio_a;
 		gpio2 = &gpio_b;
 		gpio3 = &gpio_c;
@@ -43,12 +45,18 @@
 		fdt-dummy1 = "/translation-test@8000/dev@1,100";
 		fdt-dummy2 = "/translation-test@8000/dev@2,200";
 		fdt-dummy3 = "/translation-test@8000/noxlatebus@3,300/dev@42";
-		fdt-dummy4 = "/translation-test@8000/xlatebus@4,400/devs/dev@19";
 		usb0 = &usb_0;
 		usb1 = &usb_1;
 		usb2 = &usb_2;
 		axi0 = &axi;
 		osd0 = "/osd";
+	};
+
+	config {
+		environment {
+			from_fdt = "yes";
+			fdt_env_path = "";
+		};
 	};
 
 	audio: audio-codec {
@@ -478,6 +486,48 @@
 		fake-host-hwaddr = [00 00 66 44 22 22];
 	};
 
+	dsa_eth0: dsa-test-eth {
+		compatible = "sandbox,eth";
+		reg = <0x10006000 0x1000>;
+		fake-host-hwaddr = [00 00 66 44 22 66];
+	};
+
+	dsa-test {
+		compatible = "sandbox,dsa";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			swp_0: port@0 {
+				reg = <0>;
+				label = "lan0";
+				phy-mode = "rgmii-rxid";
+
+				fixed-link {
+					speed = <100>;
+					full-duplex;
+				};
+			};
+
+			swp_1: port@1 {
+				reg = <1>;
+				label = "lan1";
+				phy-mode = "rgmii-txid";
+				fixed-link = <0 1 100 0 0>;
+			};
+
+			port@2 {
+				reg = <2>;
+				ethernet = <&dsa_eth0>;
+
+				fixed-link {
+					speed = <1000>;
+					full-duplex;
+				};
+			};
+		};
+	};
+
 	firmware {
 		sandbox_firmware: sandbox-firmware {
 			compatible = "sandbox,firmware";
@@ -496,6 +546,27 @@
 			reset_scmi0: protocol@16 {
 				reg = <0x16>;
 				#reset-cells = <1>;
+			};
+
+			protocol@17 {
+				reg = <0x17>;
+
+				regulators {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					regul0_scmi0: reg@0 {
+						reg = <0>;
+						regulator-name = "sandbox-voltd0";
+						regulator-min-microvolt = <1100000>;
+						regulator-max-microvolt = <3300000>;
+					};
+					regul1_scmi0: reg@1 {
+						reg = <0x1>;
+						regulator-name = "sandbox-voltd1";
+						regulator-min-microvolt = <1800000>;
+					};
+				};
 			};
 		};
 
@@ -569,6 +640,9 @@
 		reg = <0 1>;
 		compatible = "sandbox,i2c";
 		clock-frequency = <100000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinmux_i2c0_pins>;
+
 		eeprom@2c {
 			reg = <0x2c>;
 			compatible = "i2c-eeprom";
@@ -604,10 +678,10 @@
 				sandbox,size = <256>;
 			};
 			emul0: emul0 {
-				compatible = "sandbox,i2c-rtc";
+				compatible = "sandbox,i2c-rtc-emul";
 			};
 			emul1: emull {
-				compatible = "sandbox,i2c-rtc";
+				compatible = "sandbox,i2c-rtc-emul";
 			};
 		};
 
@@ -649,6 +723,8 @@
 	lcd {
 		u-boot,dm-pre-reloc;
 		compatible = "sandbox,lcd-sdl";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinmux_lcd_pins>;
 		xres = <1366>;
 		yres = <768>;
 	};
@@ -899,6 +975,8 @@
 	pwm: pwm {
 		compatible = "sandbox,pwm";
 		#pwm-cells = <2>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinmux_pwm_pins>;
 	};
 
 	pwm2 {
@@ -925,8 +1003,8 @@
 
 	reset-ctl-test {
 		compatible = "sandbox,reset-ctl-test";
-		resets = <&resetc 100>, <&resetc 2>;
-		reset-names = "other", "test";
+		resets = <&resetc 100>, <&resetc 2>, <&resetc 20>, <&resetc 40>;
+		reset-names = "other", "test", "test2", "test3";
 	};
 
 	rng {
@@ -970,6 +1048,9 @@
 		reg = <0 1>;
 		compatible = "sandbox,spi";
 		cs-gpios = <0>, <0>, <&gpio_a 0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinmux_spi0_pins>;
+
 		spi.bin@0 {
 			reg = <0>;
 			compatible = "spansion,m25p16", "jedec,spi-nor";
@@ -1059,6 +1140,8 @@
 	uart0: serial {
 		compatible = "sandbox,serial";
 		u-boot,dm-pre-reloc;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinmux_uart0_pins>;
 	};
 
 	usb_0: usb@0 {
@@ -1186,7 +1269,6 @@
 			  1 0x100 0x9000 0x1000
 			  2 0x200 0xA000 0x1000
 			  3 0x300 0xB000 0x1000
-			  4 0x400 0xC000 0x1000
 			 >;
 
 		dma-ranges = <0 0x000 0x10000000 0x1000
@@ -1223,25 +1305,6 @@
 				reg = <0x42>;
 			};
 		};
-
-		xlatebus@4,400 {
-			compatible = "sandbox,zero-size-cells-bus";
-			reg = <4 0x400 0x1000>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-			ranges = <0 4 0x400 0x1000>;
-
-			devs {
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				dev@19 {
-					compatible = "denx,u-boot-fdt-dummy";
-					reg = <0x19>;
-				};
-			};
-		};
-
 	};
 
 	osd {
@@ -1264,6 +1327,8 @@
 		compatible = "sandbox,scmi-devices";
 		clocks = <&clk_scmi0 7>, <&clk_scmi0 3>, <&clk_scmi1 1>;
 		resets = <&reset_scmi0 3>;
+		regul0-supply = <&regul0_scmi0>;
+		regul1-supply = <&regul1_scmi0>;
 	};
 
 	pinctrl {
@@ -1322,6 +1387,66 @@
 				pinmux = <SANDBOX_PINMUX(5, SANDBOX_PINMUX_CS)>,
 					 <SANDBOX_PINMUX(6, SANDBOX_PINMUX_CS)>;
 			};
+		};
+	};
+
+	pinctrl-single-no-width {
+		compatible = "pinctrl-single";
+		reg = <0x0000 0x238>;
+		#pinctrl-cells = <1>;
+		pinctrl-single,function-mask = <0x7f>;
+	};
+
+	pinctrl-single-pins {
+		compatible = "pinctrl-single";
+		reg = <0x0000 0x238>;
+		#pinctrl-cells = <1>;
+		pinctrl-single,register-width = <32>;
+		pinctrl-single,function-mask = <0x7f>;
+
+		pinmux_pwm_pins: pinmux_pwm_pins {
+			pinctrl-single,pins = < 0x48 0x06 >;
+		};
+
+		pinmux_spi0_pins: pinmux_spi0_pins {
+			pinctrl-single,pins = <
+				0x190 0x0c
+				0x194 0x0c
+				0x198 0x23
+				0x19c 0x0c
+			>;
+		};
+
+		pinmux_uart0_pins: pinmux_uart0_pins {
+			pinctrl-single,pins = <
+				0x70 0x30
+				0x74 0x00
+			>;
+		};
+	};
+
+	pinctrl-single-bits {
+		compatible = "pinctrl-single";
+		reg = <0x0000 0x50>;
+		#pinctrl-cells = <2>;
+		pinctrl-single,bit-per-mux;
+		pinctrl-single,register-width = <32>;
+		pinctrl-single,function-mask = <0xf>;
+
+		pinmux_i2c0_pins: pinmux_i2c0_pins {
+			pinctrl-single,bits = <
+				0x10 0x00002200 0x0000ff00
+			>;
+		};
+
+		pinmux_lcd_pins: pinmux_lcd_pins {
+			pinctrl-single,bits = <
+				0x40 0x22222200 0xffffff00
+				0x44 0x22222222 0xffffffff
+				0x48 0x00000022 0x000000ff
+				0x48 0x02000000 0x0f000000
+				0x4c 0x02000022 0x0f0000ff
+			>;
 		};
 	};
 
@@ -1387,6 +1512,13 @@
 		compatible = "sandbox,sysinfo-sandbox";
 	};
 
+	sysinfo-gpio {
+		compatible = "gpio-sysinfo";
+		gpios = <&gpio_a 15>, <&gpio_a 16>, <&gpio_a 17>;
+		revisions = <19>, <5>;
+		names = "rev_a", "foo";
+	};
+
 	some_regmapped-bus {
 		#address-cells = <0x1>;
 		#size-cells = <0x1>;
@@ -1402,3 +1534,4 @@
 };
 
 #include "sandbox_pmic.dtsi"
+#include "cros-ec-keyboard.dtsi"
