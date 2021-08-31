@@ -14,13 +14,44 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/mach-imx/gpio.h>
 
-#ifdef CONFIG_SPL
+/********************
+ * SDRAM Board layout
+
+(9)8000 0000 2Gb
+(5)4000 0000 1Gb
+(3)2000 0000 512Mb
+(2)1000 0000 256Mb
+   [   4Mb U-Boot reserved ]
+   [   4Mb U-Boot script reserved ]
+   [   4Mb U-Boot DTB reserved ]
+   [  64Mb U-Boot ramdisk area ]
+   [ 160Mb U-Boot kernel Area ]
+   [  16Mb U-Boot load area ]
+   [   4Mb U-Boot reserved ]
+(1)0000 0000 0Mb
+
+SDRAM START - 0x1000 0000
+*/
+
+/* don't like mx6_common.h default */
+#undef  CONFIG_SYS_LOAD_ADDR
+
+#define MEM_LAYOUT_ENV_SETTINGS \
+ "kernel_addr_r=0x11400000\0" \
+"ramdisk_addr_r=0x1b400000\0" \
+   "initrd_high=0x1f3fffff\0" \
+    "fdt_addr_r=0x1f400000\0" \
+      "fdt_high=0x1f7fffff\0" \
+ "script_addr_r=0x1f800000\0" \
+
+#ifdef CONFIG_SPL		/* SPL BUILD */
 #include "imx6_spl.h"
 
 /* Falcon Mode */
-#define CONFIG_SPL_FS_LOAD_ARGS_NAME	"args"
-#define CONFIG_SPL_FS_LOAD_KERNEL_NAME	"uImage"
-#define CONFIG_SYS_SPL_ARGS_ADDR	0x18000000
+#define CONFIG_SPL_FS_LOAD_ARGS_NAME	"board.dtb"
+#define CONFIG_SPL_FS_LOAD_KERNEL_NAME	"board.kernel"
+#define CONFIG_SYS_LOAD_ADDR		0x11400000 /* kernel_addr_r */
+#define CONFIG_SYS_SPL_ARGS_ADDR	0x1f400000 /* fdt_addr_r */
 
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
@@ -33,7 +64,8 @@
 #define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1000 /* 2MB */
 
 #define CONFIG_SYS_USB_FAT_BOOT_PARTITION	1
-
+#else				/* UBOOT BULD */
+#define CONFIG_SYS_LOAD_ADDR		0x10400000 /* SDRAM_START + 4Mb */
 #endif
 
 #define CONFIG_CMDLINE_TAG
@@ -59,14 +91,6 @@
 #define CONFIG_NETMASK			255.255.255.0
 #define CONFIG_SERVERIP			192.168.5.254
 
-#define MEM_LAYOUT_ENV_SETTINGS \
-	"kernel_addr_r=0x11000000\0" \
-	"fdt_addr_r=0x12000000\0" \
-	"ramdisk_addr_r=0x12100000\0" \
-	"script_addr_r=0x12300000\0" \
-	"fdt_high=0xffffffff\0" \
-	"initrd_high=0xffffffff\0"
-
 /*
  *     Default do FAST (falcon) mode from 1-st eMMC partition
  * with  kernel  "board.kernel",  DTB  "board.dtb"
@@ -74,8 +98,6 @@
  */
 #define FALCON_ENV_DEFAULT \
 	"bootargs=console=ttymxc0,115200n8 root=/dev/sda2 ro\0" \
-	"falcon_image_file=board.kernel\0" \
-	"falcon_args_file=board.dtb\0" \
 	"boot_os=0\0"
 
 #define BLKDEV_BOOTCMD \
@@ -195,8 +217,6 @@
 #define CONFIG_SYS_CBSIZE		1024
 #undef CONFIG_SYS_MAXARGS
 #define CONFIG_SYS_MAXARGS		48
-
-#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
 /* Physical Memory Map */
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
