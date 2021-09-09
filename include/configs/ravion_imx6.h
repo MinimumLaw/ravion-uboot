@@ -164,12 +164,17 @@ SDRAM START - 0x1000 0000
 #define SPL_UPDATE \
 	"prepare_module=mfgr_fuse; " \
 	"mmc dev 0 1 && " \
-	"mmc write 0x00940000 2 100 && " \
+	"mmc write 0x00940000 2 200 && " \
 	"mmc bootbus 0 2 0 1 && " \
 	"mmc partconf 0 1 1 0 && " \
 	"mmc rst-function 0 1 && " \
 	"mmc dev 0 0 && "\
-	"cfgblock create\0"
+	"cfgblock create; " \
+	"mmc dev 0 0 && " \
+	"mmc write 0x10400000 0 0x20100 && " \
+	"setenv bootmenu_4 && " \
+	"setenv prepare_module && " \
+	"saveenv\0"
 
 #define BOOTMENU_BOOTCMD \
 	"bootmenu_0=Normal boot=run bootcmd\0" \
