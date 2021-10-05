@@ -40,6 +40,14 @@ config CC_OPTIMIZE_LIBS_FOR_SPEED
 
 	  If unsure, say N.
 
+config CHARSET
+	bool
+	default y if UT_UNICODE || EFI_LOADER || UFS
+	help
+	  Enables support for various conversions between different
+	  character sets, such as between unicode representations and
+	  different 'code pages'.
+
 config DYNAMIC_CRC_TABLE
 	bool "Enable Dynamic tables for CRC"
 	help
@@ -295,8 +303,10 @@ config AES
 	  supported by the algorithm but only a 128-bit key is supported at
 	  present.
 
+source lib/ecdsa/Kconfig
 source lib/rsa/Kconfig
 source lib/crypto/Kconfig
+source lib/crypt/Kconfig
 
 config TPM
 	bool "Trusted Platform Module (TPM) Support"
@@ -365,14 +375,9 @@ config SHA256
 	  The SHA256 algorithm produces a 256-bit (32-byte) hash value
 	  (digest).
 
-config SHA512_ALGO
-	bool "Enable SHA512 algorithm"
-	help
-	  This option enables support of internal SHA512 algorithm.
 
 config SHA512
 	bool "Enable SHA512 support"
-	depends on SHA512_ALGO
 	help
 	  This option enables support of hashing using SHA512 algorithm.
 	  The hash is calculated in software.
@@ -381,10 +386,11 @@ config SHA512
 
 config SHA384
 	bool "Enable SHA384 support"
-	depends on SHA512_ALGO
+	select SHA512
 	help
 	  This option enables support of hashing using SHA384 algorithm.
-	  The hash is calculated in software.
+	  The hash is calculated in software. This is also selects SHA512,
+	  because these implementations share the bulk of the code..
 	  The SHA384 algorithm produces a 384-bit (48-byte) hash value
 	  (digest).
 
@@ -399,7 +405,7 @@ if SHA_HW_ACCEL
 
 config SHA512_HW_ACCEL
 	bool "Enable hardware acceleration for SHA512"
-	depends on SHA512_ALGO
+	depends on SHA512
 	help
 	  This option enables hardware acceleration for the SHA384 and SHA512
 	  hashing algorithms. This affects the 'hash' command and also the
@@ -468,7 +474,7 @@ config LZMA
 config LZO
 	bool "Enable LZO decompression support"
 	help
-	  This enables support for LZO compression algorithm.r
+	  This enables support for the LZO compression algorithm.
 
 config GZIP
 	bool "Enable gzip decompression support"
@@ -527,7 +533,7 @@ config SPL_GZIP
 	bool "Enable gzip decompression support for SPL build"
 	select SPL_ZLIB
 	help
-	  This enables support for GZIP compression altorithm for SPL boot.
+	  This enables support for the GZIP compression algorithm for SPL boot.
 
 config SPL_ZLIB
 	bool
@@ -557,8 +563,7 @@ config HEXDUMP
 
 config SPL_HEXDUMP
 	bool "Enable hexdump in SPL"
-	depends on HEXDUMP
-	default y
+	depends on SPL && HEXDUMP
 	help
 	  This enables functions for printing dumps of binary data in
 	  SPL.
@@ -673,6 +678,13 @@ config GENERATE_SMBIOS_TABLE
 
 	  See also SMBIOS_SYSINFO which allows SMBIOS values to be provided in
 	  the devicetree.
+
+config LIB_RATIONAL
+	bool "enable continued fraction calculation routines"
+
+config SPL_LIB_RATIONAL
+	bool "enable continued fraction calculation routines for SPL"
+	depends on SPL
 
 endmenu
 

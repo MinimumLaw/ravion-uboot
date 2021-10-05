@@ -11,14 +11,14 @@ obj-$(CONFIG_$(SPL_)I2C_CROS_EC_TUNNEL) += cros_ec_tunnel.o
 obj-$(CONFIG_$(SPL_)I2C_CROS_EC_LDO) += cros_ec_ldo.o
 
 obj-$(CONFIG_I2C_MV) += mv_i2c.o
-obj-$(CONFIG_SYS_I2C) += i2c_core.o
+obj-$(CONFIG_SYS_I2C_LEGACY) += i2c_core.o
 obj-$(CONFIG_SYS_I2C_ASPEED) += ast_i2c.o
 obj-$(CONFIG_SYS_I2C_AT91) += at91_i2c.o
 obj-$(CONFIG_SYS_I2C_CADENCE) += i2c-cdns.o
 obj-$(CONFIG_SYS_I2C_CA) += i2c-cortina.o
 obj-$(CONFIG_SYS_I2C_DAVINCI) += davinci_i2c.o
 obj-$(CONFIG_SYS_I2C_DW) += designware_i2c.o
-ifdef CONFIG_DM_PCI
+ifdef CONFIG_PCI
 obj-$(CONFIG_SYS_I2C_DW) += designware_i2c_pci.o
 endif
 obj-$(CONFIG_SYS_I2C_FSL) += fsl_i2c.o
@@ -43,6 +43,7 @@ obj-$(CONFIG_SYS_I2C_SANDBOX) += sandbox_i2c.o i2c-emul-uclass.o
 obj-$(CONFIG_SYS_I2C_SH) += sh_i2c.o
 obj-$(CONFIG_SYS_I2C_SOFT) += soft_i2c.o
 obj-$(CONFIG_SYS_I2C_STM32F7) += stm32f7_i2c.o
+obj-$(CONFIG_SYS_I2C_SYNQUACER) += synquacer_i2c.o
 obj-$(CONFIG_SYS_I2C_TEGRA) += tegra_i2c.o
 obj-$(CONFIG_SYS_I2C_UNIPHIER) += i2c-uniphier.o
 obj-$(CONFIG_SYS_I2C_UNIPHIER_F) += i2c-uniphier-f.o

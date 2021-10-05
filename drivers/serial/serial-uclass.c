@@ -3,6 +3,8 @@
  * Copyright (c) 2014 The Chromium OS Authors.
  */
 
+#define LOG_CATEGORY UCLASS_SERIAL
+
 #include <common.h>
 #include <dm.h>
 #include <env_internal.h>
@@ -393,7 +395,7 @@ static int on_baudrate(const char *name, const char *value, enum env_op op,
 		/*
 		 * Switch to new baudrate if new baudrate is supported
 		 */
-		baudrate = simple_strtoul(value, NULL, 10);
+		baudrate = dectoul(value, NULL);
 
 		/* Not actually changing */
 		if (gd->baudrate == baudrate)

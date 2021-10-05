@@ -24,6 +24,8 @@
 							    + 0x00000114)
 #define ZYNQMP_PS_SYSMON_ANALOG_BUS_VAL 0x00003210
 
+#define ADMA_CH0_BASEADDR	0xFFA80000
+
 #define PS_MODE0	BIT(0)
 #define PS_MODE1	BIT(1)
 #define PS_MODE2	BIT(2)
@@ -66,6 +68,9 @@ struct iou_scntr_secure {
 };
 
 #define iou_scntr_secure ((struct iou_scntr_secure *)ZYNQMP_IOU_SCNTR_SECURE)
+
+#define ZYNQMP_PS_VERSION	0xFFCA0044
+#define ZYNQMP_PS_VER_MASK	GENMASK(1, 0)
 
 /* Bootmode setting values */
 #define BOOT_MODES_MASK	0x0000000F

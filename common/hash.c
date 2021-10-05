@@ -207,12 +207,25 @@ static int hash_finish_crc32(struct hash_algo *algo, void *ctx, void *dest_buf,
 	return 0;
 }
 
+#ifdef USE_HOSTCC
+# define I_WANT_MD5	1
+#else
+# define I_WANT_MD5	CONFIG_IS_ENABLED(MD5)
+#endif
 /*
  * These are the hash algorithms we support.  If we have hardware acceleration
  * is enable we will use that, otherwise a software version of the algorithm.
  * Note that algorithm names must be in lower case.
  */
 static struct hash_algo hash_algo[] = {
+#if I_WANT_MD5
+	{
+		.name		= "md5",
+		.digest_size	= MD5_SUM_LEN,
+		.chunk_size	= CHUNKSZ_MD5,
+		.hash_func_ws	= md5_wd,
+	},
+#endif
 #ifdef CONFIG_SHA1
 	{
 		.name 		= "sha1",
@@ -396,8 +409,8 @@ int hash_parse_string(const char *algo_name, const char *str, uint8_t *result)
 	for (i = 0; i < algo->digest_size; i++) {
 		char chr[3];
 
-		strncpy(chr, &str[i * 2], 2);
-		result[i] = simple_strtoul(chr, NULL, 16);
+		strlcpy(chr, &str[i * 2], 3);
+		result[i] = hextoul(chr, NULL);
 	}
 
 	return 0;
@@ -470,7 +483,7 @@ static void store_result(struct hash_algo *algo, const uint8_t *sum,
 		ulong addr;
 		void *buf;
 
-		addr = simple_strtoul(dest, NULL, 16);
+		addr = hextoul(dest, NULL);
 		buf = map_sysmem(addr, algo->digest_size);
 		memcpy(buf, sum, algo->digest_size);
 		unmap_sysmem(buf);
@@ -510,7 +523,7 @@ static int parse_verify_sum(struct hash_algo *algo, char *verify_str,
 		ulong addr;
 		void *buf;
 
-		addr = simple_strtoul(verify_str, NULL, 16);
+		addr = hextoul(verify_str, NULL);
 		buf = map_sysmem(addr, algo->digest_size);
 		memcpy(vsum, buf, algo->digest_size);
 	} else {
@@ -555,8 +568,8 @@ int hash_command(const char *algo_name, int flags, struct cmd_tbl *cmdtp,
 	if ((argc < 2) || ((flags & HASH_FLAG_VERIFY) && (argc < 3)))
 		return CMD_RET_USAGE;
 
-	addr = simple_strtoul(*argv++, NULL, 16);
-	len = simple_strtoul(*argv++, NULL, 16);
+	addr = hextoul(*argv++, NULL);
+	len = hextoul(*argv++, NULL);
 
 	if (multi_hash()) {
 		struct hash_algo *algo;
@@ -628,7 +641,7 @@ int hash_command(const char *algo_name, int flags, struct cmd_tbl *cmdtp,
 				addr, addr + len - 1, crc);
 
 		if (argc >= 3) {
-			ptr = (ulong *)simple_strtoul(argv[0], NULL, 16);
+			ptr = (ulong *)hextoul(argv[0], NULL);
 			*ptr = crc;
 		}
 	}

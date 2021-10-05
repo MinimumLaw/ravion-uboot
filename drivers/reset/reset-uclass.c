@@ -3,6 +3,8 @@
  * Copyright (c) 2016, NVIDIA CORPORATION.
  */
 
+#define LOG_CATEGORY UCLASS_RESET
+
 #include <common.h>
 #include <dm.h>
 #include <fdtdec.h>
@@ -323,6 +325,8 @@ struct reset_ctl_bulk *devm_reset_bulk_get_by_node(struct udevice *dev,
 	bulk = devres_alloc(devm_reset_bulk_release,
 			    sizeof(struct reset_ctl_bulk),
 			    __GFP_ZERO);
+
+	/* this looks like a leak, but devres takes care of it */
 	if (unlikely(!bulk))
 		return ERR_PTR(-ENOMEM);
 

@@ -47,6 +47,7 @@ enum uclass_id {
 	UCLASS_DSI_HOST,	/* Display Serial Interface host */
 	UCLASS_DMA,		/* Direct Memory Access */
 	UCLASS_DSA,		/* Distributed (Ethernet) Switch Architecture */
+	UCLASS_ECDSA,		/* Elliptic curve cryptographic device */
 	UCLASS_EFI,		/* EFI managed devices */
 	UCLASS_ETH,		/* Ethernet device */
 	UCLASS_ETH_PHY,		/* Ethernet PHY device */
@@ -92,6 +93,7 @@ enum uclass_id {
 	UCLASS_PWRSEQ,		/* Power sequence device */
 	UCLASS_QFW,		/* QEMU firmware config device */
 	UCLASS_RAM,		/* RAM controller */
+	UCLASS_REBOOT_MODE,	/* Reboot mode */
 	UCLASS_REGULATOR,	/* Regulator device */
 	UCLASS_REMOTEPROC,	/* Remote Processor device */
 	UCLASS_RESET,		/* Reset controller device */

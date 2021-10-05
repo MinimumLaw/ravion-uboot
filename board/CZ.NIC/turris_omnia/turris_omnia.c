@@ -13,6 +13,7 @@
 #include <init.h>
 #include <log.h>
 #include <miiphy.h>
+#include <mtd.h>
 #include <net.h>
 #include <netdev.h>
 #include <asm/global_data.h>
@@ -30,6 +31,8 @@
 #include <../serdes/a38x/high_speed_env_spec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#define OMNIA_SPI_NOR_PATH		"/soc/spi@10600/spi-nor@0"
 
 #define OMNIA_I2C_BUS_NAME		"i2c@11000->i2cmux@70->i2c@0"
 
@@ -126,7 +129,6 @@ static int omnia_mcu_read(u8 cmd, void *buf, int len)
 	return dm_i2c_read(chip, cmd, buf, len);
 }
 
-#ifndef CONFIG_SPL_BUILD
 static int omnia_mcu_write(u8 cmd, const void *buf, int len)
 {
 	struct udevice *chip;
@@ -155,7 +157,6 @@ static bool disable_mcu_watchdog(void)
 
 	return true;
 }
-#endif
 
 static bool omnia_detect_sata(void)
 {
@@ -322,7 +323,6 @@ struct mv_ddr_topology_map *mv_ddr_topology_map_get(void)
 		return &board_topology_map_1g;
 }
 
-#ifndef CONFIG_SPL_BUILD
 static int set_regdomain(void)
 {
 	struct omnia_eeprom oep;
@@ -391,7 +391,6 @@ static void handle_reset_button(void)
 		}
 	}
 }
-#endif
 
 int board_early_init_f(void)
 {
@@ -420,24 +419,35 @@ int board_early_init_f(void)
 	return 0;
 }
 
+void spl_board_init(void)
+{
+	/*
+	 * If booting from UART, disable MCU watchdog in SPL, since uploading
+	 * U-Boot proper can take too much time and trigger it.
+	 */
+	if (get_boot_device() == BOOT_DEVICE_UART)
+		disable_mcu_watchdog();
+}
+
 int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = mvebu_sdram_bar(0) + 0x100;
-
-#ifndef CONFIG_SPL_BUILD
-	disable_mcu_watchdog();
-#endif
 
 	return 0;
 }
 
 int board_late_init(void)
 {
-#ifndef CONFIG_SPL_BUILD
+	/*
+	 * If not booting from UART, MCU watchdog was not disabled in SPL,
+	 * disable it now.
+	 */
+	if (get_boot_device() != BOOT_DEVICE_UART)
+		disable_mcu_watchdog();
+
 	set_regdomain();
 	handle_reset_button();
-#endif
 	pci_init();
 
 	return 0;
@@ -557,3 +567,93 @@ out:
 	return 0;
 }
 
+#if defined(CONFIG_OF_BOARD_SETUP)
+/*
+ * I plan to generalize this function and move it to common/fdt_support.c.
+ * This will require some more work on multiple boards, though, so for now leave
+ * it here.
+ */
+static bool fixup_mtd_partitions(void *blob, int offset, struct mtd_info *mtd)
+{
+	struct mtd_info *slave;
+	int parts;
+
+	parts = fdt_subnode_offset(blob, offset, "partitions");
+	if (parts < 0)
+		return false;
+
+	if (fdt_del_node(blob, parts) < 0)
+		return false;
+
+	parts = fdt_add_subnode(blob, offset, "partitions");
+	if (parts < 0)
+		return false;
+
+	if (fdt_setprop_u32(blob, parts, "#address-cells", 1) < 0)
+		return false;
+
+	if (fdt_setprop_u32(blob, parts, "#size-cells", 1) < 0)
+		return false;
+
+	if (fdt_setprop_string(blob, parts, "compatible",
+			       "fixed-partitions") < 0)
+		return false;
+
+	mtd_probe_devices();
+
+	list_for_each_entry(slave, &mtd->partitions, node) {
+		char name[32];
+		int part;
+
+		snprintf(name, sizeof(name), "partition@%llx", slave->offset);
+		part = fdt_add_subnode(blob, parts, name);
+		if (part < 0)
+			return false;
+
+		if (fdt_setprop_u32(blob, part, "reg", slave->offset) < 0)
+			return false;
+
+		if (fdt_appendprop_u32(blob, part, "reg", slave->size) < 0)
+			return false;
+
+		if (fdt_setprop_string(blob, part, "label", slave->name) < 0)
+			return false;
+
+		if (!(slave->flags & MTD_WRITEABLE))
+			if (fdt_setprop_empty(blob, part, "read-only") < 0)
+				return false;
+
+		if (slave->flags & MTD_POWERUP_LOCK)
+			if (fdt_setprop_empty(blob, part, "lock") < 0)
+				return false;
+	}
+
+	return true;
+}
+
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	struct mtd_info *mtd;
+	int node;
+
+	mtd = get_mtd_device_nm(OMNIA_SPI_NOR_PATH);
+	if (IS_ERR_OR_NULL(mtd))
+		goto fail;
+
+	node = fdt_path_offset(blob, OMNIA_SPI_NOR_PATH);
+	if (node < 0)
+		goto fail;
+
+	if (!fixup_mtd_partitions(blob, node, mtd))
+		goto fail;
+
+	put_mtd_device(mtd);
+	return 0;
+
+fail:
+	printf("Failed fixing SPI NOR partitions!\n");
+	if (!IS_ERR_OR_NULL(mtd))
+		put_mtd_device(mtd);
+	return 0;
+}
+#endif

@@ -10,8 +10,10 @@ config EFI_LOADER
 	depends on !EFI_STUB || !X86_64 || EFI_STUB_64BIT
 	# We need EFI_STUB_32BIT to be set on x86_32 with EFI_STUB
 	depends on !EFI_STUB || !X86 || X86_64 || EFI_STUB_32BIT
+	depends on BLK
 	default y if !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
 	select LIB_UUID
+	select PARTITION_UUIDS
 	select HAVE_BLOCK_DEVICE
 	select REGEX
 	imply CFB_CONSOLE_ANSI
@@ -315,7 +317,6 @@ config EFI_TCG2_PROTOCOL
 	depends on TPM_V2
 	select SHA1
 	select SHA256
-	select SHA512_ALGO
 	select SHA384
 	select SHA512
 	select HASH
@@ -326,7 +327,7 @@ config EFI_TCG2_PROTOCOL
 config EFI_TCG2_PROTOCOL_EVENTLOG_SIZE
 	int "EFI_TCG2_PROTOCOL EventLog size"
 	depends on EFI_TCG2_PROTOCOL
-	default 4096
+	default 65536
 	help
 		Define the size of the EventLog for EFI_TCG2_PROTOCOL. Note that
 		this is going to be allocated twice. One for the eventlog it self

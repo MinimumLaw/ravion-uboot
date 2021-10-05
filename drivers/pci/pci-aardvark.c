@@ -177,7 +177,6 @@
 #define LINK_MAX_RETRIES			10
 #define LINK_WAIT_TIMEOUT			100000
 
-#define CFG_RD_UR_VAL			0xFFFFFFFF
 #define CFG_RD_CRS_VAL			0xFFFF0001
 
 /**
@@ -235,19 +234,19 @@ static int pcie_advk_addr_valid(pci_dev_t bdf, int first_busno)
  *
  * Wait up to 1.5 seconds for PIO access to be accomplished.
  *
- * Return 1 (true) if PIO access is accomplished.
- * Return 0 (false) if PIO access is timed out.
+ * Return positive - retry count if PIO access is accomplished.
+ * Return negative - error if PIO access is timed out.
  */
 static int pcie_advk_wait_pio(struct pcie_advk *pcie)
 {
 	uint start, isr;
 	uint count;
 
-	for (count = 0; count < PIO_MAX_RETRIES; count++) {
+	for (count = 1; count <= PIO_MAX_RETRIES; count++) {
 		start = advk_readl(pcie, PIO_START);
 		isr = advk_readl(pcie, PIO_ISR);
 		if (!start && isr)
-			return 1;
+			return count;
 		/*
 		 * Do not check the PIO state too frequently,
 		 * 100us delay is appropriate.
@@ -256,21 +255,23 @@ static int pcie_advk_wait_pio(struct pcie_advk *pcie)
 	}
 
 	dev_err(pcie->dev, "PIO read/write transfer time out\n");
-	return 0;
+	return -ETIMEDOUT;
 }
 
 /**
  * pcie_advk_check_pio_status() - Validate PIO status and get the read result
  *
  * @pcie: Pointer to the PCI bus
- * @read: Read from or write to configuration space - true(read) false(write)
- * @read_val: Pointer to the read result, only valid when read is true
+ * @allow_crs: Only for read requests, if CRS response is allowed
+ * @read_val: Pointer to the read result
  *
+ * Return: 0 on success
  */
 static int pcie_advk_check_pio_status(struct pcie_advk *pcie,
-				      bool read,
+				      bool allow_crs,
 				      uint *read_val)
 {
+	int ret;
 	uint reg;
 	unsigned int status;
 	char *strcomp_status, *str_posted;
@@ -283,53 +284,54 @@ static int pcie_advk_check_pio_status(struct pcie_advk *pcie,
 	case PIO_COMPLETION_STATUS_OK:
 		if (reg & PIO_ERR_STATUS) {
 			strcomp_status = "COMP_ERR";
+			ret = -EFAULT;
 			break;
 		}
 		/* Get the read result */
-		if (read)
+		if (read_val)
 			*read_val = advk_readl(pcie, PIO_RD_DATA);
 		/* No error */
 		strcomp_status = NULL;
+		ret = 0;
 		break;
 	case PIO_COMPLETION_STATUS_UR:
-		if (read) {
-			/* For reading, UR is not an error status. */
-			*read_val = CFG_RD_UR_VAL;
-			strcomp_status = NULL;
-		} else {
-			strcomp_status = "UR";
-		}
+		strcomp_status = "UR";
+		ret = -EOPNOTSUPP;
 		break;
 	case PIO_COMPLETION_STATUS_CRS:
-		if (read) {
+		if (allow_crs && read_val) {
 			/* For reading, CRS is not an error status. */
 			*read_val = CFG_RD_CRS_VAL;
 			strcomp_status = NULL;
+			ret = 0;
 		} else {
 			strcomp_status = "CRS";
+			ret = -EAGAIN;
 		}
 		break;
 	case PIO_COMPLETION_STATUS_CA:
 		strcomp_status = "CA";
+		ret = -ECANCELED;
 		break;
 	default:
 		strcomp_status = "Unknown";
+		ret = -EINVAL;
 		break;
 	}
 
 	if (!strcomp_status)
-		return 0;
+		return ret;
 
 	if (reg & PIO_NON_POSTED_REQ)
 		str_posted = "Non-posted";
 	else
 		str_posted = "Posted";
 
-	dev_err(pcie->dev, "%s PIO Response Status: %s, %#x @ %#x\n",
+	dev_dbg(pcie->dev, "%s PIO Response Status: %s, %#x @ %#x\n",
 		str_posted, strcomp_status, reg,
 		advk_readl(pcie, PIO_ADDR_LS));
 
-	return -EFAULT;
+	return ret;
 }
 
 /**
@@ -352,6 +354,8 @@ static int pcie_advk_read_config(const struct udevice *bus, pci_dev_t bdf,
 				 enum pci_size_t size)
 {
 	struct pcie_advk *pcie = dev_get_priv(bus);
+	int retry_count;
+	bool allow_crs;
 	uint reg;
 	int ret;
 
@@ -364,13 +368,28 @@ static int pcie_advk_read_config(const struct udevice *bus, pci_dev_t bdf,
 		return 0;
 	}
 
+	/*
+	 * Returning fabricated CRS value (0xFFFF0001) by PCIe Root Complex to
+	 * OS is allowed only for 4-byte PCI_VENDOR_ID config read request and
+	 * only when CRSSVE bit in Root Port PCIe device is enabled. In all
+	 * other error PCIe Root Complex must return all-ones.
+	 * Aardvark HW does not have Root Port PCIe device and U-Boot does not
+	 * implement emulation of this device.
+	 * U-Boot currently does not support handling of CRS return value for
+	 * PCI_VENDOR_ID config read request and also does not set CRSSVE bit.
+	 * Therefore disable returning CRS response for now.
+	 */
+	allow_crs = false;
+
 	if (advk_readl(pcie, PIO_START)) {
 		dev_err(pcie->dev,
 			"Previous PIO read/write transfer is still running\n");
-		if (offset != PCI_VENDOR_ID)
-			return -EINVAL;
-		*valuep = CFG_RD_CRS_VAL;
-		return 0;
+		if (allow_crs) {
+			*valuep = CFG_RD_CRS_VAL;
+			return 0;
+		}
+		*valuep = pci_get_ff(size);
+		return -EAGAIN;
 	}
 
 	/* Program the control register */
@@ -387,21 +406,33 @@ static int pcie_advk_read_config(const struct udevice *bus, pci_dev_t bdf,
 	advk_writel(pcie, reg, PIO_ADDR_LS);
 	advk_writel(pcie, 0, PIO_ADDR_MS);
 
+	retry_count = 0;
+
+retry:
 	/* Start the transfer */
 	advk_writel(pcie, 1, PIO_ISR);
 	advk_writel(pcie, 1, PIO_START);
 
-	if (!pcie_advk_wait_pio(pcie)) {
-		if (offset != PCI_VENDOR_ID)
-			return -EINVAL;
-		*valuep = CFG_RD_CRS_VAL;
-		return 0;
+	ret = pcie_advk_wait_pio(pcie);
+	if (ret < 0) {
+		if (allow_crs) {
+			*valuep = CFG_RD_CRS_VAL;
+			return 0;
+		}
+		*valuep = pci_get_ff(size);
+		return ret;
 	}
 
+	retry_count += ret;
+
 	/* Check PIO status and get the read result */
-	ret = pcie_advk_check_pio_status(pcie, true, &reg);
-	if (ret)
+	ret = pcie_advk_check_pio_status(pcie, allow_crs, &reg);
+	if (ret == -EAGAIN && retry_count < PIO_MAX_RETRIES)
+		goto retry;
+	if (ret) {
+		*valuep = pci_get_ff(size);
 		return ret;
+	}
 
 	dev_dbg(pcie->dev, "(addr,size,val)=(0x%04x, %d, 0x%08x)\n",
 		offset, size, reg);
@@ -459,7 +490,9 @@ static int pcie_advk_write_config(struct udevice *bus, pci_dev_t bdf,
 				  enum pci_size_t size)
 {
 	struct pcie_advk *pcie = dev_get_priv(bus);
+	int retry_count;
 	uint reg;
+	int ret;
 
 	dev_dbg(pcie->dev, "PCIE CFG write: (b,d,f)=(%2d,%2d,%2d) ",
 		PCI_BUS(bdf), PCI_DEV(bdf), PCI_FUNC(bdf));
@@ -474,7 +507,7 @@ static int pcie_advk_write_config(struct udevice *bus, pci_dev_t bdf,
 	if (advk_readl(pcie, PIO_START)) {
 		dev_err(pcie->dev,
 			"Previous PIO read/write transfer is still running\n");
-		return -EINVAL;
+		return -EAGAIN;
 	}
 
 	/* Program the control register */
@@ -502,18 +535,24 @@ static int pcie_advk_write_config(struct udevice *bus, pci_dev_t bdf,
 	advk_writel(pcie, reg, PIO_WR_DATA_STRB);
 	dev_dbg(pcie->dev, "\tPIO req. - strb = 0x%02x\n", reg);
 
+	retry_count = 0;
+
+retry:
 	/* Start the transfer */
 	advk_writel(pcie, 1, PIO_ISR);
 	advk_writel(pcie, 1, PIO_START);
 
-	if (!pcie_advk_wait_pio(pcie)) {
-		return -EINVAL;
-	}
+	ret = pcie_advk_wait_pio(pcie);
+	if (ret < 0)
+		return ret;
+
+	retry_count += ret;
 
 	/* Check PIO status */
-	pcie_advk_check_pio_status(pcie, false, &reg);
-
-	return 0;
+	ret = pcie_advk_check_pio_status(pcie, false, NULL);
+	if (ret == -EAGAIN && retry_count < PIO_MAX_RETRIES)
+		goto retry;
+	return ret;
 }
 
 /**
@@ -605,25 +644,26 @@ static void pcie_advk_set_ob_region(struct pcie_advk *pcie, int *wins,
 
 	/*
 	 * The n-th PCIe window is configured by tuple (match, remap, mask)
-	 * and an access to address A uses this window it if A matches the
+	 * and an access to address A uses this window if A matches the
 	 * match with given mask.
 	 * So every PCIe window size must be a power of two and every start
 	 * address must be aligned to window size. Minimal size is 64 KiB
-	 * because lower 16 bits of mask must be zero.
+	 * because lower 16 bits of mask must be zero. Remapped address
+	 * may have set only bits from the mask.
 	 */
 	while (*wins < OB_WIN_COUNT && size > 0) {
 		/* Calculate the largest aligned window size */
 		win_size = (1ULL << (fls64(size) - 1)) |
 			   (phys_start ? (1ULL << __ffs64(phys_start)) : 0);
 		win_size = 1ULL << __ffs64(win_size);
-		if (win_size < 0x10000)
+		win_mask = ~(win_size - 1);
+		if (win_size < 0x10000 || (bus_start & ~win_mask))
 			break;
 
 		dev_dbg(pcie->dev,
 			"Configuring PCIe window %d: [0x%llx-0x%llx] as 0x%x\n",
 			*wins, (u64)phys_start, (u64)phys_start + win_size,
 			actions);
-		win_mask = ~(win_size - 1) & ~0xffff;
 		pcie_advk_set_ob_win(pcie, *wins, phys_start, bus_start,
 				     win_mask, actions);
 

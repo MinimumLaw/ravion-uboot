@@ -52,7 +52,6 @@
 #define CONFIG_SYS_LOAD_ADDR		0x8000000
 
 #if defined(CONFIG_ZYNQMP_USB)
-#define CONFIG_SYS_DFU_DATA_BUF_SIZE	0x1800000
 #define DFU_DEFAULT_POLL_TIMEOUT	300
 #define CONFIG_THOR_RESET_OFF
 
@@ -90,6 +89,8 @@
 	"pxefile_addr_r=0x10000000\0" \
 	"kernel_addr_r=0x18000000\0" \
 	"kernel_size_r=0x10000000\0" \
+	"kernel_comp_addr_r=0x30000000\0" \
+	"kernel_comp_size=0x3C00000\0" \
 	"scriptaddr=0x20000000\0" \
 	"ramdisk_addr_r=0x02100000\0" \
 	"script_size_f=0x80000\0" \
@@ -257,12 +258,12 @@
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_DFU)
 # define CONFIG_SPL_ENV_SUPPORT
-# define CONFIG_SPL_HASH_SUPPORT
+# define CONFIG_SPL_HASH
 # define CONFIG_ENV_MAX_ENTRIES	10
 #endif
 
 #define CONFIG_SYS_SPL_MALLOC_START	0x20000000
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x100000
+#define CONFIG_SYS_SPL_MALLOC_SIZE	0x1000000
 
 #ifdef CONFIG_SPL_SYS_MALLOC_SIMPLE
 # error "Disable CONFIG_SPL_SYS_MALLOC_SIMPLE. Full malloc needs to be used"

@@ -341,7 +341,7 @@ config DEBUG_UART_PL010
 
 config DEBUG_UART_PL011
 	bool "pl011"
-	depends on PL011_SERIAL
+	depends on PL01X_SERIAL || PL011_SERIAL
 	help
 	  Select this to enable a debug UART using the pl01x driver with the
 	  PL011 UART type. You will need to provide parameters to make this
@@ -443,6 +443,7 @@ config DEBUG_UART_CLOCK
 	int "UART input clock"
 	depends on DEBUG_UART
 	default 0 if DEBUG_UART_SANDBOX
+	default 0 if DEBUG_MVEBU_A3700_UART
 	help
 	  The UART input clock determines the speed of the internal UART
 	  circuitry. The baud rate is derived from this by dividing the input
@@ -694,12 +695,6 @@ config INTEL_MID_SERIAL
 	help
 	  Select this to enable a UART for Intel MID platforms.
 	  This uses the ns16550 driver as a library.
-
-config PL010_SERIAL
-	bool "ARM PL010 driver"
-	depends on !DM_SERIAL
-	help
-	  Select this to enable a UART for platforms using PL010.
 
 config PL011_SERIAL
 	bool "ARM PL011 driver"
