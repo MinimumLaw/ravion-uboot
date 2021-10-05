@@ -232,6 +232,16 @@ static inline ofnode ofnode_root(void)
 }
 
 /**
+ * ofnode_name_eq() - Check if the node name is equivalent to a given name
+ *                    ignoring the unit address
+ *
+ * @node:	valid node reference that has to be compared
+ * @name:	name that has to be compared with the node name
+ * @return true if matches, false if it doesn't match
+ */
+bool ofnode_name_eq(ofnode node, const char *name);
+
+/**
  * ofnode_read_u32() - Read a 32-bit integer from a property
  *
  * @ref:	valid node reference to read property from
@@ -459,6 +469,16 @@ ofnode ofnode_get_parent(ofnode node);
 const char *ofnode_get_name(ofnode node);
 
 /**
+ * ofnode_get_path() - get the full path of a node
+ *
+ * @node: valid node to look up
+ * @buf: buffer to write the node path into
+ * @buflen: buffer size
+ * @return 0 if OK, -ve on error
+ */
+int ofnode_get_path(ofnode node, char *buf, int buflen);
+
+/**
  * ofnode_get_by_phandle() - get ofnode from phandle
  *
  * @phandle:	phandle to look up
@@ -488,6 +508,23 @@ int ofnode_read_size(ofnode node, const char *propname);
  */
 phys_addr_t ofnode_get_addr_size_index(ofnode node, int index,
 				       fdt_size_t *size);
+
+/**
+ * ofnode_get_addr_size_index_notrans() - get an address/size from a node
+ *					  based on index, without address
+ *					  translation
+ *
+ * This reads the register address/size from a node based on index.
+ * The resulting address is not translated. Useful for example for on-disk
+ * addresses.
+ *
+ * @node: node to read from
+ * @index: Index of address to read (0 for first)
+ * @size: Pointer to size of the address
+ * @return address, or FDT_ADDR_T_NONE if not present or invalid
+ */
+phys_addr_t ofnode_get_addr_size_index_notrans(ofnode node, int index,
+					       fdt_size_t *size);
 
 /**
  * ofnode_get_addr_index() - get an address from a node

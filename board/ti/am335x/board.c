@@ -588,7 +588,7 @@ void sdram_init(void)
 #endif
 
 #if defined(CONFIG_CLOCK_SYNTHESIZER) && (!defined(CONFIG_SPL_BUILD) || \
-	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD)))
+	(defined(CONFIG_SPL_ETH) && defined(CONFIG_SPL_BUILD)))
 static void request_and_set_gpio(int gpio, char *name, int val)
 {
 	int ret;
@@ -724,7 +724,7 @@ int board_init(void)
 #endif
 
 #if defined(CONFIG_CLOCK_SYNTHESIZER) && (!defined(CONFIG_SPL_BUILD) || \
-	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD)))
+	(defined(CONFIG_SPL_ETH) && defined(CONFIG_SPL_BUILD)))
 	if (board_is_icev2()) {
 		int rv;
 		u32 reg;
@@ -954,13 +954,16 @@ int board_fit_config_name_match(const char *name)
 		return 0;
 	else if (board_is_icev2() && !strcmp(name, "am335x-icev2"))
 		return 0;
+	else if (board_is_bben() && !strcmp(name, "am335x-sancloud-bbe"))
+		return 0;
 	else
 		return -1;
 }
 #endif
 
 #ifdef CONFIG_TI_SECURE_DEVICE
-void board_fit_image_post_process(void **p_image, size_t *p_size)
+void board_fit_image_post_process(const void *fit, int node, void **p_image,
+				  size_t *p_size)
 {
 	secure_boot_verify_image(p_image, p_size);
 }

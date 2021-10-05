@@ -20,10 +20,6 @@
 #include <charset.h>
 #include <pe.h>
 
-#ifdef CONFIG_EFI_LOADER
-#include <asm/setjmp.h>
-#endif
-
 /* UEFI spec version 2.8 */
 #define EFI_SPECIFICATION_VERSION (2 << 16 | 80)
 
@@ -253,7 +249,7 @@ struct efi_memory_range {
 struct efi_memory_range_capsule {
 	struct efi_capsule_header *header;
 	/* EFI_MEMORY_TYPE: 0x80000000-0xFFFFFFFF */
-	enum efi_mem_type os_requested_memory_type;
+	enum efi_memory_type os_requested_memory_type;
 	u64 number_of_memory_ranges;
 	struct efi_memory_range memory_ranges[];
 } __packed;
@@ -527,6 +523,7 @@ struct efi_device_path_acpi_path {
 #  define DEVICE_PATH_SUB_TYPE_MSG_USB_CLASS	0x0f
 #  define DEVICE_PATH_SUB_TYPE_MSG_SATA		0x12
 #  define DEVICE_PATH_SUB_TYPE_MSG_NVME		0x17
+#  define DEVICE_PATH_SUB_TYPE_MSG_URI		0x18
 #  define DEVICE_PATH_SUB_TYPE_MSG_SD		0x1a
 #  define DEVICE_PATH_SUB_TYPE_MSG_MMC		0x1d
 
@@ -589,6 +586,11 @@ struct efi_device_path_nvme {
 	struct efi_device_path dp;
 	u32 ns_id;
 	u8 eui64[8];
+} __packed;
+
+struct efi_device_path_uri {
+	struct efi_device_path dp;
+	u8 uri[];
 } __packed;
 
 #define DEVICE_PATH_TYPE_MEDIA_DEVICE		0x04

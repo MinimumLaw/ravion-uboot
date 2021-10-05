@@ -167,7 +167,7 @@ config CMD_TLV_EEPROM
 config SPL_CMD_TLV_EEPROM
 	bool "tlv_eeprom for SPL"
 	depends on SPL_I2C_EEPROM
-	select SPL_DRIVERS_MISC_SUPPORT
+	select SPL_DRIVERS_MISC
 	help
 	  Read system EEPROM data block in ONIE Tlvinfo format from SPL.
 
@@ -1322,7 +1322,7 @@ config CMD_UNIVERSE
 
 config CMD_USB
 	bool "usb"
-	depends on USB
+	depends on USB_HOST
 	select HAVE_BLOCK_DEVICE
 	help
 	  USB support.
@@ -1345,6 +1345,7 @@ config CMD_ROCKUSB
 
 config CMD_USB_MASS_STORAGE
 	bool "UMS usb mass storage"
+	depends on USB_GADGET_DOWNLOAD
 	select USB_FUNCTION_MASS_STORAGE
 	depends on BLK && USB_GADGET
 	help
@@ -1412,6 +1413,14 @@ config CMD_SETEXPR
 	    variable.
 	  Also supports loading the value at a memory location into a variable.
 	  If CONFIG_REGEX is enabled, setexpr also supports a gsub function.
+
+config CMD_SETEXPR_FMT
+	bool "setexpr_fmt"
+	default n
+	depends on CMD_SETEXPR
+	help
+	  Evaluate format string expression and store result in an environment
+	    variable.
 
 endmenu
 
@@ -2380,4 +2389,14 @@ config CMD_UBIFS
 	help
 	  UBIFS is a file system for flash devices which works on top of UBI.
 
+config MMC_SPEED_MODE_SET
+	bool "set speed mode using mmc command"
+	depends on CMD_MMC
+	default n
+	help
+	  Enable setting speed mode using mmc rescan and mmc dev commands.
+	  The speed mode is provided as the last argument in these commands
+	  and is indicated using the index from enum bus_mode in
+	  include/mmc.h. A speed mode can be set only if it has already
+	  been enabled in the device tree.
 endmenu

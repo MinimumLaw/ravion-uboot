@@ -277,7 +277,7 @@ static unsigned long get_internval_val_mhz(void)
 	ulong interval_mhz = get_bus_freq(0) / (1000 * 1000);
 
 	if (interval)
-		interval_mhz = simple_strtoul(interval, NULL, 10);
+		interval_mhz = dectoul(interval, NULL);
 
 	return interval_mhz;
 }
@@ -329,7 +329,7 @@ static void erratum_rcw_src(void)
 #ifdef CONFIG_SYS_FSL_ERRATUM_A009203
 static void erratum_a009203(void)
 {
-#ifdef CONFIG_SYS_I2C
+#ifdef CONFIG_SYS_I2C_LEGACY
 	u8 __iomem *ptr;
 #ifdef I2C1_BASE_ADDR
 	ptr = (u8 __iomem *)(I2C1_BASE_ADDR + I2C_DEBUG_REG);
@@ -953,12 +953,15 @@ int board_late_init(void)
 #endif
 #ifdef CONFIG_TFABOOT
 	/*
-	 * Set bootcmd and mcinitcmd if they don't exist in the environment.
+	 * Set bootcmd and mcinitcmd if "fsl_bootcmd_mcinitcmd_set" does
+	 * not exists in env
 	 */
-	if (!env_get("bootcmd"))
+	if (env_get_yesno("fsl_bootcmd_mcinitcmd_set") <= 0) {
+		// Set bootcmd and mcinitcmd as per boot source
 		fsl_setenv_bootcmd();
-	if (!env_get("mcinitcmd"))
 		fsl_setenv_mcinitcmd();
+		env_set("fsl_bootcmd_mcinitcmd_set", "y");
+	}
 #endif
 #ifdef CONFIG_QSPI_AHB_INIT
 	qspi_ahb_init();

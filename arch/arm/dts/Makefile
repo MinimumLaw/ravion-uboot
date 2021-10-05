@@ -56,6 +56,7 @@ dtb-$(CONFIG_ARCH_KIRKWOOD) += \
 	kirkwood-ns2lite.dtb \
 	kirkwood-ns2max.dtb \
 	kirkwood-ns2mini.dtb \
+	kirkwood-nsa310s.dtb \
 	kirkwood-openrd-base.dtb \
 	kirkwood-openrd-client.dtb \
 	kirkwood-openrd-ultimate.dtb \
@@ -145,6 +146,9 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399-rock960.dtb \
 	rk3399-rockpro64.dtb \
 	rk3399pro-rock-pi-n10.dtb
+
+dtb-$(CONFIG_ROCKCHIP_RK3568) += \
+	rk3568-evb.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RV1108) += \
 	rv1108-elgin-r1.dtb \
@@ -246,10 +250,12 @@ dtb-$(CONFIG_ARCH_MVEBU) +=			\
 	cn9130-crb-A.dtb			\
 	cn9130-crb-B.dtb
 
+dtb-$(CONFIG_ARCH_SYNQUACER) += synquacer-sc2a11-developerbox.dtb
 dtb-$(CONFIG_ARCH_UNIPHIER_LD11) += \
 	uniphier-ld11-global.dtb \
 	uniphier-ld11-ref.dtb
 dtb-$(CONFIG_ARCH_UNIPHIER_LD20) += \
+	uniphier-ld20-akebi96.dtb \
 	uniphier-ld20-global.dtb \
 	uniphier-ld20-ref.dtb
 dtb-$(CONFIG_ARCH_UNIPHIER_LD4) += \
@@ -360,6 +366,7 @@ dtb-$(CONFIG_AM33XX) += \
 	am335x-pocketbeagle.dtb \
 	am335x-pxm50.dtb \
 	am335x-rut.dtb \
+	am335x-sancloud-bbe.dtb \
 	am335x-shc.dtb \
 	am335x-pdu001.dtb \
 	am335x-chiliboard.dtb \
@@ -393,6 +400,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_cyclone5_socrates.dtb			\
 	socfpga_cyclone5_sr1500.dtb			\
 	socfpga_cyclone5_vining_fpga.dtb		\
+	socfpga_n5x_socdk.dtb				\
 	socfpga_stratix10_socdk.dtb
 
 dtb-$(CONFIG_TARGET_DRA7XX_EVM) += dra72-evm.dtb dra7-evm.dtb	\
@@ -608,7 +616,8 @@ dtb-$(CONFIG_MACH_SUN8I_H3) += \
 	sun8i-h3-orangepi-plus.dtb \
 	sun8i-h3-orangepi-plus2e.dtb \
 	sun8i-h3-orangepi-zero-plus2.dtb \
-	sun8i-h3-rervision-dvk.dtb
+	sun8i-h3-rervision-dvk.dtb \
+	sun8i-h3-zeropi.dtb
 dtb-$(CONFIG_MACH_SUN8I_R40) += \
 	sun8i-r40-bananapi-m2-ultra.dtb \
 	sun8i-v40-bananapi-m2-berry.dtb
@@ -672,6 +681,7 @@ dtb-$(CONFIG_TARGET_MX23_OLINUXINO) += \
 	imx23-olinuxino.dtb
 
 dtb-$(CONFIG_MX28) += \
+	imx28-evk.dtb \
 	imx28-xea.dtb
 
 dtb-$(CONFIG_MX51) += \
@@ -855,6 +865,9 @@ dtb-$(CONFIG_ARCH_IMX8) += \
 	imx8-deneb.dtb \
 	imx8-giedi.dtb
 
+dtb-$(CONFIG_ARCH_IMX8ULP) += \
+	imx8ulp-evk.dtb
+
 dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-evk.dtb \
 	imx8mm-icore-mx8mm-ctouch2.dtb \
@@ -863,6 +876,8 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-venice-gw71xx-0x.dtb \
 	imx8mm-venice-gw72xx-0x.dtb \
 	imx8mm-venice-gw73xx-0x.dtb \
+	imx8mm-venice-gw7901.dtb \
+	imx8mm-venice-gw7902.dtb \
 	imx8mm-verdin.dtb \
 	phycore-imx8mm.dtb \
 	imx8mn-ddr4-evk.dtb \
@@ -906,7 +921,8 @@ dtb-$(CONFIG_RCAR_GEN3) += \
 	r8a77970-eagle-u-boot.dtb \
 	r8a77980-condor-u-boot.dtb \
 	r8a77990-ebisu-u-boot.dtb \
-	r8a77995-draak-u-boot.dtb
+	r8a77995-draak-u-boot.dtb \
+	r8a779a0-falcon-u-boot.dtb
 
 ifdef CONFIG_RCAR_GEN3
 DTC_FLAGS += -R 4 -p 0x1000
@@ -1114,10 +1130,12 @@ dtb-$(CONFIG_TARGET_PRESIDIO_ASIC) += ca-presidio-engboard.dtb
 
 dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE) += imx8mm-cl-iot-gate.dtb
 
+dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
+
 targets += $(dtb-y)
 
 # Add any required device tree compiler flags here
-DTC_FLAGS +=
+DTC_FLAGS += -a 0x8
 
 PHONY += dtbs
 dtbs: $(addprefix $(obj)/, $(dtb-y))

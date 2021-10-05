@@ -269,7 +269,7 @@ static int rsa_engine_get_priv_key(const char *keydir, const char *name,
 			snprintf(key_id, sizeof(key_id),
 				 "%s%s",
 				 keydir, name);
-		else if (keydir)
+		else if (name)
 			snprintf(key_id, sizeof(key_id),
 				 "%s",
 				 name);
@@ -338,6 +338,7 @@ static int rsa_init(void)
 
 static int rsa_engine_init(const char *engine_id, ENGINE **pe)
 {
+	const char *key_pass;
 	ENGINE *e;
 	int ret;
 
@@ -362,10 +363,20 @@ static int rsa_engine_init(const char *engine_id, ENGINE **pe)
 		goto err_set_rsa;
 	}
 
+	key_pass = getenv("MKIMAGE_SIGN_PIN");
+	if (key_pass) {
+		if (!ENGINE_ctrl_cmd_string(e, "PIN", key_pass, 0)) {
+			fprintf(stderr, "Couldn't set PIN\n");
+			ret = -1;
+			goto err_set_pin;
+		}
+	}
+
 	*pe = e;
 
 	return 0;
 
+err_set_pin:
 err_set_rsa:
 	ENGINE_finish(e);
 err_engine_init:
@@ -442,7 +453,7 @@ static int rsa_sign_with_key(EVP_PKEY *pkey, struct padding_algo *padding_algo,
 		goto err_sign;
 	}
 
-#ifdef CONFIG_FIT_ENABLE_RSASSA_PSS_SUPPORT
+#ifdef CONFIG_FIT_RSASSA_PSS
 	if (padding_algo && !strcmp(padding_algo->name, "pss")) {
 		if (EVP_PKEY_CTX_set_rsa_padding(ckey,
 						 RSA_PKCS1_PSS_PADDING) <= 0) {
@@ -450,7 +461,7 @@ static int rsa_sign_with_key(EVP_PKEY *pkey, struct padding_algo *padding_algo,
 			goto err_sign;
 		}
 	}
-#endif /* CONFIG_FIT_ENABLE_RSASSA_PSS_SUPPORT */
+#endif /* CONFIG_FIT_RSASSA_PSS */
 
 	for (i = 0; i < region_count; i++) {
 		if (!EVP_DigestSignUpdate(context, region[i].data,
@@ -473,7 +484,7 @@ static int rsa_sign_with_key(EVP_PKEY *pkey, struct padding_algo *padding_algo,
 	#endif
 	EVP_MD_CTX_destroy(context);
 
-	debug("Got signature: %d bytes, expected %zu\n", *sig_size, size);
+	debug("Got signature: %zu bytes, expected %d\n", size, EVP_PKEY_size(pkey));
 	*sigp = sig;
 	*sig_size = size;
 

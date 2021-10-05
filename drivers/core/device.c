@@ -87,8 +87,10 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 		if (CONFIG_IS_ENABLED(OF_CONTROL) &&
 		    !CONFIG_IS_ENABLED(OF_PLATDATA)) {
 			if (uc->uc_drv->name && ofnode_valid(node)) {
-				if (!dev_read_alias_seq(dev, &dev->seq_))
+				if (!dev_read_alias_seq(dev, &dev->seq_)) {
 					auto_seq = false;
+					log_debug("   - seq=%d\n", dev->seq_);
+					}
 			}
 		}
 	}
@@ -561,7 +563,7 @@ int device_probe(struct udevice *dev)
 		 * Process 'assigned-{clocks/clock-parents/clock-rates}'
 		 * properties
 		 */
-		ret = clk_set_defaults(dev, 0);
+		ret = clk_set_defaults(dev, CLK_DEFAULTS_PRE);
 		if (ret)
 			goto fail;
 	}

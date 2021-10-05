@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2021
-PATCHLEVEL = 07
+PATCHLEVEL = 10
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -12,10 +12,9 @@ NAME =
 # Comments in this file are targeted only to the developer, do not
 # expect to learn how to build the kernel reading this file.
 
-# o Do not use make's built-in rules and variables
-#   (this increases performance and avoids hard-to-debug behaviour);
-# o Look for make include files relative to root of kernel src
-MAKEFLAGS += -rR --include-dir=$(CURDIR)
+# Do not use make's built-in rules and variables
+# (this increases performance and avoids hard-to-debug behaviour)
+MAKEFLAGS += -rR
 
 # Determine target architecture for the sandbox
 include include/host_arch.h
@@ -161,6 +160,13 @@ KBUILD_OUTPUT := $(shell mkdir -p $(KBUILD_OUTPUT) && cd $(KBUILD_OUTPUT) \
 								&& /bin/pwd)
 $(if $(KBUILD_OUTPUT),, \
      $(error failed to create output directory "$(saved-output)"))
+
+# Look for make include files relative to root of kernel src
+#
+# This does not become effective immediately because MAKEFLAGS is re-parsed
+# once after the Makefile is read.  It is OK since we are going to invoke
+# 'sub-make' below.
+MAKEFLAGS += --include-dir=$(CURDIR)
 
 PHONY += $(MAKECMDGOALS) sub-make
 
@@ -492,8 +498,7 @@ PHONY += outputmakefile
 outputmakefile:
 ifneq ($(KBUILD_SRC),)
 	$(Q)ln -fsn $(srctree) source
-	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/mkmakefile \
-	    $(srctree) $(objtree) $(VERSION) $(PATCHLEVEL)
+	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/mkmakefile $(srctree)
 endif
 
 # To make sure we do not include .config for any of the *config targets
@@ -572,7 +577,7 @@ else
 # Carefully list dependencies so we do not try to build scripts twice
 # in parallel
 PHONY += scripts
-scripts: scripts_basic include/config/auto.conf
+scripts: scripts_basic scripts_dtc include/config/auto.conf
 	$(Q)$(MAKE) $(build)=$(@)
 
 ifeq ($(dot-config),1)
@@ -709,8 +714,15 @@ KBUILD_CFLAGS += $(call cc-option,-fno-stack-protector)
 endif
 KBUILD_CFLAGS += $(call cc-option,-fno-delete-null-pointer-checks)
 
+# disable pointer signed / unsigned warnings in gcc 4.0
+KBUILD_CFLAGS += -Wno-pointer-sign
+
 # disable stringop warnings in gcc 8+
 KBUILD_CFLAGS += $(call cc-disable-warning, stringop-truncation)
+
+KBUILD_CFLAGS += $(call cc-disable-warning, zero-length-bounds)
+KBUILD_CFLAGS += $(call cc-disable-warning, array-bounds)
+KBUILD_CFLAGS += $(call cc-disable-warning, stringop-overflow)
 
 # Enabled with W=2, disabled by default as noisy
 KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
@@ -735,7 +747,7 @@ endif
 KBUILD_CFLAGS += $(call cc-option,-Wno-format-nonliteral)
 KBUILD_CFLAGS += $(call cc-disable-warning, address-of-packed-member)
 
-ifeq ($(cc-name),clang)
+ifdef CONFIG_CC_IS_CLANG
 KBUILD_CPPFLAGS += $(call cc-option,-Qunused-arguments,)
 KBUILD_CFLAGS += $(call cc-disable-warning, format-invalid-specifier)
 KBUILD_CFLAGS += $(call cc-disable-warning, gnu)
@@ -747,12 +759,11 @@ KBUILD_CFLAGS += $(call cc-disable-warning, tautological-compare)
 # See modpost pattern 2
 KBUILD_CFLAGS += $(call cc-option, -mno-global-merge,)
 KBUILD_CFLAGS += $(call cc-option, -fcatch-undefined-behavior)
-else
+endif
 
 # These warnings generated too much noise in a regular build.
 # Use make W=1 to enable them (see scripts/Makefile.extrawarn)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
-endif
 
 # Prohibit date/time macros, which would make the build non-deterministic
 KBUILD_CFLAGS   += $(call cc-option,-Werror=date-time)
@@ -791,16 +802,19 @@ c_flags := $(KBUILD_CFLAGS) $(cpp_flags)
 
 HAVE_VENDOR_COMMON_LIB = $(if $(wildcard $(srctree)/board/$(VENDOR)/common/Makefile),y,n)
 
-libs-y += lib/
+libs-$(CONFIG_API) += api/
 libs-$(HAVE_VENDOR_COMMON_LIB) += board/$(VENDOR)/common/
+libs-y += cmd/
+libs-y += common/
 libs-$(CONFIG_OF_EMBED) += dts/
+libs-y += env/
+libs-y += lib/
 libs-y += fs/
 libs-y += net/
 libs-y += disk/
 libs-y += drivers/
 libs-y += drivers/dma/
 libs-y += drivers/gpio/
-libs-y += drivers/i2c/
 libs-y += drivers/net/
 libs-y += drivers/net/phy/
 libs-y += drivers/power/ \
@@ -830,10 +844,6 @@ libs-y += drivers/usb/musb/
 libs-y += drivers/usb/musb-new/
 libs-y += drivers/usb/phy/
 libs-y += drivers/usb/ulpi/
-libs-y += cmd/
-libs-y += common/
-libs-y += env/
-libs-$(CONFIG_API) += api/
 ifdef CONFIG_POST
 libs-y += post/
 endif
@@ -1114,17 +1124,10 @@ ifneq ($(CONFIG_DM),y)
 	@echo >&2 "See doc/driver-model/migration.rst for more info."
 	@echo >&2 "===================================================="
 endif
-	$(call deprecated,CONFIG_DM_USB CONFIG_OF_CONTROL CONFIG_BLK,\
-		USB,v2019.07,$(CONFIG_USB))
-	$(call deprecated,CONFIG_DM_PCI,PCI,v2019.07,$(CONFIG_PCI))
-	$(call deprecated,CONFIG_DM_VIDEO,video,v2019.07,\
-		$(CONFIG_LCD)$(CONFIG_VIDEO))
-	$(call deprecated,CONFIG_DM_SPI_FLASH,SPI flash,v2019.07,\
-		$(CONFIG_SPI_FLASH))
 	$(call deprecated,CONFIG_WDT,DM watchdog,v2019.10,\
 		$(CONFIG_WATCHDOG)$(CONFIG_HW_WATCHDOG))
 	$(call deprecated,CONFIG_DM_ETH,Ethernet drivers,v2020.07,$(CONFIG_NET))
-	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_I2C))
+	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C_LEGACY))
 	@# Check that this build does not use CONFIG options that we do not
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
@@ -1165,6 +1168,8 @@ endif
 MKIMAGEFLAGS_fit-dtb.blob = -f auto -A $(ARCH) -T firmware -C none -O u-boot \
 	-a 0 -e 0 -E \
 	$(patsubst %,-b arch/$(ARCH)/dts/%.dtb,$(subst ",,$(CONFIG_OF_LIST))) -d /dev/null
+
+MKIMAGEFLAGS_fit-dtb.blob += -B 0x8
 
 ifneq ($(EXT_DTB),)
 u-boot-fit-dtb.bin: u-boot-nodtb.bin $(EXT_DTB)
@@ -1428,6 +1433,7 @@ MKIMAGEFLAGS_u-boot.itb =
 else
 MKIMAGEFLAGS_u-boot.itb = -E
 endif
+MKIMAGEFLAGS_u-boot.itb += -B 0x8
 
 ifdef U_BOOT_ITS
 u-boot.itb: u-boot-nodtb.bin \
@@ -1437,7 +1443,7 @@ u-boot.itb: u-boot-nodtb.bin \
 	$(BOARD_SIZE_CHECK)
 endif
 
-u-boot-spl.kwb: u-boot.img spl/u-boot-spl.bin FORCE
+u-boot-spl.kwb: u-boot.bin spl/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
 
 u-boot.sha1:	u-boot.bin
@@ -1557,21 +1563,10 @@ u-boot-signed.sb: u-boot.bin spl/u-boot-spl.bin
 u-boot.sb: u-boot.bin spl/u-boot-spl.bin
 	$(Q)$(MAKE) $(build)=arch/arm/cpu/arm926ejs/mxs u-boot.sb
 
-# On x600 (SPEAr600) U-Boot is appended to U-Boot SPL.
-# Both images are created using mkimage (crc etc), so that the ROM
-# bootloader can check its integrity. Padding needs to be done to the
-# SPL image (with mkimage header) and not the binary. Otherwise the resulting image
-# which is loaded/copied by the ROM bootloader to SRAM doesn't fit.
-# The resulting image containing both U-Boot images is called u-boot.spr
 MKIMAGEFLAGS_u-boot-spl.img = -A $(ARCH) -T firmware -C none \
 	-a $(CONFIG_SPL_TEXT_BASE) -e $(CONFIG_SPL_TEXT_BASE) -n XLOADER
 spl/u-boot-spl.img: spl/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
-
-OBJCOPYFLAGS_u-boot.spr = -I binary -O binary --pad-to=$(CONFIG_SPL_PAD_TO) \
-			  --gap-fill=0xff
-u-boot.spr: spl/u-boot-spl.img u-boot.img FORCE
-	$(call if_changed,pad_cat)
 
 ifneq ($(CONFIG_ARCH_SOCFPGA),)
 quiet_cmd_gensplx4 = GENSPLX4 $@
@@ -1743,7 +1738,7 @@ u-boot-keep-syms-lto_c := $(patsubst %.o,%.c,$(u-boot-keep-syms-lto))
 
 quiet_cmd_keep_syms_lto = KSL     $@
       cmd_keep_syms_lto = \
-	NM=$(NM) $(srctree)/scripts/gen_ll_addressable_symbols.sh $^ >$@
+	$(srctree)/scripts/gen_ll_addressable_symbols.sh $(NM) $^ > $@
 
 quiet_cmd_keep_syms_lto_cc = KSLCC   $@
       cmd_keep_syms_lto_cc = \
@@ -1871,6 +1866,8 @@ endif
 
 ifeq ($(CONFIG_USE_DEFAULT_ENV_FILE),y)
 prepare1: $(defaultenv_h)
+
+envtools: $(defaultenv_h)
 endif
 
 archprepare: prepare1 scripts_basic
@@ -1910,7 +1907,6 @@ define filechk_timestamp.h
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_DATE "%b %d %C%y"'; \
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_TIME "%T"'; \
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_TZ "%z"'; \
-			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_DMI_DATE "%m/%d/%Y"'; \
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_BUILD_DATE 0x%Y%m%d'; \
 			LC_ALL=C $${DATE} -u -d "$${SOURCE_DATE}" +'#define U_BOOT_EPOCH %s'; \
 		else \
@@ -1920,7 +1916,6 @@ define filechk_timestamp.h
 		LC_ALL=C date +'#define U_BOOT_DATE "%b %d %C%y"'; \
 		LC_ALL=C date +'#define U_BOOT_TIME "%T"'; \
 		LC_ALL=C date +'#define U_BOOT_TZ "%z"'; \
-		LC_ALL=C date +'#define U_BOOT_DMI_DATE "%m/%d/%Y"'; \
 		LC_ALL=C date +'#define U_BOOT_BUILD_DATE 0x%Y%m%d'; \
 		LC_ALL=C date +'#define U_BOOT_EPOCH %s'; \
 	fi)
@@ -1952,6 +1947,35 @@ $(dt_h): $(srctree)/Makefile FORCE
 
 $(defaultenv_h): $(CONFIG_DEFAULT_ENV_FILE:"%"=%) FORCE
 	$(call filechk,defaultenv.h)
+
+# ---------------------------------------------------------------------------
+# Devicetree files
+
+ifneq ($(wildcard $(srctree)/arch/$(SRCARCH)/boot/dts/),)
+dtstree := arch/$(SRCARCH)/boot/dts
+endif
+
+ifneq ($(dtstree),)
+
+%.dtb: prepare3 scripts_dtc
+	$(Q)$(MAKE) $(build)=$(dtstree) $(dtstree)/$@
+
+PHONY += dtbs dtbs_install
+dtbs: prepare3 scripts_dtc
+	$(Q)$(MAKE) $(build)=$(dtstree)
+
+dtbs_install:
+	$(Q)$(MAKE) $(dtbinst)=$(dtstree)
+
+ifdef CONFIG_OF_EARLY_FLATTREE
+all: dtbs
+endif
+
+endif
+
+PHONY += scripts_dtc
+scripts_dtc: scripts_basic
+	$(Q)$(MAKE) $(build)=scripts/dtc
 
 # ---------------------------------------------------------------------------
 quiet_cmd_cpp_lds = LDS     $@
@@ -2078,7 +2102,7 @@ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h tools/version.h \
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl \
-		  .tmp_objdiff doc/output
+		  .tmp_objdiff doc/output include/asm
 
 # Remove include/asm symlink created by U-Boot before v2014.01
 MRPROPER_FILES += .config .config.old include/autoconf.mk* include/config.h \
@@ -2215,9 +2239,6 @@ PHONY += $(DOC_TARGETS)
 $(DOC_TARGETS): scripts_basic FORCE
 	$(Q)$(MAKE) $(build)=doc $@
 
-endif #ifeq ($(config-targets),1)
-endif #ifeq ($(mixed-targets),1)
-
 PHONY += checkstack ubootrelease ubootversion
 
 checkstack:
@@ -2305,13 +2326,15 @@ quiet_cmd_rmfiles = $(if $(wildcard $(rm-files)),CLEAN   $(wildcard $(rm-files))
 
 # read all saved command lines
 
-cmd_files := $(wildcard .*.cmd $(foreach f,$(sort $(targets)),$(dir $(f)).$(notdir $(f)).cmd))
+cmd_files := $(wildcard .*.cmd)
 
 ifneq ($(cmd_files),)
   $(cmd_files): ;	# Do not try to update included dependency files
   include $(cmd_files)
 endif
 
+endif    #ifeq ($(config-targets),1)
+endif    #ifeq ($(mixed-targets),1)
 endif	# skip-makefile
 
 PHONY += FORCE

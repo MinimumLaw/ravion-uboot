@@ -82,10 +82,10 @@ config ENV_IS_IN_FLASH
 	depends on !CHAIN_OF_TRUST
 	default y if ARCH_CINTEGRATOR
 	default y if ARCH_INTEGRATOR_CP
-	default y if M548x || M547x || M5282 || MCF547x_8x
+	default y if M548x || M547x || M5282
 	default y if MCF532x || MCF52x2
 	default y if MPC86xx || MPC83xx
-	default y if ARCH_MPC8572 || ARCH_MPC8548 || ARCH_MPC8641
+	default y if ARCH_MPC8548
 	default y if SH && !CPU_SH4
 	help
 	  Define this if you have a flash device which you want to use for the
@@ -446,8 +446,7 @@ config ENV_FAT_DEVICE_AND_PART
 	depends on ENV_IS_IN_FAT
 	default "0:1" if TI_COMMON_CMD_OPTIONS
 	default "0:auto" if ARCH_ZYNQ || ARCH_ZYNQMP || ARCH_VERSAL
-	default "0:auto" if ARCH_SUNXI && MMC_SUNXI_SLOT_EXTRA = -1
-	default "1:auto" if ARCH_SUNXI && MMC_SUNXI_SLOT_EXTRA != -1
+	default ":auto" if ARCH_SUNXI
 	default "0" if ARCH_AT91
 	help
 	  Define this to a string to specify the partition of the device. It can
@@ -617,7 +616,7 @@ config SYS_RELOC_GD_ENV_ADDR
 config SYS_MMC_ENV_DEV
 	int "mmc device number"
 	depends on ENV_IS_IN_MMC || ENV_IS_IN_FAT || SYS_LS_PPA_FW_IN_MMC || \
-		CMD_MVEBU_BUBT || FMAN_ENET || QE
+		CMD_MVEBU_BUBT || FMAN_ENET || QE || PHY_CORTINA
 	default 0
 	help
 	  MMC device number on the platform where the environment is stored.
