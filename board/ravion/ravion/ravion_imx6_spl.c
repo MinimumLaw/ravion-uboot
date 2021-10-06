@@ -75,15 +75,16 @@ int spl_start_uboot(void)
 	struct gpio_desc pwrbtn_gpio;
 	struct gpio_desc nrstout_gpio;
 	int ret = SPL_LOAD_UBOOT;
+	int v;
 
-	if (dm_gpio_lookup_name(rst_gpio, &nrstout_gpio))
-		printf("nRESET lookup failed!\n");
-	if (dm_gpio_request(&nrstout_gpio, "nRSTOUT"))
-		printf("nRESET request failed!\n");
-	if (dm_gpio_set_dir_flags(&nrstout_gpio, GPIOD_IS_OUT))
-		printf("nRESET configure output failed!\n");
-	if (dm_gpio_set_value(&nrstout_gpio, 0))
-		printf("nRESET deassert failed!\n");
+	if (!!(v=dm_gpio_lookup_name(rst_gpio, &nrstout_gpio)))
+		printf("nRESET lookup failed! (err=%d)\n", v);
+	if (!!(v=dm_gpio_request(&nrstout_gpio, "nRSTOUT")))
+		printf("nRESET request failed! (err=%d)\n", v);
+	if (!!(v=dm_gpio_set_dir_flags(&nrstout_gpio, GPIOD_IS_OUT)))
+		printf("nRESET configure output failed! (err=%d)\n",v);
+	if (!!(v=dm_gpio_set_value(&nrstout_gpio, 0)))
+		printf("nRESET deassert failed! (err=%d)\n", v);
 
 #ifdef CONFIG_SPL_ENV_SUPPORT
 	env_init();

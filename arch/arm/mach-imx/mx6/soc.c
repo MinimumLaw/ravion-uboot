@@ -24,6 +24,7 @@
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
 #include <fsl_sec.h>
+#include <fsl_wdog.h>
 #include <imx_thermal.h>
 #include <mmc.h>
 
@@ -770,3 +771,19 @@ void gpr_init(void)
 		writel(0x007F007F, &iomux->gpr[7]);
 	}
 }
+
+#if !CONFIG_IS_ENABLED(SYSRESET)
+void reset_cpu(void)
+{
+	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
+
+	/* Clear WDA to trigger WDOG_B immediately */
+	writew((SET_WCR_WT(1) | WCR_WDT | WCR_WDE | WCR_SRS), &wdog->wcr);
+
+	while (1) {
+		/*
+		 * spin for .5 seconds before reset
+		 */
+	};
+}
+#endif
