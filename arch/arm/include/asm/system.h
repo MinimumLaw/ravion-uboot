@@ -397,20 +397,6 @@ static inline void set_cr(unsigned int val)
 	isb();
 }
 
-static inline unsigned int get_dacr(void)
-{
-	unsigned int val;
-	asm("mrc p15, 0, %0, c3, c0, 0	@ get DACR" : "=r" (val) : : "cc");
-	return val;
-}
-
-static inline void set_dacr(unsigned int val)
-{
-	asm volatile("mcr p15, 0, %0, c3, c0, 0	@ set DACR"
-	  : : "r" (val) : "cc");
-	isb();
-}
-
 #ifdef CONFIG_ARMV7_LPAE
 /* Long-Descriptor Translation Table Level 1/2 Bits */
 #define TTB_SECT_XN_MASK	(1ULL << 54)
@@ -475,7 +461,7 @@ enum dcache_option {
 #define TTB_SECT_XN_MASK	(1 << 4)
 #define TTB_SECT_C_MASK		(1 << 3)
 #define TTB_SECT_B_MASK		(1 << 2)
-#define TTB_SECT			(2 << 0)
+#define TTB_SECT		(2 << 0)
 
 /*
  * Short-descriptor format memory region attributes, without TEX remap
@@ -489,7 +475,7 @@ enum dcache_option {
  */
 enum dcache_option {
 	DCACHE_OFF = TTB_SECT_DOMAIN(0) | TTB_SECT_XN_MASK | TTB_SECT,
-	DCACHE_WRITETHROUGH = DCACHE_OFF | TTB_SECT_C_MASK,
+	DCACHE_WRITETHROUGH = TTB_SECT_DOMAIN(0) | TTB_SECT | TTB_SECT_C_MASK,
 	DCACHE_WRITEBACK = DCACHE_WRITETHROUGH | TTB_SECT_B_MASK,
 	DCACHE_WRITEALLOC = DCACHE_WRITEBACK | TTB_SECT_TEX(1),
 };
@@ -628,7 +614,18 @@ void mmu_set_region_dcache_behaviour(phys_addr_t start, size_t size,
 				     enum dcache_option option);
 
 #ifdef CONFIG_SYS_NONCACHED_MEMORY
-void noncached_init(void);
+/**
+ * noncached_init() - Initialize non-cached memory region
+ *
+ * Initialize non-cached memory area. This memory region will be typically
+ * located right below the malloc() area and mapped uncached in the MMU.
+ *
+ * It is called during the generic post-relocation init sequence.
+ *
+ * Return: 0 if OK
+ */
+int noncached_init(void);
+
 phys_addr_t noncached_alloc(size_t size, size_t align);
 #endif /* CONFIG_SYS_NONCACHED_MEMORY */
 

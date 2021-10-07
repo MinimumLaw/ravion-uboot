@@ -899,11 +899,11 @@ struct udevice;
 
 #ifdef CONFIG_DM_PCI
 /**
- * struct pci_child_platdata - information stored about each PCI device
+ * struct pci_child_plat - information stored about each PCI device
  *
  * Every device on a PCI bus has this per-child data.
  *
- * It can be accessed using dev_get_parent_platdata(dev) if dev->parent is a
+ * It can be accessed using dev_get_parent_plat(dev) if dev->parent is a
  * PCI bus (i.e. UCLASS_PCI)
  *
  * @devfn:	Encoded device and function index - see PCI_DEVFN()
@@ -914,7 +914,7 @@ struct udevice;
  * @pfdev:	Handle to Physical Function device
  * @virtid:	Virtual Function Index
  */
-struct pci_child_platdata {
+struct pci_child_plat {
 	int devfn;
 	unsigned short vendor;
 	unsigned short device;
@@ -934,7 +934,7 @@ struct dm_pci_ops {
 	 * PCI buses must support reading and writing configuration values
 	 * so that the bus can be scanned and its devices configured.
 	 *
-	 * Normally PCI_BUS(@bdf) is the same as @bus->seq, but not always.
+	 * Normally PCI_BUS(@bdf) is the same as @dev_seq(bus), but not always.
 	 * If bridges exist it is possible to use the top-level bus to
 	 * access a sub-bus. In that case @bus will be the top-level bus
 	 * and PCI_BUS(bdf) will be a different (higher) value
@@ -1689,6 +1689,14 @@ int sandbox_pci_get_emul(const struct udevice *bus, pci_dev_t find_devfn,
  * @return 0 if OK, -ENOENT if the device has no client yet
  */
 int sandbox_pci_get_client(struct udevice *emul, struct udevice **devp);
+
+/**
+ * board_pci_fixup_dev() - Board callback for PCI device fixups
+ *
+ * @bus:	PCI bus
+ * @dev:	PCI device
+ */
+extern void board_pci_fixup_dev(struct udevice *bus, struct udevice *dev);
 
 #endif /* CONFIG_DM_PCI */
 

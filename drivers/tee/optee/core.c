@@ -297,7 +297,7 @@ static u32 call_err_to_res(u32 call_err)
 
 static u32 do_call_with_arg(struct udevice *dev, struct optee_msg_arg *arg)
 {
-	struct optee_pdata *pdata = dev_get_platdata(dev);
+	struct optee_pdata *pdata = dev_get_plat(dev);
 	struct rpc_param param = { .a0 = OPTEE_SMC_CALL_WITH_ARG };
 	void *page_list = NULL;
 
@@ -592,7 +592,7 @@ static optee_invoke_fn *get_invoke_func(struct udevice *dev)
 	const char *method;
 
 	debug("optee: looking for conduit method in DT.\n");
-	method = ofnode_get_property(dev->node, "method", NULL);
+	method = ofnode_get_property(dev_ofnode(dev), "method", NULL);
 	if (!method) {
 		debug("optee: missing \"method\" property\n");
 		return ERR_PTR(-ENXIO);
@@ -607,9 +607,9 @@ static optee_invoke_fn *get_invoke_func(struct udevice *dev)
 	return ERR_PTR(-EINVAL);
 }
 
-static int optee_ofdata_to_platdata(struct udevice *dev)
+static int optee_of_to_plat(struct udevice *dev)
 {
-	struct optee_pdata *pdata = dev_get_platdata(dev);
+	struct optee_pdata *pdata = dev_get_plat(dev);
 
 	pdata->invoke_fn = get_invoke_func(dev);
 	if (IS_ERR(pdata->invoke_fn))
@@ -620,18 +620,18 @@ static int optee_ofdata_to_platdata(struct udevice *dev)
 
 static int optee_probe(struct udevice *dev)
 {
-	struct optee_pdata *pdata = dev_get_platdata(dev);
+	struct optee_pdata *pdata = dev_get_plat(dev);
 	u32 sec_caps;
 
 	if (!is_optee_api(pdata->invoke_fn)) {
-		debug("%s: OP-TEE api uid mismatch\n", __func__);
+		dev_err(dev, "OP-TEE api uid mismatch\n");
 		return -ENOENT;
 	}
 
 	print_os_revision(dev, pdata->invoke_fn);
 
 	if (!api_revision_is_compatible(pdata->invoke_fn)) {
-		debug("%s: OP-TEE api revision mismatch\n", __func__);
+		dev_err(dev, "OP-TEE api revision mismatch\n");
 		return -ENOENT;
 	}
 
@@ -642,7 +642,7 @@ static int optee_probe(struct udevice *dev)
 	 */
 	if (!exchange_capabilities(pdata->invoke_fn, &sec_caps) ||
 	    !(sec_caps & OPTEE_SMC_SEC_CAP_DYNAMIC_SHM)) {
-		debug("%s: OP-TEE capabilities mismatch\n", __func__);
+		dev_err(dev, "OP-TEE capabilities mismatch\n");
 		return -ENOENT;
 	}
 
@@ -658,9 +658,9 @@ U_BOOT_DRIVER(optee) = {
 	.name = "optee",
 	.id = UCLASS_TEE,
 	.of_match = optee_match,
-	.ofdata_to_platdata = optee_ofdata_to_platdata,
+	.of_to_plat = optee_of_to_plat,
 	.probe = optee_probe,
 	.ops = &optee_ops,
-	.platdata_auto_alloc_size = sizeof(struct optee_pdata),
-	.priv_auto_alloc_size = sizeof(struct optee_private),
+	.plat_auto	= sizeof(struct optee_pdata),
+	.priv_auto	= sizeof(struct optee_private),
 };

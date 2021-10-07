@@ -211,10 +211,9 @@ config FSL_SEC_MON
 	  like software violations or hardware security violations.
 
 config IRQ
-	bool "Intel Interrupt controller"
-	depends on X86 || SANDBOX
+	bool "Interrupt controller"
 	help
-	  This enables support for Intel interrupt controllers, including ITSS.
+	  This enables support for interrupt controllers, including ITSS.
 	  Some devices have extra features, such as Apollo Lake. The
 	  device has its own uclass since there are several operations
 	  involved.
@@ -343,6 +342,15 @@ config TEGRA186_BPMP
 	  can make requests to the BPMP. This driver is similar to an MFD
 	  driver in the Linux kernel.
 
+config TEST_DRV
+	bool "Enable support for test drivers"
+	default y if SANDBOX
+	help
+	  This enables drivers and uclasses that provides a way of testing the
+	  operations of memory allocation and driver/uclass methods in driver
+	  model. This should only be enabled for testing as it is not useful for
+	  anything else.
+
 config TWL4030_LED
 	bool "Enable TWL4030 LED controller"
 	help
@@ -359,8 +367,22 @@ config WINBOND_W83627
 config QFW
 	bool
 	help
-	  Hidden option to enable QEMU fw_cfg interface. This will be selected by
-	  either CONFIG_CMD_QFW or CONFIG_GENERATE_ACPI_TABLE.
+	  Hidden option to enable QEMU fw_cfg interface and uclass. This will
+	  be selected by either CONFIG_CMD_QFW or CONFIG_GENERATE_ACPI_TABLE.
+
+config QFW_PIO
+	bool
+	depends on QFW
+	help
+	  Hidden option to enable PIO QEMU fw_cfg interface. This will be
+	  selected by the appropriate QEMU board.
+
+config QFW_MMIO
+	bool
+	depends on QFW
+	help
+	  Hidden option to enable MMIO QEMU fw_cfg interface. This will be
+	  selected by the appropriate QEMU board.
 
 config I2C_EEPROM
 	bool "Enable driver for generic I2C-attached EEPROMs"

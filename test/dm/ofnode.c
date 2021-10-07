@@ -213,7 +213,7 @@ static int dm_test_ofnode_read_aliases(struct unit_test_state *uts)
 	ofnode node;
 	int size;
 
-	node = ofnode_get_aliases_node("eth3");
+	node = ofnode_get_aliases_node("ethernet3");
 	ut_assert(ofnode_valid(node));
 	ut_asserteq_str("sbe5", ofnode_get_name(node));
 
@@ -249,3 +249,46 @@ static int dm_test_ofnode_get_child_count(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_ofnode_get_child_count,
 	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_is_enabled(struct unit_test_state *uts)
+{
+	ofnode root_node = ofnode_path("/");
+	ofnode node = ofnode_path("/usb@0");
+
+	ut_assert(ofnode_is_enabled(root_node));
+	ut_assert(!ofnode_is_enabled(node));
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_is_enabled, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_get_reg(struct unit_test_state *uts)
+{
+	ofnode node;
+	fdt_addr_t addr;
+	fdt_size_t size;
+
+	node = ofnode_path("/translation-test@8000");
+	ut_assert(ofnode_valid(node));
+	addr = ofnode_get_addr(node);
+	size = ofnode_get_size(node);
+	ut_asserteq(0x8000, addr);
+	ut_asserteq(0x4000, size);
+
+	node = ofnode_path("/translation-test@8000/dev@1,100");
+	ut_assert(ofnode_valid(node));
+	addr = ofnode_get_addr(node);
+	size = ofnode_get_size(node);
+	ut_asserteq(0x9000, addr);
+	ut_asserteq(0x1000, size);
+
+	node = ofnode_path("/emul-mux-controller");
+	ut_assert(ofnode_valid(node));
+	addr = ofnode_get_addr(node);
+	size = ofnode_get_size(node);
+	ut_asserteq(FDT_ADDR_T_NONE, addr);
+	ut_asserteq(FDT_SIZE_T_NONE, size);
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_get_reg, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);

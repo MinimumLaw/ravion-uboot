@@ -16,6 +16,7 @@
 #include <dm/ofnode.h>
 #include <linux/err.h>
 #include <linux/ioport.h>
+#include <asm/global_data.h>
 
 int ofnode_read_u32(ofnode node, const char *propname, u32 *outp)
 {
@@ -226,6 +227,17 @@ int ofnode_read_u32_array(ofnode node, const char *propname,
 	}
 }
 
+#if !CONFIG_IS_ENABLED(DM_INLINE_OFNODE)
+bool ofnode_is_enabled(ofnode node)
+{
+	if (ofnode_is_np(node)) {
+		return of_device_is_available(ofnode_to_np(node));
+	} else {
+		return fdtdec_get_is_enabled(gd->fdt_blob,
+					     ofnode_to_offset(node));
+	}
+}
+
 ofnode ofnode_first_subnode(ofnode node)
 {
 	assert(ofnode_valid(node));
@@ -245,6 +257,7 @@ ofnode ofnode_next_subnode(ofnode node)
 	return offset_to_ofnode(
 		fdt_next_subnode(gd->fdt_blob, ofnode_to_offset(node)));
 }
+#endif /* !DM_INLINE_OFNODE */
 
 ofnode ofnode_get_parent(ofnode node)
 {
@@ -290,6 +303,8 @@ fdt_addr_t ofnode_get_addr_size_index(ofnode node, int index, fdt_size_t *size)
 {
 	int na, ns;
 
+	*size = FDT_SIZE_T_NONE;
+
 	if (ofnode_is_np(node)) {
 		const __be32 *prop_val;
 		u64 size64;
@@ -331,6 +346,15 @@ fdt_addr_t ofnode_get_addr_index(ofnode node, int index)
 fdt_addr_t ofnode_get_addr(ofnode node)
 {
 	return ofnode_get_addr_index(node, 0);
+}
+
+fdt_size_t ofnode_get_size(ofnode node)
+{
+	fdt_size_t size;
+
+	ofnode_get_addr_size_index(node, 0, &size);
+
+	return size;
 }
 
 int ofnode_stringlist_search(ofnode node, const char *property,
@@ -909,6 +933,15 @@ u64 ofnode_translate_dma_address(ofnode node, const fdt32_t *in_addr)
 		return of_translate_dma_address(ofnode_to_np(node), in_addr);
 	else
 		return fdt_translate_dma_address(gd->fdt_blob, ofnode_to_offset(node), in_addr);
+}
+
+int ofnode_get_dma_range(ofnode node, phys_addr_t *cpu, dma_addr_t *bus, u64 *size)
+{
+	if (ofnode_is_np(node))
+		return of_get_dma_range(ofnode_to_np(node), cpu, bus, size);
+	else
+		return fdt_get_dma_range(gd->fdt_blob, ofnode_to_offset(node),
+					 cpu, bus, size);
 }
 
 int ofnode_device_is_compatible(ofnode node, const char *compat)

@@ -18,7 +18,7 @@ Get and Build the ARM Trusted firmware
 
 Note: builddir is U-Boot build directory (source directory for in-tree builds)
 Get ATF from: https://source.codeaurora.org/external/imx/imx-atf
-branch: imx_4.19.35_1.0.0
+branch: imx_5.4.47_2.2.0
 
 .. code-block:: bash
 
@@ -30,10 +30,10 @@ Get the ddr firmware
 
 .. code-block:: bash
 
-   $ wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.0.bin
-   $ chmod +x firmware-imx-8.0.bin
-   $ ./firmware-imx-8.0
-   $ cp firmware-imx-8.0/firmware/ddr/synopsys/lpddr4*.bin $(builddir)
+   $ wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.9.bin
+   $ chmod +x firmware-imx-8.9.bin
+   $ ./firmware-imx-8.9
+   $ cp firmware-imx-8.9/firmware/ddr/synopsys/lpddr4*.bin $(builddir)
 
 Build U-Boot
 ------------
@@ -43,13 +43,14 @@ Build U-Boot
    $ export CROSS_COMPILE=aarch64-poky-linux-
    $ make imx8mm_evk_defconfig
    $ export ATF_LOAD_ADDR=0x920000
-   $ make flash.bin
+   $ make
 
 Burn the flash.bin to MicroSD card offset 33KB:
 
 .. code-block:: bash
 
    $sudo dd if=flash.bin of=/dev/sd[x] bs=1024 seek=33 conv=notrunc
+   $sudo dd if=u-boot.itb of=/dev/sdc bs=1024 seek=384 conv=sync
 
 Boot
 ----

@@ -68,7 +68,8 @@ static int fit_add_file_data(struct image_tool_params *params, size_t size_inc,
 	}
 
 	if (!ret) {
-		ret = fit_add_verification_data(params->keydir, dest_blob, ptr,
+		ret = fit_add_verification_data(params->keydir,
+						params->keyfile, dest_blob, ptr,
 						params->comment,
 						params->require_keys,
 						params->engine_id,
@@ -883,7 +884,7 @@ static int fit_extract_contents(void *ptr, struct image_tool_params *params)
 	/* Indent string is defined in header image.h */
 	p = IMAGE_INDENT_STRING;
 
-	if (!fit_check_format(fit)) {
+	if (fit_check_format(fit, IMAGE_SIZE_INVAL)) {
 		printf("Bad FIT image format\n");
 		return -1;
 	}

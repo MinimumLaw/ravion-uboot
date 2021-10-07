@@ -10,6 +10,7 @@
 #include <cpu_func.h>
 #include <hang.h>
 #include <init.h>
+#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
@@ -33,7 +34,7 @@ int board_init(void)
 #define RST_CA57_CODE	0xA5A5000F
 #define RST_CA53_CODE	0x5A5A000F
 
-void reset_cpu(ulong addr)
+void reset_cpu(void)
 {
 	unsigned long midr, cputype;
 

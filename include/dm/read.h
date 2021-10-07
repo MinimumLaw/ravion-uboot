@@ -21,7 +21,7 @@ struct resource;
 #if CONFIG_IS_ENABLED(OF_LIVE)
 static inline const struct device_node *dev_np(const struct udevice *dev)
 {
-	return ofnode_to_np(dev->node);
+	return ofnode_to_np(dev_ofnode(dev));
 }
 #else
 static inline const struct device_node *dev_np(const struct udevice *dev)
@@ -30,24 +30,7 @@ static inline const struct device_node *dev_np(const struct udevice *dev)
 }
 #endif
 
-/**
- * dev_ofnode() - get the DT node reference associated with a udevice
- *
- * @dev:	device to check
- * @return reference of the the device's DT node
- */
-static inline ofnode dev_ofnode(const struct udevice *dev)
-{
-	return dev->node;
-}
-
-static inline bool dev_of_valid(const struct udevice *dev)
-{
-	return ofnode_valid(dev_ofnode(dev));
-}
-
-#ifndef CONFIG_DM_DEV_READ_INLINE
-
+#if !defined(CONFIG_DM_DEV_READ_INLINE) || CONFIG_IS_ENABLED(OF_PLATDATA)
 /**
  * dev_read_u32() - read a 32-bit integer from a device's DT property
  *
@@ -665,6 +648,21 @@ u64 dev_translate_dma_address(const struct udevice *dev,
 			      const fdt32_t *in_addr);
 
 /**
+ * dev_get_dma_range() - Get a device's DMA constraints
+ *
+ * Provide the address bases and size of the linear mapping between the CPU and
+ * a device's BUS address space.
+ *
+ * @dev: device giving the context in which to translate the DMA address
+ * @cpu: base address for CPU's view of memory
+ * @bus: base address for BUS's view of memory
+ * @size: size of the address space
+ * @return 0 if ok, negative on error
+ */
+int dev_get_dma_range(const struct udevice *dev, phys_addr_t *cpu,
+		      dma_addr_t *bus, u64 *size);
+
+/**
  * dev_read_alias_highest_id - Get highest alias id for the given stem
  * @stem:	Alias stem to be examined
  *
@@ -694,7 +692,25 @@ int dev_get_child_count(const struct udevice *dev);
  */
 int dev_read_pci_bus_range(const struct udevice *dev, struct resource *res);
 
+/**
+ * dev_decode_display_timing() - decode display timings
+ *
+ * Decode display timings from the supplied 'display-timings' node.
+ * See doc/device-tree-bindings/video/display-timing.txt for binding
+ * information.
+ *
+ * @dev: device to read DT display timings from. The node linked to the device
+ *       contains a child node called 'display-timings' which in turn contains
+ *       one or more display timing nodes.
+ * @index: index number to read (0=first timing subnode)
+ * @config: place to put timings
+ * @return 0 if OK, -FDT_ERR_NOTFOUND if not found
+ */
+int dev_decode_display_timing(const struct udevice *dev, int index,
+			      struct display_timing *config);
+
 #else /* CONFIG_DM_DEV_READ_INLINE is enabled */
+#include <asm/global_data.h>
 
 static inline int dev_read_u32(const struct udevice *dev,
 			       const char *propname, u32 *outp)
@@ -1004,9 +1020,15 @@ static inline u64 dev_translate_dma_address(const struct udevice *dev,
 	return ofnode_translate_dma_address(dev_ofnode(dev), in_addr);
 }
 
+static inline int dev_get_dma_range(const struct udevice *dev, phys_addr_t *cpu,
+				    dma_addr_t *bus, u64 *size)
+{
+	return ofnode_get_dma_range(dev_ofnode(dev), cpu, bus, size);
+}
+
 static inline int dev_read_alias_highest_id(const char *stem)
 {
-	if (!CONFIG_IS_ENABLED(OF_LIBFDT))
+	if (!CONFIG_IS_ENABLED(OF_LIBFDT) || !gd->fdt_blob)
 		return -1;
 	return fdtdec_get_alias_highest_id(gd->fdt_blob, stem);
 }
@@ -1014,6 +1036,13 @@ static inline int dev_read_alias_highest_id(const char *stem)
 static inline int dev_get_child_count(const struct udevice *dev)
 {
 	return ofnode_get_child_count(dev_ofnode(dev));
+}
+
+static inline int dev_decode_display_timing(const struct udevice *dev,
+					    int index,
+					    struct display_timing *config)
+{
+	return ofnode_decode_display_timing(dev_ofnode(dev), index, config);
 }
 
 #endif /* CONFIG_DM_DEV_READ_INLINE */

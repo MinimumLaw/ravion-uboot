@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <part.h>
 #include <usb.h>
+#include <asm/global_data.h>
 #include <asm/state.h>
 #include <dm/test.h>
 #include <test/test.h>
@@ -18,9 +19,6 @@ DECLARE_GLOBAL_DATA_PTR;
 static int dm_test_blk_base(struct unit_test_state *uts)
 {
 	struct udevice *blk1, *blk3, *dev;
-
-	/* Make sure there are no block devices */
-	ut_asserteq(-ENODEV, uclass_get_device_by_seq(UCLASS_BLK, 0, &dev));
 
 	/* Create two, one the parent of the other */
 	ut_assertok(blk_create_device(gd->dm_root, "sandbox_host_blk", "test",
@@ -139,7 +137,7 @@ static int dm_test_blk_devnum(struct unit_test_state *uts)
 		 * Check that the block device devnum matches its parent's
 		 * sequence number
 		 */
-		desc = dev_get_uclass_platdata(dev);
+		desc = dev_get_uclass_plat(dev);
 		ut_asserteq(desc->devnum, i);
 	}
 

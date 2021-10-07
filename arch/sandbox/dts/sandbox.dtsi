@@ -31,7 +31,7 @@
 
 	clk_fixed: clk-fixed {
 		u-boot,dm-pre-reloc;
-		compatible = "fixed-clock";
+		compatible = "sandbox,fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <1234>;
 	};
@@ -56,7 +56,7 @@
 	};
 
 	gpio_a: gpios@0 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-pre-proper;
 		gpio-controller;
 		compatible = "sandbox,gpio";
 		#gpio-cells = <1>;
@@ -65,7 +65,7 @@
 	};
 
 	gpio_b: gpios@1 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-pre-proper;
 		gpio-controller;
 		compatible = "sandbox,gpio";
 		#gpio-cells = <2>;
@@ -101,15 +101,19 @@
 		};
 
 		i2c_emul: emul {
+			u-boot,dm-pre-reloc;
 			reg = <0xff>;
 			compatible = "sandbox,i2c-emul-parent";
 			emul_eeprom: emul-eeprom {
 				compatible = "sandbox,i2c-eeprom";
 				sandbox,filename = "i2c.bin";
 				sandbox,size = <256>;
+				#emul-cells = <0>;
 			};
 			emul0: emul0 {
-				compatible = "sandbox,i2c-rtc";
+				u-boot,dm-pre-reloc;
+				compatible = "sandbox,i2c-rtc-emul";
+				#emul-cells = <0>;
 			};
 		};
 	};
@@ -120,7 +124,7 @@
 	};
 
 	lcd {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-pre-proper;
 		compatible = "sandbox,lcd-sdl";
 		xres = <1366>;
 		yres = <768>;
@@ -196,6 +200,10 @@
 		compatible = "sandbox,reset";
 	};
 
+	rng {
+		compatible = "sandbox,sandbox-rng";
+	};
+
 	sound {
 		compatible = "sandbox,sound";
 		cpu {
@@ -209,7 +217,7 @@
 
 	spi@0 {
 		firmware_storage_spi: flash@0 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
 			reg = <0>;
 			compatible = "spansion,m25p16", "jedec,spi-nor";
 			spi-max-frequency = <40000000>;
@@ -248,11 +256,6 @@
 		stringarray = "one";
 	};
 
-	spl-test4 {
-		u-boot,dm-pre-reloc;
-		compatible = "sandbox,spl-test.2";
-	};
-
 	spl-test5 {
 		u-boot,dm-tpl;
 		compatible = "sandbox,spl-test";
@@ -283,7 +286,6 @@
 	};
 
 	tpm {
-		u-boot,dm-pre-reloc;
 		compatible = "google,sandbox-tpm";
 	};
 
@@ -420,6 +422,6 @@
 	};
 
 	keyboard-controller {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-pre-proper;
 	};
 };

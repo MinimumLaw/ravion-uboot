@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <netdev.h>
 #include <dm.h>
+#include <asm/global_data.h>
 #include <dm/platform_data/serial_sh.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
@@ -74,7 +75,7 @@ int board_init(void)
 #define RST_CA53RESCNT	(RST_BASE + 0x44)
 #define RST_CA53_CODE	0x5A5A000F
 
-void reset_cpu(ulong addr)
+void reset_cpu(void)
 {
 	writel(RST_CA53_CODE, RST_CA53RESCNT);
 }

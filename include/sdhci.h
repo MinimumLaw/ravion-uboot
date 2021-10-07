@@ -440,10 +440,10 @@ static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
  * ...
  *
  * Inside U_BOOT_DRIVER():
- *	.platdata_auto_alloc_size = sizeof(struct msm_sdhc_plat),
+ *	.plat_auto	= sizeof(struct msm_sdhc_plat),
  *
  * To access platform data:
- *	struct msm_sdhc_plat *plat = dev_get_platdata(dev);
+ *	struct msm_sdhc_plat *plat = dev_get_plat(dev);
  *
  * See msm_sdhci.c for an example.
  *
@@ -491,6 +491,16 @@ void sdhci_set_uhs_timing(struct sdhci_host *host);
 /* Export the operations to drivers */
 int sdhci_probe(struct udevice *dev);
 int sdhci_set_clock(struct mmc *mmc, unsigned int clock);
+
+/**
+ * sdhci_set_control_reg - Set control registers
+ *
+ * This is used set up control registers for voltage level and UHS speed
+ * mode.
+ *
+ * @host: SDHCI host structure
+ */
+void sdhci_set_control_reg(struct sdhci_host *host);
 extern const struct dm_mmc_ops sdhci_ops;
 #else
 #endif

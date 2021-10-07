@@ -74,24 +74,11 @@
 #include <version.h>
 #include <malloc.h>
 #include <video.h>
+#include <asm/global_data.h>
 #include <linux/compiler.h>
 
 #if defined(CONFIG_VIDEO_MXS)
 #define VIDEO_FB_16BPP_WORD_SWAP
-#endif
-
-/*
- * Defines for the MB862xx driver
- */
-#ifdef CONFIG_VIDEO_MB862xx
-
-#ifdef CONFIG_VIDEO_CORALP
-#define VIDEO_FB_LITTLE_ENDIAN
-#endif
-#ifdef CONFIG_VIDEO_MB862xx_ACCEL
-#define VIDEO_HW_RECTFILL
-#define VIDEO_HW_BITBLT
-#endif
 #endif
 
 /*

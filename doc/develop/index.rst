@@ -3,13 +3,45 @@
 Develop U-Boot
 ==============
 
+Implementation
+--------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   coccinelle
    commands
-   crash_dumps
+   driver-model/index
    global_data
    logging
+   menus
+   uefi/index
+   version
+
+Debugging
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+   crash_dumps
    trace
+
+Packaging
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+   package/index
+
+Testing
+-------
+
+.. toctree::
+   :maxdepth: 1
+
+   coccinelle
+   testing
+   py_testing
+   tests_writing
+   tests_sandbox

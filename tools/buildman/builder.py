@@ -182,6 +182,7 @@ class Builder:
             only useful for testing in-tree builds.
         work_in_output: Use the output directory as the work directory and
             don't write to a separate output directory.
+        thread_exceptions: List of exceptions raised by thread jobs
 
     Private members:
         _base_board_dict: Last-summarised Dict of boards
@@ -197,6 +198,8 @@ class Builder:
             last _timestamp_count builds. Each is a datetime object.
         _timestamp_count: Number of timestamps to keep in our list.
         _working_dir: Base working directory containing all threads
+        _single_builder: BuilderThread object for the singer builder, if
+            threading is not being used
     """
     class Outcome:
         """Records a build outcome for a single make invocation
@@ -233,7 +236,8 @@ class Builder:
                  no_subdirs=False, full_path=False, verbose_build=False,
                  mrproper=False, per_board_out_dir=False,
                  config_only=False, squash_config_y=False,
-                 warnings_as_errors=False, work_in_output=False):
+                 warnings_as_errors=False, work_in_output=False,
+                 test_thread_exceptions=False):
         """Create a new Builder object
 
         Args:
@@ -260,6 +264,9 @@ class Builder:
             warnings_as_errors: Treat all compiler warnings as errors
             work_in_output: Use the output directory as the work directory and
                 don't write to a separate output directory.
+            test_thread_exceptions: Uses for tests only, True to make the
+                threads raise an exception instead of reporting their result.
+                This simulates a failure in the code somewhere
         """
         self.toolchains = toolchains
         self.base_dir = base_dir
@@ -309,19 +316,27 @@ class Builder:
         self._re_migration_warning = re.compile(r'^={21} WARNING ={22}\n.*\n=+\n',
                                                 re.MULTILINE | re.DOTALL)
 
-        self.queue = queue.Queue()
-        self.out_queue = queue.Queue()
-        for i in range(self.num_threads):
-            t = builderthread.BuilderThread(self, i, mrproper,
-                    per_board_out_dir)
+        self.thread_exceptions = []
+        self.test_thread_exceptions = test_thread_exceptions
+        if self.num_threads:
+            self._single_builder = None
+            self.queue = queue.Queue()
+            self.out_queue = queue.Queue()
+            for i in range(self.num_threads):
+                t = builderthread.BuilderThread(
+                        self, i, mrproper, per_board_out_dir,
+                        test_exception=test_thread_exceptions)
+                t.setDaemon(True)
+                t.start()
+                self.threads.append(t)
+
+            t = builderthread.ResultThread(self)
             t.setDaemon(True)
             t.start()
             self.threads.append(t)
-
-        t = builderthread.ResultThread(self)
-        t.setDaemon(True)
-        t.start()
-        self.threads.append(t)
+        else:
+            self._single_builder = builderthread.BuilderThread(
+                self, -1, mrproper, per_board_out_dir)
 
         ignore_lines = ['(make.*Waiting for unfinished)', '(Segmentation fault)']
         self.re_make_err = re.compile('|'.join(ignore_lines))
@@ -1531,11 +1546,12 @@ class Builder:
         """Get the directory path to the working dir for a thread.
 
         Args:
-            thread_num: Number of thread to check.
+            thread_num: Number of thread to check (-1 for main process, which
+                is treated as 0)
         """
         if self.work_in_output:
             return self._working_dir
-        return os.path.join(self._working_dir, '%02d' % thread_num)
+        return os.path.join(self._working_dir, '%02d' % max(thread_num, 0))
 
     def _PrepareThread(self, thread_num, setup_git):
         """Prepare the working directory for a thread.
@@ -1594,7 +1610,9 @@ class Builder:
         if git-worktree is available, or clones the repo if it isn't.
 
         Args:
-            max_threads: Maximum number of threads we expect to need.
+            max_threads: Maximum number of threads we expect to need. If 0 then
+                1 is set up, since the main process still needs somewhere to
+                work
             setup_git: True to set up a git worktree or a git clone
         """
         builderthread.Mkdir(self._working_dir)
@@ -1608,7 +1626,9 @@ class Builder:
                 gitutil.PruneWorktrees(src_dir)
             else:
                 setup_git = 'clone'
-        for thread in range(max_threads):
+
+        # Always do at least one thread
+        for thread in range(max(max_threads, 1)):
             self._PrepareThread(thread, setup_git)
 
     def _GetOutputSpaceRemovals(self):
@@ -1664,6 +1684,7 @@ class Builder:
             Tuple containing:
                 - number of boards that failed to build
                 - number of boards that issued warnings
+                - list of thread exceptions raised
         """
         self.commit_count = len(commits) if commits else 1
         self.commits = commits
@@ -1677,7 +1698,7 @@ class Builder:
         Print('\rStarting build...', newline=False)
         self.SetupBuild(board_selected, commits)
         self.ProcessResult(None)
-
+        self.thread_exceptions = []
         # Create jobs to build all commits for each board
         for brd in board_selected.values():
             job = builderthread.BuilderJob()
@@ -1686,16 +1707,20 @@ class Builder:
             job.keep_outputs = keep_outputs
             job.work_in_output = self.work_in_output
             job.step = self._step
-            self.queue.put(job)
+            if self.num_threads:
+                self.queue.put(job)
+            else:
+                results = self._single_builder.RunJob(job)
 
-        term = threading.Thread(target=self.queue.join)
-        term.setDaemon(True)
-        term.start()
-        while term.isAlive():
-            term.join(100)
+        if self.num_threads:
+            term = threading.Thread(target=self.queue.join)
+            term.setDaemon(True)
+            term.start()
+            while term.is_alive():
+                term.join(100)
 
-        # Wait until we have processed all output
-        self.out_queue.join()
+            # Wait until we have processed all output
+            self.out_queue.join()
         Print()
 
         msg = 'Completed: %d total built' % self.count
@@ -1712,5 +1737,8 @@ class Builder:
             rate = float(self.count) / duration.total_seconds()
             msg += ', duration %s, rate %1.2f' % (duration, rate)
         Print(msg)
+        if self.thread_exceptions:
+            Print('Failed: %d thread exceptions' % len(self.thread_exceptions),
+                  colour=self.col.RED)
 
-        return (self.fail, self.warned)
+        return (self.fail, self.warned, self.thread_exceptions)

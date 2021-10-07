@@ -14,6 +14,7 @@
 #include <malloc.h>
 #include <netdev.h>
 #include <dm.h>
+#include <asm/global_data.h>
 #include <dm/platform_data/serial_sh.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
@@ -75,7 +76,7 @@ int board_init(void)
 #define RST_RSTOUTCR	(RST_BASE + 0x58)
 #define RST_CODE	0xA5A5000F
 
-void reset_cpu(ulong addr)
+void reset_cpu(void)
 {
 #if defined(CONFIG_SYS_I2C) && defined(CONFIG_SYS_I2C_SH)
 	i2c_reg_write(CONFIG_SYS_I2C_POWERIC_ADDR, 0x20, 0x80);

@@ -13,6 +13,7 @@
 #include <log.h>
 #include <net.h>
 #include <phy.h>
+#include <asm/global_data.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <net/pcap.h>
@@ -365,7 +366,7 @@ int eth_send(void *packet, int length)
 	ret = eth_current->send(eth_current, packet, length);
 #if defined(CONFIG_CMD_PCAP)
 	if (ret >= 0)
-		pcap_post(packet, lengeth, true);
+		pcap_post(packet, length, true);
 #endif
 	return ret;
 }

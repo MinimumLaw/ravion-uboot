@@ -113,6 +113,32 @@ config SPL_DM_SEQ_ALIAS
 	  numbered devices (e.g. serial0 = &serial0). This feature can be
 	  disabled if it is not required, to save code space in SPL.
 
+config SPL_DM_INLINE_OFNODE
+	bool "Inline some ofnode functions which are seldom used in SPL"
+	depends on SPL_DM
+	default y
+	help
+	  This applies to several ofnode functions (see ofnode.h) which are
+	  seldom used. Inlining them can help reduce code size.
+
+config TPL_DM_INLINE_OFNODE
+	bool "Inline some ofnode functions which are seldom used in TPL"
+	depends on TPL_DM
+	default y
+	help
+	  This applies to several ofnode functions (see ofnode.h) which are
+	  seldom used. Inlining them can help reduce code size.
+
+config DM_DMA
+	bool "Support per-device DMA constraints"
+	depends on DM
+	default n
+	help
+	  Enable this to extract per-device DMA constraints, only supported on
+	  device-tree systems for now. This is needed in order translate
+	  addresses on systems where different buses have different views of
+	  the physical address space.
+
 config REGMAP
 	bool "Support register maps"
 	depends on DM
@@ -209,6 +235,20 @@ config SPL_SIMPLE_BUS
 	  Supports the 'simple-bus' driver, which is used on some systems
 	  in SPL.
 
+config SIMPLE_BUS_CORRECT_RANGE
+	bool "Decode the 'simple-bus' <range> by honoring the #address-cells and #size-cells"
+	depends on SIMPLE_BUS
+	default y if SANDBOX
+	help
+	  Decoding the 'simple-bus' <range> by honoring the #address-cells
+	  and #size-cells of parent/child bus. If unset, #address-cells of
+	  parent bus is assumed to be 1, #address-cells and #size-cells of
+	  child bus is also assumed to be 1, to save some spaces of using
+	  an advanced API to decode the <range>, which benefits SPL image
+	  builds that have size limits.
+
+	  If you are unsure about this, Say N here.
+
 config SIMPLE_PM_BUS
 	bool "Support simple-pm-bus driver"
 	depends on DM && OF_CONTROL && CLK && POWER_DOMAIN
@@ -290,15 +330,6 @@ config ACPIGEN
 	  devices. It adds a new operation struct to each driver, to support
 	  things like generating device-specific tables and returning the ACPI
 	  name of a device.
-
-config INTEL_ACPIGEN
-	bool "Support ACPI table generation for Intel SoCs"
-	depends on ACPIGEN
-	help
-	  This option adds some functions used for programatic generation of
-	  ACPI tables on Intel SoCs. This provides features for writing CPU
-	  information such as P states and T stages. Also included is a way
-	  to create a GNVS table and set it up.
 
 config BOUNCE_BUFFER
 	bool "Include bounce buffer API"

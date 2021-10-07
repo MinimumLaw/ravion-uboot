@@ -9,6 +9,19 @@ config WATCHDOG
 	  this option if you want to service enabled watchdog by U-Boot. Disable
 	  this option if you want U-Boot to start watchdog but never service it.
 
+config WATCHDOG_AUTOSTART
+	bool "Automatically start watchdog timer"
+	depends on WDT
+	default y
+	help
+	  Automatically start watchdog timer and start servicing it during
+	  init phase. Enabled by default. Disable this option if you want
+	  to compile U-Boot with CONFIG_WDT support but do not want to
+	  activate watchdog, like when CONFIG_WDT option is disabled. You
+	  would be able to start watchdog manually by 'wdt' command. Useful
+	  when you want to have support for 'wdt' command but do not want
+	  to have watchdog enabled by default.
+
 config WATCHDOG_TIMEOUT_MSECS
 	int "Watchdog timeout in msec"
 	default 128000 if ARCH_MX25 || ARCH_MX31 || ARCH_MX5 || ARCH_MX6
@@ -86,6 +99,15 @@ config WDT_ASPEED
 	  It currently does not support Boot Flash Addressing Mode Detection or
 	  Second Boot.
 
+config WDT_AST2600
+	bool "Aspeed AST2600 watchdog timer support"
+	depends on WDT
+	default y if ASPEED_AST2600
+	help
+	  Select this to enable watchdog timer for Aspeed ast2500/ast2400 devices.
+	  The watchdog timer is stopped when initialized. It performs reset, either
+	  full SoC reset or CPU or just some peripherals, based on the flags.
+
 config WDT_AT91
 	bool "AT91 watchdog timer support"
 	depends on WDT
@@ -101,6 +123,13 @@ config WDT_BCM6345
 	  Select this to enable watchdog timer for BCM6345 SoCs.
 	  The watchdog timer is stopped when initialized.
 	  It performs full SoC reset.
+
+config WDT_BOOKE
+	bool "PowerPC Book-E watchdog driver"
+	depends on WDT && MPC85xx
+	help
+	  Watchdog driver for PowerPC Book-E chips, such as the Freescale
+	  MPC85xx SOCs and the IBM PowerPC 440.
 
 config WDT_CDNS
 	bool "Cadence watchdog timer support"
@@ -124,6 +153,13 @@ config WDT_MPC8xx
 	select HW_WATCHDOG
 	help
 	  Select this to enable mpc8xx watchdog timer
+
+config WDT_MT7620
+	bool "MediaTek MT7620 watchdog timer support"
+	depends on WDT && SOC_MT7620
+	help
+	  Select this to enable watchdog timer on MediaTek MT7620 and earlier
+	  SoC chips.
 
 config WDT_MT7621
 	bool "MediaTek MT7621 watchdog timer support"

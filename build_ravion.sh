@@ -25,4 +25,11 @@ fi
 if [ -f u-boot-dtb.img ]; then
 	sudo cp -f u-boot-dtb.img /cimc/root/colibri-imx6/boot/
 	sudo cp -f SPL /cimc/root/colibri-imx6/boot/
+	mkdir -p `pwd`/board/ravion/.root
+	genimage \
+		--outputpath=`pwd` \
+		--inputpath=`pwd` \
+		--rootpath=`pwd`/board/ravion/.root \
+		--tmppath=`pwd`/board/ravion/.tmp \
+		--config board/ravion/ravion/emmc.cfg
 fi

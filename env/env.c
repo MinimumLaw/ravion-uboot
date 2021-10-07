@@ -8,6 +8,7 @@
 #include <env.h>
 #include <env_internal.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 
@@ -334,6 +335,9 @@ int env_init(void)
 
 		debug("%s: Environment %s init done (ret=%d)\n", __func__,
 		      drv->name, ret);
+
+		if (gd->env_valid == ENV_INVALID)
+			ret = -ENOENT;
 	}
 
 	if (!prio)

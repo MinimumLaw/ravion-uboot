@@ -177,8 +177,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_BR1_PRELIM  CONFIG_SYS_QRIO_BR_PRELIM /* QRIO Base Address */
 #define CONFIG_SYS_OR1_PRELIM  CONFIG_SYS_QRIO_OR_PRELIM /* QRIO Options */
 
-#define CONFIG_MISC_INIT_F
-
 #define CONFIG_HWCONFIG
 
 /* define to use L1 as initial stack */
@@ -237,12 +235,6 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 					{0, {{I2C_MUX_PCA9547, 0x70, 1 } } }, \
 					{0, {{I2C_MUX_PCA9547, 0x70, 2 } } }, \
 				}
-#ifndef __ASSEMBLY__
-void set_sda(int state);
-void set_scl(int state);
-int get_sda(void);
-int get_scl(void);
-#endif
 
 #define CONFIG_KM_IVM_BUS		1	/* I2C1 (Mux-Port 1)*/
 

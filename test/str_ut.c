@@ -19,7 +19,7 @@ static const char str3[] = "0xbI'm sorry you're alive.";
 /* Declare a new str test */
 #define STR_TEST(_name, _flags)		UNIT_TEST(_name, _flags, str_test)
 
-static int str_test_upper(struct unit_test_state *uts)
+static int str_upper(struct unit_test_state *uts)
 {
 	char out[TEST_STR_SIZE];
 
@@ -55,7 +55,7 @@ static int str_test_upper(struct unit_test_state *uts)
 
 	return 0;
 }
-STR_TEST(str_test_upper, 0);
+STR_TEST(str_upper, 0);
 
 static int run_strtoul(struct unit_test_state *uts, const char *str, int base,
 		       ulong expect_val, int expect_endp_offset, bool upper)
@@ -107,9 +107,8 @@ STR_TEST(str_simple_strtoul, 0);
 
 int do_ut_str(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	struct unit_test *tests = ll_entry_start(struct unit_test,
-						 str_test);
-	const int n_ents = ll_entry_count(struct unit_test, str_test);
+	struct unit_test *tests = UNIT_TEST_SUITE_START(str_test);
+	const int n_ents = UNIT_TEST_SUITE_COUNT(str_test);
 
 	return cmd_ut_category("str", "str_", tests, n_ents, argc, argv);
 }

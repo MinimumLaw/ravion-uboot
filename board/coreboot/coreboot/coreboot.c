@@ -4,7 +4,8 @@
  */
 
 #include <common.h>
-#include <asm/arch/sysinfo.h>
+#include <asm/cb_sysinfo.h>
+#include <asm/global_data.h>
 #include <init.h>
 #include <smbios.h>
 

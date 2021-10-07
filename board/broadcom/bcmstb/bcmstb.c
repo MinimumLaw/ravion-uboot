@@ -10,6 +10,7 @@
 #include <init.h>
 #include <log.h>
 #include <time.h>
+#include <asm/global_data.h>
 #include <linux/types.h>
 #include <common.h>
 #include <env.h>
@@ -21,7 +22,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define BCMSTB_DATA_SECTION __attribute__((section(".data")))
+#define BCMSTB_DATA_SECTION __section(".data")
 
 struct bcmstb_boot_parameters bcmstb_boot_parameters BCMSTB_DATA_SECTION;
 
@@ -42,7 +43,7 @@ u32 get_board_rev(void)
 	return 0;
 }
 
-void reset_cpu(ulong ignored)
+void reset_cpu(void)
 {
 }
 

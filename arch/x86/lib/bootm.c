@@ -12,6 +12,7 @@
 #include <command.h>
 #include <hang.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <dm/device.h>
 #include <dm/root.h>
 #include <errno.h>
@@ -35,7 +36,7 @@ void bootm_announce_and_cleanup(void)
 	printf("\nStarting kernel ...\n\n");
 
 #ifdef CONFIG_SYS_COREBOOT
-	timestamp_add_now(TS_U_BOOT_START_KERNEL);
+	timestamp_add_now(TS_START_KERNEL);
 #endif
 	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
 #if CONFIG_IS_ENABLED(BOOTSTAGE_REPORT)

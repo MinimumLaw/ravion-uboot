@@ -19,13 +19,14 @@
 #include <menu.h>
 #include <post.h>
 #include <time.h>
+#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <u-boot/sha256.h>
 #include <bootcount.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define MAX_DELAY_STOP_STR 32
+#define MAX_DELAY_STOP_STR 64
 
 #ifndef DEBUG_BOOTKEYS
 #define DEBUG_BOOTKEYS 0
@@ -43,8 +44,8 @@ static int menukey;
 #define AUTOBOOT_STOP_STR_SHA256 ""
 #endif
 
-#ifdef CONFIG_USE_AUTOBOOT_MENUKEY
-#define AUTOBOOT_MENUKEY CONFIG_USE_AUTOBOOT_MENUKEY
+#ifdef CONFIG_AUTOBOOT_USE_MENUKEY
+#define AUTOBOOT_MENUKEY CONFIG_AUTOBOOT_MENUKEY
 #else
 #define AUTOBOOT_MENUKEY 0
 #endif
@@ -80,6 +81,7 @@ static int passwd_abort_sha256(uint64_t etime)
 	u8 sha_env[SHA256_SUM_LEN];
 	u8 *sha;
 	char *presskey;
+	char *c;
 	const char *algo_name = "sha256";
 	u_int presskey_len = 0;
 	int abort = 0;
@@ -89,6 +91,14 @@ static int passwd_abort_sha256(uint64_t etime)
 	if (sha_env_str == NULL)
 		sha_env_str = AUTOBOOT_STOP_STR_SHA256;
 
+	presskey = malloc_cache_aligned(MAX_DELAY_STOP_STR);
+	c = strstr(sha_env_str, ":");
+	if (c && (c - sha_env_str < MAX_DELAY_STOP_STR)) {
+		/* preload presskey with salt */
+		memcpy(presskey, sha_env_str, c - sha_env_str);
+		presskey_len = c - sha_env_str;
+		sha_env_str = c + 1;
+	}
 	/*
 	 * Generate the binary value from the environment hash value
 	 * so that we can compare this value with the computed hash
@@ -100,7 +110,6 @@ static int passwd_abort_sha256(uint64_t etime)
 		return 0;
 	}
 
-	presskey = malloc_cache_aligned(MAX_DELAY_STOP_STR);
 	sha = malloc_cache_aligned(SHA256_SUM_LEN);
 	size = SHA256_SUM_LEN;
 	/*
@@ -156,9 +165,9 @@ static int passwd_abort_key(uint64_t etime)
 	};
 
 	char presskey[MAX_DELAY_STOP_STR];
-	u_int presskey_len = 0;
-	u_int presskey_max = 0;
-	u_int i;
+	int presskey_len = 0;
+	int presskey_max = 0;
+	int i;
 
 #  ifdef CONFIG_AUTOBOOT_DELAY_STR
 	if (delaykey[0].str == NULL)
@@ -273,7 +282,7 @@ static int abortboot_single_key(int bootdelay)
 				abort  = 1;	/* don't auto boot	*/
 				bootdelay = 0;	/* no more delay	*/
 				key = getchar();/* consume input	*/
-				if (IS_ENABLED(CONFIG_USE_AUTOBOOT_MENUKEY))
+				if (IS_ENABLED(CONFIG_AUTOBOOT_USE_MENUKEY))
 					menukey = key;
 				break;
 			}
@@ -379,7 +388,7 @@ void autoboot_command(const char *s)
 			disable_ctrlc(prev);	/* restore Ctrl-C checking */
 	}
 
-	if (IS_ENABLED(CONFIG_USE_AUTOBOOT_MENUKEY) &&
+	if (IS_ENABLED(CONFIG_AUTOBOOT_USE_MENUKEY) &&
 	    menukey == AUTOBOOT_MENUKEY) {
 		s = env_get("menucmd");
 		if (s)

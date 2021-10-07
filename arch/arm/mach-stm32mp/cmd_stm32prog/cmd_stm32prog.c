@@ -50,13 +50,13 @@ static int do_stm32prog(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc < 3 ||  argc > 5)
 		return CMD_RET_USAGE;
 
-	if (!strcmp(argv[1], "usb"))
+	if (IS_ENABLED(CONFIG_CMD_STM32PROG_USB) && !strcmp(argv[1], "usb"))
 		link = LINK_USB;
-	else if (!strcmp(argv[1], "serial"))
+	else if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) && !strcmp(argv[1], "serial"))
 		link = LINK_SERIAL;
 
 	if (link == LINK_UNDEFINED) {
-		pr_err("not supported link=%s\n", argv[1]);
+		log_err("not supported link=%s\n", argv[1]);
 		return CMD_RET_USAGE;
 	}
 
@@ -73,15 +73,16 @@ static int do_stm32prog(struct cmd_tbl *cmdtp, int flag, int argc,
 		size = simple_strtoul(argv[4], NULL, 16);
 
 	/* check STM32IMAGE presence */
-	if (size == 0 &&
-	    !stm32prog_header_check((struct raw_header_s *)addr, &header)) {
-		size = header.image_length + BL_HEADER_SIZE;
+	if (size == 0) {
+		stm32prog_header_check((struct raw_header_s *)addr, &header);
+		if (header.type == HEADER_STM32IMAGE) {
+			size = header.image_length + BL_HEADER_SIZE;
 
-		/* uImage detected in STM32IMAGE, execute the script */
-		if (IMAGE_FORMAT_LEGACY ==
-		    genimg_get_format((void *)(addr + BL_HEADER_SIZE)))
-			return image_source_script(addr + BL_HEADER_SIZE,
-						   "script@1");
+			/* uImage detected in STM32IMAGE, execute the script */
+			if (IMAGE_FORMAT_LEGACY ==
+			    genimg_get_format((void *)(addr + BL_HEADER_SIZE)))
+				return image_source_script(addr + BL_HEADER_SIZE, "script@1");
+		}
 	}
 
 	if (IS_ENABLED(CONFIG_DM_VIDEO))
@@ -90,7 +91,7 @@ static int do_stm32prog(struct cmd_tbl *cmdtp, int flag, int argc,
 	data = (struct stm32prog_data *)malloc(sizeof(*data));
 
 	if (!data) {
-		pr_err("Alloc failed.");
+		log_err("Alloc failed.");
 		return CMD_RET_FAILURE;
 	}
 	stm32prog_data = data;

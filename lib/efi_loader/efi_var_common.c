@@ -9,6 +9,7 @@
 #include <common.h>
 #include <efi_loader.h>
 #include <efi_variable.h>
+#include <stdlib.h>
 
 enum efi_secure_mode {
 	EFI_MODE_SETUP,
@@ -22,6 +23,9 @@ struct efi_auth_var_name_type {
 	const efi_guid_t *guid;
 	const enum efi_auth_var_type type;
 };
+
+const efi_guid_t efi_guid_image_security_database =
+		EFI_IMAGE_SECURITY_DATABASE_GUID;
 
 static const struct efi_auth_var_name_type name_type[] = {
 	{u"PK", &efi_global_variable_guid, EFI_AUTH_VAR_PK},
@@ -158,6 +162,19 @@ efi_status_t EFIAPI efi_query_variable_info(
 
 	EFI_ENTRY("%x %p %p %p", attributes, maximum_variable_storage_size,
 		  remaining_variable_storage_size, maximum_variable_size);
+
+	if (!maximum_variable_storage_size ||
+	    !remaining_variable_storage_size ||
+	    !maximum_variable_size ||
+	    !(attributes & EFI_VARIABLE_BOOTSERVICE_ACCESS))
+		return EFI_EXIT(EFI_INVALID_PARAMETER);
+
+	if ((attributes & ~(u32)EFI_VARIABLE_MASK) ||
+	    (attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) ||
+	    (attributes & EFI_VARIABLE_HARDWARE_ERROR_RECORD) ||
+	    (!IS_ENABLED(CONFIG_EFI_SECURE_BOOT) &&
+	     (attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)))
+		return EFI_EXIT(EFI_UNSUPPORTED);
 
 	ret = efi_query_variable_info_int(attributes,
 					  maximum_variable_storage_size,
@@ -342,4 +359,36 @@ enum efi_auth_var_type efi_auth_var_get_type(u16 *name, const efi_guid_t *guid)
 			return name_type[i].type;
 	}
 	return EFI_AUTH_VAR_NONE;
+}
+
+/**
+ * efi_get_var() - read value of an EFI variable
+ *
+ * @name:	variable name
+ * @start:	vendor GUID
+ * @size:	size of allocated buffer
+ *
+ * Return:	buffer with variable data or NULL
+ */
+void *efi_get_var(u16 *name, const efi_guid_t *vendor, efi_uintn_t *size)
+{
+	efi_status_t ret;
+	void *buf = NULL;
+
+	*size = 0;
+	ret = efi_get_variable_int(name, vendor, NULL, size, buf, NULL);
+	if (ret == EFI_BUFFER_TOO_SMALL) {
+		buf = malloc(*size);
+		if (!buf)
+			return NULL;
+		ret = efi_get_variable_int(name, vendor, NULL, size, buf, NULL);
+	}
+
+	if (ret != EFI_SUCCESS) {
+		free(buf);
+		*size = 0;
+		return NULL;
+	}
+
+	return buf;
 }

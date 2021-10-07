@@ -16,9 +16,9 @@
 #include <command.h>
 #include <cpu_func.h>
 #include <dm.h>
-#include <hang.h>
 #include <lmb.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <dm/root.h>
 #include <env.h>
 #include <image.h>
@@ -119,6 +119,9 @@ static void announce_and_cleanup(int fake)
 	 * This may be useful for last-stage operations, like cancelling
 	 * of DMA operation or releasing device internal buffers.
 	 */
+	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL | DM_REMOVE_NON_VITAL);
+
+	/* Remove all active vital devices next */
 	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL);
 
 	cleanup_before_linux();
@@ -245,8 +248,7 @@ static void boot_prep_linux(bootm_headers_t *images)
 #ifdef CONFIG_OF_LIBFDT
 		debug("using: FDT\n");
 		if (image_setup_linux(images)) {
-			printf("FDT creation failed! hanging...");
-			hang();
+			panic("FDT creation failed!");
 		}
 #endif
 	} else if (BOOTM_ENABLE_TAGS) {
@@ -279,8 +281,7 @@ static void boot_prep_linux(bootm_headers_t *images)
 		setup_board_tags(&params);
 		setup_end_tag(gd->bd);
 	} else {
-		printf("FDT and ATAGS support not compiled in - hanging\n");
-		hang();
+		panic("FDT and ATAGS support not compiled in\n");
 	}
 
 	board_prep_linux(images);

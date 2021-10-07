@@ -87,7 +87,23 @@ static unsigned int dfu_polltimeout_sf(struct dfu_entity *dfu)
 
 static void dfu_free_entity_sf(struct dfu_entity *dfu)
 {
-	spi_flash_free(dfu->data.sf.dev);
+	/*
+	 * In the DM case it is not necessary to free the SPI device.
+	 * For the non-DM case we must ensure that the the SPI device is only
+	 * freed once.
+	 */
+	if (!CONFIG_IS_ENABLED(DM_SPI_FLASH)) {
+		struct spi_flash *dev = dfu->data.sf.dev;
+
+		if (!dev)
+			return;
+		dfu->data.sf.dev = NULL;
+		list_for_each_entry(dfu, &dfu_list, list) {
+			if (dfu->data.sf.dev == dev)
+				dfu->data.sf.dev = NULL;
+		}
+		spi_flash_free(dev);
+	}
 }
 
 static struct spi_flash *parse_dev(char *devstr)
@@ -131,7 +147,7 @@ static struct spi_flash *parse_dev(char *devstr)
 
 	dev = spi_flash_probe(bus, cs, speed, mode);
 	if (!dev) {
-		printf("Failed to create SPI flash at %d:%d:%d:%d\n",
+		printf("Failed to create SPI flash at %u:%u:%u:%u\n",
 		       bus, cs, speed, mode);
 		return NULL;
 	}

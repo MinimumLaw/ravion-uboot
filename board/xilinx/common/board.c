@@ -7,6 +7,7 @@
 #include <common.h>
 #include <env.h>
 #include <log.h>
+#include <asm/global_data.h>
 #include <asm/sections.h>
 #include <dm/uclass.h>
 #include <i2c.h>
@@ -324,25 +325,30 @@ void *board_fdt_blob_setup(void)
 {
 	void *fdt_blob;
 
-#if !defined(CONFIG_VERSAL_NO_DDR) && !defined(CONFIG_ZYNQMP_NO_DDR)
-	fdt_blob = (void *)CONFIG_XILINX_OF_BOARD_DTB_ADDR;
+	if (!IS_ENABLED(CONFIG_SPL_BUILD) &&
+	    !IS_ENABLED(CONFIG_VERSAL_NO_DDR) &&
+	    !IS_ENABLED(CONFIG_ZYNQMP_NO_DDR)) {
+		fdt_blob = (void *)CONFIG_XILINX_OF_BOARD_DTB_ADDR;
 
-	if (fdt_magic(fdt_blob) == FDT_MAGIC)
-		return fdt_blob;
+		if (fdt_magic(fdt_blob) == FDT_MAGIC)
+			return fdt_blob;
 
-	debug("DTB is not passed via %p\n", fdt_blob);
-#endif
+		debug("DTB is not passed via %p\n", fdt_blob);
+	}
 
-#ifdef CONFIG_SPL_BUILD
-	/* FDT is at end of BSS unless it is in a different memory region */
-	if (IS_ENABLED(CONFIG_SPL_SEPARATE_BSS))
-		fdt_blob = (ulong *)&_image_binary_end;
-	else
-		fdt_blob = (ulong *)&__bss_end;
-#else
-	/* FDT is at end of image */
-	fdt_blob = (ulong *)&_end;
-#endif
+	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		/*
+		 * FDT is at end of BSS unless it is in a different memory
+		 * region
+		 */
+		if (IS_ENABLED(CONFIG_SPL_SEPARATE_BSS))
+			fdt_blob = (ulong *)&_image_binary_end;
+		else
+			fdt_blob = (ulong *)&__bss_end;
+	} else {
+		/* FDT is at end of image */
+		fdt_blob = (ulong *)&_end;
+	}
 
 	if (fdt_magic(fdt_blob) == FDT_MAGIC)
 		return fdt_blob;
@@ -372,14 +378,12 @@ int board_late_init_xilinx(void)
 	int i, id, macid = 0;
 	struct xilinx_board_description *desc;
 	phys_size_t bootm_size = gd->ram_size;
-	struct bd_info *bd = gd->bd;
 
-	if (!CONFIG_IS_ENABLED(MICROBLAZE) && bd->bi_dram[0].start) {
+	if (!CONFIG_IS_ENABLED(MICROBLAZE)) {
 		ulong scriptaddr;
 
 		scriptaddr = env_get_hex("scriptaddr", 0);
-		ret |= env_set_hex("scriptaddr",
-				   bd->bi_dram[0].start + scriptaddr);
+		ret |= env_set_hex("scriptaddr", gd->ram_base + scriptaddr);
 	}
 
 	if (CONFIG_IS_ENABLED(ARCH_ZYNQ) || CONFIG_IS_ENABLED(MICROBLAZE))

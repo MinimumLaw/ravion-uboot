@@ -125,8 +125,8 @@ void k3_mmc_restart_clock(void)
  * but the .bss is cleared between writing and reading this variable, so move
  * it to the .data section.
  */
-u32 bootindex __attribute__((section(".data")));
-static struct rom_extended_boot_data bootdata __section(.data);
+u32 bootindex __section(".data");
+static struct rom_extended_boot_data bootdata __section(".data");
 
 static void store_boot_info_from_rom(void)
 {
@@ -167,7 +167,7 @@ void board_init_f(ulong dummy)
 	 * firmware (SYSFW) image for various purposes and SYSFW depends on us
 	 * to initialize its pin settings.
 	 */
-	ret = uclass_find_device_by_seq(UCLASS_SERIAL, 0, true, &dev);
+	ret = uclass_find_device_by_seq(UCLASS_SERIAL, 0, &dev);
 	if (!ret)
 		pinctrl_select_state(dev, "default");
 
@@ -206,7 +206,7 @@ void board_init_f(ulong dummy)
 		do_board_detect();
 
 #if defined(CONFIG_CPU_V7R) && defined(CONFIG_K3_AVS0)
-	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_GET_DRIVER(k3_avs),
+	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(k3_avs),
 					  &dev);
 	if (ret)
 		printf("AVS init failed: %d\n", ret);

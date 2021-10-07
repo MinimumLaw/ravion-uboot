@@ -3559,6 +3559,8 @@ int nand_erase_nand(struct mtd_info *mtd, struct erase_info *instr,
 			pr_warn("%s: attempt to erase a bad block at page 0x%08x\n",
 				    __func__, page);
 			instr->state = MTD_ERASE_FAILED;
+			instr->fail_addr =
+				((loff_t)page << chip->page_shift);
 			goto erase_exit;
 		}
 
@@ -4574,6 +4576,7 @@ ident_done:
 EXPORT_SYMBOL(nand_get_flash_type);
 
 #if CONFIG_IS_ENABLED(OF_CONTROL)
+#include <asm/global_data.h>
 DECLARE_GLOBAL_DATA_PTR;
 
 static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, int node)

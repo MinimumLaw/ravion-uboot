@@ -10,6 +10,7 @@
 #include <log.h>
 #include <ram.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/armv7m.h>
 
@@ -59,8 +60,8 @@ int spl_dram_init(void)
 
 void spl_board_init(void)
 {
-	spl_dram_init();
 	preloader_console_init();
+	spl_dram_init();
 	arch_cpu_init(); /* to configure mpu for sdram rw permissions */
 }
 

@@ -3,6 +3,7 @@
  * Copyright 2019 Broadcom.
  */
 #include <common.h>
+#include <cpu_func.h>
 #include <dm.h>
 #include <regmap.h>
 #include <syscon.h>
@@ -43,10 +44,10 @@ static int gic_v3_its_get_gic_addr(struct gic_v3_its_priv *priv)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_IRQ,
-					  DM_GET_DRIVER(arm_gic_v3_its), &dev);
+					  DM_DRIVER_GET(arm_gic_v3_its), &dev);
 	if (ret) {
 		pr_err("%s: failed to get %s irq device\n", __func__,
-		       DM_GET_DRIVER(arm_gic_v3_its)->name);
+		       DM_DRIVER_GET(arm_gic_v3_its)->name);
 		return ret;
 	}
 
@@ -74,17 +75,17 @@ static int gic_v3_its_get_gic_lpi_addr(struct gic_v3_its_priv *priv)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_SYSCON,
-					  DM_GET_DRIVER(gic_lpi_syscon), &dev);
+					  DM_DRIVER_GET(gic_lpi_syscon), &dev);
 	if (ret) {
 		pr_err("%s: failed to get %s syscon device\n", __func__,
-		       DM_GET_DRIVER(gic_lpi_syscon)->name);
+		       DM_DRIVER_GET(gic_lpi_syscon)->name);
 		return ret;
 	}
 
 	regmap = syscon_get_regmap(dev);
 	if (!regmap) {
 		pr_err("%s: failed to regmap for %s syscon device\n", __func__,
-		       DM_GET_DRIVER(gic_lpi_syscon)->name);
+		       DM_DRIVER_GET(gic_lpi_syscon)->name);
 		return -ENODEV;
 	}
 	priv->lpi_base = regmap->ranges[0].start;
@@ -108,6 +109,8 @@ int gic_lpi_tables_init(void)
 	int i;
 	u64 redist_lpi_base;
 	u64 pend_base;
+	ulong pend_tab_total_sz;
+	void *pend_tab_va;
 
 	if (gic_v3_its_get_gic_addr(&priv))
 		return -EINVAL;
@@ -161,6 +164,12 @@ int gic_lpi_tables_init(void)
 	}
 
 	redist_lpi_base = priv.lpi_base + LPI_PROPBASE_SZ;
+	pend_tab_total_sz = priv.num_redist * LPI_PENDBASE_SZ;
+	pend_tab_va = map_physmem(redist_lpi_base, pend_tab_total_sz,
+				  MAP_NOCACHE);
+	memset(pend_tab_va, 0, pend_tab_total_sz);
+	flush_cache((ulong)pend_tab_va, pend_tab_total_sz);
+	unmap_physmem(pend_tab_va, MAP_NOCACHE);
 
 	pend_base = priv.gicr_base + GICR_PENDBASER;
 	for (i = 0; i < priv.num_redist; i++) {
@@ -168,7 +177,8 @@ int gic_lpi_tables_init(void)
 
 		val = ((redist_lpi_base + (i * LPI_PENDBASE_SZ)) |
 			GICR_PENDBASER_INNERSHAREABLE |
-			GICR_PENDBASER_RAWAWB);
+			GICR_PENDBASER_RAWAWB |
+			GICR_PENDBASER_PTZ);
 
 		writeq(val, (uintptr_t)(pend_base + offset));
 		tmp = readq((uintptr_t)(pend_base + offset));

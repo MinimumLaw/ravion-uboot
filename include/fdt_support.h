@@ -185,6 +185,16 @@ int fdt_find_or_add_subnode(void *fdt, int parentoffset, const char *name);
  */
 int ft_board_setup(void *blob, struct bd_info *bd);
 
+/**
+ * board_fdt_chosen_bootargs() - Arbitrarily amend fdt kernel command line
+ *
+ * This is used for late modification of kernel command line arguments just
+ * before they are added into the /chosen node in flat device tree.
+ *
+ * @return: pointer to kernel command line arguments in memory
+ */
+char *board_fdt_chosen_bootargs(void);
+
 /*
  * The keystone2 SOC requires all 32 bit aliased addresses to be converted
  * to their 36 physical format. This has to happen after all fdt nodes
@@ -260,6 +270,20 @@ u64 fdt_translate_address(const void *blob, int node_offset,
 u64 fdt_translate_dma_address(const void *blob, int node_offset,
 			      const __be32 *in_addr);
 
+/**
+ * Get DMA ranges for a specifc node, this is useful to perform bus->cpu and
+ * cpu->bus address translations
+ *
+ * @param blob		Pointer to device tree blob
+ * @param node_offset	Node DT offset
+ * @param cpu		Pointer to variable storing the range's cpu address
+ * @param bus		Pointer to variable storing the range's bus address
+ * @param size		Pointer to variable storing the range's size
+ * @return translated DMA address or OF_BAD_ADDR on error
+ */
+int fdt_get_dma_range(const void *blob, int node_offset, phys_addr_t *cpu,
+		      dma_addr_t *bus, u64 *size);
+
 int fdt_node_offset_by_compat_reg(void *blob, const char *compat,
 					phys_addr_t compat_off);
 int fdt_alloc_phandle(void *blob);
@@ -327,6 +351,8 @@ int fdt_setup_simplefb_node(void *fdt, int node, u64 base_address, u32 width,
 			    u32 height, u32 stride, const char *format);
 
 int fdt_overlay_apply_verbose(void *fdt, void *fdto);
+
+int fdt_valid(struct fdt_header **blobp);
 
 /**
  * fdt_get_cells_len() - Get the length of a type of cell in top-level nodes

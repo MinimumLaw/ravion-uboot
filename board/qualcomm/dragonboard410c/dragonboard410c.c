@@ -13,6 +13,7 @@
 #include <net.h>
 #include <usb.h>
 #include <asm/cache.h>
+#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <fdt_support.h>
 #include <asm/arch/dram.h>
@@ -202,7 +203,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	return 0;
 }
 
-void reset_cpu(ulong addr)
+void reset_cpu(void)
 {
 	psci_system_reset();
 }

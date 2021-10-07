@@ -30,6 +30,7 @@
 #include <twl4030.h>
 #include <i2c.h>
 #include <video_fb.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/setup.h>
 #include <asm/bitops.h>
@@ -39,8 +40,23 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mmc_host_def.h>
 
-#include "rx51.h"
 #include "tag_omap.h"
+
+/* Needed for ROM SMC call */
+struct emu_hal_params_rx51 {
+	u32 num_params;
+	u32 param1;
+	u32 param2;
+	u32 param3;
+	u32 param4;
+};
+
+#define ONENAND_GPMC_CONFIG1_RX51	0xfb001202
+#define ONENAND_GPMC_CONFIG2_RX51	0x00111100
+#define ONENAND_GPMC_CONFIG3_RX51	0x00020200
+#define ONENAND_GPMC_CONFIG4_RX51	0x11001102
+#define ONENAND_GPMC_CONFIG5_RX51	0x03101616
+#define ONENAND_GPMC_CONFIG6_RX51	0x90060000
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -415,6 +431,8 @@ int misc_init_r(void)
 
 	/* initialize twl4030 power managment */
 	twl4030_power_init();
+	twl4030_power_mmc_init(0);
+	twl4030_power_mmc_init(1);
 
 	/* set VSIM to 1.8V */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VSIM_DEDICATED,
@@ -463,17 +481,6 @@ int misc_init_r(void)
 		omap3_update_aux_cr_secure_rx51(1 << 6, 0);
 
 	return 0;
-}
-
-/*
- * Routine: set_muxconf_regs
- * Description: Setting up the configuration Mux registers specific to the
- *		hardware. Many pins need to be moved from protect to primary
- *		mode.
- */
-void set_muxconf_regs(void)
-{
-	MUX_RX51();
 }
 
 static unsigned long int twl_wd_time; /* last time of watchdog reset */
@@ -686,30 +693,31 @@ int rx51_kp_getc(struct stdio_dev *sdev)
 	return keybuf[keybuf_head++];
 }
 
-/*
- * Routine: board_mmc_init
- * Description: Initialize mmc devices.
- */
-int board_mmc_init(struct bd_info *bis)
-{
-	omap_mmc_init(0, 0, 0, -1, -1);
-	omap_mmc_init(1, 0, 0, -1, -1);
-	return 0;
-}
+static const struct mmc_config rx51_mmc_cfg = {
+	.host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS,
+	.f_min = 400000,
+	.f_max = 52000000,
+	.b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT,
+	.voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195,
+};
 
-void board_mmc_power_init(void)
-{
-	twl4030_power_mmc_init(0);
-	twl4030_power_mmc_init(1);
-}
+static const struct omap_hsmmc_plat rx51_mmc[] = {
+	{ rx51_mmc_cfg, (struct hsmmc *)OMAP_HSMMC1_BASE },
+	{ rx51_mmc_cfg, (struct hsmmc *)OMAP_HSMMC2_BASE },
+};
 
-static const struct omap_i2c_platdata rx51_i2c[] = {
+U_BOOT_DRVINFOS(rx51_mmc) = {
+	{ "omap_hsmmc", &rx51_mmc[0] },
+	{ "omap_hsmmc", &rx51_mmc[1] },
+};
+
+static const struct omap_i2c_plat rx51_i2c[] = {
 	{ I2C_BASE1, 100000, OMAP_I2C_REV_V1 },
 	{ I2C_BASE2, 100000, OMAP_I2C_REV_V1 },
 	{ I2C_BASE3, 100000, OMAP_I2C_REV_V1 },
 };
 
-U_BOOT_DEVICES(rx51_i2c) = {
+U_BOOT_DRVINFOS(rx51_i2c) = {
 	{ "i2c_omap", &rx51_i2c[0] },
 	{ "i2c_omap", &rx51_i2c[1] },
 	{ "i2c_omap", &rx51_i2c[2] },

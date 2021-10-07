@@ -17,6 +17,7 @@
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>
 #include <acpi/acpi_table.h>
+#include <asm/global_data.h>
 #include <dm/acpi.h>
 #include <dm/test.h>
 #include <test/ut.h>
@@ -25,12 +26,12 @@
 #define BUF_SIZE		4096
 
 /**
- * struct testacpi_platdata - Platform data for the test ACPI device
+ * struct testacpi_plat - Platform data for the test ACPI device
  *
  * @no_name: true to emit an empty ACPI name from testacpi_get_name()
  * @return_error: true to return an error instead of a name
  */
-struct testacpi_platdata {
+struct testacpi_plat {
 	bool return_error;
 	bool no_name;
 };
@@ -53,7 +54,7 @@ static int testacpi_write_tables(const struct udevice *dev,
 
 static int testacpi_get_name(const struct udevice *dev, char *out_name)
 {
-	struct testacpi_platdata *plat = dev_get_platdata(dev);
+	struct testacpi_plat *plat = dev_get_plat(dev);
 
 	if (plat->return_error)
 		return -EINVAL;
@@ -110,7 +111,7 @@ U_BOOT_DRIVER(testacpi_drv) = {
 	.of_match	= testacpi_ids,
 	.id	= UCLASS_TEST_ACPI,
 	.bind	= dm_scan_fdt_dev,
-	.platdata_auto_alloc_size	= sizeof(struct testacpi_platdata),
+	.plat_auto	= sizeof(struct testacpi_plat),
 	ACPI_OPS_PTR(&testacpi_ops)
 };
 
@@ -123,7 +124,7 @@ UCLASS_DRIVER(testacpi) = {
 static int dm_test_acpi_get_name(struct unit_test_state *uts)
 {
 	char name[ACPI_NAME_MAX];
-	struct udevice *dev, *dev2, *i2c, *spi, *serial, *timer, *sound;
+	struct udevice *dev, *dev2, *i2c, *spi, *timer, *sound;
 	struct udevice *pci, *root;
 
 	/* Test getting the name from the driver */
@@ -145,10 +146,6 @@ static int dm_test_acpi_get_name(struct unit_test_state *uts)
 	ut_assertok(uclass_first_device(UCLASS_SPI, &spi));
 	ut_assertok(acpi_get_name(spi, name));
 	ut_asserteq_str("SPI0", name);
-
-	/* The uart has no sequence number, so this should fail */
-	ut_assertok(uclass_first_device(UCLASS_SERIAL, &serial));
-	ut_asserteq(-ENXIO, acpi_get_name(serial, name));
 
 	/* ACPI doesn't know about the timer */
 	ut_assertok(uclass_first_device(UCLASS_TIMER, &timer));
@@ -363,24 +360,24 @@ static int dm_test_acpi_cmd_list(struct unit_test_state *uts)
 	run_command("acpi list", 0);
 	addr = (ulong)map_to_sysmem(buf);
 	ut_assert_nextline("ACPI tables start at %lx", addr);
-	ut_assert_nextline("RSDP %08lx %06lx (v02 U-BOOT)", addr,
+	ut_assert_nextline("RSDP %08lx %06zx (v02 U-BOOT)", addr,
 			   sizeof(struct acpi_rsdp));
 	addr = ALIGN(addr + sizeof(struct acpi_rsdp), 16);
-	ut_assert_nextline("RSDT %08lx %06lx (v01 U-BOOT U-BOOTBL %x INTL 0)",
+	ut_assert_nextline("RSDT %08lx %06zx (v01 U-BOOT U-BOOTBL %x INTL 0)",
 			   addr, sizeof(struct acpi_table_header) +
 			   3 * sizeof(u32), U_BOOT_BUILD_DATE);
 	addr = ALIGN(addr + sizeof(struct acpi_rsdt), 16);
-	ut_assert_nextline("XSDT %08lx %06lx (v01 U-BOOT U-BOOTBL %x INTL 0)",
+	ut_assert_nextline("XSDT %08lx %06zx (v01 U-BOOT U-BOOTBL %x INTL 0)",
 			   addr, sizeof(struct acpi_table_header) +
 			   3 * sizeof(u64), U_BOOT_BUILD_DATE);
 	addr = ALIGN(addr + sizeof(struct acpi_xsdt), 64);
-	ut_assert_nextline("DMAR %08lx %06lx (v01 U-BOOT U-BOOTBL %x INTL 0)",
+	ut_assert_nextline("DMAR %08lx %06zx (v01 U-BOOT U-BOOTBL %x INTL 0)",
 			   addr, sizeof(struct acpi_dmar), U_BOOT_BUILD_DATE);
 	addr = ALIGN(addr + sizeof(struct acpi_dmar), 16);
-	ut_assert_nextline("DMAR %08lx %06lx (v01 U-BOOT U-BOOTBL %x INTL 0)",
+	ut_assert_nextline("DMAR %08lx %06zx (v01 U-BOOT U-BOOTBL %x INTL 0)",
 			   addr, sizeof(struct acpi_dmar), U_BOOT_BUILD_DATE);
 	addr = ALIGN(addr + sizeof(struct acpi_dmar), 16);
-	ut_assert_nextline("DMAR %08lx %06lx (v01 U-BOOT U-BOOTBL %x INTL 0)",
+	ut_assert_nextline("DMAR %08lx %06zx (v01 U-BOOT U-BOOTBL %x INTL 0)",
 			   addr, sizeof(struct acpi_dmar), U_BOOT_BUILD_DATE);
 	ut_assert_console_end();
 
@@ -422,7 +419,7 @@ DM_TEST(dm_test_acpi_cmd_dump, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 /* Test acpi_device_path() */
 static int dm_test_acpi_device_path(struct unit_test_state *uts)
 {
-	struct testacpi_platdata *plat;
+	struct testacpi_plat *plat;
 	char buf[ACPI_PATH_MAX];
 	struct udevice *dev, *child;
 
@@ -442,13 +439,13 @@ static int dm_test_acpi_device_path(struct unit_test_state *uts)
 			buf);
 
 	/* Test handling of a device which doesn't produce a name */
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 	plat->no_name = true;
 	ut_assertok(acpi_device_path(child, buf, sizeof(buf)));
 	ut_asserteq_str("\\_SB." ACPI_TEST_CHILD_NAME, buf);
 
 	/* Test handling of a device which returns an error */
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 	plat->return_error = true;
 	ut_asserteq(-EINVAL, acpi_device_path(child, buf, sizeof(buf)));
 

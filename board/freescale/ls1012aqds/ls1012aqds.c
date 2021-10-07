@@ -8,6 +8,7 @@
 #include <fdt_support.h>
 #include <asm/cache.h>
 #include <init.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
@@ -31,6 +32,7 @@
 #include "../common/qixis.h"
 #include "ls1012aqds_qixis.h"
 #include "ls1012aqds_pfe.h"
+#include <net/pfe_eth/pfe/pfe_hw.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -111,7 +113,7 @@ int misc_init_r(void)
 	u8 mux_sdhc_cd = 0x80;
 	int bus_num = 0;
 
-#ifdef CONFIG_DM_I2C
+#if CONFIG_IS_ENABLED(DM_I2C)
 	struct udevice *dev;
 	int ret;
 
@@ -161,6 +163,13 @@ int board_init(void)
 #endif
 	return 0;
 }
+
+#ifdef CONFIG_FSL_PFE
+void board_quiesce_devices(void)
+{
+	pfe_command_stop(0, NULL);
+}
+#endif
 
 int esdhc_status_fixup(void *blob, const char *compat)
 {

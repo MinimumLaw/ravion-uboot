@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2017, 2020 NXP
+ * Copyright 2017, 2020-2021 NXP
  */
 
 #ifndef __LS1088A_QDS_H
@@ -26,7 +26,7 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_DDR_CLK_FREQ		100000000
 #else
 #define CONFIG_QIXIS_I2C_ACCESS
-#ifndef CONFIG_DM_I2C
+#if !CONFIG_IS_ENABLED(DM_I2C)
 #define CONFIG_SYS_I2C_EARLY_INIT
 #endif
 #define CONFIG_SYS_CLK_FREQ		get_board_sys_clk()
@@ -326,12 +326,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_VOL_MONITOR_LTC3882_SET
 #define CONFIG_VOL_MONITOR_LTC3882_READ
 
-/* PM Bus commands code for LTC3882*/
-#define PMBUS_CMD_PAGE                  0x0
-#define PMBUS_CMD_READ_VOUT             0x8B
-#define PMBUS_CMD_PAGE_PLUS_WRITE       0x05
-#define PMBUS_CMD_VOUT_COMMAND          0x21
-
 #define PWM_CHANNEL0                    0x0
 
 /*
@@ -367,14 +361,21 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_FSL_MEMAC
 
 /*  MMC  */
-#define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
 #define CONFIG_ESDHC_DETECT_QUIRK ((readb(QIXIS_BASE + QIXIS_STAT_PRES1) & \
 	QIXIS_SDID_MASK) != QIXIS_ESDHC_NO_ADAPTER)
+
+#define COMMON_ENV \
+	"kernelheader_addr_r=0x80200000\0"	\
+	"fdtheader_addr_r=0x80100000\0"		\
+	"kernel_addr_r=0x81000000\0"		\
+	"fdt_addr_r=0x90000000\0"		\
+	"load_addr=0xa0000000\0"
 
 /* Initial environment variables */
 #ifdef CONFIG_NXP_ESBC
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	COMMON_ENV				\
 	"hwconfig=fsl_ddr:bank_intlv=auto\0"	\
 	"loadaddr=0x90100000\0"			\
 	"kernel_addr=0x100000\0"		\
@@ -406,6 +407,7 @@ unsigned long get_board_ddr_clk(void);
 
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	COMMON_ENV				\
 	"hwconfig=fsl_ddr:bank_intlv=auto\0"	\
 	"loadaddr=0x90100000\0"			\
 	"kernel_addr=0x100000\0"		\
@@ -467,6 +469,7 @@ unsigned long get_board_ddr_clk(void);
 #if defined(CONFIG_QSPI_BOOT)
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	COMMON_ENV				\
 	"hwconfig=fsl_ddr:bank_intlv=auto\0"	\
 	"loadaddr=0x90100000\0"			\
 	"kernel_addr=0x100000\0"		\
@@ -484,6 +487,7 @@ unsigned long get_board_ddr_clk(void);
 #elif defined(CONFIG_SD_BOOT)
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS               \
+	COMMON_ENV				\
 	"hwconfig=fsl_ddr:bank_intlv=auto\0"    \
 	"loadaddr=0x90100000\0"                 \
 	"kernel_addr=0x800\0"                \
@@ -501,6 +505,7 @@ unsigned long get_board_ddr_clk(void);
 #else	/* NOR BOOT */
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS		\
+	COMMON_ENV				\
 	"hwconfig=fsl_ddr:bank_intlv=auto\0"	\
 	"loadaddr=0x90100000\0"			\
 	"kernel_addr=0x100000\0"		\

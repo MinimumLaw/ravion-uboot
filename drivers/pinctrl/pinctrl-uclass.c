@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <malloc.h>
+#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <linux/libfdt.h>
 #include <linux/err.h>
@@ -112,7 +113,7 @@ static int pinconfig_post_bind(struct udevice *dev)
 	ofnode node;
 	int ret;
 
-	if (!dev_of_valid(dev))
+	if (!dev_has_ofnode(dev))
 		return 0;
 
 	dev_for_each_subnode(node, dev) {
@@ -234,8 +235,9 @@ int pinctrl_gpio_request(struct udevice *dev, unsigned offset)
 		return ret;
 
 	ops = pinctrl_get_ops(pctldev);
-	if (!ops || !ops->gpio_request_enable)
-		return -ENOTSUPP;
+	assert(ops);
+	if (!ops->gpio_request_enable)
+		return -ENOSYS;
 
 	return ops->gpio_request_enable(pctldev, pin_selector);
 }
@@ -260,8 +262,9 @@ int pinctrl_gpio_free(struct udevice *dev, unsigned offset)
 		return ret;
 
 	ops = pinctrl_get_ops(pctldev);
-	if (!ops || !ops->gpio_disable_free)
-		return -ENOTSUPP;
+	assert(ops);
+	if (!ops->gpio_disable_free)
+		return -ENOSYS;
 
 	return ops->gpio_disable_free(pctldev, pin_selector);
 }
@@ -305,7 +308,7 @@ int pinctrl_select_state(struct udevice *dev, const char *statename)
 	 * Some device which is logical like mmc.blk, do not have
 	 * a valid ofnode.
 	 */
-	if (!ofnode_valid(dev->node))
+	if (!dev_has_ofnode(dev))
 		return 0;
 	/*
 	 * Try full-implemented pinctrl first.
@@ -416,7 +419,9 @@ static int __maybe_unused pinctrl_post_bind(struct udevice *dev)
 
 UCLASS_DRIVER(pinctrl) = {
 	.id = UCLASS_PINCTRL,
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.post_bind = pinctrl_post_bind,
+#endif
 	.flags = DM_UC_FLAG_SEQ_ALIAS,
 	.name = "pinctrl",
 };

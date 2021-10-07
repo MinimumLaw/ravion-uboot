@@ -13,6 +13,7 @@
 #include <dm/lists.h>
 #include <dm/device-internal.h>
 #include <linux/delay.h>
+#include <asm/global_data.h>
 #include "stm32prog.h"
 
 /* - configuration part -----------------------------*/
@@ -159,8 +160,8 @@ static int stm32prog_read(struct stm32prog_data *data, u8 phase, u32 offset,
 		dfu_entity->offset = offset;
 	data->offset = offset;
 	data->read_phase = phase;
-	pr_debug("\nSTM32 download read %s offset=0x%x\n",
-		 dfu_entity->name, offset);
+	log_debug("\nSTM32 download read %s offset=0x%x\n",
+		  dfu_entity->name, offset);
 	ret = dfu_read(dfu_entity, buffer, buffer_size,
 		       dfu_entity->i_blk_seq_num);
 	if (ret < 0) {
@@ -186,35 +187,18 @@ static int stm32prog_read(struct stm32prog_data *data, u8 phase, u32 offset,
 int stm32prog_serial_init(struct stm32prog_data *data, int link_dev)
 {
 	struct udevice *dev = NULL;
-	int node;
-	char alias[10];
-	const char *path;
 	struct dm_serial_ops *ops;
 	/* no parity, 8 bits, 1 stop */
 	u32 serial_config = SERIAL_DEFAULT_CONFIG;
 
 	down_serial_dev = NULL;
 
-	sprintf(alias, "serial%d", link_dev);
-	path = fdt_get_alias(gd->fdt_blob, alias);
-	if (!path) {
-		pr_err("%s alias not found", alias);
+	if (uclass_get_device_by_seq(UCLASS_SERIAL, link_dev, &dev)) {
+		log_err("serial %d device not found\n", link_dev);
 		return -ENODEV;
 	}
-	node = fdt_path_offset(gd->fdt_blob, path);
-	if (!uclass_get_device_by_of_offset(UCLASS_SERIAL, node,
-					    &dev)) {
-		down_serial_dev = dev;
-	} else if (node > 0 &&
-		   !lists_bind_fdt(gd->dm_root, offset_to_ofnode(node),
-				   &dev, false)) {
-		if (!device_probe(dev))
-			down_serial_dev = dev;
-	}
-	if (!down_serial_dev) {
-		pr_err("%s = %s device not found", alias, path);
-		return -ENODEV;
-	}
+
+	down_serial_dev = dev;
 
 	/* force silent console on uart only when used */
 	if (gd->cur_serial_dev == down_serial_dev)
@@ -225,11 +209,11 @@ int stm32prog_serial_init(struct stm32prog_data *data, int link_dev)
 	ops = serial_get_ops(down_serial_dev);
 
 	if (!ops) {
-		pr_err("%s = %s missing ops", alias, path);
+		log_err("serial %d = %s missing ops\n", link_dev, dev->name);
 		return -ENODEV;
 	}
 	if (!ops->setconfig) {
-		pr_err("%s = %s missing setconfig", alias, path);
+		log_err("serial %d = %s missing setconfig\n", link_dev, dev->name);
 		return -ENODEV;
 	}
 
@@ -325,11 +309,10 @@ static u8 stm32prog_header(struct stm32prog_data *data)
 	/* force cleanup to avoid issue with previous read */
 	dfu_transaction_cleanup(dfu_entity);
 
-	ret = stm32prog_header_check(data->header_data,
-				     &data->header);
+	stm32prog_header_check(data->header_data, &data->header);
 
-	/* no header : max size is partition size */
-	if (ret) {
+	/* no stm32 image header : max size is partition size */
+	if (data->header.type != HEADER_STM32IMAGE) {
 		dfu_entity->get_medium_size(dfu_entity, &size);
 		data->header.image_length = size;
 	}
@@ -397,16 +380,15 @@ static u8 stm32prog_start(struct stm32prog_data *data, u32 address)
 		if (!dfu_entity)
 			return -ENODEV;
 
-		if (data->dfu_seq) {
-			ret = dfu_flush(dfu_entity, NULL, 0, data->dfu_seq);
-			data->dfu_seq = 0;
-			if (ret) {
-				stm32prog_err("DFU flush failed [%d]", ret);
-				return ret;
-			}
+		ret = dfu_flush(dfu_entity, NULL, 0, data->dfu_seq);
+		if (ret) {
+			stm32prog_err("DFU flush failed [%d]", ret);
+			return ret;
 		}
+		data->dfu_seq = 0;
+
 		printf("\n  received length = 0x%x\n", data->cursor);
-		if (data->header.present) {
+		if (data->header.type == HEADER_STM32IMAGE) {
 			if (data->cursor !=
 			    (data->header.image_length + BL_HEADER_SIZE)) {
 				stm32prog_err("transmission interrupted (length=0x%x expected=0x%x)",
@@ -806,7 +788,7 @@ static void download_command(struct stm32prog_data *data)
 		}
 	}
 
-	if (image_header->present) {
+	if (data->header.type == HEADER_STM32IMAGE) {
 		if (data->cursor <= BL_HEADER_SIZE)
 			goto end;
 		/* compute checksum on payload */
@@ -815,7 +797,7 @@ static void download_command(struct stm32prog_data *data)
 
 		if (data->cursor >
 		    image_header->image_length + BL_HEADER_SIZE) {
-			pr_err("expected size exceeded\n");
+			log_err("expected size exceeded\n");
 			result = ABORT_BYTE;
 			goto end;
 		}
@@ -859,8 +841,8 @@ static void read_partition_command(struct stm32prog_data *data)
 
 	rcv_data = stm32prog_serial_getc();
 	if (rcv_data != tmp_xor) {
-		pr_debug("1st checksum received = %x, computed %x\n",
-			 rcv_data, tmp_xor);
+		log_debug("1st checksum received = %x, computed %x\n",
+			  rcv_data, tmp_xor);
 		goto error;
 	}
 	stm32prog_serial_putc(ACK_BYTE);
@@ -872,12 +854,12 @@ static void read_partition_command(struct stm32prog_data *data)
 
 	rcv_data = stm32prog_serial_getc();
 	if ((rcv_data ^ tmp_xor) != 0xFF) {
-		pr_debug("2nd checksum received = %x, computed %x\n",
-			 rcv_data, tmp_xor);
+		log_debug("2nd checksum received = %x, computed %x\n",
+			  rcv_data, tmp_xor);
 		goto error;
 	}
 
-	pr_debug("%s : %x\n", __func__, part_id);
+	log_debug("%s : %x\n", __func__, part_id);
 	rcv_data = 0;
 	switch (part_id) {
 	case PHASE_OTP:

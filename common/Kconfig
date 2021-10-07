@@ -17,6 +17,14 @@ config CONSOLE_RECORD
 	  To enable console recording, call console_record_reset_enable()
 	  from your code.
 
+config CONSOLE_RECORD_INIT_F
+	bool "Enable console recording during pre-relocation init"
+	depends on CONSOLE_RECORD && SYS_MALLOC_F
+	default y
+	help
+	  This option enables console recording during pre-relocation init.
+	  CONFIG_SYS_MALLOC_F must be enabled to use this feature.
+
 config CONSOLE_RECORD_OUT_SIZE
 	hex "Output buffer size"
 	depends on CONSOLE_RECORD
@@ -519,6 +527,12 @@ config LAST_STAGE_INIT
 	  U-Boot calls last_stage_init() before the command-line interpreter is
 	  started.
 
+config MISC_INIT_F
+	bool "Execute pre-relocation misc init"
+	help
+	  Enabling this option calls the 'misc_init_f' function in the init
+	  sequence just before DRAM is inited.
+
 config MISC_INIT_R
 	bool "Execute Misc Init"
 	default y if ARCH_KEYSTONE || ARCH_SUNXI || MPC85xx
@@ -553,6 +567,7 @@ config HASH
 config AVB_VERIFY
 	bool "Build Android Verified Boot operations"
 	depends on LIBAVB
+	depends on MMC
 	depends on PARTITION_UUIDS
 	help
 	  This option enables compilation of bootloader-dependent operations,
@@ -579,6 +594,14 @@ config AVB_BUF_SIZE
 
 endif # AVB_VERIFY
 
+config SCP03
+	bool "Build SCP03 - Secure Channel Protocol O3 - controls"
+	depends on OPTEE || SANDBOX
+	depends on TEE
+	help
+	  This option allows U-Boot to enable and or provision SCP03 on an OPTEE
+	  controlled Secured Element.
+
 config SPL_HASH
 	bool # "Support hashing API (SHA1, SHA256, etc.)"
 	help
@@ -594,6 +617,23 @@ config TPL_HASH
 	  algorithms (such as SHA1, MD5, CRC32). The API is defined in hash.h
 	  and the algorithms it supports are defined in common/hash.c. See
 	  also CMD_HASH for command-line access.
+
+config STACKPROTECTOR
+	bool "Stack Protector buffer overflow detection"
+	default n
+	help
+	  Enable stack smash detection through compiler's stack-protector
+	  canary logic
+
+config SPL_STACKPROTECTOR
+	bool "Stack Protector buffer overflow detection for SPL"
+	depends on STACKPROTECTOR && SPL
+	default n
+
+config TPL_STACKPROTECTOR
+	bool "Stack Protector buffer overflow detection for TPL"
+	depends on STACKPROTECTOR && TPL
+	default n
 
 endmenu
 
@@ -688,6 +728,16 @@ config BLOBLIST_ADDR
 	help
 	  Sets the address of the bloblist, set up by the first part of U-Boot
 	  which runs. Subsequent U-Boot stages typically use the same address.
+
+config BLOBLIST_SIZE_RELOC
+	hex "Size of bloblist after relocation"
+	depends on BLOBLIST
+	default BLOBLIST_SIZE
+	help
+	  Sets the size of the bloblist in bytes after relocation. Since U-Boot
+	  has a lot more memory available then, it is possible to use a larger
+	  size than the one set up by SPL. This bloblist is set up during the
+	  relocation process.
 
 endmenu
 

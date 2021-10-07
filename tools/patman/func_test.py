@@ -25,13 +25,8 @@ from patman import terminal
 from patman import tools
 from patman.test_util import capture_sys_output
 
-try:
-    import pygit2
-    HAVE_PYGIT2 = True
-    from patman import status
-except ModuleNotFoundError:
-    HAVE_PYGIT2 = False
-
+import pygit2
+from patman import status
 
 class TestFunctional(unittest.TestCase):
     """Functional tests for checking that patman behaves correctly"""
@@ -186,7 +181,7 @@ class TestFunctional(unittest.TestCase):
             - Commit-notes
         """
         process_tags = True
-        ignore_bad_tags = True
+        ignore_bad_tags = False
         stefan = b'Stefan Br\xc3\xbcns <stefan.bruens@rwth-aachen.de>'.decode('utf-8')
         rick = 'Richard III <richard@palace.gov>'
         mel = b'Lord M\xc3\xablchett <clergy@palace.gov>'.decode('utf-8')
@@ -237,27 +232,26 @@ class TestFunctional(unittest.TestCase):
                 if 'Cc:' not in prev:
                     break
         self.assertEqual('To:	  u-boot@lists.denx.de', prev)
-        self.assertEqual('Cc:	  %s' % tools.FromUnicode(stefan), next(lines))
+        self.assertEqual('Cc:	  %s' % stefan, next(lines))
         self.assertEqual('Version:  3', next(lines))
         self.assertEqual('Prefix:\t  RFC', next(lines))
         self.assertEqual('Cover: 4 lines', next(lines))
         self.assertEqual('      Cc:  %s' % self.fred, next(lines))
-        self.assertEqual('      Cc:  %s' % tools.FromUnicode(self.leb),
+        self.assertEqual('      Cc:  %s' % self.leb,
                          next(lines))
-        self.assertEqual('      Cc:  %s' % tools.FromUnicode(mel), next(lines))
+        self.assertEqual('      Cc:  %s' % mel, next(lines))
         self.assertEqual('      Cc:  %s' % rick, next(lines))
         expected = ('Git command: git send-email --annotate '
                     '--in-reply-to="%s" --to "u-boot@lists.denx.de" '
                     '--cc "%s" --cc-cmd "%s send --cc-cmd %s" %s %s'
                     % (in_reply_to, stefan, sys.argv[0], cc_file, cover_fname,
                        ' '.join(args)))
-        self.assertEqual(expected, tools.ToUnicode(next(lines)))
+        self.assertEqual(expected, next(lines))
 
-        self.assertEqual(('%s %s\0%s' % (args[0], rick, stefan)),
-                         tools.ToUnicode(cc_lines[0]))
+        self.assertEqual(('%s %s\0%s' % (args[0], rick, stefan)), cc_lines[0])
         self.assertEqual(
             '%s %s\0%s\0%s\0%s' % (args[1], self.fred, self.leb, rick, stefan),
-            tools.ToUnicode(cc_lines[1]))
+            cc_lines[1])
 
         expected = '''
 This is a test of how the cover
@@ -459,7 +453,6 @@ complicated as possible''')
         repo.branches.local.create('base', base_target)
         return repo
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testBranch(self):
         """Test creating patches from a branch"""
         repo = self.make_git_tree()
@@ -476,7 +469,7 @@ complicated as possible''')
             with capture_sys_output() as _:
                 _, cover_fname, patch_files = control.prepare_patches(
                     col, branch=None, count=-1, start=0, end=0,
-                    ignore_binary=False)
+                    ignore_binary=False, signoff=True)
             self.assertIsNone(cover_fname)
             self.assertEqual(2, len(patch_files))
 
@@ -485,7 +478,7 @@ complicated as possible''')
             with capture_sys_output() as _:
                 _, cover_fname, patch_files = control.prepare_patches(
                     col, branch='second', count=-1, start=0, end=0,
-                    ignore_binary=False)
+                    ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
             self.assertEqual(3, len(patch_files))
 
@@ -493,7 +486,7 @@ complicated as possible''')
             with capture_sys_output() as _:
                 _, cover_fname, patch_files = control.prepare_patches(
                     col, branch='second', count=-1, start=0, end=1,
-                    ignore_binary=False)
+                    ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
             self.assertEqual(2, len(patch_files))
         finally:
@@ -605,7 +598,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             ["Found possible blank line(s) at end of file 'lib/fdtdec.c'"],
             pstrm.commit.warn)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testNoUpstream(self):
         """Test CountCommitsToBranch when there is no upstream"""
         repo = self.make_git_tree()
@@ -643,7 +635,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
                     {'id': '1', 'name': 'Some patch'}]}
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testStatusMismatch(self):
         """Test Patchwork patches not matching the series"""
         series = Series()
@@ -653,7 +644,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testStatusReadPatch(self):
         """Test handling a single patch in Patchwork"""
         series = Series()
@@ -666,7 +656,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual('1', patch.id)
         self.assertEqual('Some patch', patch.raw_subject)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testParseSubject(self):
         """Test parsing of the patch subject"""
         patch = status.Patch('1')
@@ -729,7 +718,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual('RESEND', patch.prefix)
         self.assertEqual(None, patch.version)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testCompareSeries(self):
         """Test operation of compare_with_series()"""
         commit1 = Commit('abcd')
@@ -832,7 +820,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             return patch.comments
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testFindNewResponses(self):
         """Test operation of find_new_responses()"""
         commit1 = Commit('abcd')
@@ -971,7 +958,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             return patch.comments
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testCreateBranch(self):
         """Test operation of create_branch()"""
         repo = self.make_git_tree()
@@ -1059,7 +1045,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual('Reviewed-by: %s' % self.mary, next(lines))
         self.assertEqual('Tested-by: %s' % self.leb, next(lines))
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testParseSnippets(self):
         """Test parsing of review snippets"""
         text = '''Hi Fred,
@@ -1143,7 +1128,6 @@ line8
               'line2', 'line3', 'line4', 'line5', 'line6', 'line7', 'line8']],
             pstrm.snippets)
 
-    @unittest.skipIf(not HAVE_PYGIT2, 'Missing python3-pygit2')
     def testReviewSnippets(self):
         """Test showing of review snippets"""
         def _to_submitter(who):

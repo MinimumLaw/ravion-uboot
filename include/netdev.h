@@ -12,6 +12,8 @@
 #define _NETDEV_H_
 #include <phy_interface.h>
 
+struct udevice;
+
 /*
  * Board and CPU-specific initialization functions
  * board_eth_init() has highest priority.  cpu_eth_init() only
@@ -31,7 +33,6 @@ int at91emac_register(struct bd_info *bis, unsigned long iobase);
 int ax88180_initialize(struct bd_info *bis);
 int bcm_sf2_eth_register(struct bd_info *bis, u8 dev_num);
 int bfin_EMAC_initialize(struct bd_info *bis);
-int calxedaxgmac_initialize(u32 id, ulong base_addr);
 int cs8900_initialize(u8 dev_num, int base_addr);
 int dc21x4x_initialize(struct bd_info *bis);
 int designware_initialize(ulong base_addr, u32 interface);

@@ -49,19 +49,12 @@
 #define CONFIG_MALLOC_F_ADDR		CONFIG_SYS_FSL_OCRAM_BASE
 
 /* serial port */
-#define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE 1
 #define CONFIG_SYS_NS16550_CLK          (get_bus_freq(0) / 2)
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 #define CONFIG_SYS_CLK_FREQ		100000000
 #define CONFIG_DDR_CLK_FREQ		100000000
 #define COUNTER_FREQUENCY_REAL		(CONFIG_SYS_CLK_FREQ / 4)
-
-/* MMC */
-#ifdef CONFIG_MMC
-#define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
-#endif
 
 /* ethernet */
 #define CONFIG_SYS_RX_ETH_BUFFER	8
@@ -93,6 +86,7 @@
 	func(MMC, mmc, 1) \
 	func(NVME, nvme, 0) \
 	func(USB, usb, 0) \
+	func(SCSI, scsi, 0) \
 	func(DHCP, dhcp, 0) \
 	func(PXE, pxe, 0)
 #include <config_distro_bootcmd.h>

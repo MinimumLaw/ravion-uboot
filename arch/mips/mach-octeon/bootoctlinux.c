@@ -9,6 +9,7 @@
 #include <dm.h>
 #include <elf.h>
 #include <env.h>
+#include <asm/global_data.h>
 
 #include <asm/io.h>
 #include <linux/compat.h>
@@ -24,6 +25,7 @@
 #include <mach/octeon-model.h>
 #include <mach/octeon-feature.h>
 #include <mach/bootoct_cmd.h>
+#include <mach/cvmx-ciu-defs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

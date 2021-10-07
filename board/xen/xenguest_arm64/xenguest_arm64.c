@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <malloc.h>
 #include <xen.h>
+#include <asm/global_data.h>
 
 #include <asm/io.h>
 #include <asm/armv8/mmu.h>
@@ -170,7 +171,7 @@ int dram_init_banksize(void)
 /*
  * Board specific reset that is system reset.
  */
-void reset_cpu(ulong addr)
+void reset_cpu(void)
 {
 }
 

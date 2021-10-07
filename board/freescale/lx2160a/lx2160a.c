@@ -7,6 +7,7 @@
 #include <clock_legacy.h>
 #include <dm.h>
 #include <init.h>
+#include <asm/global_data.h>
 #include <dm/platform_data/serial_pl01x.h>
 #include <i2c.h>
 #include <malloc.h>
@@ -52,7 +53,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct pl01x_serial_platdata serial0 = {
+static struct pl01x_serial_plat serial0 = {
 #if CONFIG_CONS_INDEX == 0
 	.base = CONFIG_SYS_SERIAL0,
 #elif CONFIG_CONS_INDEX == 1
@@ -63,26 +64,26 @@ static struct pl01x_serial_platdata serial0 = {
 	.type = TYPE_PL011,
 };
 
-U_BOOT_DEVICE(nxp_serial0) = {
+U_BOOT_DRVINFO(nxp_serial0) = {
 	.name = "serial_pl01x",
-	.platdata = &serial0,
+	.plat = &serial0,
 };
 
-static struct pl01x_serial_platdata serial1 = {
+static struct pl01x_serial_plat serial1 = {
 	.base = CONFIG_SYS_SERIAL1,
 	.type = TYPE_PL011,
 };
 
-U_BOOT_DEVICE(nxp_serial1) = {
+U_BOOT_DRVINFO(nxp_serial1) = {
 	.name = "serial_pl01x",
-	.platdata = &serial1,
+	.plat = &serial1,
 };
 
 int select_i2c_ch_pca9547(u8 ch)
 {
 	int ret;
 
-#ifndef CONFIG_DM_I2C
+#if !CONFIG_IS_ENABLED(DM_I2C)
 	ret = i2c_write(I2C_MUX_PCA_ADDR_PRI, 0, 1, &ch, 1);
 #else
 	struct udevice *dev;
@@ -646,6 +647,48 @@ int misc_init_r(void)
 
 	return 0;
 }
+#endif
+
+#ifdef CONFIG_VID
+u16 soc_get_fuse_vid(int vid_index)
+{
+	static const u16 vdd[32] = {
+		8250,
+		7875,
+		7750,
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		8000,
+		8125,
+		8250,
+		0,      /* reserved */
+		8500,
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+		0,      /* reserved */
+	};
+
+	return vdd[vid_index];
+};
 #endif
 
 #ifdef CONFIG_FSL_MC_ENET

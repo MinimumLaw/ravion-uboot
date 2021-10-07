@@ -6,9 +6,10 @@
 #include <dm/test.h>
 #include <test/test.h>
 #include <test/ut.h>
+#include <asm/global_data.h>
 
 /* Test that we can find a device using of-platdata */
-static int dm_test_of_platdata_base(struct unit_test_state *uts)
+static int dm_test_of_plat_base(struct unit_test_state *uts)
 {
 	struct udevice *dev;
 
@@ -17,10 +18,10 @@ static int dm_test_of_platdata_base(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_of_platdata_base, UT_TESTF_SCAN_PDATA);
+DM_TEST(dm_test_of_plat_base, UT_TESTF_SCAN_PDATA);
 
 /* Test that we can read properties from a device */
-static int dm_test_of_platdata_props(struct unit_test_state *uts)
+static int dm_test_of_plat_props(struct unit_test_state *uts)
 {
 	struct dtd_sandbox_spl_test *plat;
 	struct udevice *dev;
@@ -31,7 +32,7 @@ static int dm_test_of_platdata_props(struct unit_test_state *uts)
 	ut_asserteq_str("sandbox_clk_test", dev->name);
 
 	ut_assertok(uclass_next_device_err(&dev));
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 	ut_assert(plat->boolval);
 	ut_asserteq(1, plat->intval);
 	ut_asserteq(4, ARRAY_SIZE(plat->intarray));
@@ -54,7 +55,7 @@ static int dm_test_of_platdata_props(struct unit_test_state *uts)
 	ut_asserteq_str("", plat->stringarray[2]);
 
 	ut_assertok(uclass_next_device_err(&dev));
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 	ut_assert(!plat->boolval);
 	ut_asserteq(3, plat->intval);
 	ut_asserteq(5, plat->intarray[0]);
@@ -74,14 +75,14 @@ static int dm_test_of_platdata_props(struct unit_test_state *uts)
 	ut_asserteq_str("message", plat->stringarray[2]);
 
 	ut_assertok(uclass_next_device_err(&dev));
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 	ut_assert(!plat->boolval);
 	ut_asserteq_str("one", plat->stringarray[0]);
 	ut_asserteq_str("", plat->stringarray[1]);
 	ut_asserteq_str("", plat->stringarray[2]);
 
 	ut_assertok(uclass_next_device_err(&dev));
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 	ut_assert(!plat->boolval);
 	ut_asserteq_str("spl", plat->stringarray[0]);
 
@@ -89,7 +90,7 @@ static int dm_test_of_platdata_props(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_of_platdata_props, UT_TESTF_SCAN_PDATA);
+DM_TEST(dm_test_of_plat_props, UT_TESTF_SCAN_PDATA);
 
 /*
  * find_driver_info - recursively find the driver_info for a device
@@ -139,13 +140,15 @@ static int find_driver_info(struct unit_test_state *uts, struct udevice *parent,
 }
 
 /* Check that every device is recorded in its driver_info struct */
-static int dm_test_of_platdata_dev(struct unit_test_state *uts)
+static int dm_test_of_plat_dev(struct unit_test_state *uts)
 {
-	const struct driver_info *info =
-		ll_entry_start(struct driver_info, driver_info);
 	const int n_ents = ll_entry_count(struct driver_info, driver_info);
 	bool found[n_ents];
 	uint i;
+
+	/* Skip this test if there is no platform data */
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA_DRIVER_RT))
+		return 0;
 
 	/* Record the indexes that are found */
 	memset(found, '\0', sizeof(found));
@@ -154,61 +157,59 @@ static int dm_test_of_platdata_dev(struct unit_test_state *uts)
 	/* Make sure that the driver entries without devices have no ->dev */
 	for (i = 0; i < n_ents; i++) {
 		const struct driver_rt *drt = gd_dm_driver_rt() + i;
-		const struct driver_info *entry = info + i;
 		struct udevice *dev;
 
 		if (found[i]) {
 			/* Make sure we can find it */
 			ut_assertnonnull(drt->dev);
-			ut_assertok(device_get_by_driver_info(entry, &dev));
+			ut_assertok(device_get_by_ofplat_idx(i, &dev));
 			ut_asserteq_ptr(dev, drt->dev);
 		} else {
 			ut_assertnull(drt->dev);
-			ut_asserteq(-ENOENT,
-				    device_get_by_driver_info(entry, &dev));
+			ut_asserteq(-ENOENT, device_get_by_ofplat_idx(i, &dev));
 		}
 	}
 
 	return 0;
 }
-DM_TEST(dm_test_of_platdata_dev, UT_TESTF_SCAN_PDATA);
+DM_TEST(dm_test_of_plat_dev, UT_TESTF_SCAN_PDATA);
 
 /* Test handling of phandles that point to other devices */
-static int dm_test_of_platdata_phandle(struct unit_test_state *uts)
+static int dm_test_of_plat_phandle(struct unit_test_state *uts)
 {
 	struct dtd_sandbox_clk_test *plat;
 	struct udevice *dev, *clk;
 
 	ut_assertok(uclass_first_device_err(UCLASS_MISC, &dev));
 	ut_asserteq_str("sandbox_clk_test", dev->name);
-	plat = dev_get_platdata(dev);
+	plat = dev_get_plat(dev);
 
-	ut_assertok(device_get_by_driver_info_idx(plat->clocks[0].idx, &clk));
-	ut_asserteq_str("fixed_clock", clk->name);
+	ut_assertok(device_get_by_ofplat_idx(plat->clocks[0].idx, &clk));
+	ut_asserteq_str("sandbox_fixed_clock", clk->name);
 
-	ut_assertok(device_get_by_driver_info_idx(plat->clocks[1].idx, &clk));
+	ut_assertok(device_get_by_ofplat_idx(plat->clocks[1].idx, &clk));
 	ut_asserteq_str("sandbox_clk", clk->name);
 	ut_asserteq(1, plat->clocks[1].arg[0]);
 
-	ut_assertok(device_get_by_driver_info_idx(plat->clocks[2].idx, &clk));
+	ut_assertok(device_get_by_ofplat_idx(plat->clocks[2].idx, &clk));
 	ut_asserteq_str("sandbox_clk", clk->name);
 	ut_asserteq(0, plat->clocks[2].arg[0]);
 
-	ut_assertok(device_get_by_driver_info_idx(plat->clocks[3].idx, &clk));
+	ut_assertok(device_get_by_ofplat_idx(plat->clocks[3].idx, &clk));
 	ut_asserteq_str("sandbox_clk", clk->name);
 	ut_asserteq(3, plat->clocks[3].arg[0]);
 
-	ut_assertok(device_get_by_driver_info_idx(plat->clocks[4].idx, &clk));
+	ut_assertok(device_get_by_ofplat_idx(plat->clocks[4].idx, &clk));
 	ut_asserteq_str("sandbox_clk", clk->name);
 	ut_asserteq(2, plat->clocks[4].arg[0]);
 
 	return 0;
 }
-DM_TEST(dm_test_of_platdata_phandle, UT_TESTF_SCAN_PDATA);
+DM_TEST(dm_test_of_plat_phandle, UT_TESTF_SCAN_PDATA);
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA_PARENT)
 /* Test that device parents are correctly set up */
-static int dm_test_of_platdata_parent(struct unit_test_state *uts)
+static int dm_test_of_plat_parent(struct unit_test_state *uts)
 {
 	struct udevice *rtc, *i2c;
 
@@ -218,5 +219,5 @@ static int dm_test_of_platdata_parent(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_of_platdata_parent, UT_TESTF_SCAN_PDATA);
+DM_TEST(dm_test_of_plat_parent, UT_TESTF_SCAN_PDATA);
 #endif

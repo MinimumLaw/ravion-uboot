@@ -12,6 +12,7 @@
 #include <log.h>
 #include <serial.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <asm/io.h>
@@ -375,7 +376,7 @@ void board_boot_order(u32 *spl_boot_list)
 #endif
 }
 
-void reset_cpu(ulong addr) {}
+void reset_cpu(void) {}
 
 #ifdef CONFIG_SPL_LOAD_FIT
 int board_fit_config_name_match(const char *name)

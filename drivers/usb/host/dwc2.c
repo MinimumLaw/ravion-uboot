@@ -21,6 +21,7 @@
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <linux/delay.h>
+#include <linux/usb/otg.h>
 #include <power/regulator.h>
 #include <reset.h>
 
@@ -1204,7 +1205,13 @@ static int dwc2_init_common(struct udevice *dev, struct dwc2_priv *priv)
 #endif
 
 	dwc_otg_core_init(dev);
-	dwc_otg_core_host_init(dev, regs);
+
+	if (usb_get_dr_mode(dev_ofnode(dev)) == USB_DR_MODE_PERIPHERAL) {
+		dev_dbg(dev, "USB device %s dr_mode set to %d. Skipping host_init.\n",
+			dev->name, usb_get_dr_mode(dev_ofnode(dev)));
+	} else {
+		dwc_otg_core_host_init(dev, regs);
+	}
 
 	clrsetbits_le32(&regs->hprt0, DWC2_HPRT0_PRTENA |
 			DWC2_HPRT0_PRTCONNDET | DWC2_HPRT0_PRTENCHNG |
@@ -1326,7 +1333,7 @@ static int dwc2_submit_int_msg(struct udevice *dev, struct usb_device *udev,
 			       nonblock);
 }
 
-static int dwc2_usb_ofdata_to_platdata(struct udevice *dev)
+static int dwc2_usb_of_to_plat(struct udevice *dev)
 {
 	struct dwc2_priv *priv = dev_get_priv(dev);
 
@@ -1473,11 +1480,11 @@ U_BOOT_DRIVER(usb_dwc2) = {
 	.name	= "dwc2_usb",
 	.id	= UCLASS_USB,
 	.of_match = dwc2_usb_ids,
-	.ofdata_to_platdata = dwc2_usb_ofdata_to_platdata,
+	.of_to_plat = dwc2_usb_of_to_plat,
 	.probe	= dwc2_usb_probe,
 	.remove = dwc2_usb_remove,
 	.ops	= &dwc2_usb_ops,
-	.priv_auto_alloc_size = sizeof(struct dwc2_priv),
+	.priv_auto	= sizeof(struct dwc2_priv),
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };
 #endif

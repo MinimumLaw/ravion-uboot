@@ -50,13 +50,12 @@
 /* SPL support */
 #ifdef CONFIG_SPL
 /* SPL use DDR */
-#define CONFIG_SPL_BSS_START_ADDR	0xC0200000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x00100000
 #define CONFIG_SYS_SPL_MALLOC_START	0xC0300000
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x00100000
+#define CONFIG_SYS_SPL_MALLOC_SIZE	0x01D00000
 
-/* limit SYSRAM usage to first 128 KB */
-#define CONFIG_SPL_MAX_SIZE		0x00020000
+/* Restrict SPL to fit within SYSRAM */
+#define STM32_SYSRAM_END		(STM32_SYSRAM_BASE + STM32_SYSRAM_SIZE)
+#define CONFIG_SPL_MAX_FOOTPRINT	(STM32_SYSRAM_END - CONFIG_SPL_TEXT_BASE)
 #define CONFIG_SPL_STACK		(STM32_SYSRAM_BASE + \
 					 STM32_SYSRAM_SIZE)
 #endif /* #ifdef CONFIG_SPL */
@@ -69,7 +68,6 @@
 
 /* Ethernet need */
 #ifdef CONFIG_DWC_ETH_QOS
-#define CONFIG_SYS_NONCACHED_MEMORY	(1 * SZ_1M)	/* 1M */
 #define CONFIG_SERVERIP                 192.168.1.1
 #define CONFIG_BOOTP_SERVERIP
 #define CONFIG_SYS_AUTOLOAD		"no"
@@ -103,11 +101,18 @@
 #define BOOT_TARGET_UBIFS(func)
 #endif
 
+#ifdef CONFIG_USB
+#define BOOT_TARGET_USB(func)	func(USB, usb, 0)
+#else
+#define BOOT_TARGET_USB(func)
+#endif
+
 #define BOOT_TARGET_DEVICES(func)	\
 	BOOT_TARGET_MMC1(func)		\
 	BOOT_TARGET_UBIFS(func)		\
 	BOOT_TARGET_MMC0(func)		\
 	BOOT_TARGET_MMC2(func)		\
+	BOOT_TARGET_USB(func)		\
 	BOOT_TARGET_PXE(func)
 
 /*
@@ -133,6 +138,19 @@
 		"run distro_bootcmd;" \
 	"fi;\0"
 
+#ifdef CONFIG_FASTBOOT_CMD_OEM_FORMAT
+/* eMMC default partitions for fastboot command: oem format */
+#define PARTS_DEFAULT \
+	"partitions=" \
+	"name=ssbl,size=2M;" \
+	"name=bootfs,size=64MB,bootable;" \
+	"name=vendorfs,size=16M;" \
+	"name=rootfs,size=746M;" \
+	"name=userfs,size=-\0"
+#else
+#define PARTS_DEFAULT
+#endif
+
 #include <config_distro_bootcmd.h>
 
 /*
@@ -141,7 +159,6 @@
  * and the ramdisk at the end.
  */
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootdelay=1\0" \
 	"kernel_addr_r=0xc2000000\0" \
 	"fdt_addr_r=0xc4000000\0" \
 	"scriptaddr=0xc4100000\0" \
@@ -151,6 +168,7 @@
 	"altbootcmd=run bootcmd\0" \
 	"env_check=if env info -p -d -q; then env save; fi\0" \
 	STM32MP_BOOTCMD \
+	PARTS_DEFAULT \
 	BOOTENV \
 	"boot_net_usb_start=true\0"
 

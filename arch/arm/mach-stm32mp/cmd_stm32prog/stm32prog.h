@@ -37,8 +37,14 @@ enum stm32prog_link_t {
 	LINK_UNDEFINED,
 };
 
+enum stm32prog_header_t {
+	HEADER_NONE,
+	HEADER_STM32IMAGE,
+	HEADER_FIP,
+};
+
 struct image_header_s {
-	bool	present;
+	enum stm32prog_header_t type;
 	u32	image_checksum;
 	u32	image_length;
 };
@@ -160,8 +166,8 @@ int stm32prog_pmic_read(struct stm32prog_data *data, u32 offset,
 int stm32prog_pmic_start(struct stm32prog_data *data);
 
 /* generic part*/
-u8 stm32prog_header_check(struct raw_header_s *raw_header,
-			  struct image_header_s *header);
+void stm32prog_header_check(struct raw_header_s *raw_header,
+			    struct image_header_s *header);
 int stm32prog_dfu_init(struct stm32prog_data *data);
 void stm32prog_next_phase(struct stm32prog_data *data);
 void stm32prog_do_reset(struct stm32prog_data *data);
@@ -172,14 +178,35 @@ char *stm32prog_get_error(struct stm32prog_data *data);
 	if (data->phase != PHASE_RESET) { \
 		sprintf(data->error, args); \
 		data->phase = PHASE_RESET; \
-		pr_err("Error: %s\n", data->error); } \
+		log_err("Error: %s\n", data->error); } \
 	}
 
 /* Main function */
 int stm32prog_init(struct stm32prog_data *data, ulong addr, ulong size);
+void stm32prog_clean(struct stm32prog_data *data);
+
+#ifdef CONFIG_CMD_STM32PROG_SERIAL
 int stm32prog_serial_init(struct stm32prog_data *data, int link_dev);
 bool stm32prog_serial_loop(struct stm32prog_data *data);
+#else
+static inline int stm32prog_serial_init(struct stm32prog_data *data, int link_dev)
+{
+	return -ENOSYS;
+}
+
+static inline bool stm32prog_serial_loop(struct stm32prog_data *data)
+{
+	return false;
+}
+#endif
+
+#ifdef CONFIG_CMD_STM32PROG_USB
 bool stm32prog_usb_loop(struct stm32prog_data *data, int dev);
-void stm32prog_clean(struct stm32prog_data *data);
+#else
+static inline bool stm32prog_usb_loop(struct stm32prog_data *data, int dev)
+{
+	return false;
+}
+#endif
 
 #endif

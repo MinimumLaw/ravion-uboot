@@ -94,20 +94,21 @@ static void usage(const char *msg)
 		"          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
 	fprintf(stderr,
-		"       %s [-D dtc_options] [-f fit-image.its|-f auto|-F] [-b <dtb> [-b <dtb>]] [-i <ramdisk.cpio.gz>] fit-image\n"
+		"       %s [-D dtc_options] [-f fit-image.its|-f auto|-F] [-b <dtb> [-b <dtb>]] [-E] [-B size] [-i <ramdisk.cpio.gz>] fit-image\n"
 		"           <dtb> file is used with -f auto, it may occur multiple times.\n",
 		params.cmdname);
 	fprintf(stderr,
 		"          -D => set all options for device tree compiler\n"
 		"          -f => input filename for FIT source\n"
-		"          -i => input filename for ramdisk file\n");
+		"          -i => input filename for ramdisk file\n"
+		"          -E => place data outside of the FIT structure\n"
+		"          -B => align size in hex for FIT structure and header\n");
 #ifdef CONFIG_FIT_SIGNATURE
 	fprintf(stderr,
-		"Signing / verified boot options: [-E] [-B size] [-k keydir] [-K dtb] [ -c <comment>] [-p addr] [-r] [-N engine]\n"
-		"          -E => place data outside of the FIT structure\n"
-		"          -B => align size in hex for FIT structure and header\n"
+		"Signing / verified boot options: [-k keydir] [-K dtb] [ -c <comment>] [-p addr] [-r] [-N engine]\n"
 		"          -k => set directory containing private keys\n"
 		"          -K => write public keys to this .dtb file\n"
+		"          -G => use this signing key (in lieu of -k)\n"
 		"          -c => add comment in signature node\n"
 		"          -F => re-sign existing FIT image\n"
 		"          -p => place external data at a static position\n"
@@ -142,6 +143,7 @@ static int add_content(int type, const char *fname)
 	return 0;
 }
 
+#define OPT_STRING "a:A:b:B:c:C:d:D:e:Ef:Fk:i:K:ln:N:p:O:rR:qstT:vVx"
 static void process_args(int argc, char **argv)
 {
 	char *ptr;
@@ -150,7 +152,7 @@ static void process_args(int argc, char **argv)
 	int opt;
 
 	while ((opt = getopt(argc, argv,
-		   "a:A:b:B:c:C:d:D:e:Ef:Fk:i:K:ln:N:p:O:rR:qstT:vVx")) != -1) {
+		   "a:A:b:B:c:C:d:D:e:Ef:FG:k:i:K:ln:N:p:O:rR:qstT:vVx")) != -1) {
 		switch (opt) {
 		case 'a':
 			params.addr = strtoull(optarg, &ptr, 16);
@@ -224,6 +226,9 @@ static void process_args(int argc, char **argv)
 			 */
 			params.type = IH_TYPE_FLATDT;
 			params.fflag = 1;
+			break;
+		case 'G':
+			params.keyfile = optarg;
 			break;
 		case 'i':
 			params.fit_ramdisk = optarg;

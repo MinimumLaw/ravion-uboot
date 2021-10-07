@@ -111,7 +111,11 @@ typedef struct environment_s {
 extern env_t embedded_environment;
 #endif /* ENV_IS_EMBEDDED */
 
+#ifdef DEFAULT_ENV_IS_RW
+extern unsigned char default_environment[];
+#else
 extern const unsigned char default_environment[];
+#endif
 
 #ifndef DO_DEPS_ONLY
 
@@ -207,6 +211,7 @@ struct env_driver {
 #endif
 
 #define ENV_SAVE_PTR(x) (CONFIG_IS_ENABLED(SAVEENV) ? (x) : NULL)
+#define ENV_ERASE_PTR(x) (CONFIG_IS_ENABLED(CMD_ERASEENV) ? (x) : NULL)
 
 extern struct hsearch_data env_htab;
 

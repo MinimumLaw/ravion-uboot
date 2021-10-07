@@ -2320,6 +2320,25 @@ sub get_raw_comment {
 	return $comment;
 }
 
+# Args:
+#   line: Patch line to check
+#   auto: Auto variable name, e.g. "per_child_auto"
+#   suffix: Suffix to expect on member, e.g. "_priv"
+#   warning: Warning name, e.g. "PRIV_AUTO"
+sub u_boot_struct_name {
+	my ($line, $auto, $suffix, $warning, $herecurr) = @_;
+
+	# Use _priv as a suffix for the device-private data struct
+	if ($line =~ /^\+\s*\.${auto}\s*=\s*sizeof\(struct\((\w+)\).*/) {
+		my $struct_name = $1;
+		if ($struct_name !~ /^\w+${suffix}/) {
+			WARN($warning,
+				 "struct \'$struct_name\' should have a ${suffix} suffix\n"
+				 . $herecurr);
+		}
+	}
+}
+
 # Checks specific to U-Boot
 sub u_boot_line {
 	my ($realfile, $line, $rawline, $herecurr) = @_;
@@ -2348,6 +2367,12 @@ sub u_boot_line {
 		     "Use 'if (IS_ENABLED(CONFIG...))' instead of '#if or #ifdef' where possible\n" . $herecurr);
 	}
 
+	# prefer strl(cpy|cat) over strn(cpy|cat)
+	if ($line =~ /\bstrn(cpy|cat)\s*\(/) {
+		WARN("STRL",
+		     "strl$1 is preferred over strn$1 because it always produces a nul-terminated string\n" . $herecurr);
+	}
+
 	# use defconfig to manage CONFIG_CMD options
 	if ($line =~ /\+\s*#\s*(define|undef)\s+(CONFIG_CMD\w*)\b/) {
 		ERROR("DEFINE_CONFIG_CMD",
@@ -2366,11 +2391,38 @@ sub u_boot_line {
 		     "fdt or initrd relocation disabled at boot time\n" . $herecurr);
 	}
 
+	# make sure 'skip_board_fixup' is not
+	if ($rawline =~ /.*skip_board_fixup.*/) {
+		ERROR("SKIP_BOARD_FIXUP",
+		     "Avoid setting skip_board_fixup env variable\n" . $herecurr);
+	}
+
 	# Do not use CONFIG_ prefix in CONFIG_IS_ENABLED() calls
 	if ($line =~ /^\+.*CONFIG_IS_ENABLED\(CONFIG_\w*\).*/) {
 		ERROR("CONFIG_IS_ENABLED_CONFIG",
 		      "CONFIG_IS_ENABLED() takes values without the CONFIG_ prefix\n" . $herecurr);
 	}
+
+	# Use _priv as a suffix for the device-private data struct
+	if ($line =~ /^\+\s*\.priv_auto\s*=\s*sizeof\(struct\((\w+)\).*/) {
+		my $struct_name = $1;
+		if ($struct_name !~ /^\w+_priv/) {
+			WARN("PRIV_AUTO", "struct \'$struct_name\' should have a _priv suffix");
+		}
+	}
+
+	# Check struct names for the 'auto' members of struct driver
+	u_boot_struct_name($line, "priv_auto", "_priv", "PRIV_AUTO", $herecurr);
+	u_boot_struct_name($line, "plat_auto", "_plat", "PLAT_AUTO", $herecurr);
+	u_boot_struct_name($line, "per_child_auto", "_priv", "CHILD_PRIV_AUTO", $herecurr);
+	u_boot_struct_name($line, "per_child_plat_auto", "_plat",
+		"CHILD_PLAT_AUTO", $herecurr);
+
+	# Now the ones for struct uclass, skipping those in common with above
+	u_boot_struct_name($line, "per_device_auto", "_priv",
+		"DEVICE_PRIV_AUTO", $herecurr);
+	u_boot_struct_name($line, "per_device_plat_auto", "_plat",
+		"DEVICE_PLAT_AUTO", $herecurr);
 }
 
 sub process {
@@ -6021,7 +6073,7 @@ sub process {
 			my $old = substr($rawline, $-[1], $+[1] - $-[1]);
 			my $new = substr($old, 1, -1);
 			if (WARN("PREFER_SECTION",
-				 "__section($new) is preferred over __attribute__((section($old)))\n" . $herecurr) &&
+				 "__section(\"$new\") is preferred over __attribute__((section($old)))\n" . $herecurr) &&
 			    $fix) {
 				$fixed[$fixlinenr] =~ s/\b__attribute__\s*\(\s*\(\s*_*section_*\s*\(\s*\Q$old\E\s*\)\s*\)\s*\)/__section($new)/;
 			}
