@@ -7,7 +7,7 @@
 #ifndef __FDT_SUPPORT_H
 #define __FDT_SUPPORT_H
 
-#ifdef CONFIG_OF_LIBFDT
+#if defined(CONFIG_OF_LIBFDT) && !defined(USE_HOSTCC)
 
 #include <asm/u-boot.h>
 #include <linux/libfdt.h>
@@ -203,8 +203,6 @@ char *board_fdt_chosen_bootargs(void);
  * called at the end of the image_setup_libfdt() is to do that convertion.
  */
 void ft_board_setup_ex(void *blob, struct bd_info *bd);
-void ft_cpu_setup(void *blob, struct bd_info *bd);
-void ft_pci_setup(void *blob, struct bd_info *bd);
 
 /**
  * Add system-specific data to the FDT before booting the OS.

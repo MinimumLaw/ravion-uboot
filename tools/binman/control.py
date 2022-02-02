@@ -343,10 +343,10 @@ def ReplaceEntries(image_fname, input_fname, indir, entry_paths,
 
     Args:
         image_fname: Image filename to process
-        input_fname: Single input ilename to use if replacing one file, None
+        input_fname: Single input filename to use if replacing one file, None
             otherwise
         indir: Input directory to use (for any number of files), else None
-        entry_paths: List of entry paths to extract
+        entry_paths: List of entry paths to replace
         do_compress: True if the input data is uncompressed and may need to be
             compressed if the entry requires it, False if the data is already
             compressed.
@@ -479,7 +479,8 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded):
 
 
 def ProcessImage(image, update_fdt, write_map, get_contents=True,
-                 allow_resize=True, allow_missing=False):
+                 allow_resize=True, allow_missing=False,
+                 allow_fake_blobs=False):
     """Perform all steps for this image, including checking and # writing it.
 
     This means that errors found with a later image will be reported after
@@ -495,12 +496,15 @@ def ProcessImage(image, update_fdt, write_map, get_contents=True,
         allow_resize: True to allow entries to change size (this does a re-pack
             of the entries), False to raise an exception
         allow_missing: Allow blob_ext objects to be missing
+        allow_fake_blobs: Allow blob_ext objects to be faked with dummy files
 
     Returns:
-        True if one or more external blobs are missing, False if all are present
+        True if one or more external blobs are missing or faked,
+        False if all are present
     """
     if get_contents:
         image.SetAllowMissing(allow_missing)
+        image.SetAllowFakeBlob(allow_fake_blobs)
         image.GetEntryContents()
     image.GetEntryOffsets()
 
@@ -549,7 +553,13 @@ def ProcessImage(image, update_fdt, write_map, get_contents=True,
         tout.Warning("Image '%s' is missing external blobs and is non-functional: %s" %
                      (image.name, ' '.join([e.name for e in missing_list])))
         _ShowHelpForMissingBlobs(missing_list)
-    return bool(missing_list)
+    faked_list = []
+    image.CheckFakedBlobs(faked_list)
+    if faked_list:
+        tout.Warning("Image '%s:%s' has faked external blobs and is non-functional: %s" %
+                     (image.name, image.image_name,
+                      ' '.join([e.GetDefaultFilename() for e in faked_list])))
+    return bool(missing_list) or bool(faked_list)
 
 
 def Binman(args):
@@ -565,12 +575,9 @@ def Binman(args):
     global state
 
     if args.full_help:
-        pager = os.getenv('PAGER')
-        if not pager:
-            pager = 'more'
-        fname = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
-                            'README.rst')
-        command.Run(pager, fname)
+        tools.PrintFullHelp(
+            os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), 'README.rst')
+        )
         return 0
 
     # Put these here so that we can import this module without libfdt
@@ -597,6 +604,13 @@ def Binman(args):
         finally:
             tools.FinaliseOutputDir()
         return 0
+
+    elf_params = None
+    if args.update_fdt_in_elf:
+        elf_params = args.update_fdt_in_elf.split(',')
+        if len(elf_params) != 4:
+            raise ValueError('Invalid args %s to --update-fdt-in-elf: expected infile,outfile,begin_sym,end_sym' %
+                             elf_params)
 
     # Try to figure out which device tree contains our image description
     if args.dt:
@@ -632,19 +646,25 @@ def Binman(args):
 
             images = PrepareImagesAndDtbs(dtb_fname, args.image,
                                           args.update_fdt, use_expanded)
+
             if args.test_section_timeout:
                 # Set the first image to timeout, used in testThreadTimeout()
                 images[list(images.keys())[0]].test_section_timeout = True
-            missing = False
+            invalid = False
             for image in images.values():
-                missing |= ProcessImage(image, args.update_fdt, args.map,
-                                        allow_missing=args.allow_missing)
+                invalid |= ProcessImage(image, args.update_fdt, args.map,
+                                       allow_missing=args.allow_missing,
+                                       allow_fake_blobs=args.fake_ext_blobs)
 
             # Write the updated FDTs to our output files
             for dtb_item in state.GetAllFdts():
                 tools.WriteFile(dtb_item._fname, dtb_item.GetContents())
 
-            if missing:
+            if elf_params:
+                data = state.GetFdtForEtype('u-boot-dtb').GetContents()
+                elf.UpdateFile(*elf_params, data)
+
+            if invalid:
                 tout.Warning("\nSome images are invalid")
 
             # Use this to debug the time take to pack the image

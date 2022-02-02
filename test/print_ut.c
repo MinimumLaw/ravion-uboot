@@ -9,7 +9,8 @@
 #include <display_options.h>
 #include <log.h>
 #include <mapmem.h>
-#include <version.h>
+#include <version_string.h>
+#include <vsprintf.h>
 #include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>
@@ -30,6 +31,7 @@ static int print_guid(struct unit_test_state *uts)
 		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 	};
 	char str[40];
+	int ret;
 
 	sprintf(str, "%pUb", guid);
 	ut_assertok(strcmp("01020304-0506-0708-090a-0b0c0d0e0f10", str));
@@ -39,6 +41,9 @@ static int print_guid(struct unit_test_state *uts)
 	ut_assertok(strcmp("04030201-0605-0807-090a-0b0c0d0e0f10", str));
 	sprintf(str, "%pUL", guid);
 	ut_assertok(strcmp("04030201-0605-0807-090A-0B0C0D0E0F10", str));
+	ret = snprintf(str, 4, "%pUL", guid);
+	ut_asserteq(0, str[3]);
+	ut_asserteq(36, ret);
 
 	return 0;
 }
@@ -327,6 +332,60 @@ static int print_do_hex_dump(struct unit_test_state *uts)
 	return 0;
 }
 PRINT_TEST(print_do_hex_dump, UT_TESTF_CONSOLE_REC);
+
+static int print_itoa(struct unit_test_state *uts)
+{
+	ut_asserteq_str("123", simple_itoa(123));
+	ut_asserteq_str("0", simple_itoa(0));
+	ut_asserteq_str("2147483647", simple_itoa(0x7fffffff));
+	ut_asserteq_str("4294967295", simple_itoa(0xffffffff));
+
+	/* Use #ifdef here to avoid a compiler warning on 32-bit machines */
+#ifdef CONFIG_PHYS_64BIT
+	if (sizeof(ulong) == 8) {
+		ut_asserteq_str("9223372036854775807",
+				simple_itoa((1UL << 63) - 1));
+		ut_asserteq_str("18446744073709551615", simple_itoa(-1));
+	}
+#endif /* CONFIG_PHYS_64BIT */
+
+	return 0;
+}
+PRINT_TEST(print_itoa, 0);
+
+static int snprint(struct unit_test_state *uts)
+{
+	char buf[10] = "xxxxxxxxx";
+	int ret;
+
+	ret = snprintf(buf, 4, "%s:%s", "abc", "def");
+	ut_asserteq(0, buf[3]);
+	ut_asserteq(7, ret);
+	ret = snprintf(buf, 4, "%s:%d", "abc", 9999);
+	ut_asserteq(8, ret);
+	return 0;
+}
+PRINT_TEST(snprint, 0);
+
+static int print_xtoa(struct unit_test_state *uts)
+{
+	ut_asserteq_str("7f", simple_xtoa(127));
+	ut_asserteq_str("00", simple_xtoa(0));
+	ut_asserteq_str("7fffffff", simple_xtoa(0x7fffffff));
+	ut_asserteq_str("ffffffff", simple_xtoa(0xffffffff));
+
+	/* Use #ifdef here to avoid a compiler warning on 32-bit machines */
+#ifdef CONFIG_PHYS_64BIT
+	if (sizeof(ulong) == 8) {
+		ut_asserteq_str("7fffffffffffffff",
+				simple_xtoa((1UL << 63) - 1));
+		ut_asserteq_str("ffffffffffffffff", simple_xtoa(-1));
+	}
+#endif /* CONFIG_PHYS_64BIT */
+
+	return 0;
+}
+PRINT_TEST(print_xtoa, 0);
 
 int do_ut_print(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {

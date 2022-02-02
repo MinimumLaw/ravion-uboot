@@ -28,6 +28,7 @@
 #include <dm/uclass.h>
 #include <dm/uclass-internal.h>
 #include <dm/util.h>
+#include <iommu.h>
 #include <linux/err.h>
 #include <linux/list.h>
 #include <power-domain.h>
@@ -543,6 +544,13 @@ int device_probe(struct udevice *dev)
 			goto fail;
 	}
 
+	if (CONFIG_IS_ENABLED(IOMMU) && dev->parent &&
+	    (device_get_uclass_id(dev) != UCLASS_IOMMU)) {
+		ret = dev_iommu_enable(dev);
+		if (ret)
+			goto fail;
+	}
+
 	ret = device_get_dma_constraints(dev);
 	if (ret)
 		goto fail;
@@ -670,7 +678,7 @@ static int device_get_device_tail(struct udevice *dev, int ret,
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 /**
  * device_find_by_ofnode() - Return device associated with given ofnode
  *
@@ -1074,7 +1082,7 @@ void dev_set_uclass_plat(struct udevice *dev, void *uclass_plat)
 	dev->uclass_plat_ = uclass_plat;
 }
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 bool device_is_compatible(const struct udevice *dev, const char *compat)
 {
 	return ofnode_device_is_compatible(dev_ofnode(dev), compat);
@@ -1135,7 +1143,7 @@ int dev_enable_by_path(const char *path)
 	if (ret)
 		return ret;
 
-	return lists_bind_fdt(parent, node, NULL, false);
+	return lists_bind_fdt(parent, node, NULL, NULL, false);
 }
 #endif
 

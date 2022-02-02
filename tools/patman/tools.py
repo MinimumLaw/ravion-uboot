@@ -5,6 +5,7 @@
 
 import glob
 import os
+import shlex
 import shutil
 import struct
 import sys
@@ -348,7 +349,7 @@ def Run(name, *args, **kwargs):
         result = command.RunPipe([all_args], capture=True, capture_stderr=True,
                                  env=env, raise_on_error=False, binary=binary)
         if result.return_code:
-            raise Exception("Error %d running '%s': %s" %
+            raise ValueError("Error %d running '%s': %s" %
                (result.return_code,' '.join(all_args),
                 result.stderr))
         return result.stdout
@@ -581,3 +582,17 @@ def ToHexSize(val):
         hex value of size, or 'None' if the value is None
     """
     return 'None' if val is None else '%#x' % len(val)
+
+def PrintFullHelp(fname):
+    """Print the full help message for a tool using an appropriate pager.
+
+    Args:
+        fname: Path to a file containing the full help message
+    """
+    pager = shlex.split(os.getenv('PAGER', ''))
+    if not pager:
+        lesspath = shutil.which('less')
+        pager = [lesspath] if lesspath else None
+    if not pager:
+        pager = ['more']
+    command.Run(*pager, fname)

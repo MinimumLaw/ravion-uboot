@@ -14,6 +14,7 @@ Implementation
    commands
    config_binding
    devicetree/index
+   distro
    driver-model/index
    global_data
    logging
@@ -56,5 +57,6 @@ Refactoring
 .. toctree::
    :maxdepth: 1
 
+   checkpatch
    coccinelle
    moveconfig

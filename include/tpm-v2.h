@@ -396,6 +396,7 @@ enum {
 	TPM_STS_DATA_EXPECT		= 1 << 3,
 	TPM_STS_SELF_TEST_DONE		= 1 << 2,
 	TPM_STS_RESPONSE_RETRY		= 1 << 1,
+	TPM_STS_READ_ZERO               = 0x23
 };
 
 enum {
@@ -511,13 +512,16 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
  * @dev		TPM device
  * @idx		Index of the PCR
  * @idx_min_sz	Minimum size in bytes of the pcrSelect array
+ * @algorithm	Algorithm used, defined in 'enum tpm2_algorithms'
  * @data	Output buffer for contents of the named PCR
+ * @digest_len  len of the data
  * @updates	Optional out parameter: number of updates for this PCR
  *
  * @return code of the operation
  */
 u32 tpm2_pcr_read(struct udevice *dev, u32 idx, unsigned int idx_min_sz,
-		  void *data, unsigned int *updates);
+		  u16 algorithm, void *data, u32 digest_len,
+		  unsigned int *updates);
 
 /**
  * Issue a TPM2_GetCapability command.  This implementation is limited
@@ -640,5 +644,18 @@ u32 tpm2_write_lock(struct udevice *dev, u32 index);
  * @return code of the operation
  */
 u32 tpm2_disable_platform_hierarchy(struct udevice *dev);
+
+/**
+ * submit user specified data to the TPM and get response
+ *
+ * @dev		TPM device
+ * @sendbuf:	Buffer of the data to send
+ * @recvbuf:	Buffer to save the response to
+ * @recv_size:	Pointer to the size of the response buffer
+ *
+ * @return code of the operation
+ */
+u32 tpm2_submit_command(struct udevice *dev, const u8 *sendbuf,
+			u8 *recvbuf, size_t *recv_size);
 
 #endif /* __TPM_V2_H */

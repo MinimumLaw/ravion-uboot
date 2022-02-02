@@ -898,9 +898,9 @@ efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
 		image_base = opt->ImageBase;
 		efi_set_code_and_data_type(loaded_image_info, opt->Subsystem);
 		handle->image_type = opt->Subsystem;
-		virt_size = ALIGN(virt_size, opt->SectionAlignment);
-		efi_reloc = efi_alloc(virt_size,
-				      loaded_image_info->image_code_type);
+		efi_reloc = efi_alloc_aligned_pages(virt_size,
+						    loaded_image_info->image_code_type,
+						    opt->SectionAlignment);
 		if (!efi_reloc) {
 			log_err("Out of memory\n");
 			ret = EFI_OUT_OF_RESOURCES;
@@ -914,9 +914,9 @@ efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
 		image_base = opt->ImageBase;
 		efi_set_code_and_data_type(loaded_image_info, opt->Subsystem);
 		handle->image_type = opt->Subsystem;
-		virt_size = ALIGN(virt_size, opt->SectionAlignment);
-		efi_reloc = efi_alloc(virt_size,
-				      loaded_image_info->image_code_type);
+		efi_reloc = efi_alloc_aligned_pages(virt_size,
+						    loaded_image_info->image_code_type,
+						    opt->SectionAlignment);
 		if (!efi_reloc) {
 			log_err("Out of memory\n");
 			ret = EFI_OUT_OF_RESOURCES;
@@ -934,9 +934,16 @@ efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
 
 #if CONFIG_IS_ENABLED(EFI_TCG2_PROTOCOL)
 	/* Measure an PE/COFF image */
-	if (tcg2_measure_pe_image(efi, efi_size, handle,
-				  loaded_image_info))
-		log_err("PE image measurement failed\n");
+	ret = tcg2_measure_pe_image(efi, efi_size, handle, loaded_image_info);
+	if (ret == EFI_SECURITY_VIOLATION) {
+		/*
+		 * TCG2 Protocol is installed but no TPM device found,
+		 * this is not expected.
+		 */
+		log_err("PE image measurement failed, no tpm device found\n");
+		goto err;
+	}
+
 #endif
 
 	/* Copy PE headers */

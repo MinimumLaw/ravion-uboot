@@ -12,9 +12,6 @@
 
 #define CONFIG_MXC_UART_BASE            UART1_IPS_BASE_ADDR
 
-/* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
-
 #define CONFIG_ETHPRIME                 "FEC"
 
 #undef CONFIG_SYS_AUTOLOAD
@@ -23,9 +20,9 @@
 
 /*
  * Use:
- * 		boot-mode=mix
- * 		boot-mode=sd
- * 		boot-mode=net
+ *		boot-mode=mix
+ *		boot-mode=sd
+ *		boot-mode=net
  */
 #define MY_CONFIG_BOOT_MODE	"boot-mode=sd\0"
 
@@ -75,9 +72,6 @@
 
 #define CONFIG_BOOTCOMMAND "run boot${boot-mode}"
 
-#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-#define CONFIG_SYS_HZ				1000
-
 /* Physical Memory Map */
 #define PHYS_SDRAM					MMDC0_ARB_BASE_ADDR
 
@@ -94,8 +88,6 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR       USDHC1_BASE_ADDR
 #define CONFIG_SYS_FSL_USDHC_NUM		2
 
-#define CONFIG_SYS_MMC_ENV_DEV			0   /* USDHC1 */
-#define CONFIG_SYS_MMC_ENV_PART			0	/* user area */
 #define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 #define CONFIG_MMCROOT					"/dev/mmcblk0p2"  /* USDHC1 */
 

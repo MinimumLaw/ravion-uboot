@@ -10,9 +10,6 @@
 #ifndef __CONFIGS_MX28EVK_H__
 #define __CONFIGS_MX28EVK_H__
 
-/* System configurations */
-#define CONFIG_MACH_TYPE	MACH_TYPE_MX28EVK
-
 /* Memory configuration */
 #define PHYS_SDRAM_1			0x40000000	/* Base address */
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* Max 1 GB RAM */
@@ -43,15 +40,13 @@
 #endif
 
 /* Framebuffer support */
-#ifdef CONFIG_VIDEO
+#ifdef CONFIG_DM_VIDEO
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(512 << 10)
 #endif
 
 /* Boot Linux */
 #define CONFIG_BOOTFILE		"uImage"
-#define CONFIG_LOADADDR		0x42000000
-#define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
 
 /* Extra Environment */
 #define CONFIG_EXTRA_ENV_SETTINGS \

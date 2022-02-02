@@ -18,14 +18,9 @@
  */
 
 /* I2C */
-#define CONFIG_SYS_I2C_LEGACY
-#define CONFIG_SYS_I2C_MVTWSI
 #define CONFIG_I2C_MVTWSI_BASE0		MVEBU_TWSI_BASE
-#define CONFIG_SYS_I2C_SLAVE		0x0
-#define CONFIG_SYS_I2C_SPEED		100000
 
 /* USB/EHCI configuration */
-#define CONFIG_EHCI_IS_TDI
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 3
 
 /* Environment in SPI NOR flash */
@@ -42,7 +37,6 @@
 #endif
 
 /* NAND */
-#define CONFIG_SYS_NAND_ONFI_DETECTION
 
 /*
  * mv-common.h should be defined after CMD configs since it used them

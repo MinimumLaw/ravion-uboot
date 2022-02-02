@@ -10,10 +10,12 @@ U-Boot API documentation
    efi
    getopt
    linker_lists
+   lmb
    logging
    pinctrl
    rng
    sandbox
    serial
+   sysreset
    timer
    unicode

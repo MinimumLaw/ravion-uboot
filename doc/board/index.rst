@@ -10,11 +10,13 @@ Board-specific doc
    advantech/index
    AndesTech/index
    amlogic/index
+   apple/index
    atmel/index
    congatec/index
    coreboot/index
    emulation/index
    google/index
+   highbank/index
    intel/index
    kontron/index
    microchip/index
@@ -22,10 +24,13 @@ Board-specific doc
    openpiton/index
    qualcomm/index
    rockchip/index
+   samsung/index
+   siemens/index
    sifive/index
    sipeed/index
    socionext/index
    st/index
+   ste/index
    tbs/index
    ti/index
    toradex/index

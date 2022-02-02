@@ -15,16 +15,12 @@
 #define CONFIG_SPL_BSS_START_ADDR	0x00128000
 #define CONFIG_SPL_BSS_MAX_SIZE	0x1000  /* 4 KB */
 
-#define CONFIG_FSL_USDHC
 #define CONFIG_SYS_BOOTMAPSZ		(256 << 20)
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define USDHC1_BASE_ADDR		0x5B010000
 #define USDHC2_BASE_ADDR		0x5B020000
 #define USDHC3_BASE_ADDR		0x5B030000
 
-#define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
-
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 /* FUSE command */
 
 /* Boot M4 */
@@ -122,9 +118,6 @@
 	   "else booti ${loadaddr} - ${fdt_addr}; fi"
 
 /* Link Definitions */
-#define CONFIG_LOADADDR			0x80280000
-
-#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
 #define CONFIG_SYS_INIT_SP_ADDR		0x80200000
 
@@ -145,9 +138,6 @@
  */
 #define CONFIG_MMCROOT			"/dev/mmcblk2p2"  /* USDHC3 */
 #define CONFIG_SYS_FSL_USDHC_NUM	3
-
-/* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		((CONFIG_ENV_SIZE + (32 * 1024)) * 1024)
 
 #define CONFIG_SYS_SDRAM_BASE		0x80000000
 #define PHYS_SDRAM_1			0x80000000

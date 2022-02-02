@@ -318,3 +318,36 @@ static int dm_test_ofnode_get_path(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_ofnode_get_path, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_conf(struct unit_test_state *uts)
+{
+	ut_assert(!ofnode_conf_read_bool("missing"));
+	ut_assert(ofnode_conf_read_bool("testing-bool"));
+
+	ut_asserteq(123, ofnode_conf_read_int("testing-int", 0));
+	ut_asserteq(6, ofnode_conf_read_int("missing", 6));
+
+	ut_assertnull(ofnode_conf_read_str("missing"));
+	ut_asserteq_str("testing", ofnode_conf_read_str("testing-str"));
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_conf, 0);
+
+static int dm_test_ofnode_for_each_compatible_node(struct unit_test_state *uts)
+{
+	const char compatible[] = "denx,u-boot-fdt-test";
+	bool found = false;
+	ofnode node;
+
+	ofnode_for_each_compatible_node(node, compatible) {
+		ut_assert(ofnode_device_is_compatible(node, compatible));
+		found = true;
+	}
+
+	/* There should be at least one matching node */
+	ut_assert(found);
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_for_each_compatible_node, UT_TESTF_SCAN_FDT);

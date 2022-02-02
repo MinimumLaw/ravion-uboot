@@ -22,8 +22,6 @@
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
 
-#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-
 #ifndef CONFIG_SPL_BUILD
 
 #define MEM_LAYOUT_ENV_SETTINGS \
@@ -82,7 +80,6 @@
 
 #endif /* ! CONFIG_SPL_BUILD */
 
-#define CONFIG_BMP_16BPP
 #define SPLASH_SCREEN_NAND_PART "nand0,10"
 #define SPLASH_SCREEN_BMP_FILE_SIZE 0x26000
 #define SPLASH_SCREEN_BMP_LOAD_ADDR 0x82000000
@@ -108,14 +105,6 @@
 #define CONFIG_SYS_BOOTCOUNT_LE
 
 #ifdef CONFIG_MTD_RAW_NAND
-
-#define CONFIG_SYS_NAND_5_ADDR_CYCLE
-#define CONFIG_SYS_NAND_PAGE_COUNT      (CONFIG_SYS_NAND_BLOCK_SIZE / \
-					CONFIG_SYS_NAND_PAGE_SIZE)
-#define CONFIG_SYS_NAND_PAGE_SIZE       4096
-#define CONFIG_SYS_NAND_OOBSIZE         256
-#define CONFIG_SYS_NAND_BLOCK_SIZE      (256 * 1024)
-
 #define CONFIG_SYS_NAND_ECCPOS  {   2,   3,   4,   5,   6,   7,   8,   9, \
 			 10,  11,  12,  13,  14,  15,  16,  17,  18,  19, \
 			 20,  21,  22,  23,  24,  25,  26,  27,  28,  29, \
@@ -140,11 +129,7 @@
 			}
 #define CONFIG_SYS_NAND_ECCSIZE         512
 #define CONFIG_SYS_NAND_ECCBYTES        26
-#define CONFIG_SYS_NAND_ONFI_DETECTION
-#define CONFIG_NAND_OMAP_ECCSCHEME      OMAP_ECC_BCH16_CODE_HW
 #define MTDIDS_DEFAULT                  "nand0=nand.0"
-
-#define CONFIG_SYS_NAND_BAD_BLOCK_POS   NAND_LARGE_BADBLOCK_POS
 
 #endif /* CONFIG_MTD_RAW_NAND */
 

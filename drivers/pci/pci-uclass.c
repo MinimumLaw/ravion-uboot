@@ -304,8 +304,8 @@ int pci_bus_clrset_config32(struct udevice *bus, pci_dev_t bdf, int offset,
 	return pci_bus_write_config(bus, bdf, offset, val, PCI_SIZE_32);
 }
 
-int pci_write_config(pci_dev_t bdf, int offset, unsigned long value,
-		     enum pci_size_t size)
+static int pci_write_config(pci_dev_t bdf, int offset, unsigned long value,
+			    enum pci_size_t size)
 {
 	struct udevice *bus;
 	int ret;
@@ -369,8 +369,8 @@ int pci_bus_read_config(const struct udevice *bus, pci_dev_t bdf, int offset,
 	return ops->read_config(bus, bdf, offset, valuep, size);
 }
 
-int pci_read_config(pci_dev_t bdf, int offset, unsigned long *valuep,
-		    enum pci_size_t size)
+static int pci_read_config(pci_dev_t bdf, int offset, unsigned long *valuep,
+			   enum pci_size_t size)
 {
 	struct udevice *bus;
 	int ret;
@@ -627,12 +627,21 @@ int pci_generic_mmap_read_config(
 
 int dm_pci_hose_probe_bus(struct udevice *bus)
 {
+	u8 header_type;
 	int sub_bus;
 	int ret;
 	int ea_pos;
 	u8 reg;
 
 	debug("%s\n", __func__);
+
+	dm_pci_read_config8(bus, PCI_HEADER_TYPE, &header_type);
+	header_type &= 0x7f;
+	if (header_type != PCI_HEADER_TYPE_BRIDGE) {
+		debug("%s: Skipping PCI device %d with Non-Bridge Header Type 0x%x\n",
+		      __func__, PCI_DEV(dm_pci_get_bdf(bus)), header_type);
+		return log_msg_ret("probe", -EINVAL);
+	}
 
 	ea_pos = dm_pci_find_capability(bus, PCI_CAP_ID_EA);
 	if (ea_pos) {
@@ -856,10 +865,7 @@ int pci_bind_bus_devices(struct udevice *bus)
 		/* Check only the first access, we don't expect problems */
 		ret = pci_bus_read_config(bus, bdf, PCI_VENDOR_ID, &vendor,
 					  PCI_SIZE_16);
-		if (ret)
-			goto error;
-
-		if (vendor == 0xffff || vendor == 0x0000)
+		if (ret || vendor == 0xffff || vendor == 0x0000)
 			continue;
 
 		pci_bus_read_config(bus, bdf, PCI_HEADER_TYPE,
@@ -940,10 +946,6 @@ int pci_bind_bus_devices(struct udevice *bus)
 	}
 
 	return 0;
-error:
-	printf("Cannot read bus configuration: %d\n", ret);
-
-	return ret;
 }
 
 static void decode_regions(struct pci_controller *hose, ofnode parent_node,
@@ -1433,9 +1435,9 @@ phys_addr_t dm_pci_bus_to_phys(struct udevice *dev, pci_addr_t bus_addr,
 	return phys_addr;
 }
 
-int _dm_pci_phys_to_bus(struct udevice *dev, phys_addr_t phys_addr,
-			unsigned long flags, unsigned long skip_mask,
-			pci_addr_t *ba)
+static int _dm_pci_phys_to_bus(struct udevice *dev, phys_addr_t phys_addr,
+			       unsigned long flags, unsigned long skip_mask,
+			       pci_addr_t *ba)
 {
 	struct pci_region *res;
 	struct udevice *ctlr;

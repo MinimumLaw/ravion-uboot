@@ -15,12 +15,11 @@
 #include <mmc.h>
 #include <clk.h>
 #include <reset.h>
+#include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
-#include <asm-generic/gpio.h>
 #include <linux/delay.h>
 
 #ifndef CCM_MMC_CTRL_MODE_SEL_NEW
@@ -73,10 +72,12 @@ static int mmc_resource_init(int sdc_no)
 		priv->reg = (struct sunxi_mmc *)SUNXI_MMC1_BASE;
 		priv->mclkreg = &ccm->sd1_clk_cfg;
 		break;
+#ifdef SUNXI_MMC2_BASE
 	case 2:
 		priv->reg = (struct sunxi_mmc *)SUNXI_MMC2_BASE;
 		priv->mclkreg = &ccm->sd2_clk_cfg;
 		break;
+#endif
 #ifdef SUNXI_MMC3_BASE
 	case 3:
 		priv->reg = (struct sunxi_mmc *)SUNXI_MMC3_BASE;
