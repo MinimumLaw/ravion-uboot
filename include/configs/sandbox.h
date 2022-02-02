@@ -6,14 +6,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#ifdef FTRACE
-#define CONFIG_TRACE
-#define CONFIG_TRACE_BUFFER_SIZE	(16 << 20)
-#define CONFIG_TRACE_EARLY_SIZE		(16 << 20)
-#define CONFIG_TRACE_EARLY
-#define CONFIG_TRACE_EARLY_ADDR		0x00100000
-#endif
-
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_IO_TRACE
 #endif
@@ -24,11 +16,7 @@
 
 #define CONFIG_HOST_MAX_DEVICES 4
 
-/*
- * Size of malloc() pool, before and after relocation
- */
 #define CONFIG_MALLOC_F_ADDR		0x0010000
-#define CONFIG_SYS_MALLOC_LEN		(32 << 20)	/* 32MB  */
 
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 
@@ -36,10 +24,6 @@
 
 /* SPI - enable all SPI flash types for testing purposes */
 
-#define CONFIG_I2C_EDID
-
-/* Memory things - we don't really want a memory test */
-#define CONFIG_SYS_LOAD_ADDR		0x00000000
 #define CONFIG_SYS_FDT_LOAD_ADDR	        0x100
 
 #define CONFIG_PHYSMEM

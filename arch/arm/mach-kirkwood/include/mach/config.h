@@ -63,13 +63,6 @@
 #endif /* CONFIG_CMD_NET */
 
 /*
- * USB/EHCI
- */
-#ifdef CONFIG_CMD_USB
-#define CONFIG_EHCI_IS_TDI
-#endif /* CONFIG_CMD_USB */
-
-/*
  * IDE Support on SATA ports
  */
 #ifdef CONFIG_IDE
@@ -90,18 +83,6 @@
 /* ATA registers base is at SATA controller base */
 #define CONFIG_SYS_ATA_BASE_ADDR	MV_SATA_BASE
 #endif /* CONFIG_IDE */
-
-/*
- * I2C related stuff
- */
-#if defined(CONFIG_CMD_I2C) && !CONFIG_IS_ENABLED(DM_I2C)
-#ifndef CONFIG_SYS_I2C_SOFT
-#define CONFIG_SYS_I2C_LEGACY
-#define CONFIG_SYS_I2C_MVTWSI
-#endif
-#define CONFIG_SYS_I2C_SLAVE		0x0
-#define CONFIG_SYS_I2C_SPEED		100000
-#endif
 
 /* Use common timer */
 #define CONFIG_SYS_TIMER_COUNTS_DOWN

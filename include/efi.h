@@ -321,7 +321,7 @@ struct efi_info_hdr {
  * struct efi_entry_hdr - Header for a table entry
  *
  * @type:	enum eft_entry_t
- * @size	size of entry bytes excluding header and padding
+ * @size:	size of entry bytes excluding header and padding
  * @addr:	address of this entry (0 if it follows the header )
  * @link:	size of entry including header and padding
  * @spare1:	Spare space for expansion
@@ -414,6 +414,17 @@ struct efi_priv {
 	void *next_hdr;
 };
 
+/*
+ * EFI attributes of the udevice handled by efi_media driver
+ *
+ * @handle: handle of the controller on which this driver is installed
+ * @blkio: block io protocol proxied by this driver
+ */
+struct efi_media_plat {
+	efi_handle_t		handle;
+	struct efi_block_io	*blkio;
+};
+
 /* Base address of the EFI image */
 extern char image_base[];
 
@@ -444,8 +455,14 @@ extern char _binary_u_boot_bin_start[], _binary_u_boot_bin_end[];
  *
  * @return pointer to EFI system table
  */
-
 struct efi_system_table *efi_get_sys_table(void);
+
+/**
+ * efi_get_boot() - Get access to the EFI boot services table
+ *
+ * @return pointer to EFI boot services table
+ */
+struct efi_boot_services *efi_get_boot(void);
 
 /**
  * efi_get_ram_base() - Find the base of RAM

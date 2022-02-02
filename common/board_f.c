@@ -244,7 +244,7 @@ __weak int dram_init_banksize(void)
 	return 0;
 }
 
-#if defined(CONFIG_SYS_I2C_LEGACY)
+#if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
 static int init_func_i2c(void)
 {
 	puts("I2C:   ");
@@ -673,30 +673,32 @@ static int reloc_bloblist(void)
 
 static int setup_reloc(void)
 {
-	if (gd->flags & GD_FLG_SKIP_RELOC) {
-		debug("Skipping relocation due to flag\n");
-		return 0;
-	}
-
+	if (!(gd->flags & GD_FLG_SKIP_RELOC)) {
 #ifdef CONFIG_SYS_TEXT_BASE
 #ifdef ARM
-	gd->reloc_off = gd->relocaddr - (unsigned long)__image_copy_start;
+		gd->reloc_off = gd->relocaddr - (unsigned long)__image_copy_start;
 #elif defined(CONFIG_M68K)
-	/*
-	 * On all ColdFire arch cpu, monitor code starts always
-	 * just after the default vector table location, so at 0x400
-	 */
-	gd->reloc_off = gd->relocaddr - (CONFIG_SYS_TEXT_BASE + 0x400);
+		/*
+		 * On all ColdFire arch cpu, monitor code starts always
+		 * just after the default vector table location, so at 0x400
+		 */
+		gd->reloc_off = gd->relocaddr - (CONFIG_SYS_TEXT_BASE + 0x400);
 #elif !defined(CONFIG_SANDBOX)
-	gd->reloc_off = gd->relocaddr - CONFIG_SYS_TEXT_BASE;
+		gd->reloc_off = gd->relocaddr - CONFIG_SYS_TEXT_BASE;
 #endif
 #endif
+	}
+
 	memcpy(gd->new_gd, (char *)gd, sizeof(gd_t));
 
-	debug("Relocation Offset is: %08lx\n", gd->reloc_off);
-	debug("Relocating to %08lx, new gd at %08lx, sp at %08lx\n",
-	      gd->relocaddr, (ulong)map_to_sysmem(gd->new_gd),
-	      gd->start_addr_sp);
+	if (gd->flags & GD_FLG_SKIP_RELOC) {
+		debug("Skipping relocation due to flag\n");
+	} else {
+		debug("Relocation Offset is: %08lx\n", gd->reloc_off);
+		debug("Relocating to %08lx, new gd at %08lx, sp at %08lx\n",
+		      gd->relocaddr, (ulong)map_to_sysmem(gd->new_gd),
+		      gd->start_addr_sp);
+	}
 
 	return 0;
 }
@@ -871,7 +873,7 @@ static const init_fnc_t init_sequence_f[] = {
 	misc_init_f,
 #endif
 	INIT_FUNC_WATCHDOG_RESET
-#if defined(CONFIG_SYS_I2C_LEGACY)
+#if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
 	init_func_i2c,
 #endif
 #if defined(CONFIG_VID) && !defined(CONFIG_SPL)

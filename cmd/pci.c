@@ -59,7 +59,7 @@ static void pci_show_regs(struct udevice *dev, struct pci_reg_info *regs)
 	}
 }
 
-int pci_bar_show(struct udevice *dev)
+static int pci_bar_show(struct udevice *dev)
 {
 	u8 header_type;
 	int bar_cnt, bar_id, mem_type;
@@ -71,9 +71,14 @@ int pci_bar_show(struct udevice *dev)
 	int prefetchable;
 
 	dm_pci_read_config8(dev, PCI_HEADER_TYPE, &header_type);
+	header_type &= 0x7f;
 
 	if (header_type == PCI_HEADER_TYPE_CARDBUS) {
 		printf("CardBus doesn't support BARs\n");
+		return -ENOSYS;
+	} else if (header_type != PCI_HEADER_TYPE_NORMAL &&
+		   header_type != PCI_HEADER_TYPE_BRIDGE) {
+		printf("unknown header type\n");
 		return -ENOSYS;
 	}
 
@@ -223,7 +228,7 @@ static struct pci_reg_info regs_cardbus[] = {
  *
  * @dev: Bus+Device+Function number
  */
-void pci_header_show(struct udevice *dev)
+static void pci_header_show(struct udevice *dev)
 {
 	unsigned long class, header_type;
 
@@ -234,7 +239,7 @@ void pci_header_show(struct udevice *dev)
 	       pci_class_str(class));
 	pci_show_regs(dev, regs_rest);
 
-	switch (header_type & 0x03) {
+	switch (header_type & 0x7f) {
 	case PCI_HEADER_TYPE_NORMAL:	/* "normal" PCI device */
 		pci_show_regs(dev, regs_normal);
 		break;
@@ -251,7 +256,7 @@ void pci_header_show(struct udevice *dev)
     }
 }
 
-void pciinfo_header(int busnum, bool short_listing)
+static void pciinfo_header(int busnum, bool short_listing)
 {
 	printf("Scanning PCI devices on bus %d\n", busnum);
 

@@ -232,18 +232,18 @@ You can use other, more specific CONFIG options - see 'Automatic .dtsi
 inclusion' below.
 
 
-Using binman with OF_BOARD or OF_PRIOR_STAGE
+Using binman with OF_BOARD
 --------------------------------------------
 
 Normally binman is used with a board configured with OF_SEPARATE or OF_EMBED.
 This is a typical scenario where a device tree source that contains the binman
 node is provided in the arch/<arch>/dts directory for a specific board.
 
-However for a board configured with OF_BOARD or OF_PRIOR_STAGE, no device tree
-blob is provided in the U-Boot build phase hence the binman node information
-is not available. In order to support such use case, a new Kconfig option
-BINMAN_STANDALONE_FDT is introduced, to tell the build system that a standalone
-device tree blob containing binman node is explicitly required.
+However for a board configured with OF_BOARD, no device tree blob is provided
+in the U-Boot build phase hence the binman node information is not available.
+In order to support such use case, a new Kconfig option BINMAN_STANDALONE_FDT
+is introduced, to tell the build system that a standalone device tree blob
+containing binman node is explicitly required.
 
 Note there is a Kconfig option BINMAN_FDT which enables U-Boot run time to
 access information about binman entries, stored in the device tree in a binman
@@ -251,10 +251,6 @@ node. Generally speaking, this option makes sense for OF_SEPARATE or OF_EMBED.
 For the other OF_CONTROL methods, it's quite possible binman node is not
 available as binman is invoked during the build phase, thus this option is not
 turned on by default for these OF_CONTROL methods.
-
-See qemu-riscv64_spl_defconfig for an example of how binman is used with
-OF_PRIOR_STAGE to generate u-boot.itb image.
-
 
 Access to binman entry offsets at run time (symbols)
 ----------------------------------------------------
@@ -820,6 +816,42 @@ the 'warning' line in scripts/Makefile.lib to see what it has found::
    # Uncomment for debugging
    # This shows all the files that were considered and the one that we chose.
    # u_boot_dtsi_options_debug = $(u_boot_dtsi_options_raw)
+
+
+Updating an ELF file
+====================
+
+For the EFI app, where U-Boot is loaded from UEFI and runs as an app, there is
+no way to update the devicetree after U-Boot is built. Normally this works by
+creating a new u-boot.dtb.out with he updated devicetree, which is automatically
+built into the output image. With ELF this is not possible since the ELF is
+not part of an image, just a stand-along file. We must create an updated ELF
+file with the new devicetree.
+
+This is handled by the --update-fdt-in-elf option. It takes four arguments,
+separated by comma:
+
+   infile     - filename of input ELF file, e.g. 'u-boot's
+   outfile    - filename of output ELF file, e.g. 'u-boot.out'
+   begin_sym - symbol at the start of the embedded devicetree, e.g.
+   '__dtb_dt_begin'
+   end_sym   - symbol at the start of the embedded devicetree, e.g.
+   '__dtb_dt_end'
+
+When this flag is used, U-Boot does all the normal packaging, but as an
+additional step, it creates a new ELF file with the new devicetree embedded in
+it.
+
+If logging is enabled you will see a message like this::
+
+   Updating file 'u-boot' with data length 0x400a (16394) between symbols
+   '__dtb_dt_begin' and '__dtb_dt_end'
+
+There must be enough space for the updated devicetree. If not, an error like
+the following is produced::
+
+   ValueError: Not enough space in 'u-boot' for data length 0x400a (16394);
+   size is 0x1744 (5956)
 
 
 Entry Documentation

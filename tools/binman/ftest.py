@@ -308,8 +308,8 @@ class TestFunctional(unittest.TestCase):
     def _DoTestFile(self, fname, debug=False, map=False, update_dtb=False,
                     entry_args=None, images=None, use_real_dtb=False,
                     use_expanded=False, verbosity=None, allow_missing=False,
-                    extra_indirs=None, threads=None,
-                    test_section_timeout=False):
+                    allow_fake_blobs=False, extra_indirs=None, threads=None,
+                    test_section_timeout=False, update_fdt_in_elf=None):
         """Run binman with a given test file
 
         Args:
@@ -331,9 +331,16 @@ class TestFunctional(unittest.TestCase):
             verbosity: Verbosity level to use (0-3, None=don't set it)
             allow_missing: Set the '--allow-missing' flag so that missing
                 external binaries just produce a warning instead of an error
+            allow_fake_blobs: Set the '--fake-ext-blobs' flag
             extra_indirs: Extra input directories to add using -I
             threads: Number of threads to use (None for default, 0 for
                 single-threaded)
+            test_section_timeout: True to force the first time to timeout, as
+                used in testThreadTimeout()
+            update_fdt_in_elf: Value to pass with --update-fdt-in-elf=xxx
+
+        Returns:
+            int return code, 0 on success
         """
         args = []
         if debug:
@@ -363,6 +370,10 @@ class TestFunctional(unittest.TestCase):
                 args.append('-a%s=%s' % (arg, value))
         if allow_missing:
             args.append('-M')
+        if allow_fake_blobs:
+            args.append('--fake-ext-blobs')
+        if update_fdt_in_elf:
+            args += ['--update-fdt-in-elf', update_fdt_in_elf]
         if images:
             for image in images:
                 args += ['-i', image]
@@ -4565,8 +4576,7 @@ class TestFunctional(unittest.TestCase):
         with self.assertRaises(ValueError) as e:
             self._DoTestFile('202_section_timeout.dts',
                              test_section_timeout=True)
-        self.assertIn("Node '/binman/section@0': Timed out obtaining contents",
-                      str(e.exception))
+        self.assertIn("Timed out obtaining contents", str(e.exception))
 
     def testTiming(self):
         """Test output of timing information"""
@@ -4575,6 +4585,94 @@ class TestFunctional(unittest.TestCase):
             state.TimingShow()
         self.assertIn('read:', stdout.getvalue())
         self.assertIn('compress:', stdout.getvalue())
+
+    def testUpdateFdtInElf(self):
+        """Test that we can update the devicetree in an ELF file"""
+        infile = elf_fname = self.ElfTestFile('u_boot_binman_embed')
+        outfile = os.path.join(self._indir, 'u-boot.out')
+        begin_sym = 'dtb_embed_begin'
+        end_sym = 'dtb_embed_end'
+        retcode = self._DoTestFile(
+            '060_fdt_update.dts', update_dtb=True,
+            update_fdt_in_elf=','.join([infile,outfile,begin_sym,end_sym]))
+        self.assertEqual(0, retcode)
+
+        # Check that the output file does in fact contact a dtb with the binman
+        # definition in the correct place
+        syms = elf.GetSymbolFileOffset(infile,
+                                       ['dtb_embed_begin', 'dtb_embed_end'])
+        data = tools.ReadFile(outfile)
+        dtb_data = data[syms['dtb_embed_begin'].offset:
+                        syms['dtb_embed_end'].offset]
+
+        dtb = fdt.Fdt.FromData(dtb_data)
+        dtb.Scan()
+        props = self._GetPropTree(dtb, BASE_DTB_PROPS + REPACK_DTB_PROPS)
+        self.assertEqual({
+            'image-pos': 0,
+            'offset': 0,
+            '_testing:offset': 32,
+            '_testing:size': 2,
+            '_testing:image-pos': 32,
+            'section@0/u-boot:offset': 0,
+            'section@0/u-boot:size': len(U_BOOT_DATA),
+            'section@0/u-boot:image-pos': 0,
+            'section@0:offset': 0,
+            'section@0:size': 16,
+            'section@0:image-pos': 0,
+
+            'section@1/u-boot:offset': 0,
+            'section@1/u-boot:size': len(U_BOOT_DATA),
+            'section@1/u-boot:image-pos': 16,
+            'section@1:offset': 16,
+            'section@1:size': 16,
+            'section@1:image-pos': 16,
+            'size': 40
+        }, props)
+
+    def testUpdateFdtInElfInvalid(self):
+        """Test that invalid args are detected with --update-fdt-in-elf"""
+        with self.assertRaises(ValueError) as e:
+            self._DoTestFile('060_fdt_update.dts', update_fdt_in_elf='fred')
+        self.assertIn("Invalid args ['fred'] to --update-fdt-in-elf",
+                      str(e.exception))
+
+    def testUpdateFdtInElfNoSyms(self):
+        """Test that missing symbols are detected with --update-fdt-in-elf"""
+        infile = elf_fname = self.ElfTestFile('u_boot_binman_embed')
+        outfile = ''
+        begin_sym = 'wrong_begin'
+        end_sym = 'wrong_end'
+        with self.assertRaises(ValueError) as e:
+            self._DoTestFile(
+                '060_fdt_update.dts',
+                update_fdt_in_elf=','.join([infile,outfile,begin_sym,end_sym]))
+        self.assertIn("Expected two symbols 'wrong_begin' and 'wrong_end': got 0:",
+                      str(e.exception))
+
+    def testUpdateFdtInElfTooSmall(self):
+        """Test that an over-large dtb is detected with --update-fdt-in-elf"""
+        infile = elf_fname = self.ElfTestFile('u_boot_binman_embed_sm')
+        outfile = os.path.join(self._indir, 'u-boot.out')
+        begin_sym = 'dtb_embed_begin'
+        end_sym = 'dtb_embed_end'
+        with self.assertRaises(ValueError) as e:
+            self._DoTestFile(
+                '060_fdt_update.dts', update_dtb=True,
+                update_fdt_in_elf=','.join([infile,outfile,begin_sym,end_sym]))
+        self.assertRegex(
+            str(e.exception),
+            "Not enough space in '.*u_boot_binman_embed_sm' for data length.*")
+
+    def testFakeBlob(self):
+        """Test handling of faking an external blob"""
+        with test_util.capture_sys_output() as (stdout, stderr):
+            self._DoTestFile('203_fake_blob.dts', allow_missing=True,
+                             allow_fake_blobs=True)
+        err = stderr.getvalue()
+        self.assertRegex(err,
+                         "Image '.*' has faked external blobs and is non-functional: .*")
+        os.remove('binman_faking_test_blob')
 
 
 if __name__ == "__main__":

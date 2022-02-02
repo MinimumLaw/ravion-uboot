@@ -699,7 +699,7 @@ static int mmc_send_op_cond(struct mmc *mmc)
 	mmc_go_idle(mmc);
 
 	start = get_timer(0);
- 	/* Asking to the card its capabilities */
+	/* Asking to the card its capabilities */
 	for (i = 0; ; i++) {
 		err = mmc_send_op_cond_iter(mmc, i != 0);
 		if (err)
@@ -819,11 +819,11 @@ static int __mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value,
 		return ret;
 
 	/*
-	 * In cases when not allowed to poll by using CMD13 or because we aren't
+	 * In cases when neiter allowed to poll by using CMD13 nor we are
 	 * capable of polling by using mmc_wait_dat0, then rely on waiting the
 	 * stated timeout to be sufficient.
 	 */
-	if (ret == -ENOSYS || !send_status) {
+	if (ret == -ENOSYS && !send_status) {
 		mdelay(timeout_ms);
 		return 0;
 	}

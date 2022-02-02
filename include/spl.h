@@ -305,6 +305,14 @@ ulong spl_get_image_text_base(void);
 bool spl_load_simple_fit_skip_processing(void);
 
 /**
+ * spl_load_simple_fit_fix_load() - Hook to make fixes
+ * after fit image header is loaded
+ *
+ * Returns pointer to fit
+ */
+void *spl_load_simple_fit_fix_load(const void *fit);
+
+/**
  * spl_load_simple_fit() - Loads a fit image from a device.
  * @spl_image:	Image description to set up
  * @info:	Structure containing the information required to load data.
@@ -459,6 +467,15 @@ int spl_board_boot_device(u32 boot_device);
  * @spl_image: Image description to set up
  */
 void __noreturn jump_to_image_linux(struct spl_image_info *spl_image);
+
+/**
+ * jump_to_image_linux() - Jump to OP-TEE OS from SPL
+ *
+ * This jumps into OP-TEE OS using the information in @spl_image.
+ *
+ * @spl_image: Image description to set up
+ */
+void __noreturn jump_to_image_optee(struct spl_image_info *spl_image);
 
 /**
  * spl_start_uboot() - Check if SPL should start the kernel or U-Boot
@@ -751,7 +768,7 @@ struct bl_params *bl2_plat_get_bl31_params_v2_default(uintptr_t bl32_entry,
  * @arg2: device tree address, (ARMv7 standard bootarg #2)
  * @arg3: non-secure entry address (ARMv7 bootarg #0)
  */
-void spl_optee_entry(void *arg0, void *arg1, void *arg2, void *arg3);
+void __noreturn spl_optee_entry(void *arg0, void *arg1, void *arg2, void *arg3);
 
 /**
  * spl_invoke_opensbi - boot using a RISC-V OpenSBI image

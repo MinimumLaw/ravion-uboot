@@ -10,8 +10,6 @@
  * High Level Configuration Options (easy to change)
  */
 
-#define CONFIG_DISPLAY_BOARDINFO_LATE
-
 /*
  * NS16550 Configuration
  */
@@ -29,7 +27,6 @@
  */
 
 /* NAND */
-#define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_SYS_MAX_NAND_DEVICE 1
 
 #define BBT_CUSTOM_SCAN
@@ -46,9 +43,6 @@
 
 /* Additional FS support/configuration */
 
-/* USB/EHCI configuration */
-#define CONFIG_EHCI_IS_TDI
-
 /* Environment in SPI NOR flash */
 
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs a longer aneg time */
@@ -59,23 +53,14 @@
 #endif
 
 /* NAND */
-#define CONFIG_SYS_NAND_ONFI_DETECTION
-
-#define CONFIG_SYS_MALLOC_LEN		(4 << 20)
 
 #include <asm/arch/config.h>
-
-/*
- * Other required minimal configurations
- */
-#define CONFIG_SYS_RESET_ADDRESS 0xffff0000	/* Rst Vector Adr */
 
 /* Keep device tree and initrd in low memory so the kernel can access them */
 #define CONFIG_EXTRA_ENV_SETTINGS	\
 	"fdt_high=0x10000000\0"		\
 	"initrd_high=0x10000000\0"
 
-#define CONFIG_SYS_LOAD_ADDR	0x1000000
 #define CONFIG_UBI_PART			user
 #define CONFIG_UBIFS_VOLUME		user
 

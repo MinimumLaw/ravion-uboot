@@ -6,6 +6,8 @@
 #ifndef _CONFIG_THEADORABLE_H
 #define _CONFIG_THEADORABLE_H
 
+#include <linux/sizes.h>
+
 /*
  * High Level Configuration Options (easy to change)
  */
@@ -23,15 +25,10 @@
  */
 
 /* I2C */
-#define CONFIG_SYS_I2C_LEGACY
-#define CONFIG_SYS_I2C_MVTWSI
 #define CONFIG_I2C_MVTWSI_BASE0		MVEBU_TWSI_BASE
 #define CONFIG_I2C_MVTWSI_BASE1		MVEBU_TWSI1_BASE
-#define CONFIG_SYS_I2C_SLAVE		0x0
-#define CONFIG_SYS_I2C_SPEED		100000
 
 /* USB/EHCI configuration */
-#define CONFIG_EHCI_IS_TDI
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 3
 
 /* Environment in SPI NOR flash */
@@ -93,6 +90,6 @@
 #define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
 
 /* Enable DDR support in SPL (DDR3 training from Marvell bin_hdr) */
-#define CONFIG_DDR_FIXED_SIZE		(2 << 20)	/* 2GiB */
+#define CONFIG_SYS_SDRAM_SIZE		SZ_2G
 
 #endif /* _CONFIG_THEADORABLE_H */

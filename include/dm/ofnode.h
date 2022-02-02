@@ -1010,6 +1010,30 @@ ofnode ofnode_by_prop_value(ofnode from, const char *propname,
 	     node = ofnode_next_subnode(node))
 
 /**
+ * ofnode_for_each_compatible_node() - iterate over all nodes with a given
+ *				       compatible string
+ *
+ * @node:       child node (ofnode, lvalue)
+ * @compat:     compatible string to match
+ *
+ * This is a wrapper around a for loop and is used like so:
+ *
+ *	ofnode node;
+ *
+ *	ofnode_for_each_compatible_node(node, parent, compatible) {
+ *		Use node
+ *		...
+ *	}
+ *
+ * Note that this is implemented as a macro and @node is used as
+ * iterator in the loop.
+ */
+#define ofnode_for_each_compatible_node(node, compat) \
+	for (node = ofnode_by_compatible(ofnode_null(), compat); \
+	     ofnode_valid(node); \
+	     node = ofnode_by_compatible(node, compat))
+
+/**
  * ofnode_get_child_count() - get the child count of a ofnode
  *
  * @node: valid node to get its child count
@@ -1116,5 +1140,42 @@ int ofnode_write_string(ofnode node, const char *propname, const char *value);
  * @return 0 if successful, -ve on error
  */
 int ofnode_set_enabled(ofnode node, bool value);
+
+/**
+ * ofnode_conf_read_bool() - Read a boolean value from the U-Boot config
+ *
+ * This reads a property from the /config node of the devicetree.
+ *
+ * See doc/config.txt for bindings
+ *
+ * @prop_name	property name to look up
+ * @return true, if it exists, false if not
+ */
+bool ofnode_conf_read_bool(const char *prop_name);
+
+/**
+ * ofnode_conf_read_int() - Read an integer value from the U-Boot config
+ *
+ * This reads a property from the /config node of the devicetree.
+ *
+ * See doc/config.txt for bindings
+ *
+ * @prop_name: property name to look up
+ * @default_val: default value to return if the property is not found
+ * @return integer value, if found, or @default_val if not
+ */
+int ofnode_conf_read_int(const char *prop_name, int default_val);
+
+/**
+ * ofnode_conf_read_str() - Read a string value from the U-Boot config
+ *
+ * This reads a property from the /config node of the devicetree.
+ *
+ * See doc/config.txt for bindings
+ *
+ * @prop_name: property name to look up
+ * @return string value, if found, or NULL if not
+ */
+const char *ofnode_conf_read_str(const char *prop_name);
 
 #endif

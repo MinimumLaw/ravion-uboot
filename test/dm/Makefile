@@ -37,6 +37,7 @@ obj-$(CONFIG_DMA) += dma.o
 obj-$(CONFIG_VIDEO_MIPI_DSI) += dsi_host.o
 obj-$(CONFIG_DM_DSA) += dsa.o
 obj-$(CONFIG_ECDSA_VERIFY) += ecdsa.o
+obj-$(CONFIG_EFI_MEDIA_SANDBOX) += efi_media.o
 obj-$(CONFIG_DM_ETH) += eth.o
 ifneq ($(CONFIG_EFI_PARTITION),)
 obj-$(CONFIG_FASTBOOT_FLASH_MMC) += fastboot.o
@@ -48,6 +49,7 @@ obj-$(CONFIG_DM_I2C) += i2c.o
 obj-$(CONFIG_SOUND) += i2s.o
 obj-y += irq.o
 obj-$(CONFIG_CLK_K210_SET_RATE) += k210_pll.o
+obj-$(CONFIG_IOMMU) += iommu.o
 obj-$(CONFIG_LED) += led.o
 obj-$(CONFIG_DM_MAILBOX) += mailbox.o
 obj-$(CONFIG_DM_MDIO) += mdio.o
@@ -105,6 +107,8 @@ obj-$(CONFIG_TIMER) += timer.o
 obj-$(CONFIG_DM_USB) += usb.o
 obj-$(CONFIG_DM_VIDEO) += video.o
 obj-$(CONFIG_VIRTIO_SANDBOX) += virtio.o
-obj-$(CONFIG_WDT) += wdt.o
+ifeq ($(CONFIG_WDT_GPIO)$(CONFIG_WDT_SANDBOX),yy)
+obj-y += wdt.o
+endif
 endif
 endif # !SPL

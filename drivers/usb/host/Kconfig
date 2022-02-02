@@ -57,6 +57,16 @@ config USB_XHCI_OCTEON
 	  family SoCs. This is a driver for the dwc3 to provide the glue logic
 	  to configure the controller.
 
+config USB_XHCI_OMAP
+	bool "Support for TI OMAP family xHCI USB controller"
+	depends on ARCH_OMAP2PLUS
+	help
+	  Enables support for the on-chip xHCI controller found on some TI SoC
+	  families.  Note that some families have multiple contollers while
+	  others only have something such as DesignWare-based controllers.
+	  Consult the SoC documentation to determine if this option applies
+	  to your hardware.
+
 config USB_XHCI_PCI
 	bool "Support for PCI-based xHCI USB controller"
 	depends on DM_USB
@@ -129,6 +139,9 @@ config USB_EHCI_HCD
 
 if USB_EHCI_HCD
 
+config USB_EHCI_IS_TDI
+	bool
+
 config USB_EHCI_ATMEL
 	bool  "Support for Atmel on-chip EHCI USB controller"
 	depends on ARCH_AT91
@@ -140,13 +153,13 @@ config USB_EHCI_MARVELL
 	bool "Support for Marvell on-chip EHCI USB controller"
 	depends on ARCH_MVEBU || ARCH_KIRKWOOD || ARCH_ORION5X
 	default y
+	select USB_EHCI_IS_TDI if !ARM64
 	---help---
 	  Enables support for the on-chip EHCI controller on MVEBU SoCs.
 
 config USB_EHCI_MX5
 	bool "Support for i.MX5 on-chip EHCI USB controller"
 	depends on ARCH_MX5
-	default n
 	help
 	  Enables support for the on-chip EHCI controller on i.MX5 SoCs.
 
@@ -166,6 +179,14 @@ config USB_EHCI_MX7
 	---help---
 	  Enables support for the on-chip EHCI controller on i.MX7 SoCs.
 
+config USB_EHCI_MXS
+	bool "Support for i.MX23 EHCI USB controller"
+	depends on ARCH_MX23
+	default y
+	select USB_EHCI_IS_TDI
+	help
+	  Enables support for the on-chip EHCI controller on i.MX23 SoCs.
+
 config USB_EHCI_OMAP
 	bool "Support for OMAP3+ on-chip EHCI USB controller"
 	depends on ARCH_OMAP2PLUS
@@ -173,6 +194,40 @@ config USB_EHCI_OMAP
 	---help---
 	  Enables support for the on-chip EHCI controller on OMAP3 and later
 	  SoCs.
+
+if USB_EHCI_OMAP
+
+config HAS_OMAP_EHCI_PHY1_RESET_GPIO
+	bool "PHY #1 requires a GPIO hold to it in RESET while PHY settles"
+	help
+	  Enable this to be able to configure the GPIO number used to hold the
+	  PHY in RESET for enough time until the PHY is settled and ready.
+
+config OMAP_EHCI_PHY1_RESET_GPIO
+	int "GPIO number to hold PHY #1 in RESET"
+	depends on HAS_OMAP_EHCI_PHY1_RESET_GPIO
+
+config HAS_OMAP_EHCI_PHY2_RESET_GPIO
+	bool "PHY #2 requires a GPIO hold to it in RESET while PHY settles"
+	help
+	  Enable this to be able to configure the GPIO number used to hold the
+	  PHY in RESET for enough time until the PHY is settled and ready.
+
+config OMAP_EHCI_PHY2_RESET_GPIO
+	int "GPIO number to hold PHY #2 in RESET"
+	depends on HAS_OMAP_EHCI_PHY2_RESET_GPIO
+
+config HAS_OMAP_EHCI_PHY3_RESET_GPIO
+	bool "PHY #3 requires a GPIO hold to it in RESET while PHY settles"
+	help
+	  Enable this to be able to configure the GPIO number used to hold the
+	  PHY in RESET for enough time until the PHY is settled and ready.
+
+config OMAP_EHCI_PHY3_RESET_GPIO
+	int "GPIO number to hold PHY #3 in RESET"
+	depends on HAS_OMAP_EHCI_PHY3_RESET_GPIO
+
+endif
 
 config USB_EHCI_VF
 	bool "Support for Vybrid on-chip EHCI USB controller"
@@ -195,7 +250,6 @@ config USB_EHCI_MSM
 	depends on DM_USB
 	select USB_ULPI_VIEWPORT
 	select MSM8916_USB_PHY
-	default n
 	---help---
 	  Enables support for the on-chip EHCI controller on Qualcomm
 	  Snapdragon SoCs.
@@ -209,12 +263,14 @@ config USB_EHCI_PCI
 config USB_EHCI_TEGRA
 	bool "Support for NVIDIA Tegra on-chip EHCI USB controller"
 	depends on ARCH_TEGRA
+	select USB_EHCI_IS_TDI
 	---help---
 	  Enable support for Tegra on-chip EHCI USB controller
 
 config USB_EHCI_ZYNQ
 	bool "Support for Xilinx Zynq on-chip EHCI USB controller"
 	default y if ARCH_ZYNQ
+	select USB_EHCI_IS_TDI
 	---help---
 	  Enable support for Zynq on-chip EHCI USB controller
 
@@ -222,13 +278,11 @@ config USB_EHCI_GENERIC
 	bool "Support for generic EHCI USB controller"
 	depends on DM_USB
 	default ARCH_SUNXI
-	default n
 	---help---
 	  Enables support for generic EHCI controller.
 
 config USB_EHCI_FSL
 	bool  "Support for FSL on-chip EHCI USB controller"
-	default n
 	select  CONFIG_EHCI_HCD_INIT_AFTER_RESET
 	---help---
 	  Enables support for the on-chip EHCI controller on FSL chips.
