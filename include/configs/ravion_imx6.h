@@ -176,6 +176,18 @@ SDRAM START - 0x1000 0000
 	"setenv prepare_module && " \
 	"saveenv\0"
 
+#define RECOVERY_BOOT \
+	"recovery_boot=" \
+	"load mmc 0:1 ${kernel_addr_r} zImage && " \
+	"load mmc 0:1 ${ramdisk_addr_r} initrd.img.gz && " \
+	"load mmc 0:1 ${fdt_addr_r} i${soc}${variant}-${vendor}-${board}.dtb && " \
+	"bootz ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}\0"
+
+#define CHECK_UBOOTENV \
+	"check_ubootenv=" \
+	"setenv bootmenu_4; " \
+	"load mmc 0:1 ${script_addr_r} uboot.env || saveenv\0"
+
 #define BOOTMENU_BOOTCMD \
 	"bootmenu_0=Normal boot=run bootcmd\0" \
 	"bootmenu_1=TFTP boot=run tftpboot\0" \
@@ -192,10 +204,12 @@ SDRAM START - 0x1000 0000
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"__INF0__=Ravion-V2 I.MX6 CPU Module BSP package\0" \
 	"__INF1__=Created: Alex A. Mihaylov AKA MinimumLaw, MinimumLaw@Rambler.Ru\0" \
-	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2021\0" \
+	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2022\0" \
 	"__INF3__=License: GPL v2 and above, https://github.com/MinimumLaw\0" \
 	"board=kitsbimx6\0" \
 	"bootcmd=" \
+	    "run check_ubootenv; " \
+	    "run recovery_boot; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
@@ -214,6 +228,8 @@ SDRAM START - 0x1000 0000
 	EMMC_BOOTCMD \
 	SATA_BOOTCMD \
 	BOOTMENU_BOOTCMD \
+	CHECK_UBOOTENV \
+	RECOVERY_BOOT \
 	SPL_UPDATE \
 	"splashpos=m,m\0"
 
