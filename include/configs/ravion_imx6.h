@@ -73,7 +73,7 @@ SDRAM START - 0x1000 0000
 #define CONFIG_INITRD_TAG
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(32 * 1024 * 1024)
+// #define CONFIG_SYS_MALLOC_LEN		(32 * 1024 * 1024)
 
 /* SATA */
 #ifdef CONFIG_CMD_SATA
@@ -176,6 +176,17 @@ SDRAM START - 0x1000 0000
 	"setenv prepare_module && " \
 	"saveenv\0"
 
+#define INITRD_BOOT \
+	"recovery_boot=" \
+	"load mmc 0:1 ${kernel_addr_r} board.kernel && " \
+	"load mmc 0:1 ${ramdisk_addr_r} board.ramdisk && " \
+	"load mmc 0:1 ${fdt_addr_r} board.dtb && " \
+	"bootm ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}\0"
+
+#define CHECK_UBOOTENV \
+	"check_ubootenv=" \
+	"load mmc 0:1 ${script_addr_r} uboot.env || saveenv\0"
+
 #define BOOTMENU_BOOTCMD \
 	"bootmenu_0=Normal boot=run bootcmd\0" \
 	"bootmenu_1=TFTP boot=run tftpboot\0" \
@@ -192,14 +203,16 @@ SDRAM START - 0x1000 0000
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"__INF0__=Ravion-V2 I.MX6 CPU Module BSP package\0" \
 	"__INF1__=Created: Alex A. Mihaylov AKA MinimumLaw, MinimumLaw@Rambler.Ru\0" \
-	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2021\0" \
+	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2022\0" \
 	"__INF3__=License: GPL v2 and above, https://github.com/MinimumLaw\0" \
 	"board=kitsbimx6\0" \
 	"bootcmd=" \
+	    "run check_ubootenv; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
 	    "run sataboot; " \
+	    "run recovery_boot; " \
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=bscript.img\0" \
