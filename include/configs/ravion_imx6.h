@@ -179,7 +179,7 @@ SDRAM START - 0x1000 0000
 #define RECOVERY_BOOT \
 	"recovery_boot=" \
 	"load mmc 0:1 ${kernel_addr_r} zImage && " \
-	"load mmc 0:1 ${ramdisk_addr_r} initrd.img.gz && " \
+	"load mmc 0:1 ${ramdisk_addr_r} initrd.img && " \
 	"load mmc 0:1 ${fdt_addr_r} i${soc}${variant}-${vendor}-${board}.dtb && " \
 	"bootz ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}\0"
 
@@ -209,11 +209,11 @@ SDRAM START - 0x1000 0000
 	"board=kitsbimx6\0" \
 	"bootcmd=" \
 	    "run check_ubootenv; " \
-	    "run recovery_boot; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
 	    "run sataboot; " \
+	    "run recovery_boot; " \
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=bscript.img\0" \
