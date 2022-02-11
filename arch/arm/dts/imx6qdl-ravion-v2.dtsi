@@ -3,6 +3,10 @@
 ** OAO Radioavionica,
 ** Ravion200 CPU module rev: 0.7.1
 **
+** TUNING:
+** SPI_CS_GPIO	- use ecspi chip-select as GPIO pin
+** DEBUG	- register UART1 as stout patch
+**
 ** (c) 2019, OAO Radiovionica,
 **     190105, Russia, St-Petersburg, Troitskiy pr. 4 liter B.
 ** (c) 2019, Alex A. Mihaylov <minimumlaw@rambler.ru>
@@ -14,7 +18,9 @@
 
 / {
 	chosen {
+#ifdef DEBUG
 		stdout-path = "serial0:115200n8";
+#endif
 	};
 
 	aliases { /* renumbering SD/MMC cards and eMMC chip */
@@ -24,6 +30,7 @@
 		serial0 = &uart1;
 		serial1 = &uart2;
 		serial2 = &uart3;
+		ethernet0 = &fec;
 	};
 
 	/* Power sources */
@@ -56,7 +63,7 @@
 	};
 
 	/* Sound subsystem */
-	sound {
+	module_sound: sound {
 		compatible = "fsl,imx6-ravion-sgtl5000",
 			    "fsl,imx-audio-sgtl5000";
 		model = "ravion-sgtl5000";
@@ -276,6 +283,9 @@
 &ecspi1 { /* ECSPI1 - default diabled */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_spi>;
+#ifdef SPI_CS_GPIO
+	cs-gpios = <&gpio5 25 GPIO_ACTIVE_LOW>;
+#endif
 	status = "disabled";
 };
 
@@ -324,6 +334,8 @@
 			reg = <0>;
 			phy-is-integrated;
 			reset-gpios = <&gpio6 7 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <100>;
+			reset-deassert-us = <100>;
 			interrupt-parent = <&gpio6>;
 			interrups = <8 IRQ_TYPE_EDGE_RISING>;
 		};
@@ -340,6 +352,8 @@
 
 &usbh1 { /* Host interface - default enabled (always connected to HUB) */
 	disable-over-current;
+	maximum-speed = "high-speed";
+	dr_mode = "host";
 	status = "okay";
 };
 
@@ -348,6 +362,7 @@
 	pinctrl-0 = <&pinctrl_usbhsic_idle>;
 	pinctrl-1 = <&pinctrl_usbhsic_active>;
 	hsic-supply = <&vgen1_reg>;
+	dr_mode = "host";
 	disable-over-current;
 	status = "disabled";
 };
@@ -355,7 +370,7 @@
 &usbotg { /* ITG interface - default enabled */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
-
+	maximum-speed = "high-speed";
 	dr_mode = "otg";
 	status = "okay";
 };
@@ -403,6 +418,20 @@
 /* IPU1 to Parrallel Display (TFT) Bus */
 &ipu1_di1_disp1 {
 	remote-endpoint = <&tft_bus_in>;
+};
+
+
+/*
+ * Remove unneeded and unconnected parallel sensor port
+ */
+&gpr {
+	ipu1_csi0_mux {
+		/delete-node/port@1;
+	};
+
+	ipu2_csi1_mux {
+		/delete-node/port@1;
+	};
 };
 
 &iomuxc {
@@ -463,10 +492,10 @@
 /* 122 */	MX6QDL_PAD_DISP0_DAT15__GPIO5_IO09	0x1b0b0
 /* 123 */	MX6QDL_PAD_NANDF_D6__GPIO2_IO06		0x1b0b0
 /* 124 */	MX6QDL_PAD_KEY_COL0__GPIO4_IO06		0x1b0b0
-/* 125 */	MX6QDL_PAD_NANDF_D7__GPIO2_IO07		0x1b0b0 /* nPWR_INT */
+/* 125 */	MX6QDL_PAD_NANDF_D7__GPIO2_IO07		0x1b0b0 /* ON/OFF */
 /* 126 */	MX6QDL_PAD_KEY_ROW2__GPIO4_IO11		0x1b0b0
-/* 127 */	MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x1b0b0 /* nPWR_DOWN, nPWR_INT on kitsbimx6 */
-/* 133 */	MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x1b0b0 /* nPWR_DOWN on kitsbinx6 */
+/* 127 */	MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x1b0b1 /* nPWR_DOWN */
+/* 133 */	MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x1b0b1
 /* 150 */	MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x1b0b0
 /* 152 */	MX6QDL_PAD_KEY_ROW1__GPIO4_IO09		0x1b0b0
 /* 154 */	MX6QDL_PAD_KEY_COL2__GPIO4_IO10		0x1b0b0
@@ -740,10 +769,14 @@
 
 	pinctrl_spi: spigrp {
 	    fsl,pins = <
-/* 086 */	MX6QDL_PAD_CSI0_DAT7__ECSPI1_SS0	0x1b0b0
-/* 088 */	MX6QDL_PAD_CSI0_DAT4__ECSPI1_SCLK	0x1b0b0
-/* 090 */	MX6QDL_PAD_CSI0_DAT6__ECSPI1_MISO	0x1b0b0
-/* 092 */	MX6QDL_PAD_CSI0_DAT5__ECSPI1_MOSI	0x1b0b0
+#ifdef SPI_CS_GPIO
+/* 086 */	MX6QDL_PAD_CSI0_DAT7__GPIO5_IO25	0x1b0b1
+#else
+/* 086 */	MX6QDL_PAD_CSI0_DAT7__ECSPI1_SS0	0x1b0b1
+#endif
+/* 088 */	MX6QDL_PAD_CSI0_DAT4__ECSPI1_SCLK	0x1b0b1
+/* 090 */	MX6QDL_PAD_CSI0_DAT6__ECSPI1_MISO	0x1b0b1
+/* 092 */	MX6QDL_PAD_CSI0_DAT5__ECSPI1_MOSI	0x1b0b1
 	    >;
 	};
 

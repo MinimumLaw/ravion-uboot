@@ -11,15 +11,16 @@
 /dts-v1/;
 
 #include <dt-bindings/clock/imx6qdl-clock.h>
-#include "imx6dl.dtsi"
-#include "imx6qdl-ravion.dtsi"
+#include "imx6qp.dtsi"
+#include "imx6qdl-ravion-v2.dtsi"
+#include "imx6qp-ravion-u-boot.dtsi"
 
 / {
-	model = "ravion:evaltest";
+	model = "ravion:generic";
 	compatible = "ravion,imx6qp", "fsl,imx6qp";
 
 	chosen {
-		stdout-path = &uart1;
+		stdout-path = "serial0:115200n8";
 	};
 
 	gpio-keys {
@@ -65,12 +66,6 @@
 
 &i2c2 {	/* Compatible I2C: soDimm 194, 196 */
 	status = "okay";
-
-	/* M41T0M6 real time clock on carrier board */
-	rtc_i2c: rtc@68 {
-		compatible = "st,m41t0";
-		reg = <0x68>;
-	};
 };
 
 &i2c3 { /* Extended I2C: soDimm 128, 130 */
@@ -104,7 +99,8 @@
 /*
  * High-speed serial bus
  */
-&pcie	{	status = "okay";	};
+/* &pcie {	status = "okay";	}; => disabled, not ethernet, not storage */
+&sata	{	status = "okay";	};
 /* &usbh1  {	status = "okay";	}; => Allways enabled */
 /* &usbotg`{	status = "okay";	}; => Allways enabled */
 /* &usbh3  {	status = "okay";	}; => HSIC interface disabled - no hub */

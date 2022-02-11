@@ -849,8 +849,7 @@ dtb-$(CONFIG_MX6ULL) += \
 
 dtb-$(CONFIG_ARCH_MX6) += \
 	imx6-apalis.dtb \
-	imx6qp-ravion.dtb \
-	imx6dl-ravion.dtb \
+	imx6qp-ravion-v2.dtb \
 	imx6-colibri.dtb
 
 dtb-$(CONFIG_O4_IMX_NANO) += \

@@ -176,15 +176,16 @@ SDRAM START - 0x1000 0000
 	"setenv prepare_module && " \
 	"saveenv\0"
 
-#define INITRD_BOOT \
+#define RECOVERY_BOOT \
 	"recovery_boot=" \
-	"load mmc 0:1 ${kernel_addr_r} board.kernel && " \
-	"load mmc 0:1 ${ramdisk_addr_r} board.ramdisk && " \
-	"load mmc 0:1 ${fdt_addr_r} board.dtb && " \
-	"bootm ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}\0"
+	"load mmc 0:1 ${kernel_addr_r} zImage && " \
+	"load mmc 0:1 ${ramdisk_addr_r} initrd.img && " \
+	"load mmc 0:1 ${fdt_addr_r} i${soc}${variant}-${vendor}-${board}.dtb && " \
+	"bootz ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}\0"
 
 #define CHECK_UBOOTENV \
 	"check_ubootenv=" \
+	"setenv bootmenu_4; " \
 	"load mmc 0:1 ${script_addr_r} uboot.env || saveenv\0"
 
 #define BOOTMENU_BOOTCMD \
@@ -227,6 +228,8 @@ SDRAM START - 0x1000 0000
 	EMMC_BOOTCMD \
 	SATA_BOOTCMD \
 	BOOTMENU_BOOTCMD \
+	CHECK_UBOOTENV \
+	RECOVERY_BOOT \
 	SPL_UPDATE \
 	"splashpos=m,m\0"
 
