@@ -192,6 +192,7 @@ void board_init_f(ulong dummy)
 	gpr_init();
 	SETUP_IOMUX_PADS(ravion_pads);
 	timer_init();
+	spl_early_init();
 
 	preloader_console_init();
 

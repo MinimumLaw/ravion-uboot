@@ -1,0 +1,12 @@
+uuu_version 1.2.135
+##############################################
+#   On firts partitin, type FAT must be placed
+# files u-boot-dtb.img and u-boot.env. Both of
+# them required for U-Boot bootloader can work
+#   And files required for Falcon Mode working
+##############################################
+SDP: boot -f SPL
+# First - write SPL into OCRAM_2/OCRAM_3 sectors
+SDPV: write -f u-boot-dtb.img -addr 0x177fffc0
+SDPV: jump -addr 0x177fffc0
+SDPV: done
