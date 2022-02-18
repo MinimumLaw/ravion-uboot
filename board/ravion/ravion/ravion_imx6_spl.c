@@ -140,17 +140,46 @@ void board_boot_order(u32 *spl_boot_list)
 	spl_boot_list[3] = BOOT_DEVICE_NONE;
 }
 
+#warning FixMe: Only really required clocks enabled here. ORLY?
 static void ccgr_init(void)
 {
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-#warning Only really required clocks must be enabled here
-	writel(0xFFFFFFFF, &ccm->CCGR0);
-	writel(0xFFFFFFFF, &ccm->CCGR1);
-	writel(0xFFFFFFFF, &ccm->CCGR2);
-	writel(0xFFFFFFFF, &ccm->CCGR3);
-	writel(0xFFFFFFFF, &ccm->CCGR4);
-	writel(0xFFFFFFFF, &ccm->CCGR5);
-	writel(0xFFFFFFFF, &ccm->CCGR6);
+	writel(	MXC_CCM_CCGR0_CHEETAH_DBG_CLK_MASK |
+		MXC_CCM_CCGR0_ASRC_MASK |
+		MXC_CCM_CCGR0_AIPS_TZ1_MASK |
+		MXC_CCM_CCGR0_AIPS_TZ2_MASK |
+		MXC_CCM_CCGR0_APBHDMA_MASK,
+		&ccm->CCGR0);
+	writel( MXC_CCM_CCGR1_ENET_MASK |
+		MXC_CCM_CCGR1_GPT_BUS_MASK |
+		MXC_CCM_CCGR1_GPT_SERIAL_MASK,
+		&ccm->CCGR1);
+	writel(	MXC_CCM_CCGR2_IOMUX_IPT_CLK_IO_MASK |
+		MXC_CCM_CCGR2_IPMUX1_MASK |
+		MXC_CCM_CCGR2_IPMUX2_MASK |
+		MXC_CCM_CCGR2_IPMUX3_MASK |
+		MXC_CCM_CCGR2_I2C1_SERIAL_MASK,
+		&ccm->CCGR2);
+	writel(	MXC_CCM_CCGR3_OCRAM_MASK |
+		MXC_CCM_CCGR3_MMDC_CORE_ACLK_FAST_CORE_P0_MASK |
+		MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P0_MASK |
+		MXC_CCM_CCGR3_MLB_MASK,
+		&ccm->CCGR3);
+	writel(	MXC_CCM_CCGR4_PL301_MX6QFAST1_S133_MASK |
+		MXC_CCM_CCGR4_PL301_MX6QPER1_BCH_MASK |
+		MXC_CCM_CCGR4_PL301_MX6QPER2_MAINCLK_ENABLE_MASK,
+		&ccm->CCGR4);
+	writel(	MXC_CCM_CCGR5_ROM_MASK |
+		MXC_CCM_CCGR5_SATA_MASK |
+		MXC_CCM_CCGR5_SDMA_MASK |
+		MXC_CCM_CCGR5_UART_MASK |
+		MXC_CCM_CCGR5_UART_SERIAL_MASK,
+		&ccm->CCGR5);
+	writel(	MXC_CCM_CCGR6_USDHC1_MASK |
+		MXC_CCM_CCGR6_USDHC2_MASK |
+		MXC_CCM_CCGR6_USDHC3_MASK |
+		MXC_CCM_CCGR6_USBOH3_MASK,
+		&ccm->CCGR6);
 }
 
 static int imx6qp_2048_dcd[] = RAVION_QP_2048;
@@ -172,32 +201,13 @@ static void spl_dram_init(void)
 		ddr_init(imx6dl_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
 }
 
-#define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |	\
-	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | \
-	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-
-static iomux_v3_cfg_t const ravion_pads[] = {
-	/* UART */
-	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
-	/* nRESET_OUT */
-	MX6_PAD_NANDF_D5__GPIO2_IO05 | MUX_PAD_CTRL(UART_PAD_CTRL),
-};
-
 void board_init_f(ulong dummy)
 {
-	spl_dram_init();
-	arch_cpu_init();
-	ccgr_init();
-	gpr_init();
-	SETUP_IOMUX_PADS(ravion_pads);
-	timer_init();
-	spl_early_init();
-
-	preloader_console_init();
-
-	/* Clear the BSS. */
-	memset(__bss_start, 0, __bss_end - __bss_start);
-	/* load/boot image from boot device */
-	board_init_r(NULL, 0);
+	spl_dram_init();		/* Yeah! We REALLY require this in SPL. */
+	arch_cpu_init();		/* Theory, we not require this code */
+	gpr_init();			/* AXI caches also will be inited not here */
+	ccgr_init();			/* Fixup clock troubles in DM code */
+	timer_init();			/* gpt-timer later will be in DM */
+	spl_early_init();		/* DM devices init...		*/
+	preloader_console_init();	/* 	... then start console	*/
 }

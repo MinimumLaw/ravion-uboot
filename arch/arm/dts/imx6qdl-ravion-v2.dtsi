@@ -33,7 +33,40 @@
 		ethernet0 = &fec;
 	};
 
-	/* Power sources */
+	/*
+	 * Critical GPIO handle
+	 */
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		power {
+			label = "Power";
+			gpios = <&gpio2 7 GPIO_ACTIVE_LOW>;	/* soDimm 125 */
+			linux,code = <KEY_POWER>;
+			debounce-interval = <100>;
+			wakeup-source;
+		};
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		sys_reset {
+			label = "sys::nRESET";
+			gpios = <&gpio2 5 GPIO_ACTIVE_LOW>;	/* soDimm 121 */
+			default-state = "off";
+		};
+	};
+
+	gpio-poweroff {
+		compatible = "gpio-poweroff";
+		gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;		/* soDimm 127 */
+	};
+
+	/*
+	 * Power sources
+	 */
 
 	avcc_reg: avcc_regulator {
 		compatible = "regulator-fixed";

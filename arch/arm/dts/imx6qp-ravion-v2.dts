@@ -23,32 +23,6 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	gpio-keys {
-		compatible = "gpio-keys";
-
-		power {
-			label = "Power";
-			gpios = <&gpio2 7 GPIO_ACTIVE_LOW>;	/* soDimm 125 */
-			linux,code = <KEY_POWER>;
-			debounce-interval = <100>;
-			wakeup-source;
-		};
-	};
-
-	gpio-leds {
-		compatible = "gpio-leds";
-
-		reset_out {
-			label = "nRESET_OUT";
-			gpios = <&gpio2 5 GPIO_ACTIVE_HIGH>;	/* soDimm 121 */
-			default-state = "on";
-		};
-	};
-
-	gpio-poweroff {
-		compatible = "gpio-poweroff";
-		gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;		/* soDimm 127 */
-	};
 };
 
 
