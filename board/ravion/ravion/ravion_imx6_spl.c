@@ -140,11 +140,11 @@ void board_boot_order(u32 *spl_boot_list)
 	spl_boot_list[3] = BOOT_DEVICE_NONE;
 }
 
-#warning FixMe: Only really required clocks _MUST_BE_ enabled here!
 static void ccgr_init(void)
 {
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
 #if 1
+#warning FixMe: Only really required clocks need be enabled here!
 	writel( 0xFFFFFFFF, &ccm->CCGR0);
 	writel( 0xFFFFFFFF, &ccm->CCGR1);
 	writel( 0xFFFFFFFF, &ccm->CCGR2);
@@ -152,8 +152,13 @@ static void ccgr_init(void)
 	writel( 0xFFFFFFFF, &ccm->CCGR4);
 	writel( 0xFFFFFFFF, &ccm->CCGR5);
 	writel( 0xFFFFFFFF, &ccm->CCGR6);
-#else /* this code NOT load Linux, may be reserved bits _MUST_ be 1 at write ??? */
-	writel(							/* 31, 30 */
+#else
+	/*
+	 * Bitmask defined clocks from CCM CCGRx registers
+	 *  (_NOT_ _WORK_ as expected - need be dzenned)
+	 */
+	writel(
+		(3<<30) |			/* Reserved (1)    31, 30 */
 		MXC_CCM_CCGR0_DTCP_MASK |			/* 29, 28 */
 		MXC_CCM_CCGR0_DCIC2_MASK |			/* 27, 26 */
 		MXC_CCM_CCGR0_DCIC1_MASK |			/* 25, 24 */
@@ -171,12 +176,13 @@ static void ccgr_init(void)
 		MXC_CCM_CCGR0_AIPS_TZ2_MASK |			/* 01, 00 */
 		MXC_CCM_CCGR0_APBHDMA_MASK,
 		&ccm->CCGR0);
-	writel( 						/* 31..28 */
+	writel(
+		(0xF<<30) |			/* Reserved (1)    31..28 */
 		MXC_CCM_CCGR1_GPU3D_MASK |			/* 27, 26 */
 		MXC_CCM_CCGR1_GPU2D_MASK |			/* 25, 24 */
 		MXC_CCM_CCGR1_GPT_SERIAL_MASK |			/* 23, 22 */
 		MXC_CCM_CCGR1_GPT_BUS_MASK |			/* 21, 20 */
-								/* 19, 18 */
+		(3<<18) |			/* Reserved (1)    19, 18 */
 		MXC_CCM_CCGR1_ESAIS_MASK |			/* 17, 16 */
 		MXC_CCM_CCGR1_EPIT2S_MASK |			/* 15, 14 */
 		MXC_CCM_CCGR1_EPIT1S_MASK |			/* 13, 12 */
@@ -187,7 +193,8 @@ static void ccgr_init(void)
 		MXC_CCM_CCGR1_ECSPI2S_MASK |			/* 03, 02 */
 		MXC_CCM_CCGR1_ECSPI1S_MASK,			/* 01, 00 */
 		&ccm->CCGR1);
-	writel( 						/* 31..28 */
+	writel(
+		(0xF<<28) |			/* Reserved (1)    31..28 */
 		MXC_CCM_CCGR2_IPSYNC_VDOA_IPG_MASTER_CLK_MASK | /* 27, 26 */
 		MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC2_IPG_MASK |	/* 25, 24 */
 		MXC_CCM_CCGR2_IOMUX_IPT_CLK_IO_MASK |		/* 23, 22 */
@@ -200,14 +207,15 @@ static void ccgr_init(void)
 		MXC_CCM_CCGR2_I2C2_SERIAL_MASK |		/* 09, 08 */
 		MXC_CCM_CCGR2_I2C1_SERIAL_MASK |		/* 07, 06 */
 		MXC_CCM_CCGR2_HDMI_TX_ISFRCLK_MASK |		/* 05, 04 */
-								/* 03, 02 */
+		 (3<<2) |			/* Reserved (1)    03, 02 */
 		MXC_CCM_CCGR2_HDMI_TX_IAHBCLK_MASK,		/* 01, 00 */
 		&ccm->CCGR2);
-	writel(							/* 31, 30 */
+	writel(
+		(3<<30) |			/* Reserved (1)    31, 30 */
 		MXC_CCM_CCGR3_OCRAM_MASK |			/* 29, 28 */
-								/* 27, 26 */
+		(3<<26) |			/* Reserved (1)    27, 26 */
 		MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P0_MASK |	/* 25, 24 */
-								/* 23, 22 */
+		(3<<22) |			/* Reserved (1)    23, 22 */
 		MXC_CCM_CCGR3_MMDC_CORE_ACLK_FAST_CORE_P0_MASK |/* 21, 20 */
 		MXC_CCM_CCGR3_MLB_MASK |			/* 19, 18 */
 		MXC_CCM_CCGR3_MIPI_CORE_CFG_MASK |		/* 17, 16 */
@@ -220,37 +228,38 @@ static void ccgr_init(void)
 		MXC_CCM_CCGR3_IPU1_IPU_DI0_MASK |		/* 03, 02 */
 		MXC_CCM_CCGR3_IPU1_IPU_MASK,			/* 01, 00 */
 		&ccm->CCGR3);
-	writel(	MXC_CCM_CCGR4_RAWNAND_U_GPMI_INPUT_APB_MASK |	/* 31, 30 */
-		MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK |	/* 29, 28 */
+	writel(
+		MXC_CCM_CCGR4_RAWNAND_U_GPMI_INPUT_APB_MASK |	/* 31, 30 */
+		MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_MASK |/* 29, 28 */
 		MXC_CCM_CCGR4_RAWNAND_U_GPMI_BCH_INPUT_BCH_MASK|/* 27, 26 */
 		MXC_CCM_CCGR4_RAWNAND_U_BCH_INPUT_APB_MASK |	/* 25, 24 */
 		MXC_CCM_CCGR4_PWM4_MASK |			/* 23, 22 */
 		MXC_CCM_CCGR4_PWM3_MASK |			/* 21, 20 */
 		MXC_CCM_CCGR4_PWM2_MASK |			/* 19, 18 */
 		MXC_CCM_CCGR4_PWM1_MASK |			/* 17, 16 */
-		MXC_CCM_CCGR4_PL301_MX6QPER2_MAINCLK_ENABLE_MASK |	/* 15, 14 */
+		MXC_CCM_CCGR4_PL301_MX6QPER2_MAINCLK_ENABLE_MASK | /* 15, 14 */
 		MXC_CCM_CCGR4_PL301_MX6QPER1_BCH_MASK |		/* 13, 12 */
-								/* 11, 10 */
+		(3<<10) |			/* Reserved (1)    11, 10 */
 		MXC_CCM_CCGR4_PL301_MX6QFAST1_S133_MASK |	/* 09, 08 */
-								/* 07..02 */
+		(0x3F<<2) |			/* Reserved (1)    07..02 */
 		MXC_CCM_CCGR4_PCIE_MASK,			/* 01, 00 */
 		&ccm->CCGR4);
-	writel(							/* 31..28 */
+	writel(	(0xF<<28) |			/* Reserved (1)    31..28 */
 		MXC_CCM_CCGR5_UART_SERIAL_MASK |		/* 27, 26 */
 		MXC_CCM_CCGR5_UART_MASK |			/* 25, 24 */
-		MXC_CCM_CCGR5_SSI3_MASK |			/* 23, 22 */
+		MXC_CCM_CCGR5_SSI3_MASK |			/*   23, 22 */
 		MXC_CCM_CCGR5_SSI2_MASK |			/* 21, 20 */
 		MXC_CCM_CCGR5_SSI1_MASK |			/* 19, 18 */
-								/* 17, 16 */
+		(3<<16) |			/* Reserved (1)    17, 16 */
 		MXC_CCM_CCGR5_SPDIF_MASK |			/* 15, 14 */
 		MXC_CCM_CCGR5_SPBA_MASK |			/* 13, 12 */
-								/* 11..08 */
+		(0xF<<8) |			/* Reserved (1)    11..08 */
 		MXC_CCM_CCGR5_SDMA_MASK |			/* 07, 06 */
 		MXC_CCM_CCGR5_SATA_MASK |			/* 05, 04 */
-								/* 03, 02 */
+		(3<<2) |			/* Reserved (1)    03, 02 */
 		MXC_CCM_CCGR5_ROM_MASK,				/* 01, 00 */
 		&ccm->CCGR5);
-	writel(							/* 31..28 */
+	writel(	(0xF<<28) |			/* Reserved (1)    31..28 */
 		(MXC_CCM_CCGR_CG_MASK<<26) | 	/* PRG_CLK_1       27, 26 */
 		(MXC_CCM_CCGR_CG_MASK<<24) | 	/* PRG_CLK_0       25, 24 */
 		(MXC_CCM_CCGR_CG_MASK<<22) | 	/* PRE_CLK_3       23, 21 */
