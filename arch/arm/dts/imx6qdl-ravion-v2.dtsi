@@ -25,8 +25,8 @@
 
 	aliases { /* renumbering SD/MMC cards and eMMC chip */
 		mmc0 = &usdhc3;
-		mmc1 = &usdhc2;
-		mmc2 = &usdhc1;
+		mmc1 = &usdhc1;
+		mmc2 = &usdhc2;
 		serial0 = &uart1;
 		serial1 = &uart2;
 		serial2 = &uart3;
@@ -61,7 +61,7 @@
 
 	gpio-poweroff {
 		compatible = "gpio-poweroff";
-		gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;		/* soDimm 127 */
+		gpios = <&gpio2 11 GPIO_ACTIVE_LOW>;		/* soDimm 133 */
 	};
 
 	/*
@@ -527,8 +527,8 @@
 /* 124 */	MX6QDL_PAD_KEY_COL0__GPIO4_IO06		0x1b0b0
 /* 125 */	MX6QDL_PAD_NANDF_D7__GPIO2_IO07		0x1b0b0 /* ON/OFF */
 /* 126 */	MX6QDL_PAD_KEY_ROW2__GPIO4_IO11		0x1b0b0
-/* 127 */	MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x1b0b1 /* nPWR_DOWN */
-/* 133 */	MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x1b0b1
+/* 127 */	MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x1b0b1
+/* 133 */	MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x1b0b1 /* nPWR_DOWN */
 /* 150 */	MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x1b0b0
 /* 152 */	MX6QDL_PAD_KEY_ROW1__GPIO4_IO09		0x1b0b0
 /* 154 */	MX6QDL_PAD_KEY_COL2__GPIO4_IO10		0x1b0b0
