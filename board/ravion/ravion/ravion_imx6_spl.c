@@ -37,6 +37,10 @@
 #include <usb.h>
 #include <spl.h>
 
+#include <button.h>
+#include <led.h>
+#include <dm/uclass-internal.h>
+
 #include "ravion_qp_2048.h"
 #include "ravion_dl_2048.h"
 
@@ -55,8 +59,6 @@
 #ifndef PWRBTN_DETECT_DELAY
 #define PWRBTN_DETECT_DELAY	750000
 #endif
-static const char POWERBUTTON_GPIO[] = "GPIO2_7";
-static const char nRESETOUT_GPIO[] = "GPIO2_5";
 
 /* called BEFORE load system */
 void spl_board_prepare_for_linux(void)
@@ -70,21 +72,23 @@ void spl_board_prepare_for_linux(void)
 
 int spl_start_uboot(void)
 {
-	const char* pwr_gpio = POWERBUTTON_GPIO;
-	const char* rst_gpio = nRESETOUT_GPIO;
-	struct gpio_desc pwrbtn_gpio;
-	struct gpio_desc nrstout_gpio;
-	int ret = SPL_LOAD_UBOOT;
-	int v;
+	struct udevice *btn_power, *led_reset;
+	int ret;
 
-	if (!!(v=dm_gpio_lookup_name(rst_gpio, &nrstout_gpio)))
-		printf("nRESET lookup failed! (err=%d)\n", v);
-	if (!!(v=dm_gpio_request(&nrstout_gpio, "nRSTOUT")))
-		printf("nRESET request failed! (err=%d)\n", v);
-	if (!!(v=dm_gpio_set_dir_flags(&nrstout_gpio, GPIOD_IS_OUT)))
-		printf("nRESET configure output failed! (err=%d)\n",v);
-	if (!!(v=dm_gpio_set_value(&nrstout_gpio, 0)))
-		printf("nRESET deassert failed! (err=%d)\n", v);
+	if (button_get_by_label("Power", &btn_power)) {
+	    printf("SPL: Power button not found!\n");
+	    return SPL_LOAD_UBOOT;
+	};
+
+	if (led_get_by_label("sys::nRESET", &led_reset)) {
+	    printf("SPL: system reset not found!\n");
+	    return SPL_LOAD_UBOOT;
+	};
+
+	if (led_set_state(led_reset, LEDST_ON)) {
+	    printf("SPL: reset activate failed!\n");
+	    return SPL_LOAD_UBOOT;
+	};
 
 #ifdef CONFIG_SPL_ENV_SUPPORT
 	env_init();
@@ -93,40 +97,28 @@ int spl_start_uboot(void)
 		printf("Falcon bootmode not allowed by environment!\n");
 		/* Yep, we must wait power button RELEASE and PRESS time */
 		udelay(PWRBTN_DETECT_DELAY);
-		if (dm_gpio_set_value(&nrstout_gpio, 1))
-			printf("nRESET assert failed!\n");
+		if (led_set_state(led_reset, LEDST_OFF)) {
+			printf("SPL: reset deactivate failed!\n");
+		};
 		return SPL_LOAD_UBOOT;
 	}
 #endif
-	ret = dm_gpio_lookup_name(pwr_gpio, &pwrbtn_gpio);
-	if (ret) {
-		printf("Power button GPIO lookup failed (%d)!\n", ret);
-		return SPL_LOAD_UBOOT;
-	}
-
-	ret = dm_gpio_request(&pwrbtn_gpio, "PWRBTN");
-	if(ret) {
-		printf("PWRBTN request failed (%d)!\n", ret);
-		return SPL_LOAD_UBOOT;
-	};
-
-	dm_gpio_set_dir_flags(&pwrbtn_gpio, GPIOD_IS_IN);
 
 	/* Yep, we must wait power button RELEASE and PRESS again */
 	udelay(PWRBTN_DETECT_DELAY);
 
-	ret = dm_gpio_get_value(&pwrbtn_gpio);
-	if(ret < 0) {
-		printf("PWRBTN get value failed (%d)!\n", ret);
+	ret = button_get_state(btn_power);
+	if ( ret >= BUTTON_COUNT) {
+		printf("SPL: power button read failed!\n");
 		return SPL_LOAD_UBOOT;
+	}
+
+	ret = (ret == BUTTON_OFF) ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
+	printf(ret == SPL_LOAD_SYSTEM ? "Falcon mode\n" : "Tortoise mode\n");
+
+	if (led_set_state(led_reset, LEDST_OFF)) {
+		printf("SPL: reset deactivate failed!\n");
 	};
-
-	/* Power button pulled UP, unpressed read "1", pressed "0" */
-	ret = ret ? SPL_LOAD_SYSTEM : SPL_LOAD_UBOOT;
-	debug(ret == SPL_LOAD_SYSTEM ? "Falcon mode\n" : "Tortoise mode\n");
-
-	if (dm_gpio_set_value(&nrstout_gpio, 1))
-		printf("nRESET assert failed!\n");
 
 	return !!ret;
 }

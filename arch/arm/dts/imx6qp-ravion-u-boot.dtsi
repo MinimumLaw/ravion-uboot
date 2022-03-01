@@ -10,6 +10,18 @@
 		stdout-path = &uart1;
 	};
 
+	gpio-poweroff { u-boot,dm-spl; };
+
+	gpio-keys {
+		u-boot,dm-spl;
+		power { u-boot,dm-spl; };
+	};
+
+	gpio-leds {
+		u-boot,dm-spl;
+		sys_reset { u-boot,dm-spl; };
+	};
+
 	wdt-reboot {
 		compatible = "wdt-reboot";
 		wdt = <&wdog1>;

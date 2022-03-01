@@ -9,6 +9,12 @@ config BUTTON
 	  can provide access to board-specific buttons. Use of the device tree
 	  for configuration is encouraged.
 
+config SPL_BUTTON
+	bool "Enable button support on SPL"
+	depends on DM
+	help
+	  See "Enable buttom support" help
+
 config BUTTON_ADC
 	bool "Button adc"
 	depends on BUTTON
@@ -25,5 +31,11 @@ config BUTTON_GPIO
 	  GPIOs may be on the SoC or some other device which provides GPIOs.
 	  The GPIO driver must used driver model. Buttons are configured using
 	  the device tree.
+
+config SPL_BUTTON_GPIO
+	bool "Button gpio support in SPL"
+	depends on BUTTON
+	help
+	  See help for "Button gpio"
 
 endmenu
