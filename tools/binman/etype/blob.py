@@ -5,8 +5,6 @@
 # Entry-type module for blobs, which are binary objects read from files
 #
 
-import pathlib
-
 from binman.entry import Entry
 from binman import state
 from dtoc import fdt_util
@@ -38,16 +36,12 @@ class Entry_blob(Entry):
         self._filename = fdt_util.GetString(self._node, 'filename', self.etype)
 
     def ObtainContents(self):
-        if self.allow_fake and not pathlib.Path(self._filename).is_file():
-            with open(self._filename, "wb") as out:
-                out.truncate(1024)
-            self.faked = True
-
         self._filename = self.GetDefaultFilename()
-        self._pathname = tools.GetInputFilename(self._filename,
+        self._pathname = tools.get_input_filename(self._filename,
             self.external and self.section.GetAllowMissing())
         # Allow the file to be missing
         if not self._pathname:
+            self._pathname = self.check_fake_fname(self._filename)
             self.SetContents(b'')
             self.missing = True
             return True
@@ -55,10 +49,10 @@ class Entry_blob(Entry):
         self.ReadBlobContents()
         return True
 
-    def ReadBlobContents(self):
+    def ReadFileContents(self, pathname):
         """Read blob contents into memory
 
-        This function compresses the data before storing if needed.
+        This function compresses the data before returning if needed.
 
         We assume the data is small enough to fit into memory. If this
         is used for large filesystem image that might not be true.
@@ -66,13 +60,23 @@ class Entry_blob(Entry):
         new Entry method which can read in chunks. Then we could copy
         the data in chunks and avoid reading it all at once. For now
         this seems like an unnecessary complication.
+
+        Args:
+            pathname (str): Pathname to read from
+
+        Returns:
+            bytes: Data read
         """
         state.TimingStart('read')
-        indata = tools.ReadFile(self._pathname)
+        indata = tools.read_file(pathname)
         state.TimingAccum('read')
         state.TimingStart('compress')
         data = self.CompressData(indata)
         state.TimingAccum('compress')
+        return data
+
+    def ReadBlobContents(self):
+        data = self.ReadFileContents(self._pathname)
         self.SetContents(data)
         return True
 

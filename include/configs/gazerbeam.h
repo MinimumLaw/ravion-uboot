@@ -43,7 +43,6 @@
 #define CONFIG_SYS_FLASH_BASE		0xFE000000 /* FLASH base address */
 #define CONFIG_SYS_FLASH_SIZE		8 /* FLASH size is up to 8M */
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	1 /* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	135
 
 #define CONFIG_SYS_BAUDRATE_TABLE  \
@@ -99,23 +98,5 @@
 		" +${filesize};cp.b ${fileaddr} "			\
 		__stringify(CONFIG_SYS_MONITOR_BASE) " ${filesize}\0"	\
 	"upd=run load update\0"						\
-
-#define NFSBOOTCOMMAND						\
-	"setenv bootargs root=/dev/nfs rw "				\
-	"nfsroot=$serverip:$rootpath "					\
-	"ip=$ipaddr:$serverip:$gatewayip:$netmask:$hostname:$netdev:off " \
-	"console=$consoledev,$baudrate $othbootargs;"			\
-	"tftp ${kernel_addr} $bootfile;"				\
-	"tftp ${fdt_addr} $fdtfile;"					\
-	"bootm ${kernel_addr} - ${fdt_addr}"
-
-#define MMCBOOTCOMMAND						\
-	"setenv bootargs root=/dev/mmcblk0p3 rw rootwait "		\
-	"console=$consoledev,$baudrate $othbootargs;"			\
-	"ext2load mmc 0:2 ${kernel_addr} $bootfile;"			\
-	"ext2load mmc 0:2 ${fdt_addr} $fdtfile;"			\
-	"bootm ${kernel_addr} - ${fdt_addr}"
-
-#define CONFIG_BOOTCOMMAND		MMCBOOTCOMMAND
 
 #endif	/* __CONFIG_H */

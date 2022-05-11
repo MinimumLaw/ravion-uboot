@@ -39,8 +39,6 @@
 #define BOOTENV
 #endif
 
-#define CONFIG_TIMESTAMP
-
 #define CONFIG_SYS_MONITOR_BASE		0
 #define CONFIG_SYS_MONITOR_LEN		0x00200000	/* 2MB */
 
@@ -79,11 +77,6 @@
 #endif
 
 #define CONFIG_ROOTPATH			"/nfs/root/path"
-#define NFSBOOTCOMMAND						\
-	"setenv bootargs $bootargs root=/dev/nfs rw "			\
-	"nfsroot=$serverip:$rootpath "					\
-	"ip=$ipaddr:$serverip:$gatewayip:$netmask:$hostname:$netdev:off;" \
-		"run __nfsboot"
 
 #ifdef CONFIG_FIT
 #define CONFIG_BOOTFILE			"fitImage"
@@ -202,7 +195,5 @@
 #define CONFIG_SPL_BSS_MAX_SIZE			0x2000
 
 #define CONFIG_SPL_PAD_TO			0x20000
-
-#define CONFIG_SYS_PCI_64BIT
 
 #endif /* __CONFIG_UNIPHIER_H__ */

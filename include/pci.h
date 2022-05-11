@@ -5,6 +5,7 @@
  *
  * (C) Copyright 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ * Copyright (c) 2021  Maciej W. Rozycki <macro@orcam.me.uk>
  */
 
 #ifndef _PCI_H
@@ -475,16 +476,40 @@
 
 /* PCI Express capabilities */
 #define PCI_EXP_FLAGS		2	/* Capabilities register */
+#define  PCI_EXP_FLAGS_VERS	0x000f	/* Capability Version */
 #define  PCI_EXP_FLAGS_TYPE	0x00f0	/* Device/Port type */
-#define  PCI_EXP_TYPE_ROOT_PORT 0x4	/* Root Port */
+#define   PCI_EXP_TYPE_ROOT_PORT   0x4	/* Root Port */
+#define   PCI_EXP_TYPE_DOWNSTREAM  0x6	/* Downstream Port */
+#define   PCI_EXP_TYPE_PCIE_BRIDGE 0x8	/* PCI/PCI-X to PCIe Bridge */
 #define PCI_EXP_DEVCAP		4	/* Device capabilities */
 #define  PCI_EXP_DEVCAP_FLR	0x10000000 /* Function Level Reset */
 #define PCI_EXP_DEVCTL		8	/* Device Control */
+#define  PCI_EXP_DEVCTL_PAYLOAD	0x00e0	/* Max_Payload_Size */
+#define  PCI_EXP_DEVCTL_PAYLOAD_128B 0x0000 /* 128 Bytes */
+#define  PCI_EXP_DEVCTL_PAYLOAD_256B 0x0020 /* 256 Bytes */
+#define  PCI_EXP_DEVCTL_PAYLOAD_512B 0x0040 /* 512 Bytes */
+#define  PCI_EXP_DEVCTL_PAYLOAD_1024B 0x0060 /* 1024 Bytes */
+#define  PCI_EXP_DEVCTL_PAYLOAD_2048B 0x0080 /* 2048 Bytes */
+#define  PCI_EXP_DEVCTL_PAYLOAD_4096B 0x00a0 /* 4096 Bytes */
+#define  PCI_EXP_DEVCTL_RELAX_EN 0x0010 /* Enable relaxed ordering */
+#define  PCI_EXP_DEVCTL_NOSNOOP_EN 0x0800  /* Enable No Snoop */
+#define  PCI_EXP_DEVCTL_READRQ	0x7000	/* Max_Read_Request_Size */
+#define  PCI_EXP_DEVCTL_READRQ_128B  0x0000 /* 128 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_256B  0x1000 /* 256 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_512B  0x2000 /* 512 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_1024B 0x3000 /* 1024 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_2048B 0x4000 /* 2048 Bytes */
+#define  PCI_EXP_DEVCTL_READRQ_4096B 0x5000 /* 4096 Bytes */
 #define  PCI_EXP_DEVCTL_BCR_FLR	0x8000  /* Bridge Configuration Retry / FLR */
 #define PCI_EXP_LNKCAP		12	/* Link Capabilities */
 #define  PCI_EXP_LNKCAP_SLS	0x0000000f /* Supported Link Speeds */
+#define  PCI_EXP_LNKCAP_SLS_2_5GB 0x00000001 /* LNKCAP2 SLS Vector bit 0 */
+#define  PCI_EXP_LNKCAP_SLS_5_0GB 0x00000002 /* LNKCAP2 SLS Vector bit 1 */
+#define  PCI_EXP_LNKCAP_SLS_8_0GB 0x00000003 /* LNKCAP2 SLS Vector bit 2 */
 #define  PCI_EXP_LNKCAP_MLW	0x000003f0 /* Maximum Link Width */
 #define  PCI_EXP_LNKCAP_DLLLARC	0x00100000 /* Data Link Layer Link Active Reporting Capable */
+#define PCI_EXP_LNKCTL		16	/* Link Control */
+#define  PCI_EXP_LNKCTL_RL	0x0020	/* Retrain Link */
 #define PCI_EXP_LNKSTA		18	/* Link Status */
 #define  PCI_EXP_LNKSTA_CLS	0x000f	/* Current Link Speed */
 #define  PCI_EXP_LNKSTA_CLS_2_5GB 0x0001 /* Current Link Speed 2.5GT/s */
@@ -492,7 +517,9 @@
 #define  PCI_EXP_LNKSTA_CLS_8_0GB 0x0003 /* Current Link Speed 8.0GT/s */
 #define  PCI_EXP_LNKSTA_NLW	0x03f0	/* Negotiated Link Width */
 #define  PCI_EXP_LNKSTA_NLW_SHIFT 4	/* start of NLW mask in link status */
+#define  PCI_EXP_LNKSTA_LT	0x0800	/* Link Training */
 #define  PCI_EXP_LNKSTA_DLLLA	0x2000	/* Data Link Layer Link Active */
+#define  PCI_EXP_LNKSTA_LBMS	0x4000	/* Link Bandwidth Management Status */
 #define PCI_EXP_SLTCAP		20	/* Slot Capabilities */
 #define  PCI_EXP_SLTCAP_PSN	0xfff80000 /* Physical Slot Number */
 #define PCI_EXP_RTCTL		28	/* Root Control */
@@ -503,8 +530,22 @@
 #define  PCI_EXP_DEVCAP2_ARI	0x00000020 /* ARI Forwarding Supported */
 #define PCI_EXP_DEVCTL2		40	/* Device Control 2 */
 #define  PCI_EXP_DEVCTL2_ARI	0x0020 /* Alternative Routing-ID */
-
+#define PCI_EXP_LNKCAP2		44	/* Link Capability 2 */
+#define  PCI_EXP_LNKCAP2_SLS	0x000000fe /* Supported Link Speeds Vector */
 #define PCI_EXP_LNKCTL2		48	/* Link Control 2 */
+#define  PCI_EXP_LNKCTL2_TLS	0x000f	/* Target Link Speed */
+#define  PCI_EXP_LNKCTL2_TLS_2_5GT 0x0001 /* Target Link Speed 2.5GT/s */
+#define  PCI_EXP_LNKCTL2_TLS_5_0GT 0x0002 /* Target Link Speed 5.0GT/s */
+#define  PCI_EXP_LNKCTL2_TLS_8_0GT 0x0003 /* Target Link Speed 8.0GT/s */
+
+/* Advanced Error Reporting */
+#define PCI_ERR_CAP		24	/* Advanced Error Capabilities */
+#define  PCI_ERR_CAP_FEP(x)	((x) & 31)	/* First Error Pointer */
+#define  PCI_ERR_CAP_ECRC_GENC	0x00000020	/* ECRC Generation Capable */
+#define  PCI_ERR_CAP_ECRC_GENE	0x00000040	/* ECRC Generation Enable */
+#define  PCI_ERR_CAP_ECRC_CHKC	0x00000080	/* ECRC Check Capable */
+#define  PCI_ERR_CAP_ECRC_CHKE	0x00000100	/* ECRC Check Enable */
+
 /* Single Root I/O Virtualization Registers */
 #define PCI_SRIOV_CAP		0x04	/* SR-IOV Capabilities */
 #define PCI_SRIOV_CTRL		0x08	/* SR-IOV Control */
@@ -521,6 +562,77 @@
 /* Include the ID list */
 
 #include <pci_ids.h>
+
+/*
+ * Config Address for PCI Configuration Mechanism #1
+ *
+ * See PCI Local Bus Specification, Revision 3.0,
+ * Section 3.2.2.3.2, Figure 3-2, p. 50.
+ */
+
+#define PCI_CONF1_BUS_SHIFT	16 /* Bus number */
+#define PCI_CONF1_DEV_SHIFT	11 /* Device number */
+#define PCI_CONF1_FUNC_SHIFT	8  /* Function number */
+
+#define PCI_CONF1_BUS_MASK	0xff
+#define PCI_CONF1_DEV_MASK	0x1f
+#define PCI_CONF1_FUNC_MASK	0x7
+#define PCI_CONF1_REG_MASK	0xfc /* Limit aligned offset to a maximum of 256B */
+
+#define PCI_CONF1_ENABLE	BIT(31)
+#define PCI_CONF1_BUS(x)	(((x) & PCI_CONF1_BUS_MASK) << PCI_CONF1_BUS_SHIFT)
+#define PCI_CONF1_DEV(x)	(((x) & PCI_CONF1_DEV_MASK) << PCI_CONF1_DEV_SHIFT)
+#define PCI_CONF1_FUNC(x)	(((x) & PCI_CONF1_FUNC_MASK) << PCI_CONF1_FUNC_SHIFT)
+#define PCI_CONF1_REG(x)	((x) & PCI_CONF1_REG_MASK)
+
+#define PCI_CONF1_ADDRESS(bus, dev, func, reg) \
+	(PCI_CONF1_ENABLE | \
+	 PCI_CONF1_BUS(bus) | \
+	 PCI_CONF1_DEV(dev) | \
+	 PCI_CONF1_FUNC(func) | \
+	 PCI_CONF1_REG(reg))
+
+/*
+ * Extension of PCI Config Address for accessing extended PCIe registers
+ *
+ * No standardized specification, but used on lot of non-ECAM-compliant ARM SoCs
+ * or on AMD Barcelona and new CPUs. Reserved bits [27:24] of PCI Config Address
+ * are used for specifying additional 4 high bits of PCI Express register.
+ */
+
+#define PCI_CONF1_EXT_REG_SHIFT	16
+#define PCI_CONF1_EXT_REG_MASK	0xf00
+#define PCI_CONF1_EXT_REG(x)	(((x) & PCI_CONF1_EXT_REG_MASK) << PCI_CONF1_EXT_REG_SHIFT)
+
+#define PCI_CONF1_EXT_ADDRESS(bus, dev, func, reg) \
+	(PCI_CONF1_ADDRESS(bus, dev, func, reg) | \
+	 PCI_CONF1_EXT_REG(reg))
+
+/*
+ * Enhanced Configuration Access Mechanism (ECAM)
+ *
+ * See PCI Express Base Specification, Revision 5.0, Version 1.0,
+ * Section 7.2.2, Table 7-1, p. 677.
+ */
+#define PCIE_ECAM_BUS_SHIFT	20 /* Bus number */
+#define PCIE_ECAM_DEV_SHIFT	15 /* Device number */
+#define PCIE_ECAM_FUNC_SHIFT	12 /* Function number */
+
+#define PCIE_ECAM_BUS_MASK	0xff
+#define PCIE_ECAM_DEV_MASK	0x1f
+#define PCIE_ECAM_FUNC_MASK	0x7
+#define PCIE_ECAM_REG_MASK	0xfff /* Limit offset to a maximum of 4K */
+
+#define PCIE_ECAM_BUS(x)	(((x) & PCIE_ECAM_BUS_MASK) << PCIE_ECAM_BUS_SHIFT)
+#define PCIE_ECAM_DEV(x)	(((x) & PCIE_ECAM_DEV_MASK) << PCIE_ECAM_DEV_SHIFT)
+#define PCIE_ECAM_FUNC(x)	(((x) & PCIE_ECAM_FUNC_MASK) << PCIE_ECAM_FUNC_SHIFT)
+#define PCIE_ECAM_REG(x)	((x) & PCIE_ECAM_REG_MASK)
+
+#define PCIE_ECAM_OFFSET(bus, dev, func, where) \
+	(PCIE_ECAM_BUS(bus) | \
+	 PCIE_ECAM_DEV(dev) | \
+	 PCIE_ECAM_FUNC(func) | \
+	 PCIE_ECAM_REG(where))
 
 #ifndef __ASSEMBLY__
 
@@ -724,7 +836,7 @@ void pciauto_config_init(struct pci_controller *hose);
  * @size:		Amount of bytes to allocate
  * @bar:		Returns the PCI bus address of the allocated resource
  * @supports_64bit:	Whether to allow allocations above the 32-bit boundary
- * @return 0 if successful, -1 on failure
+ * Return: 0 if successful, -1 on failure
  */
 int pciauto_region_allocate(struct pci_region *res, pci_size_t size,
 			    pci_addr_t *bar, bool supports_64bit);
@@ -810,7 +922,7 @@ void pci_write_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum,
  * @hose:	PCI hose to use
  * @dev:	PCI device to inspect
  * @barnum:	BAR number (0-5)
- * @return address of the bar, masking out any control bits
+ * Return: address of the bar, masking out any control bits
  * */
 u32 pci_read_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum);
 
@@ -910,7 +1022,7 @@ struct dm_pci_ops {
  * dm_pci_get_bdf() - Get the BDF value for a device
  *
  * @dev:	Device to check
- * @return bus/device/function value (see PCI_BDF())
+ * Return: bus/device/function value (see PCI_BDF())
  */
 pci_dev_t dm_pci_get_bdf(const struct udevice *dev);
 
@@ -927,7 +1039,7 @@ pci_dev_t dm_pci_get_bdf(const struct udevice *dev);
  * driver interface.
  *
  * @bus:	Bus containing devices to bind
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int pci_bind_bus_devices(struct udevice *bus);
 
@@ -942,7 +1054,7 @@ int pci_bind_bus_devices(struct udevice *bus);
  * devices are mapped into memory and I/O space ready for use.
  *
  * @bus:	Bus containing devices to bind
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int pci_auto_config_devices(struct udevice *bus);
 
@@ -951,7 +1063,7 @@ int pci_auto_config_devices(struct udevice *bus);
  *
  * @bdf:	PCI device address: bus, device and function -see PCI_BDF()
  * @devp:	Returns the device for this address, if found
- * @return 0 if OK, -ENODEV if not found
+ * Return: 0 if OK, -ENODEV if not found
  */
 int dm_pci_bus_find_bdf(pci_dev_t bdf, struct udevice **devp);
 
@@ -960,7 +1072,7 @@ int dm_pci_bus_find_bdf(pci_dev_t bdf, struct udevice **devp);
  *
  * @find_devfn:		PCI device address (device and function only)
  * @devp:	Returns the device for this address, if found
- * @return 0 if OK, -ENODEV if not found
+ * Return: 0 if OK, -ENODEV if not found
  */
 int pci_bus_find_devfn(const struct udevice *bus, pci_dev_t find_devfn,
 		       struct udevice **devp);
@@ -974,7 +1086,7 @@ int pci_bus_find_devfn(const struct udevice *bus, pci_dev_t find_devfn,
  *
  * @devp:	Set to the first available device, or NULL if no more are left
  *		or we got an error
- * @return 0 if all is OK, -ve on error (e.g. a bus/bridge failed to probe)
+ * Return: 0 if all is OK, -ve on error (e.g. a bus/bridge failed to probe)
  */
 int pci_find_first_device(struct udevice **devp);
 
@@ -986,7 +1098,7 @@ int pci_find_first_device(struct udevice **devp);
  *
  * @devp:	On entry, the last device returned. Set to the next available
  *		device, or NULL if no more are left or we got an error
- * @return 0 if all is OK, -ve on error (e.g. a bus/bridge failed to probe)
+ * Return: 0 if all is OK, -ve on error (e.g. a bus/bridge failed to probe)
  */
 int pci_find_next_device(struct udevice **devp);
 
@@ -994,7 +1106,7 @@ int pci_find_next_device(struct udevice **devp);
  * pci_get_ff() - Returns a mask for the given access size
  *
  * @size:	Access size
- * @return 0xff for PCI_SIZE_8, 0xffff for PCI_SIZE_16, 0xffffffff for
+ * Return: 0xff for PCI_SIZE_8, 0xffff for PCI_SIZE_16, 0xffffffff for
  * PCI_SIZE_32
  */
 int pci_get_ff(enum pci_size_t size);
@@ -1009,7 +1121,7 @@ int pci_get_ff(enum pci_size_t size);
  *		parameter is decremented for each non-matching device so
  *		can be called repeatedly.
  * @devp:	Returns matching device if found
- * @return 0 if found, -ENODEV if not
+ * Return: 0 if found, -ENODEV if not
  */
 int pci_bus_find_devices(struct udevice *bus, const struct pci_device_id *ids,
 			 int *indexp, struct udevice **devp);
@@ -1021,7 +1133,7 @@ int pci_bus_find_devices(struct udevice *bus, const struct pci_device_id *ids,
  * @index:	Index number of device to find, 0 for the first match, 1 for
  *		the second, etc.
  * @devp:	Returns matching device if found
- * @return 0 if found, -ENODEV if not
+ * Return: 0 if found, -ENODEV if not
  */
 int pci_find_device_id(const struct pci_device_id *ids, int index,
 		       struct udevice **devp);
@@ -1038,7 +1150,7 @@ int pci_find_device_id(const struct pci_device_id *ids, int index,
  *
  * @hose:	PCI hose to scan
  * @bdf:	PCI bus address to scan (PCI_BUS(bdf) is the bus number)
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int dm_pci_hose_probe_bus(struct udevice *bus);
 
@@ -1053,7 +1165,7 @@ int dm_pci_hose_probe_bus(struct udevice *bus);
  * @offset:	Register offset to read
  * @valuep:	Place to put the returned value
  * @size:	Access size
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int pci_bus_read_config(const struct udevice *bus, pci_dev_t bdf, int offset,
 			unsigned long *valuep, enum pci_size_t size);
@@ -1066,7 +1178,7 @@ int pci_bus_read_config(const struct udevice *bus, pci_dev_t bdf, int offset,
  * @offset:	Register offset to write
  * @value:	Value to write
  * @size:	Access size
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int pci_bus_write_config(struct udevice *bus, pci_dev_t bdf, int offset,
 			 unsigned long value, enum pci_size_t size);
@@ -1081,7 +1193,7 @@ int pci_bus_write_config(struct udevice *bus, pci_dev_t bdf, int offset,
  * @offset:	Register offset to update
  * @clr:	Bits to clear
  * @set:	Bits to set
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int pci_bus_clrset_config32(struct udevice *bus, pci_dev_t bdf, int offset,
 			    u32 clr, u32 set);
@@ -1183,7 +1295,7 @@ int pci_generic_mmap_read_config(
  *
  * @pdev:	Physical Function udevice handle
  * @vf_en:	Number of Virtual Function devices to enable
- * @return 0 on success, -ve on error
+ * Return: 0 on success, -ve on error
  */
 int pci_sriov_init(struct udevice *pdev, int vf_en);
 
@@ -1191,7 +1303,7 @@ int pci_sriov_init(struct udevice *pdev, int vf_en);
  * pci_sriov_get_totalvfs() - Get total available Virtual Function devices
  *
  * @pdev:	Physical Function udevice handle
- * @return count on success, -ve on error
+ * Return: count on success, -ve on error
  */
 int pci_sriov_get_totalvfs(struct udevice *pdev);
 #endif
@@ -1247,7 +1359,7 @@ static inline int pci_read_config_byte(pci_dev_t pcidev, int offset,
  * devices are mapped into memory and I/O space ready for use.
  *
  * @dev:	Device to configure
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 int dm_pciauto_config_device(struct udevice *dev);
 
@@ -1261,7 +1373,7 @@ int dm_pciauto_config_device(struct udevice *dev);
  * @value:	Value to transform (32-bit value read from @offset & ~3)
  * @offset:	Register offset that was read
  * @size:	Required size of the result
- * @return the value that would have been obtained if the read had been
+ * Return: the value that would have been obtained if the read had been
  * performed at the given offset with the correct size
  */
 ulong pci_conv_32_to_size(ulong value, uint offset, enum pci_size_t size);
@@ -1277,7 +1389,7 @@ ulong pci_conv_32_to_size(ulong value, uint offset, enum pci_size_t size);
  * @value:	Value to transform (32-bit value read from @offset & ~3)
  * @offset:	Register offset that should be written
  * @size:	Required size of the write
- * @return the value that should be written as a 32-bit access to @offset & ~3.
+ * Return: the value that should be written as a 32-bit access to @offset & ~3.
  */
 ulong pci_conv_size_to_32(ulong old, ulong value, uint offset,
 			  enum pci_size_t size);
@@ -1286,7 +1398,7 @@ ulong pci_conv_size_to_32(ulong old, ulong value, uint offset,
  * pci_get_controller() - obtain the controller to use for a bus
  *
  * @dev:	Device to check
- * @return pointer to the controller device for this bus
+ * Return: pointer to the controller device for this bus
  */
 struct udevice *pci_get_controller(struct udevice *dev);
 
@@ -1297,7 +1409,7 @@ struct udevice *pci_get_controller(struct udevice *dev);
  * @iop:	Returns a pointer to the I/O region, or NULL if none
  * @memp:	Returns a pointer to the memory region, or NULL if none
  * @prefp:	Returns a pointer to the pre-fetch region, or NULL if none
- * @return the number of non-NULL regions returned, normally 3
+ * Return: the number of non-NULL regions returned, normally 3
  */
 int pci_get_regions(struct udevice *dev, struct pci_region **iop,
 		    struct pci_region **memp, struct pci_region **prefp);
@@ -1329,7 +1441,7 @@ u32 dm_pci_read_bar32(const struct udevice *dev, int barnum);
  * @dev:	Device containing the PCI address
  * @addr:	PCI address to convert
  * @flags:	Flags for the region type (PCI_REGION_...)
- * @return physical address corresponding to that PCI bus address
+ * Return: physical address corresponding to that PCI bus address
  */
 phys_addr_t dm_pci_bus_to_phys(struct udevice *dev, pci_addr_t addr,
 			       unsigned long flags);
@@ -1340,7 +1452,7 @@ phys_addr_t dm_pci_bus_to_phys(struct udevice *dev, pci_addr_t addr,
  * @dev:	Device containing the bus address
  * @addr:	Physical address to convert
  * @flags:	Flags for the region type (PCI_REGION_...)
- * @return PCI bus address corresponding to that physical address
+ * Return: PCI bus address corresponding to that physical address
  */
 pci_addr_t dm_pci_phys_to_bus(struct udevice *dev, phys_addr_t addr,
 			      unsigned long flags);
@@ -1494,7 +1606,7 @@ int dm_pci_flr(struct udevice *dev);
  * @device:	Device ID
  * @index:	0 to find the first match, 1 for second, etc.
  * @devp:	Returns pointer to the device, if found
- * @return 0 if found, -ve on error
+ * Return: 0 if found, -ve on error
  */
 int dm_pci_find_device(unsigned int vendor, unsigned int device, int index,
 		       struct udevice **devp);
@@ -1505,7 +1617,7 @@ int dm_pci_find_device(unsigned int vendor, unsigned int device, int index,
  * @find_class: 3-byte (24-bit) class value to find
  * @index:	0 to find the first match, 1 for second, etc.
  * @devp:	Returns pointer to the device, if found
- * @return 0 if found, -ve on error
+ * Return: 0 if found, -ve on error
  */
 int dm_pci_find_class(uint find_class, int index, struct udevice **devp);
 
@@ -1617,7 +1729,7 @@ struct dm_pci_emul_ops {
  * @find_devfn:	PCI device and function address (PCI_DEVFN())
  * @containerp:	Returns container device if found
  * @emulp:	Returns emulated device if found
- * @return 0 if found, -ENODEV if not found
+ * Return: 0 if found, -ENODEV if not found
  */
 int sandbox_pci_get_emul(const struct udevice *bus, pci_dev_t find_devfn,
 			 struct udevice **containerp, struct udevice **emulp);
@@ -1627,7 +1739,7 @@ int sandbox_pci_get_emul(const struct udevice *bus, pci_dev_t find_devfn,
  *
  * @emul:	Emulation device to check
  * @devp:	Returns the client device emulated by this device
- * @return 0 if OK, -ENOENT if the device has no client yet
+ * Return: 0 if OK, -ENOENT if the device has no client yet
  */
 int sandbox_pci_get_client(struct udevice *emul, struct udevice **devp);
 

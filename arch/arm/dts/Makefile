@@ -34,7 +34,10 @@ dtb-$(CONFIG_TARGET_A7Y17LTE) += exynos78x0-axy17lte.dtb
 
 dtb-$(CONFIG_ARCH_APPLE) += \
 	t8103-j274.dtb \
-	t8103-j293.dtb
+	t8103-j293.dtb \
+	t8103-j313.dtb \
+	t8103-j456.dtb \
+	t8103-j457.dtb
 
 dtb-$(CONFIG_ARCH_DAVINCI) += \
 	da850-evm.dtb \
@@ -68,6 +71,7 @@ dtb-$(CONFIG_ARCH_KIRKWOOD) += \
 	kirkwood-openrd-client.dtb \
 	kirkwood-openrd-ultimate.dtb \
 	kirkwood-pogo_e02.dtb \
+	kirkwood-pogoplug-series-4.dtb \
 	kirkwood-sheevaplug.dtb
 
 dtb-$(CONFIG_MACH_S900) += \
@@ -133,6 +137,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399-ficus.dtb \
 	rk3399-firefly.dtb \
 	rk3399-gru-bob.dtb \
+	rk3399-gru-kevin.dtb \
 	rk3399-khadas-edge.dtb \
 	rk3399-khadas-edge-captain.dtb \
 	rk3399-khadas-edge-v.dtb \
@@ -361,7 +366,8 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 dtb-$(CONFIG_ARCH_VERSAL) += \
 	versal-mini.dtb \
 	versal-mini-emmc0.dtb \
-	versal-mini-emmc1.dtb
+	versal-mini-emmc1.dtb \
+	xilinx-versal-virt.dtb
 dtb-$(CONFIG_ARCH_ZYNQMP_R5) += \
 	zynqmp-r5.dtb
 dtb-$(CONFIG_AM33XX) += \
@@ -480,6 +486,8 @@ dtb-$(CONFIG_TARGET_SL28) += fsl-ls1028a-kontron-sl28.dtb \
 	fsl-ls1028a-kontron-sl28-var3.dtb \
 	fsl-ls1028a-kontron-sl28-var4.dtb \
 
+dtb-$(CONFIG_TARGET_TEN64) += fsl-ls1088a-ten64.dtb
+
 dtb-$(CONFIG_TARGET_DRAGONBOARD410C) += dragonboard410c.dtb
 dtb-$(CONFIG_TARGET_DRAGONBOARD820C) += dragonboard820c.dtb
 dtb-$(CONFIG_TARGET_STARQLTECHN) += starqltechn.dtb
@@ -497,6 +505,8 @@ dtb-$(CONFIG_STM32H7) += stm32h743i-disco.dtb \
 	stm32h743i-eval.dtb \
 	stm32h750i-art-pi.dtb
 
+dtb-$(CONFIG_MACH_SUNIV) += \
+	suniv-f1c100s-licheepi-nano.dtb
 dtb-$(CONFIG_MACH_SUN4I) += \
 	sun4i-a10-a1000.dtb \
 	sun4i-a10-ba10-tvbox.dtb \
@@ -872,6 +882,8 @@ dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-com.dtb \
 	imx7ulp-evk.dtb
 
+dtb-$(CONFIG_ARCH_HIGHBANK) += highbank.dtb
+
 dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-apalis.dtb \
 	fsl-imx8qm-mek.dtb \
@@ -904,13 +916,19 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mn-ddr4-evk.dtb \
 	imx8mq-cm.dtb \
 	imx8mn-evk.dtb \
+	imx8mn-var-som-symphony.dtb \
+	imx8mn-venice.dtb \
+	imx8mn-venice-gw7902.dtb \
 	imx8mq-evk.dtb \
 	imx8mm-beacon-kit.dtb \
 	imx8mn-beacon-kit.dtb \
+	imx8mq-mnt-reform2.dtb \
 	imx8mq-phanbell.dtb \
 	imx8mp-evk.dtb \
 	imx8mp-phyboard-pollux-rdk.dtb \
-	imx8mq-pico-pi.dtb
+	imx8mp-verdin.dtb \
+	imx8mq-pico-pi.dtb \
+	imx8mq-kontron-pitx-imx8m.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 	imxrt1020-evk.dtb
@@ -1079,7 +1097,8 @@ dtb-$(CONFIG_ARCH_BCM283X) += \
 	bcm2837-rpi-3-a-plus.dtb \
 	bcm2837-rpi-3-b.dtb \
 	bcm2837-rpi-3-b-plus.dtb \
-	bcm2837-rpi-cm3-io3.dtb
+	bcm2837-rpi-cm3-io3.dtb \
+	bcm2711-rpi-4-b.dtb
 
 dtb-$(CONFIG_ARCH_BCM63158) += \
 	bcm963158.dtb
@@ -1092,6 +1111,8 @@ dtb-$(CONFIG_ARCH_BCM6858) += \
 
 dtb-$(CONFIG_TARGET_BCMNS3) += ns3-board.dtb
 
+dtb-$(CONFIG_ARCH_BCMSTB) += bcm7xxx.dtb
+
 dtb-$(CONFIG_ASPEED_AST2500) += ast2500-evb.dtb
 dtb-$(CONFIG_ASPEED_AST2600) += ast2600-evb.dtb
 
@@ -1099,7 +1120,6 @@ dtb-$(CONFIG_ARCH_STI) += stih410-b2260.dtb
 
 dtb-$(CONFIG_STM32MP15x) += \
 	stm32mp157a-dk1.dtb \
-	stm32mp157a-avenger96.dtb \
 	stm32mp157a-icore-stm32mp1-ctouch2.dtb \
 	stm32mp157a-icore-stm32mp1-edimm2.2.dtb \
 	stm32mp157a-microgea-stm32mp1-microdev2.0.dtb \
@@ -1124,7 +1144,11 @@ dtb-$(CONFIG_SOC_K3_AM6) += \
 dtb-$(CONFIG_SOC_K3_J721E) += k3-j721e-common-proc-board.dtb \
 			      k3-j721e-r5-common-proc-board.dtb \
 			      k3-j7200-common-proc-board.dtb \
-			      k3-j7200-r5-common-proc-board.dtb
+			      k3-j7200-r5-common-proc-board.dtb \
+			      k3-j721e-sk.dtb \
+			      k3-j721e-r5-sk.dtb
+dtb-$(CONFIG_SOC_K3_J721S2) += k3-j721s2-common-proc-board.dtb\
+			       k3-j721s2-r5-common-proc-board.dtb
 dtb-$(CONFIG_SOC_K3_AM642) += k3-am642-evm.dtb \
 			      k3-am642-r5-evm.dtb \
 			      k3-am642-sk.dtb \
@@ -1141,6 +1165,11 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += \
 	mt8516-pumpkin.dtb \
 	mt8518-ap1-emmc.dtb
 
+dtb-$(CONFIG_XEN) += xenguest-arm64.dtb
+
+dtb-$(CONFIG_ARCH_OCTEONTX) += octeontx.dtb
+dtb-$(CONFIG_ARCH_OCTEONTX2) += octeontx.dtb
+
 dtb-$(CONFIG_TARGET_GE_BX50V3) += \
 	imx6q-bx50v3.dtb \
 	imx6q-b850v3.dtb \
@@ -1150,7 +1179,10 @@ dtb-$(CONFIG_TARGET_GE_BX50V3) += \
 dtb-$(CONFIG_TARGET_GE_B1X5V2) += imx6dl-b1x5v2.dtb
 dtb-$(CONFIG_TARGET_MX53PPD) += imx53-ppd.dtb
 
+# TODO(Linus Walleij <linus.walleij@linaro.org>): Should us a single vexpress
+# Kconfig option to build all of these. See examples above.
 dtb-$(CONFIG_TARGET_VEXPRESS_CA9X4) += vexpress-v2p-ca9.dtb
+dtb-$(CONFIG_TARGET_VEXPRESS64_JUNO) += juno-r2.dtb
 
 dtb-$(CONFIG_TARGET_TOTAL_COMPUTE) += total_compute.dtb
 
@@ -1158,11 +1190,33 @@ dtb-$(CONFIG_TARGET_DURIAN) += phytium-durian.dtb
 
 dtb-$(CONFIG_TARGET_PRESIDIO_ASIC) += ca-presidio-engboard.dtb
 
-dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE) += imx8mm-cl-iot-gate.dtb
+dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE) += imx8mm-cl-iot-gate.dtb \
+					imx8mm-cl-iot-gate-ied.dtbo \
+					imx8mm-cl-iot-gate-ied-adc0.dtbo \
+					imx8mm-cl-iot-gate-ied-adc1.dtbo \
+					imx8mm-cl-iot-gate-ied-can0.dtbo \
+					imx8mm-cl-iot-gate-ied-can1.dtbo \
+					imx8mm-cl-iot-gate-ied-tpm0.dtbo \
+					imx8mm-cl-iot-gate-ied-tpm1.dtbo
 
-dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE_OPTEE) += imx8mm-cl-iot-gate-optee.dtb
+dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE_OPTEE) += imx8mm-cl-iot-gate-optee.dtb \
+					imx8mm-cl-iot-gate-ied.dtbo \
+					imx8mm-cl-iot-gate-ied-adc0.dtbo \
+					imx8mm-cl-iot-gate-ied-adc1.dtbo \
+					imx8mm-cl-iot-gate-ied-can0.dtbo \
+					imx8mm-cl-iot-gate-ied-can1.dtbo \
+					imx8mm-cl-iot-gate-ied-tpm0.dtbo \
+					imx8mm-cl-iot-gate-ied-tpm1.dtbo
+
+ifneq ($(CONFIG_TARGET_IMX8MP_RSB3720A1_4G)$(CONFIG_TARGET_IMX8MP_RSB3720A1_6G),)
+dtb-y += imx8mp-rsb3720-a1.dtb
+endif
 
 dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
+
+dtb-$(CONFIG_ARCH_QEMU) += qemu-arm.dtb qemu-arm64.dtb
+
+include $(srctree)/scripts/Makefile.dts
 
 targets += $(dtb-y)
 

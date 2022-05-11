@@ -19,10 +19,6 @@
 #include <configs/ti_am335x_common.h>
 #include <linux/sizes.h>
 
-#ifndef CONFIG_SPL_BUILD
-# define CONFIG_TIMESTAMP
-#endif
-
 #define CONFIG_SYS_BOOTM_LEN		SZ_16M
 
 /* Clock Defines */
@@ -143,7 +139,10 @@
 		"if test $board_name = A335X_SK; then " \
 			"setenv fdtfile am335x-evmsk.dtb; fi; " \
 		"if test $board_name = A335_ICE; then " \
-			"setenv fdtfile am335x-icev2.dtb; fi; " \
+			"setenv fdtfile am335x-icev2.dtb; " \
+			"if test $ice_mii = mii; then " \
+				"setenv pxe_label_override Pruss; fi;" \
+		"fi; " \
 		"if test $fdtfile = undefined; then " \
 			"echo WARNING: Could not determine device tree to use; fi; \0" \
 	"init_console=" \
@@ -270,7 +269,6 @@
  */
 #if defined(CONFIG_NOR)
 #define CONFIG_SYS_MAX_FLASH_SECT	128
-#define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_FLASH_BASE		(0x08000000)
 #define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
 #define CONFIG_SYS_FLASH_SIZE		0x01000000

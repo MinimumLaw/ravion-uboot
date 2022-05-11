@@ -6,9 +6,6 @@
 #ifndef __L1028A_COMMON_H
 #define __L1028A_COMMON_H
 
-#define CONFIG_REMAKE_ELF
-#define CONFIG_MP
-
 #include <asm/arch/stream_id_lsch3.h>
 #include <asm/arch/config.h>
 #include <asm/arch/soc.h>
@@ -32,11 +29,6 @@
 #define COUNTER_FREQUENCY		25000000	/* 25MHz */
 
 /* GPIO */
-#ifdef CONFIG_DM_GPIO
-#ifndef CONFIG_MPC8XXX_GPIO
-#define CONFIG_MPC8XXX_GPIO
-#endif
-#endif
 
 /* I2C */
 
@@ -59,8 +51,6 @@
 	func(USB, usb, 0) \
 	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
-
-#undef CONFIG_BOOTCOMMAND
 
 #define XSPI_NOR_BOOTCOMMAND	\
 	"run xspi_hdploadcmd; run distro_bootcmd; run xspi_bootcmd; " \

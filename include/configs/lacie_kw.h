@@ -6,40 +6,9 @@
 #ifndef _CONFIG_LACIE_KW_H
 #define _CONFIG_LACIE_KW_H
 
-/*
- * High Level Configuration Options (easy to change)
- */
-#define CONFIG_FEROCEON_88FR131		/* CPU Core subversion */
-/* SoC name */
-#if defined(CONFIG_NETSPACE_LITE_V2) || defined(CONFIG_NETSPACE_MINI_V2)
-#define CONFIG_KW88F6192
-#else
-#define CONFIG_KW88F6281
-#endif
-
-/*
- * SDRAM configuration
- */
-
-/*
- * Different SDRAM configuration and size for some of the boards derived
- * from the Network Space v2
- */
-#if defined(CONFIG_INETSPACE_V2)
-#define CONFIG_SYS_KWD_CONFIG $(CONFIG_BOARDDIR)/kwbimage-is2.cfg
-#elif defined(CONFIG_NETSPACE_LITE_V2) || defined(CONFIG_NETSPACE_MINI_V2)
-#define CONFIG_SYS_KWD_CONFIG $(CONFIG_BOARDDIR)/kwbimage-ns2l.cfg
-#endif
-
-/*
- * mv-common.h should be defined after CMD configs since it used them
- * to enable certain macros
- */
 #include "mv-common.h"
 
 /* Remove or override few declarations from mv-common.h */
-#undef CONFIG_SYS_IDE_MAXBUS
-#undef CONFIG_SYS_IDE_MAXDEVICE
 
 /*
  * Enable platform initialisation via misc_init_r() function
@@ -61,16 +30,12 @@
 #define CONFIG_LBA48
 #if defined(CONFIG_NETSPACE_MAX_V2) || defined(CONFIG_D2NET_V2) || \
 	defined(CONFIG_NET2BIG_V2)
-#define CONFIG_SYS_SATA_MAX_DEVICE	2
-#else
-#define CONFIG_SYS_SATA_MAX_DEVICE	1
 #endif
 #endif /* CONFIG_SATA */
 
 /*
  * Enable GPI0 support
  */
-#define CONFIG_KIRKWOOD_GPIO
 
 /*
  * Enable I2C support
@@ -97,9 +62,6 @@
 /*
  * Default environment variables
  */
-#define CONFIG_BOOTCOMMAND					\
-	"dhcp && run netconsole; "				\
-	"if run usbload || run diskload; then bootm; fi"
 
 #define CONFIG_EXTRA_ENV_SETTINGS				\
 	"stdin=serial\0"					\

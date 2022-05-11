@@ -10,8 +10,6 @@
 #ifndef __XILINX_ZYNQMP_H
 #define __XILINX_ZYNQMP_H
 
-#define CONFIG_REMAKE_ELF
-
 /* #define CONFIG_ARMV8_SWITCH_TO_EL1 */
 
 /* Generic Interrupt Controller Definitions */
@@ -26,8 +24,6 @@
 #endif
 
 /* Serial setup */
-#define CONFIG_CPU_ARMV8
-
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{ 4800, 9600, 19200, 38400, 57600, 115200 }
 
@@ -37,10 +33,6 @@
 
 #ifdef CONFIG_NAND_ARASAN
 # define CONFIG_SYS_MAX_NAND_DEVICE	1
-#endif
-
-#if defined(CONFIG_SPL_BUILD)
-#define CONFIG_ZYNQMP_PSU_INIT_ENABLED
 #endif
 
 /* Miscellaneous configurable options */
@@ -242,7 +234,6 @@
 #ifdef CONFIG_MMC_SDHCI_ZYNQ
 # define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0 /* unused */
 # define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	0 /* unused */
-# define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0 /* unused */
 # if defined(CONFIG_SPL_LOAD_FIT)
 #  define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.itb"
 # else

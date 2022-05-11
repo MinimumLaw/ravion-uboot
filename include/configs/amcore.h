@@ -13,7 +13,6 @@
 #define CONFIG_MCFTMR
 #define CONFIG_SYS_UART_PORT		0
 
-#define CONFIG_BOOTCOMMAND		"bootm ffc20000"
 #define CONFIG_EXTRA_ENV_SETTINGS				\
 	"upgrade_uboot=loady; "					\
 		"protect off 0xffc00000 0xffc1ffff; "		\
@@ -41,7 +40,6 @@
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_SDRAM_SIZE		0x1000000
 #define CONFIG_SYS_FLASH_BASE		0xffc00000
-#define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_MAX_FLASH_SECT	1024
 #define CONFIG_SYS_FLASH_ERASE_TOUT	1000
 

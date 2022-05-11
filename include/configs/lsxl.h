@@ -8,23 +8,8 @@
 #define _CONFIG_LSXL_H
 
 /*
- * Version number information
- */
-#if defined(CONFIG_LSCHLV2)
-#define CONFIG_SYS_KWD_CONFIG $(CONFIG_BOARDDIR)/kwbimage-lschl.cfg
-#elif defined(CONFIG_LSXHL)
-#define CONFIG_SYS_KWD_CONFIG $(CONFIG_BOARDDIR)/kwbimage-lsxhl.cfg
-#else
-#error "unknown board"
-#endif
-
-/*
  * General configuration options
  */
-#define CONFIG_FEROCEON_88FR131		/* CPU Core subversion */
-#define CONFIG_KW88F6281		/* SOC Name */
-
-#define CONFIG_KIRKWOOD_GPIO
 
 #include "mv-common.h"
 
@@ -34,7 +19,6 @@
  *  Environment variables configurations
  */
 #ifdef CONFIG_SPI_FLASH
-#define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_MAX_FLASH_SECT	8
 #endif
 
@@ -112,7 +96,6 @@
 #endif /* CONFIG_CMD_NET */
 
 #ifdef CONFIG_SATA
-#define CONFIG_SYS_SATA_MAX_DEVICE 1
 #define CONFIG_SYS_64BIT_LBA
 #define CONFIG_LBA48
 #endif

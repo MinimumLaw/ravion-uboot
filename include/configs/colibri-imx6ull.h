@@ -72,7 +72,6 @@
 
 #if defined(CONFIG_TARGET_COLIBRI_IMX6ULL_NAND)
 /* Run Distro Boot script if ubiboot fails */
-#define CONFIG_BOOTCOMMAND "run ubiboot || run distro_bootcmd;"
 #define DFU_ALT_NAND_INFO "imx6ull-bcb part 0,1;u-boot1 part 0,2;u-boot2 part 0,3;u-boot-env part 0,4;ubi partubi 0,5"
 #define MODULE_EXTRA_ENV_SETTINGS \
 	"dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
@@ -141,8 +140,9 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* environment organization */
-
-/* Environment in eMMC, before config block at the end of 1st "boot sector" */
+#if defined(CONFIG_ENV_IS_IN_NAND)
+#define CONFIG_ENV_RANGE	(4 * CONFIG_ENV_SIZE)
+#endif
 
 #ifdef CONFIG_TARGET_COLIBRI_IMX6ULL_NAND
 /* NAND stuff */
@@ -165,7 +165,6 @@
 
 #if defined(CONFIG_DM_VIDEO)
 #define MXS_LCDIF_BASE MX6UL_LCDIF1_BASE_ADDR
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #endif
 

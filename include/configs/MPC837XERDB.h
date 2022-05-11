@@ -155,7 +155,6 @@
 #define CONFIG_SYS_FLASH_EMPTY_INFO		/* display empty sectors */
 
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	1 /* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	256 /* max sectors per device */
 
 #undef	CONFIG_SYS_FLASH_CHECKSUM
@@ -276,7 +275,6 @@
 /*
  * SATA
  */
-#define CONFIG_SYS_SATA_MAX_DEVICE	2
 #define CONFIG_SATA1
 #define CONFIG_SYS_SATA1_OFFSET	0x18000
 #define CONFIG_SYS_SATA1	(CONFIG_SYS_IMMR + CONFIG_SYS_SATA1_OFFSET)
@@ -302,8 +300,6 @@
  */
 #define CONFIG_BOOTP_BOOTFILESIZE
 
-#undef CONFIG_WATCHDOG		/* watchdog disabled */
-
 #ifdef CONFIG_MMC
 #define CONFIG_FSL_ESDHC_PIN_MUX
 #define CONFIG_SYS_FSL_ESDHC_ADDR	CONFIG_SYS_MPC83xx_ESDHC_ADDR
@@ -326,7 +322,6 @@
  */
 
 #define CONFIG_HAS_FSL_DR_USB
-#define CONFIG_USB_EHCI_FSL
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
 
 #define CONFIG_NETDEV		"eth1"
@@ -364,21 +359,5 @@
 		"ip=$ipaddr:$serverip:$gatewayip:$netmask:$hostname:"	\
 							"$netdev:off "	\
 		"root=$rootdev rw console=$console,$baudrate $othbootargs\0"
-
-#define NFSBOOTCOMMAND						\
-	"setenv rootdev /dev/nfs;"					\
-	"run setbootargs;"						\
-	"run setipargs;"						\
-	"tftp $loadaddr $bootfile;"					\
-	"tftp $fdtaddr $fdtfile;"					\
-	"bootm $loadaddr - $fdtaddr"
-
-#define RAMBOOTCOMMAND						\
-	"setenv rootdev /dev/ram;"					\
-	"run setbootargs;"						\
-	"tftp $ramdiskaddr $ramdiskfile;"				\
-	"tftp $loadaddr $bootfile;"					\
-	"tftp $fdtaddr $fdtfile;"					\
-	"bootm $loadaddr $ramdiskaddr $fdtaddr"
 
 #endif	/* __CONFIG_H */

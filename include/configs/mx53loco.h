@@ -11,8 +11,6 @@
 
 #include <asm/arch/imx-regs.h>
 
-#define CONFIG_SYS_FSL_CLK
-
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 
 /* MMC Configs */
@@ -93,18 +91,6 @@
 			"bootz; " \
 		"fi;\0"
 
-#define CONFIG_BOOTCOMMAND \
-	"mmc dev ${mmcdev}; if mmc rescan; then " \
-		"if run loadbootscript; then " \
-			"run bootscript; " \
-		"else " \
-			"if run loadimage; then " \
-				"run mmcboot; " \
-			"else run netboot; " \
-			"fi; " \
-		"fi; " \
-	"else run netboot; fi"
-
 #define CONFIG_ARP_TIMEOUT	200UL
 
 /* Miscellaneous configurable options */
@@ -139,13 +125,11 @@
 #define CONFIG_BOARD_SIZE_LIMIT		785408
 
 #ifdef CONFIG_CMD_SATA
-	#define CONFIG_SYS_SATA_MAX_DEVICE      1
 	#define CONFIG_DWC_AHSATA_PORT_ID       0
 	#define CONFIG_DWC_AHSATA_BASE_ADDR     SATA_BASE_ADDR
 	#define CONFIG_LBA48
 #endif
 
 /* Framebuffer and LCD */
-#define CONFIG_VIDEO_LOGO
 
 #endif				/* __CONFIG_H */

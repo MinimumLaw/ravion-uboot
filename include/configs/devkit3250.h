@@ -28,7 +28,6 @@
 /*
  * GPIO
  */
-#define CONFIG_LPC32XX_GPIO
 
 /*
  * Ethernet
@@ -40,7 +39,6 @@
 /*
  * NOR Flash
  */
-#define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_MAX_FLASH_SECT	71
 #define CONFIG_SYS_FLASH_BASE		EMC_CS0_BASE
 #define CONFIG_SYS_FLASH_SIZE		SZ_4M
@@ -83,14 +81,6 @@
 /*
  * Environment
  */
-
-#define CONFIG_BOOTCOMMAND			\
-	"dhcp; "				\
-	"tftp ${loadaddr} ${serverip}:${tftpdir}/${bootfile}; "		\
-	"tftp ${dtbaddr} ${serverip}:${tftpdir}/devkit3250.dtb; "	\
-	"setenv nfsargs ip=dhcp root=/dev/nfs nfsroot=${serverip}:${nfsroot},tcp; "	\
-	"setenv bootargs ${bootargs} ${nfsargs} ${userargs}; "			\
-	"bootm ${loadaddr} - ${dtbaddr}"
 
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"autoload=no\0"				\

@@ -102,9 +102,6 @@ static const table_entry_t uimage_os[] = {
 	{	IH_OS_INVALID,	"invalid",	"Invalid OS",		},
 	{       IH_OS_ARM_TRUSTED_FIRMWARE, "arm-trusted-firmware", "ARM Trusted Firmware"  },
 	{	IH_OS_LINUX,	"linux",	"Linux",		},
-#if defined(USE_HOSTCC)
-	{	IH_OS_LYNXOS,	"lynxos",	"LynxOS",		},
-#endif
 	{	IH_OS_NETBSD,	"netbsd",	"NetBSD",		},
 	{	IH_OS_OSE,	"ose",		"Enea OSE",		},
 	{	IH_OS_PLAN9,	"plan9",	"Plan 9",		},
@@ -503,7 +500,7 @@ int image_decomp(int comp, ulong load, ulong image_start, int type,
 			struct abuf in, out;
 
 			abuf_init_set(&in, image_buf, image_len);
-			abuf_init_set(&in, load_buf, unc_len);
+			abuf_init_set(&out, load_buf, unc_len);
 			ret = zstd_decompress(&in, &out);
 			if (ret >= 0) {
 				image_len = ret;
@@ -553,7 +550,7 @@ static const char *unknown_msg(enum ih_category category)
  * This will scan the translation table trying to find the entry that matches
  * the given id.
  *
- * @return long entry name if translation succeeds; error string on failure
+ * Return: long entry name if translation succeeds; error string on failure
  */
 const char *genimg_get_cat_name(enum ih_category category, uint id)
 {
@@ -573,7 +570,7 @@ const char *genimg_get_cat_name(enum ih_category category, uint id)
  * This will scan the translation table trying to find the entry that matches
  * the given id.
  *
- * @return short entry name if translation succeeds; error string on failure
+ * Return: short entry name if translation succeeds; error string on failure
  */
 const char *genimg_get_cat_short_name(enum ih_category category, uint id)
 {
@@ -603,7 +600,7 @@ const char *genimg_get_cat_desc(enum ih_category category)
  * This will scan the translation table trying to find the entry that matches
  * the given id.
  *
- * @return true if category has entry id; false if not
+ * Return: true if category has entry id; false if not
  */
 bool genimg_cat_has_id(enum ih_category category, uint id)
 {

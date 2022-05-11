@@ -160,11 +160,13 @@ enum sunxi_gpio_number {
 #define SUNXI_GPC_SDC2		3
 #define SUN6I_GPC_SDC3		4
 #define SUN50I_GPC_SPI0		4
+#define SUNIV_GPC_SPI0		2
 
 #define SUNXI_GPD_LCD0		2
 #define SUNXI_GPD_LVDS0		3
 #define SUNXI_GPD_PWM		2
 
+#define SUNIV_GPE_UART0		5
 #define SUN8I_GPE_TWI2		3
 #define SUN50I_GPE_TWI2		3
 
@@ -226,8 +228,10 @@ void sunxi_gpio_set_cfgbank(struct sunxi_gpio *pio, int bank_offset, u32 val);
 void sunxi_gpio_set_cfgpin(u32 pin, u32 val);
 int sunxi_gpio_get_cfgbank(struct sunxi_gpio *pio, int bank_offset);
 int sunxi_gpio_get_cfgpin(u32 pin);
-int sunxi_gpio_set_drv(u32 pin, u32 val);
-int sunxi_gpio_set_pull(u32 pin, u32 val);
+void sunxi_gpio_set_drv(u32 pin, u32 val);
+void sunxi_gpio_set_drv_bank(struct sunxi_gpio *pio, u32 bank_offset, u32 val);
+void sunxi_gpio_set_pull(u32 pin, u32 val);
+void sunxi_gpio_set_pull_bank(struct sunxi_gpio *pio, int bank_offset, u32 val);
 int sunxi_name_to_gpio(const char *name);
 
 #if !defined CONFIG_SPL_BUILD && defined CONFIG_AXP_GPIO

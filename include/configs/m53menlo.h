@@ -11,10 +11,6 @@
 
 #include <asm/arch/imx-regs.h>
 
-#define CONFIG_SYS_FSL_CLK
-
-#define CONFIG_TIMESTAMP		/* Print image info with timestamp */
-
 /*
  * Memory configurations
  */
@@ -103,7 +99,6 @@
  * SATA
  */
 #ifdef CONFIG_CMD_SATA
-#define CONFIG_SYS_SATA_MAX_DEVICE	1
 #define CONFIG_DWC_AHSATA_PORT_ID	0
 #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_BASE_ADDR
 #define CONFIG_LBA48
@@ -112,7 +107,6 @@
 /*
  * LCD
  */
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(2 << 20)
 
 /* LVDS display */
@@ -128,7 +122,6 @@
  * Boot Linux
  */
 #define CONFIG_BOOTFILE		"boot/fitImage"
-#define CONFIG_BOOTCOMMAND	"run mmc_mmc"
 
 /*
  * NAND SPL
@@ -204,10 +197,5 @@
 			"source ${kernel_addr_r} ; "			\
 		"fi ; "							\
 		"fi\0"
-
-#if defined(CONFIG_SPL_BUILD)
-#undef CONFIG_WATCHDOG
-#define CONFIG_HW_WATCHDOG
-#endif
 
 #endif	/* __M53MENLO_CONFIG_H__ */

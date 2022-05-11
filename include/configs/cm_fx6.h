@@ -13,7 +13,6 @@
 #include "mx6_common.h"
 
 /* Machine config */
-#define CONFIG_SYS_LITTLE_ENDIAN
 
 /* MMC */
 #define CONFIG_SYS_FSL_USDHC_NUM	3
@@ -161,7 +160,6 @@
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
 
 /* SATA */
-#define CONFIG_SYS_SATA_MAX_DEVICE	1
 #define CONFIG_LBA48
 #define CONFIG_DWC_AHSATA_PORT_ID	0
 #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
@@ -177,7 +175,6 @@
 /* Display */
 #define CONFIG_IMX_HDMI
 
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 
 /* EEPROM */

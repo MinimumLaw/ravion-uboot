@@ -12,22 +12,12 @@
 /*
  * High Level Board Configuration Options
  */
-#define	CONFIG_CPU_PXA27X		1	/* Marvell PXA270 CPU */
 /* Avoid overwriting factory configuration block */
 #define CONFIG_BOARD_SIZE_LIMIT		0x40000
 
 /*
  * Environment settings
  */
-#define	CONFIG_BOOTCOMMAND						\
-	"if fatload mmc 0 0xa0000000 uImage; then "			\
-		"bootm 0xa0000000; "					\
-	"fi; "								\
-	"if usb reset && fatload usb 0 0xa0000000 uImage; then "	\
-		"bootm 0xa0000000; "					\
-	"fi; "								\
-	"bootm 0xc0000;"
-#define	CONFIG_TIMESTAMP
 
 /*
  * Serial Console Configuration
@@ -93,7 +83,6 @@
 #define	CONFIG_SYS_FLASH_CFI_WIDTH      FLASH_CFI_32BIT
 
 #define	CONFIG_SYS_MAX_FLASH_SECT	(4 + 255)
-#define	CONFIG_SYS_MAX_FLASH_BANKS	1
 
 #define	CONFIG_SYS_FLASH_ERASE_TOUT	(25 * CONFIG_SYS_HZ)
 #define	CONFIG_SYS_FLASH_WRITE_TOUT	(25 * CONFIG_SYS_HZ)

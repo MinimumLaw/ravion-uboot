@@ -6,8 +6,6 @@
 #ifndef __CONFIG_PG_WCOM_LS102XA_H
 #define __CONFIG_PG_WCOM_LS102XA_H
 
-#define CONFIG_SYS_FSL_CLK
-
 /* include common defines/options for all Keymile boards */
 #include "keymile-common.h"
 
@@ -17,8 +15,6 @@
 #define CONFIG_PRAM			((CONFIG_KM_PNVRAM + \
 					  CONFIG_KM_PHRAM + \
 					  CONFIG_KM_RESERVED_PRAM) >> 10)
-
-#define CONFIG_SYS_CLK_FREQ		66666666
 
 #define PHYS_SDRAM			0x80000000
 #define PHYS_SDRAM_SIZE			(1u * 1024 * 1024 * 1024)
@@ -40,7 +36,6 @@
  * IFC Definitions
  */
 /* NOR Flash Definitions */
-#define CONFIG_FSL_IFC
 #define CONFIG_SYS_FLASH_BASE		0x60000000
 #define CONFIG_SYS_FLASH_BASE_PHYS	CONFIG_SYS_FLASH_BASE
 
@@ -73,7 +68,6 @@
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45	/* count down from 45/5: 9..1 */
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	512	/* sectors per device */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
@@ -279,5 +273,7 @@
 
 #define CONFIG_SYS_BOOTM_LEN	(64 << 20) /* Increase max gunzip size */
 #define CONFIG_SYS_BOOTMAPSZ	(256 << 20) /* Increase map for Linux */
+
+#define CONFIG_MISC_INIT_F
 
 #endif

@@ -35,8 +35,6 @@
 #define CONFIG_USBD_HS
 
 /* Framebuffer and LCD */
-#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
@@ -94,10 +92,6 @@
 #define FDT_FILE "imx6dl-colibri-eval-v3.dtb"
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	BOOTENV \
-	"bootcmd=run distro_bootcmd; " \
-		"usb start ; " \
-		"setenv stdout serial,vidconsole; " \
-		"setenv stdin serial,usbkbd\0" \
 	"boot_file=zImage\0" \
 	"console=ttymxc0\0" \
 	"defargs=enable_wait_mode=off galcore.contiguousSize=50331648\0" \

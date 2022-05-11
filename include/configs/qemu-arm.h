@@ -21,11 +21,35 @@
 
 /* Environment options */
 
+#if CONFIG_IS_ENABLED(CMD_USB)
+# define BOOT_TARGET_USB(func) func(USB, usb, 0)
+#else
+# define BOOT_TARGET_USB(func)
+#endif
+
+#if CONFIG_IS_ENABLED(CMD_SCSI)
+# define BOOT_TARGET_SCSI(func) func(SCSI, scsi, 0)
+#else
+# define BOOT_TARGET_SCSI(func)
+#endif
+
+#if CONFIG_IS_ENABLED(CMD_VIRTIO)
+# define BOOT_TARGET_VIRTIO(func) func(VIRTIO, virtio, 0)
+#else
+# define BOOT_TARGET_VIRTIO(func)
+#endif
+
+#if CONFIG_IS_ENABLED(CMD_DHCP)
+# define BOOT_TARGET_DHCP(func) func(DHCP, dhcp, na)
+#else
+# define BOOT_TARGET_DHCP(func)
+#endif
+
 #define BOOT_TARGET_DEVICES(func) \
-	func(USB, usb, 0) \
-	func(SCSI, scsi, 0) \
-	func(VIRTIO, virtio, 0) \
-	func(DHCP, dhcp, na)
+	BOOT_TARGET_USB(func) \
+	BOOT_TARGET_SCSI(func) \
+	BOOT_TARGET_VIRTIO(func) \
+	BOOT_TARGET_DHCP(func)
 
 #include <config_distro_bootcmd.h>
 
@@ -42,7 +66,6 @@
 #define CONFIG_SYS_CBSIZE 512
 
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_MAX_FLASH_BANKS_DETECT	2
 #define CONFIG_SYS_MAX_FLASH_SECT	256 /* Sector: 256K, Bank: 64M */
 #define CONFIG_CFI_FLASH_USE_WEAK_ACCESSORS
 

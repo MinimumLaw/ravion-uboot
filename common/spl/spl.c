@@ -49,13 +49,15 @@ DECLARE_GLOBAL_DATA_PTR;
 
 u32 *boot_params_ptr = NULL;
 
+#if CONFIG_IS_ENABLED(BINMAN_SYMBOLS)
 /* See spl.h for information about this */
 binman_sym_declare(ulong, u_boot_any, image_pos);
 binman_sym_declare(ulong, u_boot_any, size);
+#endif
 
 #ifdef CONFIG_TPL
-binman_sym_declare(ulong, spl, image_pos);
-binman_sym_declare(ulong, spl, size);
+binman_sym_declare(ulong, u_boot_spl, image_pos);
+binman_sym_declare(ulong, u_boot_spl, size);
 #endif
 
 /* Define board data structure */
@@ -140,19 +142,21 @@ void spl_fixup_fdt(void *fdt_blob)
 #endif
 }
 
+#if CONFIG_IS_ENABLED(BINMAN_SYMBOLS)
 ulong spl_get_image_pos(void)
 {
 	return spl_phase() == PHASE_TPL ?
-		binman_sym(ulong, spl, image_pos) :
+		binman_sym(ulong, u_boot_spl, image_pos) :
 		binman_sym(ulong, u_boot_any, image_pos);
 }
 
 ulong spl_get_image_size(void)
 {
 	return spl_phase() == PHASE_TPL ?
-		binman_sym(ulong, spl, size) :
+		binman_sym(ulong, u_boot_spl, size) :
 		binman_sym(ulong, u_boot_any, size);
 }
+#endif /* BINMAN_SYMBOLS */
 
 ulong spl_get_image_text_base(void)
 {
@@ -172,6 +176,11 @@ __weak void spl_board_prepare_for_linux(void)
 
 __weak void spl_board_prepare_for_optee(void *fdt)
 {
+}
+
+__weak const char *spl_board_loader_name(u32 boot_device)
+{
+	return NULL;
 }
 
 #if CONFIG_IS_ENABLED(OPTEE_IMAGE)
@@ -312,6 +321,7 @@ static int spl_load_fit_image(struct spl_image_info *spl_image,
 #endif
 
 __weak int spl_parse_board_header(struct spl_image_info *spl_image,
+				  const struct spl_boot_device *bootdev,
 				  const void *image_header, size_t size)
 {
 	return -EINVAL;
@@ -326,6 +336,7 @@ __weak int spl_parse_legacy_header(struct spl_image_info *spl_image,
 }
 
 int spl_parse_image_header(struct spl_image_info *spl_image,
+			   const struct spl_boot_device *bootdev,
 			   const struct image_header *header)
 {
 #if CONFIG_IS_ENABLED(LOAD_FIT_FULL)
@@ -369,7 +380,7 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 		}
 #endif
 
-		if (!spl_parse_board_header(spl_image, (const void *)header, sizeof(*header)))
+		if (!spl_parse_board_header(spl_image, bootdev, (const void *)header, sizeof(*header)))
 			return 0;
 
 #ifdef CONFIG_SPL_RAW_IMAGE_SUPPORT
@@ -408,7 +419,7 @@ static int setup_spl_handoff(void)
 {
 	struct spl_handoff *ho;
 
-	ho = bloblist_ensure(BLOBLISTT_SPL_HANDOFF, sizeof(struct spl_handoff));
+	ho = bloblist_ensure(BLOBLISTT_U_BOOT_SPL_HANDOFF, sizeof(struct spl_handoff));
 	if (!ho)
 		return -ENOENT;
 
@@ -425,7 +436,7 @@ static int write_spl_handoff(void)
 	struct spl_handoff *ho;
 	int ret;
 
-	ho = bloblist_find(BLOBLISTT_SPL_HANDOFF, sizeof(struct spl_handoff));
+	ho = bloblist_find(BLOBLISTT_U_BOOT_SPL_HANDOFF, sizeof(struct spl_handoff));
 	if (!ho)
 		return -ENOENT;
 	handoff_save_dram(ho);
@@ -446,7 +457,7 @@ static inline int write_spl_handoff(void) { return 0; }
  * get_bootstage_id() - Get the bootstage ID to emit
  *
  * @start: true if this is for starting SPL, false for ending it
- * @return bootstage ID to use
+ * Return: bootstage ID to use
  */
 static enum bootstage_id get_bootstage_id(bool start)
 {
@@ -587,6 +598,12 @@ static struct spl_image_loader *spl_ll_find_loader(uint boot_device)
 	return NULL;
 }
 
+__weak int spl_check_board_image(struct spl_image_info *spl_image,
+				 const struct spl_boot_device *bootdev)
+{
+	return 0;
+}
+
 static int spl_load_image(struct spl_image_info *spl_image,
 			  struct spl_image_loader *loader)
 {
@@ -608,6 +625,9 @@ static int spl_load_image(struct spl_image_info *spl_image,
 		}
 	}
 #endif
+	if (!ret)
+		ret = spl_check_board_image(spl_image, &bootdev);
+
 	return ret;
 }
 
@@ -617,7 +637,7 @@ static int spl_load_image(struct spl_image_info *spl_image,
  * @spl_image: Place to put the image details if successful
  * @spl_boot_list: List of boot devices to try
  * @count: Number of elements in spl_boot_list
- * @return 0 if OK, -ENODEV if there were no boot devices
+ * Return: 0 if OK, -ENODEV if there were no boot devices
  *	if CONFIG_SHOW_ERRORS is enabled, returns -ENXIO if there were
  *	devices but none worked
  */
@@ -770,9 +790,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			       ret);
 	}
 
-#ifdef CONFIG_CPU_V7M
-	spl_image.entry_point |= 0x1;
-#endif
 	switch (spl_image.os) {
 	case IH_OS_U_BOOT:
 		debug("Jumping to %s...\n", spl_phase_name(spl_next_phase()));
@@ -886,7 +903,7 @@ __weak void spl_relocate_stack_check(void)
  * All of this is done using the same layout and alignments as done in
  * board_init_f_init_reserve() / board_init_f_alloc_reserve().
  *
- * @return new stack location, or 0 to use the same stack
+ * Return: new stack location, or 0 to use the same stack
  */
 ulong spl_relocate_stack_gd(void)
 {

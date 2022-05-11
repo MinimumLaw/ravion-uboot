@@ -8,10 +8,6 @@
 
 #include <configs/ti_am335x_common.h>
 
-#ifndef CONFIG_SPL_BUILD
-# define CONFIG_TIMESTAMP
-#endif
-
 /* Clock Defines */
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
@@ -30,11 +26,6 @@
 		"nand read ${fdt_addr} NAND.u-boot-spl-os; " \
 		"nand read ${loadaddr} NAND.kernel; " \
 		"bootz ${loadaddr} - ${fdt_addr}\0"
-
-#define CONFIG_BOOTCOMMAND \
-	"run mmcboot; " \
-	"run nandboot; " \
-	"run netboot"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \

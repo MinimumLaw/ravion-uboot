@@ -10,8 +10,6 @@
 #ifndef __XILINX_VERSAL_H
 #define __XILINX_VERSAL_H
 
-#define CONFIG_REMAKE_ELF
-
 /* #define CONFIG_ARMV8_SWITCH_TO_EL1 */
 
 /* Generic Interrupt Controller Definitions */
@@ -26,8 +24,6 @@
 #endif
 
 /* Serial setup */
-#define CONFIG_CPU_ARMV8
-
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{ 4800, 9600, 19200, 38400, 57600, 115200 }
 

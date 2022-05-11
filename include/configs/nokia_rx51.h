@@ -21,7 +21,6 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_SYS_L2CACHE_OFF		/* pretend there is no L2 CACHE */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap.h>
@@ -71,31 +70,12 @@
 
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
-/*
- * Framebuffer
- */
-/* Video console */
-#define CONFIG_VIDEO_LOGO
-#define VIDEO_FB_16BPP_PIXEL_SWAP
-#define VIDEO_FB_16BPP_WORD_SWAP
-
-/* functions for cfb_console */
-#define VIDEO_KBD_INIT_FCT		rx51_kp_init()
-#define VIDEO_TSTC_FCT			rx51_kp_tstc
-#define VIDEO_GETC_FCT			rx51_kp_getc
-#ifndef __ASSEMBLY__
-struct stdio_dev;
-int rx51_kp_init(void);
-int rx51_kp_tstc(struct stdio_dev *sdev);
-int rx51_kp_getc(struct stdio_dev *sdev);
-#endif
-
 /* Environment information */
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"usbtty=cdc_acm\0" \
-	"stdin=usbtty,serial,vga\0" \
-	"stdout=usbtty,serial,vga\0" \
-	"stderr=usbtty,serial,vga\0" \
+	"stdin=usbtty,serial,keyboard\0" \
+	"stdout=usbtty,serial,vidconsole\0" \
+	"stderr=usbtty,serial,vidconsole\0" \
 	"slide=gpio input " __stringify(GPIO_SLIDE) "\0" \
 	"switchmmc=mmc dev ${mmcnum}\0" \
 	"kernaddr=0x82008000\0" \
@@ -166,12 +146,6 @@ int rx51_kp_getc(struct stdio_dev *sdev);
 	"echo run sdboot - Boot from SD card slot.;" \
 	"echo run emmcboot - Boot internal eMMC memory.;" \
 	"echo run attachboot - Boot attached kernel image.;" \
-	"echo"
-
-#define CONFIG_BOOTCOMMAND \
-	"run sdboot;" \
-	"run emmcboot;" \
-	"run attachboot;" \
 	"echo"
 
 /*

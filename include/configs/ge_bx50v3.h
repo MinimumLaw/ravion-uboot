@@ -21,7 +21,6 @@
 
 /* SATA Configs */
 #ifdef CONFIG_CMD_SATA
-#define CONFIG_SYS_SATA_MAX_DEVICE	1
 #define CONFIG_DWC_AHSATA_PORT_ID	0
 #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
 #define CONFIG_LBA48
@@ -98,15 +97,6 @@
 		"run doboot; " \
 		"run failbootcmd\0" \
 
-#define MMCBOOTCOMMAND \
-	"run doquiet; " \
-	"run tryboot; " \
-
-#ifdef CONFIG_CMD_NFS
-#define CONFIG_BOOTCOMMAND NETWORKBOOTCOMMAND
-#else
-#define CONFIG_BOOTCOMMAND MMCBOOTCOMMAND
-#endif
 
 /* Physical Memory Map */
 #define PHYS_SDRAM                     MMDC0_ARB_BASE_ADDR

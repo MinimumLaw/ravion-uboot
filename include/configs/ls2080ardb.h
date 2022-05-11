@@ -17,13 +17,7 @@
 
 #define I2C_MUX_CH_VOL_MONITOR		0xa
 #define I2C_VOL_MONITOR_ADDR		0x38
-#define CONFIG_VOL_MONITOR_IR36021_READ
-#define CONFIG_VOL_MONITOR_IR36021_SET
 
-#define CONFIG_VID_FLS_ENV		"ls2080ardb_vdd_mv"
-#ifndef CONFIG_SPL_BUILD
-#define CONFIG_VID
-#endif
 /* step the IR regulator in 5mV increments */
 #define IR_VDD_STEP_DOWN		5
 #define IR_VDD_STEP_UP			5
@@ -31,12 +25,7 @@
 #define VDD_MV_MIN			819
 #define VDD_MV_MAX			1212
 
-#ifndef __ASSEMBLY__
-unsigned long get_board_sys_clk(void);
-#endif
-
-#define CONFIG_SYS_CLK_FREQ		get_board_sys_clk()
-#define COUNTER_FREQUENCY_REAL		(CONFIG_SYS_CLK_FREQ/4)
+#define COUNTER_FREQUENCY_REAL		(get_board_sys_clk()/4)
 
 #define CONFIG_MEM_INIT_VALUE		0xdeadbeef
 #define SPD_EEPROM_ADDRESS1	0x51
@@ -54,15 +43,9 @@ unsigned long get_board_sys_clk(void);
 #endif
 
 /* SATA */
-#define CONFIG_SCSI_AHCI_PLAT
 
 #define CONFIG_SYS_SATA1			AHCI_BASE_ADDR1
 #define CONFIG_SYS_SATA2			AHCI_BASE_ADDR2
-
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID		1
-#define CONFIG_SYS_SCSI_MAX_LUN			1
-#define CONFIG_SYS_SCSI_MAX_DEVICE		(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-						CONFIG_SYS_SCSI_MAX_LUN)
 
 #if !defined(CONFIG_FSL_QSPI) || defined(CONFIG_TFABOOT)
 
@@ -98,7 +81,6 @@ unsigned long get_board_sys_clk(void);
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45 /* count down from 45/5: 9..1 */
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	1024	/* sectors per device */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
@@ -258,9 +240,6 @@ unsigned long get_board_sys_clk(void);
 #define I2C_MUX_CH_DEFAULT      0x8
 
 /* SPI */
-#if defined(CONFIG_FSL_DSPI)
-#define CONFIG_SPI_FLASH_STMICRO
-#endif
 
 /*
  * RTC configuration
@@ -507,38 +486,12 @@ unsigned long get_board_sys_clk(void);
 			"run distro_bootcmd;run nor_bootcmd; "		\
 			"env exists secureboot && esbc_halt;"
 #else
-#undef CONFIG_BOOTCOMMAND
 #ifdef CONFIG_QSPI_BOOT
 /* Try to boot an on-QSPI kernel first, then do normal distro boot */
-#define CONFIG_BOOTCOMMAND						\
-			"sf probe 0:0; "				\
-			"sf read 0x806c0000 0x6c0000 0x40000; "		\
-			"env exists mcinitcmd && env exists secureboot "\
-			"&& esbc_validate 0x806C0000; "			\
-			"sf read 0x80d00000 0xd00000 0x100000; "	\
-			"env exists mcinitcmd && "			\
-			"fsl_mc lazyapply dpl 0x80d00000; "		\
-			"run distro_bootcmd;run qspi_bootcmd; "		\
-			"env exists secureboot && esbc_halt;"
 #elif defined(CONFIG_SD_BOOT)
 /* Try to boot an on-SD kernel first, then do normal distro boot */
-#define CONFIG_BOOTCOMMAND						\
-			"env exists mcinitcmd && env exists secureboot "\
-			"&& mmcinfo && mmc read $load_addr 0x3600 0x800 " \
-			"&& esbc_validate $load_addr; "			\
-			"env exists mcinitcmd && run mcinitcmd "	\
-			"&& mmc read 0x88000000 0x6800 0x800 "		\
-			"&& fsl_mc lazyapply dpl 0x88000000; "		\
-			"run distro_bootcmd;run sd_bootcmd; "		\
-			"env exists secureboot && esbc_halt;"
 #else
 /* Try to boot an on-NOR kernel first, then do normal distro boot */
-#define CONFIG_BOOTCOMMAND						\
-			"env exists mcinitcmd && env exists secureboot "\
-			"&& esbc_validate 0x5806C0000; env exists mcinitcmd "\
-			"&& fsl_mc lazyapply dpl 0x580d00000;"		\
-			"run distro_bootcmd;run nor_bootcmd; "		\
-			"env exists secureboot && esbc_halt;"
 #endif
 #endif
 
