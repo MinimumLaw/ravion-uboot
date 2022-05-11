@@ -37,6 +37,7 @@
 	"fdtaddr=0x88000000\0" \
 	"dtboaddr=0x89000000\0" \
 	"fdt_addr_r=0x88000000\0" \
+	"fdtoverlay_addr_r=0x89000000\0" \
 	"rdaddr=0x88080000\0" \
 	"ramdisk_addr_r=0x88080000\0" \
 	"scriptaddr=0x80000000\0" \
@@ -54,7 +55,7 @@
 		"do;" \
 		"setenv overlaystring ${overlaystring}'#'${overlay};" \
 		"done;\0" \
-	"run_fit=bootm ${addr_fit}#${fdtfile}${overlaystring}\0" \
+	"run_fit=bootm ${addr_fit}#conf-${fdtfile}${overlaystring}\0" \
 
 /*
  * DDR information.  If the CONFIG_NR_DRAM_BANKS is not defined,
@@ -153,7 +154,6 @@
 #define CONFIG_SPL_FS_LOAD_ARGS_NAME		"args"
 
 /* RAW SD card / eMMC */
-#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1700  /* address 0x2E0000 */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x1500  /* address 0x2A0000 */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	0x200   /* 256KiB */
 #endif

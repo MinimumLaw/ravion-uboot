@@ -26,8 +26,6 @@
 #define SPL_NO_IFC
 #endif
 
-#define CONFIG_REMAKE_ELF
-
 #include <asm/arch/config.h>
 #include <asm/arch/stream_id_lsch2.h>
 
@@ -110,11 +108,6 @@
 #endif
 
 /* GPIO */
-#ifdef CONFIG_DM_GPIO
-#ifndef CONFIG_MPC8XXX_GPIO
-#define CONFIG_MPC8XXX_GPIO
-#endif
-#endif
 
 /* I2C */
 
@@ -129,14 +122,7 @@
 
 /* SATA */
 #ifndef SPL_NO_SATA
-#define CONFIG_SCSI_AHCI_PLAT
-
 #define CONFIG_SYS_SATA				AHCI_BASE_ADDR
-
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID		1
-#define CONFIG_SYS_SCSI_MAX_LUN			1
-#define CONFIG_SYS_SCSI_MAX_DEVICE		(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-						CONFIG_SYS_SCSI_MAX_LUN)
 #endif
 
 /* FMan ucode */

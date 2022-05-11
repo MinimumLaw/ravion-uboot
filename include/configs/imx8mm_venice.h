@@ -11,8 +11,6 @@
 
 #define CONFIG_SPL_MAX_SIZE		(148 * 1024)
 #define CONFIG_SYS_MONITOR_LEN		SZ_512K
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x300
 #define CONFIG_SYS_UBOOT_BASE	\
 	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
@@ -36,8 +34,6 @@
 	"ramdisk_addr_r=0x46400000\0" \
 	"scriptaddr=0x46000000\0"
 
-/* Link Definitions */
-
 /* Enable Distro Boot */
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
@@ -56,8 +52,6 @@
 	MEM_LAYOUT_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"bootm_size=0x10000000\0" \
-	"ipaddr=192.168.1.22\0" \
-	"serverip=192.168.1.146\0" \
 	"dev=2\0" \
 	"preboot=gsc wd-disable\0" \
 	"console=ttymxc1,115200\0" \
@@ -89,7 +83,7 @@
 
 /* SDRAM configuration */
 #define PHYS_SDRAM                      0x40000000
-#define PHYS_SDRAM_SIZE			SZ_1G /* 1GB DDR */
+#define PHYS_SDRAM_SIZE			SZ_4G
 #define CONFIG_SYS_BOOTM_LEN		SZ_256M
 
 /* UART */
@@ -105,13 +99,11 @@
 /* USDHC */
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
-#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 /* FEC */
 #define CONFIG_ETHPRIME                 "eth0"
 #define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          0
 #define FEC_QUIRK_ENET_MAC
-#define IMX_FEC_BASE			0x30BE0000
 
 #endif

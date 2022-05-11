@@ -58,7 +58,7 @@ static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 	const int n_ents = ll_entry_count(struct driver_info, driver_info);
 	bool missing_parent = false;
 	int result = 0;
-	uint idx;
+	int idx;
 
 	/*
 	 * Do one iteration through the driver_info records. For of-platdata,
@@ -161,7 +161,7 @@ int device_bind_driver_to_node(struct udevice *parent, const char *drv_name,
  * @param of_match:	List of compatible strings to match
  * @param of_idp:	Returns the match that was found
  * @param compat:	The compatible string to search for
- * @return 0 if there is a match, -ENOENT if no match
+ * Return: 0 if there is a match, -ENOENT if no match
  */
 static int driver_check_compatible(const struct udevice_id *of_match,
 				   const struct udevice_id **of_idp,

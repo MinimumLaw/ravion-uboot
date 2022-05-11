@@ -18,15 +18,6 @@
  * U-Boot into it.
  */
 
-/*
- * SATA/SCSI/AHCI configuration
- */
-#define CONFIG_SCSI_AHCI_PLAT
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID	2
-#define CONFIG_SYS_SCSI_MAX_LUN		1
-#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-					 CONFIG_SYS_SCSI_MAX_LUN)
-
 /* Environment in SPI NOR flash */
 
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs a longer aneg time */
@@ -121,26 +112,6 @@
 		" else;"							\
 		" gpio clear ${gpio1}; gpio set ${gpio2};"			\
 		" fi; sleep 0.12; done\0"
-
-#define NFSBOOTCOMMAND								\
-	"setenv bootargs root=/dev/nfs rw "						\
-	"nfsroot=${serverip}:${rootpath} "						\
-	"ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:${netdev}:off "	\
-	"console=${consoledev},${baudrate} ${othbootargs}; "				\
-	"tftpboot ${bootfile_addr} ${bootfile}; "						\
-	"bootm ${bootfile_addr}"
-
-#define MMCBOOTCOMMAND					\
-	"setenv bootargs root=/dev/mmcblk0p3 rw rootwait "	\
-	"console=${consoledev},${baudrate} ${othbootargs}; "	\
-	"ext2load mmc 0:2 ${bootfile_addr} ${bootfile}; "	\
-	"bootm ${bootfile_addr}"
-
-#define CONFIG_BOOTCOMMAND			\
-	"if env exists keyprogram; then;"	\
-	" setenv keyprogram; run nfsboot;"	\
-        " fi;"					\
-        " run dobootfail"
 
 /*
  * mv-common.h should be defined after CMD configs since it used them

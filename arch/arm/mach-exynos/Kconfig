@@ -23,6 +23,7 @@ config ARCH_EXYNOS5
 	imply CMD_HASH
 	imply CRC32_VERIFY
 	imply HASH_VERIFY
+	imply KEYBOARD
 	imply USB_ETHER_ASIX
 	imply USB_ETHER_RTL8152
 	imply USB_ETHER_SMSC95XX
@@ -161,7 +162,7 @@ config  TARGET_A5Y17LTE
 	select SUPPORT_SPL
 
 config  TARGET_A7Y17LTE
-	bool "Samsung SM-A520F board"
+	bool "Samsung SM-A720F board"
 	select ARM64
 	select CLK_EXYNOS
 	select OF_CONTROL
@@ -170,12 +171,12 @@ config  TARGET_A7Y17LTE
 	select SUPPORT_SPL
 
 config  TARGET_A3Y17LTE
-	bool "Samsung SM-A520F board"
+	bool "Samsung SM-A320F board"
 	select ARM64
 	select CLK_EXYNOS
 	select OF_CONTROL
 	select PINCTRL
-	select PINCTRL_EXYNOS7880
+	select PINCTRL_EXYNOS78x0
 	select SUPPORT_SPL
 
 endchoice

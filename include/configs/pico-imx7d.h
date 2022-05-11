@@ -21,7 +21,6 @@
 /* Falcon Mode - MMC support: args@1MB kernel@2MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR  0x800   /* 1MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS (CONFIG_CMD_SPL_WRITE_SIZE / 512)
-#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR        0x1000  /* 2MB */
 #endif
 
 #define CONFIG_MXC_UART_BASE		UART5_IPS_BASE_ADDR
@@ -64,9 +63,6 @@
 		"setenv fdtfile imx7d-pico-pi.dtb\0" \
 	BOOTENV
 #endif
-
-
-#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"image=zImage\0" \
@@ -124,7 +120,6 @@
 #define CONFIG_POWER_PFUZE3000_I2C_ADDR	0x08
 
 #ifdef CONFIG_DM_VIDEO
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #endif
 

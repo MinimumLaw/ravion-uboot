@@ -244,6 +244,10 @@ struct global_data {
 	 * @fdt_size: space reserved for relocated device space
 	 */
 	unsigned long fdt_size;
+	/**
+	 * @fdt_src: Source of FDT
+	 */
+	enum fdt_source_t fdt_src;
 #if CONFIG_IS_ENABLED(OF_LIVE)
 	/**
 	 * @of_root: root node of the live tree
@@ -452,6 +456,10 @@ struct global_data {
 	 * @acpi_ctx: ACPI context pointer
 	 */
 	struct acpi_ctx *acpi_ctx;
+	/**
+	 * @acpi_start: Start address of ACPI tables
+	 */
+	ulong acpi_start;
 #endif
 #if CONFIG_IS_ENABLED(GENERATE_SMBIOS_TABLE)
 	/**
@@ -508,8 +516,20 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 
 #ifdef CONFIG_GENERATE_ACPI_TABLE
 #define gd_acpi_ctx()		gd->acpi_ctx
+#define gd_acpi_start()		gd->acpi_start
+#define gd_set_acpi_start(addr)	gd->acpi_start = addr
 #else
 #define gd_acpi_ctx()		NULL
+#define gd_acpi_start()		0UL
+#define gd_set_acpi_start(addr)
+#endif
+
+#if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
+#define gd_multi_dtb_fit()	gd->multi_dtb_fit
+#define gd_set_multi_dtb_fit(_dtb)	gd->multi_dtb_fit = _dtb
+#else
+#define gd_multi_dtb_fit()	NULL
+#define gd_set_multi_dtb_fit(_dtb)
 #endif
 
 /**

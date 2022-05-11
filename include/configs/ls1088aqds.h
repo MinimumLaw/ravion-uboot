@@ -8,22 +8,14 @@
 
 #include "ls1088a_common.h"
 
-
-#ifndef __ASSEMBLY__
-unsigned long get_board_sys_clk(void);
-#endif
-
 #if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
 #define CONFIG_QIXIS_I2C_ACCESS
 #define SYS_NO_FLASH
-
-#define CONFIG_SYS_CLK_FREQ		100000000
 #else
 #define CONFIG_QIXIS_I2C_ACCESS
-#define CONFIG_SYS_CLK_FREQ		get_board_sys_clk()
 #endif
 
-#define COUNTER_FREQUENCY_REAL		(CONFIG_SYS_CLK_FREQ/4)
+#define COUNTER_FREQUENCY_REAL		(get_board_sys_clk()/4)
 #define COUNTER_FREQUENCY		25000000	/* 25MHz */
 
 #define CONFIG_DIMM_SLOTS_PER_CTLR	1
@@ -80,7 +72,6 @@ unsigned long get_board_sys_clk(void);
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45 /* count down from 45/5: 9..1 */
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	2	/* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	1024	/* sectors per device */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
@@ -298,15 +289,9 @@ unsigned long get_board_sys_clk(void);
 #define I2C_VOL_MONITOR_BUS_V_SHIFT    3
 #define I2C_SVDD_MONITOR_ADDR           0x4F
 
-#define CONFIG_VID_FLS_ENV              "ls1088aqds_vdd_mv"
-#define CONFIG_VID
-
 /* The lowest and highest voltage allowed for LS1088AQDS */
 #define VDD_MV_MIN			819
 #define VDD_MV_MAX			1212
-
-#define CONFIG_VOL_MONITOR_LTC3882_SET
-#define CONFIG_VOL_MONITOR_LTC3882_READ
 
 #define PWM_CHANNEL0                    0x0
 
@@ -321,9 +306,6 @@ unsigned long get_board_sys_clk(void);
 #define CONFIG_SYS_EEPROM_BUS_NUM		0
 
 #ifdef CONFIG_FSL_DSPI
-#define CONFIG_SPI_FLASH_STMICRO
-#define CONFIG_SPI_FLASH_SST
-#define CONFIG_SPI_FLASH_EON
 #if !defined(CONFIG_TFABOOT) && \
 	!defined(CONFIG_QSPI_BOOT) && !defined(CONFIG_SD_BOOT_QSPI)
 #endif

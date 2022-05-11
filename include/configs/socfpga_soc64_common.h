@@ -15,7 +15,6 @@
  * U-Boot general configurations
  */
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
-#define CONFIG_REMAKE_ELF
 /* sysmgr.boot_scratch_cold4 & 5 (64bit) will be used for PSCI_CPU_ON call */
 #define CPU_RELEASE_ADDR		0xFFD12210
 
@@ -60,7 +59,6 @@
 /* Flash device info */
 
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT			"nor0=ff705000.spi.0"
 #endif /* CONFIG_SPL_BUILD */
 
@@ -137,7 +135,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /*
  * Flash configurations
  */
-#define CONFIG_SYS_MAX_FLASH_BANKS	1
 
 /* Ethernet on SoC (EMAC) */
 #if defined(CONFIG_CMD_NET)
@@ -148,7 +145,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * L4 Watchdog
  */
 #ifndef CONFIG_SPL_BUILD
-#undef CONFIG_HW_WATCHDOG
 #undef CONFIG_DESIGNWARE_WATCHDOG
 #endif
 #define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD0_ADDRESS

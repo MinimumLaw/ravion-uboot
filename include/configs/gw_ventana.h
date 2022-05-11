@@ -18,7 +18,6 @@
 /* Falcon Mode - MMC support: args@1MB kernel@2MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x800	/* 1MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	(CONFIG_CMD_SPL_WRITE_SIZE / 512)
-#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1000	/* 2MB */
 
 #include "imx6_spl.h"                  /* common IMX6 SPL configuration */
 #include "mx6_common.h"
@@ -42,7 +41,6 @@
  * SATA Configs
  */
 #ifdef CONFIG_CMD_SATA
-  #define CONFIG_SYS_SATA_MAX_DEVICE	1
   #define CONFIG_DWC_AHSATA_PORT_ID	0
   #define CONFIG_DWC_AHSATA_BASE_ADDR	SATA_ARB_BASE_ADDR
   #define CONFIG_LBA48
@@ -72,7 +70,6 @@
 #define CONFIG_USBD_HS
 
 /* Framebuffer and LCD */
-#define CONFIG_VIDEO_LOGO
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 #define CONFIG_VIDEO_BMP_LOGO
@@ -106,7 +103,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS_COMMON \
 	"splashpos=m,m\0" \
-	"splashimage=" __stringify(CONFIG_LOADADDR) "\0" \
+	"splashimage=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"usb_pgood_delay=2000\0" \
 	"console=ttymxc1\0" \
 	"bootdevs=usb mmc sata flash\0" \
@@ -253,11 +250,5 @@
 			"fi; " \
 		"fi\0"
 #endif
-
-#define CONFIG_BOOTCOMMAND \
-	"for btype in ${bootdevs}; do " \
-		"echo; echo Attempting ${btype} boot...; " \
-		"if run ${btype}_boot; then; fi; " \
-	"done"
 
 #endif			       /* __CONFIG_H */

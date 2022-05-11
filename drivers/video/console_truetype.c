@@ -274,6 +274,27 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	 */
 	for (row = 0; row < height; row++) {
 		switch (vid_priv->bpix) {
+		case VIDEO_BPP8:
+			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
+				u8 *dst = line + xoff;
+				int i;
+
+				for (i = 0; i < width; i++) {
+					int val = *bits;
+					int out;
+
+					if (vid_priv->colour_bg)
+						val = 255 - val;
+					out = val;
+					if (vid_priv->colour_fg)
+						*dst++ |= out;
+					else
+						*dst++ &= out;
+					bits++;
+				}
+				end = dst;
+			}
+			break;
 #ifdef CONFIG_VIDEO_BPP16
 		case VIDEO_BPP16: {
 			uint16_t *dst = (uint16_t *)line + xoff;
@@ -347,7 +368,7 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
  * @xend:	X end position in pixels from the left
  * @yend:	Y end position  in pixels from the top
  * @clr:	Value to write
- * @return 0 if OK, -ENOSYS if the display depth is not supported
+ * Return: 0 if OK, -ENOSYS if the display depth is not supported
  */
 static int console_truetype_erase(struct udevice *dev, int xstart, int ystart,
 				  int xend, int yend, int clr)
@@ -408,7 +429,7 @@ static int console_truetype_erase(struct udevice *dev, int xstart, int ystart,
  * not been entered.
  *
  * @dev:	Device to update
- * @return 0 if OK, -ENOSYS if not supported
+ * Return: 0 if OK, -ENOSYS if not supported
  */
 static int console_truetype_backspace(struct udevice *dev)
 {
@@ -514,7 +535,7 @@ static struct font_info font_table[] = {
  *
  * This searched for the first available font.
  *
- * @return pointer to the font, or NULL if none is found
+ * Return: pointer to the font, or NULL if none is found
  */
 static u8 *console_truetype_find_font(void)
 {

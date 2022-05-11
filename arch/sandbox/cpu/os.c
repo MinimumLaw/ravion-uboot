@@ -211,6 +211,16 @@ int os_map_file(const char *pathname, int os_flags, void **bufp, int *sizep)
 	return 0;
 }
 
+int os_unmap(void *buf, int size)
+{
+	if (munmap(buf, size)) {
+		printf("Can't unmap %p %x\n", buf, size);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 /* Restore tty state when we exit */
 static struct termios orig_term;
 static bool term_setup;
@@ -614,7 +624,13 @@ const char *os_dirent_get_typename(enum os_dirent_t type)
 	return os_dirent_typename[OS_FILET_UNKNOWN];
 }
 
-int os_get_filesize(const char *fname, loff_t *size)
+/*
+ * For compatibility reasons avoid loff_t here.
+ * U-Boot defines loff_t as long long.
+ * But /usr/include/linux/types.h may not define it at all.
+ * Alpine Linux being one example.
+ */
+int os_get_filesize(const char *fname, long long *size)
 {
 	struct stat buf;
 	int ret;
@@ -628,7 +644,7 @@ int os_get_filesize(const char *fname, loff_t *size)
 
 void os_putc(int ch)
 {
-	putchar(ch);
+	fputc(ch, stdout);
 }
 
 void os_puts(const char *str)
@@ -657,7 +673,7 @@ int os_read_ram_buf(const char *fname)
 {
 	struct sandbox_state *state = state_get_current();
 	int fd, ret;
-	loff_t size;
+	long long size;
 
 	ret = os_get_filesize(fname, &size);
 	if (ret < 0)
@@ -702,7 +718,7 @@ static int make_exec(char *fname, const void *data, int size)
  * @argvp:  Returns newly allocated args list
  * @add_args: Arguments to add, each a string
  * @count: Number of arguments in @add_args
- * @return 0 if OK, -ENOMEM if out of memory
+ * Return: 0 if OK, -ENOMEM if out of memory
  */
 static int add_args(char ***argvp, char *add_args[], int count)
 {
@@ -748,7 +764,7 @@ static int add_args(char ***argvp, char *add_args[], int count)
  * execs it.
  *
  * @fname: Filename to exec
- * @return does not return on success, any return value is an error
+ * Return: does not return on success, any return value is an error
  */
 static int os_jump_to_file(const char *fname, bool delete_it)
 {

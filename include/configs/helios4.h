@@ -35,15 +35,6 @@
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 
-/* SATA support */
-#ifdef CONFIG_SCSI
-#define CONFIG_SCSI_AHCI_PLAT
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID	1
-#define CONFIG_SYS_SCSI_MAX_LUN		1
-#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-					CONFIG_SYS_SCSI_MAX_LUN)
-#endif
-
 /* Keep device tree and initrd in lower memory so the kernel can access them */
 #define RELOCATION_LIMITS_ENV_SETTINGS	\
 	"fdt_high=0x10000000\0"		\
@@ -53,7 +44,7 @@
 
 /* Defines for SPL */
 #define CONFIG_SPL_SIZE			(140 << 10)
-#define CONFIG_SPL_MAX_SIZE		(CONFIG_SPL_SIZE - 0x0030)
+#define CONFIG_SPL_MAX_SIZE		(CONFIG_SPL_SIZE - (CONFIG_SPL_TEXT_BASE - 0x40000000))
 
 #define CONFIG_SPL_BSS_START_ADDR	(0x40000000 + CONFIG_SPL_SIZE)
 #define CONFIG_SPL_BSS_MAX_SIZE		(16 << 10)

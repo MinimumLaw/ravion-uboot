@@ -11,6 +11,7 @@
  */
 
 #include <common.h>
+#include <clock_legacy.h>
 #include <dm.h>
 #include <env.h>
 #include <hang.h>
@@ -27,7 +28,9 @@
 #include <asm/arch/dram.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/prcm.h>
+#include <asm/arch/pmic_bus.h>
 #include <asm/arch/spl.h>
+#include <asm/arch/sys_proto.h>
 #include <asm/global_data.h>
 #include <linux/delay.h>
 #include <u-boot/crc.h>
@@ -169,21 +172,56 @@ void i2c_init_board(void)
 #endif
 }
 
-#if defined(CONFIG_ENV_IS_IN_MMC) && defined(CONFIG_ENV_IS_IN_FAT)
+/*
+ * Try to use the environment from the boot source first.
+ * For MMC, this means a FAT partition on the boot device (SD or eMMC).
+ * If the raw MMC environment is also enabled, this is tried next.
+ * SPI flash falls back to FAT (on SD card).
+ */
 enum env_location env_get_location(enum env_operation op, int prio)
 {
-	switch (prio) {
-	case 0:
-		return ENVL_FAT;
+	enum env_location boot_loc = ENVL_FAT;
 
-	case 1:
-		return ENVL_MMC;
+	gd->env_load_prio = prio;
 
+	switch (sunxi_get_boot_device()) {
+	case BOOT_DEVICE_MMC1:
+	case BOOT_DEVICE_MMC2:
+		boot_loc = ENVL_FAT;
+		break;
+	case BOOT_DEVICE_NAND:
+		if (IS_ENABLED(CONFIG_ENV_IS_IN_NAND))
+			boot_loc = ENVL_NAND;
+		break;
+	case BOOT_DEVICE_SPI:
+		if (IS_ENABLED(CONFIG_ENV_IS_IN_SPI_FLASH))
+			boot_loc = ENVL_SPI_FLASH;
+		break;
+	case BOOT_DEVICE_BOARD:
+		break;
 	default:
-		return ENVL_UNKNOWN;
+		break;
 	}
+
+	/* Always try to access the environment on the boot device first. */
+	if (prio == 0)
+		return boot_loc;
+
+	if (prio == 1) {
+		switch (boot_loc) {
+		case ENVL_SPI_FLASH:
+			return ENVL_FAT;
+		case ENVL_FAT:
+			if (IS_ENABLED(CONFIG_ENV_IS_IN_MMC))
+				return ENVL_MMC;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return ENVL_UNKNOWN;
 }
-#endif
 
 #ifdef CONFIG_DM_MMC
 static void mmc_pinmux_setup(int sdc);
@@ -196,7 +234,7 @@ int board_init(void)
 
 	gd->bd->bi_boot_params = (PHYS_SDRAM_0 + 0x100);
 
-#ifndef CONFIG_ARM64
+#if !defined(CONFIG_ARM64) && !defined(CONFIG_MACH_SUNIV)
 	asm volatile("mrc p15, 0, %0, c0, c1, 1" : "=r"(id_pfr1));
 	debug("id_pfr1: 0x%08x\n", id_pfr1);
 	/* Generic Timer Extension available? */
@@ -223,7 +261,7 @@ int board_init(void)
 #endif
 		}
 	}
-#endif /* !CONFIG_ARM64 */
+#endif /* !CONFIG_ARM64 && !CONFIG_MACH_SUNIV */
 
 	ret = axp_gpio_init();
 	if (ret)
@@ -270,6 +308,8 @@ int board_init(void)
 	mmc_pinmux_setup(CONFIG_MMC_SUNXI_SLOT_EXTRA);
 #endif
 #endif	/* CONFIG_DM_MMC */
+
+	eth_init_board();
 
 	return 0;
 }
@@ -601,6 +641,16 @@ void sunxi_board_init(void)
 	defined CONFIG_AXP809_POWER || defined CONFIG_AXP818_POWER
 	power_failed = axp_init();
 
+	if (IS_ENABLED(CONFIG_AXP_DISABLE_BOOT_ON_POWERON) && !power_failed) {
+		u8 boot_reason;
+
+		pmic_bus_read(AXP_POWER_STATUS, &boot_reason);
+		if (boot_reason & AXP_POWER_STATUS_ALDO_IN) {
+			printf("Power on by plug-in, shutting down.\n");
+			pmic_bus_write(0x32, BIT(7));
+		}
+	}
+
 #if defined CONFIG_AXP221_POWER || defined CONFIG_AXP809_POWER || \
 	defined CONFIG_AXP818_POWER
 	power_failed |= axp_set_dcdc1(CONFIG_AXP_DCDC1_VOLT);
@@ -667,7 +717,7 @@ void sunxi_board_init(void)
 	 * assured it's being powered with suitable core voltage
 	 */
 	if (!power_failed)
-		clock_set_pll1(CONFIG_SYS_CLK_FREQ);
+		clock_set_pll1(get_board_sys_clk());
 	else
 		printf("Failed to set core voltage! Can't set CPU frequency\n");
 }
@@ -911,10 +961,12 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	int __maybe_unused r;
 
 	/*
-	 * Call setup_environment again in case the boot fdt has
-	 * ethernet aliases the u-boot copy does not have.
+	 * Call setup_environment and fdt_fixup_ethernet again
+	 * in case the boot fdt has ethernet aliases the u-boot
+	 * copy does not have.
 	 */
 	setup_environment(blob);
+	fdt_fixup_ethernet(blob);
 
 	bluetooth_dt_fixup(blob);
 

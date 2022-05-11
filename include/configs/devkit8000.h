@@ -46,15 +46,6 @@
 
 /* TWL4030 */
 
-/* Board NAND Info */
-#define CONFIG_JFFS2_NAND
-/* nand device jffs2 lives on */
-#define CONFIG_JFFS2_DEV		"nand0"
-/* start of jffs2 partition */
-#define CONFIG_JFFS2_PART_OFFSET	0x680000
-#define CONFIG_JFFS2_PART_SIZE		0xf980000	/* size of jffs2 */
-							/* partition */
-
 /* BOOTP/DHCP options */
 #define CONFIG_BOOTP_NISDOMAIN
 #define CONFIG_BOOTP_BOOTFILESIZE
@@ -126,8 +117,6 @@
 			"fi; " \
 		"else run nandboot; fi\0"
 
-#define CONFIG_BOOTCOMMAND "run autoboot"
-
 /* Boot Argument Buffer Size */
 
 /* Defines for SPL */
@@ -144,10 +133,8 @@
 /* SPL OS boot options */
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS 0x280000
 
-#undef CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR
 #undef CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR
 #undef CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS
-#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x500 /* address 0xa0000 */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x8   /* address 0x1000 */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	8     /* 4KB */
 

@@ -18,16 +18,12 @@
 
 #undef	CONFIG_MONITOR_IS_IN_RAM		/* starts uboot direct */
 
-#define CONFIG_BOOTCOMMAND "printenv"
-
 /*----------------------------------------------------------------------*
  * Options								*
  *----------------------------------------------------------------------*/
 
 #define CONFIG_BOOT_RETRY_TIME	-1
 #define CONFIG_RESET_TO_RETRY
-
-#define CONFIG_HW_WATCHDOG
 
 #define STATUS_LED_ACTIVE		0
 
@@ -120,7 +116,6 @@
 #define CONFIG_SYS_INT_FLASH_ENABLE	0x21
 
 #define	CONFIG_SYS_MAX_FLASH_SECT	128
-#define	CONFIG_SYS_MAX_FLASH_BANKS	1
 #define	CONFIG_SYS_FLASH_ERASE_TOUT	10000000
 
 #define CONFIG_SYS_FLASH_SIZE		16*1024*1024
@@ -188,8 +183,6 @@
 /*-----------------------------------------------------------------------
  * I2C
  */
-
-#define CONFIG_SYS_IMMR			CONFIG_SYS_MBAR
 
 #ifdef CONFIG_CMD_DATE
 #define CONFIG_RTC_DS1338

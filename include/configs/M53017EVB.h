@@ -20,7 +20,6 @@
 
 #define CONFIG_SYS_UART_PORT		(0)
 
-#undef CONFIG_WATCHDOG
 #define CONFIG_WATCHDOG_TIMEOUT		5000
 
 #define CONFIG_SYS_UNIFY_CACHE
@@ -54,9 +53,6 @@
 #define CONFIG_MCFTMR
 
 /* I2C */
-#define CONFIG_SYS_IMMR			CONFIG_SYS_MBAR
-
-#define CONFIG_UDP_CHECKSUM
 
 #ifdef CONFIG_MCFFEC
 #	define CONFIG_IPADDR	192.162.1.2
@@ -132,7 +128,6 @@
 #	define CONFIG_FLASH_SPANSION_S29WS_N	1
 #	define CONFIG_SYS_FLASH_SIZE		0x1000000	/* Max size that the board might have */
 #	define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
-#	define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max number of memory banks */
 #	define CONFIG_SYS_MAX_FLASH_SECT	137	/* max number of sectors on one chip */
 #endif
 

@@ -96,8 +96,6 @@
 			"run nandboot; " \
 		"fi\0"
 
-#define CONFIG_BOOTCOMMAND		"run $modeboot"
-
 /* Miscellaneous configurable options */
 
 #ifdef CONFIG_MX6UL
@@ -149,14 +147,12 @@
 /* MMC support: args@1MB kernel@2MB */
 # define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR		0x800   /* 1MB */
 # define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS		(CONFIG_CMD_SPL_WRITE_SIZE / 512)
-# define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1000  /* 2MB */
 #endif
 
 /* Framebuffer */
 #ifdef CONFIG_VIDEO_IPUV3
 # define CONFIG_IMX_VIDEO_SKIP
 
-# define CONFIG_VIDEO_LOGO
 # define CONFIG_VIDEO_BMP_LOGO
 #endif
 

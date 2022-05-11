@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2022 NXP
  */
 #include <common.h>
+#include <clock_legacy.h>
 #include <env.h>
 #include <i2c.h>
 #include <init.h>
@@ -374,6 +375,7 @@ bool if_board_diff_clk(void)
 #endif
 }
 
+#ifdef CONFIG_DYNAMIC_SYS_CLK_FREQ
 unsigned long get_board_sys_clk(void)
 {
 	u8 sysclk_conf = QIXIS_READ(brdcfg[1]);
@@ -397,7 +399,9 @@ unsigned long get_board_sys_clk(void)
 
 	return 66666666;
 }
+#endif
 
+#ifdef CONFIG_DYNAMIC_DDR_CLK_FREQ
 unsigned long get_board_ddr_clk(void)
 {
 	u8 ddrclk_conf = QIXIS_READ(brdcfg[1]);
@@ -415,6 +419,7 @@ unsigned long get_board_ddr_clk(void)
 
 	return 66666666;
 }
+#endif
 
 #if !defined(CONFIG_SPL_BUILD)
 void board_retimer_init(void)
@@ -899,10 +904,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 	}
 
 	if (disable_ifc) {
-		offset = fdt_path_offset(fdt, "/soc/ifc/nor");
+		offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
 
 		if (offset < 0)
-			offset = fdt_path_offset(fdt, "/ifc/nor");
+			offset = fdt_path_offset(fdt, "/memory-controller/nor");
 	} else {
 		offset = fdt_path_offset(fdt, "/soc/quadspi");
 
@@ -912,10 +917,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 
 #else
 #ifdef CONFIG_FSL_QSPI
-	offset = fdt_path_offset(fdt, "/soc/ifc/nor");
+	offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
 
 	if (offset < 0)
-		offset = fdt_path_offset(fdt, "/ifc/nor");
+		offset = fdt_path_offset(fdt, "/memory-controller/nor");
 #else
 	offset = fdt_path_offset(fdt, "/soc/quadspi");
 

@@ -156,12 +156,14 @@ void init_env(void)
 #endif
 }
 
-#ifdef CONFIG_FS_LOADER
 int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr)
 {
 	struct udevice *fsdev;
 	char *name = NULL;
 	int size = 0;
+
+	if (!IS_ENABLED(CONFIG_FS_LOADER))
+		return 0;
 
 	*loadaddr = 0;
 #ifdef CONFIG_SPL_ENV_SUPPORT
@@ -186,12 +188,6 @@ int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr)
 
 	return size;
 }
-#else
-int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr)
-{
-	return 0;
-}
-#endif
 
 __weak void release_resources_for_core_shutdown(void)
 {
@@ -549,3 +545,19 @@ void spl_board_prepare_for_linux(void)
 	dcache_disable();
 }
 #endif
+
+int misc_init_r(void)
+{
+	if (IS_ENABLED(CONFIG_TI_AM65_CPSW_NUSS)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_get_device_by_driver(UCLASS_MISC,
+						  DM_DRIVER_GET(am65_cpsw_nuss),
+						  &dev);
+		if (ret)
+			printf("Failed to probe am65_cpsw_nuss driver\n");
+	}
+
+	return 0;
+}

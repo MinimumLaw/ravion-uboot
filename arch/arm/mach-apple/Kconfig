@@ -7,12 +7,15 @@ config SYS_CONFIG_NAME
 	default "apple"
 
 config SYS_SOC
-	default "m1"
+	default "apple"
 
 config SYS_MALLOC_LEN
 	default 0x4000000
 
 config SYS_MALLOC_F_LEN
 	default 0x4000
+
+config LNX_KRNL_IMG_TEXT_OFFSET_BASE
+	default SYS_TEXT_BASE
 
 endif

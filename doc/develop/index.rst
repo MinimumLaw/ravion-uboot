@@ -16,10 +16,13 @@ Implementation
    devicetree/index
    distro
    driver-model/index
+   environment
    global_data
    logging
    makefiles
    menus
+   printf
+   smbios
    uefi/index
    version
 
@@ -60,3 +63,11 @@ Refactoring
    checkpatch
    coccinelle
    moveconfig
+
+Code quality
+------------
+
+.. toctree::
+   :maxdepth: 1
+
+   python_cq
