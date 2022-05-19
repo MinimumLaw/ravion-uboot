@@ -41,9 +41,6 @@
 #include <led.h>
 #include <dm/uclass-internal.h>
 
-#include "ravion_qp_2048.h"
-#include "ravion_dl_2048.h"
-
 #include "../common/rav-cfg-block.h"
 
 #ifdef CONFIG_SPL_OS_BOOT
@@ -270,32 +267,131 @@ static void ccgr_init(void)
 #endif
 }
 
-static int imx6qp_2048_dcd[] = RAVION_QP_2048;
-static int imx6dl_2048_dcd[] = RAVION_DL_2048;
+struct mx6dq_iomux_ddr_regs qp_iomux_ddr = {
+	.dram_cas	= 0x00000030,
+	.dram_dqm0	= 0x00000030,
+	.dram_dqm1	= 0x00000030,
+	.dram_dqm2	= 0x00000030,
+	.dram_dqm3	= 0x00000030,
+	.dram_dqm4	= 0x00000030,
+	.dram_dqm5	= 0x00000030,
+	.dram_dqm6	= 0x00000030,
+	.dram_dqm7	= 0x00000030,
+	.dram_ras	= 0x00000030,
+	.dram_reset	= 0x00000030,
+	.dram_sdba2	= 0x00000000,
+	.dram_sdcke0	= 0x00003000,
+	.dram_sdcke1	= 0x00003000,
+	.dram_sdclk_0	= 0x00000030,
+	.dram_sdclk_1	= 0x00000030,
+	.dram_sdodt0	= 0x00000030,
+	.dram_sdodt1	= 0x00000030,
+	.dram_sdqs0	= 0x00000030,
+	.dram_sdqs1	= 0x00000030,
+	.dram_sdqs2	= 0x00000030,
+	.dram_sdqs3	= 0x00000030,
+	.dram_sdqs4	= 0x00000030,
+	.dram_sdqs5	= 0x00000030,
+	.dram_sdqs6	= 0x00000030,
+	.dram_sdqs7	= 0x00000030,
+};
 
-static void ddr_init(int *table, int size)
-{
-	int i;
+struct mx6dq_iomux_grp_regs qp_iomux_grp = {
+	.grp_addds	= 0x00000030,
+	.grp_b0ds	= 0x00000030,
+	.grp_b1ds	= 0x00000030,
+	.grp_b2ds	= 0x00000030,
+	.grp_b3ds	= 0x00000030,
+	.grp_b4ds	= 0x00000030,
+	.grp_b5ds	= 0x00000030,
+	.grp_b6ds	= 0x00000030,
+	.grp_b7ds	= 0x00000030,
+	.grp_ctlds	= 0x00000030,
+	.grp_ddrmode	= 0x00020000,
+	.grp_ddrmode_ctl= 0x00020000,
+	.grp_ddrpke	= 0x00000000,
+	.grp_ddr_type	= 0x000C0000,
+};
 
-	for (i = 0; i < size / 2 ; i++)
-		writel(table[2 * i + 1], table[2 * i]);
-}
+struct mx6_ddr3_cfg mt41k256m16ha_125_cfg = {
+	.mem_speed	= 1600,	/* ie 1600 for DDR3-1600 (800,1066,1333,1600) */
+	.density	= 4,	/* chip density (Gb) (1,2,4,8) */
+	.width		= 16,	/* bus width (bits) (4,8,16) */
+	.banks		= 8,	/* number of banks */
+	.rowaddr	= 15,	/* row address bits (11-16)*/
+	.coladdr	= 10,	/* col address bits (9-12) */
+	.pagesz		= 2,	/* page size (K) (1-2) */
+	.trcd		= 1375,	/* tRCD=tRP=CL (ns*100) */
+	.trcmin		= 4875,	/* tRC min (ns*100) */
+	.trasmin	= 3500,	/* tRAS min (ns*100) */
+	.SRT		= 1,	/* self-refresh temperature: 0=normal, 1=extended */
+};
+
+// Table 55: DDR3L-1600 Speed Bins, CL(ralat)=5, CWL(walat)=5 minimal possible
+struct mx6_ddr_sysinfo qp_sysinfo = {
+	.dsize		= 2,	/* size of bus (in dwords: 0=16bit,1=32bit,2=64bit) */
+	.cs_density	= 32,	/* density per chip select (Gb) */
+	.ncs		= 1,	/* number chip selects used (1|2) */
+	.cs1_mirror	= 0,	/* enable address mirror (0|1) */
+	.bi_on		= 1,	/* Bank interleaving enable */
+	.rtt_nom	= 2,	/* Rtt_Nom (DDR3_RTT_*) RZQ/2 */
+	.rtt_wr		= 1,	/* Rtt_Wr  (DDR3_RTT_*) RZQ/4 */
+	.ralat		= 5,	/* Read Additional Latency (0-7) */
+	.walat		= 0,	/* Write Additional Latency (0-3) */
+	.mif3_mode	= 3,	/* Command prediction working mode */
+	.rst_to_cke	= 0x10,	/* Time from SDE enable to CKE rise              - 200us DD3 JEDEC (14CK) */
+	.sde_to_rst	= 0x23,	/* Time from SDE enable until DDR reset# is high - 500us DD3 JEDEC (33CK) */
+	.pd_fast_exit	= 1,	/* enable precharge powerdown fast-exit */
+	.ddr_type	= DDR_TYPE_DDR3,	/* DDR type: DDR3(0) or LPDDR2(1) */
+	.refsel		= 1,	/* REF_SEL field of register MDREF - every 32KHz */
+	.refr		= 3,	/* REFR field of register MDREF    - do 4 refresh commands  */
+};
+
+struct mx6_mmdc_calibration qp_calibration_528 = {
+	/* write leveling calibration */
+	.p0_mpwldectrl0	= 0x001B0016,
+	.p0_mpwldectrl1	= 0x00240017,
+	.p1_mpwldectrl0	= 0x00090023,
+	.p1_mpwldectrl1	= 0x0006000B,
+	/* read DQS gating */
+	.p0_mpdgctrl0	= 0x031C0330,
+	.p0_mpdgctrl1	= 0x03140310,
+	.p1_mpdgctrl0	= 0x03280338,
+	.p1_mpdgctrl1	= 0x03140270,
+	/* read delay */
+	.p0_mprddlctl	= 0x42343C42,
+	.p1_mprddlctl	= 0x403C364A,
+	/* write delay */
+	.p0_mpwrdlctl	= 0x3E3C4240,
+	.p1_mpwrdlctl	= 0x4E404C46,
+	/* lpddr2 zq hw calibration */
+	.mpzqlp2ctl	= 0xA1390003,
+};
 
 static void spl_dram_init(void)
 {
-	if (is_mx6dqp())
-		ddr_init(imx6qp_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
-	else if (is_mx6dq())
-		ddr_init(imx6dl_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
+	if (is_mx6dqp()) {
+		mx6dq_dram_iocfg(64, &qp_iomux_ddr, &qp_iomux_grp);
+		mx6_dram_cfg(&qp_sysinfo, &qp_calibration_528, &mt41k256m16ha_125_cfg);
+		udelay(100);
+
+#ifdef CONFIG_MX6_DDRCAL
+		/* Perform DDR DRAM calibration */
+		mmdc_do_write_level_calibration(&qp_sysinfo);
+		mmdc_do_dqs_calibration(&qp_sysinfo);
+#endif
+	} else if (is_mx6dq()) {
+//		ddr_init(imx6dl_2048_dcd, ARRAY_SIZE(imx6qp_2048_dcd));
+	}
 }
 
 void board_init_f(ulong dummy)
 {
-	spl_dram_init();		/* Yeah! We REALLY require this in SPL. */
+	ccgr_init();			/* Fixup clock troubles in DM code */
 	arch_cpu_init();		/* Theory, we not require this code */
 	gpr_init();			/* AXI caches also will be inited not here */
-	ccgr_init();			/* Fixup clock troubles in DM code */
 	timer_init();			/* gpt-timer later will be in DM */
 	spl_early_init();		/* DM devices init...		*/
 	preloader_console_init();	/* 	... then start console	*/
+	spl_dram_init();		/* Yeah! We REALLY require this in SPL. */
 }
