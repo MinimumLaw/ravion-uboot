@@ -84,7 +84,8 @@ static void usage(const char *msg)
 	fprintf(stderr, "Error: %s\n", msg);
 	fprintf(stderr, "Usage: %s [-T type] -l image\n"
 			 "          -l ==> list image header information\n"
-			 "          -T ==> parse image file as 'type'\n",
+			 "          -T ==> parse image file as 'type'\n"
+			 "          -q ==> quiet\n",
 		params.cmdname);
 	fprintf(stderr,
 		"       %s [-x] -A arch -O os -T type -C comp -a addr -e ep -n name -d data_file[:data_file...] image\n"
@@ -95,8 +96,11 @@ static void usage(const char *msg)
 		"          -a ==> set load address to 'addr' (hex)\n"
 		"          -e ==> set entry point to 'ep' (hex)\n"
 		"          -n ==> set image name to 'name'\n"
+		"          -R ==> set second image name to 'name'\n"
 		"          -d ==> use image data from 'datafile'\n"
-		"          -x ==> set XIP (execute in place)\n",
+		"          -x ==> set XIP (execute in place)\n"
+		"          -s ==> create an image with no data\n"
+		"          -v ==> verbose\n",
 		params.cmdname);
 	fprintf(stderr,
 		"       %s [-D dtc_options] [-f fit-image.its|-f auto|-F] [-b <dtb> [-b <dtb>]] [-E] [-B size] [-i <ramdisk.cpio.gz>] fit-image\n"
@@ -107,7 +111,9 @@ static void usage(const char *msg)
 		"          -f => input filename for FIT source\n"
 		"          -i => input filename for ramdisk file\n"
 		"          -E => place data outside of the FIT structure\n"
-		"          -B => align size in hex for FIT structure and header\n");
+		"          -B => align size in hex for FIT structure and header\n"
+		"          -b => append the device tree binary to the FIT\n"
+		"          -t => update the timestamp in the FIT\n");
 #ifdef CONFIG_FIT_SIGNATURE
 	fprintf(stderr,
 		"Signing / verified boot options: [-k keydir] [-K dtb] [ -c <comment>] [-p addr] [-r] [-N engine]\n"
@@ -118,7 +124,8 @@ static void usage(const char *msg)
 		"          -F => re-sign existing FIT image\n"
 		"          -p => place external data at a static position\n"
 		"          -r => mark keys used as 'required' in dtb\n"
-		"          -N => openssl engine to use for signing\n");
+		"          -N => openssl engine to use for signing\n"
+		"          -o => algorithm to use for signing\n");
 #else
 	fprintf(stderr,
 		"Signing / verified boot not supported (CONFIG_FIT_SIGNATURE undefined)\n");
@@ -172,6 +179,7 @@ static void process_args(int argc, char **argv)
 				show_valid_options(IH_ARCH);
 				usage("Invalid architecture");
 			}
+			params.Aflag = 1;
 			break;
 		case 'b':
 			if (add_content(IH_TYPE_FLATDT, optarg)) {
@@ -338,6 +346,44 @@ static void process_args(int argc, char **argv)
 
 	if (!params.imagefile)
 		usage("Missing output filename");
+}
+
+static void verify_image(const struct image_type_params *tparams)
+{
+	struct stat sbuf;
+	void *ptr;
+	int ifd;
+
+	ifd = open(params.imagefile, O_RDONLY | O_BINARY);
+	if (ifd < 0) {
+		fprintf(stderr, "%s: Can't open %s: %s\n",
+			params.cmdname, params.imagefile,
+			strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	if (fstat(ifd, &sbuf) < 0) {
+		fprintf(stderr, "%s: Can't stat %s: %s\n",
+			params.cmdname, params.imagefile, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	params.file_size = sbuf.st_size;
+
+	ptr = mmap(0, params.file_size, PROT_READ, MAP_SHARED, ifd, 0);
+	if (ptr == MAP_FAILED) {
+		fprintf(stderr, "%s: Can't map %s: %s\n",
+			params.cmdname, params.imagefile, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	if (tparams->verify_header((unsigned char *)ptr, params.file_size, &params) != 0) {
+		fprintf(stderr, "%s: Failed to verify header of %s\n",
+			params.cmdname, params.imagefile);
+		exit(EXIT_FAILURE);
+	}
+
+	(void)munmap(ptr, params.file_size);
+	(void)close(ifd);
 }
 
 int main(int argc, char **argv)
@@ -701,6 +747,9 @@ int main(int argc, char **argv)
 			params.cmdname, params.imagefile, strerror(errno));
 		exit (EXIT_FAILURE);
 	}
+
+	if (tparams->verify_header)
+		verify_image(tparams);
 
 	exit (EXIT_SUCCESS);
 }

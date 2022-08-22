@@ -34,12 +34,6 @@
 
 /* Enable PREBOOT variable */
 
-/* Set ARP_TIMEOUT to 500ms */
-#define CONFIG_ARP_TIMEOUT 500UL
-
-/* Set ARP_TIMEOUT_COUNT to 3 repetitions */
-#define CONFIG_NET_RETRY_COUNT	5
-
 /* BK4r1 net init sets GPIO122/PTE17 to enable Ethernet */
 #define BK4_NET_INIT "run set_gpio122;"
 
@@ -67,9 +61,6 @@
 #define FSL_QSPI_FLASH_NUM		2
 #define CONFIG_SYS_FSL_QSPI_LE
 #endif
-
-/* We boot from the gfxRAM area of the OCRAM. */
-#define CONFIG_BOARD_SIZE_LIMIT		520192
 
 /* boot command, including the target-defined one if any */
 

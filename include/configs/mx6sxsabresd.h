@@ -126,11 +126,7 @@
 
 /* Network */
 
-#define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR          0x1
-
-#define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_ETHPRIME                 "FEC"
 
 #ifdef CONFIG_CMD_USB
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
@@ -148,11 +144,8 @@
 
 #ifndef CONFIG_SPL_BUILD
 #ifdef CONFIG_DM_VIDEO
-#define CONFIG_VIDEO_BMP_LOGO
 #define MXS_LCDIF_BASE MX6SX_LCDIF1_BASE_ADDR
 #endif
 #endif
-
-#define CONFIG_SYS_FSL_USDHC_NUM	3
 
 #endif				/* __CONFIG_H */

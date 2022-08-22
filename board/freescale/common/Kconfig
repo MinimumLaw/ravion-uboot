@@ -3,6 +3,7 @@ config CHAIN_OF_TRUST
 	imply CMD_BLOB
 	imply CMD_HASH if ARM
 	select FSL_CAAM
+	select ARCH_MISC_INIT
 	select SPL_BOARD_INIT if (ARM && SPL)
 	select SPL_HASH if (ARM && SPL)
 	select SHA_HW_ACCEL
@@ -21,6 +22,13 @@ config CMD_ESBC_VALIDATE
 
 	    esbc_validate - validate signature using RSA verification
 	    esbc_halt - put the core in spin loop (Secure Boot Only)
+
+config DEEP_SLEEP
+	bool "Enable SoC deep sleep feature"
+	default y if ARCH_T1024 || ARCH_T1040 || ARCH_T1042 || ARCH_LS1021A
+	help
+	  Indicates this SoC supports deep sleep feature. If deep sleep is
+	  supported, core will start to execute uboot when wakes up.
 
 config FSL_USE_PCA9547_MUX
 	bool "Enable PCA9547 I2C Mux on Freescale boards"
@@ -92,3 +100,11 @@ config VOL_MONITOR_ISL68233_SET
 	 functionality. It is used by the common VID driver.
 
 endif
+
+config FSL_QIXIS
+	bool "Enable QIXIS support"
+
+config QIXIS_I2C_ACCESS
+	bool "Access to QIXIS is over i2c"
+	depends on FSL_QIXIS
+	default y

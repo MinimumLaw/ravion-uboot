@@ -44,8 +44,6 @@
 
 /* Framebuffer and LCD */
 
-#define CONFIG_ETHPRIME		"FEC0"
-
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
@@ -105,8 +103,6 @@
 			"bootz; " \
 		"fi;\0"
 
-#define CONFIG_ARP_TIMEOUT	200UL
-
 /*
  * Miscellaneous configurable options
  */
@@ -133,18 +129,5 @@
 /*-----------------------------------------------------------------------
  * environment organization
  */
-
-/*
- * Environment starts at CONFIG_ENV_OFFSET=0xC0000 = 768k = 768 * 1024 = 786432
- *
- * Detect overlap between U-Boot image and environment area in build-time
- *
- * CONFIG_BOARD_SIZE_LIMIT = CONFIG_ENV_OFFSET - u-boot.imx offset
- * CONFIG_BOARD_SIZE_LIMIT = 768k - 1k = 767k = 785408
- *
- * Currently CONFIG_BOARD_SIZE_LIMIT does not handle expressions, so
- * write the direct value here
- */
-#define CONFIG_BOARD_SIZE_LIMIT		785408
 
 #endif

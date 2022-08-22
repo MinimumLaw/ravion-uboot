@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
- * Copyright 2019 NXP
+ * Copyright 2019, 2021 NXP
  */
 
 #include <common.h>
@@ -26,7 +26,6 @@
 #include <netdev.h>
 #include <fsl_mdio.h>
 #include <tsec.h>
-#include <fsl_sec.h>
 #include <fsl_devdis.h>
 #include <spl.h>
 #include <linux/delay.h>
@@ -107,7 +106,7 @@ static void cpld_show(void)
 	       in_8(&cpld_data->pcba_ver) & VERSION_MASK,
 	       in_8(&cpld_data->vbank) & BANK_MASK);
 
-#ifdef CONFIG_DEBUG
+#ifdef DEBUG
 	printf("soft_mux_on =%x\n",
 	       in_8(&cpld_data->soft_mux_on));
 	printf("cfg_rcw_src1 =%x\n",
@@ -555,10 +554,7 @@ int misc_init_r(void)
 #if !defined(CONFIG_QSPI_BOOT) && !defined(CONFIG_SD_BOOT_QSPI)
 	config_board_mux();
 #endif
-
-#ifdef CONFIG_FSL_CAAM
-	return sec_init();
-#endif
+	return 0;
 }
 #endif
 

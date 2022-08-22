@@ -1,15 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
- * Copyright 2019 NXP
+ * Copyright 2019, 2021 NXP
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
-
-#define CONFIG_ARMV7_SECURE_BASE	OCRAM_BASE_S_ADDR
-
-#define CONFIG_DEEP_SLEEP
 
 #define CONFIG_SYS_INIT_RAM_ADDR	OCRAM_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_SIZE	OCRAM_SIZE
@@ -79,8 +75,6 @@
 #define CONFIG_SYS_DDR_SDRAM_BASE      0x80000000UL
 #define CONFIG_SYS_SDRAM_BASE          CONFIG_SYS_DDR_SDRAM_BASE
 
-#define CONFIG_CHIP_SELECTS_PER_CTRL	4
-
 /*
  * IFC Definitions
  */
@@ -121,7 +115,6 @@
 #define CONFIG_SYS_FLASH_EMPTY_INFO
 #define CONFIG_SYS_FLASH_BANKS_LIST	{ CONFIG_SYS_FLASH_BASE_PHYS }
 
-#define CONFIG_CFI_FLASH_USE_WEAK_ACCESSORS
 #define CONFIG_SYS_WRITE_SWAPPED_DATA
 #endif
 
@@ -170,9 +163,7 @@
 /*
  * Serial Port
  */
-#ifdef CONFIG_LPUART
-#define CONFIG_LPUART_32B_REG
-#else
+#ifndef CONFIG_LPUART
 #define CONFIG_SYS_NS16550_SERIAL
 #ifndef CONFIG_DM_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -190,29 +181,6 @@
 #define CONFIG_SYS_I2C_EEPROM_NXID
 #define CONFIG_SYS_EEPROM_BUS_NUM		1
 
-/*
- * MMC
- */
-
-/*
- * Video
- */
-#ifdef CONFIG_VIDEO_FSL_DCU_FB
-#define CONFIG_VIDEO_BMP_LOGO
-
-#define CONFIG_FSL_DCU_SII9022A
-#define CONFIG_SYS_I2C_DVI_BUS_NUM	1
-#define CONFIG_SYS_I2C_DVI_ADDR		0x39
-#endif
-
-/*
- * eTSEC
- */
-
-#ifdef CONFIG_TSEC_ENET
-#define CONFIG_ETHPRIME			"ethernet@2d10000"
-#endif
-
 /* PCIe */
 #define CONFIG_PCIE1		/* PCIE controller 1 */
 #define CONFIG_PCIE2		/* PCIE controller 2 */
@@ -224,7 +192,6 @@
 #define CONFIG_PEN_ADDR_BIG_ENDIAN
 #define CONFIG_LAYERSCAPE_NS_ACCESS
 #define CONFIG_SMP_PEN_ADDR		0x01ee0200
-#define COUNTER_FREQUENCY		12500000
 
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		256
@@ -242,7 +209,6 @@
 	"bootargs=root=/dev/ram0 rw console=ttyLP0,115200 "	\
 		"cma=64M@0x0-0xb0000000\0" \
 	"initrd_high=0xffffffff\0"      \
-	"fdt_addr=0x64f00000\0"		\
 	"kernel_addr=0x65000000\0"	\
 	"scriptaddr=0x80000000\0"	\
 	"scripthdraddr=0x80080000\0"	\
@@ -299,7 +265,6 @@
 	"bootargs=root=/dev/ram0 rw console=ttyS0,115200 "	\
 		"cma=64M@0x0-0xb0000000\0" \
 	"initrd_high=0xffffffff\0"      \
-	"fdt_addr=0x64f00000\0"		\
 	"kernel_addr=0x61000000\0"	\
 	"kernelheader_addr=0x60800000\0"	\
 	"scriptaddr=0x80000000\0"	\
@@ -377,12 +342,6 @@
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
-
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SPL_TEXT_BASE
-#else
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SYS_TEXT_BASE    /* start of monitor */
-#endif
 
 /*
  * Environment

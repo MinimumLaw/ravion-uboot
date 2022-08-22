@@ -325,7 +325,7 @@ int ns16550_tstc(struct ns16550 *com_port)
 
 static inline void _debug_uart_init(void)
 {
-	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);
 	int baud_divisor;
 
 	/*
@@ -360,7 +360,7 @@ static inline int NS16550_read_baud_divisor(struct ns16550 *com_port)
 
 static inline void _debug_uart_putc(int ch)
 {
-	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);
 
 	while (!(serial_din(&com_port->lsr) & UART_LSR_THRE)) {
 #ifdef CONFIG_DEBUG_UART_NS16550_CHECK_ENABLED
@@ -624,8 +624,6 @@ U_BOOT_DRIVER(ns16550_serial) = {
 #endif
 };
 
-DM_DRIVER_ALIAS(ns16550_serial, rockchip_rk3328_uart)
-DM_DRIVER_ALIAS(ns16550_serial, rockchip_rk3368_uart)
 DM_DRIVER_ALIAS(ns16550_serial, ti_da830_uart)
 #endif
 #endif /* SERIAL_PRESENT */

@@ -99,8 +99,9 @@
 
 		fit {
 			description = "Configuration to load ATF before U-Boot";
-			#address-cells = <1>;
 			fit,external-offset = <CONFIG_FIT_EXTERNAL_OFFSET>;
+			fit,fdt-list = "of-list";
+			#address-cells = <1>;
 
 			images {
 				uboot {
@@ -123,12 +124,13 @@
 					load = <0x970000>;
 					entry = <0x970000>;
 
-					atf_blob: blob-ext {
+					atf_blob: atf-blob {
 						filename = "bl31.bin";
+						type = "atf-bl31";
 					};
 				};
 
-				fdt {
+				@fdt-SEQ {
 					description = "NAME";
 					type = "flat_dt";
 					compression = "none";
@@ -140,13 +142,13 @@
 			};
 
 			configurations {
-				default = "conf";
+				default = "@config-DEFAULT-SEQ";
 
-				conf {
+				@config-SEQ {
 					description = "NAME";
+					fdt = "fdt-SEQ";
 					firmware = "uboot";
 					loadables = "atf";
-					fdt = "fdt";
 				};
 			};
 		};

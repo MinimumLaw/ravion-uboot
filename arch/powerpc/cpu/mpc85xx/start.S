@@ -46,7 +46,6 @@
 	GOT_ENTRY(_FIXUP_TABLE_)
 
 #ifndef MINIMAL_SPL
-	GOT_ENTRY(_start)
 	GOT_ENTRY(_start_of_vectors)
 	GOT_ENTRY(_end_of_vectors)
 	GOT_ENTRY(transfer_to_handler)
@@ -71,9 +70,9 @@
  */
 
 	.section .bootpg,"ax"
-	.globl _start_e500
+	.globl _start
 
-_start_e500:
+_start:
 /* Enable debug exception */
 	li	r1,MSR_DE
 	mtmsr	r1
@@ -247,7 +246,7 @@ l2_disabled:
 /* Interrupt vectors do not fit in minimal SPL. */
 #if !defined(MINIMAL_SPL)
 	/* Setup interrupt vectors */
-	lis	r1,CONFIG_SYS_MONITOR_BASE@h
+	lis	r1,CONFIG_VAL(SYS_MONITOR_BASE)@h
 	mtspr	IVPR,r1
 
 	li	r4,CriticalInput@l
@@ -450,7 +449,7 @@ nexti:	mflr	r1		/* R1 = our PC */
  */
 	create_tlb1_entry CONFIG_SYS_PPC_E500_DEBUG_TLB, \
 		0, BOOKE_PAGESZ_4M, \
-		CONFIG_SYS_MONITOR_BASE & 0xffc00000,  MAS2_I|MAS2_G, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xffc00000,  MAS2_I|MAS2_G, \
 		0xffc00000, MAS3_SX|MAS3_SW|MAS3_SR, \
 		0, r6
 
@@ -461,8 +460,8 @@ nexti:	mflr	r1		/* R1 = our PC */
  */
 	create_tlb1_entry CONFIG_SYS_PPC_E500_DEBUG_TLB, \
 		0, BOOKE_PAGESZ_256K, \
-		CONFIG_SYS_MONITOR_BASE & 0xfffc0000, MAS2_I, \
-		CONFIG_SYS_MONITOR_BASE & 0xfffc0000, MAS3_SX|MAS3_SW|MAS3_SR, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xfffc0000, MAS2_I, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xfffc0000, MAS3_SX|MAS3_SW|MAS3_SR, \
 		0, r6
 #endif
 #endif
@@ -1027,7 +1026,7 @@ create_init_ram_area:
 	/* create a temp mapping in AS=1 to the 4M boot window */
 	create_tlb1_entry 15, \
 		1, BOOKE_PAGESZ_4M, \
-		CONFIG_SYS_MONITOR_BASE & 0xffc00000, MAS2_I|MAS2_G, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xffc00000, MAS2_I|MAS2_G, \
 		0xffc00000, MAS3_SX|MAS3_SW|MAS3_SR, \
 		0, r6
 
@@ -1037,7 +1036,7 @@ create_init_ram_area:
 	 */
 	create_tlb1_entry 15, \
 		1, BOOKE_PAGESZ_1M, \
-		CONFIG_SYS_MONITOR_BASE & 0xfff00000, MAS2_I|MAS2_G, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xfff00000, MAS2_I|MAS2_G, \
 		CONFIG_SYS_PBI_FLASH_WINDOW & 0xfff00000, MAS3_SX|MAS3_SW|MAS3_SR, \
 		0, r6
 
@@ -1048,24 +1047,24 @@ create_init_ram_area:
  */
 #elif defined(CONFIG_RAMBOOT_PBL) && defined(CONFIG_NXP_ESBC) && \
 	(!defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD))
-	/* create a temp mapping in AS = 1 for mapping CONFIG_SYS_MONITOR_BASE
+	/* create a temp mapping in AS = 1 for mapping CONFIG_VAL(SYS_MONITOR_BASE)
 	 * to L3 Address configured by PBL for ISBC code
 	 */
 	create_tlb1_entry 15, \
 		1, BOOKE_PAGESZ_1M, \
-		CONFIG_SYS_MONITOR_BASE & 0xfff00000, MAS2_I|MAS2_G, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xfff00000, MAS2_I|MAS2_G, \
 		CONFIG_SYS_INIT_L3_ADDR & 0xfff00000, MAS3_SX|MAS3_SW|MAS3_SR, \
 		0, r6
 
 #else
 	/*
-	 * create a temp mapping in AS=1 to the 1M CONFIG_SYS_MONITOR_BASE space, the main
-	 * image has been relocated to CONFIG_SYS_MONITOR_BASE on the second stage.
+	 * create a temp mapping in AS=1 to the 1M CONFIG_VAL(SYS_MONITOR_BASE) space, the main
+	 * image has been relocated to CONFIG_VAL(SYS_MONITOR_BASE) on the second stage.
 	 */
 	create_tlb1_entry 15, \
 		1, BOOKE_PAGESZ_1M, \
-		CONFIG_SYS_MONITOR_BASE & 0xfff00000, MAS2_I|MAS2_G, \
-		CONFIG_SYS_MONITOR_BASE & 0xfff00000, MAS3_SX|MAS3_SW|MAS3_SR, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xfff00000, MAS2_I|MAS2_G, \
+		CONFIG_VAL(SYS_MONITOR_BASE) & 0xfff00000, MAS3_SX|MAS3_SW|MAS3_SR, \
 		0, r6
 #endif
 
@@ -1126,18 +1125,14 @@ switch_as:
 #else
 	/* Calculate absolute address in FLASH and jump there		*/
 	/*--------------------------------------------------------------*/
-	lis	r3,CONFIG_SYS_MONITOR_BASE@h
-	ori	r3,r3,CONFIG_SYS_MONITOR_BASE@l
-	addi	r3,r3,_start_cont - _start
+	lis	r3,CONFIG_VAL(SYS_MONITOR_BASE)@h
+	ori	r3,r3,CONFIG_VAL(SYS_MONITOR_BASE)@l
+	addi	r3,r3,_start_cont - _start_cont
 	mtlr	r3
 	blr
 #endif
 
 	.text
-	.globl	_start
-_start:
-	.long	0x27051956		/* U-BOOT Magic Number */
-
 	.globl	_start_cont
 _start_cont:
 	/* Setup the stack in initial RAM,could be L2-as-SRAM or L1 dcache*/
@@ -1530,8 +1525,8 @@ relocate_code:
 	GET_GOT
 #ifndef CONFIG_SPL_SKIP_RELOCATE
 	mr	r3,r5				/* Destination Address	*/
-	lis	r4,CONFIG_SYS_MONITOR_BASE@h		/* Source      Address	*/
-	ori	r4,r4,CONFIG_SYS_MONITOR_BASE@l
+	lis	r4,CONFIG_VAL(SYS_MONITOR_BASE)@h		/* Source      Address	*/
+	ori	r4,r4,CONFIG_VAL(SYS_MONITOR_BASE)@l
 	lwz	r5,GOT(__init_end)
 	sub	r5,r5,r4
 	li	r6,CONFIG_SYS_CACHELINE_SIZE		/* Cache Line Size	*/
@@ -1539,7 +1534,7 @@ relocate_code:
 	/*
 	 * Fix GOT pointer:
 	 *
-	 * New GOT-PTR = (old GOT-PTR - CONFIG_SYS_MONITOR_BASE) + Destination Address
+	 * New GOT-PTR = (old GOT-PTR - CONFIG_VAL(SYS_MONITOR_BASE)) + Destination Address
 	 *
 	 * Offset:
 	 */
@@ -1604,7 +1599,7 @@ relocate_code:
  * initialization, now running from RAM.
  */
 
-	addi	r0,r10,in_ram - _start
+	addi	r0,r10,in_ram - _start_cont
 
 	/*
 	 * As IVPR is going to point RAM address,

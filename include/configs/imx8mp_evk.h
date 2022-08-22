@@ -26,18 +26,12 @@
 
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
 
-#undef CONFIG_DM_MMC
-
 #define CONFIG_POWER_PCA9450
 
 #endif
 
 #if defined(CONFIG_CMD_NET)
-#define CONFIG_ETHPRIME                 "eth1" /* Set eqos to primary since we use its MDIO */
-
-#define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          1
-#define FEC_QUIRK_ENET_MAC
 
 #define DWC_NET_PHYADDR			1
 
@@ -66,7 +60,7 @@
 	"initrd_addr=0x43800000\0"		\
 	"bootm_size=0x10000000\0" \
 	"mmcpart=1\0" \
-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 
 /* Link Definitions */
 
@@ -77,7 +71,6 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
 /* Totally 6GB DDR */
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
@@ -86,7 +79,7 @@
 #define PHYS_SDRAM_2			0x100000000
 #define PHYS_SDRAM_2_SIZE		0xC0000000	/* 3 GB */
 
-#define CONFIG_MXC_UART_BASE		UART2_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(2)
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		2048
@@ -94,8 +87,5 @@
 #define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
-
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
 #endif

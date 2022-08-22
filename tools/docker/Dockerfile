@@ -2,7 +2,7 @@
 # This Dockerfile is used to build an image containing basic stuff to be used
 # to build U-Boot and run our test suites.
 
-FROM ubuntu:focal-20220113
+FROM ubuntu:focal-20220302
 MAINTAINER Tom Rini <trini@konsulko.com>
 LABEL Description=" This image is for building U-Boot inside a container"
 
@@ -29,7 +29,6 @@ RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_
 # Manually install other toolchains
 RUN wget -O - https://github.com/foss-xtensa/toolchain/releases/download/2020.07/x86_64-2020.07-xtensa-dc233c-elf.tar.gz | tar -C /opt -xz
 RUN wget -O - https://github.com/foss-for-synopsys-dwc-arc-processors/toolchain/releases/download/arc-2021.03-release/arc_gnu_2021.03_prebuilt_uclibc_le_archs_linux_install.tar.gz | tar --no-same-owner -C /opt -xz
-RUN wget -O - https://github.com/vincentzwc/prebuilt-nds32-toolchain/releases/download/20180521/nds32le-linux-glibc-v3-upstream.tar.gz | tar -C /opt -xz
 
 # Update and install things from apt now
 RUN apt-get update && apt-get install -y \
@@ -48,6 +47,7 @@ RUN apt-get update && apt-get install -y \
 	dosfstools \
 	e2fsprogs \
 	efitools \
+	erofs-utils \
 	expect \
 	fakeroot \
 	flex \
@@ -226,7 +226,6 @@ RUN /bin/echo -e "[toolchain]\nroot = /usr" > ~/.buildman
 RUN /bin/echo -e "kernelorg = /opt/gcc-11.1.0-nolibc/*" >> ~/.buildman
 RUN /bin/echo -e "arc = /opt/arc_gnu_2021.03_prebuilt_uclibc_le_archs_linux_install" >> ~/.buildman
 RUN /bin/echo -e "\n[toolchain-prefix]\nxtensa = /opt/2020.07/xtensa-dc233c-elf/bin/xtensa-dc233c-elf-" >> ~/.buildman;
-RUN /bin/echo -e "\nnds32 = /opt/nds32le-linux-glibc-v3-upstream/bin/nds32le-linux-" >> ~/.buildman;
 RUN /bin/echo -e "\n[toolchain-alias]\nsh = sh2" >> ~/.buildman
 RUN /bin/echo -e "\nriscv = riscv64" >> ~/.buildman
 RUN /bin/echo -e "\nsandbox = x86_64" >> ~/.buildman

@@ -8,11 +8,6 @@
 #define _CONFIG_CONTROLCENTERDC_H
 
 /*
- * High Level Configuration Options (easy to change)
- */
-#define CONFIG_CUSTOMER_BOARD_SUPPORT
-
-/*
  * TEXT_BASE needs to be below 16MiB, since this area is scrubbed
  * for DDR ECC byte filling in the SPL before loading the main
  * U-Boot into it.
@@ -26,11 +21,6 @@
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_PCI_SCAN_SHOW
 #endif
-
-/*
- * Software (bit-bang) MII driver configuration
- */
-#define CONFIG_BITBANGMII_MULTI
 
 /* SPL */
 /*
@@ -76,7 +66,6 @@
 
 #define CONFIG_HOSTNAME		"ccdc"
 #define CONFIG_ROOTPATH		"/opt/nfsroot"
-#define CONFIG_BOOTFILE		"ccdc.img"
 
 #define CONFIG_EXTRA_ENV_SETTINGS						\
 	"netdev=eth1\0"						\

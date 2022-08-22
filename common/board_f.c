@@ -19,6 +19,7 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <event.h>
 #include <fdtdec.h>
 #include <fs.h>
 #include <hang.h>
@@ -271,7 +272,7 @@ static int setup_mon_len(void)
 	gd->mon_len = (ulong)&_end - (ulong)_init;
 #elif defined(CONFIG_NIOS2) || defined(CONFIG_XTENSA)
 	gd->mon_len = CONFIG_SYS_MONITOR_LEN;
-#elif defined(CONFIG_NDS32) || defined(CONFIG_SH) || defined(CONFIG_RISCV)
+#elif defined(CONFIG_SH) || defined(CONFIG_RISCV)
 	gd->mon_len = (ulong)(&__bss_end) - (ulong)(&_start);
 #elif defined(CONFIG_SYS_MONITOR_BASE)
 	/* TODO: use (ulong)&__bss_end - (ulong)&__text_start; ? */
@@ -326,7 +327,7 @@ static int setup_dest_addr(void)
 	 * Ram is setup, size stored in gd !!
 	 */
 	debug("Ram size: %08lX\n", (ulong)gd->ram_size);
-#if defined(CONFIG_SYS_MEM_TOP_HIDE)
+#if CONFIG_VAL(SYS_MEM_TOP_HIDE)
 	/*
 	 * Subtract specified amount of memory to hide so that it won't
 	 * get "touched" at all by U-Boot. By fixing up gd->ram_size
@@ -802,11 +803,6 @@ __weak int reserve_arch(void)
 	return 0;
 }
 
-__weak int arch_cpu_init_dm(void)
-{
-	return 0;
-}
-
 __weak int checkcpu(void)
 {
 	return 0;
@@ -815,6 +811,11 @@ __weak int checkcpu(void)
 __weak int clear_bss(void)
 {
 	return 0;
+}
+
+static int misc_init_f(void)
+{
+	return event_notify_null(EVT_MISC_INIT_F);
 }
 
 static const init_fnc_t init_sequence_f[] = {
@@ -828,6 +829,7 @@ static const init_fnc_t init_sequence_f[] = {
 	initf_malloc,
 	log_init,
 	initf_bootstage,	/* uses its own timer, so does not need DM */
+	event_init,
 #ifdef CONFIG_BLOBLIST
 	bloblist_init,
 #endif
@@ -841,7 +843,6 @@ static const init_fnc_t init_sequence_f[] = {
 	arch_cpu_init,		/* basic arch cpu dependent setup */
 	mach_cpu_init,		/* SoC/machine dependent CPU setup */
 	initf_dm,
-	arch_cpu_init_dm,
 #if defined(CONFIG_BOARD_EARLY_INIT_F)
 	board_early_init_f,
 #endif
@@ -875,9 +876,7 @@ static const init_fnc_t init_sequence_f[] = {
 	show_board_info,
 #endif
 	INIT_FUNC_WATCHDOG_INIT
-#if defined(CONFIG_MISC_INIT_F)
 	misc_init_f,
-#endif
 	INIT_FUNC_WATCHDOG_RESET
 #if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
 	init_func_i2c,

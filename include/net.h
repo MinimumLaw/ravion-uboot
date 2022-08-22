@@ -35,13 +35,7 @@ struct udevice;
  *	alignment in memory.
  *
  */
-
-#ifdef CONFIG_SYS_RX_ETH_BUFFER
-# define PKTBUFSRX	CONFIG_SYS_RX_ETH_BUFFER
-#else
-# define PKTBUFSRX	4
-#endif
-
+#define PKTBUFSRX	CONFIG_SYS_RX_ETH_BUFFER
 #define PKTALIGN	ARCH_DMA_MINALIGN
 
 /* Number of packets processed together */
@@ -396,6 +390,8 @@ struct ip_hdr {
 #define IP_FLAGS_MFRAG	0x2000 /* more fragments */
 
 #define IP_HDR_SIZE		(sizeof(struct ip_hdr))
+
+#define IP_MIN_FRAG_DATAGRAM_SIZE	(IP_HDR_SIZE + 8)
 
 /*
  *	Internet Protocol (IP) + UDP header.

@@ -24,6 +24,7 @@
 #include <mapmem.h>
 #include <asm/io.h>
 #include <malloc.h>
+#include <memalign.h>
 #include <asm/global_data.h>
 #ifdef CONFIG_DM_HASH
 #include <dm.h>
@@ -1263,7 +1264,7 @@ int calculate_hash(const void *data, int data_len, const char *name,
 static int fit_image_check_hash(const void *fit, int noffset, const void *data,
 				size_t size, char **err_msgp)
 {
-	uint8_t value[FIT_MAX_HASH_LEN];
+	ALLOC_CACHE_ALIGN_BUFFER(uint8_t, value, FIT_MAX_HASH_LEN);
 	int value_len;
 	const char *algo;
 	uint8_t *fit_value;
@@ -1885,8 +1886,7 @@ int fit_conf_get_node(const void *fit, const char *conf_uname)
 		      conf_uname, fdt_strerror(noffset));
 	}
 
-	if (conf_uname_copy)
-		free(conf_uname_copy);
+	free(conf_uname_copy);
 
 	return noffset;
 }
@@ -2420,9 +2420,6 @@ int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
 		}
 		fdt_pack(base);
 		len = fdt_totalsize(base);
-
-		free(ovcopy);
-		ovcopy = NULL;
 	}
 #else
 	printf("config with overlays but CONFIG_OF_LIBFDT_OVERLAY not set\n");
@@ -2440,11 +2437,9 @@ out:
 		*fit_uname_configp = fit_uname_config;
 
 #ifdef CONFIG_OF_LIBFDT_OVERLAY
-	if (ovcopy)
-		free(ovcopy);
+	free(ovcopy);
 #endif
-	if (fit_uname_config_copy)
-		free(fit_uname_config_copy);
+	free(fit_uname_config_copy);
 	return fdt_noffset;
 }
 #endif

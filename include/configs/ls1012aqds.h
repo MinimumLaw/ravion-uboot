@@ -10,17 +10,13 @@
 #include "ls1012a_common.h"
 
 /* DDR */
-#define CONFIG_DIMM_SLOTS_PER_CTLR	1
-#define CONFIG_CHIP_SELECTS_PER_CTRL	1
 #define CONFIG_SYS_SDRAM_SIZE		0x40000000
 
 /*
  * QIXIS Definitions
  */
-#define CONFIG_FSL_QIXIS
 
 #ifdef CONFIG_FSL_QIXIS
-#define CONFIG_QIXIS_I2C_ACCESS
 #define CONFIG_SYS_I2C_FPGA_ADDR	0x66
 #define QIXIS_LBMAP_BRDCFG_REG		0x04
 #define QIXIS_LBMAP_SWITCH		6
@@ -93,7 +89,6 @@
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"verify=no\0"				\
-	"fdt_addr=0x00f00000\0"			\
 	"kernel_addr=0x01000000\0"		\
 	"kernelheader_addr=0x600000\0"		\
 	"scriptaddr=0x80000000\0"		\

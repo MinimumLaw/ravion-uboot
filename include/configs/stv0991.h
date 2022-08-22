@@ -29,17 +29,6 @@
 
 #define CONFIG_DW_ALTDESCRIPTOR
 
-/* Command support defines */
-#define CONFIG_PHY_RESET_DELAY			10000		/* in usec */
-
 /* Misc configuration */
-
-/*
-+ * QSPI support
-+ */
-#ifdef CONFIG_OF_CONTROL		/* QSPI is controlled via DT */
-#define CONFIG_CQSPI_REF_CLK		((30/4)/2)*1000*1000
-
-#endif
 
 #endif /* __CONFIG_H */

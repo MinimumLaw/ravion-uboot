@@ -70,6 +70,11 @@ static const struct {
 	u8 variants;
 } zynqmp_devices[] = {
 	{
+		.id = 0x04688093,
+		.device = 1,
+		.variants = ZYNQMP_VARIANT_EG,
+	},
+	{
 		.id = 0x04711093,
 		.device = 2,
 		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG,
@@ -399,9 +404,6 @@ static void print_secure_boot(void)
 	       status & ZYNQMP_CSU_STATUS_ENCRYPTED ? "" : "not ");
 }
 
-#define PS_SYSMON_ANALOG_BUS_VAL	0x3210
-#define PS_SYSMON_ANALOG_BUS_REG	0xFFA50914
-
 int board_init(void)
 {
 #if defined(CONFIG_ZYNQMP_FIRMWARE)
@@ -428,9 +430,6 @@ int board_init(void)
 #endif
 
 	printf("EL Level:\tEL%d\n", current_el());
-
-	/* Bug in ROM sets wrong value in this register */
-	writel(PS_SYSMON_ANALOG_BUS_VAL, PS_SYSMON_ANALOG_BUS_REG);
 
 #if CONFIG_IS_ENABLED(FPGA) && defined(CONFIG_FPGA_ZYNQMPPL)
 	zynqmppl.name = zynqmp_get_silicon_idcode_name();
@@ -516,6 +515,9 @@ ulong board_get_usable_ram_top(ulong total_size)
 	phys_size_t size;
 	phys_addr_t reg;
 	struct lmb lmb;
+
+	if (!total_size)
+		return gd->ram_top;
 
 	if (!IS_ALIGNED((ulong)gd->fdt_blob, 0x8))
 		panic("Not 64bit aligned DT location: %p\n", gd->fdt_blob);
@@ -890,7 +892,8 @@ void set_dfu_alt_info(char *interface, char *devstr)
 
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, DFU_ALT_BUF_LEN);
 
-	if (env_get("dfu_alt_info"))
+	if (!CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT) &&
+	    env_get("dfu_alt_info"))
 		return;
 
 	memset(buf, 0, sizeof(buf));

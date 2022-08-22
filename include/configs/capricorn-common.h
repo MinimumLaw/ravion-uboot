@@ -32,13 +32,9 @@
 
 #define CONFIG_FACTORYSET
 
-/* ENET Config */
-#define CONFIG_FEC_XCV_TYPE		RMII
-
 /* ENET1 connects to base board and MUX with ESAI */
 #define CONFIG_FEC_ENET_DEV		1
 #define CONFIG_FEC_MXC_PHYADDR		0x0
-#define CONFIG_ETHPRIME                "eth1"
 
 /* I2C Configuration */
 #ifndef CONFIG_SPL_BUILD
@@ -113,7 +109,6 @@
 #define CONFIG_SYS_INIT_SP_ADDR		0x80200000
 
 /* On CCP board, USDHC1 is for eMMC */
-#define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* eMMC */
 
 #define CONFIG_SYS_SDRAM_BASE		0x80000000
 #define PHYS_SDRAM_1			0x80000000
@@ -126,9 +121,6 @@
 #define CONFIG_SYS_CBSIZE		2048
 #define CONFIG_SYS_MAXARGS		64
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-
-/* Generic Timer Definitions */
-#define COUNTER_FREQUENCY		8000000	/* 8MHz */
 
 #define BOOTAUX_RESERVED_MEM_BASE	0x88000000
 #define BOOTAUX_RESERVED_MEM_SIZE	SZ_128M /* Reserve from second 128MB */

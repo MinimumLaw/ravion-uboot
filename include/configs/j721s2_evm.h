@@ -21,8 +21,7 @@
 
 /* SPL Loader Configuration */
 #if defined(CONFIG_TARGET_J721S2_A72_EVM) || defined(CONFIG_TARGET_J7200_A72_EVM)
-#define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SPL_TEXT_BASE +	\
-					 CONFIG_SYS_K3_NON_SECURE_MSRAM_SIZE)
+#define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SPL_TEXT_BASE + SZ_4M)
 #define CONFIG_SYS_UBOOT_BASE		0x50280000
 /* Image load address in RAM for DFU boot*/
 #else
@@ -58,10 +57,6 @@
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_K3_MAX_DOWNLODABLE_IMAGE_SIZE
 
 #define CONFIG_SYS_BOOTM_LEN		SZ_64M
-#define CONFIG_CQSPI_REF_CLK		133333333
-
-/* HyperFlash related configuration */
-#define CONFIG_SYS_MAX_FLASH_BANKS_DETECT 1
 
 /* U-Boot general configuration */
 #define EXTRA_ENV_J721S2_BOARD_SETTINGS					\

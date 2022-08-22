@@ -898,6 +898,42 @@ int ofnode_read_pci_vendev(ofnode node, u16 *vendor, u16 *device)
 	return -ENOENT;
 }
 
+int ofnode_read_eth_phy_id(ofnode node, u16 *vendor, u16 *device)
+{
+	const char *list, *end;
+	int len;
+
+	list = ofnode_get_property(node, "compatible", &len);
+
+	if (!list)
+		return -ENOENT;
+
+	end = list + len;
+	while (list < end) {
+		len = strlen(list);
+
+		if (len >= strlen("ethernet-phy-idVVVV,DDDD")) {
+			char *s = strstr(list, "ethernet-phy-id");
+
+			/*
+			 * check if the string is something like
+			 * ethernet-phy-idVVVV,DDDD
+			 */
+			if (s && s[19] == '.') {
+				s += strlen("ethernet-phy-id");
+				*vendor = simple_strtol(s, NULL, 16);
+				s += 5;
+				*device = simple_strtol(s, NULL, 16);
+
+				return 0;
+			}
+		}
+		list += (len + 1);
+	}
+
+	return -ENOENT;
+}
+
 int ofnode_read_addr_cells(ofnode node)
 {
 	if (ofnode_is_np(node)) {
@@ -1161,4 +1197,48 @@ const char *ofnode_conf_read_str(const char *prop_name)
 		return NULL;
 
 	return ofnode_read_string(node, prop_name);
+}
+
+ofnode ofnode_get_phy_node(ofnode node)
+{
+	/* DT node properties that reference a PHY node */
+	static const char * const phy_handle_str[] = {
+		"phy-handle", "phy", "phy-device",
+	};
+	struct ofnode_phandle_args args = {
+		.node = ofnode_null()
+	};
+	int i;
+
+	assert(ofnode_valid(node));
+
+	for (i = 0; i < ARRAY_SIZE(phy_handle_str); i++)
+		if (!ofnode_parse_phandle_with_args(node, phy_handle_str[i],
+						    NULL, 0, 0, &args))
+			break;
+
+	return args.node;
+}
+
+phy_interface_t ofnode_read_phy_mode(ofnode node)
+{
+	const char *mode;
+	int i;
+
+	assert(ofnode_valid(node));
+
+	mode = ofnode_read_string(node, "phy-mode");
+	if (!mode)
+		mode = ofnode_read_string(node, "phy-connection-type");
+
+	if (!mode)
+		return PHY_INTERFACE_MODE_NA;
+
+	for (i = 0; i < PHY_INTERFACE_MODE_MAX; i++)
+		if (!strcmp(mode, phy_interface_strings[i]))
+			return i;
+
+	debug("%s: Invalid PHY interface '%s'\n", __func__, mode);
+
+	return PHY_INTERFACE_MODE_NA;
 }

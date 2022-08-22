@@ -16,7 +16,6 @@
 #define PHYS_SDRAM_SIZE			SZ_1G
 
 /* ENET1 */
-#define IMX_FEC_BASE			ENET2_BASE_ADDR
 
 /* MMC Config */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
@@ -49,15 +48,6 @@
 	"pxefile_addr_r=0x87100000\0" \
 	"ramdisk_addr_r=0x82200000\0" \
 	"scriptaddr=0x87000000\0"
-
-#define NFS_BOOTCMD \
-	"nfsargs=ip=:::::eth0: root=/dev/nfs\0" \
-	"nfsboot=run setup; " \
-		"setenv bootargs ${defargs} ${nfsargs} " \
-		"${setupargs} ${vidargs}; echo Booting from NFS...;" \
-		"dhcp ${kernel_addr_r} && " \
-		"tftp ${fdt_addr_r} ${fdtfile} && " \
-		"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
 
 #define UBI_BOOTCMD \
 	"ubiargs=ubi.mtd=ubi root=ubi0:rootfs rw rootfstype=ubifs " \
@@ -98,9 +88,9 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	BOOTENV \
 	MEM_LAYOUT_ENV_SETTINGS \
-	NFS_BOOTCMD \
 	UBI_BOOTCMD \
 	UBOOT_UPDATE \
+	"boot_script_dhcp=boot.scr\0" \
 	"bootubipart=ubi\0" \
 	"console=ttymxc0\0" \
 	"defargs=user_debug=30\0" \
@@ -123,9 +113,7 @@
 		"${board}/flash_blk.img && source ${loadaddr}\0" \
 	"splashpos=m,m\0" \
 	"splashimage=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
-	"videomode=video=ctfb:x:640,y:480,depth:18,pclk:39722,le:48,ri:16,up:33,lo:10,hs:96,vs:2,sync:0,vmode:0\0" \
-	"vidargs=video=mxsfb:640x480M-16@60"
-
+	"videomode=video=ctfb:x:640,y:480,depth:18,pclk:39722,le:48,ri:16,up:33,lo:10,hs:96,vs:2,sync:0,vmode:0\0"
 
 /* Physical Memory Map */
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
@@ -165,7 +153,6 @@
 
 #if defined(CONFIG_DM_VIDEO)
 #define MXS_LCDIF_BASE MX6UL_LCDIF1_BASE_ADDR
-#define CONFIG_VIDEO_BMP_LOGO
 #endif
 
 #endif /* __COLIBRI_IMX6ULL_CONFIG_H */

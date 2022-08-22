@@ -21,20 +21,15 @@
 #define CONSOLE_DEV	"ttymxc0"
 #endif
 
-#define CONFIG_FEC_XCV_TYPE		RGMII
-
 /* Framebuffer */
 #define CONFIG_SYS_LDB_CLOCK	28341000
 
 #include "mx6_common.h"
 
-#define CONFIG_MMCROOT		"/dev/mmcblk0p1"
 
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      USDHC1_BASE_ADDR
 
-#define IMX_FEC_BASE			ENET_BASE_ADDR
-#define CONFIG_ETHPRIME			"FEC"
 #define CONFIG_FEC_MXC_PHYADDR		0
 
 #define CONFIG_SYS_SPI_ST_ENABLE_WP_PIN
@@ -186,7 +181,7 @@
 		"${pubkey}\0" \
 	"mainRargs=setenv bootargs console=${console},${baudrate} " \
 		"rescue_sysnum=${rescue_sysnum} root=${emmcroot} rootfstype=ext4\0" \
-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcroot=/dev/mmcblk0p1 rootwait rw\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
 		"root=${mmcroot}\0" \
 	"mmcRargs=setenv bootargs console=${console},${baudrate} " \
@@ -415,8 +410,6 @@
 	HAB_EXTRA_SETTINGS \
 	EXTRA_ENV_BOARD_SETTINGS
 
-#define CONFIG_ARP_TIMEOUT		200UL
-
 /* Physical Memory Map */
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
 
@@ -443,7 +436,6 @@
 /* Framebuffer */
 /* check this console not needed, after test remove it */
 #define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_VIDEO_BMP_LOGO
 
 #define CONFIG_IMX6_PWM_PER_CLK	66000000
 

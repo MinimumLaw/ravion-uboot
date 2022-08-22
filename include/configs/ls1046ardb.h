@@ -11,9 +11,7 @@
 
 #define CONFIG_LAYERSCAPE_NS_ACCESS
 
-#define CONFIG_DIMM_SLOTS_PER_CTLR	1
 /* Physical Memory Map */
-#define CONFIG_CHIP_SELECTS_PER_CTRL	4
 
 #define SPD_EEPROM_ADDRESS		0x51
 #define CONFIG_SYS_SPD_BUS_NUM		0
@@ -128,8 +126,6 @@
 #define FM1_10GEC1_PHY_ADDR		0x0
 
 #define FDT_SEQ_MACADDR_FROM_ENV
-
-#define CONFIG_ETHPRIME			"FM1@DTSEC3"
 #endif
 
 #endif
@@ -142,6 +138,8 @@
 			   "env exists secureboot && esbc_halt;"
 #endif
 #endif
+
+#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME "u-boot.img"
 
 #include <asm/fsl_secure_boot.h>
 

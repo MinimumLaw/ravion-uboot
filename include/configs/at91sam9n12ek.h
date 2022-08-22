@@ -18,15 +18,6 @@
 /* LCD */
 #define LCD_BPP				LCD_COLOR16
 #define LCD_OUTPUT_BPP			24
-#define CONFIG_LCD_LOGO
-#define CONFIG_LCD_INFO
-#define CONFIG_LCD_INFO_BELOW_LOGO
-#define CONFIG_ATMEL_LCD_RGB565
-
-/*
- * BOOTP options
- */
-#define CONFIG_BOOTP_BOOTFILESIZE
 
 #define CONFIG_SYS_SDRAM_BASE		0x20000000
 #define CONFIG_SYS_SDRAM_SIZE		0x08000000
@@ -66,15 +57,6 @@
 #define CONFIG_SYS_USB_OHCI_REGS_BASE	ATMEL_BASE_OHCI
 #define CONFIG_SYS_USB_OHCI_SLOT_NAME	"at91sam9n12"
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	1
-#endif
-
-#ifdef CONFIG_SPI_BOOT
-
-/* bootstrap + u-boot + env + linux in dataflash on CS0 */
-
-#elif defined(CONFIG_NAND_BOOT)
-
-/* bootstrap + u-boot + env + linux in nandflash */
 #endif
 
 /* SPL */

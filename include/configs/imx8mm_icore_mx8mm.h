@@ -33,7 +33,6 @@
 	func(MMC, mmc, 2) \
 	func(MMC, mmc, 0)
 #include <config_distro_bootcmd.h>
-#undef CONFIG_ISO_PARTITION
 #else
 #define BOOTENV
 #endif
@@ -67,7 +66,7 @@
 #define CONFIG_SYS_BOOTM_LEN		SZ_256M
 
 /* UART */
-#define CONFIG_MXC_UART_BASE		UART2_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(2)
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		2048

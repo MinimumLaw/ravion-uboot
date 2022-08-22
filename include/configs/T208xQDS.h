@@ -44,6 +44,9 @@
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	(768 << 10)
 #define CONFIG_SYS_NAND_U_BOOT_DST	0x00200000
 #define CONFIG_SYS_NAND_U_BOOT_START	0x00200000
+#ifndef CONFIG_MPC85XX_HAVE_RESET_VECTOR
+#define CONFIG_SYS_MPC85XX_NO_RESETVEC
+#endif
 #endif
 
 #ifdef CONFIG_SPIFLASH
@@ -88,7 +91,6 @@
  * These can be toggled for performance analysis, otherwise use default.
  */
 #define CONFIG_SYS_CACHE_STASHING
-#define CONFIG_BTB		/* toggle branch predition */
 #ifdef CONFIG_DDR_ECC
 #define CONFIG_MEM_INIT_VALUE		0xdeadbeef
 #endif
@@ -117,8 +119,6 @@
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x00000000
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
-#define CONFIG_DIMM_SLOTS_PER_CTLR	2
-#define CONFIG_CHIP_SELECTS_PER_CTRL	(2 * CONFIG_DIMM_SLOTS_PER_CTLR)
 #define CONFIG_SYS_SPD_BUS_NUM	0
 #define CONFIG_SYS_SDRAM_SIZE	2048	/* for fixed parameter use */
 #define SPD_EEPROM_ADDRESS1	0x51
@@ -169,7 +169,6 @@
 #define CONFIG_SYS_FLASH_BANKS_LIST	{CONFIG_SYS_FLASH_BASE_PHYS \
 					+ 0x8000000, CONFIG_SYS_FLASH_BASE_PHYS}
 
-#define CONFIG_FSL_QIXIS	/* use common QIXIS code */
 #define QIXIS_BASE			0xffdf0000
 #define QIXIS_LBMAP_SWITCH		6
 #define QIXIS_LBMAP_MASK		0x0f
@@ -296,12 +295,6 @@
 
 #if defined(CONFIG_RAMBOOT_PBL)
 #define CONFIG_SYS_RAMBOOT
-#endif
-
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SPL_TEXT_BASE
-#else
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #endif
 
 #define CONFIG_HWCONFIG
@@ -480,10 +473,6 @@
 #define SGMII_CARD_PORT4_PHY_ADDR 0x1F
 #endif
 
-#ifdef CONFIG_FMAN_ENET
-#define CONFIG_ETHPRIME		"FM1@DTSEC3"
-#endif
-
 /*
  * SATA
  */
@@ -539,7 +528,6 @@
  * Environment Configuration
  */
 #define CONFIG_ROOTPATH	 "/opt/nfsroot"
-#define CONFIG_BOOTFILE	 "uImage"
 #define CONFIG_UBOOTPATH "u-boot.bin"	/* U-Boot image on TFTP server */
 
 #define __USB_PHY_TYPE		utmi

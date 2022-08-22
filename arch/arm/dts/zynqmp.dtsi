@@ -13,6 +13,7 @@
  */
 
 #include <dt-bindings/dma/xlnx-zynqmp-dpdma.h>
+#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/power/xlnx-zynqmp-power.h>
 #include <dt-bindings/reset/xlnx-zynqmp-resets.h>
 
@@ -75,7 +76,7 @@
 		};
 	};
 
-	cpu_opp_table: cpu-opp-table {
+	cpu_opp_table: opp-table-cpu {
 		compatible = "operating-points-v2";
 		opp-shared;
 		opp00 {
@@ -189,6 +190,12 @@
 				compatible = "xlnx,zynqmp-pinctrl";
 				status = "disabled";
 			};
+
+			modepin_gpio: gpio {
+				compatible = "xlnx,zynqmp-gpio-modepin";
+				gpio-controller;
+				#gpio-cells = <2>;
+			};
 		};
 	};
 
@@ -211,6 +218,7 @@
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
+		power-domains = <&zynqmp_firmware PD_PL>;
 	};
 
 	amba: axi {
@@ -742,6 +750,7 @@
 			#clock-cells = <1>;
 			clock-output-names = "clk_out_sd0", "clk_in_sd0";
 			power-domains = <&zynqmp_firmware PD_SD_0>;
+			resets = <&zynqmp_reset ZYNQMP_RESET_SDIO0>;
 		};
 
 		sdhci1: mmc@ff170000 {
@@ -758,6 +767,7 @@
 			#clock-cells = <1>;
 			clock-output-names = "clk_out_sd1", "clk_in_sd1";
 			power-domains = <&zynqmp_firmware PD_SD_1>;
+			resets = <&zynqmp_reset ZYNQMP_RESET_SDIO1>;
 		};
 
 		smmu: iommu@fd800000 {
@@ -872,6 +882,7 @@
 				 <&zynqmp_reset ZYNQMP_RESET_USB0_HIBERRESET>,
 				 <&zynqmp_reset ZYNQMP_RESET_USB0_APB>;
 			reset-names = "usb_crst", "usb_hibrst", "usb_apbrst";
+			reset-gpios = <&modepin_gpio 1 GPIO_ACTIVE_LOW>;
 			ranges;
 
 			dwc3_0: usb@fe200000 {

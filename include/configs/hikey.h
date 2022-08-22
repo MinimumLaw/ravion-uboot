@@ -32,17 +32,11 @@
 
 #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x7fff0)
 
-/* Generic Timer Definitions */
-#define COUNTER_FREQUENCY		19000000
-
 /* Generic Interrupt Controller Definitions */
 #define GICD_BASE			0xf6801000
 #define GICC_BASE			0xf6802000
 
 #define CONFIG_HIKEY_GPIO
-
-/* BOOTP options */
-#define CONFIG_BOOTP_BOOTFILESIZE
 
 /* Initial environment variables */
 

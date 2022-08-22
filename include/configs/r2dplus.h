@@ -4,7 +4,6 @@
 #define __LITTLE_ENDIAN__	1
 
 /* SCIF */
-#define CONFIG_CONS_SCIF1	1
 
 /* SDRAM */
 #define CONFIG_SYS_SDRAM_BASE		0x8C000000
@@ -13,7 +12,6 @@
 #define CONFIG_SYS_PBSIZE		256
 
 /* Address of u-boot image in Flash */
-#define CONFIG_SYS_MONITOR_BASE	(CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_MONITOR_LEN		(256 * 1024)
 #define CONFIG_SYS_BOOTMAPSZ		(8 * 1024 * 1024)
 

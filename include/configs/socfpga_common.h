@@ -8,11 +8,6 @@
 #include <linux/stringify.h>
 
 /*
- * High level configuration
- */
-#define CONFIG_CLOCKS
-
-/*
  * Memory configurations
  */
 #define PHYS_SDRAM_1			0x0
@@ -124,15 +119,6 @@
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_REGS_BASE	SOCFPGA_NANDREGS_ADDRESS
 #define CONFIG_SYS_NAND_DATA_BASE	SOCFPGA_NANDDATA_ADDRESS
-#endif
-
-/*
- * QSPI support
- */
-/* QSPI reference clock */
-#ifndef __ASSEMBLY__
-unsigned int cm_get_qspi_controller_clk_hz(void);
-#define CONFIG_CQSPI_REF_CLK		cm_get_qspi_controller_clk_hz()
 #endif
 
 /*

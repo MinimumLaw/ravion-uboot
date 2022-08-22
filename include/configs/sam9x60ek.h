@@ -17,14 +17,6 @@
 #define CONFIG_USART_BASE   ATMEL_BASE_DBGU
 #define CONFIG_USART_ID     0 /* ignored in arm */
 
-/* general purpose I/O */
-#define CONFIG_ATMEL_LEGACY            /* required until (g)pio is fixed */
-
-/*
- * BOOTP options
- */
-#define CONFIG_BOOTP_BOOTFILESIZE
-
 /*
  * define CONFIG_USB_EHCI_HCD to enable USB Hi-Speed (aka 2.0)
  * NB: in this case, USB 1.1 devices won't be recognized.
@@ -46,16 +38,6 @@
 #define CONFIG_SYS_NAND_MASK_CLE	BIT(22)
 #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PD4
 #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PD5
-#endif
-
-#ifdef CONFIG_SD_BOOT
-/* bootstrap + u-boot + env + linux in sd card */
-
-#elif defined(CONFIG_NAND_BOOT)
-/* bootstrap + u-boot + env + linux in nandflash */
-
-#elif defined(CONFIG_QSPI_BOOT)
-/* bootstrap + u-boot + env + linux in SPI NOR flash */
 #endif
 
 #endif

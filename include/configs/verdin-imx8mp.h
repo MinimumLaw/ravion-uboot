@@ -16,7 +16,6 @@
 
 #ifdef CONFIG_SPL_BUILD
 /*#define CONFIG_ENABLE_DDR_TRAINING_DEBUG*/
-#define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
 #define CONFIG_SPL_STACK		0x960000
 #define CONFIG_SPL_BSS_START_ADDR	0x0098fc00
 #define CONFIG_SPL_BSS_MAX_SIZE		SZ_1K
@@ -31,19 +30,12 @@
 #define CONFIG_POWER_PCA9450
 
 #define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_SPEED		100000
 #endif /* CONFIG_SPL_BUILD */
-
-#define CONFIG_REMAKE_ELF
 
 /* ENET Config */
 /* ENET1 */
 #if defined(CONFIG_CMD_NET)
-#define CONFIG_ETHPRIME			"eth0" /* eqos is aliased on-module Ethernet interface */
-
-#define CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_FEC_MXC_PHYADDR		7
-#define FEC_QUIRK_ENET_MAC
 
 #define PHY_ANEG_TIMEOUT 20000
 #endif /* CONFIG_CMD_NET */
@@ -61,7 +53,6 @@
 	func(MMC, mmc, 2) \
 	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
-#undef CONFIG_ISO_PARTITION
 #else
 #define BOOTENV
 #endif
@@ -84,13 +75,7 @@
 	"fdt_board=dev\0" \
 	"initrd_addr=0x43800000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
-		"root=/dev/nfs ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp" \
-		"\0" \
-	"nfsboot=run netargs; dhcp ${loadaddr} ${boot_file}; " \
-		"tftp ${fdt_addr} verdin/${fdtfile}; " \
-		"booti ${loadaddr} - ${fdt_addr}\0" \
-	"setup=setenv setupargs console=${console},${baudrate} console=tty1 " \
+	"setup=setenv setupargs console=tty1 console=${console},${baudrate} " \
 		"consoleblank=0 earlycon\0" \
 	"update_uboot=askenv confirm Did you load flash.bin (y/N)?; " \
 		"if test \"$confirm\" = \"y\"; then " \
@@ -115,7 +100,7 @@
 #define PHYS_SDRAM_2_SIZE		(SZ_4G + SZ_1G)
 
 /* UART */
-#define CONFIG_MXC_UART_BASE		UART3_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(3)
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		SZ_2K
@@ -123,9 +108,5 @@
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
-
-/* USDHC */
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
 #endif /* __VERDIN_IMX8MP_H */

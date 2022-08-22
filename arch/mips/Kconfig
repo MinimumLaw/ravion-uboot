@@ -101,6 +101,7 @@ config ARCH_JZ47XX
 
 config ARCH_OCTEON
 	bool "Support Marvell Octeon CN7xxx platforms"
+	select ARCH_EARLY_INIT_R
 	select CPU_CAVIUM_OCTEON
 	select DISPLAY_CPUINFO
 	select DMA_ADDR_T_64BIT
@@ -130,6 +131,7 @@ config MACH_PIC32
 config TARGET_BOSTON
 	bool "Support Boston"
 	select DM
+	imply DM_EVENT
 	select DM_SERIAL
 	select MIPS_CM
 	select SYS_CACHE_SHIFT_6

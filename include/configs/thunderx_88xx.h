@@ -20,9 +20,6 @@
 /* SMP Spin Table Definitions */
 #define CPU_RELEASE_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x7fff0)
 
-/* Generic Timer Definitions */
-#define COUNTER_FREQUENCY		(0x1800000)	/* 24MHz */
-
 /* PL011 Serial Configuration */
 
 #define CONFIG_PL011_CLOCK		24000000
@@ -32,9 +29,6 @@
 #define GICR_BASE			(0x801000002000)
 #define CONFIG_SYS_SERIAL0		0x87e024000000
 #define CONFIG_SYS_SERIAL1		0x87e025000000
-
-/* BOOTP options */
-#define CONFIG_BOOTP_BOOTFILESIZE
 
 /* Miscellaneous configurable options */
 
