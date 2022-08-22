@@ -30,17 +30,9 @@
 # define CONFIG_SYS_MAX_FLASH_SECT	2048
 #endif
 
-#define CONFIG_ICACHE
-#define CONFIG_DCACHE
-
 #ifndef XILINX_DCACHE_BYTE_SIZE
 #define XILINX_DCACHE_BYTE_SIZE	32768
 #endif
-
-/*
- * BOOTP options
- */
-#define CONFIG_BOOTP_BOOTFILESIZE
 
 /* size of console buffer */
 #define	CONFIG_SYS_CBSIZE	512
@@ -122,10 +114,6 @@
 	"setenv stdin serial\0"\
 	"script_size_f=0x40000\0"\
 	BOOTENV
-#endif
-
-#if defined(CONFIG_XILINX_AXIEMAC)
-# define CONFIG_SYS_FAULT_ECHO_LINK_DOWN	1
 #endif
 
 /* SPL part */

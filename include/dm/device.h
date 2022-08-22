@@ -80,6 +80,9 @@ struct driver_info;
  */
 #define DM_FLAG_VITAL			(1 << 14)
 
+/* Device must be probed after it was bound */
+#define DM_FLAG_PROBE_AFTER_BIND	(1 << 15)
+
 /*
  * One or multiple of these flags are passed to device_remove() so that
  * a selective device removal as specified by the remove-stage and the
@@ -184,13 +187,21 @@ struct udevice {
 #if CONFIG_IS_ENABLED(OF_REAL)
 	ofnode node_;
 #endif
-#ifdef CONFIG_DEVRES
+#if CONFIG_IS_ENABLED(DEVRES)
 	struct list_head devres_head;
 #endif
 #if CONFIG_IS_ENABLED(DM_DMA)
 	ulong dma_offset;
 #endif
 };
+
+static inline int dm_udevice_size(void)
+{
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_RT))
+		return ALIGN(sizeof(struct udevice), CONFIG_LINKER_LIST_ALIGN);
+
+	return sizeof(struct udevice);
+}
 
 /**
  * struct udevice_rt - runtime information set up by U-Boot
@@ -791,7 +802,7 @@ int device_find_first_child_by_uclass(const struct udevice *parent,
 				      struct udevice **devp);
 
 /**
- * device_find_child_by_name() - Find a child by device name
+ * device_find_child_by_namelen() - Find a child by device name
  *
  * @parent:	Parent device to search
  * @name:	Name to look for

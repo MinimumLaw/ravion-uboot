@@ -42,7 +42,6 @@
 	func(MMC, mmc, 0) \
 	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
-#undef CONFIG_ISO_PARTITION
 #else
 #define BOOTENV
 #endif
@@ -53,19 +52,14 @@
 	MEM_LAYOUT_ENV_SETTINGS \
 	"bootcmd_mfg=fastboot 0\0" \
 	"boot_file=Image\0" \
+	"boot_script_dhcp=boot.scr\0" \
 	"console=ttymxc0\0" \
 	"fdt_addr=0x43000000\0" \
 	"fdt_board=dev\0" \
 	"initrd_addr=0x43800000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
-		"root=/dev/nfs ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp" \
-		"\0" \
-	"nfsboot=run netargs; dhcp ${loadaddr} ${boot_file}; " \
-		"tftp ${fdt_addr} verdin/${fdtfile}; " \
-		"booti ${loadaddr} - ${fdt_addr}\0" \
-	"setup=setenv setupargs console=${console},${baudrate} " \
-		"console=tty1 consoleblank=0 earlycon\0" \
+	"setup=setenv setupargs console=tty1 console=${console},${baudrate} " \
+		"consoleblank=0 earlycon\0" \
 	"update_uboot=askenv confirm Did you load flash.bin (y/N)?; " \
 		"if test \"$confirm\" = \"y\"; then " \
 		"setexpr blkcnt ${filesize} + 0x1ff && setexpr blkcnt " \
@@ -90,7 +84,7 @@
 #define PHYS_SDRAM_SIZE			SZ_2G /* 2GB DDR */
 
 /* UART */
-#define CONFIG_MXC_UART_BASE		UART1_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(1)
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		SZ_2K
@@ -98,16 +92,9 @@
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
-/* USDHC */
-#define CONFIG_SYS_FSL_USDHC_NUM	2
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
 /* ENET */
-#define CONFIG_ETHPRIME                 "FEC"
-#define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          7
-#define FEC_QUIRK_ENET_MAC
-#define IMX_FEC_BASE			0x30BE0000
 
 /* USB Configs */
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET

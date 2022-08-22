@@ -165,8 +165,11 @@ int boot_relocate_fdt(struct lmb *lmb, char **of_flat_tree, ulong *of_size)
 {
 	void	*fdt_blob = *of_flat_tree;
 	void	*of_start = NULL;
+	u64	start, size, usable;
 	char	*fdt_high;
+	ulong	mapsize, low;
 	ulong	of_len = 0;
+	int	bank;
 	int	err;
 	int	disable_relocation = 0;
 
@@ -206,10 +209,39 @@ int boot_relocate_fdt(struct lmb *lmb, char **of_flat_tree, ulong *of_size)
 			    (void *)(ulong) lmb_alloc(lmb, of_len, 0x1000);
 		}
 	} else {
-		of_start =
-		    (void *)(ulong) lmb_alloc_base(lmb, of_len, 0x1000,
-						   env_get_bootm_mapsize()
-						   + env_get_bootm_low());
+		mapsize = env_get_bootm_mapsize();
+		low = env_get_bootm_low();
+		of_start = NULL;
+
+		for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
+			start = gd->bd->bi_dram[bank].start;
+			size = gd->bd->bi_dram[bank].size;
+
+			/* DRAM bank addresses are too low, skip it. */
+			if (start + size < low)
+				continue;
+
+			usable = min(size, (u64)mapsize);
+
+			/*
+			 * At least part of this DRAM bank is usable, try
+			 * using it for LMB allocation.
+			 */
+			of_start =
+			    (void *)(ulong) lmb_alloc_base(lmb, of_len, 0x1000,
+							   start + usable);
+			/* Allocation succeeded, use this block. */
+			if (of_start != NULL)
+				break;
+
+			/*
+			 * Reduce the mapping size in the next bank
+			 * by the size of attempt in current bank.
+			 */
+			mapsize -= usable - max(start, (u64)low);
+			if (!mapsize)
+				break;
+		}
 	}
 
 	if (of_start == NULL) {
@@ -600,6 +632,12 @@ int image_setup_libfdt(bootm_headers_t *images, void *blob,
 		       fdt_strerror(fdt_ret));
 		goto err;
 	}
+
+	/* Store name of configuration node as u-boot,bootconf in /chosen node */
+	if (images->fit_uname_cfg)
+		fdt_find_and_setprop(blob, "/chosen", "u-boot,bootconf",
+					images->fit_uname_cfg,
+					strlen(images->fit_uname_cfg) + 1, 1);
 
 	/* Update ethernet nodes */
 	fdt_fixup_ethernet(blob);

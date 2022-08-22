@@ -4,6 +4,7 @@
  * Sascha Hauer, Pengutronix
  *
  * (C) Copyright 2009 Freescale Semiconductor, Inc.
+ * Copyright 2021 NXP
  */
 
 #include <common.h>
@@ -23,8 +24,6 @@
 #include <asm/arch/mxc_hdmi.h>
 #include <asm/arch/crm_regs.h>
 #include <dm.h>
-#include <fsl_sec.h>
-#include <fsl_wdog.h>
 #include <imx_thermal.h>
 #include <mmc.h>
 
@@ -739,9 +738,14 @@ static void setup_serial_number(void)
 
 int arch_misc_init(void)
 {
-#ifdef CONFIG_FSL_CAAM
-	sec_init();
-#endif
+	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(caam_jr), &dev);
+		if (ret)
+			printf("Failed to initialize caam_jr: %d\n", ret);
+	}
 	setup_serial_number();
 	return 0;
 }
@@ -775,19 +779,3 @@ void gpr_init(void)
 		writel(0x007F007F, &iomux->gpr[7]);
 	}
 }
-
-#if !CONFIG_IS_ENABLED(SYSRESET)
-void reset_cpu(void)
-{
-	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
-
-	/* Clear WDA to trigger WDOG_B immediately */
-	writew((SET_WCR_WT(1) | WCR_WDT | WCR_WDE | WCR_SRS), &wdog->wcr);
-
-	while (1) {
-		/*
-		 * spin for .5 seconds before reset
-		 */
-	};
-}
-#endif

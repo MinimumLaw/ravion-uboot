@@ -15,9 +15,6 @@
 #define CONFIG_TEGRA_UARTA_SDIO1
 #define CONFIG_SYS_NS16550_COM1		NV_PA_APB_UARTA_BASE
 
-/* LCD support */
-#define CONFIG_LCD_LOGO
-
 /* NAND support */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 
@@ -27,6 +24,7 @@
 
 /* Environment in NAND, 64K is a bit excessive but erase block is 512K anyway */
 #define BOARD_EXTRA_ENV_SETTINGS \
+	"boot_script_dhcp=boot.scr\0" \
 	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	UBOOT_UPDATE
 
@@ -42,7 +40,6 @@
 #undef CONFIG_SYS_MAXARGS
 #define CONFIG_SYS_MAXARGS		32
 
-#include "tegra-common-usb-gadget.h"
 #include "tegra-common-post.h"
 
 #endif /* __CONFIG_H */

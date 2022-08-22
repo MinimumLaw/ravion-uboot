@@ -91,6 +91,12 @@ config NAND_BRCMNAND_6368
 	help
 	  Enable support for broadcom nand driver on bcm6368.
 
+config NAND_BRCMNAND_6753
+	bool "Support Broadcom NAND controller on bcm6753"
+	depends on NAND_BRCMNAND && ARCH_BCM6753
+	help
+	  Enable support for broadcom nand driver on bcm6753.
+
 config NAND_BRCMNAND_68360
        bool "Support Broadcom NAND controller on bcm68360"
        depends on NAND_BRCMNAND && ARCH_BCM68360
@@ -151,6 +157,10 @@ config NAND_FSL_ELBC
 	depends on FSL_ELBC
 	help
 	  Enable the Freescale Enhanced Local Bus Controller FCM NAND driver.
+
+config NAND_FSL_ELBC_DT
+	bool "Support Freescale Enhanced Local Bus Controller FCM NAND driver (DT mode)"
+	depends on NAND_FSL_ELBC
 
 config NAND_FSL_IFC
 	bool "Support Freescale Integrated Flash Controller NAND driver"

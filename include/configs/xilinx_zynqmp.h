@@ -10,26 +10,24 @@
 #ifndef __XILINX_ZYNQMP_H
 #define __XILINX_ZYNQMP_H
 
-/* #define CONFIG_ARMV8_SWITCH_TO_EL1 */
-
 /* Generic Interrupt Controller Definitions */
 #define GICD_BASE	0xF9010000
 #define GICC_BASE	0xF9020000
 
 #define CONFIG_SYS_INIT_SP_ADDR		CONFIG_SYS_TEXT_BASE
 
-/* Generic Timer Definitions - setup in EL3. Setup by ATF for other cases */
-#if !defined(COUNTER_FREQUENCY)
-# define COUNTER_FREQUENCY		100000000
-#endif
-
 /* Serial setup */
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{ 4800, 9600, 19200, 38400, 57600, 115200 }
 
-/* BOOTP options */
-#define CONFIG_BOOTP_BOOTFILESIZE
-#define CONFIG_BOOTP_MAY_FAIL
+/* GUIDs for capsule updatable firmware images */
+#define XILINX_BOOT_IMAGE_GUID \
+	EFI_GUID(0xde6066e8, 0x0256, 0x4fad, 0x82, 0x38, \
+		 0xe4, 0x06, 0xe2, 0x74, 0xc4, 0xcf)
+
+#define XILINX_UBOOT_IMAGE_GUID \
+	EFI_GUID(0xcf9ecfd4, 0x938b, 0x41c5, 0x85, 0x51, \
+		 0x1f, 0x88, 0x3a, 0xb7, 0xdc, 0x18)
 
 #ifdef CONFIG_NAND_ARASAN
 # define CONFIG_SYS_MAX_NAND_DEVICE	1
@@ -61,13 +59,10 @@
 
 /* Ethernet driver */
 #if defined(CONFIG_ZYNQ_GEM)
-# define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 # define PHY_ANEG_TIMEOUT       20000
 #endif
 
-#define CONFIG_SYS_BOOTM_LEN	(60 * 1024 * 1024)
-
-#define CONFIG_CLOCKS
+#define CONFIG_SYS_BOOTM_LEN	(100 * 1024 * 1024)
 
 #define ENV_MEM_LAYOUT_SETTINGS \
 	"fdt_addr_r=0x40000000\0" \
@@ -231,7 +226,6 @@
 #define CONFIG_SPL_FS_LOAD_KERNEL_NAME	"atf-uboot.ub"
 
 /* MMC support */
-#ifdef CONFIG_MMC_SDHCI_ZYNQ
 # define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0 /* unused */
 # define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	0 /* unused */
 # if defined(CONFIG_SPL_LOAD_FIT)
@@ -239,7 +233,6 @@
 # else
 #  define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"
 # endif
-#endif
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_DFU)
 # define CONFIG_SPL_HASH

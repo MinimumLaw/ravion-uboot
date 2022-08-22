@@ -5,6 +5,8 @@
  */
 
 #include <common.h>
+#include <efi.h>
+#include <efi_loader.h>
 #include <env.h>
 #include <log.h>
 #include <asm/global_data.h>
@@ -20,8 +22,34 @@
 #include <generated/dt.h>
 #include <soc.h>
 #include <linux/ctype.h>
+#include <linux/kernel.h>
 
 #include "fru.h"
+
+#if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
+struct efi_fw_image fw_images[] = {
+#if defined(XILINX_BOOT_IMAGE_GUID)
+	{
+		.image_type_id = XILINX_BOOT_IMAGE_GUID,
+		.fw_name = u"XILINX-BOOT",
+		.image_index = 1,
+	},
+#endif
+#if defined(XILINX_UBOOT_IMAGE_GUID)
+	{
+		.image_type_id = XILINX_UBOOT_IMAGE_GUID,
+		.fw_name = u"XILINX-UBOOT",
+		.image_index = 2,
+	},
+#endif
+};
+
+struct efi_capsule_update_info update_info = {
+	.images = fw_images,
+};
+
+u8 num_image_type_guids = ARRAY_SIZE(fw_images);
+#endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
 #if defined(CONFIG_ZYNQ_GEM_I2C_MAC_OFFSET)
 int zynq_board_read_rom_ethaddr(unsigned char *ethaddr)
@@ -171,6 +199,7 @@ static int xilinx_read_eeprom_fru(struct udevice *dev, char *name,
 {
 	int i, ret, eeprom_size;
 	u8 *fru_content;
+	u8 id = 0;
 
 	/* FIXME this is shortcut - if eeprom type is wrong it will fail */
 	eeprom_size = i2c_eeprom_size(dev);
@@ -216,8 +245,20 @@ static int xilinx_read_eeprom_fru(struct udevice *dev, char *name,
 	}
 	strncpy(desc->revision, (char *)fru_data.brd.rev,
 		sizeof(desc->revision));
+	for (i = 0; i < sizeof(desc->revision); i++) {
+		if (desc->revision[i] == ' ')
+			desc->revision[i] = '\0';
+	}
 	strncpy(desc->serial, (char *)fru_data.brd.serial_number,
 		sizeof(desc->serial));
+
+	while (id < EEPROM_HDR_NO_OF_MAC_ADDR) {
+		if (is_valid_ethaddr((const u8 *)fru_data.mac.macid[id]))
+			memcpy(&desc->mac_addr[id],
+			       (char *)fru_data.mac.macid[id], ETH_ALEN);
+		id++;
+	}
+
 	desc->header = EEPROM_HEADER_MAGIC;
 
 end:
@@ -416,7 +457,7 @@ int board_late_init_xilinx(void)
 
 			for (i = 0; i < EEPROM_HDR_NO_OF_MAC_ADDR; i++) {
 				if (!desc->mac_addr[i])
-					continue;
+					break;
 
 				if (is_valid_ethaddr((const u8 *)desc->mac_addr[i]))
 					ret |= eth_env_set_enetaddr_by_index("eth",

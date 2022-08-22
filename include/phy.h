@@ -359,18 +359,6 @@ static inline int phy_clear_bits_mmd(struct phy_device *phydev, int devad,
 
 #ifdef CONFIG_PHYLIB_10G
 extern struct phy_driver gen10g_driver;
-
-/*
- * List all 10G interfaces here, the assumption being that PHYs on these
- * interfaces are C45
- */
-static inline int is_10g_interface(phy_interface_t interface)
-{
-	return interface == PHY_INTERFACE_MODE_XGMII ||
-	       interface == PHY_INTERFACE_MODE_USXGMII ||
-	       interface == PHY_INTERFACE_MODE_10GBASER;
-}
-
 #endif
 
 /**
@@ -400,11 +388,9 @@ int phy_reset(struct phy_device *phydev);
  *
  * @bus:	MII/MDIO bus to scan
  * @phy_mask:	bitmap of PYH addresses to scan
- * @interface:	type of MAC-PHY interface
  * @return: pointer to phy_device if a PHY is found, or NULL otherwise
  */
-struct phy_device *phy_find_by_mask(struct mii_dev *bus, unsigned phy_mask,
-		phy_interface_t interface);
+struct phy_device *phy_find_by_mask(struct mii_dev *bus, unsigned phy_mask);
 
 #ifdef CONFIG_PHY_FIXED
 
@@ -433,8 +419,10 @@ static inline struct phy_device *fixed_phy_create(ofnode node)
  * phy_connect_dev() - Associates the given pair of PHY and Ethernet devices
  * @phydev:	PHY device
  * @dev:	Ethernet device
+ * @interface:	type of MAC-PHY interface
  */
-void phy_connect_dev(struct phy_device *phydev, struct udevice *dev);
+void phy_connect_dev(struct phy_device *phydev, struct udevice *dev,
+		     phy_interface_t interface);
 
 /**
  * phy_connect() - Creates a PHY device for the Ethernet interface
@@ -454,6 +442,29 @@ void phy_connect_dev(struct phy_device *phydev, struct udevice *dev);
 struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 				struct udevice *dev,
 				phy_interface_t interface);
+/**
+ * phy_device_create() - Create a PHY device
+ *
+ * @bus:		MII/MDIO bus that hosts the PHY
+ * @addr:		PHY address on MDIO bus
+ * @phy_id:		where to store the ID retrieved
+ * @is_c45:		Device Identifiers if is_c45
+ * @return: pointer to phy_device if a PHY is found, or NULL otherwise
+ */
+struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
+				     u32 phy_id, bool is_c45);
+
+/**
+ * phy_connect_phy_id() - Connect to phy device by reading PHY id
+ *			  from phy node.
+ *
+ * @bus:		MII/MDIO bus that hosts the PHY
+ * @dev:		Ethernet device to associate to the PHY
+ * @return:		pointer to phy_device if a PHY is found,
+ *			or NULL otherwise
+ */
+struct phy_device *phy_connect_phy_id(struct mii_dev *bus, struct udevice *dev,
+				      int phyaddr);
 
 static inline ofnode phy_get_ofnode(struct phy_device *phydev)
 {
@@ -468,8 +479,10 @@ static inline ofnode phy_get_ofnode(struct phy_device *phydev)
  * phy_connect_dev() - Associates the given pair of PHY and Ethernet devices
  * @phydev:	PHY device
  * @dev:	Ethernet device
+ * @interface:	type of MAC-PHY interface
  */
-void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev);
+void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev,
+		     phy_interface_t interface);
 
 /**
  * phy_connect() - Creates a PHY device for the Ethernet interface
@@ -500,6 +513,8 @@ int phy_config(struct phy_device *phydev);
 int phy_shutdown(struct phy_device *phydev);
 int phy_register(struct phy_driver *drv);
 int phy_set_supported(struct phy_device *phydev, u32 max_speed);
+int phy_modify(struct phy_device *phydev, int devad, int regnum, u16 mask,
+	       u16 set);
 int genphy_config_aneg(struct phy_device *phydev);
 int genphy_restart_aneg(struct phy_device *phydev);
 int genphy_update_link(struct phy_device *phydev);
@@ -514,6 +529,7 @@ int gen10g_discover_mmds(struct phy_device *phydev);
 
 int phy_b53_init(void);
 int phy_mv88e61xx_init(void);
+int phy_adin_init(void);
 int phy_aquantia_init(void);
 int phy_atheros_init(void);
 int phy_broadcom_init(void);
@@ -527,6 +543,7 @@ int phy_micrel_ksz8xxx_init(void);
 int phy_micrel_ksz90x1_init(void);
 int phy_meson_gxl_init(void);
 int phy_natsemi_init(void);
+int phy_nxp_c45_tja11xx_init(void);
 int phy_nxp_tja11xx_init(void);
 int phy_realtek_init(void);
 int phy_smsc_init(void);
@@ -541,14 +558,6 @@ int phy_xilinx_gmii2rgmii_init(void);
 
 int board_phy_config(struct phy_device *phydev);
 int get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id);
-
-/**
- * phy_get_interface_by_name() - Look up a PHY interface name
- *
- * @str:	PHY interface name, e.g. "mii"
- * @return: PHY_INTERFACE_MODE_... value, or -1 if not found
- */
-int phy_get_interface_by_name(const char *str);
 
 /**
  * phy_interface_is_rgmii - Convenience function for testing if a PHY interface

@@ -94,9 +94,6 @@
 #define CONFIG_SYS_NS16550_COM5		0x481a8000	/* UART4 */
 #define CONFIG_SYS_NS16550_COM6		0x481aa000	/* UART5 */
 
-/* PMIC support */
-#define CONFIG_POWER_TPS65217
-
 /* Bootcount using the RTC block */
 #define CONFIG_SYS_BOOTCOUNT_LE
 
@@ -128,10 +125,5 @@
 #define MTDIDS_DEFAULT                  "nand0=nand.0"
 
 #endif /* CONFIG_MTD_RAW_NAND */
-
-#define CONFIG_AM335X_USB0
-#define CONFIG_AM335X_USB0_MODE MUSB_PERIPHERAL
-#define CONFIG_AM335X_USB1
-#define CONFIG_AM335X_USB1_MODE MUSB_HOST
 
 #endif	/* ! __CONFIG_AM335X_GUARDIAN_H */

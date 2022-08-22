@@ -44,15 +44,6 @@
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 #define CONFIG_SYS_CBSIZE		512
 
-/* U-Boot */
-#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
-
 /* Environment settings */
-
-/*
- * Environment is right behind U-Boot in flash. Make sure U-Boot
- * doesn't grow into the environment area.
- */
-#define CONFIG_BOARD_SIZE_LIMIT		CONFIG_ENV_OFFSET
 
 #endif /* __CONFIG_GARDENA_SMART_GATEWAY_H */

@@ -10,6 +10,7 @@ Implementation
    :maxdepth: 1
 
    bloblist
+   bootstd
    ci_testing
    commands
    config_binding
@@ -17,12 +18,14 @@ Implementation
    distro
    driver-model/index
    environment
+   event
    global_data
    logging
    makefiles
    menus
    printf
    smbios
+   spl
    uefi/index
    version
 

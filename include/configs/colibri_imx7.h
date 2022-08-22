@@ -89,15 +89,6 @@
 	"ramdisk_addr_r=0x82100000\0" \
 	"scriptaddr=0x87000000\0"
 
-#define NFS_BOOTCMD \
-	"nfsargs=ip=:::::eth0: root=/dev/nfs\0" \
-	"nfsboot=run setup; " \
-		"setenv bootargs ${defargs} ${nfsargs} " \
-		"${setupargs} ${vidargs}; echo Booting from NFS...;" \
-		"dhcp ${kernel_addr_r} && " \
-		"tftp ${fdt_addr_r} ${soc}-colibri${variant}-${fdt_board}.dtb && " \
-		"run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
-
 #define UBI_BOOTCMD	\
 	"ubiargs=ubi.mtd=ubi root=ubi0:rootfs rootfstype=ubifs " \
 		"ubi.fm_autoconvert=1\0" \
@@ -136,10 +127,10 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	BOOTENV \
 	MEM_LAYOUT_ENV_SETTINGS \
-	NFS_BOOTCMD \
 	MODULE_EXTRA_ENV_SETTINGS \
 	UBOOT_UPDATE \
 	"boot_file=zImage\0" \
+	"boot_script_dhcp=boot.scr\0" \
 	"bootubipart=ubi\0" \
 	"console=ttymxc0\0" \
 	"defargs=\0" \
@@ -200,9 +191,5 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 2
 
 #define CONFIG_USBD_HS
-
-#if defined(CONFIG_DM_VIDEO)
-#define CONFIG_VIDEO_BMP_LOGO
-#endif
 
 #endif

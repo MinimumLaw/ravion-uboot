@@ -11,11 +11,13 @@
 
 #define CONFIG_SPL_MAX_SIZE		(124 * SZ_1K)
 #define CONFIG_SYS_MONITOR_LEN		(512 * SZ_1K)
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x300
+
+/* GUID for capsule updatable firmware image */
+#define KONTRON_PITX_IMX8M_FIT_IMAGE_GUID \
+	EFI_GUID(0xc898e959, 0x5b1f, 0x4e6d, 0x88, 0xe0, \
+		 0x40, 0xd4, 0x5c, 0xca, 0x13, 0x99)
 
 #ifdef CONFIG_SPL_BUILD
-#define CONFIG_SPL_LDSCRIPT		"arch/arm/cpu/armv8/u-boot-spl.lds"
 #define CONFIG_SPL_STACK		0x187FF0
 #define CONFIG_SPL_BSS_START_ADDR       0x00180000
 #define CONFIG_SPL_BSS_MAX_SIZE         SZ_8K
@@ -33,28 +35,22 @@
 #define CONFIG_POWER_PFUZE100_I2C_ADDR  0x08
 #endif
 
-#define CONFIG_REMAKE_ELF
-
 /* ENET1 Config */
 #if defined(CONFIG_CMD_NET)
-#define CONFIG_ETHPRIME                 "FEC"
-
-#define CONFIG_FEC_XCV_TYPE             RGMII
 #define CONFIG_FEC_MXC_PHYADDR          0
-#define FEC_QUIRK_ENET_MAC
 
-#define IMX_FEC_BASE			0x30BE0000
 #define PHY_ANEG_TIMEOUT		20000
 
 #endif
 
 #define ENV_MEM_LAYOUT_SETTINGS \
-	"kernel_addr_r=0x40880000\0" \
-	"fdt_addr_r=0x43000000\0" \
-	"scriptaddr=0x43500000\0" \
-	"initrd_addr=0x43800000\0" \
-	"pxefile_addr_r=0x43500000\0" \
-	"bootm_size=0x10000000\0" \
+	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"kernel_addr_r=0x42000000\0" \
+	"fdt_addr_r=0x48000000\0" \
+	"fdtoverlay_addr_r=0x49000000\0" \
+	"ramdisk_addr_r=0x48080000\0" \
+	"scriptaddr=0x40000000\0" \
+	"pxefile_addr_r=0x40100000\0"
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
@@ -87,11 +83,9 @@
 #define PHYS_SDRAM                      0x40000000
 #define PHYS_SDRAM_SIZE			0xC0000000 /* 3GB DDR */
 
-#define CONFIG_MXC_UART_BASE		UART3_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(3)
 
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_SYS_FSL_ESDHC_ADDR       0
-
-#define CONFIG_OF_SYSTEM_SETUP
 
 #endif

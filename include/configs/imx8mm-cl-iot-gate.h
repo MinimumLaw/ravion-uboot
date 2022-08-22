@@ -31,6 +31,15 @@
 
 #endif
 
+/* GUIDs for capsule updatable firmware images */
+#define IMX8MM_CL_IOT_GATE_FIT_IMAGE_GUID \
+	EFI_GUID(0x7a32a939, 0xab92, 0x467b, 0x91, 0x52, \
+		 0x74, 0x77, 0x1b, 0x95, 0xe6, 0x46)
+
+#define IMX8MM_CL_IOT_GATE_OPTEE_FIT_IMAGE_GUID \
+	EFI_GUID(0x0bf1165c, 0x1831, 0x4864, 0x94, 0x5e, \
+		 0xac, 0x3d, 0x38, 0x48, 0xf4, 0x99)
+
 #if CONFIG_IS_ENABLED(CMD_MMC)
 # define BOOT_TARGET_MMC(func) \
 	func(MMC, mmc, 2)      \
@@ -79,7 +88,7 @@
 	"bootm_size=0x10000000\0" \
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
 	"mmcpart=1\0" \
-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs console=${console} root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -131,13 +140,12 @@
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
 
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define PHYS_SDRAM			0x40000000
 #define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR */
 
-#define CONFIG_MXC_UART_BASE		UART3_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(3)
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		2048
@@ -151,13 +159,7 @@
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 
-#define CONFIG_ETHPRIME			"FEC"
-
-#define CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_FEC_MXC_PHYADDR		0
-#define FEC_QUIRK_ENET_MAC
-
-#define IMX_FEC_BASE			0x30BE0000
 
 /* USB Configs */
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET

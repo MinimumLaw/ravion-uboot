@@ -121,6 +121,7 @@ F:	arch/arm/include/asm/arch-m1/
 F:	arch/arm/mach-apple/
 F:	configs/apple_m1_defconfig
 F:	drivers/iommu/apple_dart.c
+F:	drivers/nvme/nvme_apple.c
 F:	drivers/pinctrl/pinctrl-apple.c
 F:	drivers/watchdog/apple_wdt.c
 F:	include/configs/apple.h
@@ -169,12 +170,23 @@ ARM ASPEED
 M:	Ryan Chen <ryan_chen@aspeedtech.com>
 M:	Chia-Wei Wang <chiawei_wang@aspeedtech.com>
 R:	Aspeed BMC SW team <BMC-SW@aspeedtech.com>
+R:	Joel Stanley <joel@jms.id.au>
 S:	Maintained
 F:	arch/arm/mach-aspeed/
 F:	arch/arm/include/asm/arch-aspeed/
 F:	board/aspeed/
 F:	drivers/clk/aspeed/
+F:	drivers/crypto/aspeed/
+F:	drivers/gpio/gpio-aspeed.c
+F:	drivers/i2c/ast_i2c.[ch]
+F:	drivers/mmc/aspeed_sdhci.c
+F:	drivers/net/aspeed_mdio.c
+F:	drivers/net/ftgmac100.[ch]
 F:	drivers/pinctrl/aspeed/
+F:	drivers/pwm/pwm-aspeed.c
+F:	drivers/ram/aspeed/
+F:	drivers/reset/reset-ast2500.c
+F:	drivers/watchdog/ast_wdt.c
 N:	aspeed
 
 ARM BROADCOM BCM283X / BCM27XX
@@ -352,6 +364,7 @@ F:	arch/arm/mach-at91/
 F:	board/atmel/
 F:	drivers/cpu/at91_cpu.c
 F:	drivers/misc/microchip_flexcom.c
+F:	drivers/timer/atmel_tcb_timer.c
 F:	include/dt-bindings/mfd/atmel-flexcom.h
 F:	drivers/timer/mchp-pit64b-timer.c
 
@@ -485,6 +498,7 @@ F:	drivers/power/regulator/stpmic1.c
 F:	drivers/ram/stm32mp1/
 F:	drivers/remoteproc/stm32_copro.c
 F:	drivers/reset/stm32-reset.c
+F:	drivers/rng/optee_rng.c
 F:	drivers/rng/stm32mp1_rng.c
 F:	drivers/rtc/stm32_rtc.c
 F:	drivers/serial/serial_stm32.*
@@ -520,7 +534,9 @@ F:	arch/arm/mach-sunxi/
 F:	board/sunxi/
 F:	drivers/clk/sunxi/
 F:	drivers/phy/allwinner/
+F:	drivers/pinctrl/sunxi/
 F:	drivers/video/sunxi/
+F:	tools/sunxi*
 
 ARM TEGRA
 M:	Tom Warren <twarren@nvidia.com>
@@ -590,7 +606,7 @@ F:	configs/uniphier_*_defconfig
 N:	uniphier
 
 ARM VERSAL
-M:	Michal Simek <michal.simek@xilinx.com>
+M:	Michal Simek <michal.simek@amd.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-versal/
@@ -621,8 +637,10 @@ F:	drivers/i2c/muxes/pca954x.c
 F:	drivers/i2c/zynq_i2c.c
 F:	drivers/mmc/zynq_sdhci.c
 F:	drivers/mtd/nand/raw/zynq_nand.c
+F:	drivers/net/phy/ethernet_id.c
 F:	drivers/net/phy/xilinx_phy.c
 F:	drivers/net/zynq_gem.c
+F:	drivers/pinctrl/pinctrl-zynqmp.c
 F:	drivers/serial/serial_zynq.c
 F:	drivers/spi/zynq_qspi.c
 F:	drivers/spi/zynq_spi.c
@@ -633,13 +651,14 @@ F:	tools/zynqimage.c
 N:	zynq
 
 ARM ZYNQMP
-M:	Michal Simek <michal.simek@xilinx.com>
+M:	Michal Simek <michal.simek@amd.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-zynqmp/
 F:	drivers/clk/clk_zynqmp.c
 F:	driver/firmware/firmware-zynqmp.c
 F:	drivers/fpga/zynqpl.c
+F:	drivers/gpio/gpio_slg7xl45106.c
 F:	drivers/gpio/zynq_gpio.c
 F:	drivers/gpio/zynqmp_gpio_modepin.c
 F:	drivers/i2c/i2c-cdns.c
@@ -652,6 +671,7 @@ F:	drivers/net/phy/xilinx_phy.c
 F:	drivers/net/zynq_gem.c
 F:	drivers/phy/phy-zynqmp.c
 F:	drivers/power/domain/zynqmp-power-domain.c
+F:	drivers/pwm/pwm-cadence-ttc.c
 F:	drivers/serial/serial_zynq.c
 F:	drivers/reset/reset-zynqmp.c
 F:	drivers/rtc/zynqmp_rtc.c
@@ -659,7 +679,6 @@ F:	drivers/soc/soc_xilinx_zynqmp.c
 F:	drivers/spi/zynq_qspi.c
 F:	drivers/spi/zynq_spi.c
 F:	drivers/timer/cadence-ttc.c
-F:	drivers/usb/host/ehci-zynq.c
 F:	drivers/video/seps525.c
 F:	drivers/watchdog/cdns_wdt.c
 F:	include/zynqmppl.h
@@ -669,7 +688,7 @@ N:	ultra96
 N:	zynqmp
 
 ARM ZYNQMP R5
-M:	Michal Simek <michal.simek@xilinx.com>
+M:	Michal Simek <michal.simek@amd.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	arch/arm/mach-zynqmp-r5/
@@ -683,8 +702,30 @@ F:	arch/arm/dts/phytium-durian.dts
 
 BINMAN
 M:	Simon Glass <sjg@chromium.org>
+M:	Alper Nebi Yasak <alpernebiyasak@gmail.com>
 S:	Maintained
 F:	tools/binman/
+
+BOOTDEVICE
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	boot/bootdev*.c
+F:	boot/bootflow.c
+F:	boot/bootmeth*.c
+F:	boot/bootstd.c
+F:	cmd/bootdev.c
+F:	cmd/bootflow.c
+F:	doc/develop/bootstd.rst
+F:	doc/usage/bootdev.rst
+F:	doc/usage/bootflow.rst
+F:	doc/usage/bootmeth.rst
+F:	drivers/mmc/mmc_bootdev.c
+F:	include/bootdev.h
+F:	include/bootflow.h
+F:	include/bootmeth.h
+F:	include/bootstd.h
+F:	net/eth_bootdevice.c
+F:	test/boot/
 
 BTRFS
 M:	Marek Behun <marek.behun@nic.cz>
@@ -813,6 +854,25 @@ S:	Maintained
 F:	doc/usage/environment.rst
 F:	scripts/env2string.awk
 
+EROFS
+M:	Huang Jianan <jnhuang95@gmail.com>
+L:	linux-erofs@lists.ozlabs.org
+S:	Maintained
+F:	cmd/erofs.c
+F:	fs/erofs/
+F:	include/erofs.h
+F:	test/py/tests/test_fs/test_erofs.py
+
+EVENTS
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	cmd/event.c
+F:	common/event.c
+F:	include/event.h
+F:	scripts/event_dump.py
+F:	test/common/event.c
+F:	test/py/tests/test_event_dump.py
+
 FASTBOOT
 S:	Orphaned
 F:	cmd/fastboot.c
@@ -826,7 +886,7 @@ F:	net/fastboot.c
 F:	test/dm/fastboot.c
 
 FPGA
-M:	Michal Simek <michal.simek@xilinx.com>
+M:	Michal Simek <michal.simek@amd.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-microblaze.git
 F:	drivers/fpga/
@@ -857,6 +917,12 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-fsl-qoriq.git
 F:	drivers/watchdog/sp805_wdt.c
 F:	drivers/watchdog/sbsa_gwdt.c
 
+GATEWORKS_SC
+M:	Tim Harvey <tharvey@gateworks.com>
+S:	Maintained
+F:	drivers/misc/gsc.c
+F:	include/gsc.h
+
 I2C
 M:	Heiko Schocher <hs@denx.de>
 S:	Maintained
@@ -872,6 +938,12 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-marvell.git
 F:	doc/README.kwbimage
 F:	doc/kwboot.1
 F:	tools/kwb*
+
+LED
+M:	Ivan Vozvakhov <i.vozvakhov@vk.team>
+S:	Supported
+F:	doc/device-tree-bindings/leds/leds-pwm.txt
+F:	drivers/led/led_pwm.c
 
 LOGGING
 M:	Simon Glass <sjg@chromium.org>
@@ -992,16 +1064,11 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-mmc.git
 F:	drivers/mmc/
 
 NAND FLASH
-#M:	Scott Wood <oss@buserror.net>
-S:	Orphaned (Since 2018-07)
+M:	Dario Binacchi <dario.binacchi@amarulasolutions.com>
+M:	Michael Trimarchi <michael@amarulasolutions.com>
+S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-nand-flash.git
 F:	drivers/mtd/nand/raw/
-
-NDS32
-M:	Rick Chen <rick@andestech.com>
-S:	Maintained
-T:	git https://source.denx.de/u-boot/custodians/u-boot-nds32.git
-F:	arch/nds32/
 
 NETWORK
 M:	Joe Hershberger <joe.hershberger@ni.com>
@@ -1151,6 +1218,11 @@ S:	Maintained
 F:	arch/sandbox/
 F:	doc/arch/sandbox.rst
 F:	include/dt-bindings/*/sandbox*.h
+
+SEMIHOSTING
+R:	Sean Anderson <sean.anderson@seco.com>
+S:	Orphaned
+N:	semihosting
 
 SETEXPR
 M:	Roland Gaudig <roland.gaudig@weidmueller.com>
@@ -1376,3 +1448,9 @@ T:	git https://source.denx.de/u-boot/u-boot.git
 F:	configs/tools-only_defconfig
 F:	*
 F:	*/
+
+CAAM
+M:	Gaurav Jain <gaurav.jain@nxp.com>
+S:	Maintained
+F:	drivers/crypto/fsl/
+F:	include/fsl_sec.h

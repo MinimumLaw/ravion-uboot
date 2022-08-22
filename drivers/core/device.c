@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <event.h>
 #include <log.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
@@ -67,7 +68,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	INIT_LIST_HEAD(&dev->sibling_node);
 	INIT_LIST_HEAD(&dev->child_head);
 	INIT_LIST_HEAD(&dev->uclass_node);
-#ifdef CONFIG_DEVRES
+#if CONFIG_IS_ENABLED(DEVRES)
 	INIT_LIST_HEAD(&dev->devres_head);
 #endif
 	dev_set_plat(dev, plat);
@@ -493,6 +494,10 @@ int device_probe(struct udevice *dev)
 	if (dev_get_flags(dev) & DM_FLAG_ACTIVATED)
 		return 0;
 
+	ret = device_notify(dev, EVT_DM_PRE_PROBE);
+	if (ret)
+		return ret;
+
 	drv = dev->driver;
 	assert(drv);
 
@@ -596,6 +601,10 @@ int device_probe(struct udevice *dev)
 			log_debug("Device '%s' failed to configure default pinctrl: %d (%s)\n",
 				  dev->name, ret, errno_str(ret));
 	}
+
+	ret = device_notify(dev, EVT_DM_POST_PROBE);
+	if (ret)
+		return ret;
 
 	return 0;
 fail_uclass:
@@ -1177,7 +1186,8 @@ int dev_enable_by_path(const char *path)
 static struct udevice_rt *dev_get_rt(const struct udevice *dev)
 {
 	struct udevice *base = ll_entry_start(struct udevice, udevice);
-	int idx = dev - base;
+	uint each_size = dm_udevice_size();
+	int idx = ((void *)dev - (void *)base) / each_size;
 
 	struct udevice_rt *urt = gd_dm_udevice_rt() + idx;
 

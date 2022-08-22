@@ -15,6 +15,8 @@ environment. As long as you don't save the environment, you are
 working with an in-memory copy. In case the Flash area containing the
 environment is erased by accident, a default environment is provided.
 
+See :doc:`cmd/env` for details.
+
 Some configuration is controlled by Environment Variables, so that setting the
 variable can adjust the behaviour of U-Boot (e.g. autoboot delay, autoloading
 from tftp).
@@ -120,7 +122,6 @@ bootdelay
     The default value is defined by CONFIG_BOOTDELAY.
     The value of 'bootdelay' is overridden by the /config/bootdelay value in
     the device-tree if CONFIG_OF_CONTROL=y.
-    Does it really make sense that the devicetree overrides the user setting?
 
 bootcmd
     The command that is run if the user does not enter the shell during the
@@ -171,7 +172,7 @@ autoload
     if set to "no" (any string beginning with 'n'),
     "bootp" and "dhcp" will just load perform a lookup of the
     configuration from the BOOTP server, but not try to
-    load any image using TFTP or DHCP.
+    load any image.
 
 autostart
     if set to "yes", an image loaded using the "bootp", "dhcp",
@@ -346,7 +347,7 @@ bootpretryperiod
     Unsigned value, in milliseconds. If not set, the period will
     be either the default (28000), or a value based on
     CONFIG_NET_RETRY_COUNT, if defined. This value has
-    precedence over the valu based on CONFIG_NET_RETRY_COUNT.
+    precedence over the value based on CONFIG_NET_RETRY_COUNT.
 
 memmatches
     Number of matches found by the last 'ms' command, in hex

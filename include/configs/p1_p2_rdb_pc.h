@@ -13,7 +13,6 @@
 #include <linux/stringify.h>
 
 #if defined(CONFIG_TARGET_P1020RDB_PC)
-#define CONFIG_BOARDNAME "P1020RDB-PC"
 #define CONFIG_VSC7385_ENET
 #define CONFIG_SLIC
 #define __SW_BOOT_MASK		0x03
@@ -22,6 +21,9 @@
 #define __SW_BOOT_SD		0x9c
 #define __SW_BOOT_NAND		0xec
 #define __SW_BOOT_PCIE		0x6c
+#define __SW_NOR_BANK_MASK	0xfd
+#define __SW_NOR_BANK_UP	0x00
+#define __SW_NOR_BANK_LO	0x02
 #define CONFIG_SYS_L2_SIZE	(256 << 10)
 #endif
 
@@ -39,7 +41,6 @@
  * 011101 800 800 400 667 PCIe-2 Core0 boot; Core1 hold-off
  */
 #if defined(CONFIG_TARGET_P1020RDB_PD)
-#define CONFIG_BOARDNAME "P1020RDB-PD"
 #define CONFIG_VSC7385_ENET
 #define CONFIG_SLIC
 #define __SW_BOOT_MASK		0x03
@@ -48,6 +49,9 @@
 #define __SW_BOOT_SD		0x24
 #define __SW_BOOT_NAND		0x44
 #define __SW_BOOT_PCIE		0x74
+#define __SW_NOR_BANK_MASK	0xfd
+#define __SW_NOR_BANK_UP	0x00
+#define __SW_NOR_BANK_LO	0x02
 #define CONFIG_SYS_L2_SIZE	(256 << 10)
 /*
  * Dynamic MTD Partition support with mtdparts
@@ -55,14 +59,17 @@
 #endif
 
 #if defined(CONFIG_TARGET_P2020RDB)
-#define CONFIG_BOARDNAME "P2020RDB-PC"
 #define CONFIG_VSC7385_ENET
 #define __SW_BOOT_MASK		0x03
 #define __SW_BOOT_NOR		0xc8
 #define __SW_BOOT_SPI		0x28
-#define __SW_BOOT_SD		0x68 /* or 0x18 */
+#define __SW_BOOT_SD		0x68
+#define __SW_BOOT_SD2		0x18
 #define __SW_BOOT_NAND		0xe8
 #define __SW_BOOT_PCIE		0xa8
+#define __SW_NOR_BANK_MASK	0xfd
+#define __SW_NOR_BANK_UP	0x00
+#define __SW_NOR_BANK_LO	0x02
 #define CONFIG_SYS_L2_SIZE	(512 << 10)
 /*
  * Dynamic MTD Partition support with mtdparts
@@ -114,6 +121,10 @@
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	(128 << 10)
 #define CONFIG_SYS_NAND_U_BOOT_DST	0xf8f80000
 #define CONFIG_SYS_NAND_U_BOOT_START	0xf8f80000
+#else
+#ifndef CONFIG_MPC85XX_HAVE_RESET_VECTOR
+#define CONFIG_SYS_MPC85XX_NO_RESETVEC
+#endif
 #endif /* not CONFIG_TPL_BUILD */
 
 #define CONFIG_SPL_PAD_TO		0x20000
@@ -123,16 +134,6 @@
 
 #ifndef CONFIG_RESET_VECTOR_ADDRESS
 #define CONFIG_RESET_VECTOR_ADDRESS	0xeffffffc
-#endif
-
-#ifndef CONFIG_SYS_MONITOR_BASE
-#ifdef CONFIG_TPL_BUILD
-#define CONFIG_SYS_MONITOR_BASE	0xf8f81000
-#elif defined(CONFIG_SPL_BUILD)
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SPL_TEXT_BASE
-#else
-#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
-#endif
 #endif
 
 #define CONFIG_PCIE1	/* PCIE controller 1 (slot 1) */
@@ -145,7 +146,6 @@
  * These can be toggled for performance analysis, otherwise use default.
  */
 #define CONFIG_L2_CACHE
-#define CONFIG_BTB
 
 #define CONFIG_ENABLE_36BIT_PHYS
 
@@ -165,16 +165,12 @@
 
 #if defined(CONFIG_TARGET_P1020RDB_PD)
 #define CONFIG_SYS_SDRAM_SIZE_LAW	LAW_SIZE_2G
-#define CONFIG_CHIP_SELECTS_PER_CTRL	2
 #else
 #define CONFIG_SYS_SDRAM_SIZE_LAW	LAW_SIZE_1G
-#define CONFIG_CHIP_SELECTS_PER_CTRL	1
 #endif
 #define CONFIG_SYS_SDRAM_SIZE		(1u << (CONFIG_SYS_SDRAM_SIZE_LAW - 19))
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x00000000
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
-
-#define CONFIG_DIMM_SLOTS_PER_CTLR	1
 
 /* Default settings for DDR3 */
 #ifndef CONFIG_TARGET_P2020RDB
@@ -327,9 +323,6 @@
 #define CONFIG_SYS_CPLD_BASE_PHYS	CONFIG_SYS_CPLD_BASE
 #endif
 /* CPLD config size: 1Mb */
-#define CONFIG_CPLD_BR_PRELIM	(BR_PHYS_ADDR(CONFIG_SYS_CPLD_BASE_PHYS) | \
-					BR_PS_8 | BR_V)
-#define CONFIG_CPLD_OR_PRELIM	(0xfff009f7)
 
 #define CONFIG_SYS_PMC_BASE	0xff980000
 #define CONFIG_SYS_PMC_BASE_PHYS	CONFIG_SYS_PMC_BASE
@@ -341,7 +334,7 @@
 
 /* Vsc7385 switch */
 #ifdef CONFIG_VSC7385_ENET
-#define __VSCFW_ADDR			"vscfw_addr=ef000000"
+#define __VSCFW_ADDR			"vscfw_addr=ef000000\0"
 #define CONFIG_SYS_VSC7385_BASE		0xffb00000
 
 #ifdef CONFIG_PHYS_64BIT
@@ -358,6 +351,10 @@
 
 /* The size of the VSC7385 firmware image */
 #define CONFIG_VSC7385_IMAGE_SIZE	8192
+#endif
+
+#ifndef __VSCFW_ADDR
+#define __VSCFW_ADDR ""
 #endif
 
 /*
@@ -488,12 +485,6 @@
 #define TSEC1_PHYIDX	0
 #define TSEC2_PHYIDX	0
 #define TSEC3_PHYIDX	0
-
-#define CONFIG_ETHPRIME	"eTSEC1"
-
-#define CONFIG_HAS_ETH0
-#define CONFIG_HAS_ETH1
-#define CONFIG_HAS_ETH2
 #endif /* CONFIG_TSEC_ENET */
 
 /*
@@ -549,33 +540,32 @@
  */
 #define CONFIG_HOSTNAME		"unknown"
 #define CONFIG_ROOTPATH		"/opt/nfsroot"
-#define CONFIG_BOOTFILE		"uImage"
 #define CONFIG_UBOOTPATH	u-boot.bin /* U-Boot image on TFTP server */
 
 #ifdef __SW_BOOT_NOR
 #define __NOR_RST_CMD	\
-norboot=i2c dev 1; i2c mw 18 1 __SW_BOOT_NOR 1; \
-i2c mw 18 3 __SW_BOOT_MASK 1; reset
+norboot=i2c dev CONFIG_SYS_SPD_BUS_NUM; i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 1 __SW_BOOT_NOR 1; \
+i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 3 __SW_BOOT_MASK 1; reset
 #endif
 #ifdef __SW_BOOT_SPI
 #define __SPI_RST_CMD	\
-spiboot=i2c dev 1; i2c mw 18 1 __SW_BOOT_SPI 1; \
-i2c mw 18 3 __SW_BOOT_MASK 1; reset
+spiboot=i2c dev CONFIG_SYS_SPD_BUS_NUM; i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 1 __SW_BOOT_SPI 1; \
+i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 3 __SW_BOOT_MASK 1; reset
 #endif
 #ifdef __SW_BOOT_SD
 #define __SD_RST_CMD	\
-sdboot=i2c dev 1; i2c mw 18 1 __SW_BOOT_SD 1; \
-i2c mw 18 3 __SW_BOOT_MASK 1; reset
+sdboot=i2c dev CONFIG_SYS_SPD_BUS_NUM; i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 1 __SW_BOOT_SD 1; \
+i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 3 __SW_BOOT_MASK 1; reset
 #endif
 #ifdef __SW_BOOT_NAND
 #define __NAND_RST_CMD	\
-nandboot=i2c dev 1; i2c mw 18 1 __SW_BOOT_NAND 1; \
-i2c mw 18 3 __SW_BOOT_MASK 1; reset
+nandboot=i2c dev CONFIG_SYS_SPD_BUS_NUM; i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 1 __SW_BOOT_NAND 1; \
+i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 3 __SW_BOOT_MASK 1; reset
 #endif
 #ifdef __SW_BOOT_PCIE
 #define __PCIE_RST_CMD	\
-pciboot=i2c dev 1; i2c mw 18 1 __SW_BOOT_PCIE 1; \
-i2c mw 18 3 __SW_BOOT_MASK 1; reset
+pciboot=i2c dev CONFIG_SYS_SPD_BUS_NUM; i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 1 __SW_BOOT_PCIE 1; \
+i2c mw CONFIG_SYS_I2C_PCA9557_ADDR 3 __SW_BOOT_MASK 1; reset
 #endif
 
 #define	CONFIG_EXTRA_ENV_SETTINGS	\
@@ -602,9 +592,9 @@ i2c mw 18 3 __SW_BOOT_MASK 1; reset
 "nandbootaddr=100000\0"	\
 "nandfdtaddr=80000\0"		\
 "ramdisk_size=120000\0"	\
-"map_lowernorbank=i2c dev 1; i2c mw 18 1 02 1; i2c mw 18 3 fd 1\0" \
-"map_uppernorbank=i2c dev 1; i2c mw 18 1 00 1; i2c mw 18 3 fd 1\0" \
-__stringify(__VSCFW_ADDR)"\0" \
+__VSCFW_ADDR	\
+"map_lowernorbank=i2c dev "__stringify(CONFIG_SYS_SPD_BUS_NUM)"; i2c mw "__stringify(CONFIG_SYS_I2C_PCA9557_ADDR)" 1 "__stringify(__SW_NOR_BANK_LO)" 1; i2c mw "__stringify(CONFIG_SYS_I2C_PCA9557_ADDR)" 3 "__stringify(__SW_NOR_BANK_MASK)" 1\0" \
+"map_uppernorbank=i2c dev "__stringify(CONFIG_SYS_SPD_BUS_NUM)"; i2c mw "__stringify(CONFIG_SYS_I2C_PCA9557_ADDR)" 1 "__stringify(__SW_NOR_BANK_UP)" 1; i2c mw "__stringify(CONFIG_SYS_I2C_PCA9557_ADDR)" 3 "__stringify(__SW_NOR_BANK_MASK)" 1\0" \
 __stringify(__NOR_RST_CMD)"\0" \
 __stringify(__SPI_RST_CMD)"\0" \
 __stringify(__SD_RST_CMD)"\0" \

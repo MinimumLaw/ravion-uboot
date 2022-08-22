@@ -143,8 +143,10 @@ int checkcpu (void)
 	printf("Core:  ");
 	switch(ver) {
 	case PVR_VER_E500_V1:
+		puts("e500v1");
+		break;
 	case PVR_VER_E500_V2:
-		puts("e500");
+		puts("e500v2");
 		break;
 	case PVR_VER_E500MC:
 		puts("e500mc");
@@ -239,10 +241,6 @@ int checkcpu (void)
 
 #if defined(CONFIG_FSL_IFC)
 	printf("IFC:%-4s MHz\n", strmhz(buf1, sysinfo.freq_localbus));
-#endif
-
-#ifdef CONFIG_CPM2
-	printf("CPM:   %s MHz\n", strmhz(buf1, sysinfo.freq_systembus));
 #endif
 
 #ifdef CONFIG_QE

@@ -28,7 +28,7 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* Board and environment settings */
-#define CONFIG_MXC_UART_BASE		UART3_BASE_ADDR
+#define CONFIG_MXC_UART_BASE		UART_BASE_ADDR(3)
 #define CONFIG_HOSTNAME			"kontron-mx8mm"
 
 #ifdef CONFIG_USB_EHCI_HCD
@@ -37,6 +37,11 @@
 #define CONFIG_MXC_USB_FLAGS		0
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	2
 #endif
+
+/* GUID for capsule updatable firmware image */
+#define KONTRON_SL_MX8MM_FIT_IMAGE_GUID \
+	EFI_GUID(0xd488e45a, 0x4929, 0x4b55, 0x8c, 0x14, \
+		 0x86, 0xce, 0xa2, 0xcd, 0x66, 0x29)
 
 #ifndef CONFIG_SPL_BUILD
 #define BOOT_TARGET_DEVICES(func) \
@@ -64,8 +69,6 @@
 /* malloc f used before GD_FLG_FULL_MALLOC_INIT set */
 #define CONFIG_MALLOC_F_ADDR		0x930000
 #endif
-
-#define FEC_QUIRK_ENET_MAC
 
 #define ENV_MEM_LAYOUT_SETTINGS \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \

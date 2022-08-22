@@ -16,6 +16,7 @@ config MISC
 config SPL_MISC
 	bool "Enable Driver Model for Misc drivers in SPL"
 	depends on SPL_DM
+	default MISC
 	help
 	  Enable driver model for miscellaneous devices. This class is
 	  used only for those do not fit other more general classes. A
@@ -25,6 +26,17 @@ config SPL_MISC
 config TPL_MISC
 	bool "Enable Driver Model for Misc drivers in TPL"
 	depends on TPL_DM
+	default MISC
+	help
+	  Enable driver model for miscellaneous devices. This class is
+	  used only for those do not fit other more general classes. A
+	  set of generic read, write and ioctl methods may be used to
+	  access the device.
+
+config VPL_MISC
+	bool "Enable Driver Model for Misc drivers in VPL"
+	depends on VPL_DM
+	default MISC
 	help
 	  Enable driver model for miscellaneous devices. This class is
 	  used only for those do not fit other more general classes. A
@@ -40,11 +52,20 @@ config ALTERA_SYSID
 
 config ATSHA204A
 	bool "Support for Atmel ATSHA204A module"
+	select BITREVERSE
 	depends on MISC
 	help
 	   Enable support for I2C connected Atmel's ATSHA204A
 	   CryptoAuthentication module found for example on the Turris Omnia
 	   board.
+
+config GATEWORKS_SC
+	bool "Gateworks System Controller Support"
+	depends on MISC
+	help
+	  Enable access for the Gateworks System Controller used on Gateworks
+	  boards to provide a boot watchdog, power control, temperature monitor,
+	  voltage ADCs, and EEPROM.
 
 config ROCKCHIP_EFUSE
         bool "Rockchip e-fuse support"
@@ -122,6 +143,16 @@ config TPL_CROS_EC
 	  control access to the battery and main PMIC depending on the
 	  device. You can use the 'crosec' command to access it.
 
+config VPL_CROS_EC
+	bool "Enable Chrome OS EC in VPL"
+	depends on VPL
+	help
+	  Enable access to the Chrome OS EC in VPL. This is a separate
+	  microcontroller typically available on a SPI bus on Chromebooks. It
+	  provides access to the keyboard, some internal storage and may
+	  control access to the battery and main PMIC depending on the
+	  device. You can use the 'crosec' command to access it.
+
 config CROS_EC_I2C
 	bool "Enable Chrome OS EC I2C driver"
 	depends on CROS_EC
@@ -158,6 +189,15 @@ config TPL_CROS_EC_LPC
 	  through a legacy port interface, so on x86 machines the main
 	  function of the EC is power and thermal management.
 
+config VPL_CROS_EC_LPC
+	bool "Enable Chrome OS EC LPC driver in VPL"
+	depends on CROS_EC
+	help
+	  Enable I2C access to the Chrome OS EC. This is used on x86
+	  Chromebooks such as link and falco. The keyboard is provided
+	  through a legacy port interface, so on x86 machines the main
+	  function of the EC is power and thermal management.
+
 config CROS_EC_SANDBOX
 	bool "Enable Chrome OS EC sandbox driver"
 	depends on CROS_EC && SANDBOX
@@ -181,6 +221,15 @@ config TPL_CROS_EC_SANDBOX
 	depends on TPL_CROS_EC && SANDBOX
 	help
 	  Enable a sandbox emulation of the Chrome OS EC in TPL. This supports
+	  keyboard (use the -l flag to enable the LCD), verified boot context,
+	  EC flash read/write/erase support and a few other things. It is
+	  enough to perform a Chrome OS verified boot on sandbox.
+
+config VPL_CROS_EC_SANDBOX
+	bool "Enable Chrome OS EC sandbox driver in VPL"
+	depends on VPL_CROS_EC && SANDBOX
+	help
+	  Enable a sandbox emulation of the Chrome OS EC in VPL. This supports
 	  keyboard (use the -l flag to enable the LCD), verified boot context,
 	  EC flash read/write/erase support and a few other things. It is
 	  enough to perform a Chrome OS verified boot on sandbox.
@@ -359,6 +408,15 @@ config TEST_DRV
 	  operations of memory allocation and driver/uclass methods in driver
 	  model. This should only be enabled for testing as it is not useful for
 	  anything else.
+
+config USB_HUB_USB251XB
+	tristate "USB251XB Hub Controller Configuration Driver"
+	depends on I2C
+	help
+	  This option enables support for configuration via SMBus of the
+	  Microchip USB251x/xBi USB 2.0 Hub Controller series. Configuration
+	  parameters may be set in devicetree or platform data.
+	  Say Y or M here if you need to configure such a device via SMBus.
 
 config TWL4030_LED
 	bool "Enable TWL4030 LED controller"

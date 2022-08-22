@@ -1071,7 +1071,6 @@ class Builder:
         For example:
            powerpc: (622 boards)   text -0.0
           arm: (285 boards)   text -0.0
-          nds32: (3 boards)   text -8.0
 
         Args:
             board_selected: Dict containing boards to summarise, keyed by
@@ -1763,7 +1762,7 @@ class Builder:
             if self.num_threads:
                 self.queue.put(job)
             else:
-                results = self._single_builder.RunJob(job)
+                self._single_builder.RunJob(job)
 
         if self.num_threads:
             term = threading.Thread(target=self.queue.join)

@@ -70,7 +70,7 @@
 /*
  * Serial Driver info
  */
-#define CONFIG_MXC_UART_BASE	UART1_BASE
+#define CONFIG_MXC_UART_BASE	UART_BASE_ADDR(1)
 
 /*
  * Flash & Environment
@@ -83,7 +83,6 @@
 #define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
 #define CONFIG_SYS_MAX_FLASH_SECT	(PHYS_FLASH_SIZE / \
 		CONFIG_SYS_FLASH_SECT_SZ)
-#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_MONITOR_LEN		0x40000		/* Reserve 256KiB */
 /* Address and size of Redundant Environment Sector	*/
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2019 NXP
+ * Copyright 2019, 2021 NXP
  */
 
 #ifndef __LS1028A_RDB_H
@@ -14,16 +14,9 @@
 
 /* Store environment at top of flash */
 
-#define CONFIG_DIMM_SLOTS_PER_CTLR          1
-
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SYS_TEXT_BASE
-
-#define CONFIG_QIXIS_I2C_ACCESS
-
 /*
  * QIXIS Definitions
  */
-#define CONFIG_FSL_QIXIS
 
 #ifdef CONFIG_FSL_QIXIS
 #define QIXIS_BASE			0x7fb00000
@@ -71,7 +64,6 @@
 	"ramdisk_addr=0x800000\0"		\
 	"ramdisk_size=0x2000000\0"		\
 	"bootm_size=0x10000000\0"		\
-	"fdt_addr=0x00f00000\0"                 \
 	"kernel_addr=0x01000000\0"              \
 	"scriptaddr=0x80000000\0"               \
 	"scripthdraddr=0x80080000\0"		\

@@ -10,14 +10,10 @@
 
 #if defined(CONFIG_TFABOOT) || \
 	defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
-#ifndef CONFIG_SPL_BUILD
-#define CONFIG_QIXIS_I2C_ACCESS
-#endif
 #define SYS_NO_FLASH
 #endif
 
 #define COUNTER_FREQUENCY_REAL		25000000	/* 25MHz */
-#define COUNTER_FREQUENCY		25000000	/* 25MHz */
 
 #ifdef CONFIG_EMU
 #define CONFIG_SYS_FSL_DDR_EMU
@@ -26,7 +22,6 @@
 #endif
 #define SPD_EEPROM_ADDRESS	0x51
 #define CONFIG_SYS_SPD_BUS_NUM	0	/* SPD on I2C bus 0 */
-#define CONFIG_DIMM_SLOTS_PER_CTLR	1
 
 
 #if !defined(CONFIG_QSPI_BOOT) && !defined(CONFIG_SD_BOOT_QSPI)
@@ -104,10 +99,6 @@
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
-
-#ifndef SPL_NO_QIXIS
-#define CONFIG_FSL_QIXIS
-#endif
 
 #define CONFIG_SYS_I2C_FPGA_ADDR	0x66
 #define QIXIS_BRDCFG4_OFFSET            0x54
@@ -222,12 +213,6 @@
 #define CONFIG_SYS_I2C_EEPROM_NXID
 #define CONFIG_SYS_EEPROM_BUS_NUM		0
 
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SPL_TEXT_BASE
-#else
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SYS_TEXT_BASE
-#endif
-
 #define CONFIG_FSL_MEMAC
 
 #ifndef SPL_NO_ENV
@@ -286,7 +271,6 @@
 	"ramdisk_size=0x2000000\0"		\
 	"fdt_high=0xa0000000\0"			\
 	"initrd_high=0xffffffffffffffff\0"	\
-	"fdt_addr=0x64f00000\0"			\
 	"kernel_addr=0x1000000\0"		\
 	"kernel_addr_sd=0x8000\0"		\
 	"kernelhdr_addr_sd=0x3000\0"		\
@@ -355,7 +339,6 @@
 	"ramdisk_size=0x2000000\0"		\
 	"fdt_high=0xa0000000\0"			\
 	"initrd_high=0xffffffffffffffff\0"	\
-	"fdt_addr=0x64f00000\0"			\
 	"kernel_addr=0x1000000\0"		\
 	"kernel_addr_sd=0x8000\0"		\
 	"kernelhdr_addr_sd=0x3000\0"		\
@@ -455,8 +438,6 @@
 #define QSGMII2_PORT2_PHY_ADDR		0x1d
 #define QSGMII2_PORT3_PHY_ADDR		0x1e
 #define QSGMII2_PORT4_PHY_ADDR		0x1f
-
-#define CONFIG_ETHPRIME		"DPMAC1@xgmii"
 #endif
 #endif
 

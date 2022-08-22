@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2019-2020 NXP
+ * Copyright 2019-2021 NXP
  */
 
 #ifndef __LS1028A_QDS_H
@@ -10,15 +10,9 @@
 
 #define COUNTER_FREQUENCY_REAL		(get_board_sys_clk() / 4)
 
-/* DDR */
-#define CONFIG_DIMM_SLOTS_PER_CTLR		2
-
-#define CONFIG_QIXIS_I2C_ACCESS
-
 /*
  * QIXIS Definitions
  */
-#define CONFIG_FSL_QIXIS
 
 #ifdef CONFIG_FSL_QIXIS
 #define QIXIS_BASE			0x7fb00000
@@ -58,15 +52,8 @@
 
 /* Store environment at top of flash */
 
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SPL_TEXT_BASE
-#else
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SYS_TEXT_BASE
-#endif
-
 /* LPUART */
 #ifdef CONFIG_LPUART
-#define CONFIG_LPUART_32B_REG
 #define CFG_LPUART_MUX_MASK	0xf0
 #define CFG_LPUART_EN		0xf0
 #endif
@@ -81,7 +68,6 @@
 	"hwconfig=fsl_ddr:bank_intlv=auto\0" \
 	"ramdisk_addr=0x800000\0" \
 	"ramdisk_size=0x2000000\0" \
-	"fdt_addr=0x00f00000\0" \
 	"kernel_addr=0x01000000\0" \
 	"scriptaddr=0x80000000\0" \
 	"scripthdraddr=0x80080000\0" \

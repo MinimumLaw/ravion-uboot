@@ -20,8 +20,7 @@
 
 /* SPL Loader Configuration */
 #if defined(CONFIG_TARGET_J721E_A72_EVM) || defined(CONFIG_TARGET_J7200_A72_EVM)
-#define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SPL_TEXT_BASE +	\
-					 CONFIG_SYS_K3_NON_SECURE_MSRAM_SIZE)
+#define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SPL_TEXT_BASE + SZ_4M)
 #define CONFIG_SYS_UBOOT_BASE		0x50280000
 /* Image load address in RAM for DFU boot*/
 #else
@@ -57,7 +56,6 @@
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_K3_MAX_DOWNLODABLE_IMAGE_SIZE
 
 #define CONFIG_SYS_BOOTM_LEN		SZ_64M
-#define CONFIG_CQSPI_REF_CLK		133333333
 
 /* HyperFlash related configuration */
 
@@ -122,13 +120,28 @@
 	"partitions=" PARTS_DEFAULT
 
 /* Set the default list of remote processors to boot */
-#if defined(CONFIG_TARGET_J721E_A72_EVM) || defined(CONFIG_TARGET_J7200_A72_EVM)
+#if defined(CONFIG_TARGET_J7200_A72_EVM)
 #define EXTRA_ENV_CONFIG_MAIN_CPSW0_QSGMII_PHY				\
-	"dorprocboot=1\0"						\
 	"do_main_cpsw0_qsgmii_phyinit=1\0"				\
 	"init_main_cpsw0_qsgmii_phy=gpio set gpio@22_17;"		\
 		 "gpio clear gpio@22_16\0"				\
 	"main_cpsw0_qsgmii_phyinit="					\
+	"if test ${do_main_cpsw0_qsgmii_phyinit} -eq 1 && test ${dorprocboot} -eq 1 && " \
+			"test ${boot} = mmc; then "			\
+		"run init_main_cpsw0_qsgmii_phy;"			\
+	"fi;\0"
+#ifdef DEFAULT_RPROCS
+#undef DEFAULT_RPROCS
+#endif
+#elif defined(CONFIG_TARGET_J721E_A72_EVM)
+#define EXTRA_ENV_CONFIG_MAIN_CPSW0_QSGMII_PHY				\
+	"init_main_cpsw0_qsgmii_phy=gpio set gpio@22_17;"		\
+		 "gpio clear gpio@22_16\0"				\
+	"main_cpsw0_qsgmii_phyinit="					\
+	"if test $board_name = J721EX-PM1-SOM || test $board_name = J721EX-PM2-SOM " \
+	"|| test $board_name = j721e; then " \
+	"do_main_cpsw0_qsgmii_phyinit=1; else "			\
+	"do_main_cpsw0_qsgmii_phyinit=0; fi;"			\
 	"if test ${do_main_cpsw0_qsgmii_phyinit} -eq 1 && test ${dorprocboot} -eq 1 && " \
 			"test ${boot} = mmc; then "			\
 		"run init_main_cpsw0_qsgmii_phy;"			\

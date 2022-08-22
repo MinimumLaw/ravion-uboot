@@ -33,8 +33,6 @@
 #define SPD_EEPROM_ADDRESS6		0x56
 #define SPD_EEPROM_ADDRESS		SPD_EEPROM_ADDRESS1
 #define CONFIG_SYS_SPD_BUS_NUM		0	/* SPD on I2C bus 0 */
-#define CONFIG_DIMM_SLOTS_PER_CTLR	2
-#define CONFIG_CHIP_SELECTS_PER_CTRL	4
 #define CONFIG_SYS_MONITOR_LEN		(936 * 1024)
 
 /* Miscellaneous configurable options */
@@ -48,7 +46,6 @@
  * will be udpated later when get_bus_freq(0) is available.
  */
 
-#define COUNTER_FREQUENCY		25000000	/* 25MHz */
 
 /* Serial Port */
 #define CONFIG_PL011_CLOCK		(get_bus_freq(0) / 4)
@@ -68,11 +65,6 @@
 #define CONFIG_SYS_LS_MC_DPL_MAX_LENGTH		0x20000
 #define CONFIG_SYS_LS_MC_DRAM_DPL_OFFSET	0x00F20000
 #define CONFIG_SYS_LS_MC_BOOT_TIMEOUT_MS	5000
-
-/* Define phy_reset function to boot the MC based on mcinitcmd.
- * This happens late enough to properly fixup u-boot env MAC addresses.
- */
-#define CONFIG_RESET_PHY_R
 
 /*
  * Carve out a DDR region which will not be used by u-boot/Linux
@@ -97,8 +89,6 @@
 #define CONFIG_SYS_EEPROM_BUS_NUM		0
 
 /* Qixis */
-#define CONFIG_FSL_QIXIS
-#define CONFIG_QIXIS_I2C_ACCESS
 #define CONFIG_SYS_I2C_FPGA_ADDR		0x66
 
 /* PCI */
@@ -174,7 +164,6 @@
 	"ramdisk_size=0x2000000\0"		\
 	"fdt_high=0xa0000000\0"			\
 	"initrd_high=0xffffffffffffffff\0"	\
-	"fdt_addr=0x64f00000\0"			\
 	"kernel_start=0x1000000\0"		\
 	"kernelheader_start=0x600000\0"		\
 	"scriptaddr=0x80000000\0"		\

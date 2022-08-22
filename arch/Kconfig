@@ -1,5 +1,5 @@
 config ARCH_MAP_SYSMEM
-	depends on SANDBOX || NDS32
+	depends on SANDBOX
 	def_bool y
 
 config CREATE_ARCH_SYMLINK
@@ -85,15 +85,13 @@ config MIPS
 	select HAVE_ARCH_IOREMAP
 	select HAVE_PRIVATE_LIBGCC
 	select SUPPORT_OF_CONTROL
-
-config NDS32
-	bool "NDS32 architecture"
-	select SUPPORT_OF_CONTROL
+	select SPL_SEPARATE_BSS if SPL
 
 config NIOS2
 	bool "Nios II architecture"
 	select CPU
 	select DM
+	imply DM_EVENT
 	select OF_CONTROL
 	select SUPPORT_OF_CONTROL
 	imply CMD_DM
@@ -111,8 +109,10 @@ config RISCV
 	select SUPPORT_OF_CONTROL
 	select OF_CONTROL
 	select DM
+	select SPL_SEPARATE_BSS if SPL
 	imply DM_SERIAL
 	imply DM_ETH
+	imply DM_EVENT
 	imply DM_MMC
 	imply DM_SPI
 	imply DM_SPI_FLASH
@@ -203,6 +203,7 @@ config SANDBOX
 	imply KEYBOARD
 	imply PHYSMEM
 	imply GENERATE_ACPI_TABLE
+	imply BINMAN
 
 config SH
 	bool "SuperH architecture"
@@ -238,6 +239,7 @@ config X86
 	imply CMD_SF_TEST
 	imply CMD_ZBOOT
 	imply DM_ETH
+	imply DM_EVENT
 	imply DM_GPIO
 	imply DM_KEYBOARD
 	imply DM_MMC
@@ -376,7 +378,7 @@ config SYS_IMMR
 
 config SKIP_LOWLEVEL_INIT
 	bool "Skip the calls to certain low level initialization functions"
-	depends on ARM || NDS32 || MIPS || RISCV
+	depends on ARM || MIPS || RISCV
 	help
 	  If enabled, then certain low level initializations (like setting up
 	  the memory controller) are omitted and/or U-Boot does not relocate
@@ -387,7 +389,7 @@ config SKIP_LOWLEVEL_INIT
 
 config SPL_SKIP_LOWLEVEL_INIT
 	bool "Skip the calls to certain low level initialization functions"
-	depends on SPL && (ARM || NDS32 || MIPS || RISCV)
+	depends on SPL && (ARM || MIPS || RISCV)
 	help
 	  If enabled, then certain low level initializations (like setting up
 	  the memory controller) are omitted and/or U-Boot does not relocate
@@ -436,7 +438,6 @@ source "arch/arm/Kconfig"
 source "arch/m68k/Kconfig"
 source "arch/microblaze/Kconfig"
 source "arch/mips/Kconfig"
-source "arch/nds32/Kconfig"
 source "arch/nios2/Kconfig"
 source "arch/powerpc/Kconfig"
 source "arch/sandbox/Kconfig"
@@ -444,3 +445,5 @@ source "arch/sh/Kconfig"
 source "arch/x86/Kconfig"
 source "arch/xtensa/Kconfig"
 source "arch/riscv/Kconfig"
+
+source "board/keymile/Kconfig"

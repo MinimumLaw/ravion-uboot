@@ -4598,6 +4598,12 @@ static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, ofnode nod
 			ecc_mode = NAND_ECC_SOFT_BCH;
 	}
 
+	if (ecc_mode == NAND_ECC_SOFT) {
+		str = ofnode_read_string(node, "nand-ecc-algo");
+		if (str && !strcmp(str, "bch"))
+			ecc_mode = NAND_ECC_SOFT_BCH;
+	}
+
 	ecc_strength = ofnode_read_s32_default(node,
 					       "nand-ecc-strength", -1);
 	ecc_step = ofnode_read_s32_default(node,
@@ -5257,6 +5263,7 @@ int nand_scan_tail(struct mtd_info *mtd)
 		break;
 	}
 
+	mtd->flash_node = chip->flash_node;
 	/* Fill in remaining MTD driver data */
 	mtd->type = nand_is_slc(chip) ? MTD_NANDFLASH : MTD_MLCNANDFLASH;
 	mtd->flags = (chip->options & NAND_ROM) ? MTD_CAP_ROM :

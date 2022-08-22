@@ -20,16 +20,21 @@
 #define CONFIG_SYS_TIMER_COUNTS_DOWN
 #define CONFIG_SYS_TIMER_COUNTER	(CONFIG_SYS_TIMERBASE + 0x4)
 
+/* GUIDs for capsule updatable firmware images */
+#define XILINX_BOOT_IMAGE_GUID \
+	EFI_GUID(0x1ba29a15, 0x9969, 0x40aa, 0xb4, 0x24, \
+		 0xe8, 0x61, 0x21, 0x61, 0x86, 0x64)
+
+#define XILINX_UBOOT_IMAGE_GUID \
+	EFI_GUID(0x1a5178f0, 0x87d3, 0x4f36, 0xac, 0x63, \
+		 0x3b, 0x31, 0xa2, 0x3b, 0xe3, 0x05)
+
 /* Serial drivers */
 /* The following table includes the supported baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE  \
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400}
 
 /* Ethernet driver */
-#if defined(CONFIG_ZYNQ_GEM)
-# define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
-# define CONFIG_BOOTP_MAY_FAIL
-#endif
 
 /* NOR */
 #ifdef CONFIG_MTD_NOR_FLASH
@@ -194,7 +199,6 @@
 
 /* Miscellaneous configurable options */
 
-#define CONFIG_CLOCKS
 #define CONFIG_SYS_MAXARGS		32 /* max number of command args */
 #define CONFIG_SYS_CBSIZE		2048 /* Console I/O Buffer Size */
 

@@ -61,6 +61,9 @@
 		osd0 = "/osd";
 	};
 
+	binman {
+	};
+
 	config {
 		testing-bool;
 		testing-int = <123>;
@@ -68,6 +71,21 @@
 		environment {
 			from_fdt = "yes";
 			fdt_env_path = "";
+		};
+	};
+
+	bootstd {
+		compatible = "u-boot,boot-std";
+
+		filename-prefixes = "/", "/boot/";
+		bootdev-order = "mmc2", "mmc1";
+
+		syslinux {
+			compatible = "u-boot,distro-syslinux";
+		};
+
+		efi {
+			compatible = "u-boot,distro-efi";
 		};
 	};
 
@@ -527,6 +545,14 @@
 		fake-host-hwaddr = [00 00 66 44 22 22];
 	};
 
+	phy_eth0: phy-test-eth {
+		compatible = "sandbox,eth";
+		reg = <0x10007000 0x1000>;
+		fake-host-hwaddr = [00 00 66 44 22 77];
+		phy-handle = <&ethphy1>;
+		phy-mode = "2500base-x";
+	};
+
 	dsa_eth0: dsa-test-eth {
 		compatible = "sandbox,eth";
 		reg = <0x10006000 0x1000>;
@@ -574,17 +600,21 @@
 			compatible = "sandbox,firmware";
 		};
 
-		sandbox-scmi-agent@0 {
+		scmi {
 			compatible = "sandbox,scmi-agent";
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			clk_scmi0: protocol@14 {
+			protocol@10 {
+				reg = <0x10>;
+			};
+
+			clk_scmi: protocol@14 {
 				reg = <0x14>;
 				#clock-cells = <1>;
 			};
 
-			reset_scmi0: protocol@16 {
+			reset_scmi: protocol@16 {
 				reg = <0x16>;
 				#reset-cells = <1>;
 			};
@@ -596,33 +626,18 @@
 					#address-cells = <1>;
 					#size-cells = <0>;
 
-					regul0_scmi0: reg@0 {
+					regul0_scmi: reg@0 {
 						reg = <0>;
 						regulator-name = "sandbox-voltd0";
 						regulator-min-microvolt = <1100000>;
 						regulator-max-microvolt = <3300000>;
 					};
-					regul1_scmi0: reg@1 {
+					regul1_scmi: reg@1 {
 						reg = <0x1>;
 						regulator-name = "sandbox-voltd1";
 						regulator-min-microvolt = <1800000>;
 					};
 				};
-			};
-		};
-
-		sandbox-scmi-agent@1 {
-			compatible = "sandbox,scmi-agent";
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			clk_scmi1: protocol@14 {
-				reg = <0x14>;
-				#clock-cells = <1>;
-			};
-
-			protocol@10 {
-				reg = <0x10>;
 			};
 		};
 	};
@@ -891,10 +906,13 @@
 		non-removable;
 	};
 
+	/* This is used for the bootdev tests */
 	mmc1 {
 		compatible = "sandbox,mmc";
+		filename = "mmc1.img";
 	};
 
+	/* This is used for the fastboot tests */
 	mmc0 {
 		compatible = "sandbox,mmc";
 	};
@@ -979,7 +997,7 @@
 		#address-cells = <3>;
 		#size-cells = <2>;
 		ranges = <0x02000000 0 0x30000000 0x30000000 0 0x2000 // MEM0
-			  0x02000000 0 0x31000000 0x31000000 0 0x2000 // MEM1
+			  0x02000000 0 0x31000000 0x3e000000 0 0x2000 // MEM1
 			  0x01000000 0 0x40000000 0x40000000 0 0x2000>;
 		sandbox,dev-info = <0x08 0x00 0x1234 0x5678
 				    0x0c 0x00 0x1234 0x5678
@@ -1403,10 +1421,10 @@
 
 	sandbox_scmi {
 		compatible = "sandbox,scmi-devices";
-		clocks = <&clk_scmi0 7>, <&clk_scmi0 3>, <&clk_scmi1 1>;
-		resets = <&reset_scmi0 3>;
-		regul0-supply = <&regul0_scmi0>;
-		regul1-supply = <&regul1_scmi0>;
+		clocks = <&clk_scmi 2>, <&clk_scmi 0>;
+		resets = <&reset_scmi 3>;
+		regul0-supply = <&regul0_scmi>;
+		regul1-supply = <&regul1_scmi>;
 	};
 
 	pinctrl {
@@ -1563,6 +1581,12 @@
 
 	mdio: mdio-test {
 		compatible = "sandbox,mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy1: ethernet-phy@1 {
+			reg = <1>;
+		};
 	};
 
 	pm-bus-test {

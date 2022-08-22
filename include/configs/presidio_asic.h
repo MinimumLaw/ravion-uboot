@@ -12,8 +12,7 @@
 #define CONFIG_SYS_BOOTM_LEN		0x00c00000
 
 /* Generic Timer Definitions */
-#define COUNTER_FREQUENCY		25000000
-#define CONFIG_SYS_TIMER_RATE		COUNTER_FREQUENCY
+#define CONFIG_SYS_TIMER_RATE		25000000
 #define CONFIG_SYS_TIMER_COUNTER	0xf4321008
 
 /* note: arch/arm/cpu/armv8/start.S which references GICD_BASE/GICC_BASE
@@ -35,9 +34,6 @@
 
 #define CONFIG_SYS_SERIAL0		PER_UART0_CFG
 #define CONFIG_SYS_SERIAL1		PER_UART1_CFG
-
-/* BOOTP options */
-#define CONFIG_BOOTP_BOOTFILESIZE
 
 /* SDRAM Bank #1 */
 #define DDR_BASE			0x00000000

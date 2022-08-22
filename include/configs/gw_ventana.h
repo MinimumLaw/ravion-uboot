@@ -31,9 +31,6 @@
 #undef CONFIG_SYS_BOOTM_LEN
 #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
-/* I2C Configs */
-#define CONFIG_I2C_GSC			0
-
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
 
@@ -72,7 +69,6 @@
 /* Framebuffer and LCD */
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_HIDE_LOGO_VERSION  /* Custom config to hide U-boot version */
 
 /* Miscellaneous configurable options */

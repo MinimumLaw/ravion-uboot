@@ -199,6 +199,13 @@ int g_dnl_board_usb_cable_connected(void)
 	if (!IS_ENABLED(CONFIG_USB_GADGET_DWC2_OTG))
 		return -ENODEV;
 
+	/*
+	 * In case of USB boot device is detected, consider USB cable is
+	 * connected
+	 */
+	if ((get_bootmode() & TAMP_BOOT_DEVICE_MASK) == BOOT_SERIAL_USB)
+		return true;
+
 	/* if typec stusb160x is present, means DK1 or DK2 board */
 	ret = stusb160x_cable_connected();
 	if (ret >= 0)
@@ -665,9 +672,6 @@ int board_init(void)
 	 */
 	if (IS_ENABLED(CONFIG_ARMV7_NONSEC))
 		sysconf_init();
-
-	if (CONFIG_IS_ENABLED(LED))
-		led_default_state();
 
 	setup_led(LEDST_ON);
 

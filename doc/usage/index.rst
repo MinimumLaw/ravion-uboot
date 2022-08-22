@@ -11,6 +11,7 @@ Use U-Boot
    netconsole
    partitions
    cmdline
+   semihosting
 
 Shell commands
 --------------
@@ -22,13 +23,19 @@ Shell commands
    cmd/addrmap
    cmd/askenv
    cmd/base
+   cmd/bootdev
    cmd/bootefi
+   cmd/bootflow
    cmd/booti
    cmd/bootmenu
+   cmd/bootmeth
    cmd/button
+   cmd/bootz
    cmd/cbsysinfo
    cmd/conitrace
    cmd/echo
+   cmd/env
+   cmd/event
    cmd/exception
    cmd/extension
    cmd/exit
@@ -42,6 +49,7 @@ Shell commands
    cmd/md
    cmd/mmc
    cmd/pinmux
+   cmd/printenv
    cmd/pstore
    cmd/qfw
    cmd/reset
