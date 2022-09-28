@@ -37,6 +37,7 @@ SDRAM START - 0x1000 0000
 #undef  CONFIG_SYS_LOAD_ADDR
 
 #define MEM_LAYOUT_ENV_SETTINGS \
+"loadaddr_low_r=0x10400000\0" \
  "kernel_addr_r=0x11400000\0" \
 "ramdisk_addr_r=0x1b400000\0" \
    "initrd_high=0x1f3fffff\0" \
@@ -101,6 +102,9 @@ SDRAM START - 0x1000 0000
 	"boot_os=0\0"
 
 #define BLKDEV_BOOTCMD \
+	"_efiboot=" \
+	"load ${blkname} ${blkdev} ${loadaddr_low_r} "\
+	"${boot_efi_file} && bootefi ${loadaddr_low_r}\0" \
 	"_blkdevboot=" \
 	"sysboot ${blkname} ${blkdev} any " \
 	"${script_addr_r} syslinux.conf\0" \
@@ -118,7 +122,7 @@ SDRAM START - 0x1000 0000
 	"usbboot=" \
 	"setenv blkname usb && " \
 	"setenv blkdev 0:1 && " \
-	"run _scriptboot; run _blkdevboot\0"
+	"run _efiboot; run _scriptboot; run _blkdevboot\0"
 
 /*
  * SD/MMC card removable storage
@@ -127,7 +131,7 @@ SDRAM START - 0x1000 0000
 	"sdboot=" \
 	"setenv blkname mmc && " \
 	"setenv blkdev 1:1 && " \
-	"run _scriptboot; run _blkdevboot\0"
+	"run _efiboot; run _scriptboot; run _blkdevboot\0"
 
 /*
  * Network/TFTP - only bootscript allowed.
@@ -148,7 +152,19 @@ SDRAM START - 0x1000 0000
 	"emmcboot=" \
 	"setenv blkname mmc && " \
 	"setenv blkdev 0:2 && " \
-	"run _scriptboot; run _blkdevboot\0"
+	"run _efiboot; run _scriptboot; run _blkdevboot\0"
+
+/*
+ * eMMC storage.
+ * Boot syslinux.conf & script from SECOND partition (slow).
+ * 1-st partition MUST contents working mode falcon files,
+ * u-boot-dtb.img an uboot.env platform file
+ */
+#define EMMC_EFI_BOOTCMD \
+	"emmcefiboot=" \
+	"setenv blkname mmc && " \
+	"setenv blkdev 0:1 && " \
+	"run _efiboot\0"
 
 /*
  * SATA storage.
@@ -159,7 +175,7 @@ SDRAM START - 0x1000 0000
 	"setenv blkname sata; " \
 	"setenv blkdev 0:1; " \
 	"sata init; " \
-	"run _scriptboot; run _blkdevboot\0"
+	"run _efiboot; run _scriptboot; run _blkdevboot\0"
 
 #define SPL_UPDATE \
 	"prepare_module=mfgr_fuse; " \
@@ -209,6 +225,7 @@ SDRAM START - 0x1000 0000
 	"board=kitsbimx6\0" \
 	"bootcmd=" \
 	    "run check_ubootenv; " \
+	    "run emmcefiboot; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
@@ -217,6 +234,7 @@ SDRAM START - 0x1000 0000
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=bscript.img\0" \
+	"boot_efi_file=EFI/BOOT/BOOTARM.EFI\0" \
 	"board_name=\0" \
 	FALCON_ENV_DEFAULT \
 	VARIANT \
@@ -226,6 +244,7 @@ SDRAM START - 0x1000 0000
 	SD_BOOTCMD \
 	TFTP_BOOTCMD \
 	EMMC_BOOTCMD \
+	EMMC_EFI_BOOTCMD \
 	SATA_BOOTCMD \
 	BOOTMENU_BOOTCMD \
 	CHECK_UBOOTENV \
