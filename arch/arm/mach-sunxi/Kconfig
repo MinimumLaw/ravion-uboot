@@ -1,9 +1,5 @@
 if ARCH_SUNXI
 
-config SPL_LDSCRIPT
-	default "arch/arm/cpu/arm926ejs/sunxi/u-boot-spl.lds" if MACH_SUNIV
-	default "arch/arm/cpu/armv7/sunxi/u-boot-spl.lds" if !ARM64
-
 config IDENT_STRING
 	default " Allwinner Technology"
 
@@ -683,15 +679,6 @@ config MMC_SUNXI_SLOT_EXTRA
 	slot or emmc on mmc1 - mmc3. Setting this to 1, 2 or 3 will enable
 	support for this.
 
-config INITIAL_USB_SCAN_DELAY
-	int "delay initial usb scan by x ms to allow builtin devices to init"
-	default 0
-	---help---
-	Some boards have on board usb devices which need longer than the
-	USB spec's 1 second to connect from board powerup. Set this config
-	option to a non 0 value to add an extra delay before the first usb
-	bus scan.
-
 config USB0_VBUS_PIN
 	string "Vbus enable pin for usb0 (otg)"
 	default ""
@@ -854,8 +841,9 @@ config VIDEO_LCD_DCLK_PHASE
 	int "LCD panel display clock phase"
 	depends on VIDEO_SUNXI || DM_VIDEO
 	default 1
+	range 0 3
 	---help---
-	Select LCD panel display clock phase shift, range 0-3.
+	Select LCD panel display clock phase shift
 
 config VIDEO_LCD_POWER
 	string "LCD panel power enable pin"

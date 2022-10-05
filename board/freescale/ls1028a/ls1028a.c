@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019, 2021 NXP
+ * Copyright 2019-2022 NXP
  */
 
 #include <common.h>
+#include <display_options.h>
 #include <init.h>
 #include <malloc.h>
 #include <errno.h>
@@ -328,3 +329,8 @@ int checkboard(void)
 	return 0;
 }
 #endif
+
+void *video_hw_init(void)
+{
+	return NULL;
+}

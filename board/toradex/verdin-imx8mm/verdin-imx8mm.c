@@ -83,7 +83,8 @@ static void select_dt_from_module_version(void)
 		 * device tree.
 		 */
 		is_wifi = (tdx_hw_tag.prodid == VERDIN_IMX8MMQ_WIFI_BT_IT) ||
-			  (tdx_hw_tag.prodid == VERDIN_IMX8MMDL_WIFI_BT_IT);
+			  (tdx_hw_tag.prodid == VERDIN_IMX8MMDL_WIFI_BT_IT) ||
+			  (tdx_hw_tag.prodid == VERDIN_IMX8MMQ_WIFI_BT_IT_NO_CAN);
 	}
 
 	switch (get_pcb_revision()) {
@@ -101,9 +102,6 @@ static void select_dt_from_module_version(void)
 	if (strcmp(variant, env_variant)) {
 		printf("Setting variant to %s\n", variant);
 		env_set("variant", variant);
-
-		if (IS_ENABLED(CONFIG_ENV_IS_NOWHERE))
-			env_save();
 	}
 }
 

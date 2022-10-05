@@ -30,7 +30,7 @@ const efi_guid_t efi_guid_virtio_dev = U_BOOT_VIRTIO_DEV_GUID;
 #endif
 
 /* template END node: */
-static const struct efi_device_path END = {
+const struct efi_device_path END = {
 	.type     = DEVICE_PATH_TYPE_END,
 	.sub_type = DEVICE_PATH_SUB_TYPE_END,
 	.length   = sizeof(END),
@@ -1158,6 +1158,8 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 {
 	struct blk_desc *desc = NULL;
 	struct disk_partition fs_partition;
+	size_t image_size;
+	void *image_addr;
 	int part = 0;
 	char *filename;
 	char *s;
@@ -1173,6 +1175,13 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 	} else if (!strcmp(dev, "Uart")) {
 		if (device)
 			*device = efi_dp_from_uart();
+	} else if (!strcmp(dev, "Mem")) {
+		efi_get_image_parameters(&image_addr, &image_size);
+
+		if (device)
+			*device = efi_dp_from_mem(EFI_RESERVED_MEMORY_TYPE,
+						  (uintptr_t)image_addr,
+						  image_size);
 	} else {
 		part = blk_get_device_part_str(dev, devnr, &desc, &fs_partition,
 					       1);

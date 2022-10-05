@@ -14,7 +14,7 @@
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 #define PHYS_SDRAM_1_SIZE		0x3E000000
 
-#define CONFIG_SYS_HZ_CLOCK		1000000000	/* 1 GHz */
+#define CONFIG_SYS_HZ_CLOCK		750000000	/* 750 MHz */
 
 /* Environment */
 
@@ -23,8 +23,6 @@
  * the maximum mapped by the Linux kernel during initialization.
  */
 #define CONFIG_SYS_BOOTMAPSZ		SZ_256M
-
-#define CONFIG_SYS_BOOTM_LEN		SZ_16M
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
@@ -42,17 +40,7 @@
 
 /* Extra Commands */
 
-#define CONFIG_SYS_GBL_DATA_SIZE	1024	/* Global data structures */
-#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE - \
-					 CONFIG_SYS_MALLOC_LEN - \
-					 CONFIG_SYS_GBL_DATA_SIZE)
-
-/* Monitor Command Prompt */
-#define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
-
 /* USB Configs */
-#define CONFIG_USB_OHCI_NEW
-#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
 
 /* NET Configs */
 

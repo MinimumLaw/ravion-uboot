@@ -55,19 +55,11 @@
 
 #define IMX_FEC1_BASE			ENET1_BASE_ADDR
 
-/* QSPI Configs*/
-#ifdef CONFIG_FSL_QSPI
-#define FSL_QSPI_FLASH_SIZE		(SZ_16M)
-#define FSL_QSPI_FLASH_NUM		2
-#define CONFIG_SYS_FSL_QSPI_LE
-#endif
-
 /* boot command, including the target-defined one if any */
 
 /* Extra env settings (including the target-defined ones if any) */
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	BK4_EXTRA_ENV_SETTINGS \
-	"autoload=no\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"blimg_file=u-boot.vyb\0" \
@@ -81,7 +73,6 @@
 	"nfs_root=/path/to/nfs/root\0" \
 	"tftptimeout=1000\0" \
 	"tftptimeoutcountmax=1000000\0" \
-	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"ipaddr=192.168.0.60\0" \
 	"serverip=192.168.0.1\0" \
 	"bootargs_base=setenv bootargs rw " \
@@ -212,10 +203,5 @@
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
 #define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_SIZE	IRAM_SIZE
-
-#define CONFIG_SYS_INIT_SP_OFFSET \
-	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_ADDR \
-	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 #endif /* __CONFIG_H */

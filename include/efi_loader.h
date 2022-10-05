@@ -375,6 +375,7 @@ enum efi_object_type {
  * @protocols:	linked list with the protocol interfaces installed on this
  *		handle
  * @type:	image type if the handle relates to an image
+ * @dev:	pointer to the DM device which is associated with this EFI handle
  *
  * UEFI offers a flexible and expandable object model. The objects in the UEFI
  * API are devices, drivers, and loaded images. struct efi_object is our storage
@@ -392,6 +393,7 @@ struct efi_object {
 	/* The list of protocols */
 	struct list_head protocols;
 	enum efi_object_type type;
+	struct udevice *dev;
 };
 
 enum efi_image_auth_status {
@@ -529,8 +531,10 @@ void efi_carve_out_dt_rsv(void *fdt);
 void efi_try_purge_kaslr_seed(void *fdt);
 /* Called by bootefi to make console interface available */
 efi_status_t efi_console_register(void);
-/* Called by efi_init_obj_list() to initialize efi_disks */
+/* Called by efi_init_early() to add block devices when probed */
 efi_status_t efi_disk_init(void);
+/* Called by efi_init_obj_list() to proble all block devices */
+efi_status_t efi_disks_register(void);
 /* Called by efi_init_obj_list() to install EFI_RNG_PROTOCOL */
 efi_status_t efi_rng_register(void);
 /* Called by efi_init_obj_list() to install EFI_TCG2_PROTOCOL */
@@ -591,6 +595,8 @@ efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
 void efi_save_gd(void);
 /* Call this to relocate the runtime section to an address space */
 void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map);
+/* Call this to get image parameters */
+void efi_get_image_parameters(void **img_addr, size_t *img_size);
 /* Add a new object to the object list. */
 void efi_add_handle(efi_handle_t obj);
 /* Create handle */
@@ -687,6 +693,8 @@ struct efi_device_path *efi_get_dp_from_boot(const efi_guid_t guid);
 /* get len, string (used in u-boot crypto from a guid */
 const char *guid_to_sha_str(const efi_guid_t *guid);
 int algo_to_len(const char *algo);
+
+int efi_link_dev(efi_handle_t handle, struct udevice *dev);
 
 /**
  * efi_size_in_pages() - convert size in bytes to size in pages
@@ -799,6 +807,9 @@ ssize_t efi_dp_check_length(const struct efi_device_path *dp,
 #define EFI_DP_TYPE(_dp, _type, _subtype) \
 	(((_dp)->type == DEVICE_PATH_TYPE_##_type) && \
 	 ((_dp)->sub_type == DEVICE_PATH_SUB_TYPE_##_subtype))
+
+/* template END node: */
+extern const struct efi_device_path END;
 
 /* Indicate supported runtime services */
 efi_status_t efi_init_runtime_supported(void);
@@ -1040,6 +1051,13 @@ extern u8 num_image_type_guids;
  * Return:	status code
  */
 efi_status_t efi_esrt_register(void);
+
+/**
+ * efi_ecpt_register() - Install the ECPT system table.
+ *
+ * Return: status code
+ */
+efi_status_t efi_ecpt_register(void);
 
 /**
  * efi_esrt_populate() - Populates the ESRT entries from the FMP instances

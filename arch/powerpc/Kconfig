@@ -20,7 +20,8 @@ config MPC85xx
 	select CREATE_ARCH_SYMLINK
 	select SYS_FSL_DDR
 	select SYS_FSL_DDR_BE
-	select BINMAN if OF_SEPARATE
+	select SYS_FSL_IFC_BE
+	select BINMAN if MPC85XX_HAVE_RESET_VECTOR && OF_SEPARATE
 	imply CMD_HASH
 	imply CMD_IRQ
 	imply USB_EHCI_HCD if USB

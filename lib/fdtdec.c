@@ -6,6 +6,7 @@
 #ifndef USE_HOSTCC
 #include <common.h>
 #include <boot_fit.h>
+#include <display_options.h>
 #include <dm.h>
 #include <hang.h>
 #include <init.h>
@@ -516,11 +517,8 @@ int fdtdec_get_alias_seq(const void *blob, const char *base, int offset,
 		 * Adding an extra check to distinguish DT nodes with
 		 * same name
 		 */
-		if (IS_ENABLED(CONFIG_PHANDLE_CHECK_SEQ)) {
-			if (fdt_get_phandle(blob, offset) !=
-			    fdt_get_phandle(blob, fdt_path_offset(blob, prop)))
-				continue;
-		}
+		if (offset != fdt_path_offset(blob, prop))
+			continue;
 
 		val = trailing_strtol(name);
 		if (val != -1) {

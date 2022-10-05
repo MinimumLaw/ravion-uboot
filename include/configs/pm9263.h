@@ -149,7 +149,6 @@
 /* NOR flash, if populated */
 #define PHYS_FLASH_1			0x10000000
 #define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
-#define CONFIG_SYS_MAX_FLASH_SECT	256
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
@@ -175,17 +174,9 @@
 					 AT91_MATRIX_SCFG_SLOT_CYCLE(255))
 
 /* USB */
-#define CONFIG_USB_ATMEL
-#define CONFIG_USB_ATMEL_CLK_SEL_PLLB
-#define CONFIG_USB_OHCI_NEW			1
-#define CONFIG_SYS_USB_OHCI_CPU_INIT		1
 #define CONFIG_SYS_USB_OHCI_REGS_BASE		0x00a00000	/* AT91SAM9263_UHP_BASE */
-#define CONFIG_SYS_USB_OHCI_SLOT_NAME		"at91sam9263"
-#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
 
 #define CONFIG_EXTRA_ENV_SETTINGS				\
-	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0"				\
-	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0"			\
 	"partition=nand0,0\0"					\
 	"ramargs=setenv bootargs $(bootargs) $(mtdparts)\0"	\
 	"nfsargs=setenv bootargs root=/dev/nfs rw "		\
@@ -202,7 +193,5 @@
 	""
 
 #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM
-#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_SDRAM_BASE + 16 * 1024 - \
-				GENERATED_GBL_DATA_SIZE)
 
 #endif

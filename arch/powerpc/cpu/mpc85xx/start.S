@@ -14,6 +14,7 @@
 #include <asm-offsets.h>
 #include <config.h>
 #include <mpc85xx.h>
+#include <system-constants.h>
 
 #include <ppc_asm.tmpl>
 #include <ppc_defs.h>
@@ -27,7 +28,7 @@
 #define LAW_EN		0x80000000
 
 #if defined(CONFIG_NAND_SPL) || \
-	(defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_INIT_MINIMAL))
+	(defined(CONFIG_SPL_BUILD) && CONFIG_IS_ENABLED(INIT_MINIMAL))
 #define MINIMAL_SPL
 #endif
 
@@ -55,6 +56,100 @@
 	GOT_ENTRY(__bss_end)
 	GOT_ENTRY(__bss_start)
 	END_GOT
+
+#ifdef CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR
+#if !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD)
+
+/* Maximal size of the image */
+#ifdef CONFIG_SPL_BUILD
+#define MAX_IMAGE_SIZE (CONFIG_SPL_MAX_SIZE - (CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR_DATA * 512))
+#else
+#define MAX_IMAGE_SIZE CONFIG_SYS_L2_SIZE
+#endif
+
+#if defined(CONFIG_SPL_BUILD) && CONFIG_SPL_MAX_SIZE < CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR_DATA * 512
+#error "CONFIG_SPL_MAX_SIZE is too small for CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR_DATA"
+#endif
+
+#if MAX_IMAGE_SIZE > CONFIG_SYS_L2_SIZE
+#error "Image is too big"
+#endif
+
+#define DIV_ROUND_UP(a, b) (((a) + (b) - 1) / (b))
+#define ALIGN(x, a) (DIV_ROUND_UP(x, a) * (a))
+
+/* Definitions from C header file asm/immap_85xx.h */
+
+#define CONFIG_SYS_MPC85xx_L2_OFFSET		0x20000
+
+#define MPC85xx_L2CTL				0x000
+#define MPC85xx_L2CTL_L2E			0x80000000
+#define MPC85xx_L2CTL_L2SRAM_ENTIRE		0x00010000
+
+#define MPC85xx_L2SRBAR0			0x100
+
+#define MPC85xx_L2ERRDIS			0xe44
+#define MPC85xx_L2ERRDIS_MBECC			0x00000008
+#define MPC85xx_L2ERRDIS_SBECC			0x00000004
+
+/* Definitions from C header file fsl_esdhc.h */
+
+#define ESDHCCTL				0x0002e40c
+#define ESDHCCTL_SNOOP				0x00000040
+
+/*
+ * QorIQ pre-PBL eSDHC boot sector:
+ * Instruct BootROM to configure L2 SRAM and eSDHC then load image
+ * from SD card into L2 SRAM and finally jump to image entry point.
+ */
+	.section .bootsect, "a"
+	.globl bootsect
+
+bootsect:
+	.org 0x40 /* BOOT signature */
+	.ascii "BOOT"
+
+	.org 0x48 /* Number of bytes to be copied, must be multiple of block size (512) */
+	.long ALIGN(MAX_IMAGE_SIZE, 512)
+
+	.org 0x50 /* Source address from the beginning of boot sector in byte address format, must be multiple of block size (512) */
+	.long (CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR_START + CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR_DATA) * 512
+
+	.org 0x58 /* Target address in the system's local memory address space */
+	.long CONFIG_SYS_MONITOR_BASE
+
+	.org 0x60 /* Execution starting address */
+	.long _start
+
+	.org 0x68 /* Number of configuration data pairs */
+	.long DIV_ROUND_UP(.Lconf_pair_end - .Lconf_pair_start, 8)
+
+	.org 0x80 /* Start of configuration */
+	.Lconf_pair_start:
+
+	.long CONFIG_SYS_CCSRBAR_DEFAULT + CONFIG_SYS_MPC85xx_L2_OFFSET + MPC85xx_L2SRBAR0 /* Address: L2 memory-mapped SRAM base addr 0 */
+	.long CONFIG_SYS_INIT_L2_ADDR
+
+	.long CONFIG_SYS_CCSRBAR_DEFAULT + CONFIG_SYS_MPC85xx_L2_OFFSET + MPC85xx_L2ERRDIS /* Address: L2 cache error disable */
+	.long MPC85xx_L2ERRDIS_MBECC | MPC85xx_L2ERRDIS_SBECC
+
+	.long CONFIG_SYS_CCSRBAR_DEFAULT + CONFIG_SYS_MPC85xx_L2_OFFSET + MPC85xx_L2CTL /* Address: L2 configuration 0 */
+	.long MPC85xx_L2CTL_L2E | MPC85xx_L2CTL_L2SRAM_ENTIRE
+
+	.long CONFIG_SYS_CCSRBAR_DEFAULT + ESDHCCTL /* Address: eSDHC DMA control */
+	.long ESDHCCTL_SNOOP
+
+	.long 0x40000001 /* Command: Delay in 8 CCB clocks */
+	.long 256
+
+	.long 0x80000001 /* End of configuration */
+	.Lconf_pair_end:
+
+	.org 0x1b8 /* Reserved for MBR/DBR */
+	.org 0x200 /* End of boot sector */
+
+#endif
+#endif
 
 /*
  * e500 Startup -- after reset only the last 4KB of the effective
@@ -1125,9 +1220,8 @@ switch_as:
 #else
 	/* Calculate absolute address in FLASH and jump there		*/
 	/*--------------------------------------------------------------*/
-	lis	r3,CONFIG_VAL(SYS_MONITOR_BASE)@h
-	ori	r3,r3,CONFIG_VAL(SYS_MONITOR_BASE)@l
-	addi	r3,r3,_start_cont - _start_cont
+	lis	r3,_start_cont@h
+	ori	r3,r3,_start_cont@l
 	mtlr	r3
 	blr
 #endif
@@ -1160,8 +1254,8 @@ _start_cont:
 	bne	1b
 
 #if CONFIG_VAL(SYS_MALLOC_F_LEN)
-	lis	r4,(CONFIG_SYS_INIT_RAM_ADDR)@h
-	ori	r4,r4,(CONFIG_SYS_GBL_DATA_OFFSET)@l
+	lis	r4,SYS_INIT_SP_ADDR@h
+	ori	r4,r4,SYS_INIT_SP_ADDR@l
 
 	addi	r3,r3,16	/* Pre-relocation malloc area */
 	stw	r3,GD_MALLOC_BASE(r4)
@@ -1599,7 +1693,7 @@ relocate_code:
  * initialization, now running from RAM.
  */
 
-	addi	r0,r10,in_ram - _start_cont
+	addi	r0,r10,in_ram - CONFIG_VAL(SYS_MONITOR_BASE)
 
 	/*
 	 * As IVPR is going to point RAM address,

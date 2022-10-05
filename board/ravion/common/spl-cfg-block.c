@@ -16,7 +16,6 @@
 #endif
 #include <cli.h>
 #include <console.h>
-#include <flash.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <nand.h>

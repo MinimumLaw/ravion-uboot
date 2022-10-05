@@ -48,33 +48,28 @@ SDRAM START - 0x1000 0000
 #ifdef CONFIG_SPL		/* SPL BUILD */
 #include "imx6_spl.h"
 
-/* Falcon Mode */
-#define CONFIG_SPL_FS_LOAD_ARGS_NAME	"board.dtb"
-#define CONFIG_SPL_FS_LOAD_KERNEL_NAME	"board.kernel"
-#define CONFIG_SYS_LOAD_ADDR		0x11400000 /* kernel_addr_r */
-#define CONFIG_SYS_SPL_ARGS_ADDR	0x1f400000 /* fdt_addr_r */
+/* SPL Basic params */
+#define CONFIG_SYS_LOAD_ADDR		0x11400000  /* kernel_addr_r */
+#define CONFIG_MXC_UART_BASE		UART1_BASE  /* debug console */
 
-#define CONFIG_MXC_UART_BASE		UART1_BASE
-
-/* MMC Configuration */
+/* SPL MMC Configuration */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC3_BASE_ADDR
 
-/* Falcon Mode - MMC support: args@1MB kernel@2MB */
+/* Falcon Mode - MMC support: args@1MB kernel@2MB - not used in real world */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	(CONFIG_CMD_SPL_WRITE_SIZE / 512)
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x0800 /* 1MB */
 #define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1000 /* 2MB */
 
+/* SPL USB Configuration */
 #define CONFIG_SYS_USB_FAT_BOOT_PARTITION	1
 #else				/* UBOOT BULD */
+/* U-Bool default load address (16Mb block) */
 #define CONFIG_SYS_LOAD_ADDR		0x10400000 /* SDRAM_START + 4Mb */
 #endif
 
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
-
-/* Size of malloc() pool */
-// #define CONFIG_SYS_MALLOC_LEN		(32 * 1024 * 1024)
 
 /* SATA */
 #ifdef CONFIG_CMD_SATA
@@ -88,7 +83,7 @@ SDRAM START - 0x1000 0000
 #undef CONFIG_IPADDR
 #undef CONFIG_NETMASK
 #undef CONFIG_SERVERIP
-#define CONFIG_IPADDR			192.168.5.101
+#define CONFIG_IPADDR			192.168.5.200
 #define CONFIG_NETMASK			255.255.255.0
 #define CONFIG_SERVERIP			192.168.5.254
 
@@ -264,10 +259,5 @@ SDRAM START - 0x1000 0000
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
 #define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_SIZE	IRAM_SIZE
-
-#define CONFIG_SYS_INIT_SP_OFFSET \
-	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_ADDR \
-	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 #endif	/* __CONFIG_H */

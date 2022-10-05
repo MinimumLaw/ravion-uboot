@@ -18,16 +18,12 @@
 /*
  * Manually set up DDR parameters
  */
-#define CONFIG_SYS_DDR_SIZE		2048 /* MB */
+#define CONFIG_SYS_SDRAM_SIZE		0x80000000 /* 2048 MiB */
 
 /*
  * The reserved memory
  */
 #define CONFIG_SYS_FLASH_BASE		0xF0000000
-
-#if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
-#define CONFIG_SYS_RAMBOOT
-#endif
 
 /* Reserve 768 kB for Mon */
 #define CONFIG_SYS_MONITOR_LEN		(768 * 1024)
@@ -38,8 +34,6 @@
 #define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xE6000000 /* Initial RAM address */
 #define CONFIG_SYS_INIT_RAM_SIZE	0x1000 /* End of used area in RAM */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
-						GENERATED_GBL_DATA_SIZE)
 /*
  * Init Local Bus Memory Controller:
  *
@@ -55,7 +49,6 @@
  */
 #define CONFIG_SYS_FLASH_SIZE		256 /* max FLASH size is 256M */
 
-#define CONFIG_SYS_MAX_FLASH_SECT	512 /* max num of sects on one chip */
 #define CONFIG_SYS_FLASH_BANKS_LIST { CONFIG_SYS_FLASH_BASE }
 
 /* I2C */
@@ -82,10 +75,6 @@
 /*
  * Environment
  */
-
-#ifndef CONFIG_SYS_RAMBOOT
-/* Address and size of Redundant Environment Sector	*/
-#endif /* CFG_SYS_RAMBOOT */
 
 /*
  * Environment Configuration

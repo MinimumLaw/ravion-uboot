@@ -10,18 +10,13 @@
 #include <asm/arch/config.h>
 #include <asm/arch/soc.h>
 
-#define CONFIG_FSL_MEMAC
-
-#define CONFIG_SYS_INIT_SP_ADDR		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_FLASH_BASE		0x20000000
 
 /* DDR */
-#define CONFIG_SYS_FSL_DDR_INTLV_256B	/* force 256 byte interleaving */
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE		0x80000000UL
 #define CONFIG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
 #define CONFIG_SYS_DDR_BLOCK2_BASE		0x2080000000ULL
-#define CONFIG_SYS_FSL_DDR_MAIN_NUM_CTRLS	2
 #define CONFIG_SYS_SDRAM_SIZE			0x200000000UL
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 #define CONFIG_MEM_INIT_VALUE		0xdeadbeef
@@ -32,7 +27,6 @@
 #define SPD_EEPROM_ADDRESS5		0x55
 #define SPD_EEPROM_ADDRESS6		0x56
 #define SPD_EEPROM_ADDRESS		SPD_EEPROM_ADDRESS1
-#define CONFIG_SYS_SPD_BUS_NUM		0	/* SPD on I2C bus 0 */
 #define CONFIG_SYS_MONITOR_LEN		(936 * 1024)
 
 /* Miscellaneous configurable options */
@@ -91,38 +85,12 @@
 /* Qixis */
 #define CONFIG_SYS_I2C_FPGA_ADDR		0x66
 
-/* PCI */
-#ifdef CONFIG_PCI
-#define CONFIG_PCI_SCAN_SHOW
-#endif
-
-/* SATA */
-
-#ifdef CONFIG_SCSI
-#define CONFIG_SYS_SATA1		AHCI_BASE_ADDR1
-#define CONFIG_SYS_SATA2		AHCI_BASE_ADDR2
-#endif
-
 /* USB */
-#ifdef CONFIG_USB_HOST
-#ifndef CONFIG_TARGET_LX2162AQDS
-#define CONFIG_USB_MAX_CONTROLLER_COUNT	2
-#endif
-#endif
 
 #define COUNTER_FREQUENCY_REAL		(get_board_sys_clk() / 4)
 
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		128
-
-/* Monitor Command Prompt */
-#define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
-					sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE /* Boot args buffer */
-#define CONFIG_SYS_MAXARGS		64	/* max command args */
-
-#define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */
 
 /* Initial environment variables */
 #define XSPI_MC_INIT_CMD				\

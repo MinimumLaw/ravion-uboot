@@ -61,14 +61,11 @@ struct fsl_e_tlb_entry tlb_table[] = {
 			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 			0, 5, BOOKE_PAGESZ_1M, 1),
 #endif
+#endif /* not SPL */
 
 	SET_TLB_ENTRY(1, CONFIG_SYS_CPLD_BASE, CONFIG_SYS_CPLD_BASE_PHYS,
 			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 			0, 6, BOOKE_PAGESZ_1M, 1),
-	SET_TLB_ENTRY(1, CONFIG_SYS_PMC_BASE, CONFIG_SYS_PMC_BASE_PHYS,
-			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
-			0, 10, BOOKE_PAGESZ_64K, 1),
-#endif /* not SPL */
 
 #ifdef CONFIG_SYS_NAND_BASE
 	/* *I*G - NAND */
@@ -77,8 +74,7 @@ struct fsl_e_tlb_entry tlb_table[] = {
 			0, 7, BOOKE_PAGESZ_1M, 1),
 #endif
 
-#if defined(CONFIG_SYS_RAMBOOT) || \
-	(defined(CONFIG_SPL) && !defined(CONFIG_SPL_COMMON_INIT_DDR))
+#if defined(CONFIG_SYS_RAMBOOT) || !CONFIG_IS_ENABLED(COMMON_INIT_DDR)
 	/* **M** - 1G DDR for eSDHC/eSPI/NAND boot */
 	SET_TLB_ENTRY(1, CONFIG_SYS_DDR_SDRAM_BASE, CONFIG_SYS_DDR_SDRAM_BASE,
 			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_M,
@@ -94,14 +90,14 @@ struct fsl_e_tlb_entry tlb_table[] = {
 #endif /* RAMBOOT/SPL */
 
 #ifdef CONFIG_SYS_INIT_L2_ADDR
-	/* *I*G - L2SRAM */
+	/* ***G - L2SRAM */
 	SET_TLB_ENTRY(1, CONFIG_SYS_INIT_L2_ADDR, CONFIG_SYS_INIT_L2_ADDR_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_G,
 		      0, 11, BOOKE_PAGESZ_256K, 1),
 #if CONFIG_SYS_L2_SIZE >= (256 << 10)
 	SET_TLB_ENTRY(1, CONFIG_SYS_INIT_L2_ADDR + 0x40000,
 		      CONFIG_SYS_INIT_L2_ADDR_PHYS + 0x40000,
-		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
+		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_G,
 		      0, 12, BOOKE_PAGESZ_256K, 1)
 #endif
 #endif
