@@ -11,35 +11,21 @@
 #include <asm/arch/config.h>
 
 /* Link Definitions */
-#ifdef CONFIG_TFABOOT
-#define CONFIG_SYS_INIT_SP_ADDR		CONFIG_SYS_TEXT_BASE
-#else
-#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_FSL_OCRAM_BASE + 0xfff0)
-#endif
 
 /* We need architecture specific misc initializations */
 
 /* Link Definitions */
-
-#ifndef CONFIG_SYS_FSL_DDR4
-#define CONFIG_SYS_DDR_RAW_TIMING
-#endif
-
-#define CONFIG_SYS_FSL_DDR_INTLV_256B	/* force 256 byte interleaving */
 
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000UL
 #define CONFIG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 #define CONFIG_SYS_DDR_BLOCK2_BASE	0x8080000000ULL
-#define CONFIG_SYS_FSL_DDR_MAIN_NUM_CTRLS	2
 
 /*
  * SMP Definitinos
  */
 #define CPU_RELEASE_ADDR		secondary_boot_addr
-
-#define CONFIG_SYS_FSL_OTHER_DDR_NUM_CTRLS
 
 /*
  * This is not an accurate number. It is used in start.S. The frequency
@@ -142,25 +128,11 @@ unsigned long long get_qixis_addr(void);
 	"mcinitcmd=fsl_mc start mc 0x580a00000"	\
 	" 0x580e00000 \0"
 
-/* Monitor Command Prompt */
-#define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
-#define CONFIG_SYS_MAXARGS		64	/* max command args */
-
-#define CONFIG_SPL_BSS_START_ADDR	0x80100000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x00100000
-#define CONFIG_SPL_MAX_SIZE		0x16000
-#define CONFIG_SPL_STACK		(CONFIG_SYS_FSL_OCRAM_BASE + 0x9ff0)
-#define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
-
 #ifdef CONFIG_NAND_BOOT
 #define CONFIG_SYS_NAND_U_BOOT_DST	0x80400000
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_NAND_U_BOOT_DST
 #endif
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x00100000
-#define CONFIG_SYS_SPL_MALLOC_START	0x80200000
 #define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
-
-#define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */
 
 #include <asm/arch/soc.h>
 

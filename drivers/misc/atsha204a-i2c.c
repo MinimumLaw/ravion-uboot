@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2014 Josh Datko, Cryptotronix, jbd@cryptotronix.com
  *		 2016 Tomas Hlavacek, CZ.NIC, tmshlvck@gmail.com
- *		 2017 Marek Behun, CZ.NIC, marek.behun@nic.cz
+ *		 2017 Marek Behún, CZ.NIC, kabel@kernel.org
  *
  * This program is free software; you can redistribute  it and/or modify it
  * under the terms of the GNU General Public License version 2 as
@@ -103,12 +103,13 @@ int atsha204a_wakeup(struct udevice *dev)
 	for (try = 1; try <= 10; ++try) {
 		debug("Try %i... ", try);
 
+		/*
+		 * The device ignores any levels or transitions on the SCL pin
+		 * when the device is idle, asleep or during waking up.
+		 * Don't check for error when waking up the device.
+		 */
 		memset(req, 0, 4);
-		res = atsha204a_send(dev, req, 4);
-		if (res) {
-			debug("failed on I2C send, trying again\n");
-			continue;
-		}
+		atsha204a_send(dev, req, 4);
 
 		udelay(ATSHA204A_TWLO_US + ATSHA204A_TWHI_US);
 

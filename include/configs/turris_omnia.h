@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2017 Marek Behun <marek.behun@nic.cz>
+ * Copyright (C) 2017 Marek Behún <kabel@kernel.org>
  * Copyright (C) 2016 Tomas Hlavacek <tomas.hlavacek@nic.cz>
  */
 
@@ -25,23 +25,6 @@
 #define RELOCATION_LIMITS_ENV_SETTINGS	\
 	"fdt_high=0x10000000\0"		\
 	"initrd_high=0x10000000\0"
-
-/* Defines for SPL */
-#define CONFIG_SPL_SIZE			(140 << 10)
-#define CONFIG_SPL_MAX_SIZE		(CONFIG_SPL_SIZE - (CONFIG_SPL_TEXT_BASE - 0x40000000))
-
-#define CONFIG_SPL_BSS_START_ADDR	(0x40000000 + CONFIG_SPL_SIZE)
-#define CONFIG_SPL_BSS_MAX_SIZE		(16 << 10)
-
-#define CONFIG_SPL_STACK		(0x40000000 + ((192 - 16) << 10))
-#define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
-
-#ifdef CONFIG_MVEBU_SPL_BOOT_DEVICE_MMC
-/* SPL related MMC defines */
-# ifdef CONFIG_SPL_BUILD
-#  define CONFIG_FIXED_SDHCI_ALIGNED_BUFFER	0x00180000	/* in SDRAM */
-# endif
-#endif
 
 /*
  * mv-common.h should be defined after CMD configs since it used them

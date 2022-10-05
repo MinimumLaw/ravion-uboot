@@ -12,6 +12,7 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <clock_legacy.h>
+#include <display_options.h>
 #include <init.h>
 #include <irq_func.h>
 #include <log.h>
@@ -43,7 +44,9 @@ __board_reset(void)
 {
 	/* Do nothing */
 }
+void board_reset_prepare(void) __attribute__((weak, alias("__board_reset")));
 void board_reset(void) __attribute__((weak, alias("__board_reset")));
+void board_reset_last(void) __attribute__((weak, alias("__board_reset")));
 
 int checkcpu (void)
 {
@@ -318,12 +321,18 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 #else
 	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 
+	/* Call board-specific preparation for reset */
+	board_reset_prepare();
+
 	/* Attempt board-specific reset */
 	board_reset();
 
 	/* Next try asserting HRESET_REQ */
 	out_be32(&gur->rstcr, 0x2);
 	udelay(100);
+
+	/* Attempt last-stage board-specific reset */
+	board_reset_last();
 #endif
 
 	return 1;
@@ -333,9 +342,6 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 /*
  * Get timebase clock frequency
  */
-#ifndef CONFIG_SYS_FSL_TBCLK_DIV
-#define CONFIG_SYS_FSL_TBCLK_DIV 8
-#endif
 __weak unsigned long get_tbclk(void)
 {
 	unsigned long tbclk_div = CONFIG_SYS_FSL_TBCLK_DIV;
@@ -344,6 +350,7 @@ __weak unsigned long get_tbclk(void)
 }
 
 
+#ifndef CONFIG_WDT
 #if defined(CONFIG_WATCHDOG)
 #define WATCHDOG_MASK (TCR_WP(63) | TCR_WRC(3) | TCR_WIE)
 void
@@ -372,6 +379,7 @@ watchdog_reset(void)
 		enable_interrupts();
 }
 #endif	/* CONFIG_WATCHDOG */
+#endif
 
 /*
  * Initializes on-chip MMC controllers.

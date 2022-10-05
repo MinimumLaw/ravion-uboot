@@ -35,6 +35,18 @@ static void *image_addr;
 static size_t image_size;
 
 /**
+ * efi_get_image_parameters() - return image parameters
+ *
+ * @img_addr:		address of loaded image in memory
+ * @img_size:		size of loaded image
+ */
+void efi_get_image_parameters(void **img_addr, size_t *img_size)
+{
+	*img_addr = image_addr;
+	*img_size = image_size;
+}
+
+/**
  * efi_clear_bootdev() - clear boot device
  */
 static void efi_clear_bootdev(void)
@@ -107,9 +119,9 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 			efi_free_pool(image_tmp);
 		}
 		bootefi_image_path = image;
-		log_debug("- recorded device %ls\n", efi_dp_str(device));
+		log_debug("- boot device %pD\n", device);
 		if (image)
-			log_debug("- and image %ls\n", efi_dp_str(image));
+			log_debug("- image %pD\n", image);
 	} else {
 		log_debug("- efi_dp_from_name() failed, err=%lx\n", ret);
 		efi_clear_bootdev();

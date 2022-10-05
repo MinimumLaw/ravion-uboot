@@ -10,6 +10,8 @@
 #ifndef __event_h
 #define __event_h
 
+#include <dm/ofnode_decl.h>
+
 /**
  * enum event_t - Types of events supported by U-Boot
  *
@@ -28,6 +30,9 @@ enum event_t {
 
 	/* Init hooks */
 	EVT_MISC_INIT_F,
+
+	/* Device tree fixups before booting */
+	EVT_FT_FIXUP,
 
 	EVT_COUNT
 };
@@ -50,6 +55,15 @@ union event_data {
 	struct event_dm {
 		struct udevice *dev;
 	} dm;
+
+	/**
+	 * struct event_ft_fixup - FDT fixup before booting
+	 *
+	 * @tree: tree to update
+	 */
+	struct event_ft_fixup {
+		oftree tree;
+	} ft_fixup;
 };
 
 /**
@@ -123,10 +137,13 @@ static inline const char *event_spy_id(struct evspy_info *spy)
  * The only solution I can think of is to mark linker-list entries as 'used'
  * using an attribute. This should be safe, since we don't actually want to drop
  * any of these. However this does slightly limit LTO's optimisation choices.
+ *
+ * Another issue has come up, only with clang: using 'static' makes it throw
+ * away the linker-list entry sometimes, e.g. with the EVT_FT_FIXUP entry in
+ * vbe_simple.c - so for now, make it global.
  */
 #define EVENT_SPY(_type, _func) \
-	static __attribute__((used)) ll_entry_declare(struct evspy_info, \
-						      _type, evspy_info) = \
+	__used ll_entry_declare(struct evspy_info, _type, evspy_info) = \
 	_ESPY_REC(_type, _func)
 
 /**
@@ -144,7 +161,16 @@ int event_register(const char *id, enum event_t type, event_handler_t func,
 /** event_show_spy_list( - Show a list of event spies */
 void event_show_spy_list(void);
 
-#if CONFIG_IS_ENABLED(EVENT)
+/**
+ * event_manual_reloc() - Relocate event handler pointers
+ *
+ * Relocate event handler pointers for all static event spies. It is called
+ * during the generic board init sequence, after relocation.
+ *
+ * Return: 0 if OK
+ */
+int event_manual_reloc(void);
+
 /**
  * event_notify() - notify spies about an event
  *
@@ -159,6 +185,7 @@ void event_show_spy_list(void);
  */
 int event_notify(enum event_t type, void *data, int size);
 
+#if CONFIG_IS_ENABLED(EVENT)
 /**
  * event_notify_null() - notify spies about an event
  *
@@ -169,11 +196,6 @@ int event_notify(enum event_t type, void *data, int size);
  */
 int event_notify_null(enum event_t type);
 #else
-static inline int event_notify(enum event_t type, void *data, int size)
-{
-	return 0;
-}
-
 static inline int event_notify_null(enum event_t type)
 {
 	return 0;

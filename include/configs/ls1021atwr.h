@@ -46,16 +46,6 @@
 #define CONFIG_U_BOOT_HDR_SIZE				(16 << 10)
 #endif /* ifdef CONFIG_NXP_ESBC */
 
-#define CONFIG_SPL_MAX_SIZE		0x1a000
-#define CONFIG_SPL_STACK		0x1001d000
-#define CONFIG_SPL_PAD_TO		0x1c000
-
-#define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_TEXT_BASE + \
-		CONFIG_SYS_MONITOR_LEN)
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x100000
-#define CONFIG_SPL_BSS_START_ADDR	0x80100000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
-
 #ifdef CONFIG_U_BOOT_HDR_SIZE
 /*
  * HDR would be appended at end of image and copied to DDR along
@@ -105,14 +95,8 @@
 					FTIM2_NOR_TWPH(0x0e))
 #define CONFIG_SYS_NOR_FTIM3		0
 
-#define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45	/* count down from 45/5: 9..1 */
 
-#define CONFIG_SYS_MAX_FLASH_SECT	1024	/* sectors per device */
-#define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
-#define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
-
-#define CONFIG_SYS_FLASH_EMPTY_INFO
 #define CONFIG_SYS_FLASH_BANKS_LIST	{ CONFIG_SYS_FLASH_BASE_PHYS }
 
 #define CONFIG_SYS_WRITE_SWAPPED_DATA
@@ -181,16 +165,7 @@
 #define CONFIG_SYS_I2C_EEPROM_NXID
 #define CONFIG_SYS_EEPROM_BUS_NUM		1
 
-/* PCIe */
-#define CONFIG_PCIE1		/* PCIE controller 1 */
-#define CONFIG_PCIE2		/* PCIE controller 2 */
-
-#ifdef CONFIG_PCI
-#define CONFIG_PCI_SCAN_SHOW
-#endif
-
 #define CONFIG_PEN_ADDR_BIG_ENDIAN
-#define CONFIG_LAYERSCAPE_NS_ACCESS
 #define CONFIG_SMP_PEN_ADDR		0x01ee0200
 
 #define CONFIG_HWCONFIG
@@ -338,16 +313,10 @@
 
 #define CONFIG_LS102XA_STREAM_ID
 
-#define CONFIG_SYS_INIT_SP_OFFSET \
-	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_ADDR \
-	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
-
 /*
  * Environment
  */
 
 #include <asm/fsl_secure_boot.h>
-#define CONFIG_SYS_BOOTM_LEN	(64 << 20) /* Increase max gunzip size */
 
 #endif

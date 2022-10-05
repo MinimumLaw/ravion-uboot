@@ -33,15 +33,6 @@
 
 /* Available command configuration */
 
-#ifdef CONFIG_MCFFEC
-#define CONFIG_SYS_DISCOVER_PHY
-/* If CONFIG_SYS_DISCOVER_PHY is not defined - hardcoded */
-#ifndef CONFIG_SYS_DISCOVER_PHY
-#define FECDUPLEX		FULL
-#define FECSPEED		_100BASET
-#endif
-#endif
-
 /* I2C */
 #define CONFIG_SYS_I2C_PINMUX_REG	(gpio_reg->par_feci2c)
 #define CONFIG_SYS_I2C_PINMUX_CLR	(0xFFF0)
@@ -78,8 +69,6 @@
  */
 #define CONFIG_SYS_INIT_RAM_ADDR	0x20000000
 #define CONFIG_SYS_INIT_RAM_SIZE	0x10000	/* Size of used area in internal SRAM */
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*-----------------------------------------------------------------------
  * Start addresses for the final memory configuration
@@ -91,7 +80,6 @@
 #define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_CS0_BASE
 
 #define CONFIG_SYS_MONITOR_LEN		0x20000
-#define CONFIG_SYS_BOOTPARAMS_LEN	64*1024
 
 /*
  * For booting Linux, the board info and command line data
@@ -99,13 +87,10 @@
  * the maximum mapped by the Linux kernel during initialization ??
  */
 #define CONFIG_SYS_BOOTMAPSZ		(CONFIG_SYS_SDRAM_BASE + (CONFIG_SYS_SDRAM_SIZE << 20))
-#define CONFIG_SYS_BOOTM_LEN		(CONFIG_SYS_SDRAM_SIZE << 20)
 
 /*-----------------------------------------------------------------------
  * FLASH organization
  */
-#define CONFIG_SYS_MAX_FLASH_SECT	11	/* max number of sectors on one chip */
-#define CONFIG_SYS_FLASH_ERASE_TOUT	1000
 
 #define CONFIG_SYS_FLASH_SIZE		0x200000
 
@@ -136,10 +121,5 @@
 #define CONFIG_SYS_CS1_BASE		0x30000000
 #define CONFIG_SYS_CS1_CTRL		0x00001900
 #define CONFIG_SYS_CS1_MASK		0x00070001
-
-/*-----------------------------------------------------------------------
- * Port configuration
- */
-#define CONFIG_SYS_FECI2C		0x0FA0
 
 #endif	/* _M5275EVB_H */

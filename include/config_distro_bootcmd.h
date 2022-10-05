@@ -70,18 +70,25 @@
 #ifdef CONFIG_CMD_UBIFS
 #define BOOTENV_SHARED_UBIFS \
 	"ubifs_boot=" \
-		"env exists bootubipart || " \
-			"env set bootubipart UBI; " \
-		"env exists bootubivol || " \
-			"env set bootubivol boot; " \
-		"if ubi part ${bootubipart} && " \
-			"ubifsmount ubi${devnum}:${bootubivol}; " \
+		"if ubi part ${bootubipart} ${bootubioff} && " \
+			"ubifsmount ubi0:${bootubivol}; " \
 		"then " \
 			"devtype=ubi; " \
+			"devnum=ubi0; " \
+			"bootfstype=ubifs; " \
+			"distro_bootpart=${bootubivol}; " \
 			"run scan_dev_for_boot; " \
+			"ubifsumount; " \
 		"fi\0"
-#define BOOTENV_DEV_UBIFS	BOOTENV_DEV_BLKDEV
-#define BOOTENV_DEV_NAME_UBIFS	BOOTENV_DEV_NAME_BLKDEV
+#define BOOTENV_DEV_UBIFS_BOOTUBIOFF(off) #off /* type check, throw error when called with more args */
+#define BOOTENV_DEV_UBIFS(devtypeu, devtypel, instance, bootubipart, bootubivol, ...) \
+	"bootcmd_ubifs" #instance "=" \
+		"bootubipart=" #bootubipart "; " \
+		"bootubivol=" #bootubivol "; " \
+		"bootubioff=" BOOTENV_DEV_UBIFS_BOOTUBIOFF(__VA_ARGS__) "; " \
+		"run ubifs_boot\0"
+#define BOOTENV_DEV_NAME_UBIFS(devtypeu, devtypel, instance, ...) \
+	#devtypel #instance " "
 #else
 #define BOOTENV_SHARED_UBIFS
 #define BOOTENV_DEV_UBIFS \
@@ -411,13 +418,13 @@
 	BOOT_TARGET_DEVICES_references_PXE_without_CONFIG_CMD_DHCP_or_PXE
 #endif
 
-#define BOOTENV_DEV_NAME(devtypeu, devtypel, instance) \
-	BOOTENV_DEV_NAME_##devtypeu(devtypeu, devtypel, instance)
+#define BOOTENV_DEV_NAME(devtypeu, devtypel, instance, ...) \
+	BOOTENV_DEV_NAME_##devtypeu(devtypeu, devtypel, instance, ## __VA_ARGS__)
 #define BOOTENV_BOOT_TARGETS \
 	"boot_targets=" BOOT_TARGET_DEVICES(BOOTENV_DEV_NAME) "\0"
 
-#define BOOTENV_DEV(devtypeu, devtypel, instance) \
-	BOOTENV_DEV_##devtypeu(devtypeu, devtypel, instance)
+#define BOOTENV_DEV(devtypeu, devtypel, instance, ...) \
+	BOOTENV_DEV_##devtypeu(devtypeu, devtypel, instance, ## __VA_ARGS__)
 #define BOOTENV \
 	BOOTENV_SHARED_HOST \
 	BOOTENV_SHARED_MMC \

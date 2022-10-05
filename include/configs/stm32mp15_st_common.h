@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2021, STMicroelectronics - All Rights Reserved
  *
- * Configuration settings for the STMicroelectonics STM32MP15x boards
+ * Configuration settings for the STMicroelectronics STM32MP15x boards
  */
 
 #ifndef __CONFIG_STM32MP15_ST_COMMON_H__
@@ -48,7 +48,8 @@
 	ST_STM32MP1_BOOTCMD \
 	STM32MP_PARTS_DEFAULT \
 	BOOTENV \
-	STM32MP_EXTRA
+	STM32MP_EXTRA \
+	STM32MP_BOARD_EXTRA_ENV
 
 #endif
 #endif

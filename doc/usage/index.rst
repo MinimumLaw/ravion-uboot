@@ -33,6 +33,7 @@ Shell commands
    cmd/bootz
    cmd/cbsysinfo
    cmd/conitrace
+   cmd/dm
    cmd/echo
    cmd/env
    cmd/event
@@ -42,8 +43,11 @@ Shell commands
    cmd/false
    cmd/fatinfo
    cmd/fatload
+   cmd/fdt
    cmd/for
+   cmd/gpio
    cmd/load
+   cmd/loadm
    cmd/loady
    cmd/mbr
    cmd/md
@@ -53,11 +57,13 @@ Shell commands
    cmd/pstore
    cmd/qfw
    cmd/reset
+   cmd/rng
    cmd/sbi
    cmd/sf
    cmd/scp03
    cmd/setexpr
    cmd/size
+   cmd/tftpput
    cmd/true
    cmd/ums
    cmd/wdt

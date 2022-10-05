@@ -5,7 +5,7 @@
  *
  * (c) 2012 Daniel Stodden <daniel.stodden@gmail.com>
  * (c) 2021 Pali Rohár <pali@kernel.org>
- * (c) 2021 Marek Behún <marek.behun@nic.cz>
+ * (c) 2021 Marek Behún <kabel@kernel.org>
  *
  * References:
  * - "88F6180, 88F6190, 88F6192, and 88F6281: Integrated Controller: Functional
@@ -84,7 +84,7 @@ static unsigned char kwboot_msg_debug[] = {
 #define KWBOOT_MSG_RSP_TIMEO	50 /* ms */
 
 /* Defines known to work on Armada XP */
-#define KWBOOT_MSG_RSP_TIMEO_AXP	1000 /* ms */
+#define KWBOOT_MSG_RSP_TIMEO_AXP	10 /* ms */
 
 /*
  * Xmodem Transfers

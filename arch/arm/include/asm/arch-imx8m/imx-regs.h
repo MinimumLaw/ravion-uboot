@@ -27,6 +27,7 @@
 #define IOMUXC_GPR_BASE_ADDR	0x30340000
 #define OCOTP_BASE_ADDR		0x30350000
 #define ANATOP_BASE_ADDR	0x30360000
+#define SNVS_BASE_ADDR		0x30370000
 #define CCM_BASE_ADDR		0x30380000
 #define SRC_BASE_ADDR		0x30390000
 #define GPC_BASE_ADDR		0x303A0000
@@ -45,6 +46,7 @@
 #define UART4_BASE_ADDR		0x30A60000
 #define USDHC1_BASE_ADDR	0x30B40000
 #define USDHC2_BASE_ADDR	0x30B50000
+#define QSPI0_AMBA_BASE     0x08000000
 #ifdef CONFIG_IMX8MM
 #define USDHC3_BASE_ADDR	0x30B60000
 #endif
@@ -91,7 +93,6 @@
 #define CONFIG_SYS_FSL_JR0_OFFSET       (0x1000)
 #define CONFIG_SYS_FSL_JR0_ADDR         (CONFIG_SYS_FSL_SEC_ADDR + \
 					 CONFIG_SYS_FSL_JR0_OFFSET)
-#define CONFIG_SYS_FSL_MAX_NUM_OF_SEC   1
 #if !defined(__ASSEMBLY__)
 #include <asm/types.h>
 #include <linux/bitops.h>
@@ -112,6 +113,10 @@
 #define SRC_DDR1_RCR_PHY_RESET_MASK	BIT(2)
 #define SRC_DDR1_RCR_CORE_RESET_N_MASK	BIT(1)
 #define SRC_DDR1_RCR_PRESET_N_MASK	BIT(0)
+
+#define SNVS_LPSR			0x4c
+#define SNVS_LPLVDR			0x64
+#define SNVS_LPPGDR_INIT		0x41736166
 
 struct iomuxc_gpr_base_regs {
 	u32 gpr[47];
