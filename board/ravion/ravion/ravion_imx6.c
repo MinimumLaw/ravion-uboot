@@ -64,3 +64,15 @@ int board_init(void)
 #endif /* CONFIG_FEC_MXC */
 	return 0;
 }
+
+int board_late_init(void)
+{
+	/* check boot from USB */
+	if (is_boot_from_usb()) {
+		puts("USB Boot\n");
+		env_set("preboot","");
+		env_set("bootdelay","0");
+		env_set("bootcmd", "fastboot usb 0");
+	}
+	return 0;
+}
