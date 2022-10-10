@@ -140,7 +140,6 @@ SDRAM START - 0x1000 0000
 	"sataboot="\
 	"setenv blkname sata; " \
 	"setenv blkdev 0:1; " \
-	"sata init; " \
 	"run _scriptboot; run _blkdevboot\0"
 
 #ifdef CONFIG_MX6Q
