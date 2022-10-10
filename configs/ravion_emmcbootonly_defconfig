@@ -36,7 +36,7 @@ CONFIG_SUPPORT_RAW_INITRD=y
 CONFIG_SD_BOOT=y
 CONFIG_BOOTDELAY=-2
 CONFIG_USE_PREBOOT=y
-CONFIG_PREBOOT="usb start; sata init; sata devices; button Power && setenv bootdelay 3"
+CONFIG_PREBOOT="setenv bootdelay -2; usb start; sata init; sata devices; button Power && setenv bootdelay 3"
 CONFIG_DEFAULT_FDT_FILE="imx6qp-ravion-v2.dtb"
 CONFIG_SYS_CONSOLE_IS_IN_ENV=y
 # CONFIG_DISPLAY_BOARDINFO is not set

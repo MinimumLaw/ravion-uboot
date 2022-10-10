@@ -120,14 +120,16 @@ SDRAM START - 0x1000 0000
 
 /*
  * eMMC storage.
- * Boot syslinux.conf & script from SECOND partition (slow).
- * 1-st partition MUST contents working mode falcon files,
- * u-boot-dtb.img an uboot.env platform file
+ * Boot syslinux.conf & script from first and second (compatibe) partition(s).
  */
 #define EMMC_BOOTCMD \
 	"emmcboot=" \
 	"setenv blkname mmc && " \
 	"setenv blkdev 0:1 && " \
+	"run _scriptboot; run _blkdevboot\0" \
+	"emmcboot2=" \
+	"setenv blkname mmc && " \
+	"setenv blkdev 0:2 && " \
 	"run _scriptboot; run _blkdevboot\0"
 
 /*
@@ -158,11 +160,11 @@ SDRAM START - 0x1000 0000
 	    "run usbboot; " \
 	    "run sdboot; " \
 	    "run emmcboot; " \
+	    "run emmcboot2; " \
 	    "run sataboot; " \
 	    "ums 0 mmc 0\0" \
 	"server_path=/cimc/root/colibri-imx6\0" \
 	"boot_script_file=bscript.img\0" \
-	"boot_efi_file=EFI/BOOT/BOOTARM.EFI\0" \
 	"board_name=\0" \
 	VARIANT \
 	MEM_LAYOUT_ENV_SETTINGS \
