@@ -119,6 +119,23 @@ int spl_start_uboot(void)
 
 	return !!ret;
 }
+#else  /* !CONFIG_SPL_OS_BOOT*/
+
+/* No Falcon mode supported */
+void prepare_for_uboot(void)
+{
+	struct udevice *led_reset;
+
+	if (led_get_by_label("sys::nRESET", &led_reset)) {
+	    printf("SPL: system reset not found!\n");
+	    return;
+	};
+
+	if (led_set_state(led_reset, LEDST_ON)) {
+	    printf("SPL: reset activate failed!\n");
+	    return;
+	};
+}
 #endif /* CONFIG_SPL_OS_BOOT*/
 
 void board_boot_order(u32 *spl_boot_list)
@@ -401,5 +418,9 @@ void board_init_f(ulong dummy)
 	timer_init();			/* gpt-timer later will be in DM */
 	spl_early_init();		/* DM devices init...		*/
 	preloader_console_init();	/* 	... then start console	*/
+#if !defined CONFIG_SPL_OS_BOOT
+	/* Falcon mode disabled, just load U-Boot */
+	prepare_for_uboot();
+#endif
 	spl_dram_init();		/* Yeah! We REALLY require this in SPL. */
 }
