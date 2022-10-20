@@ -52,8 +52,6 @@ SDRAM START - 0x1000 0000
 #define CONFIG_MXC_UART_BASE		UART1_BASE  /* debug console */
 /* SPL MMC Configuration */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC3_BASE_ADDR
-/* SPL USB Configuration */
-#define CONFIG_SYS_USB_FAT_BOOT_PARTITION	1
 #else				/* UBOOT BULD */
 /* U-Bool default load address (16Mb block) */
 #define CONFIG_SYS_LOAD_ADDR		0x10400000 /* SDRAM_START + 4Mb */
@@ -62,15 +60,6 @@ SDRAM START - 0x1000 0000
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
-
-/* SATA */
-#ifdef CONFIG_CMD_SATA
-#define CONFIG_LBA48
-#endif
-/* I2C Configs */
-#define CONFIG_SYS_I2C_SPEED		100000
-/* USB Config (Host) */
-#define CONFIG_MXC_USB_PORTSC          (PORT_PTS_UTMI | PORT_PTS_PTW)
 
 #undef CONFIG_IPADDR
 #undef CONFIG_NETMASK
@@ -154,7 +143,8 @@ SDRAM START - 0x1000 0000
 	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2022\0" \
 	"__INF3__=License: GPL v2 and above, https://github.com/MinimumLaw\0" \
 	"board=kitsbimx6\0" \
-	"bootcmd=" \
+	"bootcmd=echo BOOT DONE\0" \
+	"distro_bootcmd=" \
 	    "run efiboot; " \
 	    "run usbboot; " \
 	    "run sdboot; " \
