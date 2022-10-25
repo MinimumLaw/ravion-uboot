@@ -262,6 +262,8 @@
 #include <linux/bitmap.h>
 #include <g_dnl.h>
 
+#include <watchdog.h>
+
 /*------------------------------------------------------------------------*/
 
 #define FSG_DRIVER_DESC	"Mass Storage Function"
@@ -2428,6 +2430,8 @@ int fsg_main_thread(void *common_)
 
 		if (!exception_in_progress(common))
 			common->state = FSG_STATE_IDLE;
+
+		WATCHDOG_RESET();
 	} while (0);
 
 	common->thread_task = NULL;
