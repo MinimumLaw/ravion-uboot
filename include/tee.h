@@ -39,6 +39,7 @@
 #define TEE_SUCCESS			0x00000000
 #define TEE_ERROR_STORAGE_NOT_AVAILABLE	0xf0100003
 #define TEE_ERROR_GENERIC		0xffff0000
+#define TEE_ERROR_EXCESS_DATA		0xffff0004
 #define TEE_ERROR_BAD_PARAMETERS	0xffff0006
 #define TEE_ERROR_ITEM_NOT_FOUND	0xffff0008
 #define TEE_ERROR_NOT_IMPLEMENTED	0xffff0009
@@ -307,11 +308,22 @@ bool tee_shm_is_registered(struct tee_shm *shm, struct udevice *dev);
  * Returns a probed TEE device of the first TEE device matched by the
  * match() callback or NULL.
  */
+#if CONFIG_IS_ENABLED(TEE)
 struct udevice *tee_find_device(struct udevice *start,
 				int (*match)(struct tee_version_data *vers,
 					     const void *data),
 				const void *data,
 				struct tee_version_data *vers);
+#else
+static inline struct udevice *tee_find_device(struct udevice *start,
+					      int (*match)(struct tee_version_data *vers,
+							   const void *data),
+					      const void *data,
+					      struct tee_version_data *vers)
+{
+	return NULL;
+}
+#endif
 
 /**
  * tee_get_version() - Query capabilities of TEE device
@@ -376,5 +388,11 @@ void tee_optee_ta_uuid_from_octets(struct tee_optee_ta_uuid *d,
  */
 void tee_optee_ta_uuid_to_octets(u8 d[TEE_UUID_LEN],
 				 const struct tee_optee_ta_uuid *s);
+
+/**
+ * tee_flush_all_shm_dcache() - Flush data cache for all shared memories
+ * @dev:	The TEE device
+ */
+void tee_flush_all_shm_dcache(struct udevice *dev);
 
 #endif /* __TEE_H */

@@ -7,7 +7,7 @@
 #ifndef __FDT_SUPPORT_H
 #define __FDT_SUPPORT_H
 
-#ifdef CONFIG_OF_LIBFDT
+#if defined(CONFIG_OF_LIBFDT) && !defined(USE_HOSTCC)
 
 #include <asm/u-boot.h>
 #include <linux/libfdt.h>
@@ -160,11 +160,12 @@ static inline void fdt_fixup_crypto_node(void *blob, int sec_rev) {}
  * @param entry_point   entry point (if specified, otherwise pass -1)
  * @param type          type (if specified, otherwise pass NULL)
  * @param os            os-type (if specified, otherwise pass NULL)
+ * @param arch		architecture (if specified, otherwise pass NULL)
  * @return 0 if ok, or -1 or -FDT_ERR_... on error
  */
 int fdt_record_loadable(void *blob, u32 index, const char *name,
 			uintptr_t load_addr, u32 size, uintptr_t entry_point,
-			const char *type, const char *os);
+			const char *type, const char *os, const char *arch);
 
 #ifdef CONFIG_PCI
 #include <pci.h>
@@ -202,8 +203,6 @@ char *board_fdt_chosen_bootargs(void);
  * called at the end of the image_setup_libfdt() is to do that convertion.
  */
 void ft_board_setup_ex(void *blob, struct bd_info *bd);
-void ft_cpu_setup(void *blob, struct bd_info *bd);
-void ft_pci_setup(void *blob, struct bd_info *bd);
 
 /**
  * Add system-specific data to the FDT before booting the OS.

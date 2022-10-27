@@ -32,6 +32,8 @@ struct udevice;
 #define TPM2_MAX_TPM_PROPERTIES ((TPM2_MAX_CAP_BUFFER - sizeof(u32) /* TPM2_CAP */ - \
 				 sizeof(u32)) / sizeof(struct tpms_tagged_property))
 
+#define TPM2_HDR_LEN		10
+
 /*
  *  We deviate from this draft of the specification by increasing the value of
  *  TPM2_NUM_PCR_BANKS from 3 to 16 to ensure compatibility with TPM2
@@ -73,7 +75,7 @@ struct udevice;
 /*
  * event types, cf.
  * "TCG PC Client Platform Firmware Profile Specification", Family "2.0"
- * rev 1.04, June 3, 2019
+ * Level 00 Version 1.05 Revision 23, May 7, 2021
  */
 #define EV_EFI_EVENT_BASE			((u32)0x80000000)
 #define EV_EFI_VARIABLE_DRIVER_CONFIG		((u32)0x80000001)
@@ -85,8 +87,24 @@ struct udevice;
 #define EV_EFI_ACTION				((u32)0x80000007)
 #define EV_EFI_PLATFORM_FIRMWARE_BLOB		((u32)0x80000008)
 #define EV_EFI_HANDOFF_TABLES			((u32)0x80000009)
+#define EV_EFI_PLATFORM_FIRMWARE_BLOB2		((u32)0x8000000A)
+#define EV_EFI_HANDOFF_TABLES2			((u32)0x8000000B)
+#define EV_EFI_VARIABLE_BOOT2			((u32)0x8000000C)
 #define EV_EFI_HCRTM_EVENT			((u32)0x80000010)
 #define EV_EFI_VARIABLE_AUTHORITY		((u32)0x800000E0)
+#define EV_EFI_SPDM_FIRMWARE_BLOB		((u32)0x800000E1)
+#define EV_EFI_SPDM_FIRMWARE_CONFIG		((u32)0x800000E2)
+
+#define EFI_CALLING_EFI_APPLICATION         \
+	"Calling EFI Application from Boot Option"
+#define EFI_RETURNING_FROM_EFI_APPLICATION  \
+	"Returning from EFI Application from Boot Option"
+#define EFI_EXIT_BOOT_SERVICES_INVOCATION   \
+	"Exit Boot Services Invocation"
+#define EFI_EXIT_BOOT_SERVICES_FAILED       \
+	"Exit Boot Services Returned with Failure"
+#define EFI_EXIT_BOOT_SERVICES_SUCCEEDED    \
+	"Exit Boot Services Returned with Success"
 
 /* TPMS_TAGGED_PROPERTY Structure */
 struct tpms_tagged_property {
@@ -378,6 +396,7 @@ enum {
 	TPM_STS_DATA_EXPECT		= 1 << 3,
 	TPM_STS_SELF_TEST_DONE		= 1 << 2,
 	TPM_STS_RESPONSE_RETRY		= 1 << 1,
+	TPM_STS_READ_ZERO               = 0x23
 };
 
 enum {
@@ -493,13 +512,16 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
  * @dev		TPM device
  * @idx		Index of the PCR
  * @idx_min_sz	Minimum size in bytes of the pcrSelect array
+ * @algorithm	Algorithm used, defined in 'enum tpm2_algorithms'
  * @data	Output buffer for contents of the named PCR
+ * @digest_len  len of the data
  * @updates	Optional out parameter: number of updates for this PCR
  *
  * @return code of the operation
  */
 u32 tpm2_pcr_read(struct udevice *dev, u32 idx, unsigned int idx_min_sz,
-		  void *data, unsigned int *updates);
+		  u16 algorithm, void *data, u32 digest_len,
+		  unsigned int *updates);
 
 /**
  * Issue a TPM2_GetCapability command.  This implementation is limited
@@ -622,5 +644,18 @@ u32 tpm2_write_lock(struct udevice *dev, u32 index);
  * @return code of the operation
  */
 u32 tpm2_disable_platform_hierarchy(struct udevice *dev);
+
+/**
+ * submit user specified data to the TPM and get response
+ *
+ * @dev		TPM device
+ * @sendbuf:	Buffer of the data to send
+ * @recvbuf:	Buffer to save the response to
+ * @recv_size:	Pointer to the size of the response buffer
+ *
+ * @return code of the operation
+ */
+u32 tpm2_submit_command(struct udevice *dev, const u8 *sendbuf,
+			u8 *recvbuf, size_t *recv_size);
 
 #endif /* __TPM_V2_H */

@@ -229,8 +229,11 @@ static inline void fill_smbios_header(void *table, int type,
  * This writes SMBIOS table at a given address.
  *
  * @addr:	start address to write SMBIOS table. If this is not
- *	16-byte-aligned then it will be aligned before the table is written
- * @return:	end address of SMBIOS table (and start address for next entry)
+ *		16-byte-aligned then it will be aligned before the table is
+ *		written.
+ * Return:	end address of SMBIOS table (and start address for next entry)
+ *		or NULL in case of an error
+ *
  */
 ulong write_smbios_table(ulong addr);
 
@@ -257,9 +260,9 @@ const struct smbios_header *smbios_header(const struct smbios_entry *entry, int 
  *
  * @header:    pointer to struct smbios_header
  * @index:     string index
- * @return:    NULL or a valid const char pointer
+ * @return:    NULL or a valid char pointer
  */
-const char *smbios_string(const struct smbios_header *header, int index);
+char *smbios_string(const struct smbios_header *header, int index);
 
 /**
  * smbios_update_version() - Update the version string
@@ -288,5 +291,18 @@ int smbios_update_version(const char *version);
  *	-ENOSPC if the new string is too large to fit
  */
 int smbios_update_version_full(void *smbios_tab, const char *version);
+
+/**
+ * smbios_prepare_measurement() - Update smbios table for the measurement
+ *
+ * TCG specification requires to measure static configuration information.
+ * This function clear the device dependent parameters such as
+ * serial number for the measurement.
+ *
+ * @entry: pointer to a struct smbios_entry
+ * @header: pointer to a struct smbios_header
+ */
+void smbios_prepare_measurement(const struct smbios_entry *entry,
+				struct smbios_header *header);
 
 #endif /* _SMBIOS_H_ */

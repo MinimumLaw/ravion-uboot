@@ -3,13 +3,14 @@
 # (C) Copyright 2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
+obj-y += phy/
+
 obj-$(CONFIG_ALTERA_TSE) += altera_tse.o
 obj-$(CONFIG_AG7XXX) += ag7xxx.o
 obj-$(CONFIG_ARMADA100_FEC) += armada100_fec.o
 obj-$(CONFIG_BCM6348_ETH) += bcm6348-eth.o
 obj-$(CONFIG_BCM6368_ETH) += bcm6368-eth.o
 obj-$(CONFIG_BCMGENET) += bcmgenet.o
-obj-$(CONFIG_DRIVER_AT91EMAC) += at91_emac.o
 obj-$(CONFIG_DRIVER_AX88180) += ax88180.o
 obj-$(CONFIG_BCM_SF2_ETH) += bcm-sf2-eth.o
 obj-$(CONFIG_BCM_SF2_ETH_GMAC) += bcm-sf2-eth-gmac.o
@@ -33,12 +34,14 @@ obj-$(CONFIG_SUN8I_EMAC) += sun8i_emac.o
 obj-$(CONFIG_EP93XX) += ep93xx_eth.o
 obj-$(CONFIG_ETHOC) += ethoc.o
 obj-$(CONFIG_FEC_MXC) += fec_mxc.o
+obj-$(CONFIG_FMAN_ENET) += fm/
 obj-$(CONFIG_FSLDMAFEC) += fsl_mcdmafec.o mcfmii.o
 obj-$(CONFIG_FTGMAC100) += ftgmac100.o
 obj-$(CONFIG_FTMAC110) += ftmac110.o
 obj-$(CONFIG_FTMAC100) += ftmac100.o
 obj-$(CONFIG_GMAC_ROCKCHIP) += gmac_rockchip.o
 obj-$(CONFIG_KS8851_MLL) += ks8851_mll.o
+obj-$(CONFIG_KSZ9477) += ksz9477.o
 obj-$(CONFIG_LAN91C96) += lan91c96.o
 obj-$(CONFIG_LPC32XX_ETH) += lpc32xx_eth.o
 obj-$(CONFIG_MACB) += macb.o
@@ -78,6 +81,7 @@ obj-$(CONFIG_FMAN_ENET) += fsl_mdio.o
 obj-$(CONFIG_ULI526X) += uli526x.o
 obj-$(CONFIG_VSC7385_ENET) += vsc7385.o
 obj-$(CONFIG_XILINX_AXIEMAC) += xilinx_axi_emac.o
+obj-$(CONFIG_XILINX_AXIMRMAC) += xilinx_axi_mrmac.o
 obj-$(CONFIG_XILINX_EMACLITE) += xilinx_emaclite.o
 obj-$(CONFIG_ZYNQ_GEM) += zynq_gem.o
 obj-$(CONFIG_FSL_MC_ENET) += fsl-mc/

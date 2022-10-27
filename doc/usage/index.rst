@@ -9,6 +9,7 @@ Use U-Boot
    fit
    netconsole
    partitions
+   cmdline
 
 Shell commands
 --------------
@@ -43,6 +44,7 @@ Shell commands
    reset
    sbi
    scp03
+   setexpr
    size
    true
    ums

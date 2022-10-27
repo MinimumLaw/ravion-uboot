@@ -39,6 +39,9 @@
 #define     PCIE_CORE_CMD_IO_ACCESS_EN				BIT(0)
 #define     PCIE_CORE_CMD_MEM_ACCESS_EN				BIT(1)
 #define     PCIE_CORE_CMD_MEM_IO_REQ_EN				BIT(2)
+#define PCIE_CORE_DEV_REV_REG					0x8
+#define PCIE_CORE_EXP_ROM_BAR_REG				0x30
+#define PCIE_CORE_PCIEXP_CAP_OFF				0xc0
 #define PCIE_CORE_DEV_CTRL_STATS_REG				0xc8
 #define     PCIE_CORE_DEV_CTRL_STATS_RELAX_ORDER_DISABLE	(0 << 4)
 #define     PCIE_CORE_DEV_CTRL_STATS_SNOOP_DISABLE		(0 << 11)
@@ -145,6 +148,7 @@
 #define     LTSSM_SHIFT				24
 #define     LTSSM_MASK				0x3f
 #define     LTSSM_L0				0x10
+#define     LTSSM_DISABLED			0x20
 #define VENDOR_ID_REG				(LMI_BASE_ADDR + 0x44)
 
 /* PCIe core controller registers */
@@ -162,7 +166,7 @@
 #define PCIE_CONFIG_WR_TYPE1			0xb
 
 /* PCI_BDF shifts 8bit, so we need extra 4bit shift */
-#define PCIE_BDF(dev)				(dev << 4)
+#define PCIE_BDF(b, d, f)			(PCI_BDF(b, d, f) << 4)
 #define PCIE_CONF_BUS(bus)			(((bus) & 0xff) << 20)
 #define PCIE_CONF_DEV(dev)			(((dev) & 0x1f) << 15)
 #define PCIE_CONF_FUNC(fun)			(((fun) & 0x7)	<< 12)
@@ -177,24 +181,29 @@
 #define LINK_MAX_RETRIES			10
 #define LINK_WAIT_TIMEOUT			100000
 
-#define CFG_RD_UR_VAL			0xFFFFFFFF
 #define CFG_RD_CRS_VAL			0xFFFF0001
 
 /**
  * struct pcie_advk - Advk PCIe controller state
  *
- * @reg_base:    The base address of the register space.
- * @first_busno: This driver supports multiple PCIe controllers.
- *               first_busno stores the bus number of the PCIe root-port
- *               number which may vary depending on the PCIe setup
- *               (PEX switches etc).
- * @device:      The pointer to PCI uclass device.
+ * @base:        The base address of the register space.
+ * @first_busno: Bus number of the PCIe root-port.
+ *               This may vary depending on the PCIe setup.
+ * @sec_busno:   Bus number for the device behind the PCIe root-port.
+ * @dev:         The pointer to PCI uclass device.
+ * @reset_gpio:  GPIO descriptor for PERST.
+ * @cfgcache:    Buffer for emulation of PCIe Root Port's PCI Bridge registers
+ *               that are not available on Aardvark.
+ * @cfgcrssve:   For CRSSVE emulation.
  */
 struct pcie_advk {
-	void           *base;
-	int            first_busno;
-	struct udevice *dev;
-	struct gpio_desc reset_gpio;
+	void			*base;
+	int			first_busno;
+	int			sec_busno;
+	struct udevice		*dev;
+	struct gpio_desc	reset_gpio;
+	u32			cfgcache[(0x3c - 0x10) / 4];
+	bool			cfgcrssve;
 };
 
 static inline void advk_writel(struct pcie_advk *pcie, uint val, uint reg)
@@ -210,22 +219,30 @@ static inline uint advk_readl(struct pcie_advk *pcie, uint reg)
 /**
  * pcie_advk_addr_valid() - Check for valid bus address
  *
+ * @pcie: Pointer to the PCI bus
+ * @busno: Bus number of PCI device
+ * @dev: Device number of PCI device
+ * @func: Function number of PCI device
  * @bdf: The PCI device to access
- * @first_busno: Bus number of the PCIe controller root complex
  *
- * Return: 1 on valid, 0 on invalid
+ * Return: true on valid, false on invalid
  */
-static int pcie_advk_addr_valid(pci_dev_t bdf, int first_busno)
+static bool pcie_advk_addr_valid(struct pcie_advk *pcie,
+				 int busno, u8 dev, u8 func)
 {
-	/*
-	 * In PCIE-E only a single device (0) can exist
-	 * on the local bus. Beyound the local bus, there might be
-	 * a Switch and everything is possible.
-	 */
-	if ((PCI_BUS(bdf) == first_busno) && (PCI_DEV(bdf) > 0))
-		return 0;
+	/* On the primary (local) bus there is only one PCI Bridge */
+	if (busno == pcie->first_busno && (dev != 0 || func != 0))
+		return false;
 
-	return 1;
+	/*
+	 * In PCI-E only a single device (0) can exist on the secondary bus.
+	 * Beyond the secondary bus, there might be a Switch and anything is
+	 * possible.
+	 */
+	if (busno == pcie->sec_busno && dev != 0)
+		return false;
+
+	return true;
 }
 
 /**
@@ -235,19 +252,19 @@ static int pcie_advk_addr_valid(pci_dev_t bdf, int first_busno)
  *
  * Wait up to 1.5 seconds for PIO access to be accomplished.
  *
- * Return 1 (true) if PIO access is accomplished.
- * Return 0 (false) if PIO access is timed out.
+ * Return positive - retry count if PIO access is accomplished.
+ * Return negative - error if PIO access is timed out.
  */
 static int pcie_advk_wait_pio(struct pcie_advk *pcie)
 {
 	uint start, isr;
 	uint count;
 
-	for (count = 0; count < PIO_MAX_RETRIES; count++) {
+	for (count = 1; count <= PIO_MAX_RETRIES; count++) {
 		start = advk_readl(pcie, PIO_START);
 		isr = advk_readl(pcie, PIO_ISR);
 		if (!start && isr)
-			return 1;
+			return count;
 		/*
 		 * Do not check the PIO state too frequently,
 		 * 100us delay is appropriate.
@@ -256,21 +273,23 @@ static int pcie_advk_wait_pio(struct pcie_advk *pcie)
 	}
 
 	dev_err(pcie->dev, "PIO read/write transfer time out\n");
-	return 0;
+	return -ETIMEDOUT;
 }
 
 /**
  * pcie_advk_check_pio_status() - Validate PIO status and get the read result
  *
  * @pcie: Pointer to the PCI bus
- * @read: Read from or write to configuration space - true(read) false(write)
- * @read_val: Pointer to the read result, only valid when read is true
+ * @allow_crs: Only for read requests, if CRS response is allowed
+ * @read_val: Pointer to the read result
  *
+ * Return: 0 on success
  */
 static int pcie_advk_check_pio_status(struct pcie_advk *pcie,
-				      bool read,
+				      bool allow_crs,
 				      uint *read_val)
 {
+	int ret;
 	uint reg;
 	unsigned int status;
 	char *strcomp_status, *str_posted;
@@ -283,53 +302,54 @@ static int pcie_advk_check_pio_status(struct pcie_advk *pcie,
 	case PIO_COMPLETION_STATUS_OK:
 		if (reg & PIO_ERR_STATUS) {
 			strcomp_status = "COMP_ERR";
+			ret = -EFAULT;
 			break;
 		}
 		/* Get the read result */
-		if (read)
+		if (read_val)
 			*read_val = advk_readl(pcie, PIO_RD_DATA);
 		/* No error */
 		strcomp_status = NULL;
+		ret = 0;
 		break;
 	case PIO_COMPLETION_STATUS_UR:
-		if (read) {
-			/* For reading, UR is not an error status. */
-			*read_val = CFG_RD_UR_VAL;
-			strcomp_status = NULL;
-		} else {
-			strcomp_status = "UR";
-		}
+		strcomp_status = "UR";
+		ret = -EOPNOTSUPP;
 		break;
 	case PIO_COMPLETION_STATUS_CRS:
-		if (read) {
+		if (allow_crs && read_val) {
 			/* For reading, CRS is not an error status. */
 			*read_val = CFG_RD_CRS_VAL;
 			strcomp_status = NULL;
+			ret = 0;
 		} else {
 			strcomp_status = "CRS";
+			ret = -EAGAIN;
 		}
 		break;
 	case PIO_COMPLETION_STATUS_CA:
 		strcomp_status = "CA";
+		ret = -ECANCELED;
 		break;
 	default:
 		strcomp_status = "Unknown";
+		ret = -EINVAL;
 		break;
 	}
 
 	if (!strcomp_status)
-		return 0;
+		return ret;
 
 	if (reg & PIO_NON_POSTED_REQ)
 		str_posted = "Non-posted";
 	else
 		str_posted = "Posted";
 
-	dev_err(pcie->dev, "%s PIO Response Status: %s, %#x @ %#x\n",
+	dev_dbg(pcie->dev, "%s PIO Response Status: %s, %#x @ %#x\n",
 		str_posted, strcomp_status, reg,
 		advk_readl(pcie, PIO_ADDR_LS));
 
-	return -EFAULT;
+	return ret;
 }
 
 /**
@@ -352,56 +372,135 @@ static int pcie_advk_read_config(const struct udevice *bus, pci_dev_t bdf,
 				 enum pci_size_t size)
 {
 	struct pcie_advk *pcie = dev_get_priv(bus);
+	int busno = PCI_BUS(bdf) - dev_seq(bus);
+	int retry_count;
+	bool allow_crs;
+	ulong data;
 	uint reg;
 	int ret;
 
 	dev_dbg(pcie->dev, "PCIE CFG read:  (b,d,f)=(%2d,%2d,%2d) ",
 		PCI_BUS(bdf), PCI_DEV(bdf), PCI_FUNC(bdf));
 
-	if (!pcie_advk_addr_valid(bdf, pcie->first_busno)) {
+	if (!pcie_advk_addr_valid(pcie, busno, PCI_DEV(bdf), PCI_FUNC(bdf))) {
 		dev_dbg(pcie->dev, "- out of range\n");
 		*valuep = pci_get_ff(size);
 		return 0;
 	}
 
+	/*
+	 * The configuration space of the PCI Bridge on primary (first) bus is
+	 * not accessible via PIO transfers like all other PCIe devices. PCI
+	 * Bridge config registers are available directly in Aardvark memory
+	 * space starting at offset zero. The PCI Bridge config space is of
+	 * Type 0, but the BAR registers (including ROM BAR) don't have the same
+	 * meaning as in the PCIe specification. Therefore do not access BAR
+	 * registers and non-common registers (those which have different
+	 * meaning for Type 0 and Type 1 config space) of the primary PCI Bridge
+	 * and instead read their content from driver virtual cfgcache[].
+	 */
+	if (busno == pcie->first_busno) {
+		if ((offset >= 0x10 && offset < 0x34) || (offset >= 0x38 && offset < 0x3c))
+			data = pcie->cfgcache[(offset - 0x10) / 4];
+		else
+			data = advk_readl(pcie, offset & ~3);
+
+		if ((offset & ~3) == (PCI_HEADER_TYPE & ~3)) {
+			/*
+			 * Change Header Type of PCI Bridge device to Type 1
+			 * (0x01, used by PCI Bridges) because hardwired value
+			 * is Type 0 (0x00, used by Endpoint devices).
+			 */
+			data &= ~0x007f0000;
+			data |= PCI_HEADER_TYPE_BRIDGE << 16;
+		}
+
+		if ((offset & ~3) == PCIE_CORE_PCIEXP_CAP_OFF + PCI_EXP_RTCTL) {
+			/* CRSSVE bit is stored only in cache */
+			if (pcie->cfgcrssve)
+				data |= PCI_EXP_RTCTL_CRSSVE;
+		}
+
+		if ((offset & ~3) == PCIE_CORE_PCIEXP_CAP_OFF +
+				     (PCI_EXP_RTCAP & ~3)) {
+			/* CRS is emulated below, so set CRSVIS capability */
+			data |= PCI_EXP_RTCAP_CRSVIS << 16;
+		}
+
+		*valuep = pci_conv_32_to_size(data, offset, size);
+
+		return 0;
+	}
+
+	/*
+	 * Returning fabricated CRS value (0xFFFF0001) by PCIe Root Complex to
+	 * OS is allowed only for 4-byte PCI_VENDOR_ID config read request and
+	 * only when CRSSVE bit in Root Port PCIe device is enabled. In all
+	 * other error PCIe Root Complex must return all-ones.
+	 *
+	 * U-Boot currently does not support handling of CRS return value for
+	 * PCI_VENDOR_ID config read request and also does not set CRSSVE bit.
+	 * So it means that pcie->cfgcrssve is false. But the code is prepared
+	 * for returning CRS, so that if U-Boot does support CRS in the future,
+	 * it will work for Aardvark.
+	 */
+	allow_crs = (offset == PCI_VENDOR_ID) && (size == PCI_SIZE_32) && pcie->cfgcrssve;
+
 	if (advk_readl(pcie, PIO_START)) {
 		dev_err(pcie->dev,
 			"Previous PIO read/write transfer is still running\n");
-		if (offset != PCI_VENDOR_ID)
-			return -EINVAL;
-		*valuep = CFG_RD_CRS_VAL;
-		return 0;
+		if (allow_crs) {
+			*valuep = CFG_RD_CRS_VAL;
+			return 0;
+		}
+		*valuep = pci_get_ff(size);
+		return -EAGAIN;
 	}
 
 	/* Program the control register */
 	reg = advk_readl(pcie, PIO_CTRL);
 	reg &= ~PIO_CTRL_TYPE_MASK;
-	if (PCI_BUS(bdf) == pcie->first_busno)
+	if (busno == pcie->sec_busno)
 		reg |= PCIE_CONFIG_RD_TYPE0;
 	else
 		reg |= PCIE_CONFIG_RD_TYPE1;
 	advk_writel(pcie, reg, PIO_CTRL);
 
 	/* Program the address registers */
-	reg = PCIE_BDF(bdf) | PCIE_CONF_REG(offset);
+	reg = PCIE_BDF(busno, PCI_DEV(bdf), PCI_FUNC(bdf)) | PCIE_CONF_REG(offset);
 	advk_writel(pcie, reg, PIO_ADDR_LS);
 	advk_writel(pcie, 0, PIO_ADDR_MS);
 
+	/* Program the data strobe */
+	advk_writel(pcie, 0xf, PIO_WR_DATA_STRB);
+
+	retry_count = 0;
+
+retry:
 	/* Start the transfer */
 	advk_writel(pcie, 1, PIO_ISR);
 	advk_writel(pcie, 1, PIO_START);
 
-	if (!pcie_advk_wait_pio(pcie)) {
-		if (offset != PCI_VENDOR_ID)
-			return -EINVAL;
-		*valuep = CFG_RD_CRS_VAL;
-		return 0;
+	ret = pcie_advk_wait_pio(pcie);
+	if (ret < 0) {
+		if (allow_crs) {
+			*valuep = CFG_RD_CRS_VAL;
+			return 0;
+		}
+		*valuep = pci_get_ff(size);
+		return ret;
 	}
 
+	retry_count += ret;
+
 	/* Check PIO status and get the read result */
-	ret = pcie_advk_check_pio_status(pcie, true, &reg);
-	if (ret)
+	ret = pcie_advk_check_pio_status(pcie, allow_crs, &reg);
+	if (ret == -EAGAIN && retry_count < PIO_MAX_RETRIES)
+		goto retry;
+	if (ret) {
+		*valuep = pci_get_ff(size);
 		return ret;
+	}
 
 	dev_dbg(pcie->dev, "(addr,size,val)=(0x%04x, %d, 0x%08x)\n",
 		offset, size, reg);
@@ -459,35 +558,75 @@ static int pcie_advk_write_config(struct udevice *bus, pci_dev_t bdf,
 				  enum pci_size_t size)
 {
 	struct pcie_advk *pcie = dev_get_priv(bus);
+	int busno = PCI_BUS(bdf) - dev_seq(bus);
+	int retry_count;
+	ulong data;
 	uint reg;
+	int ret;
 
 	dev_dbg(pcie->dev, "PCIE CFG write: (b,d,f)=(%2d,%2d,%2d) ",
 		PCI_BUS(bdf), PCI_DEV(bdf), PCI_FUNC(bdf));
 	dev_dbg(pcie->dev, "(addr,size,val)=(0x%04x, %d, 0x%08lx)\n",
 		offset, size, value);
 
-	if (!pcie_advk_addr_valid(bdf, pcie->first_busno)) {
+	if (!pcie_advk_addr_valid(pcie, busno, PCI_DEV(bdf), PCI_FUNC(bdf))) {
 		dev_dbg(pcie->dev, "- out of range\n");
+		return 0;
+	}
+
+	/*
+	 * As explained in pcie_advk_read_config(), PCI Bridge config registers
+	 * are available directly in Aardvark memory space starting at offset
+	 * zero. Type 1 specific registers are not available, so we write their
+	 * content only into driver virtual cfgcache[].
+	 */
+	if (busno == pcie->first_busno) {
+		if ((offset >= 0x10 && offset < 0x34) ||
+		    (offset >= 0x38 && offset < 0x3c)) {
+			data = pcie->cfgcache[(offset - 0x10) / 4];
+			data = pci_conv_size_to_32(data, value, offset, size);
+			/* This PCI bridge does not have configurable bars */
+			if ((offset & ~3) == PCI_BASE_ADDRESS_0 ||
+			    (offset & ~3) == PCI_BASE_ADDRESS_1 ||
+			    (offset & ~3) == PCI_ROM_ADDRESS1)
+				data = 0x0;
+			pcie->cfgcache[(offset - 0x10) / 4] = data;
+		} else {
+			data = advk_readl(pcie, offset & ~3);
+			data = pci_conv_size_to_32(data, value, offset, size);
+			advk_writel(pcie, data, offset & ~3);
+		}
+
+		if (offset == PCI_PRIMARY_BUS)
+			pcie->first_busno = data & 0xff;
+
+		if (offset == PCI_SECONDARY_BUS ||
+		    (offset == PCI_PRIMARY_BUS && size != PCI_SIZE_8))
+			pcie->sec_busno = (data >> 8) & 0xff;
+
+		if ((offset & ~3) == PCIE_CORE_PCIEXP_CAP_OFF + PCI_EXP_RTCTL)
+			pcie->cfgcrssve = data & PCI_EXP_RTCTL_CRSSVE;
+
 		return 0;
 	}
 
 	if (advk_readl(pcie, PIO_START)) {
 		dev_err(pcie->dev,
 			"Previous PIO read/write transfer is still running\n");
-		return -EINVAL;
+		return -EAGAIN;
 	}
 
 	/* Program the control register */
 	reg = advk_readl(pcie, PIO_CTRL);
 	reg &= ~PIO_CTRL_TYPE_MASK;
-	if (PCI_BUS(bdf) == pcie->first_busno)
+	if (busno == pcie->sec_busno)
 		reg |= PCIE_CONFIG_WR_TYPE0;
 	else
 		reg |= PCIE_CONFIG_WR_TYPE1;
 	advk_writel(pcie, reg, PIO_CTRL);
 
 	/* Program the address registers */
-	reg = PCIE_BDF(bdf) | PCIE_CONF_REG(offset);
+	reg = PCIE_BDF(busno, PCI_DEV(bdf), PCI_FUNC(bdf)) | PCIE_CONF_REG(offset);
 	advk_writel(pcie, reg, PIO_ADDR_LS);
 	advk_writel(pcie, 0, PIO_ADDR_MS);
 	dev_dbg(pcie->dev, "\tPIO req. - addr = 0x%08x\n", reg);
@@ -502,18 +641,24 @@ static int pcie_advk_write_config(struct udevice *bus, pci_dev_t bdf,
 	advk_writel(pcie, reg, PIO_WR_DATA_STRB);
 	dev_dbg(pcie->dev, "\tPIO req. - strb = 0x%02x\n", reg);
 
+	retry_count = 0;
+
+retry:
 	/* Start the transfer */
 	advk_writel(pcie, 1, PIO_ISR);
 	advk_writel(pcie, 1, PIO_START);
 
-	if (!pcie_advk_wait_pio(pcie)) {
-		return -EINVAL;
-	}
+	ret = pcie_advk_wait_pio(pcie);
+	if (ret < 0)
+		return ret;
+
+	retry_count += ret;
 
 	/* Check PIO status */
-	pcie_advk_check_pio_status(pcie, false, &reg);
-
-	return 0;
+	ret = pcie_advk_check_pio_status(pcie, false, NULL);
+	if (ret == -EAGAIN && retry_count < PIO_MAX_RETRIES)
+		goto retry;
+	return ret;
 }
 
 /**
@@ -530,7 +675,7 @@ static int pcie_advk_link_up(struct pcie_advk *pcie)
 
 	val = advk_readl(pcie, CFG_REG);
 	ltssm_state = (val >> LTSSM_SHIFT) & LTSSM_MASK;
-	return ltssm_state >= LTSSM_L0;
+	return ltssm_state >= LTSSM_L0 && ltssm_state < LTSSM_DISABLED;
 }
 
 /**
@@ -550,14 +695,14 @@ static int pcie_advk_wait_for_link(struct pcie_advk *pcie)
 	/* check if the link is up or not */
 	for (retries = 0; retries < LINK_MAX_RETRIES; retries++) {
 		if (pcie_advk_link_up(pcie)) {
-			printf("PCIE-%d: Link up\n", pcie->first_busno);
+			printf("PCIe: Link up\n");
 			return 0;
 		}
 
 		udelay(LINK_WAIT_TIMEOUT);
 	}
 
-	printf("PCIE-%d: Link down\n", pcie->first_busno);
+	printf("PCIe: Link down\n");
 
 	return -ETIMEDOUT;
 }
@@ -605,25 +750,26 @@ static void pcie_advk_set_ob_region(struct pcie_advk *pcie, int *wins,
 
 	/*
 	 * The n-th PCIe window is configured by tuple (match, remap, mask)
-	 * and an access to address A uses this window it if A matches the
+	 * and an access to address A uses this window if A matches the
 	 * match with given mask.
 	 * So every PCIe window size must be a power of two and every start
 	 * address must be aligned to window size. Minimal size is 64 KiB
-	 * because lower 16 bits of mask must be zero.
+	 * because lower 16 bits of mask must be zero. Remapped address
+	 * may have set only bits from the mask.
 	 */
 	while (*wins < OB_WIN_COUNT && size > 0) {
 		/* Calculate the largest aligned window size */
 		win_size = (1ULL << (fls64(size) - 1)) |
 			   (phys_start ? (1ULL << __ffs64(phys_start)) : 0);
 		win_size = 1ULL << __ffs64(win_size);
-		if (win_size < 0x10000)
+		win_mask = ~(win_size - 1);
+		if (win_size < 0x10000 || (bus_start & ~win_mask))
 			break;
 
 		dev_dbg(pcie->dev,
 			"Configuring PCIe window %d: [0x%llx-0x%llx] as 0x%x\n",
 			*wins, (u64)phys_start, (u64)phys_start + win_size,
 			actions);
-		win_mask = ~(win_size - 1) & ~0xffff;
 		pcie_advk_set_ob_win(pcie, *wins, phys_start, bus_start,
 				     win_mask, actions);
 
@@ -674,6 +820,33 @@ static int pcie_advk_setup_hw(struct pcie_advk *pcie)
 	 * for erratum 4.1: "The value of device and vendor ID is incorrect".
 	 */
 	advk_writel(pcie, 0x11ab11ab, VENDOR_ID_REG);
+
+	/*
+	 * Change Class Code of PCI Bridge device to PCI Bridge (0x600400),
+	 * because default value is Mass Storage Controller (0x010400), causing
+	 * U-Boot to fail to recognize it as P2P Bridge.
+	 *
+	 * Note that this Aardvark PCI Bridge does not have a compliant Type 1
+	 * Configuration Space and it even cannot be accessed via Aardvark's
+	 * PCI config space access method. Aardvark PCI Bridge Config space is
+	 * available in internal Aardvark registers starting at offset 0x0
+	 * and has format of Type 0 config space.
+	 *
+	 * Moreover Type 0 BAR registers (ranges 0x10 - 0x28 and 0x30 - 0x34)
+	 * have the same format in Marvell's specification as in PCIe
+	 * specification, but their meaning is totally different (and not even
+	 * the same meaning as explained in the corresponding comment in the
+	 * pci_mvebu driver; aardvark is still different).
+	 *
+	 * So our driver converts Type 0 config space to Type 1 and reports
+	 * Header Type as Type 1. Access to BAR registers and to non-existent
+	 * Type 1 registers is redirected to the virtual cfgcache[] buffer,
+	 * which avoids changing unrelated registers.
+	 */
+	reg = advk_readl(pcie, PCIE_CORE_DEV_REV_REG);
+	reg &= ~0xffffff00;
+	reg |= (PCI_CLASS_BRIDGE_PCI << 8) << 8;
+	advk_writel(pcie, reg, PCIE_CORE_DEV_REV_REG);
 
 	/* Set Advanced Error Capabilities and Control PF0 register */
 	reg = PCIE_CORE_ERR_CAPCTL_ECRC_CHK_TX |
@@ -769,12 +942,6 @@ static int pcie_advk_setup_hw(struct pcie_advk *pcie)
 	if (pcie_advk_wait_for_link(pcie))
 		return -ENXIO;
 
-	reg = advk_readl(pcie, PCIE_CORE_CMD_STATUS_REG);
-	reg |= PCIE_CORE_CMD_MEM_ACCESS_EN |
-		PCIE_CORE_CMD_IO_ACCESS_EN |
-		PCIE_CORE_CMD_MEM_IO_REQ_EN;
-	advk_writel(pcie, reg, PCIE_CORE_CMD_STATUS_REG);
-
 	return 0;
 }
 
@@ -816,8 +983,13 @@ static int pcie_advk_probe(struct udevice *dev)
 		dev_warn(dev, "PCIE Reset on GPIO support is missing\n");
 	}
 
-	pcie->first_busno = dev_seq(dev);
 	pcie->dev = pci_get_controller(dev);
+
+	/* PCI Bridge support 32-bit I/O and 64-bit prefetch mem addressing */
+	pcie->cfgcache[(PCI_IO_BASE - 0x10) / 4] =
+		PCI_IO_RANGE_TYPE_32 | (PCI_IO_RANGE_TYPE_32 << 8);
+	pcie->cfgcache[(PCI_PREF_MEMORY_BASE - 0x10) / 4] =
+		PCI_PREF_RANGE_TYPE_64 | (PCI_PREF_RANGE_TYPE_64 << 16);
 
 	return pcie_advk_setup_hw(pcie);
 }

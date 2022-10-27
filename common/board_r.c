@@ -67,6 +67,7 @@
 #endif
 #include <asm/sections.h>
 #include <dm/root.h>
+#include <dm/ofnode.h>
 #include <linux/compiler.h>
 #include <linux/err.h>
 #include <efi_loader.h>
@@ -114,7 +115,7 @@ static int initr_reloc(void)
 	return 0;
 }
 
-#ifdef CONFIG_ARM
+#if defined(CONFIG_ARM) || defined(CONFIG_RISCV)
 /*
  * Some of these functions are needed purely because the functions they
  * call return void. If we change them to return 0, these stubs can go away.
@@ -323,10 +324,16 @@ static int initr_manual_reloc_cmdtable(void)
 
 static int initr_binman(void)
 {
+	int ret;
+
 	if (!CONFIG_IS_ENABLED(BINMAN_FDT))
 		return 0;
 
-	return binman_init();
+	ret = binman_init();
+	if (ret)
+		printf("binman_init failed:%d\n", ret);
+
+	return ret;
 }
 
 #if defined(CONFIG_MTD_NOR_FLASH)
@@ -442,8 +449,7 @@ static int initr_pvblock(void)
 static int should_load_env(void)
 {
 	if (IS_ENABLED(CONFIG_OF_CONTROL))
-		return fdtdec_get_config_int(gd->fdt_blob,
-						"load-environment", 1);
+		return ofnode_conf_read_int("load-environment", 1);
 
 	if (IS_ENABLED(CONFIG_DELAY_ENVIRONMENT))
 		return 0;
@@ -601,7 +607,7 @@ static init_fnc_t init_sequence_r[] = {
 	initr_trace,
 	initr_reloc,
 	/* TODO: could x86/PPC have this also perhaps? */
-#ifdef CONFIG_ARM
+#if defined(CONFIG_ARM) || defined(CONFIG_RISCV)
 	initr_caches,
 	/* Note: For Freescale LS2 SoCs, new MMU table is created in DDR.
 	 *	 A temporary mapping of IFC high region is since removed,
@@ -714,7 +720,7 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 	INIT_FUNC_WATCHDOG_RESET
 	cpu_secondary_init_r,
-#if defined(CONFIG_ID_EEPROM) || defined(CONFIG_SYS_I2C_MAC_OFFSET)
+#if defined(CONFIG_ID_EEPROM)
 	mac_read_from_eeprom,
 #endif
 	INIT_FUNC_WATCHDOG_RESET

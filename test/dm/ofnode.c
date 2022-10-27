@@ -289,6 +289,65 @@ static int dm_test_ofnode_get_reg(struct unit_test_state *uts)
 	ut_asserteq(FDT_ADDR_T_NONE, addr);
 	ut_asserteq(FDT_SIZE_T_NONE, size);
 
+	node = ofnode_path("/translation-test@8000/noxlatebus@3,300/dev@42");
+	ut_assert(ofnode_valid(node));
+	addr = ofnode_get_addr_size_index_notrans(node, 0, &size);
+	ut_asserteq_64(0x42, addr);
+
 	return 0;
 }
 DM_TEST(dm_test_ofnode_get_reg, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_get_path(struct unit_test_state *uts)
+{
+	const char *path = "/translation-test@8000/noxlatebus@3,300/dev@42";
+	char buf[64];
+	ofnode node;
+	int res;
+
+	node = ofnode_path(path);
+	ut_assert(ofnode_valid(node));
+
+	res = ofnode_get_path(node, buf, 64);
+	ut_asserteq(0, res);
+	ut_asserteq_str(path, buf);
+
+	res = ofnode_get_path(node, buf, 32);
+	ut_asserteq(-ENOSPC, res);
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_get_path, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_conf(struct unit_test_state *uts)
+{
+	ut_assert(!ofnode_conf_read_bool("missing"));
+	ut_assert(ofnode_conf_read_bool("testing-bool"));
+
+	ut_asserteq(123, ofnode_conf_read_int("testing-int", 0));
+	ut_asserteq(6, ofnode_conf_read_int("missing", 6));
+
+	ut_assertnull(ofnode_conf_read_str("missing"));
+	ut_asserteq_str("testing", ofnode_conf_read_str("testing-str"));
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_conf, 0);
+
+static int dm_test_ofnode_for_each_compatible_node(struct unit_test_state *uts)
+{
+	const char compatible[] = "denx,u-boot-fdt-test";
+	bool found = false;
+	ofnode node;
+
+	ofnode_for_each_compatible_node(node, compatible) {
+		ut_assert(ofnode_device_is_compatible(node, compatible));
+		found = true;
+	}
+
+	/* There should be at least one matching node */
+	ut_assert(found);
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_for_each_compatible_node, UT_TESTF_SCAN_FDT);

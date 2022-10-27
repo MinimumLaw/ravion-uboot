@@ -95,7 +95,14 @@ int padding_pkcs_15_verify(struct image_sign_info *info,
 	return 0;
 }
 
-#ifdef CONFIG_FIT_ENABLE_RSASSA_PSS_SUPPORT
+#ifndef USE_HOSTCC
+U_BOOT_PADDING_ALGO(pkcs_15) = {
+	.name = "pkcs-1.5",
+	.verify = padding_pkcs_15_verify,
+};
+#endif
+
+#if CONFIG_IS_ENABLED(FIT_RSASSA_PSS)
 static void u32_i2osp(uint32_t val, uint8_t *buf)
 {
 	buf[0] = (uint8_t)((val >> 24) & 0xff);
@@ -296,9 +303,16 @@ out:
 
 	return ret;
 }
+
+#ifndef USE_HOSTCC
+U_BOOT_PADDING_ALGO(pss) = {
+	.name = "pss",
+	.verify = padding_pss_verify,
+};
 #endif
 
-#if CONFIG_IS_ENABLED(FIT_SIGNATURE) || CONFIG_IS_ENABLED(RSA_VERIFY_WITH_PKEY)
+#endif
+
 /**
  * rsa_verify_key() - Verify a signature against some data using RSA Key
  *
@@ -326,7 +340,7 @@ static int rsa_verify_key(struct image_sign_info *info,
 	struct padding_algo *padding = info->padding;
 	int hash_len;
 
-	if (!prop || !sig || !hash || !checksum)
+	if (!prop || !sig || !hash || !checksum || !padding)
 		return -EIO;
 
 	if (sig_len != (prop->num_bits / 8)) {
@@ -370,9 +384,7 @@ static int rsa_verify_key(struct image_sign_info *info,
 
 	return 0;
 }
-#endif
 
-#if CONFIG_IS_ENABLED(RSA_VERIFY_WITH_PKEY)
 /**
  * rsa_verify_with_pkey() - Verify a signature against some data using
  * only modulus and exponent as RSA key properties.
@@ -393,6 +405,9 @@ int rsa_verify_with_pkey(struct image_sign_info *info,
 	struct key_prop *prop;
 	int ret;
 
+	if (!CONFIG_IS_ENABLED(RSA_VERIFY_WITH_PKEY))
+		return -EACCES;
+
 	/* Public key is self-described to fill key_prop */
 	ret = rsa_gen_key_prop(info->key, info->keylen, &prop);
 	if (ret) {
@@ -407,13 +422,6 @@ int rsa_verify_with_pkey(struct image_sign_info *info,
 
 	return ret;
 }
-#else
-int rsa_verify_with_pkey(struct image_sign_info *info,
-			 const void *hash, uint8_t *sig, uint sig_len)
-{
-	return -EACCES;
-}
-#endif
 
 #if CONFIG_IS_ENABLED(FIT_SIGNATURE)
 /**
@@ -556,7 +564,7 @@ int rsa_verify(struct image_sign_info *info,
 	 */
 	if (info->checksum->checksum_len >
 	    info->crypto->key_len) {
-		debug("%s: invlaid checksum-algorithm %s for %s\n",
+		debug("%s: invalid checksum-algorithm %s for %s\n",
 		      __func__, info->checksum->name, info->crypto->name);
 		return -EINVAL;
 	}
@@ -571,3 +579,19 @@ int rsa_verify(struct image_sign_info *info,
 
 	return rsa_verify_hash(info, hash, sig, sig_len);
 }
+
+#ifndef USE_HOSTCC
+
+U_BOOT_CRYPTO_ALGO(rsa2048) = {
+	.name = "rsa2048",
+	.key_len = RSA2048_BYTES,
+	.verify = rsa_verify,
+};
+
+U_BOOT_CRYPTO_ALGO(rsa4096) = {
+	.name = "rsa4096",
+	.key_len = RSA4096_BYTES,
+	.verify = rsa_verify,
+};
+
+#endif

@@ -18,7 +18,6 @@
  * Memory configurations
  */
 #define PHYS_SDRAM_1			0x0
-#define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 #if defined(CONFIG_TARGET_SOCFPGA_GEN5)
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFFFF0000
 #define CONFIG_SYS_INIT_RAM_SIZE	SOCFPGA_PHYS_OCRAM_SIZE
@@ -124,9 +123,7 @@
  * NAND Support
  */
 #ifdef CONFIG_NAND_DENALI
-#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_SYS_NAND_REGS_BASE	SOCFPGA_NANDREGS_ADDRESS
 #define CONFIG_SYS_NAND_DATA_BASE	SOCFPGA_NANDDATA_ADDRESS
 #endif
@@ -148,7 +145,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * USB Gadget (DFU, UMS)
  */
 #if defined(CONFIG_CMD_DFU) || defined(CONFIG_CMD_USB_MASS_STORAGE)
-#define CONFIG_SYS_DFU_DATA_BUF_SIZE	(16 * 1024 * 1024)
 #define DFU_DEFAULT_POLL_TIMEOUT	300
 
 /* USB IDs */
@@ -187,7 +183,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #endif
 
 /* SPL SDMMC boot support */
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#ifdef CONFIG_SPL_MMC
 #if defined(CONFIG_SPL_FS_FAT) || defined(CONFIG_SPL_FS_EXT4)
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
 #endif
@@ -200,13 +196,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /* SPL QSPI boot support */
 
 /* SPL NAND boot support */
-#ifdef CONFIG_SPL_NAND_SUPPORT
-#if defined(CONFIG_TARGET_SOCFPGA_GEN5)
-#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x40000
-#elif defined(CONFIG_TARGET_SOCFPGA_ARRIA10)
-#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x100000
-#endif
-#endif
 
 /* Extra Environment */
 #ifndef CONFIG_SPL_BUILD

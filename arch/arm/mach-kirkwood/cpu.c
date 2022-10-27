@@ -125,7 +125,7 @@ static void kw_sysrst_check(void)
 		return;
 
 	/* read sysrstdelay value */
-	sysrst_dly = (u32) simple_strtoul(s, NULL, 10);
+	sysrst_dly = (u32)dectoul(s, NULL);
 
 	/* read SysRst Length counter register (bits 28:0) */
 	sysrst_cnt = (0x1fffffff & readl(KW_REG_SYSRST_CNT));
@@ -278,4 +278,3 @@ int cpu_eth_init(struct bd_info *bis)
 	return 0;
 }
 #endif
-

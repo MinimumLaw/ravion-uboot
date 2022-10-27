@@ -24,6 +24,9 @@
 #include <nand.h>
 #include <fat.h>
 #include <u-boot/crc.h>
+#if CONFIG_IS_ENABLED(BANNER_PRINT)
+#include <timestamp.h>
+#endif
 #include <version.h>
 #include <image.h>
 #include <malloc.h>
@@ -58,10 +61,12 @@ binman_sym_declare(ulong, spl, size);
 /* Define board data structure */
 static struct bd_info bdata __attribute__ ((section(".data")));
 
+#if CONFIG_IS_ENABLED(SHOW_BOOT_PROGRESS)
 /*
  * Board-specific Platform code can reimplement show_boot_progress () if needed
  */
 __weak void show_boot_progress(int val) {}
+#endif
 
 #if defined(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF) || \
 	defined(CONFIG_SPL_ATF)
@@ -82,7 +87,7 @@ __weak int dram_init_banksize(void)
  * 0 to not start u-boot
  * positive if u-boot should start
  */
-#ifdef CONFIG_SPL_OS_BOOT
+#if CONFIG_IS_ENABLED(OS_BOOT)
 __weak int spl_start_uboot(void)
 {
 	puts(SPL_TPL_PROMPT
@@ -165,6 +170,18 @@ __weak void spl_board_prepare_for_linux(void)
 	/* Nothing to do! */
 }
 
+__weak void spl_board_prepare_for_optee(void *fdt)
+{
+}
+
+#if CONFIG_IS_ENABLED(OPTEE_IMAGE)
+__weak void __noreturn jump_to_image_optee(struct spl_image_info *spl_image)
+{
+	spl_optee_entry(NULL, NULL, spl_image->fdt_addr,
+			(void *)spl_image->entry_point);
+}
+#endif
+
 __weak void spl_board_prepare_for_boot(void)
 {
 	/* Nothing to do! */
@@ -198,7 +215,7 @@ void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 	spl_image->name = "U-Boot";
 }
 
-#ifdef CONFIG_SPL_LOAD_FIT_FULL
+#if CONFIG_IS_ENABLED(LOAD_FIT_FULL)
 /* Parse and load full fitImage in SPL */
 static int spl_load_fit_image(struct spl_image_info *spl_image,
 			      const struct image_header *header)
@@ -294,6 +311,12 @@ static int spl_load_fit_image(struct spl_image_info *spl_image,
 }
 #endif
 
+__weak int spl_parse_board_header(struct spl_image_info *spl_image,
+				  const void *image_header, size_t size)
+{
+	return -EINVAL;
+}
+
 __weak int spl_parse_legacy_header(struct spl_image_info *spl_image,
 				   const struct image_header *header)
 {
@@ -305,7 +328,7 @@ __weak int spl_parse_legacy_header(struct spl_image_info *spl_image,
 int spl_parse_image_header(struct spl_image_info *spl_image,
 			   const struct image_header *header)
 {
-#ifdef CONFIG_SPL_LOAD_FIT_FULL
+#if CONFIG_IS_ENABLED(LOAD_FIT_FULL)
 	int ret = spl_load_fit_image(spl_image, header);
 
 	if (!ret)
@@ -330,7 +353,7 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 		panic("** no mkimage signature but raw image not supported");
 #endif
 
-#ifdef CONFIG_SPL_OS_BOOT
+#if CONFIG_IS_ENABLED(OS_BOOT)
 		ulong start, end;
 
 		if (!bootz_setup((ulong)header, &start, &end)) {
@@ -345,6 +368,9 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 			return 0;
 		}
 #endif
+
+		if (!spl_parse_board_header(spl_image, (const void *)header, sizeof(*header)))
+			return 0;
 
 #ifdef CONFIG_SPL_RAW_IMAGE_SUPPORT
 		/* Signature not found - assume u-boot.bin */
@@ -471,7 +497,7 @@ static int spl_common_init(bool setup_malloc)
 		return ret;
 	}
 #endif
-	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) {
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
 		ret = fdtdec_setup();
 		if (ret) {
 			debug("fdtdec_setup() returned error %d\n", ret);
@@ -591,32 +617,42 @@ static int spl_load_image(struct spl_image_info *spl_image,
  * @spl_image: Place to put the image details if successful
  * @spl_boot_list: List of boot devices to try
  * @count: Number of elements in spl_boot_list
- * @return 0 if OK, -ve on error
+ * @return 0 if OK, -ENODEV if there were no boot devices
+ *	if CONFIG_SHOW_ERRORS is enabled, returns -ENXIO if there were
+ *	devices but none worked
  */
 static int boot_from_devices(struct spl_image_info *spl_image,
 			     u32 spl_boot_list[], int count)
 {
+	int ret = -ENODEV;
 	int i;
 
 	for (i = 0; i < count && spl_boot_list[i] != BOOT_DEVICE_NONE; i++) {
 		struct spl_image_loader *loader;
+		int bootdev = spl_boot_list[i];
 
-		loader = spl_ll_find_loader(spl_boot_list[i]);
-#if defined(CONFIG_SPL_SERIAL_SUPPORT) \
-    && defined(CONFIG_SPL_LIBCOMMON_SUPPORT)    \
-    && !defined(CONFIG_SILENT_CONSOLE)
-		if (loader)
-			printf("Trying to boot from %s\n", loader->name);
-		else
-			puts(SPL_TPL_PROMPT "Unsupported Boot Device!\n");
-#endif
+		if (CONFIG_IS_ENABLED(SHOW_ERRORS))
+			ret = -ENXIO;
+		loader = spl_ll_find_loader(bootdev);
+		if (CONFIG_IS_ENABLED(SERIAL) &&
+		    CONFIG_IS_ENABLED(LIBCOMMON_SUPPORT) &&
+		    !IS_ENABLED(CONFIG_SILENT_CONSOLE)) {
+			if (loader)
+				printf("Trying to boot from %s\n",
+				       spl_loader_name(loader));
+			else if (CONFIG_IS_ENABLED(SHOW_ERRORS))
+				printf(SPL_TPL_PROMPT
+				       "Unsupported Boot Device %d\n", bootdev);
+			else
+				puts(SPL_TPL_PROMPT "Unsupported Boot Device!\n");
+		}
 		if (loader && !spl_load_image(spl_image, loader)) {
-			spl_image->boot_device = spl_boot_list[i];
+			spl_image->boot_device = bootdev;
 			return 0;
 		}
 	}
 
-	return -ENODEV;
+	return ret;
 }
 
 #if defined(CONFIG_SPL_FRAMEWORK_BOARD_INIT_F)
@@ -691,7 +727,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_board_init();
 #endif
 
-#if defined(CONFIG_SPL_WATCHDOG_SUPPORT) && CONFIG_IS_ENABLED(WDT)
+#if defined(CONFIG_SPL_WATCHDOG) && CONFIG_IS_ENABLED(WDT)
 	initr_watchdog();
 #endif
 
@@ -708,9 +744,15 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_image.boot_device = BOOT_DEVICE_NONE;
 	board_boot_order(spl_boot_list);
 
-	if (boot_from_devices(&spl_image, spl_boot_list,
-			      ARRAY_SIZE(spl_boot_list))) {
-		puts(SPL_TPL_PROMPT "failed to boot from all boot devices\n");
+	ret = boot_from_devices(&spl_image, spl_boot_list,
+				ARRAY_SIZE(spl_boot_list));
+	if (ret) {
+		if (CONFIG_IS_ENABLED(SHOW_ERRORS) &&
+		    CONFIG_IS_ENABLED(LIBCOMMON_SUPPORT))
+			printf(SPL_TPL_PROMPT "failed to boot from all boot devices (err=%d)\n",
+			       ret);
+		else
+			puts(SPL_TPL_PROMPT "failed to boot from all boot devices\n");
 		hang();
 	}
 
@@ -742,11 +784,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		spl_invoke_atf(&spl_image);
 		break;
 #endif
-#if CONFIG_IS_ENABLED(OPTEE)
+#if CONFIG_IS_ENABLED(OPTEE_IMAGE)
 	case IH_OS_TEE:
 		debug("Jumping to U-Boot via OP-TEE\n");
-		spl_optee_entry(NULL, NULL, spl_image.fdt_addr,
-				(void *)spl_image.entry_point);
+		spl_board_prepare_for_optee(spl_image.fdt_addr);
+		jump_to_image_optee(&spl_image);
 		break;
 #endif
 #if CONFIG_IS_ENABLED(OPENSBI)
@@ -755,7 +797,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		spl_invoke_opensbi(&spl_image);
 		break;
 #endif
-#ifdef CONFIG_SPL_OS_BOOT
+#if CONFIG_IS_ENABLED(OS_BOOT)
 	case IH_OS_LINUX:
 		debug("Jumping to Linux\n");
 #if defined(CONFIG_SYS_SPL_ARGS_ADDR)
@@ -789,7 +831,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
  */
 void preloader_console_init(void)
 {
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
+#ifdef CONFIG_SPL_SERIAL
 	gd->baudrate = CONFIG_BAUDRATE;
 
 	serial_init();		/* serial communications setup */

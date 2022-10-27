@@ -132,8 +132,10 @@ static int fit_image_write_sig(void *fit, int noffset, uint8_t *value,
 	if (!ret) {
 		time_t timestamp = imagetool_get_source_date(cmdname,
 							     time(NULL));
+		uint32_t t = cpu_to_uimage(timestamp);
 
-		ret = fit_set_timestamp(fit, noffset, timestamp);
+		ret = fdt_setprop(fit, noffset, FIT_TIMESTAMP_PROP, &t,
+			sizeof(uint32_t));
 	}
 	if (region_prop && !ret) {
 		uint32_t strdata[2];
@@ -311,7 +313,7 @@ static int fit_image_read_data(char *filename, unsigned char *data,
 
 	/* Check that we have read all the file */
 	if (n != sbuf.st_size) {
-		printf("Can't read all file %s (read %zd bytes, expexted %lld)\n",
+		printf("Can't read all file %s (read %zd bytes, expected %lld)\n",
 		       filename, n, (long long)sbuf.st_size);
 		goto err;
 	}
@@ -327,7 +329,7 @@ static int get_random_data(void *data, int size)
 {
 	unsigned char *tmp = data;
 	struct timespec date;
-	int i, ret = 0;
+	int i, ret;
 
 	if (!tmp) {
 		printf("%s: pointer data is NULL\n", __func__);
@@ -336,9 +338,9 @@ static int get_random_data(void *data, int size)
 	}
 
 	ret = clock_gettime(CLOCK_MONOTONIC, &date);
-	if (ret < 0) {
-		printf("%s: clock_gettime has failed (err=%d, str=%s)\n",
-		       __func__, ret, strerror(errno));
+	if (ret) {
+		printf("%s: clock_gettime has failed (%s)\n", __func__,
+		       strerror(errno));
 		goto out;
 	}
 

@@ -16,10 +16,6 @@
  * for DDR ECC byte filling in the SPL before loading the main
  * U-Boot into it.
  */
-#define CONFIG_SYS_TCLK		250000000	/* 250MHz */
-
-/* USB/EHCI configuration */
-#define CONFIG_EHCI_IS_TDI
 
 /* Environment in SPI NOR flash */
 
@@ -37,23 +33,11 @@
 #define CONFIG_SPL_BSS_START_ADDR	(0x40000000 + CONFIG_SPL_SIZE)
 #define CONFIG_SPL_BSS_MAX_SIZE		(16 << 10)
 
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_MALLOC_SIMPLE
-#endif
-
 #define CONFIG_SPL_STACK		(0x40000000 + ((192 - 16) << 10))
 #define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
-#define CONFIG_SPL_DRIVERS_MISC_SUPPORT
-
-#ifdef CONFIG_MVEBU_SPL_BOOT_DEVICE_SPI
-/* SPL related SPI defines */
-# define CONFIG_SYS_U_BOOT_OFFS		CONFIG_SYS_SPI_U_BOOT_OFFS
-#endif
 
 #ifdef CONFIG_MVEBU_SPL_BOOT_DEVICE_MMC
 /* SPL related MMC defines */
-# define CONFIG_SYS_MMC_U_BOOT_OFFS		(160 << 10)
-# define CONFIG_SYS_U_BOOT_OFFS			CONFIG_SYS_MMC_U_BOOT_OFFS
 # ifdef CONFIG_SPL_BUILD
 #  define CONFIG_FIXED_SDHCI_ALIGNED_BUFFER	0x00180000	/* in SDRAM */
 # endif

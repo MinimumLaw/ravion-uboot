@@ -297,9 +297,6 @@ int board_late_init(void);
 int board_postclk_init(void); /* after clocks/timebase, before env/serial */
 int board_early_init_r(void);
 
-/* TODO(sjg@chromium.org): Drop this when DM_PCI migration is completed */
-void pci_init_board(void);
-
 /**
  * arch_initr_trap() - Init traps
  *
@@ -334,6 +331,8 @@ void bdinfo_print_mhz(const char *name, unsigned long hz);
 
 /* Show arch-specific information for the 'bd' command */
 void arch_print_bdinfo(void);
+
+int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
 
 #endif	/* __ASSEMBLY__ */
 /* Put only stuff here that the assembler can digest */

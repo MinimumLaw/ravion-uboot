@@ -414,7 +414,7 @@ static int ec_command(struct udevice *dev, uint cmd, int cmd_version,
 
 int cros_ec_scan_keyboard(struct udevice *dev, struct mbkp_keyscan *scan)
 {
- 	if (ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, scan,
+	if (ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, scan,
 		       sizeof(scan->data)) != sizeof(scan->data))
 		return -1;
 
@@ -751,17 +751,6 @@ int cros_ec_flash_protect(struct udevice *dev, uint32_t set_mask,
 		       resp, sizeof(*resp)) != sizeof(*resp))
 		return -1;
 
-	return 0;
-}
-
-int cros_ec_entering_mode(struct udevice *dev, int mode)
-{
-	int rc;
-
-	rc = ec_command(dev, EC_CMD_ENTERING_MODE, 0, &mode, sizeof(mode),
-			NULL, 0);
-	if (rc)
-		return -1;
 	return 0;
 }
 
@@ -1661,11 +1650,28 @@ int cros_ec_get_switches(struct udevice *dev)
 	return ret;
 }
 
+int cros_ec_read_batt_charge(struct udevice *dev, uint *chargep)
+{
+	struct ec_params_charge_state req;
+	struct ec_response_charge_state resp;
+	int ret;
+
+	req.cmd = CHARGE_STATE_CMD_GET_STATE;
+	ret = ec_command(dev, EC_CMD_CHARGE_STATE, 0, &req, sizeof(req),
+			 &resp, sizeof(resp));
+	if (ret)
+		return log_msg_ret("read", ret);
+
+	*chargep = resp.get_state.batt_state_of_charge;
+
+	return 0;
+}
+
 UCLASS_DRIVER(cros_ec) = {
 	.id		= UCLASS_CROS_EC,
 	.name		= "cros-ec",
 	.per_device_auto	= sizeof(struct cros_ec_dev),
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	.post_bind	= dm_scan_fdt_dev,
 #endif
 	.flags		= DM_UC_FLAG_ALLOC_PRIV_DMA,

@@ -12,13 +12,14 @@
 #include <errno.h>
 #include <log.h>
 #include <pci.h>
+#include "pci_internal.h"
 
 /* the user can define CONFIG_SYS_PCI_CACHE_LINE_SIZE to avoid problems */
 #ifndef CONFIG_SYS_PCI_CACHE_LINE_SIZE
 #define CONFIG_SYS_PCI_CACHE_LINE_SIZE	8
 #endif
 
-static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
+static void dm_pciauto_setup_device(struct udevice *dev,
 				    struct pci_region *mem,
 				    struct pci_region *prefetch,
 				    struct pci_region *io)
@@ -27,6 +28,7 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 	pci_size_t bar_size;
 	u16 cmdstat = 0;
 	int bar, bar_nr = 0;
+	int bars_num;
 	u8 header_type;
 	int rom_addr;
 	pci_addr_t bar_value;
@@ -37,6 +39,26 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 	dm_pci_read_config16(dev, PCI_COMMAND, &cmdstat);
 	cmdstat = (cmdstat & ~(PCI_COMMAND_IO | PCI_COMMAND_MEMORY)) |
 			PCI_COMMAND_MASTER;
+
+	dm_pci_read_config8(dev, PCI_HEADER_TYPE, &header_type);
+	header_type &= 0x7f;
+
+	switch (header_type) {
+	case PCI_HEADER_TYPE_NORMAL:
+		bars_num = 6;
+		break;
+	case PCI_HEADER_TYPE_BRIDGE:
+		bars_num = 2;
+		break;
+	case PCI_HEADER_TYPE_CARDBUS:
+		/* CardBus header does not have any BAR */
+		bars_num = 0;
+		break;
+	default:
+		/* Skip configuring BARs for unknown header types */
+		bars_num = 0;
+		break;
+	}
 
 	for (bar = PCI_BASE_ADDRESS_0;
 	     bar < PCI_BASE_ADDRESS_0 + (bars_num * 4); bar += 4) {
@@ -128,9 +150,8 @@ static void dm_pciauto_setup_device(struct udevice *dev, int bars_num,
 	}
 
 	/* Configure the expansion ROM address */
-	dm_pci_read_config8(dev, PCI_HEADER_TYPE, &header_type);
-	header_type &= 0x7f;
-	if (header_type != PCI_HEADER_TYPE_CARDBUS) {
+	if (header_type == PCI_HEADER_TYPE_NORMAL ||
+	    header_type == PCI_HEADER_TYPE_BRIDGE) {
 		rom_addr = (header_type == PCI_HEADER_TYPE_NORMAL) ?
 			PCI_ROM_ADDRESS : PCI_ROM_ADDRESS1;
 		dm_pci_write_config32(dev, rom_addr, 0xfffffffe);
@@ -165,6 +186,7 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 	struct pci_region *pci_prefetch;
 	struct pci_region *pci_io;
 	u16 cmdstat, prefechable_64;
+	u8 io_32;
 	struct udevice *ctlr = pci_get_controller(dev);
 	struct pci_controller *ctlr_hose = dev_get_uclass_priv(ctlr);
 
@@ -175,6 +197,8 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 	dm_pci_read_config16(dev, PCI_COMMAND, &cmdstat);
 	dm_pci_read_config16(dev, PCI_PREF_MEMORY_BASE, &prefechable_64);
 	prefechable_64 &= PCI_PREF_RANGE_TYPE_MASK;
+	dm_pci_read_config8(dev, PCI_IO_LIMIT, &io_32);
+	io_32 &= PCI_IO_RANGE_TYPE_MASK;
 
 	/* Configure bus number registers */
 	dm_pci_write_config8(dev, PCI_PRIMARY_BUS,
@@ -191,7 +215,8 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 		 * I/O space
 		 */
 		dm_pci_write_config16(dev, PCI_MEMORY_BASE,
-				      (pci_mem->bus_lower & 0xfff00000) >> 16);
+				      ((pci_mem->bus_lower & 0xfff00000) >> 16) &
+				      PCI_MEMORY_RANGE_MASK);
 
 		cmdstat |= PCI_COMMAND_MEMORY;
 	}
@@ -205,7 +230,8 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 		 * I/O space
 		 */
 		dm_pci_write_config16(dev, PCI_PREF_MEMORY_BASE,
-				(pci_prefetch->bus_lower & 0xfff00000) >> 16);
+				(((pci_prefetch->bus_lower & 0xfff00000) >> 16) &
+				PCI_PREF_RANGE_MASK) | prefechable_64);
 		if (prefechable_64 == PCI_PREF_RANGE_TYPE_64)
 #ifdef CONFIG_SYS_PCI_64BIT
 			dm_pci_write_config32(dev, PCI_PREF_BASE_UPPER32,
@@ -217,8 +243,10 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 		cmdstat |= PCI_COMMAND_MEMORY;
 	} else {
 		/* We don't support prefetchable memory for now, so disable */
-		dm_pci_write_config16(dev, PCI_PREF_MEMORY_BASE, 0x1000);
-		dm_pci_write_config16(dev, PCI_PREF_MEMORY_LIMIT, 0x0);
+		dm_pci_write_config16(dev, PCI_PREF_MEMORY_BASE, 0x1000 |
+								prefechable_64);
+		dm_pci_write_config16(dev, PCI_PREF_MEMORY_LIMIT, 0x0 |
+								prefechable_64);
 		if (prefechable_64 == PCI_PREF_RANGE_TYPE_64) {
 			dm_pci_write_config16(dev, PCI_PREF_BASE_UPPER32, 0x0);
 			dm_pci_write_config16(dev, PCI_PREF_LIMIT_UPPER32, 0x0);
@@ -230,8 +258,10 @@ void dm_pciauto_prescan_setup_bridge(struct udevice *dev, int sub_bus)
 		pciauto_region_align(pci_io, 0x1000);
 
 		dm_pci_write_config8(dev, PCI_IO_BASE,
-				     (pci_io->bus_lower & 0x0000f000) >> 8);
-		dm_pci_write_config16(dev, PCI_IO_BASE_UPPER16,
+				     (((pci_io->bus_lower & 0x0000f000) >> 8) &
+				     PCI_IO_RANGE_MASK) | io_32);
+		if (io_32 == PCI_IO_RANGE_TYPE_32)
+			dm_pci_write_config16(dev, PCI_IO_BASE_UPPER16,
 				      (pci_io->bus_lower & 0xffff0000) >> 16);
 
 		cmdstat |= PCI_COMMAND_IO;
@@ -261,7 +291,8 @@ void dm_pciauto_postscan_setup_bridge(struct udevice *dev, int sub_bus)
 		pciauto_region_align(pci_mem, 0x100000);
 
 		dm_pci_write_config16(dev, PCI_MEMORY_LIMIT,
-				      (pci_mem->bus_lower - 1) >> 16);
+				      ((pci_mem->bus_lower - 1) >> 16) &
+				      PCI_MEMORY_RANGE_MASK);
 	}
 
 	if (pci_prefetch) {
@@ -275,7 +306,8 @@ void dm_pciauto_postscan_setup_bridge(struct udevice *dev, int sub_bus)
 		pciauto_region_align(pci_prefetch, 0x100000);
 
 		dm_pci_write_config16(dev, PCI_PREF_MEMORY_LIMIT,
-				      (pci_prefetch->bus_lower - 1) >> 16);
+				      (((pci_prefetch->bus_lower - 1) >> 16) &
+				       PCI_PREF_RANGE_MASK) | prefechable_64);
 		if (prefechable_64 == PCI_PREF_RANGE_TYPE_64)
 #ifdef CONFIG_SYS_PCI_64BIT
 			dm_pci_write_config32(dev, PCI_PREF_LIMIT_UPPER32,
@@ -286,12 +318,20 @@ void dm_pciauto_postscan_setup_bridge(struct udevice *dev, int sub_bus)
 	}
 
 	if (pci_io) {
+		u8 io_32;
+
+		dm_pci_read_config8(dev, PCI_IO_LIMIT,
+				     &io_32);
+		io_32 &= PCI_IO_RANGE_TYPE_MASK;
+
 		/* Round I/O allocator to 4KB boundary */
 		pciauto_region_align(pci_io, 0x1000);
 
 		dm_pci_write_config8(dev, PCI_IO_LIMIT,
-				((pci_io->bus_lower - 1) & 0x0000f000) >> 8);
-		dm_pci_write_config16(dev, PCI_IO_LIMIT_UPPER16,
+				((((pci_io->bus_lower - 1) & 0x0000f000) >> 8) &
+				PCI_IO_RANGE_MASK) | io_32);
+		if (io_32 == PCI_IO_RANGE_TYPE_32)
+			dm_pci_write_config16(dev, PCI_IO_LIMIT_UPPER16,
 				((pci_io->bus_lower - 1) & 0xffff0000) >> 16);
 	}
 }
@@ -322,7 +362,7 @@ int dm_pciauto_config_device(struct udevice *dev)
 		debug("PCI Autoconfig: Found P2P bridge, device %d\n",
 		      PCI_DEV(dm_pci_get_bdf(dev)));
 
-		dm_pciauto_setup_device(dev, 2, pci_mem, pci_prefetch, pci_io);
+		dm_pciauto_setup_device(dev, pci_mem, pci_prefetch, pci_io);
 
 		ret = dm_pci_hose_probe_bus(dev);
 		if (ret < 0)
@@ -335,7 +375,7 @@ int dm_pciauto_config_device(struct udevice *dev)
 		 * just do a minimal setup of the bridge,
 		 * let the OS take care of the rest
 		 */
-		dm_pciauto_setup_device(dev, 0, pci_mem, pci_prefetch, pci_io);
+		dm_pciauto_setup_device(dev, pci_mem, pci_prefetch, pci_io);
 
 		debug("PCI Autoconfig: Found P2CardBus bridge, device %d\n",
 		      PCI_DEV(dm_pci_get_bdf(dev)));
@@ -348,8 +388,7 @@ int dm_pciauto_config_device(struct udevice *dev)
 		      PCI_DEV(dm_pci_get_bdf(dev)));
 		break;
 #endif
-#if defined(CONFIG_ARCH_MPC834X) && !defined(CONFIG_TARGET_VME8349) && \
-		!defined(CONFIG_TARGET_CADDY2)
+#if defined(CONFIG_ARCH_MPC834X)
 	case PCI_CLASS_BRIDGE_OTHER:
 		/*
 		 * The host/PCI bridge 1 seems broken in 8349 - it presents
@@ -368,7 +407,7 @@ int dm_pciauto_config_device(struct udevice *dev)
 		/* fall through */
 
 	default:
-		dm_pciauto_setup_device(dev, 6, pci_mem, pci_prefetch, pci_io);
+		dm_pciauto_setup_device(dev, pci_mem, pci_prefetch, pci_io);
 		break;
 	}
 

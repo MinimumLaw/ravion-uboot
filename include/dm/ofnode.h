@@ -232,6 +232,16 @@ static inline ofnode ofnode_root(void)
 }
 
 /**
+ * ofnode_name_eq() - Check if the node name is equivalent to a given name
+ *                    ignoring the unit address
+ *
+ * @node:	valid node reference that has to be compared
+ * @name:	name that has to be compared with the node name
+ * @return true if matches, false if it doesn't match
+ */
+bool ofnode_name_eq(ofnode node, const char *name);
+
+/**
  * ofnode_read_u32() - Read a 32-bit integer from a property
  *
  * @ref:	valid node reference to read property from
@@ -459,6 +469,16 @@ ofnode ofnode_get_parent(ofnode node);
 const char *ofnode_get_name(ofnode node);
 
 /**
+ * ofnode_get_path() - get the full path of a node
+ *
+ * @node: valid node to look up
+ * @buf: buffer to write the node path into
+ * @buflen: buffer size
+ * @return 0 if OK, -ve on error
+ */
+int ofnode_get_path(ofnode node, char *buf, int buflen);
+
+/**
  * ofnode_get_by_phandle() - get ofnode from phandle
  *
  * @phandle:	phandle to look up
@@ -488,6 +508,23 @@ int ofnode_read_size(ofnode node, const char *propname);
  */
 phys_addr_t ofnode_get_addr_size_index(ofnode node, int index,
 				       fdt_size_t *size);
+
+/**
+ * ofnode_get_addr_size_index_notrans() - get an address/size from a node
+ *					  based on index, without address
+ *					  translation
+ *
+ * This reads the register address/size from a node based on index.
+ * The resulting address is not translated. Useful for example for on-disk
+ * addresses.
+ *
+ * @node: node to read from
+ * @index: Index of address to read (0 for first)
+ * @size: Pointer to size of the address
+ * @return address, or FDT_ADDR_T_NONE if not present or invalid
+ */
+phys_addr_t ofnode_get_addr_size_index_notrans(ofnode node, int index,
+					       fdt_size_t *size);
 
 /**
  * ofnode_get_addr_index() - get an address from a node
@@ -973,6 +1010,30 @@ ofnode ofnode_by_prop_value(ofnode from, const char *propname,
 	     node = ofnode_next_subnode(node))
 
 /**
+ * ofnode_for_each_compatible_node() - iterate over all nodes with a given
+ *				       compatible string
+ *
+ * @node:       child node (ofnode, lvalue)
+ * @compat:     compatible string to match
+ *
+ * This is a wrapper around a for loop and is used like so:
+ *
+ *	ofnode node;
+ *
+ *	ofnode_for_each_compatible_node(node, parent, compatible) {
+ *		Use node
+ *		...
+ *	}
+ *
+ * Note that this is implemented as a macro and @node is used as
+ * iterator in the loop.
+ */
+#define ofnode_for_each_compatible_node(node, compat) \
+	for (node = ofnode_by_compatible(ofnode_null(), compat); \
+	     ofnode_valid(node); \
+	     node = ofnode_by_compatible(node, compat))
+
+/**
  * ofnode_get_child_count() - get the child count of a ofnode
  *
  * @node: valid node to get its child count
@@ -1079,5 +1140,42 @@ int ofnode_write_string(ofnode node, const char *propname, const char *value);
  * @return 0 if successful, -ve on error
  */
 int ofnode_set_enabled(ofnode node, bool value);
+
+/**
+ * ofnode_conf_read_bool() - Read a boolean value from the U-Boot config
+ *
+ * This reads a property from the /config node of the devicetree.
+ *
+ * See doc/config.txt for bindings
+ *
+ * @prop_name	property name to look up
+ * @return true, if it exists, false if not
+ */
+bool ofnode_conf_read_bool(const char *prop_name);
+
+/**
+ * ofnode_conf_read_int() - Read an integer value from the U-Boot config
+ *
+ * This reads a property from the /config node of the devicetree.
+ *
+ * See doc/config.txt for bindings
+ *
+ * @prop_name: property name to look up
+ * @default_val: default value to return if the property is not found
+ * @return integer value, if found, or @default_val if not
+ */
+int ofnode_conf_read_int(const char *prop_name, int default_val);
+
+/**
+ * ofnode_conf_read_str() - Read a string value from the U-Boot config
+ *
+ * This reads a property from the /config node of the devicetree.
+ *
+ * See doc/config.txt for bindings
+ *
+ * @prop_name: property name to look up
+ * @return string value, if found, or NULL if not
+ */
+const char *ofnode_conf_read_str(const char *prop_name);
 
 #endif

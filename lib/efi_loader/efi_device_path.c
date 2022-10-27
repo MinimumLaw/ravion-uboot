@@ -5,6 +5,8 @@
  * (C) Copyright 2017 Rob Clark
  */
 
+#define LOG_CATEGORY LOGC_EFI
+
 #include <common.h>
 #include <blk.h>
 #include <dm.h>
@@ -16,6 +18,7 @@
 #include <efi_loader.h>
 #include <part.h>
 #include <sandboxblockdev.h>
+#include <uuid.h>
 #include <asm-generic/unaligned.h>
 #include <linux/compat.h> /* U16_MAX */
 
@@ -43,7 +46,7 @@ static const struct efi_device_path_vendor ROOT = {
 	.guid = U_BOOT_GUID,
 };
 
-#if defined(CONFIG_DM_MMC) && defined(CONFIG_MMC)
+#if defined(CONFIG_MMC)
 /*
  * Determine if an MMC device is an SD card.
  *
@@ -65,7 +68,7 @@ static void *dp_alloc(size_t sz)
 {
 	void *buf;
 
-	if (efi_allocate_pool(EFI_ALLOCATE_ANY_PAGES, sz, &buf) !=
+	if (efi_allocate_pool(EFI_BOOT_SERVICES_DATA, sz, &buf) !=
 	    EFI_SUCCESS) {
 		debug("EFI: ERROR: out of memory in %s\n", __func__);
 		return NULL;
@@ -483,7 +486,6 @@ bool efi_dp_is_multi_instance(const struct efi_device_path *dp)
 	return p->sub_type == DEVICE_PATH_SUB_TYPE_INSTANCE_END;
 }
 
-#ifdef CONFIG_DM
 /* size of device-path not including END node for device and all parents
  * up to the root device.
  */
@@ -500,7 +502,6 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 	case UCLASS_ETH:
 		return dp_size(dev->parent) +
 			sizeof(struct efi_device_path_mac_addr);
-#ifdef CONFIG_BLK
 	case UCLASS_BLK:
 		switch (dev->parent->uclass->uc_drv->id) {
 #ifdef CONFIG_IDE
@@ -508,12 +509,12 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 			return dp_size(dev->parent) +
 				sizeof(struct efi_device_path_atapi);
 #endif
-#if defined(CONFIG_SCSI) && defined(CONFIG_DM_SCSI)
+#if defined(CONFIG_SCSI)
 		case UCLASS_SCSI:
 			return dp_size(dev->parent) +
 				sizeof(struct efi_device_path_scsi);
 #endif
-#if defined(CONFIG_DM_MMC) && defined(CONFIG_MMC)
+#if defined(CONFIG_MMC)
 		case UCLASS_MMC:
 			return dp_size(dev->parent) +
 				sizeof(struct efi_device_path_sd_mmc_path);
@@ -551,8 +552,7 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
 		default:
 			return dp_size(dev->parent);
 		}
-#endif
-#if defined(CONFIG_DM_MMC) && defined(CONFIG_MMC)
+#if defined(CONFIG_MMC)
 	case UCLASS_MMC:
 		return dp_size(dev->parent) +
 			sizeof(struct efi_device_path_sd_mmc_path);
@@ -587,7 +587,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 		*vdp = ROOT;
 		return &vdp[1];
 	}
-#ifdef CONFIG_DM_ETH
+#ifdef CONFIG_NET
 	case UCLASS_ETH: {
 		struct efi_device_path_mac_addr *dp =
 			dp_fill(buf, dev->parent);
@@ -604,7 +604,6 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 		return &dp[1];
 	}
 #endif
-#ifdef CONFIG_BLK
 	case UCLASS_BLK:
 		switch (dev->parent->uclass->uc_drv->id) {
 #ifdef CONFIG_SANDBOX
@@ -659,7 +658,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 			return &dp[1];
 			}
 #endif
-#if defined(CONFIG_SCSI) && defined(CONFIG_DM_SCSI)
+#if defined(CONFIG_SCSI)
 		case UCLASS_SCSI: {
 			struct efi_device_path_scsi *dp =
 				dp_fill(buf, dev->parent);
@@ -673,7 +672,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 			return &dp[1];
 			}
 #endif
-#if defined(CONFIG_DM_MMC) && defined(CONFIG_MMC)
+#if defined(CONFIG_MMC)
 		case UCLASS_MMC: {
 			struct efi_device_path_sd_mmc_path *sddp =
 				dp_fill(buf, dev->parent);
@@ -724,8 +723,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 			      dev->name, dev->parent->uclass->uc_drv->id);
 			return dp_fill(buf, dev->parent);
 		}
-#endif
-#if defined(CONFIG_DM_MMC) && defined(CONFIG_MMC)
+#if defined(CONFIG_MMC)
 	case UCLASS_MMC: {
 		struct efi_device_path_sd_mmc_path *sddp =
 			dp_fill(buf, dev->parent);
@@ -767,24 +765,18 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 		return dp_fill(buf, dev->parent);
 	}
 }
-#endif
 
 static unsigned dp_part_size(struct blk_desc *desc, int part)
 {
 	unsigned dpsize;
+	struct udevice *dev;
+	int ret;
 
-#ifdef CONFIG_BLK
-	{
-		struct udevice *dev;
-		int ret = blk_find_device(desc->if_type, desc->devnum, &dev);
+	ret = blk_find_device(desc->if_type, desc->devnum, &dev);
 
-		if (ret)
-			dev = desc->bdev->parent;
-		dpsize = dp_size(dev);
-	}
-#else
-	dpsize = sizeof(ROOT) + sizeof(struct efi_device_path_usb);
-#endif
+	if (ret)
+		dev = desc->bdev->parent;
+	dpsize = dp_size(dev);
 
 	if (part == 0) /* the actual disk, not a partition */
 		return dpsize;
@@ -851,8 +843,11 @@ static void *dp_part_node(void *buf, struct blk_desc *desc, int part)
 			break;
 		case SIG_TYPE_GUID:
 			hddp->signature_type = 2;
-			memcpy(hddp->partition_signature, &desc->guid_sig,
-			       sizeof(hddp->partition_signature));
+			if (uuid_str_to_bin(info.uuid,
+					    hddp->partition_signature, 1))
+				log_warning(
+					"Partition no. %d: invalid guid: %s\n",
+					part, info.uuid);
 			break;
 		}
 
@@ -871,36 +866,14 @@ static void *dp_part_node(void *buf, struct blk_desc *desc, int part)
  */
 static void *dp_part_fill(void *buf, struct blk_desc *desc, int part)
 {
-#ifdef CONFIG_BLK
-	{
-		struct udevice *dev;
-		int ret = blk_find_device(desc->if_type, desc->devnum, &dev);
+	struct udevice *dev;
+	int ret;
 
-		if (ret)
-			dev = desc->bdev->parent;
-		buf = dp_fill(buf, dev);
-	}
-#else
-	/*
-	 * We *could* make a more accurate path, by looking at if_type
-	 * and handling all the different cases like we do for non-
-	 * legacy (i.e. CONFIG_BLK=y) case. But most important thing
-	 * is just to have a unique device-path for if_type+devnum.
-	 * So map things to a fictitious USB device.
-	 */
-	struct efi_device_path_usb *udp;
+	ret = blk_find_device(desc->if_type, desc->devnum, &dev);
 
-	memcpy(buf, &ROOT, sizeof(ROOT));
-	buf += sizeof(ROOT);
-
-	udp = buf;
-	udp->dp.type = DEVICE_PATH_TYPE_MESSAGING_DEVICE;
-	udp->dp.sub_type = DEVICE_PATH_SUB_TYPE_MSG_USB;
-	udp->dp.length = sizeof(*udp);
-	udp->parent_port_number = desc->if_type;
-	udp->usb_interface = desc->devnum;
-	buf = &udp[1];
-#endif
+	if (ret)
+		dev = desc->bdev->parent;
+	buf = dp_fill(buf, dev);
 
 	if (part == 0) /* the actual disk, not a partition */
 		return buf;
@@ -1045,39 +1018,18 @@ struct efi_device_path *efi_dp_from_uart(void)
 #ifdef CONFIG_NET
 struct efi_device_path *efi_dp_from_eth(void)
 {
-#ifndef CONFIG_DM_ETH
-	struct efi_device_path_mac_addr *ndp;
-#endif
 	void *buf, *start;
 	unsigned dpsize = 0;
 
 	assert(eth_get_dev());
 
-#ifdef CONFIG_DM_ETH
 	dpsize += dp_size(eth_get_dev());
-#else
-	dpsize += sizeof(ROOT);
-	dpsize += sizeof(*ndp);
-#endif
 
 	start = buf = dp_alloc(dpsize + sizeof(END));
 	if (!buf)
 		return NULL;
 
-#ifdef CONFIG_DM_ETH
 	buf = dp_fill(buf, eth_get_dev());
-#else
-	memcpy(buf, &ROOT, sizeof(ROOT));
-	buf += sizeof(ROOT);
-
-	ndp = buf;
-	ndp->dp.type = DEVICE_PATH_TYPE_MESSAGING_DEVICE;
-	ndp->dp.sub_type = DEVICE_PATH_SUB_TYPE_MSG_MAC_ADDR;
-	ndp->dp.length = sizeof(*ndp);
-	ndp->if_type = 1; /* Ethernet */
-	memcpy(ndp->mac.addr, eth_get_ethaddr(), ARP_HLEN);
-	buf = &ndp[1];
-#endif
 
 	*((struct efi_device_path *)buf) = END;
 
@@ -1257,7 +1209,6 @@ ssize_t efi_dp_check_length(const struct efi_device_path *dp,
  *                    initrd location
  *
  * @lo:		EFI_LOAD_OPTION containing a valid device path
- * @size:	size of the discovered device path
  * @guid:	guid to search for
  *
  * Return:
@@ -1266,7 +1217,7 @@ ssize_t efi_dp_check_length(const struct efi_device_path *dp,
  */
 struct
 efi_device_path *efi_dp_from_lo(struct efi_load_option *lo,
-				efi_uintn_t *size, efi_guid_t guid)
+				const efi_guid_t *guid)
 {
 	struct efi_device_path *fp = lo->file_path;
 	struct efi_device_path_vendor *vendor;
@@ -1281,10 +1232,37 @@ efi_device_path *efi_dp_from_lo(struct efi_load_option *lo,
 			continue;
 
 		vendor = (struct efi_device_path_vendor *)fp;
-		if (!guidcmp(&vendor->guid, &guid))
-			return efi_dp_dup(fp);
+		if (!guidcmp(&vendor->guid, guid))
+			return efi_dp_dup(efi_dp_next(fp));
 	}
 	log_debug("VenMedia(%pUl) not found in %ls\n", &guid, lo->label);
+
+	return NULL;
+}
+
+/**
+ * search_gpt_dp_node() - search gpt device path node
+ *
+ * @device_path:	device path
+ *
+ * Return:	pointer to the gpt device path node
+ */
+struct efi_device_path *search_gpt_dp_node(struct efi_device_path *device_path)
+{
+	struct efi_device_path *dp = device_path;
+
+	while (dp) {
+		if (dp->type == DEVICE_PATH_TYPE_MEDIA_DEVICE &&
+		    dp->sub_type == DEVICE_PATH_SUB_TYPE_HARD_DRIVE_PATH) {
+			struct efi_device_path_hard_drive_path *hd_dp =
+				(struct efi_device_path_hard_drive_path *)dp;
+
+			if (hd_dp->partmap_type == PART_FORMAT_GPT &&
+			    hd_dp->signature_type == SIG_TYPE_GUID)
+				return dp;
+		}
+		dp = efi_dp_next(dp);
+	}
 
 	return NULL;
 }

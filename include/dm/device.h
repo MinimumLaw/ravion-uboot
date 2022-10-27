@@ -181,7 +181,7 @@ struct udevice {
 	u32 flags_;
 #endif
 	int seq_;
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	ofnode node_;
 #endif
 #ifdef CONFIG_DEVRES
@@ -207,8 +207,9 @@ struct udevice_rt {
 	u32 flags_;
 };
 
-/* Maximum sequence number supported */
+/* Maximum sequence number supported and associated string length */
 #define DM_MAX_SEQ	999
+#define DM_MAX_SEQ_STR	3
 
 /* Returns the operations for a device */
 #define device_get_ops(dev)	(dev->driver->ops)
@@ -242,7 +243,7 @@ static inline void dev_bic_flags(struct udevice *dev, u32 bic)
  */
 static inline ofnode dev_ofnode(const struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	return dev->node_;
 #else
 	return ofnode_null();
@@ -262,7 +263,7 @@ static inline ofnode dev_ofnode(const struct udevice *dev)
 
 static inline int dev_of_offset(const struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	return ofnode_to_offset(dev_ofnode(dev));
 #else
 	return -1;
@@ -271,7 +272,7 @@ static inline int dev_of_offset(const struct udevice *dev)
 
 static inline bool dev_has_ofnode(const struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	return ofnode_valid(dev_ofnode(dev));
 #else
 	return false;
@@ -280,7 +281,7 @@ static inline bool dev_has_ofnode(const struct udevice *dev)
 
 static inline void dev_set_ofnode(struct udevice *dev, ofnode node)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	dev->node_ = node;
 #endif
 }
@@ -300,7 +301,7 @@ struct udevice_id {
 	ulong data;
 };
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 #define of_match_ptr(_ptr)	(_ptr)
 #else
 #define of_match_ptr(_ptr)	NULL
@@ -738,7 +739,7 @@ int device_find_next_child(struct udevice **devp);
  *
  * @parent:	Parent device to search
  * @uclass_id:	Uclass to look for
- * @devp:	Returns device found, if any
+ * @devp:	Returns device found, if any, else NULL
  * @return 0 if found, else -ENODEV
  */
 int device_find_first_inactive_child(const struct udevice *parent,
@@ -750,7 +751,7 @@ int device_find_first_inactive_child(const struct udevice *parent,
  *
  * @parent: Parent device to search
  * @uclass_id:	Uclass to look for
- * @devp: Returns first child device in that uclass, if any
+ * @devp: Returns first child device in that uclass, if any, else NULL
  * @return 0 if found, else -ENODEV
  */
 int device_find_first_child_by_uclass(const struct udevice *parent,
@@ -958,8 +959,8 @@ static inline bool device_is_on_pci_bus(const struct udevice *dev)
  * @parent: parent device to scan
  */
 #define device_foreach_child_of_to_plat(pos, parent)	\
-	for (int _ret = device_first_child_ofdata_err(parent, &dev); !_ret; \
-	     _ret = device_next_child_ofdata_err(&dev))
+	for (int _ret = device_first_child_ofdata_err(parent, &pos); !_ret; \
+	     _ret = device_next_child_ofdata_err(&pos))
 
 /**
  * device_foreach_child_probe() - iterate through children, probing them
@@ -975,8 +976,8 @@ static inline bool device_is_on_pci_bus(const struct udevice *dev)
  * @parent: parent device to scan
  */
 #define device_foreach_child_probe(pos, parent)	\
-	for (int _ret = device_first_child_err(parent, &dev); !_ret; \
-	     _ret = device_next_child_err(&dev))
+	for (int _ret = device_first_child_err(parent, &pos); !_ret; \
+	     _ret = device_next_child_err(&pos))
 
 /**
  * dm_scan_fdt_dev() - Bind child device in the device tree

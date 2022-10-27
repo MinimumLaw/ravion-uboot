@@ -19,6 +19,8 @@ typedef ulong lbaint_t;
 #define LBAF "%" LBAFlength "x"
 #define LBAFU "%" LBAFlength "u"
 
+struct udevice;
+
 /* Interface types: */
 enum if_type {
 	IF_TYPE_UNKNOWN = 0,
@@ -32,9 +34,10 @@ enum if_type {
 	IF_TYPE_SATA,
 	IF_TYPE_HOST,
 	IF_TYPE_NVME,
-	IF_TYPE_EFI,
+	IF_TYPE_EFI_LOADER,
 	IF_TYPE_PVBLOCK,
 	IF_TYPE_VIRTIO,
+	IF_TYPE_EFI_MEDIA,
 
 	IF_TYPE_COUNT,			/* Number of interface types */
 };
@@ -42,6 +45,9 @@ enum if_type {
 #define BLK_VEN_SIZE		40
 #define BLK_PRD_SIZE		20
 #define BLK_REV_SIZE		8
+
+#define PART_FORMAT_PCAT	0x1
+#define PART_FORMAT_GPT		0x2
 
 /*
  * Identifies the partition table type (ie. MBR vs GPT GUID) signature
@@ -365,6 +371,18 @@ int blk_create_devicef(struct udevice *parent, const char *drv_name,
 		       lbaint_t lba, struct udevice **devp);
 
 /**
+ * blk_probe_or_unbind() - Try to probe
+ *
+ * Try to probe the device, primarily for enumerating partitions.
+ * If it fails, the device itself is unbound since it means that it won't
+ * work any more.
+ *
+ * @dev:	The device to probe
+ * Return:	0 if OK, -ve on error
+ */
+int blk_probe_or_unbind(struct udevice *dev);
+
+/**
  * blk_unbind_all() - Unbind all device of the given interface type
  *
  * The devices are removed and then unbound.
@@ -682,5 +700,59 @@ const char *blk_get_if_type_name(enum if_type if_type);
  */
 int blk_common_cmd(int argc, char *const argv[], enum if_type if_type,
 		   int *cur_devnump);
+
+enum blk_flag_t {
+	BLKF_FIXED	= 1 << 0,
+	BLKF_REMOVABLE	= 1 << 1,
+	BLKF_BOTH	= BLKF_FIXED | BLKF_REMOVABLE,
+};
+
+/**
+ * blk_first_device_err() - Get the first block device
+ *
+ * The device returned is probed if necessary, and ready for use
+ *
+ * @flags: Indicates type of device to return
+ * @devp: Returns pointer to the first device in that uclass, or NULL if none
+ * @return 0 if found, -ENODEV if not found, other -ve on error
+ */
+int blk_first_device_err(enum blk_flag_t flags, struct udevice **devp);
+
+/**
+ * blk_next_device_err() - Get the next block device
+ *
+ * The device returned is probed if necessary, and ready for use
+ *
+ * @flags: Indicates type of device to return
+ * @devp: On entry, pointer to device to lookup. On exit, returns pointer
+ * to the next device in the uclass if no error occurred, or -ENODEV if
+ * there is no next device.
+ * @return 0 if found, -ENODEV if not found, other -ve on error
+ */
+int blk_next_device_err(enum blk_flag_t flags, struct udevice **devp);
+
+/**
+ * blk_foreach_probe() - Helper function to iteration through block devices
+ *
+ * This creates a for() loop which works through the available devices in
+ * a uclass in order from start to end. Devices are probed if necessary,
+ * and ready for use.
+ *
+ * @flags: Indicates type of device to return
+ * @dev: struct udevice * to hold the current device. Set to NULL when there
+ * are no more devices.
+ */
+#define blk_foreach_probe(flags, pos)	\
+	for (int _ret = blk_first_device_err(flags, &(pos)); \
+	     !_ret && pos; \
+	     _ret = blk_next_device_err(flags, &(pos)))
+
+/**
+ * blk_count_devices() - count the number of devices of a particular type
+ *
+ * @flags: Indicates type of device to find
+ * @return number of devices matching those flags
+ */
+int blk_count_devices(enum blk_flag_t flag);
 
 #endif

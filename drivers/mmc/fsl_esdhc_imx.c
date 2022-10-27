@@ -291,7 +291,8 @@ static int esdhc_setup_data(struct fsl_esdhc_priv *priv, struct mmc *mmc,
 {
 	int timeout;
 	struct fsl_esdhc *regs = priv->esdhc_regs;
-#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M)
+#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M) || \
+	defined(CONFIG_IMX8ULP)
 	dma_addr_t addr;
 #endif
 	uint wml_value;
@@ -304,7 +305,8 @@ static int esdhc_setup_data(struct fsl_esdhc_priv *priv, struct mmc *mmc,
 
 		esdhc_clrsetbits32(&regs->wml, WML_RD_WML_MASK, wml_value);
 #ifndef CONFIG_SYS_FSL_ESDHC_USE_PIO
-#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M)
+#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M) || \
+	defined(CONFIG_IMX8ULP)
 		addr = virt_to_phys((void *)(data->dest));
 		if (upper_32_bits(addr))
 			printf("Error found for upper 32 bits\n");
@@ -341,7 +343,8 @@ static int esdhc_setup_data(struct fsl_esdhc_priv *priv, struct mmc *mmc,
 		esdhc_clrsetbits32(&regs->wml, WML_WR_WML_MASK,
 					wml_value << 16);
 #ifndef CONFIG_SYS_FSL_ESDHC_USE_PIO
-#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M)
+#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M) || \
+		defined(CONFIG_IMX8ULP)
 		addr = virt_to_phys((void *)(data->src));
 		if (upper_32_bits(addr))
 			printf("Error found for upper 32 bits\n");
@@ -406,7 +409,8 @@ static void check_and_invalidate_dcache_range
 	unsigned end = 0;
 	unsigned size = roundup(ARCH_DMA_MINALIGN,
 				data->blocks*data->blocksize);
-#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M)
+#if defined(CONFIG_S32V234) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M) || \
+	defined(CONFIG_IMX8ULP)
 	dma_addr_t addr;
 
 	addr = virt_to_phys((void *)(data->dest));
@@ -723,17 +727,20 @@ static void esdhc_set_strobe_dll(struct mmc *mmc)
 
 	if (priv->clock > ESDHC_STROBE_DLL_CLK_FREQ) {
 		esdhc_write32(&regs->strobe_dllctrl, ESDHC_STROBE_DLL_CTRL_RESET);
+		/* clear the reset bit on strobe dll before any setting */
+		esdhc_write32(&regs->strobe_dllctrl, 0);
 
 		/*
 		 * enable strobe dll ctrl and adjust the delay target
 		 * for the uSDHC loopback read clock
 		 */
 		val = ESDHC_STROBE_DLL_CTRL_ENABLE |
+			ESDHC_STROBE_DLL_CTRL_SLV_UPDATE_INT_DEFAULT |
 			(priv->strobe_dll_delay_target <<
 			 ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_SHIFT);
 		esdhc_write32(&regs->strobe_dllctrl, val);
-		/* wait 1us to make sure strobe dll status register stable */
-		mdelay(1);
+		/* wait 5us to make sure strobe dll status register stable */
+		mdelay(5);
 		val = esdhc_read32(&regs->strobe_dllstat);
 		if (!(val & ESDHC_STROBE_DLL_STS_REF_LOCK))
 			pr_warn("HS400 strobe DLL status REF not lock!\n");
@@ -967,7 +974,6 @@ static int esdhc_set_ios_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 	if (priv->clock != clock)
 		set_sysctl(priv, mmc, clock);
 
-#ifdef MMC_SUPPORTS_TUNING
 	if (mmc->clk_disable) {
 #ifdef CONFIG_FSL_USDHC
 		esdhc_clrbits32(&regs->vendorspec, VENDORSPEC_CKEN);
@@ -983,6 +989,7 @@ static int esdhc_set_ios_common(struct fsl_esdhc_priv *priv, struct mmc *mmc)
 #endif
 	}
 
+#ifdef MMC_SUPPORTS_TUNING
 	/*
 	 * For HS400/HS400ES mode, make sure set the strobe dll in the
 	 * target clock rate. So call esdhc_set_strobe_dll() after the
@@ -1407,7 +1414,6 @@ __weak void init_clk_usdhc(u32 index)
 
 static int fsl_esdhc_of_to_plat(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct fsl_esdhc_priv *priv = dev_get_priv(dev);
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *vqmmc_dev;
@@ -1415,9 +1421,11 @@ static int fsl_esdhc_of_to_plat(struct udevice *dev)
 #endif
 	const void *fdt = gd->fdt_blob;
 	int node = dev_of_offset(dev);
-
 	fdt_addr_t addr;
 	unsigned int val;
+
+	if (!CONFIG_IS_ENABLED(OF_REAL))
+		return 0;
 
 	addr = dev_read_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
@@ -1490,7 +1498,7 @@ static int fsl_esdhc_of_to_plat(struct udevice *dev)
 			priv->vs18_enable = 1;
 	}
 #endif
-#endif
+
 	return 0;
 }
 
@@ -1594,11 +1602,11 @@ static int fsl_esdhc_probe(struct udevice *dev)
 		return ret;
 	}
 
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	ret = mmc_of_parse(dev, &plat->cfg);
-	if (ret)
-		return ret;
-#endif
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		ret = mmc_of_parse(dev, &plat->cfg);
+		if (ret)
+			return ret;
+	}
 
 	mmc = &plat->mmc;
 	mmc->cfg = &plat->cfg;
@@ -1702,6 +1710,12 @@ static struct esdhc_soc_data usdhc_imx7d_data = {
 			| ESDHC_FLAG_HS400,
 };
 
+static struct esdhc_soc_data usdhc_imx7ulp_data = {
+	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING
+			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_HS200
+			| ESDHC_FLAG_HS400,
+};
+
 static struct esdhc_soc_data usdhc_imx8qm_data = {
 	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING |
 		ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_HS200 |
@@ -1716,7 +1730,7 @@ static const struct udevice_id fsl_esdhc_ids[] = {
 	{ .compatible = "fsl,imx6sl-usdhc", },
 	{ .compatible = "fsl,imx6q-usdhc", },
 	{ .compatible = "fsl,imx7d-usdhc", .data = (ulong)&usdhc_imx7d_data,},
-	{ .compatible = "fsl,imx7ulp-usdhc", },
+	{ .compatible = "fsl,imx7ulp-usdhc", .data = (ulong)&usdhc_imx7ulp_data,},
 	{ .compatible = "fsl,imx8qm-usdhc", .data = (ulong)&usdhc_imx8qm_data,},
 	{ .compatible = "fsl,imx8mm-usdhc", .data = (ulong)&usdhc_imx8qm_data,},
 	{ .compatible = "fsl,imx8mn-usdhc", .data = (ulong)&usdhc_imx8qm_data,},

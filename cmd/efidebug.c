@@ -61,7 +61,7 @@ static int do_efi_capsule_update(struct cmd_tbl *cmdtp, int flag,
 		argv++;
 	}
 
-	capsule = (typeof(capsule))simple_strtoul(argv[1], &endp, 16);
+	capsule = (typeof(capsule))hextoul(argv[1], &endp);
 	if (endp == argv[1]) {
 		printf("Invalid address: %s", argv[1]);
 		return CMD_RET_FAILURE;
@@ -117,7 +117,7 @@ static int do_efi_capsule_show(struct cmd_tbl *cmdtp, int flag,
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	capsule = (typeof(capsule))simple_strtoul(argv[1], &endp, 16);
+	capsule = (typeof(capsule))hextoul(argv[1], &endp);
 	if (endp == argv[1]) {
 		printf("Invalid address: %s", argv[1]);
 		return CMD_RET_FAILURE;
@@ -256,7 +256,7 @@ static int do_efi_capsule_res(struct cmd_tbl *cmdtp, int flag,
 		argc--;
 		argv++;
 
-		capsule_id = simple_strtoul(argv[0], &endp, 16);
+		capsule_id = hextoul(argv[0], &endp);
 		if (capsule_id < 0 || capsule_id > 0xffff)
 			return CMD_RET_USAGE;
 
@@ -983,7 +983,7 @@ static int do_efi_boot_add(struct cmd_tbl *cmdtp, int flag,
 				r = CMD_RET_USAGE;
 				goto out;
 			}
-			id = (int)simple_strtoul(argv[1], &endp, 16);
+			id = (int)hextoul(argv[1], &endp);
 			if (*endp != '\0' || id > 0xffff)
 				return CMD_RET_USAGE;
 
@@ -1113,7 +1113,7 @@ static int do_efi_boot_rm(struct cmd_tbl *cmdtp, int flag,
 
 	guid = efi_global_variable_guid;
 	for (i = 1; i < argc; i++, argv++) {
-		id = (int)simple_strtoul(argv[1], &endp, 16);
+		id = (int)hextoul(argv[1], &endp);
 		if (*endp != '\0' || id > 0xffff)
 			return CMD_RET_FAILURE;
 
@@ -1143,10 +1143,7 @@ static void show_efi_boot_opt_data(u16 *varname16, void *data, size_t *size)
 {
 	struct efi_device_path *initrd_path = NULL;
 	struct efi_load_option lo;
-	u16 *dp_str;
 	efi_status_t ret;
-	efi_uintn_t initrd_dp_size;
-	const efi_guid_t lf2_initrd_guid = EFI_INITRD_MEDIA_GUID;
 
 	ret = efi_deserialize_load_option(&lo, data, size);
 	if (ret != EFI_SUCCESS) {
@@ -1165,15 +1162,11 @@ static void show_efi_boot_opt_data(u16 *varname16, void *data, size_t *size)
 	       lo.attributes);
 	printf("  label: %ls\n", lo.label);
 
-	dp_str = efi_dp_str(lo.file_path);
-	printf("  file_path: %ls\n", dp_str);
-	efi_free_pool(dp_str);
+	printf("  file_path: %pD\n", lo.file_path);
 
-	initrd_path = efi_dp_from_lo(&lo, &initrd_dp_size, lf2_initrd_guid);
+	initrd_path = efi_dp_from_lo(&lo, &efi_lf2_initrd_guid);
 	if (initrd_path) {
-		dp_str = efi_dp_str(initrd_path);
-		printf("  initrd_path: %ls\n", dp_str);
-		efi_free_pool(dp_str);
+		printf("  initrd_path: %pD\n", initrd_path);
 		efi_free_pool(initrd_path);
 	}
 
@@ -1410,7 +1403,7 @@ static int do_efi_boot_next(struct cmd_tbl *cmdtp, int flag,
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	bootnext = (u16)simple_strtoul(argv[1], &endp, 16);
+	bootnext = (u16)hextoul(argv[1], &endp);
 	if (*endp) {
 		printf("invalid value: %s\n", argv[1]);
 		r = CMD_RET_FAILURE;
@@ -1469,7 +1462,7 @@ static int do_efi_boot_order(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_FAILURE;
 
 	for (i = 0; i < argc; i++) {
-		id = (int)simple_strtoul(argv[i], &endp, 16);
+		id = (int)hextoul(argv[i], &endp);
 		if (*endp != '\0' || id > 0xffff) {
 			printf("invalid value: %s\n", argv[i]);
 			r = CMD_RET_FAILURE;

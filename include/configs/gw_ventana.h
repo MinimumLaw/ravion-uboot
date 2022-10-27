@@ -8,7 +8,6 @@
 
 /* SPL */
 /* Location in NAND to read U-Boot from */
-#define CONFIG_SYS_NAND_U_BOOT_OFFS     (14 * SZ_1M)
 
 /* Falcon Mode */
 #define CONFIG_SYS_SPL_ARGS_ADDR	0x18000000
@@ -24,29 +23,17 @@
 #include "imx6_spl.h"                  /* common IMX6 SPL configuration */
 #include "mx6_common.h"
 
-#define CONFIG_MACH_TYPE	4520   /* Gateworks Ventana Platform */
-
-/* Serial ATAG */
-#define CONFIG_SERIAL_TAG
-
-/* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
-
 /* Serial */
 #define CONFIG_MXC_UART_BASE	       UART2_BASE
 
 /* NAND */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 
+#undef CONFIG_SYS_BOOTM_LEN
+#define CONFIG_SYS_BOOTM_LEN		(64 << 20)
+
 /* I2C Configs */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
-#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
-#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
-#define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_I2C_GSC			0
-#define CONFIG_I2C_EDID
 
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
@@ -71,8 +58,6 @@
 /*
  * PMIC
  */
-#define CONFIG_POWER
-#define CONFIG_POWER_I2C
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 #define CONFIG_POWER_LTC3676
@@ -121,6 +106,7 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS_COMMON \
 	"splashpos=m,m\0" \
+	"splashimage=" __stringify(CONFIG_LOADADDR) "\0" \
 	"usb_pgood_delay=2000\0" \
 	"console=ttymxc1\0" \
 	"bootdevs=usb mmc sata flash\0" \

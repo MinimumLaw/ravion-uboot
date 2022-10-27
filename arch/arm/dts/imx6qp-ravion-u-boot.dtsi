@@ -6,16 +6,20 @@
 
 / {
 	chosen {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-spl;
 		stdout-path = &uart1;
 	};
 
-	soc {
-		u-boot,dm-pre-reloc;
+	gpio-poweroff { u-boot,dm-spl; };
 
-		aips-bus@2100000 {
-			u-boot,dm-pre-reloc;
-		};
+	gpio-keys {
+		u-boot,dm-spl;
+		power { u-boot,dm-spl; };
+	};
+
+	gpio-leds {
+		u-boot,dm-spl;
+		sys_reset { u-boot,dm-spl; };
 	};
 
 	wdt-reboot {
@@ -36,12 +40,38 @@
 
 /* keep specific clocks for SPL */
 &clks	{ u-boot,dm-spl; };
+&wdog1	{ u-boot,dm-spl; };
+&wdog2	{ u-boot,dm-spl; };
 
-/* keep specific devices for SPL */
+/*
+ * keep specific devices for SPL
+ */
+&uart1		{ u-boot,dm-spl; };	/* Console */
+&i2c1		{ u-boot,dm-spl; };	/* PMIC interface */
+&usdhc2		{ u-boot,dm-spl; };	/* SD1 */
+&usdhc3		{ u-boot,dm-spl; };	/* eMMC */
+&wdog1		{ u-boot,dm-spl; };	/* WatchDog */
+&usbh1		{ u-boot,dm-spl; };	/* HOST */
+&usbotg		{ u-boot,dm-spl; };	/* OTG */
+&usbphy1	{ u-boot,dm-spl; };
+&usbphy2	{ u-boot,dm-spl; };
+&usbmisc	{ u-boot,dm-spl; };
+&anatop		{ u-boot,dm-spl; };
+&gpio1		{ u-boot,dm-spl; };
+&gpio2		{ u-boot,dm-spl; };
+&gpio3		{ u-boot,dm-spl; };
+&gpio4		{ u-boot,dm-spl; };
+&gpio5		{ u-boot,dm-spl; };
+&gpio6		{ u-boot,dm-spl; };
+&gpio7		{ u-boot,dm-spl; };
+&iomuxc		{ u-boot,dm-spl; };
+
 &pinctrl_hog	{ u-boot,dm-spl; };
-&uart1	{ u-boot,dm-spl; };	/* Console */
-&i2c1	{ u-boot,dm-spl; };	/* PMIC interface */
-&pinctrl_i2c_int	{ u-boot,dm-spl; };
+&pinctrl_uart1	{ u-boot,dm-spl; };
+&pinctrl_pmic	{ u-boot,dm-spl; };
+&pinctrl_sd1	{ u-boot,dm-spl; };
+&pinctrl_emmc	{ u-boot,dm-spl; };
+
 &pmic { /* PMIC chip */
 	u-boot,dm-spl;
 
@@ -49,22 +79,5 @@
 		u-boot,dm-spl;
 	};
 };
-&pinctrl_pmic	{ u-boot,dm-spl; };
-&usdhc3	{ u-boot,dm-spl; };	/* eMMC */
-&pinctrl_emmc	{ u-boot,dm-spl; };
-&wdog1	{ u-boot,dm-spl; };	/* WatchDog */
-&usbh1	{ u-boot,dm-spl; };	/* HOST */
-&usbotg	{ u-boot,dm-spl; };	/* OTG */
-&usbphy1 { u-boot,dm-spl; };
-&usbphy2 { u-boot,dm-spl; };
-&usbmisc { u-boot,dm-spl; };
-&anatop  { u-boot,dm-spl; };
-&gpio1  { u-boot,dm-spl; };
-&gpio2  { u-boot,dm-spl; };
-&gpio3  { u-boot,dm-spl; };
-&gpio4  { u-boot,dm-spl; };
-&gpio5  { u-boot,dm-spl; };
-&gpio6  { u-boot,dm-spl; };
-&gpio7  { u-boot,dm-spl; };
-&iomuxc  { u-boot,dm-spl; };
+
 &pinctrl_i2c_int	{ u-boot,dm-spl; };
