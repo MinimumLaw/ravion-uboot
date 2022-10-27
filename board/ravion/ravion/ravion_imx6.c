@@ -65,25 +65,25 @@ int board_init(void)
 #endif /* CONFIG_FEC_MXC */
 
 	struct udevice *udev;
-	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "sw1ab", &udev))
-		regulator_set_enable(udev, true);
-	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "sw1c", &udev))
-		regulator_set_enable(udev, true);
-	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "sw2", &udev))
-		regulator_set_enable(udev, true);
-	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "sw3a", &udev))
-		regulator_set_enable(udev, true);
-	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "swbst", &udev)) /* USB_OTG_VBUS, USB_H1_VBUS */
-		regulator_set_enable(udev, true);
-	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "vgen1", &udev)) /* NVCC_RGMII */
-		regulator_set_enable(udev, true);
 	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "vgen4", &udev)) /* VDDHI_IN */
 		regulator_set_enable(udev, true);
 	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "vgen6", &udev)) /* NVCC_LCD, NVCC_EIM, NVCC_SD1, NVCC_SD2, NVCC_NANDF */
 		regulator_set_enable(udev, true);
 
 	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
-	ccm->pmu_reg_3p0_set = 0x3; /* reg_3p0 enable LDO, BROWNOUT */
+#warning FixMe: Only really required clocks need be enabled here!
+	ccm->CCGR0 = 0xFFFFFFFF;
+	ccm->CCGR1 = 0xFFFFFFFF;
+	ccm->CCGR2 = 0xFFFFFFFF;
+	ccm->CCGR3 = 0xFFFFFFFF;
+	ccm->CCGR4 = 0xFFFFFFFF;
+	ccm->CCGR5 = 0xFFFFFFFF;
+	ccm->CCGR6 = 0xFFFFFFFF;
+
+	/* USB required LDO 1P1, 2P5, 3P0 and VBUS power supply (defined in DTB) */
+	ccm->pmu_reg_3p0_set = 0x3;
+	ccm->pmu_reg_1p1_set = 0x3;
+	ccm->pmu_reg_2p5_set = 0x3;
 
 	return 0;
 }
