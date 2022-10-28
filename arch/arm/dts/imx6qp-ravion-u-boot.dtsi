@@ -52,7 +52,8 @@
 &usdhc3		{ u-boot,dm-spl; };	/* eMMC */
 &wdog1		{ u-boot,dm-spl; };	/* WatchDog */
 &usbh1		{ u-boot,dm-spl; };	/* HOST */
-&usbotg		{ u-boot,dm-spl; };	/* OTG */
+&usbotg		{ u-boot,dm-spl;	/* OTG */
+		  power-active-high; };
 &usbphy1	{ u-boot,dm-spl; };
 &usbphy2	{ u-boot,dm-spl; };
 &usbmisc	{ u-boot,dm-spl; };
