@@ -148,8 +148,8 @@ void board_boot_order(u32 *spl_boot_list)
 		spl_boot_list[3] = BOOT_DEVICE_NONE;
 	} else {
 		spl_boot_list[0] = BOOT_DEVICE_MMC1;
-		spl_boot_list[1] = BOOT_DEVICE_USB;
 		spl_boot_list[2] = BOOT_DEVICE_BOARD;
+		spl_boot_list[1] = BOOT_DEVICE_NONE;
 		spl_boot_list[3] = BOOT_DEVICE_NONE;
 	};
 }
