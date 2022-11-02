@@ -110,15 +110,15 @@ SDRAM START - 0x1000 0000
  * Required for back compatible
  ****************************************************************************/
 #define DISTRO_FIXUP \
-	"boot_syslinux_conf=syslinux.conf\0" \
 	"board=kitsbimx6\0" \
-	"vendor_required=" \
+	"ravion_fixup=" \
 	    "env info -d && saveenv; " \
-	    "setenv boot_scripts bscript.img ${boot_scripts}; " \
+	    "setenv boot_syslinux_conf syslinux.conf; " \
+	    "setenv boot_scripts bscript.img; " \
 	    "setenv boot_targets ${boot_targets} tftp0; " \
 	    "setenv nfs_path /cimc/root/colibri-imx6; " \
 	    "setenv fdtfile i${soc}${variant}-${vendor}-${board}.dtb\0" \
-	"bootcmd=run vendor_required; run distro_bootcmd\0"
+	"bootcmd=run ravion_fixup; run distro_bootcmd\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"__INF0__=Ravion-V2 I.MX6 CPU Module BSP package\0" \
