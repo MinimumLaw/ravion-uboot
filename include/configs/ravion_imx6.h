@@ -113,8 +113,6 @@ SDRAM START - 0x1000 0000
 	"board=kitsbimx6\0" \
 	"ravion_fixup=" \
 	    "env info -d && saveenv; " \
-	    "setenv boot_syslinux_conf syslinux.conf; " \
-	    "setenv boot_scripts bscript.img; " \
 	    "setenv boot_targets ${boot_targets} tftp0; " \
 	    "setenv nfs_path /cimc/root/colibri-imx6; " \
 	    "setenv fdtfile i${soc}${variant}-${vendor}-${board}.dtb\0" \
