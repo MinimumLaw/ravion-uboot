@@ -1,0 +1,6 @@
+i.MX8MQ RHOS BOARD
+M:	Alex A. Mihaylov <minimumlaw@rambler.ru>
+S:	Maintained
+F:	board/ravion/rhos/
+F:	include/configs/imx8mq_rhos.h
+F:	configs/imx8mq_rhos_defconfig
