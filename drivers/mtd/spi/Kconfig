@@ -57,7 +57,7 @@ config SF_DEFAULT_CS
 config SF_DEFAULT_MODE
 	hex "SPI Flash default mode (see include/spi.h)"
 	depends on SPI_FLASH || DM_SPI_FLASH
-	default 0
+	default 0x0
 	help
 	  The default mode may be provided by the platform
 	  to handle the common case when only a single serial
@@ -97,9 +97,15 @@ config SPI_FLASH_SMART_HWCAPS
 	 can support a type of operation in a much more refined way compared
 	 to using flags like SPI_RX_DUAL, SPI_TX_QUAD, etc.
 
+config SPI_NOR_BOOT_SOFT_RESET_EXT_INVERT
+	bool "Command extension type is INVERT for Software Reset on boot"
+	default n
+	help
+	 Because of SFDP information can not be get before boot.
+	 So define command extension type is INVERT when Software Reset on boot only.
+
 config SPI_FLASH_SOFT_RESET
 	bool "Software Reset support for SPI NOR flashes"
-	default n
 	help
 	 Enable support for xSPI Software Reset. It will be used to switch from
 	 Octal DTR mode to legacy mode on shutdown and boot (if enabled).
@@ -107,7 +113,6 @@ config SPI_FLASH_SOFT_RESET
 config SPI_FLASH_SOFT_RESET_ON_BOOT
 	bool "Perform a Software Reset on boot on flashes that boot in stateful mode"
 	depends on SPI_FLASH_SOFT_RESET
-	default n
 	help
 	 Perform a Software Reset on boot to allow detecting flashes that are
 	 handed to us in Octal DTR mode. Do not enable this config on flashes
@@ -130,12 +135,6 @@ config SPI_FLASH_UNLOCK_ALL
 
 	 For legacy reasons, this option default to y. But if you intend to
 	 actually use the software protection bits you should say n here.
-
-config SF_DUAL_FLASH
-	bool "SPI DUAL flash memory support"
-	help
-	  Enable this option to support two flash memories connected to a single
-	  controller. Currently Xilinx Zynq qspi supports this.
 
 config SPI_FLASH_ATMEL
 	bool "Atmel SPI flash support"
@@ -256,7 +255,7 @@ config SPI_FLASH_MTD
 
 config SPL_SPI_FLASH_MTD
 	bool "SPI flash MTD support for SPL"
-	depends on SPI_FLASH
+	depends on SPI_FLASH && SPL
 	help
           Enable the MTD support for the SPI flash layer in SPL.
 

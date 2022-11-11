@@ -21,6 +21,7 @@
  */
 
 #include <common.h>
+#include <display_options.h>
 #include <env.h>
 #include <splash.h>
 #include <lcd.h>
@@ -52,7 +53,7 @@ static struct splash_location default_splash_locations[] = {
 	},
 };
 
-#if defined(CONFIG_DM_VIDEO) && defined(CONFIG_VIDEO_LOGO)
+#ifdef CONFIG_VIDEO_LOGO
 
 #include <bmp_logo_data.h>
 

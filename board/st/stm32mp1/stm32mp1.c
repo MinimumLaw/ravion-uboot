@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <fdt_simplefb.h>
 #include <fdt_support.h>
 #include <g_dnl.h>
 #include <generic-phy.h>
@@ -37,6 +38,7 @@
 #include <asm/gpio.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
+#include <dm/ofnode.h>
 #include <jffs2/load_kernel.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
@@ -80,11 +82,6 @@
 #define SYSCFG_PMCSETR_ETH_SEL_RGMII	BIT(21)
 #define SYSCFG_PMCSETR_ETH_SEL_RMII	BIT(23)
 
-/*
- * Get a global data pointer
- */
-DECLARE_GLOBAL_DATA_PTR;
-
 #define USB_LOW_THRESHOLD_UV		200000
 #define USB_WARNING_LOW_THRESHOLD_UV	660000
 #define USB_START_LOW_THRESHOLD_UV	1230000
@@ -114,8 +111,8 @@ int checkboard(void)
 		mode = "basic";
 	}
 
-	fdt_compat = fdt_getprop(gd->fdt_blob, 0, "compatible",
-				 &fdt_compat_len);
+	fdt_compat = ofnode_get_property(ofnode_root(), "compatible",
+					 &fdt_compat_len);
 
 	log_info("Board: stm32mp1 in %s mode (%s)\n", mode,
 		 fdt_compat && fdt_compat_len ? fdt_compat : "");
@@ -197,6 +194,13 @@ int g_dnl_board_usb_cable_connected(void)
 	if (!IS_ENABLED(CONFIG_USB_GADGET_DWC2_OTG))
 		return -ENODEV;
 
+	/*
+	 * In case of USB boot device is detected, consider USB cable is
+	 * connected
+	 */
+	if ((get_bootmode() & TAMP_BOOT_DEVICE_MASK) == BOOT_SERIAL_USB)
+		return true;
+
 	/* if typec stusb160x is present, means DK1 or DK2 board */
 	ret = stusb160x_cable_connected();
 	if (ret >= 0)
@@ -235,10 +239,10 @@ int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
 
 static int get_led(struct udevice **dev, char *led_string)
 {
-	char *led_name;
+	const char *led_name;
 	int ret;
 
-	led_name = fdtdec_get_config_string(gd->fdt_blob, led_string);
+	led_name = ofnode_conf_read_str(led_string);
 	if (!led_name) {
 		log_debug("could not find %s config string\n", led_string);
 		return -ENOENT;
@@ -490,7 +494,7 @@ static void sysconf_init(void)
 	ret = uclass_get_device_by_driver(UCLASS_PMIC,
 					  DM_DRIVER_GET(stm32mp_pwr_pmic),
 					  &pwr_dev);
-	if (!ret && IS_ENABLED(CONFIG_DM_REGULATOR)) {
+	if (!ret) {
 		ret = uclass_get_device_by_driver(UCLASS_MISC,
 						  DM_DRIVER_GET(stm32mp_bsec),
 						  &dev);
@@ -545,16 +549,13 @@ static void sysconf_init(void)
 	clrbits_le32(syscfg + SYSCFG_CMPCR, SYSCFG_CMPCR_SW_CTRL);
 }
 
-/* Fix to make I2C1 usable on DK2 for touchscreen usage in kernel */
-static int dk2_i2c1_fix(void)
+static int board_stm32mp15x_dk2_init(void)
 {
 	ofnode node;
 	struct gpio_desc hdmi, audio;
 	int ret = 0;
 
-	if (!IS_ENABLED(CONFIG_DM_REGULATOR))
-		return -ENODEV;
-
+	/* Fix to make I2C1 usable on DK2 for touchscreen usage in kernel */
 	node = ofnode_path("/soc/i2c@40012000/hdmi-transmitter@39");
 	if (!ofnode_valid(node)) {
 		log_debug("no hdmi-transmitter@39 ?\n");
@@ -602,7 +603,7 @@ error:
 	return ret;
 }
 
-static bool board_is_dk2(void)
+static bool board_is_stm32mp15x_dk2(void)
 {
 	if (CONFIG_IS_ENABLED(TARGET_ST_STM32MP15x) &&
 	    of_machine_is_compatible("st,stm32mp157c-dk2"))
@@ -611,7 +612,7 @@ static bool board_is_dk2(void)
 	return false;
 }
 
-static bool board_is_ev1(void)
+static bool board_is_stm32mp15x_ev1(void)
 {
 	if (CONFIG_IS_ENABLED(TARGET_ST_STM32MP15x) &&
 	    (of_machine_is_compatible("st,stm32mp157a-ev1") ||
@@ -635,7 +636,7 @@ U_BOOT_DRIVER(goodix) = {
 	.of_match	= goodix_ids,
 };
 
-static void board_ev1_init(void)
+static void board_stm32mp15x_ev1_init(void)
 {
 	struct udevice *dev;
 
@@ -646,28 +647,22 @@ static void board_ev1_init(void)
 /* board dependent setup after realloc */
 int board_init(void)
 {
-	/* address of boot parameters */
-	gd->bd->bi_boot_params = STM32_DDR_BASE + 0x100;
-
-	if (CONFIG_IS_ENABLED(DM_GPIO_HOG))
-		gpio_hog_probe_all();
-
 	board_key_check();
 
-	if (board_is_ev1())
-		board_ev1_init();
+	if (board_is_stm32mp15x_ev1())
+		board_stm32mp15x_ev1_init();
 
-	if (board_is_dk2())
-		dk2_i2c1_fix();
+	if (board_is_stm32mp15x_dk2())
+		board_stm32mp15x_dk2_init();
 
-	if (IS_ENABLED(CONFIG_DM_REGULATOR))
-		regulators_enable_boot_on(_DEBUG);
+	regulators_enable_boot_on(_DEBUG);
 
-	if (!IS_ENABLED(CONFIG_TFABOOT))
+	/*
+	 * sysconf initialisation done only when U-Boot is running in secure
+	 * done in TF-A for TFABOOT.
+	 */
+	if (IS_ENABLED(CONFIG_ARMV7_NONSEC))
 		sysconf_init();
-
-	if (CONFIG_IS_ENABLED(LED))
-		led_default_state();
 
 	setup_led(LEDST_ON);
 
@@ -686,8 +681,8 @@ int board_late_init(void)
 	int buf_len;
 
 	if (IS_ENABLED(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)) {
-		fdt_compat = fdt_getprop(gd->fdt_blob, 0, "compatible",
-					 &fdt_compat_len);
+		fdt_compat = ofnode_get_property(ofnode_root(), "compatible",
+						 &fdt_compat_len);
 		if (fdt_compat && fdt_compat_len) {
 			if (strncmp(fdt_compat, "st,", 3) != 0) {
 				env_set("board_name", fdt_compat);
@@ -890,8 +885,10 @@ const char *env_ext4_get_dev_part(void)
 
 int mmc_get_env_dev(void)
 {
-	if (CONFIG_SYS_MMC_ENV_DEV >= 0)
-		return CONFIG_SYS_MMC_ENV_DEV;
+	const int mmc_env_dev = CONFIG_IS_ENABLED(ENV_IS_IN_MMC, (CONFIG_SYS_MMC_ENV_DEV), (-1));
+
+	if (mmc_env_dev >= 0)
+		return mmc_env_dev;
 
 	/* use boot instance to select the correct mmc device identifier */
 	return mmc_get_boot();
@@ -914,6 +911,9 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	    (strcmp(boot_device, "serial") && strcmp(boot_device, "usb")))
 		if (IS_ENABLED(CONFIG_FDT_FIXUP_PARTITIONS))
 			fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+
+	if (CONFIG_IS_ENABLED(FDT_SIMPLEFB))
+		fdt_simplefb_enable_and_mem_rsv(blob);
 
 	return 0;
 }

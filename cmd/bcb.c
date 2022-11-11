@@ -9,9 +9,11 @@
 #include <bcb.h>
 #include <command.h>
 #include <common.h>
+#include <display_options.h>
 #include <log.h>
 #include <part.h>
 #include <malloc.h>
+#include <memalign.h>
 
 enum bcb_cmd {
 	BCB_CMD_LOAD,
@@ -24,7 +26,7 @@ enum bcb_cmd {
 
 static int bcb_dev = -1;
 static int bcb_part = -1;
-static struct bootloader_message bcb = { { 0 } };
+static struct bootloader_message bcb __aligned(ARCH_DMA_MINALIGN) = { { 0 } };
 
 static int bcb_cmd_get(char *cmd)
 {

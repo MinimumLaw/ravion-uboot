@@ -513,6 +513,7 @@ void sdhci_set_uhs_timing(struct sdhci_host *host)
 		reg |= SDHCI_CTRL_UHS_SDR104;
 		break;
 	case MMC_HS_400:
+	case MMC_HS_400_ES:
 		reg |= SDHCI_CTRL_HS400;
 		break;
 	default:
@@ -666,6 +667,7 @@ static int sdhci_set_ios(struct mmc *mmc)
 		    mmc->selected_mode == MMC_DDR_52 ||
 		    mmc->selected_mode == MMC_HS_200 ||
 		    mmc->selected_mode == MMC_HS_400 ||
+		    mmc->selected_mode == MMC_HS_400_ES ||
 		    mmc->selected_mode == UHS_SDR25 ||
 		    mmc->selected_mode == UHS_SDR50 ||
 		    mmc->selected_mode == UHS_SDR104 ||
@@ -780,6 +782,38 @@ static int sdhci_get_cd(struct udevice *dev)
 		return value;
 }
 
+static int sdhci_wait_dat0(struct udevice *dev, int state,
+			   int timeout_us)
+{
+	int tmp;
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+	struct sdhci_host *host = mmc->priv;
+	unsigned long timeout = timer_get_us() + timeout_us;
+
+	// readx_poll_timeout is unsuitable because sdhci_readl accepts
+	// two arguments
+	do {
+		tmp = sdhci_readl(host, SDHCI_PRESENT_STATE);
+		if (!!(tmp & SDHCI_DATA_0_LVL_MASK) == !!state)
+			return 0;
+	} while (!timeout_us || !time_after(timer_get_us(), timeout));
+
+	return -ETIMEDOUT;
+}
+
+#if CONFIG_IS_ENABLED(MMC_HS400_ES_SUPPORT)
+static int sdhci_set_enhanced_strobe(struct udevice *dev)
+{
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+	struct sdhci_host *host = mmc->priv;
+
+	if (host->ops && host->ops->set_enhanced_strobe)
+		return host->ops->set_enhanced_strobe(host);
+
+	return -ENOTSUPP;
+}
+#endif
+
 const struct dm_mmc_ops sdhci_ops = {
 	.send_cmd	= sdhci_send_command,
 	.set_ios	= sdhci_set_ios,
@@ -787,6 +821,10 @@ const struct dm_mmc_ops sdhci_ops = {
 	.deferred_probe	= sdhci_deferred_probe,
 #ifdef MMC_SUPPORTS_TUNING
 	.execute_tuning	= sdhci_execute_tuning,
+#endif
+	.wait_dat0	= sdhci_wait_dat0,
+#if CONFIG_IS_ENABLED(MMC_HS400_ES_SUPPORT)
+	.set_enhanced_strobe = sdhci_set_enhanced_strobe,
 #endif
 };
 #else

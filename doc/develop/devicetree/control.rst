@@ -108,10 +108,9 @@ If CONFIG_OF_BOARD is defined, a board-specific routine will provide the
 devicetree at runtime, for example if an earlier bootloader stage creates
 it and passes it to U-Boot.
 
-If CONFIG_OF_HOSTFILE is defined, then it will be read from a file on
-startup. This is only useful for sandbox. Use the -d flag to U-Boot to
-specify the file to read, -D for the default and -T for the test devicetree,
-used to run sandbox unit tests.
+If CONFIG_SANDBOX is defined, then it will be read from a file on
+startup. Use the -d flag to U-Boot to specify the file to read, -D for the
+default and -T for the test devicetree, used to run sandbox unit tests.
 
 You cannot use more than one of these options at the same time.
 
@@ -182,6 +181,24 @@ main file, in this order::
 
 Only one of these is selected but of course you can #include another one within
 that file, to create a hierarchy of shared files.
+
+
+External .dtsi fragments
+------------------------
+
+Apart from describing the hardware present, U-Boot also uses its
+control dtb for various configuration purposes. For example, the
+public key(s) used for Verified Boot are embedded in a specific format
+in a /signature node.
+
+As mentioned above, the U-Boot build system automatically includes a
+`*-u-boot.dtsi` file, if found, containing U-Boot specific
+quirks. However, some data, such as the mentioned public keys, are not
+appropriate for upstream U-Boot but are better kept and maintained
+outside the U-Boot repository. You can use CONFIG_DEVICE_TREE_INCLUDES
+to specify a list of .dtsi files that will also be included when
+building .dtb files.
+
 
 Relocation, SPL and TPL
 -----------------------

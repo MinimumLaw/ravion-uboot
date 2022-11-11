@@ -11,12 +11,17 @@ config EFI_LOADER
 	# We need EFI_STUB_32BIT to be set on x86_32 with EFI_STUB
 	depends on !EFI_STUB || !X86 || X86_64 || EFI_STUB_32BIT
 	depends on BLK
+	depends on DM_ETH || !NET
+	depends on !EFI_APP
 	default y if !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
+	select CHARSET
+	select DM_EVENT
+	select EVENT
+	select EVENT_DYNAMIC
 	select LIB_UUID
-	select PARTITION_UUIDS
+	imply PARTITION_UUIDS
 	select HAVE_BLOCK_DEVICE
 	select REGEX
-	imply CFB_CONSOLE_ANSI
 	imply FAT
 	imply FAT_WRITE
 	imply USB_KEYBOARD_FN_KEYS
@@ -32,6 +37,7 @@ if EFI_LOADER
 config CMD_BOOTEFI_BOOTMGR
 	bool "UEFI Boot Manager"
 	default y
+	select BOOTMETH_GLOBAL if BOOTSTD
 	help
 	  Select this option if you want to select the UEFI binary to be booted
 	  via UEFI variables Boot####, BootOrder, and BootNext. This enables the
@@ -39,7 +45,7 @@ config CMD_BOOTEFI_BOOTMGR
 
 config EFI_SETUP_EARLY
 	bool
-	default n
+	default y
 
 choice
 	prompt "Store for non-volatile UEFI variables"
@@ -62,11 +68,18 @@ config EFI_MM_COMM_TEE
 	  variable related operations to that. The application will verify,
 	  authenticate and store the variables on an RPMB.
 
+config EFI_VARIABLE_NO_STORE
+	bool "Don't persist non-volatile UEFI variables"
+	help
+	  If you choose this option, non-volatile variables cannot be persisted.
+	  You could still provide non-volatile variables via
+	  EFI_VARIABLES_PRESEED.
+
 endchoice
 
 config EFI_VARIABLES_PRESEED
 	bool "Initial values for UEFI variables"
-	depends on EFI_VARIABLE_FILE_STORE
+	depends on !EFI_MM_COMM_TEE
 	help
 	  Include a file with the initial values for non-volatile UEFI variables
 	  into the U-Boot binary. If this configuration option is set, changes
@@ -113,7 +126,6 @@ config EFI_SET_TIME
 	bool "SetTime() runtime service"
 	depends on EFI_GET_TIME
 	default y if ARCH_QEMU || SANDBOX
-	default n
 	help
 	  Provide the SetTime() runtime service at boottime. This service
 	  can be used by an EFI application to adjust the real time clock.
@@ -123,7 +135,6 @@ config EFI_HAVE_CAPSULE_SUPPORT
 
 config EFI_RUNTIME_UPDATE_CAPSULE
 	bool "UpdateCapsule() runtime service"
-	default n
 	select EFI_HAVE_CAPSULE_SUPPORT
 	help
 	  Select this option if you want to use UpdateCapsule and
@@ -131,8 +142,8 @@ config EFI_RUNTIME_UPDATE_CAPSULE
 
 config EFI_CAPSULE_ON_DISK
 	bool "Enable capsule-on-disk support"
+	depends on SYSRESET
 	select EFI_HAVE_CAPSULE_SUPPORT
-	default n
 	help
 	  Select this option if you want to use capsule-on-disk feature,
 	  that is, capsules can be fetched and executed from files
@@ -142,7 +153,6 @@ config EFI_CAPSULE_ON_DISK
 config EFI_IGNORE_OSINDICATIONS
 	bool "Ignore OsIndications for CapsuleUpdate on-disk"
 	depends on EFI_CAPSULE_ON_DISK
-	default n
 	help
 	  There are boards where U-Boot does not support SetVariable at runtime.
 	  Select this option if you want to use the capsule-on-disk feature
@@ -152,7 +162,6 @@ config EFI_IGNORE_OSINDICATIONS
 config EFI_CAPSULE_ON_DISK_EARLY
 	bool "Initiate capsule-on-disk at U-Boot boottime"
 	depends on EFI_CAPSULE_ON_DISK
-	default n
 	select EFI_SETUP_EARLY
 	help
 	  Normally, without this option enabled, capsules will be
@@ -163,7 +172,6 @@ config EFI_CAPSULE_ON_DISK_EARLY
 
 config EFI_CAPSULE_FIRMWARE
 	bool
-	default n
 
 config EFI_CAPSULE_FIRMWARE_MANAGEMENT
 	bool "Capsule: Firmware Management Protocol"
@@ -179,6 +187,7 @@ config EFI_CAPSULE_FIRMWARE_FIT
 	depends on EFI_CAPSULE_FIRMWARE_MANAGEMENT
 	select UPDATE_FIT
 	select DFU
+	select SET_DFU_ALT_INFO
 	select EFI_CAPSULE_FIRMWARE
 	help
 	  Select this option if you want to enable firmware management protocol
@@ -190,6 +199,7 @@ config EFI_CAPSULE_FIRMWARE_RAW
 	depends on SANDBOX || (!SANDBOX && !EFI_CAPSULE_FIRMWARE_FIT)
 	select DFU_WRITE_ALT
 	select DFU
+	select SET_DFU_ALT_INFO
 	select EFI_CAPSULE_FIRMWARE
 	help
 	  Select this option if you want to enable firmware management protocol
@@ -210,7 +220,6 @@ config EFI_CAPSULE_AUTHENTICATE
 	select PKCS7_VERIFY
 	select IMAGE_SIGN_INFO
 	select EFI_SIGNATURE_SUPPORT
-	default n
 	help
 	  Select this option if you want to enable capsule
 	  authentication
@@ -271,7 +280,6 @@ endif
 config EFI_LOADER_BOUNCE_BUFFER
 	bool "EFI Applications use bounce buffers for DMA operations"
 	depends on ARM64
-	default n
 	help
 	  Some hardware does not support DMA to full 64bit addresses. For this
 	  hardware we can create a bounce buffer so that payloads don't have to
@@ -315,11 +323,14 @@ config EFI_TCG2_PROTOCOL
 	bool "EFI_TCG2_PROTOCOL support"
 	default y
 	depends on TPM_V2
+	# Sandbox TPM currently fails on GetCapabilities needed for TCG2
+	depends on !SANDBOX
 	select SHA1
 	select SHA256
 	select SHA384
 	select SHA512
 	select HASH
+	select SMBIOS_PARSER
 	help
 	  Provide a EFI_TCG2_PROTOCOL implementation using the TPM hardware
 	  of the platform.
@@ -345,7 +356,7 @@ config EFI_LOAD_FILE2_INITRD
 
 config EFI_SECURE_BOOT
 	bool "Enable EFI secure boot support"
-	depends on EFI_LOADER
+	depends on EFI_LOADER && FIT_SIGNATURE
 	select HASH
 	select SHA256
 	select RSA
@@ -356,8 +367,8 @@ config EFI_SECURE_BOOT
 	select X509_CERTIFICATE_PARSER
 	select PKCS7_MESSAGE_PARSER
 	select PKCS7_VERIFY
+	select MSCODE_PARSER
 	select EFI_SIGNATURE_SUPPORT
-	default n
 	help
 	  Select this option to enable EFI secure boot support.
 	  Once SecureBoot mode is enforced, any EFI binary can run only if
@@ -373,5 +384,32 @@ config EFI_ESRT
 	default y
 	help
 	  Enabling this option creates the ESRT UEFI system table.
+
+config EFI_ECPT
+	bool "Enable the UEFI ECPT generation"
+	default y
+	help
+	  Enabling this option created the ECPT UEFI table.
+
+config EFI_EBBR_2_0_CONFORMANCE
+	bool "Add the EBBRv2.0 conformance entry to the ECPT table"
+	depends on EFI_ECPT
+	depends on EFI_LOADER_HII
+	depends on EFI_RISCV_BOOT_PROTOCOL || !RISCV
+	depends on EFI_RNG_PROTOCOL || !DM_RNG
+	depends on EFI_UNICODE_COLLATION_PROTOCOL2
+	default y
+	help
+	  Enabling this option adds the EBBRv2.0 conformance entry to the ECPT UEFI table.
+
+config EFI_RISCV_BOOT_PROTOCOL
+	bool "RISCV_EFI_BOOT_PROTOCOL support"
+	default y
+	depends on RISCV
+	help
+	  The EFI_RISCV_BOOT_PROTOCOL is used to transfer the boot hart ID
+	  to the next boot stage. It should be enabled as it is meant to
+	  replace the transfer via the device-tree. The latter is not
+	  possible on systems using ACPI.
 
 endif

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2010
- * Vipin Kumar, ST Microelectronics, vipin.kumar@st.com.
+ * Vipin Kumar, STMicroelectronics, vipin.kumar@st.com.
  *
  * (C) Copyright 2012
- * Amit Virdi, ST Microelectronics, amit.virdi@st.com.
+ * Amit Virdi, STMicroelectronics, amit.virdi@st.com.
  */
 
 #include <common.h>
@@ -13,6 +13,7 @@
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/mtd/nand_ecc.h>
+#include <linux/mtd/rawnand.h>
 #include <linux/mtd/fsmc_nand.h>
 #include <asm/arch/hardware.h>
 

@@ -21,33 +21,16 @@
 #endif
 
 /* I2C Configuration */
-#define CONFIG_ENV_EEPROM_IS_ON_I2C
-#define CONFIG_SYS_I2C_EEPROM_ADDR	0x50	/* Main EEPROM */
-#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	2
 
 /* Power */
-#if !CONFIG_IS_ENABLED(DM_I2C)
-#define CONFIG_POWER
-#define CONFIG_POWER_I2C
-#endif
 #define CONFIG_POWER_TPS65218
 #define CONFIG_POWER_TPS62362
 
 /* SPL defines. */
-#define CONFIG_SYS_SPL_ARGS_ADDR	(CONFIG_SYS_SDRAM_BASE + \
-					 (128 << 20))
 
 /* Enabling L2 Cache */
 #define CONFIG_SYS_L2_PL310
 #define CONFIG_SYS_PL310_BASE	0x48242000
-
-/*
- * Since SPL did pll and ddr initialization for us,
- * we don't need to do it twice.
- */
-#if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_QSPI_BOOT)
-#define CONFIG_SKIP_LOWLEVEL_INIT
-#endif
 
 /*
  * When building U-Boot such that there is no previous loader
@@ -64,37 +47,6 @@
 
 /* NS16550 Configuration */
 #define CONFIG_SYS_NS16550_COM1		0x44e09000	/* Base EVM has UART0 */
-
-/* SPL USB Support */
-
-#if defined(CONFIG_SPL_USB_HOST) || !defined(CONFIG_SPL_BUILD)
-#define CONFIG_SYS_USB_FAT_BOOT_PARTITION		1
-#define CONFIG_USB_XHCI_OMAP
-
-#define CONFIG_AM437X_USB2PHY2_HOST
-#endif
-
-#if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_SPL_USB_ETHER)
-#undef CONFIG_USB_DWC3_PHY_OMAP
-#undef CONFIG_USB_DWC3_OMAP
-#undef CONFIG_USB_DWC3
-#undef CONFIG_USB_DWC3_GADGET
-
-#undef CONFIG_USB_GADGET_DOWNLOAD
-#undef CONFIG_USB_GADGET_VBUS_DRAW
-#undef CONFIG_USB_GADGET_MANUFACTURER
-#undef CONFIG_USB_GADGET_VENDOR_NUM
-#undef CONFIG_USB_GADGET_PRODUCT_NUM
-#undef CONFIG_USB_GADGET_DUALSPEED
-#endif
-
-/*
- * Disable MMC DM for SPL build and can be re-enabled after adding
- * DM support in SPL
- */
-#ifdef CONFIG_SPL_BUILD
-#undef CONFIG_TIMER
-#endif
 
 #ifndef CONFIG_SPL_BUILD
 /* USB Device Firmware Update support */
@@ -163,28 +115,12 @@
 
 #endif
 
-#ifndef CONFIG_SPL_BUILD
-/* CPSW Ethernet */
-#define CONFIG_NET_RETRY_COUNT		10
-#endif
-
 #define PHY_ANEG_TIMEOUT	8000 /* PHY needs longer aneg time at 1G */
-
-#define CONFIG_SYS_RX_ETH_BUFFER	64
 
 /* NAND support */
 #ifdef CONFIG_MTD_RAW_NAND
 /* NAND: device related configs */
-#define CONFIG_SYS_NAND_PAGE_SIZE	4096
-#define CONFIG_SYS_NAND_OOBSIZE		224
-#define CONFIG_SYS_NAND_BLOCK_SIZE	(256*1024)
-#define CONFIG_SYS_NAND_PAGE_COUNT	(CONFIG_SYS_NAND_BLOCK_SIZE / \
-					 CONFIG_SYS_NAND_PAGE_SIZE)
-#define CONFIG_SYS_NAND_5_ADDR_CYCLE
 /* NAND: driver related configs */
-#define CONFIG_SYS_NAND_ONFI_DETECTION
-#define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_BCH16_CODE_HW
-#define CONFIG_SYS_NAND_BAD_BLOCK_POS	NAND_LARGE_BADBLOCK_POS
 #define CONFIG_SYS_NAND_ECCPOS	{ 2, 3, 4, 5, 6, 7, 8, 9, \
 				10, 11, 12, 13, 14, 15, 16, 17, 18, 19, \
 				20, 21, 22, 23, 24, 25, 26, 27, 28, 29, \
@@ -209,21 +145,13 @@
 			}
 #define CONFIG_SYS_NAND_ECCSIZE		512
 #define CONFIG_SYS_NAND_ECCBYTES	26
-#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x00180000
-/* NAND: SPL related configs */
-/* NAND: SPL falcon mode configs */
-#ifdef CONFIG_SPL_OS_BOOT
-#define CONFIG_SYS_NAND_SPL_KERNEL_OFFS	0x00300000 /* kernel offset */
-#endif
 #define NANDARGS \
-	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
-	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"${optargs} " \
 		"root=${nandroot} " \
 		"rootfstype=${nandrootfstype}\0" \
 	"nandroot=ubi0:rootfs rw ubi.mtd=NAND.file-system,4096\0" \
-	"nandrootfstype=ubifs rootwait=1\0" \
+	"nandrootfstype=ubifs rootwait\0" \
 	"nandboot=echo Booting from nand ...; " \
 		"run nandargs; " \
 		"nand read ${fdtaddr} NAND.u-boot-spl-os; " \

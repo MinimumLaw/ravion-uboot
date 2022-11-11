@@ -32,6 +32,7 @@
 #include <micrel.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <power/regulator.h>
 #include <usb.h>
 
 #include "../common/rav-cfg-block.h"
@@ -62,5 +63,39 @@ int board_init(void)
 	enable_fec_anatop_clock(0, ENET_50MHZ);
 	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_ENET_CLK_SEL_MASK);
 #endif /* CONFIG_FEC_MXC */
+
+	struct udevice *udev;
+	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "vgen4", &udev)) /* VDDHI_IN */
+		regulator_set_enable(udev, true);
+	if (!uclass_get_device_by_name(UCLASS_REGULATOR, "vgen6", &udev)) /* NVCC_LCD, NVCC_EIM, NVCC_SD1, NVCC_SD2, NVCC_NANDF */
+		regulator_set_enable(udev, true);
+
+	struct mxc_ccm_reg *ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
+#warning FixMe: Only really required clocks need be enabled here!
+	ccm->CCGR0 = 0xFFFFFFFF;
+	ccm->CCGR1 = 0xFFFFFFFF;
+	ccm->CCGR2 = 0xFFFFFFFF;
+	ccm->CCGR3 = 0xFFFFFFFF;
+	ccm->CCGR4 = 0xFFFFFFFF;
+	ccm->CCGR5 = 0xFFFFFFFF;
+	ccm->CCGR6 = 0xFFFFFFFF;
+
+	/* USB required LDO 1P1, 2P5, 3P0 and VBUS power supply (defined in DTB) */
+	ccm->pmu_reg_3p0_set = 0x3;
+	ccm->pmu_reg_1p1_set = 0x3;
+	ccm->pmu_reg_2p5_set = 0x3;
+
+	return 0;
+}
+
+int board_late_init(void)
+{
+	/* check boot from USB */
+	if (is_boot_from_usb()) {
+		puts("Factory mode enabled!\n");
+		env_set("preboot","");
+		env_set("bootdelay","0");
+		env_set("bootcmd", "fastboot usb 0");
+	}
 	return 0;
 }

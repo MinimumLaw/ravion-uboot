@@ -4,7 +4,6 @@
  */
 
 #include <common.h>
-#include <flash.h>
 #include <malloc.h>
 #include <linux/errno.h>
 #include <linux/mtd/mtd.h>
@@ -46,7 +45,6 @@ static int spi_flash_mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
 	}
 
 	instr->state = MTD_ERASE_DONE;
-	mtd_erase_callback(instr);
 
 	return 0;
 }

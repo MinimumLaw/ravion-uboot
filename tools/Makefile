@@ -76,9 +76,9 @@ hostprogs-$(CONFIG_TOOLS_LIBCRYPTO) += fit_info fit_check_sign
 
 hostprogs-$(CONFIG_CMD_BOOTEFI_SELFTEST) += file2include
 
-FIT_OBJS-y := fit_common.o fit_image.o image-host.o common/image-fit.o
-FIT_SIG_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := image-sig-host.o common/image-fit-sig.o
-FIT_CIPHER_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := common/image-cipher.o
+FIT_OBJS-y := fit_common.o fit_image.o image-host.o boot/image-fit.o
+FIT_SIG_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := image-sig-host.o boot/image-fit-sig.o
+FIT_CIPHER_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := boot/image-cipher.o
 
 # The following files are synced with upstream DTC.
 # Use synced versions from scripts/dtc/libfdt/.
@@ -94,9 +94,10 @@ ECDSA_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix lib/ecdsa/, ecdsa-libcrypto.
 AES_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix lib/aes/, \
 					aes-encrypt.o aes-decrypt.o)
 
-# Cryptographic helpers that depend on openssl/libcrypto
-LIBCRYPTO_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix lib/, \
-					fdt-libcrypto.o)
+# Cryptographic helpers and image types that depend on openssl/libcrypto
+LIBCRYPTO_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := \
+			lib/fdt-libcrypto.o \
+			sunxi_toc0.o
 
 ROCKCHIP_OBS = lib/rc4.o rkcommon.o rkimage.o rksd.o rkspi.o
 
@@ -106,13 +107,14 @@ dumpimage-mkimage-objs := aisimage.o \
 			$(FIT_OBJS-y) \
 			$(FIT_SIG_OBJS-y) \
 			$(FIT_CIPHER_OBJS-y) \
-			common/fdt_region.o \
-			common/bootm.o \
+			boot/fdt_region.o \
+			boot/bootm.o \
 			lib/crc32.o \
 			default_image.o \
 			lib/fdtdec_common.o \
 			lib/fdtdec.o \
-			common/image.o \
+			boot/image.o \
+			boot/image-host.o \
 			imagetool.o \
 			imximage.o \
 			imx8image.o \
@@ -130,7 +132,7 @@ dumpimage-mkimage-objs := aisimage.o \
 			$(ROCKCHIP_OBS) \
 			socfpgaimage.o \
 			sunxi_egon.o \
-			lib/crc16.o \
+			lib/crc16-ccitt.o \
 			lib/hash-checksum.o \
 			lib/sha1.o \
 			lib/sha256.o \
@@ -195,6 +197,11 @@ hostprogs-$(CONFIG_EXYNOS5250) += mkexynosspl
 hostprogs-$(CONFIG_EXYNOS5420) += mkexynosspl
 HOSTCFLAGS_mkexynosspl.o := -pedantic
 
+HOSTCFLAGS_kwboot.o += -pthread
+HOSTLDLIBS_kwboot += -pthread
+HOSTLDLIBS_kwboot += \
+	$(shell pkg-config --libs tinfo 2> /dev/null || echo "-ltinfo")
+
 ifdtool-objs := $(LIBFDT_OBJS) ifdtool.o
 hostprogs-$(CONFIG_X86) += ifdtool
 
@@ -226,7 +233,7 @@ hostprogs-$(CONFIG_ARCH_OCTEON) += update_octeon_header
 update_octeon_header-objs := update_octeon_header.o lib/crc32.o
 
 hostprogs-y += fdtgrep
-fdtgrep-objs += $(LIBFDT_OBJS) common/fdt_region.o fdtgrep.o
+fdtgrep-objs += $(LIBFDT_OBJS) boot/fdt_region.o fdtgrep.o
 
 ifneq ($(TOOLS_ONLY),y)
 hostprogs-y += spl_size_limit
@@ -237,8 +244,15 @@ hostprogs-$(CONFIG_MIPS) += mips-relocs
 hostprogs-$(CONFIG_ASN1_COMPILER)	+= asn1_compiler
 HOSTCFLAGS_asn1_compiler.o = -idirafter $(srctree)/include
 
-mkeficapsule-objs	:= mkeficapsule.o $(LIBFDT_OBJS)
-hostprogs-$(CONFIG_EFI_HAVE_CAPSULE_SUPPORT) += mkeficapsule
+HOSTCFLAGS_mkeficapsule.o += \
+	$(shell pkg-config --cflags gnutls 2> /dev/null || echo "")
+HOSTCFLAGS_mkeficapsule.o += \
+	$(shell pkg-config --cflags uuid 2> /dev/null || echo "")
+HOSTLDLIBS_mkeficapsule += \
+	$(shell pkg-config --libs gnutls 2> /dev/null || echo "-lgnutls")
+HOSTLDLIBS_mkeficapsule += \
+	$(shell pkg-config --libs uuid 2> /dev/null || echo "-luuid")
+hostprogs-$(CONFIG_TOOLS_MKEFICAPSULE) += mkeficapsule
 
 # We build some files with extra pedantic flags to try to minimize things
 # that won't build on some weird host compiler -- though there are lots of
@@ -253,7 +267,7 @@ HOSTCFLAGS_sha512.o := -pedantic -DCONFIG_SHA512 -DCONFIG_SHA384
 quiet_cmd_wrap = WRAP    $@
 cmd_wrap = echo "\#include <../$(patsubst $(obj)/%,%,$@)>" >$@
 
-$(obj)/lib/%.c $(obj)/common/%.c $(obj)/env/%.c:
+$(obj)/boot/%.c $(obj)/common/%.c $(obj)/env/%.c $(obj)/lib/%.c:
 	$(call cmd,wrap)
 
 clean-dirs := lib common
@@ -294,8 +308,7 @@ HOST_EXTRACFLAGS += -include $(srctree)/include/compiler.h \
 		-I$(srctree)/tools \
 		-DUSE_HOSTCC \
 		-D__KERNEL_STRICT_NAMES \
-		-D_GNU_SOURCE \
-		-std=gnu99
+		-D_GNU_SOURCE
 
 __build:	$(LOGO-y)
 

@@ -396,6 +396,7 @@ enum {
 	TPM_STS_DATA_EXPECT		= 1 << 3,
 	TPM_STS_SELF_TEST_DONE		= 1 << 2,
 	TPM_STS_RESPONSE_RETRY		= 1 << 1,
+	TPM_STS_READ_ZERO               = 0x23
 };
 
 enum {
@@ -424,7 +425,7 @@ enum {
  * @dev		TPM device
  * @mode	TPM startup mode
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_startup(struct udevice *dev, enum tpm2_startup_types mode);
 
@@ -434,7 +435,7 @@ u32 tpm2_startup(struct udevice *dev, enum tpm2_startup_types mode);
  * @dev		TPM device
  * @full_test	Asking to perform all tests or only the untested ones
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_self_test(struct udevice *dev, enum tpm2_yes_no full_test);
 
@@ -446,7 +447,7 @@ u32 tpm2_self_test(struct udevice *dev, enum tpm2_yes_no full_test);
  * @pw		Password
  * @pw_sz	Length of the password
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_clear(struct udevice *dev, u32 handle, const char *pw,
 	       const ssize_t pw_sz);
@@ -462,7 +463,7 @@ u32 tpm2_clear(struct udevice *dev, u32 handle, const char *pw,
  * @nv_attributes	TPM_NV_ATTRIBUTES of the area
  * @nv_policy		policy to use
  * @nv_policy_size	size of the policy
- * @return return code of the operation
+ * Return: return code of the operation
  */
 u32 tpm2_nv_define_space(struct udevice *dev, u32 space_index,
 			 size_t space_size, u32 nv_attributes,
@@ -477,7 +478,7 @@ u32 tpm2_nv_define_space(struct udevice *dev, u32 space_index,
  * @digest	Value representing the event to be recorded
  * @digest_len  len of the hash
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_pcr_extend(struct udevice *dev, u32 index, u32 algorithm,
 		    const u8 *digest, u32 digest_len);
@@ -489,7 +490,7 @@ u32 tpm2_pcr_extend(struct udevice *dev, u32 index, u32 algorithm,
  * @index	Index of data to read
  * @data	Place to put data
  * @count	Number of bytes of data
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_nv_read_value(struct udevice *dev, u32 index, void *data, u32 count);
 
@@ -500,7 +501,7 @@ u32 tpm2_nv_read_value(struct udevice *dev, u32 index, void *data, u32 count);
  * @index	Index of data to write
  * @data	Data to write
  * @count	Number of bytes of data
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
 			u32 count);
@@ -511,13 +512,16 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
  * @dev		TPM device
  * @idx		Index of the PCR
  * @idx_min_sz	Minimum size in bytes of the pcrSelect array
+ * @algorithm	Algorithm used, defined in 'enum tpm2_algorithms'
  * @data	Output buffer for contents of the named PCR
+ * @digest_len  len of the data
  * @updates	Optional out parameter: number of updates for this PCR
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_pcr_read(struct udevice *dev, u32 idx, unsigned int idx_min_sz,
-		  void *data, unsigned int *updates);
+		  u16 algorithm, void *data, u32 digest_len,
+		  unsigned int *updates);
 
 /**
  * Issue a TPM2_GetCapability command.  This implementation is limited
@@ -529,7 +533,7 @@ u32 tpm2_pcr_read(struct udevice *dev, u32 idx, unsigned int idx_min_sz,
  * @buf		Output buffer for capability information
  * @prop_count	Size of output buffer
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_get_capability(struct udevice *dev, u32 capability, u32 property,
 			void *buf, size_t prop_count);
@@ -541,7 +545,7 @@ u32 tpm2_get_capability(struct udevice *dev, u32 capability, u32 property,
  * @pw		Password
  * @pw_sz	Length of the password
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_dam_reset(struct udevice *dev, const char *pw, const ssize_t pw_sz);
 
@@ -555,7 +559,7 @@ u32 tpm2_dam_reset(struct udevice *dev, const char *pw, const ssize_t pw_sz);
  * @recovery_time Time before decrementation of the failure count
  * @lockout_recovery Time to wait after a lockout
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_dam_parameters(struct udevice *dev, const char *pw,
 			const ssize_t pw_sz, unsigned int max_tries,
@@ -572,7 +576,7 @@ u32 tpm2_dam_parameters(struct udevice *dev, const char *pw,
  * @oldpw	Old password
  * @oldpw_sz	Length of the old password
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 int tpm2_change_auth(struct udevice *dev, u32 handle, const char *newpw,
 		     const ssize_t newpw_sz, const char *oldpw,
@@ -587,7 +591,7 @@ int tpm2_change_auth(struct udevice *dev, u32 handle, const char *newpw,
  * @index	Index of the PCR
  * @digest	New key to access the PCR
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_pcr_setauthpolicy(struct udevice *dev, const char *pw,
 			   const ssize_t pw_sz, u32 index, const char *key);
@@ -602,7 +606,7 @@ u32 tpm2_pcr_setauthpolicy(struct udevice *dev, const char *pw,
  * @digest	New key to access the PCR
  * @key_sz	Length of the new key
  *
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_pcr_setauthvalue(struct udevice *dev, const char *pw,
 			  const ssize_t pw_sz, u32 index, const char *key,
@@ -615,7 +619,7 @@ u32 tpm2_pcr_setauthvalue(struct udevice *dev, const char *pw,
  * @param data		output buffer for the random bytes
  * @param count		size of output buffer
  *
- * @return return code of the operation
+ * Return: return code of the operation
  */
 u32 tpm2_get_random(struct udevice *dev, void *data, u32 count);
 
@@ -626,7 +630,7 @@ u32 tpm2_get_random(struct udevice *dev, void *data, u32 count);
  *
  * @dev		TPM device
  * @index	Index of data to lock
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_write_lock(struct udevice *dev, u32 index);
 
@@ -637,8 +641,51 @@ u32 tpm2_write_lock(struct udevice *dev, u32 index);
  * before calling the kernel.
  *
  * @dev		TPM device
- * @return code of the operation
+ * Return: code of the operation
  */
 u32 tpm2_disable_platform_hierarchy(struct udevice *dev);
+
+/**
+ * submit user specified data to the TPM and get response
+ *
+ * @dev		TPM device
+ * @sendbuf:	Buffer of the data to send
+ * @recvbuf:	Buffer to save the response to
+ * @recv_size:	Pointer to the size of the response buffer
+ *
+ * Return: code of the operation
+ */
+u32 tpm2_submit_command(struct udevice *dev, const u8 *sendbuf,
+			u8 *recvbuf, size_t *recv_size);
+
+/**
+ * tpm_cr50_report_state() - Report the Cr50 internal state
+ *
+ * @dev:	TPM device
+ * @vendor_cmd:	Vendor command number to send
+ * @vendor_subcmd: Vendor sub-command number to send
+ * @recvbuf:	Buffer to save the response to
+ * @recv_size:	Pointer to the size of the response buffer
+ * Return: result of the operation
+ */
+u32 tpm2_report_state(struct udevice *dev, uint vendor_cmd, uint vendor_subcmd,
+		      u8 *recvbuf, size_t *recv_size);
+
+/**
+ * tpm2_enable_nvcommits() - Tell TPM to commit NV data immediately
+ *
+ * For Chromium OS verified boot, we may reboot or reset at different times,
+ * possibly leaving non-volatile data unwritten by the TPM.
+ *
+ * This vendor command is used to indicate that non-volatile data should be
+ * written to its store immediately.
+ *
+ * @dev		TPM device
+ * @vendor_cmd:	Vendor command number to send
+ * @vendor_subcmd: Vendor sub-command number to send
+ * Return: result of the operation
+ */
+u32 tpm2_enable_nvcommits(struct udevice *dev, uint vendor_cmd,
+			  uint vendor_subcmd);
 
 #endif /* __TPM_V2_H */

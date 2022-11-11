@@ -29,9 +29,9 @@ static unsigned int	bus;
 static unsigned int	cs;
 static unsigned int	mode;
 static unsigned int	freq;
-static int   		bitlen;
-static uchar 		dout[MAX_SPI_BYTES];
-static uchar 		din[MAX_SPI_BYTES];
+static int		bitlen;
+static uchar		dout[MAX_SPI_BYTES];
+static uchar		din[MAX_SPI_BYTES];
 
 static int do_spi_xfer(int bus, int cs)
 {
@@ -46,8 +46,8 @@ static int do_spi_xfer(int bus, int cs)
 	str = strdup(name);
 	if (!str)
 		return -ENOMEM;
-	ret = spi_get_bus_and_cs(bus, cs, freq, mode, "spi_generic_drv",
-				 str, &dev, &slave);
+	ret = _spi_get_bus_and_cs(bus, cs, freq, mode, "spi_generic_drv",
+				  str, &dev, &slave);
 	if (ret)
 		return ret;
 #else

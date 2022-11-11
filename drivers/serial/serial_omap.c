@@ -66,7 +66,7 @@ static inline int serial_in_shift(void *addr, int shift)
 
 static inline void _debug_uart_init(void)
 {
-	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);
 	int baud_divisor;
 
 	baud_divisor = ns16550_calc_divisor(com_port, CONFIG_DEBUG_UART_CLOCK,
@@ -85,7 +85,7 @@ static inline void _debug_uart_init(void)
 
 static inline void _debug_uart_putc(int ch)
 {
-	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);
 
 	while (!(serial_din(&com_port->lsr) & UART_LSR_THRE))
 		;
@@ -98,7 +98,7 @@ DEBUG_UART_FUNCS
 
 #if CONFIG_IS_ENABLED(DM_SERIAL)
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 static int omap_serial_of_to_plat(struct udevice *dev)
 {
 	struct ns16550_plat *plat = dev_get_plat(dev);
@@ -149,13 +149,13 @@ static const struct udevice_id omap_serial_ids[] = {
 	{ .compatible = "ti,am654-uart", },
 	{}
 };
-#endif /* OF_CONTROL && !OF_PLATDATA */
+#endif /* OF_REAL */
 
 #if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 U_BOOT_DRIVER(omap_serial) = {
 	.name	= "omap_serial",
 	.id	= UCLASS_SERIAL,
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	.of_match = omap_serial_ids,
 	.of_to_plat = omap_serial_of_to_plat,
 	.plat_auto	= sizeof(struct ns16550_plat),

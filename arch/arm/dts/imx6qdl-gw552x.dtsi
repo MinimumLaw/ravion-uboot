@@ -14,8 +14,8 @@
 		led1 = &led1;
 		led2 = &led2;
 		nand = &gpmi;
-		usb0 = &usbotg;
-		usb1 = &usbh1;
+		usb0 = &usbh1;
+		usb1 = &usbotg;
 	};
 
 	chosen {
@@ -24,8 +24,6 @@
 
 	gpio-keys {
 		compatible = "gpio-keys";
-		#address-cells = <1>;
-		#size-cells = <0>;
 
 		user-pb {
 			label = "user_pb";
@@ -120,6 +118,7 @@
 		regulator-name = "5P0V";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
 	};
 };
 
@@ -401,7 +400,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
 	disable-over-current;
-	dr_mode = "otg";
 	status = "okay";
 };
 

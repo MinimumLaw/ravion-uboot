@@ -13,6 +13,7 @@
 #include <fdtdec.h>
 #include <fpga.h>
 #include <malloc.h>
+#include <memalign.h>
 #include <mmc.h>
 #include <watchdog.h>
 #include <wdt.h>
@@ -23,6 +24,13 @@
 #include "../common/board.h"
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_DEBUG_UART_BOARD_INIT)
+void board_debug_uart_init(void)
+{
+	/* Add initialization sequence if UART is not configured */
+}
+#endif
 
 int board_init(void)
 {
@@ -151,3 +159,38 @@ enum env_location env_get_location(enum env_operation op, int prio)
 		return ENVL_NOWHERE;
 	}
 }
+
+#if defined(CONFIG_SET_DFU_ALT_INFO)
+
+#define DFU_ALT_BUF_LEN                SZ_1K
+
+void set_dfu_alt_info(char *interface, char *devstr)
+{
+	ALLOC_CACHE_ALIGN_BUFFER(char, buf, DFU_ALT_BUF_LEN);
+
+	if (!CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT) &&
+	    env_get("dfu_alt_info"))
+		return;
+
+	memset(buf, 0, sizeof(buf));
+
+	switch ((zynq_slcr_get_boot_mode()) & ZYNQ_BM_MASK) {
+	case ZYNQ_BM_SD:
+		snprintf(buf, DFU_ALT_BUF_LEN,
+			 "mmc 0:1=boot.bin fat 0 1;"
+			 "u-boot.img fat 0 1");
+		break;
+	case ZYNQ_BM_QSPI:
+		snprintf(buf, DFU_ALT_BUF_LEN,
+			 "sf 0:0=boot.bin raw 0 0x1500000;"
+			 "u-boot.img raw 0x%x 0x500000",
+			 CONFIG_SYS_SPI_U_BOOT_OFFS);
+		break;
+	default:
+		return;
+	}
+
+	env_set("dfu_alt_info", buf);
+	puts("DFU alt info setting: done\n");
+}
+#endif

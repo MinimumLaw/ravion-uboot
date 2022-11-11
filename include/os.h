@@ -17,6 +17,13 @@ struct rtc_time;
 struct sandbox_state;
 
 /**
+ * os_printf() - print directly to OS console
+ *
+ * @format: format string
+ */
+int os_printf(const char *format, ...);
+
+/**
  * Access to the OS read() system call
  *
  * @fd:		File descriptor as returned by os_open()
@@ -50,6 +57,14 @@ off_t os_lseek(int fd, off_t offset, int whence);
 #define OS_SEEK_SET	0
 #define OS_SEEK_CUR	1
 #define OS_SEEK_END	2
+
+/**
+ * os_filesize() - Calculate the size of a file
+ *
+ * @fd:		File descriptor as returned by os_open()
+ * Return:	file size or negative error code
+ */
+int os_filesize(int fd);
 
 /**
  * Access to the OS open() system call
@@ -258,7 +273,7 @@ const char *os_dirent_get_typename(enum os_dirent_t type);
  * @size:	size of file is returned if no error
  * Return:	0 on success or -1 if an error ocurred
  */
-int os_get_filesize(const char *fname, loff_t *size);
+int os_get_filesize(const char *fname, long long *size);
 
 /**
  * os_putc() - write a character to the controlling OS terminal
@@ -397,6 +412,28 @@ int os_write_file(const char *name, const void *buf, int size);
  * Return:	0 if OK, -ve on error
  */
 int os_read_file(const char *name, void **bufp, int *sizep);
+
+/**
+ * os_map_file() - Map a file from the host filesystem into memory
+ *
+ * This can be useful when to provide a backing store for an emulated device
+ *
+ * @pathname:	File pathname to map
+ * @os_flags:	Flags, like OS_O_RDONLY, OS_O_RDWR
+ * @bufp:	Returns buffer containing the file
+ * @sizep:	Returns size of data
+ * Return:	0 if OK, -ve on error
+ */
+int os_map_file(const char *pathname, int os_flags, void **bufp, int *sizep);
+
+/**
+ * os_unmap() - Unmap a file previously mapped
+ *
+ * @buf: Mapped address
+ * @size: Size in bytes
+ * Return:	0 if OK, -ve on error
+ */
+int os_unmap(void *buf, int size);
 
 /*
  * os_find_text_base() - Find the text section in this running process

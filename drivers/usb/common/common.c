@@ -29,9 +29,25 @@ enum usb_dr_mode usb_get_dr_mode(ofnode node)
 
 	dr_mode = ofnode_read_string(node, "dr_mode");
 	if (!dr_mode) {
-		pr_err("usb dr_mode not found\n");
+		pr_debug("usb dr_mode not found\n");
 		return USB_DR_MODE_UNKNOWN;
 	}
+
+	for (i = 0; i < ARRAY_SIZE(usb_dr_modes); i++)
+		if (!strcmp(dr_mode, usb_dr_modes[i]))
+			return i;
+
+	return USB_DR_MODE_UNKNOWN;
+}
+
+enum usb_dr_mode usb_get_role_switch_default_mode(ofnode node)
+{
+	const char *dr_mode;
+	int i;
+
+	dr_mode = ofnode_read_string(node, "role-switch-default-mode");
+	if (!dr_mode)
+		return USB_DR_MODE_UNKNOWN;
 
 	for (i = 0; i < ARRAY_SIZE(usb_dr_modes); i++)
 		if (!strcmp(dr_mode, usb_dr_modes[i]))
@@ -64,7 +80,7 @@ enum usb_device_speed usb_get_maximum_speed(ofnode node)
 
 	max_speed = ofnode_read_string(node, "maximum-speed");
 	if (!max_speed) {
-		pr_err("usb maximum-speed not found\n");
+		pr_debug("usb maximum-speed not found\n");
 		return USB_SPEED_UNKNOWN;
 	}
 

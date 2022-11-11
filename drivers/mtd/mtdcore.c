@@ -4,7 +4,7 @@
  * drivers and users.
  *
  * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
- * Copyright © 2006      Red Hat UK Limited 
+ * Copyright © 2006      Red Hat UK Limited
  *
  */
 
@@ -123,7 +123,7 @@ void *idr_get_next(struct idr *idp, int *next)
 	} else {
 		*next = 0;
 	}
-	
+
 	return ret;
 }
 
@@ -799,8 +799,8 @@ static bool mtd_device_matches_name(struct mtd_info *mtd, const char *name)
  *	device name
  *	@name: MTD device name to open
  *
- * 	This function returns MTD device description structure in case of
- * 	success and an error code in case of failure.
+ *	This function returns MTD device description structure in case of
+ *	success and an error code in case of failure.
  */
 struct mtd_info *get_mtd_device_nm(const char *name)
 {
@@ -850,7 +850,7 @@ EXPORT_SYMBOL_GPL(get_mtd_device_nm);
  * @param mtd an MTD device
  * @param offset offset in flash
  * @param length image length
- * @return image length including bad blocks in *len_incl_bad and whether or not
+ * Return: image length including bad blocks in *len_incl_bad and whether or not
  *         the length returned was truncated in *truncated
  */
 void mtd_get_len_incl_bad(struct mtd_info *mtd, uint64_t offset,
@@ -906,13 +906,6 @@ void __put_mtd_device(struct mtd_info *mtd)
 }
 EXPORT_SYMBOL_GPL(__put_mtd_device);
 
-/*
- * Erase is an asynchronous operation.  Device drivers are supposed
- * to call instr->callback() whenever the operation completes, even
- * if it completes with a failure.
- * Callers are supposed to pass a callback function and wait for it
- * to be called before writing to the block.
- */
 int mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
 {
 	if (instr->addr > mtd->size || instr->len > mtd->size - instr->addr)
@@ -922,7 +915,6 @@ int mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
 	instr->fail_addr = MTD_FAIL_ADDR_UNKNOWN;
 	if (!instr->len) {
 		instr->state = MTD_ERASE_DONE;
-		mtd_erase_callback(instr);
 		return 0;
 	}
 	return mtd->_erase(mtd, instr);

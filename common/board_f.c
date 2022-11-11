@@ -16,9 +16,11 @@
 #include <console.h>
 #include <cpu.h>
 #include <cpu_func.h>
+#include <display_options.h>
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <event.h>
 #include <fdtdec.h>
 #include <fs.h>
 #include <hang.h>
@@ -244,7 +246,7 @@ __weak int dram_init_banksize(void)
 	return 0;
 }
 
-#if defined(CONFIG_SYS_I2C_LEGACY)
+#if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
 static int init_func_i2c(void)
 {
 	puts("I2C:   ");
@@ -271,7 +273,7 @@ static int setup_mon_len(void)
 	gd->mon_len = (ulong)&_end - (ulong)_init;
 #elif defined(CONFIG_NIOS2) || defined(CONFIG_XTENSA)
 	gd->mon_len = CONFIG_SYS_MONITOR_LEN;
-#elif defined(CONFIG_NDS32) || defined(CONFIG_SH) || defined(CONFIG_RISCV)
+#elif defined(CONFIG_SH) || defined(CONFIG_RISCV)
 	gd->mon_len = (ulong)(&__bss_end) - (ulong)(&_start);
 #elif defined(CONFIG_SYS_MONITOR_BASE)
 	/* TODO: use (ulong)&__bss_end - (ulong)&__text_start; ? */
@@ -283,7 +285,7 @@ static int setup_mon_len(void)
 static int setup_spl_handoff(void)
 {
 #if CONFIG_IS_ENABLED(HANDOFF)
-	gd->spl_handoff = bloblist_find(BLOBLISTT_SPL_HANDOFF,
+	gd->spl_handoff = bloblist_find(BLOBLISTT_U_BOOT_SPL_HANDOFF,
 					sizeof(struct spl_handoff));
 	debug("Found SPL hand-off info %p\n", gd->spl_handoff);
 #endif
@@ -326,7 +328,7 @@ static int setup_dest_addr(void)
 	 * Ram is setup, size stored in gd !!
 	 */
 	debug("Ram size: %08lX\n", (ulong)gd->ram_size);
-#if defined(CONFIG_SYS_MEM_TOP_HIDE)
+#if CONFIG_VAL(SYS_MEM_TOP_HIDE)
 	/*
 	 * Subtract specified amount of memory to hide so that it won't
 	 * get "touched" at all by U-Boot. By fixing up gd->ram_size
@@ -399,13 +401,9 @@ static int reserve_video(void)
 	      ((unsigned long)gd->relocaddr - addr) >> 10, addr);
 	gd->relocaddr = addr;
 #elif defined(CONFIG_LCD)
-#  ifdef CONFIG_FB_ADDR
-	gd->fb_base = CONFIG_FB_ADDR;
-#  else
 	/* reserve memory for LCD display (always full pages) */
 	gd->relocaddr = lcd_setmem(gd->relocaddr);
 	gd->fb_base = gd->relocaddr;
-#  endif /* CONFIG_FB_ADDR */
 #endif
 
 	return 0;
@@ -655,8 +653,14 @@ static int reloc_bootstage(void)
 static int reloc_bloblist(void)
 {
 #ifdef CONFIG_BLOBLIST
-	if (gd->flags & GD_FLG_SKIP_RELOC)
+	/*
+	 * Relocate only if we are supposed to send it
+	 */
+	if ((gd->flags & GD_FLG_SKIP_RELOC) &&
+	    CONFIG_BLOBLIST_SIZE == CONFIG_BLOBLIST_SIZE_RELOC) {
+		debug("Not relocating bloblist\n");
 		return 0;
+	}
 	if (gd->new_bloblist) {
 		int size = CONFIG_BLOBLIST_SIZE;
 
@@ -673,30 +677,34 @@ static int reloc_bloblist(void)
 
 static int setup_reloc(void)
 {
-	if (gd->flags & GD_FLG_SKIP_RELOC) {
-		debug("Skipping relocation due to flag\n");
-		return 0;
-	}
-
+	if (!(gd->flags & GD_FLG_SKIP_RELOC)) {
 #ifdef CONFIG_SYS_TEXT_BASE
 #ifdef ARM
-	gd->reloc_off = gd->relocaddr - (unsigned long)__image_copy_start;
+		gd->reloc_off = gd->relocaddr - (unsigned long)__image_copy_start;
+#elif defined(CONFIG_MICROBLAZE)
+		gd->reloc_off = gd->relocaddr - (u32)_start;
 #elif defined(CONFIG_M68K)
-	/*
-	 * On all ColdFire arch cpu, monitor code starts always
-	 * just after the default vector table location, so at 0x400
-	 */
-	gd->reloc_off = gd->relocaddr - (CONFIG_SYS_TEXT_BASE + 0x400);
+		/*
+		 * On all ColdFire arch cpu, monitor code starts always
+		 * just after the default vector table location, so at 0x400
+		 */
+		gd->reloc_off = gd->relocaddr - (CONFIG_SYS_TEXT_BASE + 0x400);
 #elif !defined(CONFIG_SANDBOX)
-	gd->reloc_off = gd->relocaddr - CONFIG_SYS_TEXT_BASE;
+		gd->reloc_off = gd->relocaddr - CONFIG_SYS_TEXT_BASE;
 #endif
 #endif
+	}
+
 	memcpy(gd->new_gd, (char *)gd, sizeof(gd_t));
 
-	debug("Relocation Offset is: %08lx\n", gd->reloc_off);
-	debug("Relocating to %08lx, new gd at %08lx, sp at %08lx\n",
-	      gd->relocaddr, (ulong)map_to_sysmem(gd->new_gd),
-	      gd->start_addr_sp);
+	if (gd->flags & GD_FLG_SKIP_RELOC) {
+		debug("Skipping relocation due to flag\n");
+	} else {
+		debug("Relocation Offset is: %08lx\n", gd->reloc_off);
+		debug("Relocating to %08lx, new gd at %08lx, sp at %08lx\n",
+		      gd->relocaddr, (ulong)map_to_sysmem(gd->new_gd),
+		      gd->start_addr_sp);
+	}
 
 	return 0;
 }
@@ -794,11 +802,6 @@ __weak int reserve_arch(void)
 	return 0;
 }
 
-__weak int arch_cpu_init_dm(void)
-{
-	return 0;
-}
-
 __weak int checkcpu(void)
 {
 	return 0;
@@ -807,6 +810,11 @@ __weak int checkcpu(void)
 __weak int clear_bss(void)
 {
 	return 0;
+}
+
+static int misc_init_f(void)
+{
+	return event_notify_null(EVT_MISC_INIT_F);
 }
 
 static const init_fnc_t init_sequence_f[] = {
@@ -820,6 +828,7 @@ static const init_fnc_t init_sequence_f[] = {
 	initf_malloc,
 	log_init,
 	initf_bootstage,	/* uses its own timer, so does not need DM */
+	event_init,
 #ifdef CONFIG_BLOBLIST
 	bloblist_init,
 #endif
@@ -833,7 +842,6 @@ static const init_fnc_t init_sequence_f[] = {
 	arch_cpu_init,		/* basic arch cpu dependent setup */
 	mach_cpu_init,		/* SoC/machine dependent CPU setup */
 	initf_dm,
-	arch_cpu_init_dm,
 #if defined(CONFIG_BOARD_EARLY_INIT_F)
 	board_early_init_f,
 #endif
@@ -867,11 +875,9 @@ static const init_fnc_t init_sequence_f[] = {
 	show_board_info,
 #endif
 	INIT_FUNC_WATCHDOG_INIT
-#if defined(CONFIG_MISC_INIT_F)
 	misc_init_f,
-#endif
 	INIT_FUNC_WATCHDOG_RESET
-#if defined(CONFIG_SYS_I2C_LEGACY)
+#if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
 	init_func_i2c,
 #endif
 #if defined(CONFIG_VID) && !defined(CONFIG_SPL)

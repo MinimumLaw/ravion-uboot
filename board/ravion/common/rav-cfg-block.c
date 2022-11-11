@@ -16,11 +16,11 @@
 #endif
 #include <cli.h>
 #include <console.h>
-#include <flash.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <nand.h>
 #include <asm/mach-types.h>
+#include <asm/cache.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

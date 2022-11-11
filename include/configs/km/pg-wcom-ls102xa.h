@@ -6,17 +6,8 @@
 #ifndef __CONFIG_PG_WCOM_LS102XA_H
 #define __CONFIG_PG_WCOM_LS102XA_H
 
-#define CONFIG_SYS_FSL_CLK
-
-#define CONFIG_SKIP_LOWLEVEL_INIT
-
 /* include common defines/options for all Keymile boards */
 #include "keymile-common.h"
-
-/*
- * Size of malloc() pool
- */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 16 * 1024 * 1024)
 
 #define CONFIG_SYS_INIT_RAM_ADDR	OCRAM_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_SIZE	OCRAM_SIZE
@@ -25,26 +16,12 @@
 					  CONFIG_KM_PHRAM + \
 					  CONFIG_KM_RESERVED_PRAM) >> 10)
 
-#define CONFIG_SYS_CLK_FREQ		66666666
-/*
- * Take into account default implementation where DDR_FDBK_MULTI is consider as
- * configured for DDR_PLL = 2*MEM_PLL_RAT.
- * In our case DDR_FDBK_MULTI is 2, means DDR_PLL = MEM_PLL_RAT.
- */
-#define CONFIG_DDR_CLK_FREQ		(100000000 >> 1)
-
 #define PHYS_SDRAM			0x80000000
 #define PHYS_SDRAM_SIZE			(1u * 1024 * 1024 * 1024)
 
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000UL
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 
-#define CONFIG_DIMM_SLOTS_PER_CTLR	1
-#define CONFIG_CHIP_SELECTS_PER_CTRL	4
-
-#define CONFIG_DDR_SPD
-
-#define CONFIG_SYS_SPD_BUS_NUM		0
 #define SPD_EEPROM_ADDRESS		0x54
 
 /* POST memory regions test */
@@ -55,7 +32,6 @@
  * IFC Definitions
  */
 /* NOR Flash Definitions */
-#define CONFIG_FSL_IFC
 #define CONFIG_SYS_FLASH_BASE		0x60000000
 #define CONFIG_SYS_FLASH_BASE_PHYS	CONFIG_SYS_FLASH_BASE
 
@@ -85,18 +61,10 @@
 					FTIM2_NOR_TWP(0xb))
 #define CONFIG_SYS_NOR_FTIM3		0
 
-#define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45	/* count down from 45/5: 9..1 */
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* number of banks */
-#define CONFIG_SYS_MAX_FLASH_SECT	512	/* sectors per device */
-#define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
-#define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
-
-#define CONFIG_SYS_FLASH_EMPTY_INFO
 #define CONFIG_SYS_FLASH_BANKS_LIST	{ CONFIG_SYS_FLASH_BASE_PHYS }
 
-#define CONFIG_CFI_FLASH_USE_WEAK_ACCESSORS
 #define CONFIG_SYS_WRITE_SWAPPED_DATA
 
 #define CONFIG_SYS_CSPR0_EXT		CONFIG_SYS_NOR0_CSPR_EXT
@@ -109,7 +77,6 @@
 #define CONFIG_SYS_CS0_FTIM3		CONFIG_SYS_NOR_FTIM3
 
 /* NAND Flash Definitions */
-#define CONFIG_NAND_FSL_IFC
 #define CONFIG_SYS_NAND_BASE		0x68000000
 #define CONFIG_SYS_NAND_BASE_PHYS	CONFIG_SYS_NAND_BASE
 
@@ -129,8 +96,6 @@
 					| CSOR_NAND_PB(64) \
 					| CSOR_NAND_TRHZ_40 \
 					| CSOR_NAND_BCTLD)
-
-#define CONFIG_SYS_NAND_ONFI_DETECTION
 
 #define CONFIG_SYS_NAND_FTIM0		(FTIM0_NAND_TCCST(0x3) | \
 					FTIM0_NAND_TWP(0x8) | \
@@ -156,7 +121,6 @@
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
-#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
 
 /* QRIO FPGA Definitions */
 #define CONFIG_SYS_QRIO_BASE		0x70000000
@@ -191,9 +155,7 @@
 /*
  * I2C
  */
-#define CONFIG_SYS_I2C_LEGACY
 #define CONFIG_SYS_I2C_INIT_BOARD
-#define CONFIG_SYS_I2C_SPEED		100000
 
 #define CONFIG_I2C_MULTI_BUS
 #define CONFIG_SYS_I2C_MAX_HOPS		1
@@ -205,16 +167,7 @@
 					{1, {I2C_NULL_HOP}                 }, \
 				}
 
-/*
- * eTSEC
- */
-#ifdef CONFIG_TSEC_ENET
-#define CONFIG_ETHPRIME			"ethernet@2d90000"
-#endif
-
-#define CONFIG_LAYERSCAPE_NS_ACCESS
 #define CONFIG_SMP_PEN_ADDR		0x01ee0200
-#define COUNTER_FREQUENCY		8333333
 
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		256
@@ -224,20 +177,9 @@
  * Miscellaneous configurable options
  */
 
-#define CONFIG_SYS_LOAD_ADDR		0x82000000
-
 #define CONFIG_LS102XA_STREAM_ID
 
-#define CONFIG_SYS_INIT_SP_OFFSET \
-	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_ADDR \
-	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
-
-#define CONFIG_SYS_MONITOR_BASE CONFIG_SYS_TEXT_BASE /* start of monitor */
 #define CONFIG_SYS_MONITOR_LEN		0x100000     /* 1Mbyte */
-#define CONFIG_SYS_QE_FW_ADDR		0x60020000
-
-#define CONFIG_SYS_BOOTCOUNT_BE
 
 /*
  * Environment
@@ -301,7 +243,6 @@
 	"ethrotate=no\0"						\
 	""
 
-#define CONFIG_SYS_BOOTM_LEN	(64 << 20) /* Increase max gunzip size */
 #define CONFIG_SYS_BOOTMAPSZ	(256 << 20) /* Increase map for Linux */
 
 #endif

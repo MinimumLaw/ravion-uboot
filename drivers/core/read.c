@@ -205,6 +205,12 @@ int dev_read_string_count(const struct udevice *dev, const char *propname)
 	return ofnode_read_string_count(dev_ofnode(dev), propname);
 }
 
+int dev_read_string_list(const struct udevice *dev, const char *propname,
+			 const char ***listp)
+{
+	return ofnode_read_string_list(dev_ofnode(dev), propname, listp);
+}
+
 int dev_read_phandle_with_args(const struct udevice *dev, const char *list_name,
 			       const char *cells_name, int cell_count,
 			       int index, struct ofnode_phandle_args *out_args)
@@ -391,4 +397,14 @@ int dev_decode_display_timing(const struct udevice *dev, int index,
 			      struct display_timing *config)
 {
 	return ofnode_decode_display_timing(dev_ofnode(dev), index, config);
+}
+
+ofnode dev_get_phy_node(const struct udevice *dev)
+{
+	return ofnode_get_phy_node(dev_ofnode(dev));
+}
+
+phy_interface_t dev_read_phy_mode(const struct udevice *dev)
+{
+	return ofnode_read_phy_mode(dev_ofnode(dev));
 }

@@ -48,6 +48,7 @@ static const struct r8152_dongle r8152_dongles[] = {
 
 	/* TP-LINK */
 	{ 0x2357, 0x0601 },
+	{ 0x2357, 0x0602 },
 
 	/* Nvidia */
 	{ 0x0955, 0x09ff },
@@ -1885,6 +1886,7 @@ static const struct usb_device_id r8152_eth_id_table[] = {
 
 	/* TP-LINK */
 	{ USB_DEVICE(0x2357, 0x0601) },
+	{ USB_DEVICE(0x2357, 0x0602) },
 
 	/* Nvidia */
 	{ USB_DEVICE(0x0955, 0x09ff) },
@@ -1894,4 +1896,3 @@ static const struct usb_device_id r8152_eth_id_table[] = {
 
 U_BOOT_USB_DEVICE(r8152_eth, r8152_eth_id_table);
 #endif /* CONFIG_DM_ETH */
-

@@ -1291,6 +1291,9 @@ static ulong px30_clk_set_rate(struct clk *clk, ulong rate)
 	case PLL_NPLL:
 		ret = px30_clk_set_pll_rate(priv, NPLL, rate);
 		break;
+	case PLL_CPLL:
+		ret = px30_clk_set_pll_rate(priv, CPLL, rate);
+		break;
 	case ARMCLK:
 		ret = px30_armclk_set_clk(priv, rate);
 		break;
@@ -1367,7 +1370,7 @@ static ulong px30_clk_set_rate(struct clk *clk, ulong rate)
 	return ret;
 }
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 static int px30_gmac_set_parent(struct clk *clk, struct clk *parent)
 {
 	struct px30_clk_priv *priv = dev_get_priv(clk->dev);
@@ -1400,10 +1403,13 @@ static int px30_clk_enable(struct clk *clk)
 {
 	switch (clk->id) {
 	case HCLK_HOST:
+	case HCLK_OTG:
+	case HCLK_SFC:
 	case SCLK_GMAC:
 	case SCLK_GMAC_RX_TX:
 	case SCLK_MAC_REF:
 	case SCLK_MAC_REFOUT:
+	case SCLK_SFC:
 	case ACLK_GMAC:
 	case PCLK_GMAC:
 	case SCLK_GMAC_RMII:
@@ -1418,7 +1424,7 @@ static int px30_clk_enable(struct clk *clk)
 static struct clk_ops px30_clk_ops = {
 	.get_rate = px30_clk_get_rate,
 	.set_rate = px30_clk_set_rate,
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	.set_parent = px30_clk_set_parent,
 #endif
 	.enable = px30_clk_enable,

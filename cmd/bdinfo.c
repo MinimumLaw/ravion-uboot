@@ -117,7 +117,7 @@ int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	bdinfo_print_num_l("fdt_size", (ulong)gd->fdt_size);
 	if (IS_ENABLED(CONFIG_DM_VIDEO))
 		show_video_info();
-#if defined(CONFIG_LCD) || defined(CONFIG_VIDEO)
+#if defined(CONFIG_LCD)
 	bdinfo_print_num_l("FB base  ", gd->fb_base);
 #endif
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
@@ -128,6 +128,8 @@ int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 		lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 		lmb_dump_all_force(&lmb);
+		if (IS_ENABLED(CONFIG_OF_REAL))
+			printf("devicetree  = %s\n", fdtdec_get_srcname());
 	}
 
 	arch_print_bdinfo();

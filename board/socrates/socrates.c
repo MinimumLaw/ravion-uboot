@@ -26,12 +26,9 @@
 #include <fdt_support.h>
 #include <asm/io.h>
 #include <i2c.h>
-#include <video_fb.h>
 #include "upm_table.h"
 
 DECLARE_GLOBAL_DATA_PTR;
-
-extern flash_info_t flash_info[];	/* FLASH chips info */
 
 void local_bus_init (void);
 ulong flash_get_size (ulong base, int banknum);
@@ -57,10 +54,11 @@ int checkboard (void)
 	/* Check the PCI_clk sel bit */
 	if (in_be32(&gur->porpllsr) & (1<<15)) {
 		src = "SYSCLK";
-		f = CONFIG_SYS_CLK_FREQ;
+		f = get_board_sys_clk();
 	} else {
 		src = "PCI_CLK";
-		f = CONFIG_PCI_CLK_FREQ;
+		/* PCI is clocked by the external source at 33 MHz */
+		f = 33000000;
 	}
 	printf ("PCI1:  32 bit, %d MHz (%s)\n",	f/1000000, src);
 #else
@@ -220,13 +218,15 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 #endif /* CONFIG_OF_BOARD_SETUP */
 
 #if defined(CONFIG_OF_SEPARATE)
-void *board_fdt_blob_setup(void)
+void *board_fdt_blob_setup(int *err)
 {
 	void *fw_dtb;
 
+	*err = 0;
 	fw_dtb = (void *)(CONFIG_SYS_TEXT_BASE - CONFIG_ENV_SECT_SIZE);
 	if (fdt_magic(fw_dtb) != FDT_MAGIC) {
 		printf("DTB is not passed via %x\n", (u32)fw_dtb);
+		*err = -ENXIO;
 		return NULL;
 	}
 

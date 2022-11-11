@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2019 NXP
+ * Copyright 2019, 2021 NXP
  */
 
 #include "imx8mp-u-boot.dtsi"
@@ -43,6 +43,10 @@
 	u-boot,dm-spl;
 };
 
+&pinctrl_wdog {
+	u-boot,dm-spl;
+};
+
 &gpio1 {
 	u-boot,dm-spl;
 };
@@ -64,6 +68,22 @@
 };
 
 &uart2 {
+	u-boot,dm-spl;
+};
+
+&crypto {
+	u-boot,dm-spl;
+};
+
+&sec_jr0 {
+	u-boot,dm-spl;
+};
+
+&sec_jr1 {
+	u-boot,dm-spl;
+};
+
+&sec_jr2 {
 	u-boot,dm-spl;
 };
 
@@ -109,6 +129,18 @@
 
 &wdog1 {
 	u-boot,dm-spl;
+};
+
+&eqos {
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
+};
+
+&ethphy0 {
+	reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
+	reset-delay-us = <15000>;
+	reset-post-delay-us = <100000>;
 };
 
 &fec {

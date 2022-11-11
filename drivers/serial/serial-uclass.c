@@ -27,10 +27,6 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 static const unsigned long baudrate_table[] = CONFIG_SYS_BAUDRATE_TABLE;
 
-#if !CONFIG_VAL(SYS_MALLOC_F_LEN)
-#error "Serial is required before relocation - define CONFIG_$(SPL_)SYS_MALLOC_F_LEN to make this work"
-#endif
-
 #if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 static int serial_check_stdout(const void *blob, struct udevice **devp)
 {
@@ -69,8 +65,9 @@ static int serial_check_stdout(const void *blob, struct udevice **devp)
 	 * anyway.
 	 */
 	if (node > 0 && !lists_bind_fdt(gd->dm_root, offset_to_ofnode(node),
-					devp, false)) {
-		if (!device_probe(*devp))
+					devp, NULL, false)) {
+		if (device_get_uclass_id(*devp) == UCLASS_SERIAL &&
+		    !device_probe(*devp))
 			return 0;
 	}
 
@@ -108,7 +105,8 @@ static void serial_find_console_or_panic(void)
 			}
 		}
 	}
-	if (!SPL_BUILD || !CONFIG_IS_ENABLED(OF_CONTROL) || !blob) {
+	if (!IS_ENABLED(CONFIG_SPL_BUILD) || !CONFIG_IS_ENABLED(OF_CONTROL) ||
+	    !blob) {
 		/*
 		 * Try to use CONFIG_CONS_INDEX if available (it is numbered
 		 * from 1!).
@@ -200,10 +198,44 @@ static void _serial_putc(struct udevice *dev, char ch)
 	} while (err == -EAGAIN);
 }
 
+static int __serial_puts(struct udevice *dev, const char *str, size_t len)
+{
+	struct dm_serial_ops *ops = serial_get_ops(dev);
+
+	do {
+		ssize_t written = ops->puts(dev, str, len);
+
+		if (written < 0)
+			return written;
+		str += written;
+		len -= written;
+	} while (len);
+
+	return 0;
+}
+
 static void _serial_puts(struct udevice *dev, const char *str)
 {
-	while (*str)
-		_serial_putc(dev, *str++);
+	struct dm_serial_ops *ops = serial_get_ops(dev);
+
+	if (!CONFIG_IS_ENABLED(SERIAL_PUTS) || !ops->puts) {
+		while (*str)
+			_serial_putc(dev, *str++);
+		return;
+	}
+
+	do {
+		const char *newline = strchrnul(str, '\n');
+		size_t len = newline - str;
+
+		if (__serial_puts(dev, str, len))
+			return;
+
+		if (*newline && __serial_puts(dev, "\r\n", 2))
+			return;
+
+		str += len + !!*newline;
+	} while (*str);
 }
 
 static int __serial_getc(struct udevice *dev)
@@ -360,7 +392,6 @@ static void serial_stub_putc(struct stdio_dev *sdev, const char ch)
 {
 	_serial_putc(sdev->priv, ch);
 }
-#endif
 
 static void serial_stub_puts(struct stdio_dev *sdev, const char *str)
 {
@@ -376,6 +407,7 @@ static int serial_stub_tstc(struct stdio_dev *sdev)
 {
 	return _serial_tstc(sdev->priv);
 }
+#endif
 #endif
 
 /**

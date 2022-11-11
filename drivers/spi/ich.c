@@ -504,7 +504,7 @@ static int wait_for_hwseq_xfer(struct fast_spi_regs *regs, uint offset)
  * @hsfsts_cycle: Cycle type (enum hsfsts_cycle_t)
  * @offset: Offset to access
  * @len: Number of bytes to transfer (can be 0)
- * @return 0 if OK, -EIO on flash-cycle error (FCERR), -EPERM on access error
+ * Return: 0 if OK, -EIO on flash-cycle error (FCERR), -EPERM on access error
  *	(AEL), -ETIMEDOUT on timeout
  */
 static int exec_sync_hwseq_xfer(struct fast_spi_regs *regs, uint hsfsts_cycle,
@@ -604,7 +604,7 @@ static int ich_spi_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 	return ret;
 }
 
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 /**
  * ich_spi_get_basics() - Get basic information about the ICH device
  *
@@ -615,7 +615,7 @@ static int ich_spi_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
  * @pchp: Returns a pointer to the pch, or NULL if not found
  * @ich_versionp: Returns ICH version detected on success
  * @mmio_basep: Returns the address of the SPI registers on success
- * @return 0 if OK, -EPROTOTYPE if the PCH could not be found, -EAGAIN if
+ * Return: 0 if OK, -EPROTOTYPE if the PCH could not be found, -EAGAIN if
  *	the function cannot success without probing, possible another error if
  *	pch_get_spi_base() fails
  */
@@ -672,7 +672,7 @@ static int ich_get_mmap_bus(struct udevice *bus, ulong *map_basep,
 			    uint *map_sizep, uint *offsetp)
 {
 	pci_dev_t spi_bdf;
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	if (device_is_on_pci_bus(bus)) {
 		struct pci_child_plat *pplat;
 
@@ -940,7 +940,7 @@ static int ich_spi_of_to_plat(struct udevice *dev)
 {
 	struct ich_spi_plat *plat = dev_get_plat(dev);
 
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	struct ich_spi_priv *priv = dev_get_priv(dev);
 	int ret;
 

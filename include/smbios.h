@@ -260,9 +260,9 @@ const struct smbios_header *smbios_header(const struct smbios_entry *entry, int 
  *
  * @header:    pointer to struct smbios_header
  * @index:     string index
- * @return:    NULL or a valid const char pointer
+ * @return:    NULL or a valid char pointer
  */
-const char *smbios_string(const struct smbios_header *header, int index);
+char *smbios_string(const struct smbios_header *header, int index);
 
 /**
  * smbios_update_version() - Update the version string
@@ -271,7 +271,7 @@ const char *smbios_string(const struct smbios_header *header, int index);
  * main loop has started) to update the BIOS version string (SMBIOS table 0).
  *
  * @version: New version string to use
- * @return 0 if OK, -ENOENT if no version string was previously written,
+ * Return: 0 if OK, -ENOENT if no version string was previously written,
  *	-ENOSPC if the new string is too large to fit
  */
 int smbios_update_version(const char *version);
@@ -287,9 +287,22 @@ int smbios_update_version(const char *version);
  *
  * @smbios_tab: Start of SMBIOS tables
  * @version: New version string to use
- * @return 0 if OK, -ENOENT if no version string was previously written,
+ * Return: 0 if OK, -ENOENT if no version string was previously written,
  *	-ENOSPC if the new string is too large to fit
  */
 int smbios_update_version_full(void *smbios_tab, const char *version);
+
+/**
+ * smbios_prepare_measurement() - Update smbios table for the measurement
+ *
+ * TCG specification requires to measure static configuration information.
+ * This function clear the device dependent parameters such as
+ * serial number for the measurement.
+ *
+ * @entry: pointer to a struct smbios_entry
+ * @header: pointer to a struct smbios_header
+ */
+void smbios_prepare_measurement(const struct smbios_entry *entry,
+				struct smbios_header *header);
 
 #endif /* _SMBIOS_H_ */

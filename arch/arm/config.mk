@@ -25,6 +25,7 @@ endif
 
 PLATFORM_RELFLAGS += -fno-common -ffixed-r9
 PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
+		     $(call cc-option,-mgeneral-regs-only) \
       $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,))
 
 # LLVM support
@@ -140,11 +141,11 @@ endif
 # limit ourselves to the sections we want in the .bin.
 ifdef CONFIG_ARM64
 OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .data \
-		-j .u_boot_list -j .rela.dyn -j .got -j .got.plt \
+		-j __u_boot_list -j .rela.dyn -j .got -j .got.plt \
 		-j .binman_sym_table -j .text_rest
 else
 OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .hash \
-		-j .data -j .got -j .got.plt -j .u_boot_list -j .rel.dyn \
+		-j .data -j .got -j .got.plt -j __u_boot_list -j .rel.dyn \
 		-j .binman_sym_table -j .text_rest
 endif
 
@@ -158,7 +159,8 @@ ifdef CONFIG_EFI_LOADER
 OBJCOPYFLAGS += -j .efi_runtime -j .efi_runtime_rel
 endif
 
-ifneq ($(CONFIG_IMX_CONFIG),)
+ifdef CONFIG_MACH_IMX
+ifneq ($(CONFIG_IMX_CONFIG),"")
 ifdef CONFIG_SPL
 ifndef CONFIG_SPL_BUILD
 INPUTS-y += SPL
@@ -172,6 +174,7 @@ endif
 endif
 ifneq ($(CONFIG_VF610),)
 INPUTS-y += u-boot.vyb
+endif
 endif
 endif
 

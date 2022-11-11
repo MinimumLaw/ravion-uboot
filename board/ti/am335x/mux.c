@@ -345,14 +345,6 @@ void enable_i2c2_pin_mux(void)
 static unsigned short detect_daughter_board_profile(void)
 {
 	unsigned short val;
-
-#if !CONFIG_IS_ENABLED(DM_I2C)
-	if (i2c_probe(I2C_CPLD_ADDR))
-		return PROFILE_NONE;
-
-	if (i2c_read(I2C_CPLD_ADDR, CFG_REG, 1, (unsigned char *)(&val), 2))
-		return PROFILE_NONE;
-#else
 	struct udevice *dev = NULL;
 	int rc;
 
@@ -362,7 +354,6 @@ static unsigned short detect_daughter_board_profile(void)
 	rc = dm_i2c_read(dev, CFG_REG, (unsigned char *)(&val), 2);
 	if (rc)
 		return PROFILE_NONE;
-#endif
 	return (1 << (val & PROFILE_MASK));
 }
 
@@ -410,8 +401,13 @@ void enable_board_pin_mux(void)
 		configure_module_pin_mux(mmc0_pin_mux_sk_evm);
 	} else if (board_is_bone_lt()) {
 		if (board_is_bben()) {
+			char subtype_id = board_ti_get_config()[1];
+
 			/* SanCloud Beaglebone LT Enhanced pinmux */
 			configure_module_pin_mux(rgmii1_pin_mux);
+
+			if (subtype_id == 'L')
+				configure_module_pin_mux(spi0_pin_mux);
 		} else {
 			/* Beaglebone LT pinmux */
 			configure_module_pin_mux(mii1_pin_mux);

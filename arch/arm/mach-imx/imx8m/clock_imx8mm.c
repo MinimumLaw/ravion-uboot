@@ -48,6 +48,7 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 #ifdef CONFIG_SPL_BUILD
 static struct imx_int_pll_rate_table imx8mm_fracpll_tbl[] = {
 	PLL_1443X_RATE(1000000000U, 250, 3, 1, 0),
+	PLL_1443X_RATE(933000000U, 311, 4, 1, 0),
 	PLL_1443X_RATE(800000000U, 300, 9, 0, 0),
 	PLL_1443X_RATE(750000000U, 250, 8, 0, 0),
 	PLL_1443X_RATE(650000000U, 325, 3, 2, 0),
@@ -244,9 +245,29 @@ int intpll_configure(enum pll_clocks pll, ulong freq)
 			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(1);
 		break;
 	case MHZ(1200):
-		/* 24 * 0xc8 / 2 / 2 ^ 1 */
+		/* 24 * 0x12c / 3 / 2 ^ 1 */
+		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0x12c) |
+			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(1);
+		break;
+	case MHZ(1400):
+		/* 24 * 0x15e / 3 / 2 ^ 1 */
+		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0x15e) |
+			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(1);
+		break;
+	case MHZ(1500):
+		/* 24 * 0x177 / 3 / 2 ^ 1 */
+		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0x177) |
+			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(1);
+		break;
+	case MHZ(1600):
+		/* 24 * 0xc8 / 3 / 2 ^ 0 */
 		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0xc8) |
-			INTPLL_PRE_DIV_VAL(2) | INTPLL_POST_DIV_VAL(1);
+			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(0);
+		break;
+	case MHZ(1800):
+		/* 24 * 0xe1 / 3 / 2 ^ 0 */
+		pll_div_ctl_val = INTPLL_MAIN_DIV_VAL(0xe1) |
+			INTPLL_PRE_DIV_VAL(3) | INTPLL_POST_DIV_VAL(0);
 		break;
 	case MHZ(2000):
 		/* 24 * 0xfa / 3 / 2 ^ 0 */

@@ -7,6 +7,7 @@
 #include <common.h>
 #include <console.h>
 #include <debug_uart.h>
+#include <display_options.h>
 #include <dm.h>
 #include <env.h>
 #include <stdarg.h>
@@ -213,7 +214,7 @@ static int console_setfile(int file, struct stdio_dev * dev)
  * console_dev_is_serial() - Check if a stdio device is a serial device
  *
  * @sdev: Device to check
- * @return true if this device is in the serial uclass (or for pre-driver-model,
+ * Return: true if this device is in the serial uclass (or for pre-driver-model,
  * whether it is called "serial".
  */
 static bool console_dev_is_serial(struct stdio_dev *sdev)
@@ -348,7 +349,8 @@ static void console_puts_select(int file, bool serial_only, const char *s)
 
 void console_puts_select_stderr(bool serial_only, const char *s)
 {
-	console_puts_select(stderr, serial_only, s);
+	if (gd->flags & GD_FLG_DEVINIT)
+		console_puts_select(stderr, serial_only, s);
 }
 
 static void console_puts(int file, const char *s)
@@ -401,7 +403,8 @@ static inline void console_putc(int file, const char c)
 
 void console_puts_select(int file, bool serial_only, const char *s)
 {
-	if (serial_only == console_dev_is_serial(stdio_devices[file]))
+	if ((gd->flags & GD_FLG_DEVINIT) &&
+	    serial_only == console_dev_is_serial(stdio_devices[file]))
 		stdio_devices[file]->puts(stdio_devices[file], s);
 }
 
@@ -591,13 +594,16 @@ int tstc(void)
 #define PRE_CONSOLE_FLUSHPOINT2_EVERYTHING_BUT_SERIAL	1
 
 #if CONFIG_IS_ENABLED(PRE_CONSOLE_BUFFER)
-#define CIRC_BUF_IDX(idx) ((idx) % (unsigned long)CONFIG_PRE_CON_BUF_SZ)
+#define CIRC_BUF_IDX(idx) ((idx) % (unsigned long)CONFIG_VAL(PRE_CON_BUF_SZ))
 
 static void pre_console_putc(const char c)
 {
 	char *buffer;
 
-	buffer = map_sysmem(CONFIG_PRE_CON_BUF_ADDR, CONFIG_PRE_CON_BUF_SZ);
+	if (gd->precon_buf_idx < 0)
+		return;
+
+	buffer = map_sysmem(CONFIG_VAL(PRE_CON_BUF_ADDR), CONFIG_VAL(PRE_CON_BUF_SZ));
 
 	buffer[CIRC_BUF_IDX(gd->precon_buf_idx++)] = c;
 
@@ -606,22 +612,25 @@ static void pre_console_putc(const char c)
 
 static void pre_console_puts(const char *s)
 {
+	if (gd->precon_buf_idx < 0)
+		return;
+
 	while (*s)
 		pre_console_putc(*s++);
 }
 
 static void print_pre_console_buffer(int flushpoint)
 {
-	unsigned long in = 0, out = 0;
-	char buf_out[CONFIG_PRE_CON_BUF_SZ + 1];
+	long in = 0, out = 0;
+	char buf_out[CONFIG_VAL(PRE_CON_BUF_SZ) + 1];
 	char *buf_in;
 
 	if (IS_ENABLED(CONFIG_SILENT_CONSOLE) && (gd->flags & GD_FLG_SILENT))
 		return;
 
-	buf_in = map_sysmem(CONFIG_PRE_CON_BUF_ADDR, CONFIG_PRE_CON_BUF_SZ);
-	if (gd->precon_buf_idx > CONFIG_PRE_CON_BUF_SZ)
-		in = gd->precon_buf_idx - CONFIG_PRE_CON_BUF_SZ;
+	buf_in = map_sysmem(CONFIG_VAL(PRE_CON_BUF_ADDR), CONFIG_VAL(PRE_CON_BUF_SZ));
+	if (gd->precon_buf_idx > CONFIG_VAL(PRE_CON_BUF_SZ))
+		in = gd->precon_buf_idx - CONFIG_VAL(PRE_CON_BUF_SZ);
 
 	while (in < gd->precon_buf_idx)
 		buf_out[out++] = buf_in[CIRC_BUF_IDX(in++)];
@@ -629,6 +638,7 @@ static void print_pre_console_buffer(int flushpoint)
 
 	buf_out[out] = 0;
 
+	gd->precon_buf_idx = -1;
 	switch (flushpoint) {
 	case PRE_CONSOLE_FLUSHPOINT1_SERIAL:
 		puts(buf_out);
@@ -637,6 +647,7 @@ static void print_pre_console_buffer(int flushpoint)
 		console_puts_select(stdout, false, buf_out);
 		break;
 	}
+	gd->precon_buf_idx = in;
 }
 #else
 static inline void pre_console_putc(const char c) {}
@@ -735,7 +746,9 @@ int console_record_init(void)
 	int ret;
 
 	ret = membuff_new((struct membuff *)&gd->console_out,
-			  CONFIG_CONSOLE_RECORD_OUT_SIZE);
+			  gd->flags & GD_FLG_RELOC ?
+				  CONFIG_CONSOLE_RECORD_OUT_SIZE :
+				  CONFIG_CONSOLE_RECORD_OUT_SIZE_F);
 	if (ret)
 		return ret;
 	ret = membuff_new((struct membuff *)&gd->console_in,

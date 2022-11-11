@@ -12,19 +12,20 @@ config SPL_LIBDISK_SUPPORT
 config SPL_LIBGENERIC_SUPPORT
 	default y
 
-config SPL_MMC_SUPPORT
+config SPL_MMC
 	default y if MMC_SDHCI_ZYNQ
 
-config SPL_SERIAL_SUPPORT
+config SPL_SERIAL
 	default y
 
 config SPL_SPI_FLASH_SUPPORT
 	default y if ZYNQ_QSPI
 
-config SPL_SPI_SUPPORT
+config SPL_SPI
 	default y if ZYNQ_QSPI
 
 config SYS_BOARD
+	string "Board name"
 	default "zynqmp"
 
 config SYS_VENDOR
@@ -139,6 +140,7 @@ config DEFINE_TCM_OCM_MMAP
 
 config ZYNQMP_PSU_INIT_ENABLED
 	bool "Include psu_init"
+	select BOARD_EARLY_INIT_F
 	help
 	  Include psu_init to full u-boot. SPL include psu_init by default.
 
@@ -148,6 +150,14 @@ config SPL_ZYNQMP_ALT_BOOTMODE_ENABLED
 	help
 	  Overwrite bootmode selected via boot mode pins to tell SPL what should
 	  be the next boot device.
+
+config SPL_ZYNQMP_RESTORE_JTAG
+	bool "Restore JTAG"
+	depends on SPL
+	help
+	  Booting SPL in secure mode causes the CSU to disable the JTAG interface
+	  even if no eFuses were burnt. This option restores the interface if
+	  possible.
 
 config ZYNQ_SDHCI_MAX_FREQ
 	default 200000000

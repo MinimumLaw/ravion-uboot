@@ -107,9 +107,9 @@ int board_init(void)
 	}
 	boot_temp_check();
 #endif
-#ifdef CONFIG_TZSW_RESERVED_DRAM_SIZE
+#if CONFIG_VAL(SYS_MEM_TOP_HIDE)
 	/* The last few MB of memory can be reserved for secure firmware */
-	ulong size = CONFIG_TZSW_RESERVED_DRAM_SIZE;
+	ulong size = CONFIG_SYS_MEM_TOP_HIDE;
 
 	gd->ram_size -= size;
 	gd->bd->bi_dram[CONFIG_NR_DRAM_BANKS - 1].size -= size;
@@ -185,7 +185,7 @@ int board_early_init_f(void)
 }
 #endif
 
-#if defined(CONFIG_POWER) || defined(CONFIG_DM_PMIC)
+#if CONFIG_IS_ENABLED(POWER_LEGACY) || CONFIG_IS_ENABLED(DM_PMIC)
 int power_init_board(void)
 {
 	set_ps_hold_ctrl();

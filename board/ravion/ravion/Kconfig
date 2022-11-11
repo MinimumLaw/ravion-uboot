@@ -4,6 +4,7 @@ config SYS_BOARD
 	default "ravion"
 
 config SYS_CONFIG_NAME
+	string  "Board specific configuration header name"
 	default "ravion_imx6"
 
 config SYS_CPU

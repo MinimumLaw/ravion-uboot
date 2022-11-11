@@ -14,8 +14,11 @@
 
 #include <linux/types.h>
 
-/* Avoid using CONFIG_EFI_STUB directly as we may boot from other loaders */
-#ifdef CONFIG_EFI_STUB
+/*
+ * In case of the EFI app the UEFI firmware provides the low-level
+ * initialisation.
+ */
+#ifdef CONFIG_EFI
 #define ll_boot_init()	false
 #else
 #include <asm/global_data.h>
@@ -41,17 +44,6 @@ void board_init_f(ulong dummy);
  * Return: 0 on success, otherwise error
  */
 int arch_cpu_init(void);
-
-/**
- * arch_cpu_init_dm() - init CPU after driver model is available
- *
- * This is called immediately after driver model is available before
- * relocation. This is similar to arch_cpu_init() but is able to reference
- * devices
- *
- * Return: 0 if OK, -ve on error
- */
-int arch_cpu_init_dm(void);
 
 /**
  * mach_cpu_init() - SoC/machine dependent CPU setup
@@ -163,6 +155,19 @@ int arch_setup_bdinfo(void);
  */
 int setup_bdinfo(void);
 
+#if defined(CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR) || \
+defined(CONFIG_SAVE_PREV_BL_FDT_ADDR)
+/**
+ * save_prev_bl_data - Save prev bl data in env vars.
+ *
+ * When u-boot is chain-loaded, save previous bootloader data,
+ * like initramfs address to environment variables.
+ *
+ * Return: 0 if ok; -ENODATA on error
+ */
+int save_prev_bl_data(void);
+#endif
+
 /**
  * cpu_secondary_init_r() - CPU-specific secondary initialization
  *
@@ -214,7 +219,6 @@ int init_cache_f_r(void);
 int print_cpuinfo(void);
 #endif
 int timer_init(void);
-int misc_init_f(void);
 
 #if defined(CONFIG_DTB_RESELECT)
 int embedded_dtb_select(void);
@@ -308,6 +312,16 @@ int board_early_init_r(void);
 int arch_initr_trap(void);
 
 /**
+ * init_addr_map()
+ *
+ * Initialize non-identity virtual-physical memory mappings for 32bit CPUs.
+ * It is called during the generic board init sequence, after relocation.
+ *
+ * Return: 0 if OK
+ */
+int init_addr_map(void);
+
+/**
  * main_loop() - Enter the main loop of U-Boot
  *
  * This normally runs the command line.
@@ -331,6 +345,8 @@ void bdinfo_print_mhz(const char *name, unsigned long hz);
 
 /* Show arch-specific information for the 'bd' command */
 void arch_print_bdinfo(void);
+
+int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
 
 #endif	/* __ASSEMBLY__ */
 /* Put only stuff here that the assembler can digest */

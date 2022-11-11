@@ -34,6 +34,7 @@
 
 #include <common.h>
 #include <blk.h>
+#include <bootdev.h>
 #include <command.h>
 #include <dm.h>
 #include <errno.h>
@@ -94,7 +95,7 @@ struct us_data {
 	int		action;			/* what to do */
 	int		ip_wanted;		/* needed */
 	int		*irq_handle;		/* for USB int requests */
-	unsigned int	irqpipe;	 	/* pipe for release_irq */
+	unsigned int	irqpipe;		/* pipe for release_irq */
 	unsigned char	irqmaxp;		/* max packed for irq Pipe */
 	unsigned char	irqinterval;		/* Intervall for IRQ Pipe */
 	struct scsi_cmd	*srb;			/* current srb */
@@ -238,6 +239,20 @@ static int usb_stor_probe_device(struct usb_device *udev)
 			ret = device_unbind(dev);
 			if (ret)
 				return ret;
+		}
+
+		ret = blk_probe_or_unbind(dev);
+		if (ret)
+			return ret;
+
+		ret = bootdev_setup_sibling_blk(dev, "usb_bootdev");
+		if (ret) {
+			int ret2;
+
+			ret2 = device_unbind(dev);
+			if (ret2)
+				return log_msg_ret("bootdev", ret2);
+			return log_msg_ret("bootdev", ret);
 		}
 	}
 #else

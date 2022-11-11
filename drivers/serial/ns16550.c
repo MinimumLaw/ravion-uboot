@@ -41,7 +41,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #endif
 #endif /* !CONFIG_DM_SERIAL */
 
-#if defined(CONFIG_SOC_KEYSTONE)
+#if defined(CONFIG_ARCH_KEYSTONE)
 #define UART_REG_VAL_PWREMU_MGMT_UART_DISABLE   0
 #define UART_REG_VAL_PWREMU_MGMT_UART_ENABLE ((1 << 14) | (1 << 13) | (1 << 0))
 #undef UART_MCRVAL
@@ -267,7 +267,7 @@ void ns16550_init(struct ns16550 *com_port, int baud_divisor)
 	/* /16 is proper to hit 115200 with 48MHz */
 	serial_out(0, &com_port->mdr1);
 #endif
-#if defined(CONFIG_SOC_KEYSTONE)
+#if defined(CONFIG_ARCH_KEYSTONE)
 	serial_out(UART_REG_VAL_PWREMU_MGMT_UART_ENABLE, &com_port->regC);
 #endif
 }
@@ -325,8 +325,12 @@ int ns16550_tstc(struct ns16550 *com_port)
 
 static inline void _debug_uart_init(void)
 {
-	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);
 	int baud_divisor;
+
+	/* Wait until tx buffer is empty */
+	while (!(serial_din(&com_port->lsr) & UART_LSR_TEMT))
+		;
 
 	/*
 	 * We copy the code from above because it is already horribly messy.
@@ -360,7 +364,7 @@ static inline int NS16550_read_baud_divisor(struct ns16550 *com_port)
 
 static inline void _debug_uart_putc(int ch)
 {
-	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);
 
 	while (!(serial_din(&com_port->lsr) & UART_LSR_THRE)) {
 #ifdef CONFIG_DEBUG_UART_NS16550_CHECK_ENABLED
@@ -533,7 +537,7 @@ enum {
 };
 #endif
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 int ns16550_serial_of_to_plat(struct udevice *dev)
 {
 	struct ns16550_plat *plat = dev_get_plat(dev);
@@ -588,7 +592,7 @@ const struct dm_serial_ops ns16550_serial_ops = {
 	.getinfo = ns16550_serial_getinfo,
 };
 
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 /*
  * Please consider existing compatible strings before adding a new
  * one to keep this table compact. Or you may add a generic "ns16550"
@@ -602,7 +606,7 @@ static const struct udevice_id ns16550_serial_ids[] = {
 	{ .compatible = "snps,dw-apb-uart",	.data = PORT_NS16550 },
 	{}
 };
-#endif /* OF_CONTROL && !OF_PLATDATA */
+#endif /* OF_REAL */
 
 #if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 
@@ -611,7 +615,7 @@ static const struct udevice_id ns16550_serial_ids[] = {
 U_BOOT_DRIVER(ns16550_serial) = {
 	.name	= "ns16550_serial",
 	.id	= UCLASS_SERIAL,
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	.of_match = ns16550_serial_ids,
 	.of_to_plat = ns16550_serial_of_to_plat,
 	.plat_auto	= sizeof(struct ns16550_plat),
@@ -624,8 +628,6 @@ U_BOOT_DRIVER(ns16550_serial) = {
 #endif
 };
 
-DM_DRIVER_ALIAS(ns16550_serial, rockchip_rk3328_uart)
-DM_DRIVER_ALIAS(ns16550_serial, rockchip_rk3368_uart)
 DM_DRIVER_ALIAS(ns16550_serial, ti_da830_uart)
 #endif
 #endif /* SERIAL_PRESENT */

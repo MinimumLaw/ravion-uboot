@@ -11,8 +11,6 @@
 
 #include <linux/sizes.h>
 
-#define CONFIG_SYS_MALLOC_LEN	       SZ_128M
-
 #ifndef BOOT_PARTITION
 #define BOOT_PARTITION "boot"
 #endif
@@ -23,6 +21,10 @@
 
 #ifndef CONTROL_PARTITION
 #define CONTROL_PARTITION "misc"
+#endif
+
+#ifndef EXTRA_ANDROID_ENV_SETTINGS
+#define EXTRA_ANDROID_ENV_SETTINGS ""
 #endif
 
 #if defined(CONFIG_CMD_AVB)
@@ -102,6 +104,12 @@
 	"elif test $board_name = sei610; then " \
 		"echo \"  Reading DTB for sei610...\"; " \
 		"setenv dtb_index 1;" \
+	"elif test $board_name = vim3l; then " \
+		"echo \"  Reading DTB for vim3l...\"; " \
+		"setenv dtb_index 2;" \
+	"elif test $board_name = vim3; then " \
+		"echo \"  Reading DTB for vim3...\"; " \
+		"setenv dtb_index 3;" \
 	"else " \
 		"echo Error: Android boot is not supported for $board_name; " \
 		"exit; " \
@@ -115,6 +123,12 @@
 	"elif test $board_name = sei610; then " \
 		"echo \"  Reading DTBO for sei610...\"; " \
 		"setenv dtbo_index 1;" \
+	"elif test $board_name = vim3l; then " \
+		"echo \"  Reading DTBO for vim3l...\"; " \
+		"setenv dtbo_index 2;" \
+	"elif test $board_name = vim3; then " \
+		"echo \"  Reading DTBO for vim3...\"; " \
+		"setenv dtbo_index 3;" \
 	"else " \
 		"echo Error: Android boot is not supported for $board_name; " \
 		"exit; " \
@@ -142,24 +156,27 @@
 			"echo Fastboot forced by usb rom boot;" \
 			"setenv run_fastboot 1;" \
 		"fi;" \
-		"if gpt verify mmc ${mmcdev} ${partitions}; then; " \
-		"else " \
-			"echo Broken MMC partition scheme;" \
-			"setenv run_fastboot 1;" \
-		"fi;" \
-		"if bcb load " __stringify(CONFIG_FASTBOOT_FLASH_MMC_DEV) " " \
-		CONTROL_PARTITION "; then " \
-			"if bcb test command = bootonce-bootloader; then " \
-				"echo BCB: Bootloader boot...; " \
-				"bcb clear command; bcb store; " \
+		"if test \"${run_fastboot}\" -eq 0; then " \
+			"if gpt verify mmc ${mmcdev} ${partitions}; then; " \
+			"else " \
+				"echo Broken MMC partition scheme;" \
 				"setenv run_fastboot 1;" \
 			"fi; " \
-			"if bcb test command = boot-fastboot; then " \
-				"echo BCB: fastboot userspace boot...; " \
-				"setenv force_recovery 1;" \
-			"fi; " \
-		"else " \
-			"echo Warning: BCB is corrupted or does not exist; " \
+		"fi;" \
+		"if test \"${run_fastboot}\" -eq 0; then " \
+			"if bcb load " __stringify(CONFIG_FASTBOOT_FLASH_MMC_DEV) " " \
+			CONTROL_PARTITION "; then " \
+				"if bcb test command = bootonce-bootloader; then " \
+					"echo BCB: Bootloader boot...; " \
+					"bcb clear command; bcb store; " \
+					"setenv run_fastboot 1;" \
+				"elif bcb test command = boot-fastboot; then " \
+					"echo BCB: fastboot userspace boot...; " \
+					"setenv force_recovery 1;" \
+				"fi; " \
+			"else " \
+				"echo Warning: BCB is corrupted or does not exist; " \
+			"fi;" \
 		"fi;" \
 		"if test \"${run_fastboot}\" -eq 1; then " \
 			"echo Running Fastboot...;" \
@@ -232,16 +249,24 @@
 			"echo Running Android...;" \
 			BOOT_CMD \
 		"fi;" \
-		"echo Failed to boot Android...;" \
-		"reset\0"
+		"echo Failed to boot Android...;\0"
 
 #define BOOTENV_DEV_NAME_SYSTEM(devtypeu, devtypel, instance)	\
 		"system "
+
+#define BOOTENV_DEV_PANIC(devtypeu, devtypel, instance) \
+	"bootcmd_panic=" \
+		"fastboot " __stringify(CONFIG_FASTBOOT_USB_DEV) "; " \
+		"reset\0"
+
+#define BOOTENV_DEV_NAME_PANIC(devtypeu, devtypel, instance)	\
+		"panic "
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(FASTBOOT, fastboot, na) \
 	func(RECOVERY, recovery, na) \
 	func(SYSTEM, system, na) \
+	func(PANIC, panic, na) \
 
 #define PREBOOT_LOAD_LOGO \
 	"if test \"${boot_source}\" != \"usb\" && " \
@@ -255,8 +280,11 @@
 	"fi;"
 
 #define CONFIG_EXTRA_ENV_SETTINGS                                     \
+	EXTRA_ANDROID_ENV_SETTINGS                                    \
 	"partitions=" PARTS_DEFAULT "\0"                              \
 	"mmcdev=2\0"                                                  \
+	"fastboot_raw_partition_bootloader=0x1 0xfff mmcpart 1\0"     \
+	"fastboot_raw_partition_bootenv=0x0 0xfff mmcpart 2\0"        \
 	ANDROIDBOOT_GET_CURRENT_SLOT_CMD                              \
 	AVB_VERIFY_CMD                                                \
 	"force_avb=0\0"                                               \

@@ -7,6 +7,7 @@
 #include <common.h>
 #include <console.h>
 #include <dm.h>
+#include <event.h>
 #include <dm/root.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
@@ -106,7 +107,7 @@ static int do_autoprobe(struct unit_test_state *uts)
  * This skips long/slow tests where there is not much value in running a flat
  * DT test in addition to a live DT test.
  *
- * @return true to run the given test on the flat device tree
+ * Return: true to run the given test on the flat device tree
  */
 static bool ut_test_run_on_flattree(struct unit_test *test)
 {
@@ -130,7 +131,7 @@ static bool ut_test_run_on_flattree(struct unit_test *test)
  *	a prefix.
  * @test_name: Name of current test
  * @select_name: Name of test to run (or NULL for all)
- * @return true to run this test, false to skip it
+ * Return: true to run this test, false to skip it
  */
 static bool test_matches(const char *prefix, const char *test_name,
 			 const char *select_name)
@@ -171,7 +172,7 @@ static bool test_matches(const char *prefix, const char *test_name,
  *
  * @tests: List of tests to run
  * @count: Number of tests to ru
- * @return true if any of the tests have the UT_TESTF_DM flag
+ * Return: true if any of the tests have the UT_TESTF_DM flag
  */
 static bool ut_list_has_dm_tests(struct unit_test *tests, int count)
 {
@@ -189,7 +190,7 @@ static bool ut_list_has_dm_tests(struct unit_test *tests, int count)
  * dm_test_restore() Put things back to normal so sandbox works as expected
  *
  * @of_root: Value to set for of_root
- * @return 0 if OK, -ve on error
+ * Return: 0 if OK, -ve on error
  */
 static int dm_test_restore(struct device_node *of_root)
 {
@@ -212,12 +213,14 @@ static int dm_test_restore(struct device_node *of_root)
  *
  * @uts: Test state
  * @test: Test to prepare for
- * @return 0 if OK, -EAGAIN to skip this test since some required feature is not
+ * Return: 0 if OK, -EAGAIN to skip this test since some required feature is not
  *	available, other -ve on error (meaning that testing cannot likely
  *	continue)
  */
 static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 {
+	ut_assertok(event_init());
+
 	if (test->flags & UT_TESTF_DM)
 		ut_assertok(dm_test_pre_run(uts));
 
@@ -225,8 +228,10 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 
 	uts->start = mallinfo();
 
-	if (test->flags & UT_TESTF_SCAN_PDATA)
+	if (test->flags & UT_TESTF_SCAN_PDATA) {
 		ut_assertok(dm_scan_plat(false));
+		ut_assertok(dm_scan_other(false));
+	}
 
 	if (test->flags & UT_TESTF_PROBE_TEST)
 		ut_assertok(do_autoprobe(uts));
@@ -253,13 +258,14 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
  *
  * @uts: Test state
  * @test: Test to clean up after
- * @return 0 if OK, -ve on error (meaning that testing cannot likely continue)
+ * Return: 0 if OK, -ve on error (meaning that testing cannot likely continue)
  */
 static int test_post_run(struct unit_test_state *uts, struct unit_test *test)
 {
 	ut_unsilence_console(uts);
 	if (test->flags & UT_TESTF_DM)
 		ut_assertok(dm_test_post_run(uts));
+	ut_assertok(event_uninit());
 
 	return 0;
 }
@@ -275,7 +281,7 @@ static int test_post_run(struct unit_test_state *uts, struct unit_test *test)
  *	incremented by the number of failures (0, one hopes)
  * @test_name: Test to run
  * @name: Name of test, possibly skipping a prefix that should not be displayed
- * @return 0 if all tests passed, -EAGAIN if the test should be skipped, -1 if
+ * Return: 0 if all tests passed, -EAGAIN if the test should be skipped, -1 if
  *	any failed
  */
 static int ut_run_test(struct unit_test_state *uts, struct unit_test *test,
@@ -323,7 +329,7 @@ static int ut_run_test(struct unit_test_state *uts, struct unit_test *test,
  *	incremented by the number of failures (0, one hopes)
  * @test: Test to run
  * @name: Name of test, possibly skipping a prefix that should not be displayed
- * @return 0 if all tests passed, -EAGAIN if the test should be skipped, -1 if
+ * Return: 0 if all tests passed, -EAGAIN if the test should be skipped, -1 if
  *	any failed
  */
 static int ut_run_test_live_flat(struct unit_test_state *uts,
@@ -334,7 +340,8 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	/* Run with the live tree if possible */
 	runs = 0;
 	if (CONFIG_IS_ENABLED(OF_LIVE)) {
-		if (!(test->flags & UT_TESTF_FLAT_TREE)) {
+		if (!(test->flags &
+		    (UT_TESTF_FLAT_TREE | UT_TESTF_LIVE_OR_FLAT))) {
 			uts->of_live = true;
 			ut_assertok(ut_run_test(uts, test, test->name));
 			runs++;
@@ -371,7 +378,7 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
  * @count: Number of tests to run
  * @select_name: Name of a single test to run (from the list provided). If NULL
  *	then all tests are run
- * @return 0 if all tests passed, -ENOENT if test @select_name was not found,
+ * Return: 0 if all tests passed, -ENOENT if test @select_name was not found,
  *	-EBADF if any failed
  */
 static int ut_run_tests(struct unit_test_state *uts, const char *prefix,

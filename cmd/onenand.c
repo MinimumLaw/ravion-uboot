@@ -53,7 +53,7 @@ static int arg_off_size_onenand(int argc, char *const argv[], ulong *off,
 	if (*size == mtd->size)
 		puts("whole chip\n");
 	else
-		printf("offset 0x%lx, size 0x%x\n", *off, *size);
+		printf("offset 0x%lx, size 0x%zx\n", *off, *size);
 
 	return 0;
 }
@@ -186,9 +186,7 @@ next:
 static int onenand_block_erase(u32 start, u32 size, int force)
 {
 	struct onenand_chip *this = mtd->priv;
-	struct erase_info instr = {
-		.callback	= NULL,
-	};
+	struct erase_info instr = {};
 	loff_t ofs;
 	int ret;
 	int blocksize = 1 << this->erase_shift;
@@ -219,10 +217,7 @@ static int onenand_block_erase(u32 start, u32 size, int force)
 static int onenand_block_test(u32 start, u32 size)
 {
 	struct onenand_chip *this = mtd->priv;
-	struct erase_info instr = {
-		.callback	= NULL,
-		.priv		= 0,
-	};
+	struct erase_info instr = {};
 
 	int blocks;
 	loff_t ofs;
@@ -406,7 +401,7 @@ static int do_onenand_read(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	ret = onenand_block_read(ofs, len, &retlen, (u8 *)addr, oob);
 
-	printf(" %d bytes read: %s\n", retlen, ret ? "ERROR" : "OK");
+	printf(" %zu bytes read: %s\n", retlen, ret ? "ERROR" : "OK");
 
 	return ret == 0 ? 0 : 1;
 }
@@ -433,7 +428,7 @@ static int do_onenand_write(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	ret = onenand_block_write(ofs, len, &retlen, (u8 *)addr, withoob);
 
-	printf(" %d bytes written: %s\n", retlen, ret ? "ERROR" : "OK");
+	printf(" %zu bytes written: %s\n", retlen, ret ? "ERROR" : "OK");
 
 	return ret == 0 ? 0 : 1;
 }

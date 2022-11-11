@@ -25,8 +25,6 @@
 #include <reset.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/clock.h>
-#include <asm/arch/gpio.h>
-#include <asm-generic/gpio.h>
 #include <dm/device_compat.h>
 #include <dm/lists.h>
 #include <dm/root.h>
@@ -243,12 +241,6 @@ static int sunxi_musb_enable(struct musb *musb)
 	musb_writeb(musb->mregs, USBC_REG_o_VEND0, 0);
 
 	if (is_host_enabled(musb)) {
-		ret = sun4i_usb_phy_vbus_detect(&glue->phy);
-		if (ret == 1) {
-			printf("A charger is plugged into the OTG: ");
-			return -ENODEV;
-		}
-
 		ret = sun4i_usb_phy_id_detect(&glue->phy);
 		if (ret == 1) {
 			printf("No host cable detected: ");

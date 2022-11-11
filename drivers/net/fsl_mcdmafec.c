@@ -243,16 +243,8 @@ static int fec_init(struct udevice *dev)
 	fecpin_setclear(info, 1);
 	fec_halt(dev);
 
-#if defined(CONFIG_CMD_MII) || defined (CONFIG_MII) || \
-	defined (CONFIG_SYS_DISCOVER_PHY)
-
 	mii_init();
 	set_fec_duplex_speed(fecp, info->dup_spd);
-#else
-#ifndef CONFIG_SYS_DISCOVER_PHY
-	set_fec_duplex_speed(fecp, (FECDUPLEX << 16) | FECSPEED);
-#endif				/* ifndef CONFIG_SYS_DISCOVER_PHY */
-#endif				/* CONFIG_CMD_MII || CONFIG_MII */
 
 	/* We use strictly polling mode only */
 	fecp->eimr = 0;
@@ -541,7 +533,7 @@ static int mcdmafec_probe(struct udevice *dev)
 	info->bus = mdio_alloc();
 	if (!info->bus)
 		return -ENOMEM;
-	strncpy(info->bus->name, dev->name, MDIO_NAME_LEN);
+	strlcpy(info->bus->name, dev->name, MDIO_NAME_LEN);
 	info->bus->read = mcffec_miiphy_read;
 	info->bus->write = mcffec_miiphy_write;
 

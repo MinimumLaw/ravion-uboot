@@ -16,11 +16,11 @@
 #endif
 #include <cli.h>
 #include <console.h>
-#include <flash.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <nand.h>
 #include <asm/mach-types.h>
+#include <asm/cache.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -83,7 +83,7 @@ static int rav_cfg_block_mmc_storage(u8 *config_block, int write)
 	}
 	if (offset < 0)
 		offset += mmc->capacity;
-	blk_start = ALIGN(offset, mmc->write_bl_len) / mmc->write_bl_len;
+	blk_start = ALIGN(offset, mmc->read_bl_len) / mmc->read_bl_len;
 
 	if (!write) {
 		/* Careful reads a whole block of 512 bytes into config_block */

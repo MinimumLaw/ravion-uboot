@@ -11,6 +11,8 @@
 #include <config.h>
 #include <common.h>
 #include <cpu_func.h>
+#include <clock_legacy.h>
+#include <display_options.h>
 #include <init.h>
 #include <irq_func.h>
 #include <log.h>
@@ -42,7 +44,9 @@ __board_reset(void)
 {
 	/* Do nothing */
 }
+void board_reset_prepare(void) __attribute__((weak, alias("__board_reset")));
 void board_reset(void) __attribute__((weak, alias("__board_reset")));
+void board_reset_last(void) __attribute__((weak, alias("__board_reset")));
 
 int checkcpu (void)
 {
@@ -52,7 +56,8 @@ int checkcpu (void)
 	uint major, minor;
 	struct cpu_type *cpu;
 	char buf1[32], buf2[32];
-#if defined(CONFIG_DDR_CLK_FREQ) || defined(CONFIG_FSL_CORENET)
+#if defined(CONFIG_DYNAMIC_DDR_CLK_FREQ) || \
+	defined(CONFIG_STATIC_DDR_CLK_FREQ) || defined(CONFIG_FSL_CORENET)
 	ccsr_gur_t __iomem *gur =
 		(void __iomem *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 #endif
@@ -70,12 +75,12 @@ int checkcpu (void)
 		>> FSL_CORENET_RCWSR5_DDR_SYNC_SHIFT;
 #endif /* CONFIG_SYS_FSL_QORIQ_CHASSIS2 */
 #else	/* CONFIG_FSL_CORENET */
-#ifdef CONFIG_DDR_CLK_FREQ
+#if defined(CONFIG_DYNAMIC_DDR_CLK_FREQ) || defined(CONFIG_STATIC_DDR_CLK_FREQ)
 	u32 ddr_ratio = ((gur->porpllsr) & MPC85xx_PORPLLSR_DDR_RATIO)
 		>> MPC85xx_PORPLLSR_DDR_RATIO_SHIFT;
 #else
 	u32 ddr_ratio = 0;
-#endif /* CONFIG_DDR_CLK_FREQ */
+#endif /* CONFIG_DYNAMIC_DDR_CLK_FREQ || CONFIG_STATIC_DDR_CLK_FREQ */
 #endif /* CONFIG_FSL_CORENET */
 
 	unsigned int i, core, nr_cores = cpu_numcores();
@@ -141,8 +146,10 @@ int checkcpu (void)
 	printf("Core:  ");
 	switch(ver) {
 	case PVR_VER_E500_V1:
+		puts("e500v1");
+		break;
 	case PVR_VER_E500_V2:
-		puts("e500");
+		puts("e500v2");
 		break;
 	case PVR_VER_E500MC:
 		puts("e500mc");
@@ -239,10 +246,6 @@ int checkcpu (void)
 	printf("IFC:%-4s MHz\n", strmhz(buf1, sysinfo.freq_localbus));
 #endif
 
-#ifdef CONFIG_CPM2
-	printf("CPM:   %s MHz\n", strmhz(buf1, sysinfo.freq_systembus));
-#endif
-
 #ifdef CONFIG_QE
 	printf("       QE:%-4s MHz\n", strmhz(buf1, sysinfo.freq_qe));
 #endif
@@ -318,12 +321,18 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 #else
 	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 
+	/* Call board-specific preparation for reset */
+	board_reset_prepare();
+
 	/* Attempt board-specific reset */
 	board_reset();
 
 	/* Next try asserting HRESET_REQ */
 	out_be32(&gur->rstcr, 0x2);
 	udelay(100);
+
+	/* Attempt last-stage board-specific reset */
+	board_reset_last();
 #endif
 
 	return 1;
@@ -333,9 +342,6 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 /*
  * Get timebase clock frequency
  */
-#ifndef CONFIG_SYS_FSL_TBCLK_DIV
-#define CONFIG_SYS_FSL_TBCLK_DIV 8
-#endif
 __weak unsigned long get_tbclk(void)
 {
 	unsigned long tbclk_div = CONFIG_SYS_FSL_TBCLK_DIV;
@@ -344,6 +350,7 @@ __weak unsigned long get_tbclk(void)
 }
 
 
+#ifndef CONFIG_WDT
 #if defined(CONFIG_WATCHDOG)
 #define WATCHDOG_MASK (TCR_WP(63) | TCR_WRC(3) | TCR_WIE)
 void
@@ -372,6 +379,7 @@ watchdog_reset(void)
 		enable_interrupts();
 }
 #endif	/* CONFIG_WATCHDOG */
+#endif
 
 /*
  * Initializes on-chip MMC controllers.

@@ -28,7 +28,8 @@ static const char *if_typename_str[IF_TYPE_COUNT] = {
 	[IF_TYPE_SATA]		= "sata",
 	[IF_TYPE_HOST]		= "host",
 	[IF_TYPE_NVME]		= "nvme",
-	[IF_TYPE_EFI]		= "efi",
+	[IF_TYPE_EFI_MEDIA]	= "efi",
+	[IF_TYPE_EFI_LOADER]	= "efiloader",
 	[IF_TYPE_VIRTIO]	= "virtio",
 	[IF_TYPE_PVBLOCK]	= "pvblock",
 };
@@ -44,7 +45,8 @@ static enum uclass_id if_type_uclass_id[IF_TYPE_COUNT] = {
 	[IF_TYPE_SATA]		= UCLASS_AHCI,
 	[IF_TYPE_HOST]		= UCLASS_ROOT,
 	[IF_TYPE_NVME]		= UCLASS_NVME,
-	[IF_TYPE_EFI]		= UCLASS_EFI,
+	[IF_TYPE_EFI_MEDIA]	= UCLASS_EFI_MEDIA,
+	[IF_TYPE_EFI_LOADER]	= UCLASS_EFI_LOADER,
 	[IF_TYPE_VIRTIO]	= UCLASS_VIRTIO,
 	[IF_TYPE_PVBLOCK]	= UCLASS_PVBLOCK,
 };
@@ -170,7 +172,7 @@ struct blk_desc *blk_get_by_device(struct udevice *dev)
  * @if_type:	Interface type
  * @devnum:	Device number (0 = first)
  * @descp:	Returns block device descriptor on success
- * @return 0 on success, -ENODEV if there is no such device and no device
+ * Return: 0 on success, -ENODEV if there is no such device and no device
  * with a higher device number, -ENOENT if there is no such device but there
  * is one with a higher number, or other -ve on other error.
  */
@@ -507,6 +509,13 @@ int blk_get_from_parent(struct udevice *parent, struct udevice **devp)
 	return 0;
 }
 
+const char *blk_get_devtype(struct udevice *dev)
+{
+	struct udevice *parent = dev_get_parent(dev);
+
+	return uclass_get_name(device_get_uclass_id(parent));
+};
+
 int blk_find_max_devnum(enum if_type if_type)
 {
 	struct udevice *dev;
@@ -548,6 +557,30 @@ static int blk_flags_check(struct udevice *dev, enum blk_flag_t req_flags)
 	flags = desc->removable ? BLKF_REMOVABLE : BLKF_FIXED;
 
 	return flags & req_flags ? 0 : 1;
+}
+
+int blk_find_first(enum blk_flag_t flags, struct udevice **devp)
+{
+	int ret;
+
+	for (ret = uclass_find_first_device(UCLASS_BLK, devp);
+	     *devp && !blk_flags_check(*devp, flags);
+	     ret = uclass_find_next_device(devp))
+		return 0;
+
+	return -ENODEV;
+}
+
+int blk_find_next(enum blk_flag_t flags, struct udevice **devp)
+{
+	int ret;
+
+	for (ret = uclass_find_next_device(devp);
+	     *devp && !blk_flags_check(*devp, flags);
+	     ret = uclass_find_next_device(devp))
+		return 0;
+
+	return -ENODEV;
 }
 
 int blk_first_device_err(enum blk_flag_t flags, struct udevice **devp)
@@ -670,6 +703,19 @@ int blk_create_devicef(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
+int blk_probe_or_unbind(struct udevice *dev)
+{
+	int ret;
+
+	ret = device_probe(dev);
+	if (ret) {
+		log_debug("probing %s failed\n", dev->name);
+		device_unbind(dev);
+	}
+
+	return ret;
+}
+
 int blk_unbind_all(int if_type)
 {
 	struct uclass *uc;
@@ -697,11 +743,15 @@ int blk_unbind_all(int if_type)
 
 static int blk_post_probe(struct udevice *dev)
 {
-	if (IS_ENABLED(CONFIG_PARTITIONS) &&
+	if (CONFIG_IS_ENABLED(PARTITIONS) &&
 	    IS_ENABLED(CONFIG_HAVE_BLOCK_DEVICE)) {
 		struct blk_desc *desc = dev_get_uclass_plat(dev);
 
 		part_init(desc);
+
+		if (desc->part_type != PART_TYPE_UNKNOWN &&
+		    part_create_block_devices(dev))
+			debug("*** creating partitions failed\n");
 	}
 
 	return 0;

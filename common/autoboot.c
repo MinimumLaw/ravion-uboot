@@ -24,6 +24,7 @@
 #include <u-boot/sha256.h>
 #include <bootcount.h>
 #include <crypt.h>
+#include <dm/ofnode.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -68,7 +69,7 @@ static int menukey;
  * before starting to enter the password.
  *
  * @etime: Timeout value ticks (stop when get_ticks() reachs this)
- * @return 0 if autoboot should continue, 1 if it should stop
+ * Return: 0 if autoboot should continue, 1 if it should stop
  */
 static int passwd_abort_crypt(uint64_t etime)
 {
@@ -114,6 +115,7 @@ static int passwd_abort_crypt(uint64_t etime)
 				presskey_len++;
 			}
 		}
+		udelay(10000);
 	} while (never_timeout || get_ticks() <= etime);
 
 	return abort;
@@ -142,7 +144,7 @@ static int slow_equals(u8 *a, u8 *b, int len)
  * This checks for the user entering a SHA256 hash within a given time.
  *
  * @etime: Timeout value ticks (stop when get_ticks() reachs this)
- * @return 0 if autoboot should continue, 1 if it should stop
+ * Return: 0 if autoboot should continue, 1 if it should stop
  */
 static int passwd_abort_sha256(uint64_t etime)
 {
@@ -205,6 +207,7 @@ static int passwd_abort_sha256(uint64_t etime)
 			if (slow_equals(sha, sha_env, SHA256_SUM_LEN))
 				abort = 1;
 		}
+		udelay(10000);
 	} while (!abort && get_ticks() <= etime);
 
 	free(presskey);
@@ -218,7 +221,7 @@ static int passwd_abort_sha256(uint64_t etime)
  * This checks for the user entering a string within a given time.
  *
  * @etime: Timeout value ticks (stop when get_ticks() reachs this)
- * @return 0 if autoboot should continue, 1 if it should stop
+ * Return: 0 if autoboot should continue, 1 if it should stop
  */
 static int passwd_abort_key(uint64_t etime)
 {
@@ -292,6 +295,7 @@ static int passwd_abort_key(uint64_t etime)
 				abort = 1;
 			}
 		}
+		udelay(10000);
 	} while (!abort && get_ticks() <= etime);
 
 	return abort;
@@ -314,7 +318,7 @@ static void flush_stdin(void)
  * sha256-fallback has been enabled via the config setting
  * `AUTOBOOT_SHA256_FALLBACK`.
  *
- * @return `false` if we must not fall-back, `true` if plain sha256 should be tried
+ * Return: `false` if we must not fall-back, `true` if plain sha256 should be tried
  */
 static bool fallback_to_sha256(void)
 {
@@ -424,12 +428,12 @@ static void process_fdt_options(const void *blob)
 	ulong addr;
 
 	/* Add an env variable to point to a kernel payload, if available */
-	addr = fdtdec_get_config_int(gd->fdt_blob, "kernel-offset", 0);
+	addr = ofnode_conf_read_int("kernel-offset", 0);
 	if (addr)
 		env_set_addr("kernaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
 
 	/* Add an env variable to point to a root disk, if available */
-	addr = fdtdec_get_config_int(gd->fdt_blob, "rootdisk-offset", 0);
+	addr = ofnode_conf_read_int("rootdisk-offset", 0);
 	if (addr)
 		env_set_addr("rootaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
 #endif /* CONFIG_SYS_TEXT_BASE */
@@ -445,9 +449,13 @@ const char *bootdelay_process(void)
 	s = env_get("bootdelay");
 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 
+	/*
+	 * Does it really make sense that the devicetree overrides the user
+	 * setting? It is possibly helpful for security since the device tree
+	 * may be signed whereas the environment is often loaded from storage.
+	 */
 	if (IS_ENABLED(CONFIG_OF_CONTROL))
-		bootdelay = fdtdec_get_config_int(gd->fdt_blob, "bootdelay",
-						  bootdelay);
+		bootdelay = ofnode_conf_read_int("bootdelay", bootdelay);
 
 	debug("### main_loop entered: bootdelay=%d\n\n", bootdelay);
 

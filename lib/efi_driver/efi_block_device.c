@@ -35,6 +35,7 @@
 #include <malloc.h>
 #include <dm/device-internal.h>
 #include <dm/root.h>
+#include <dm/tag.h>
 
 /*
  * EFI attributes of the udevice handled by this driver.
@@ -107,25 +108,6 @@ static ulong efi_bl_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 }
 
 /**
- * Create partions for the block device.
- *
- * @handle:	EFI handle of the block device
- * @dev:	udevice of the block device
- * Return:	number of partitions created
- */
-static int efi_bl_bind_partitions(efi_handle_t handle, struct udevice *dev)
-{
-	struct blk_desc *desc;
-	const char *if_typename;
-
-	desc = dev_get_uclass_plat(dev);
-	if_typename = blk_get_if_type_name(desc->if_type);
-
-	return efi_disk_create_partitions(handle, desc, if_typename,
-					  desc->devnum, dev->name);
-}
-
-/**
  * Create a block device for a handle
  *
  * @handle:	handle
@@ -139,7 +121,6 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	char *name;
 	struct efi_object *obj = efi_search_obj(handle);
 	struct efi_block_io *io = interface;
-	int disks;
 	struct efi_blk_plat *plat;
 
 	EFI_PRINT("%s: handle %p, interface %p\n", __func__, handle, io);
@@ -147,7 +128,7 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	if (!obj)
 		return -ENOENT;
 
-	devnum = blk_find_max_devnum(IF_TYPE_EFI);
+	devnum = blk_find_max_devnum(IF_TYPE_EFI_LOADER);
 	if (devnum == -ENODEV)
 		devnum = 0;
 	else if (devnum < 0)
@@ -159,8 +140,8 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	sprintf(name, "efiblk#%d", devnum);
 
 	/* Create driver model udevice for the EFI block io device */
-	ret = blk_create_device(parent, "efi_blk", name, IF_TYPE_EFI, devnum,
-				io->media->block_size,
+	ret = blk_create_device(parent, "efi_blk", name, IF_TYPE_EFI_LOADER,
+				devnum, io->media->block_size,
 				(lbaint_t)io->media->last_block, &bdev);
 	if (ret)
 		return ret;
@@ -173,14 +154,18 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	plat->handle = handle;
 	plat->io = interface;
 
+	/*
+	 * FIXME: necessary because we won't do almost nothing in
+	 * efi_disk_create() when called from device_probe().
+	 */
+	if (efi_link_dev(handle, bdev))
+		/* FIXME: cleanup for bdev */
+		return ret;
+
 	ret = device_probe(bdev);
 	if (ret)
 		return ret;
 	EFI_PRINT("%s: block device '%s' created\n", __func__, bdev->name);
-
-	/* Create handles for the partions of the block device */
-	disks = efi_bl_bind_partitions(handle, bdev);
-	EFI_PRINT("Found %d partitions\n", disks);
 
 	return 0;
 }
@@ -209,6 +194,6 @@ static const struct efi_driver_ops driver_ops = {
 /* Identify as EFI driver */
 U_BOOT_DRIVER(efi_block) = {
 	.name		= "EFI block driver",
-	.id		= UCLASS_EFI,
+	.id		= UCLASS_EFI_LOADER,
 	.ops		= &driver_ops,
 };

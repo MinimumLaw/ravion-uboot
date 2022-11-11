@@ -6,9 +6,6 @@
 #ifndef _CONFIG_SYNOLOGY_DS414_H
 #define _CONFIG_SYNOLOGY_DS414_H
 
-/* Vendor kernel expects this MACH_TYPE */
-#define CONFIG_MACH_TYPE	3036
-
 /*
  * High Level Configuration Options (easy to change)
  */
@@ -20,19 +17,7 @@
  */
 
 /* I2C */
-#define CONFIG_SYS_I2C_LEGACY
-#define CONFIG_SYS_I2C_MVTWSI
 #define CONFIG_I2C_MVTWSI_BASE0		MVEBU_TWSI_BASE
-#define CONFIG_SYS_I2C_SLAVE		0x0
-#define CONFIG_SYS_I2C_SPEED		100000
-
-/* PCIe support */
-#ifndef CONFIG_SPL_BUILD
-#define CONFIG_PCI_SCAN_SHOW
-#endif
-
-/* USB/EHCI/XHCI configuration */
-#define CONFIG_EHCI_IS_TDI
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -55,28 +40,8 @@
 
 /* SPL */
 /* Defines for SPL */
-#define CONFIG_SPL_MAX_SIZE		((128 << 10) - 0x4030)
-
-#define CONFIG_SPL_BSS_START_ADDR	(0x40000000 + (128 << 10))
-#define CONFIG_SPL_BSS_MAX_SIZE		(16 << 10)
-
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_MALLOC_SIMPLE
-#endif
-
-#define CONFIG_SPL_STACK		(0x40000000 + ((192 - 16) << 10))
-#define CONFIG_SPL_BOOTROM_SAVE		(CONFIG_SPL_STACK + 4)
-
-/* DS414 bus width is 32bits */
-#define CONFIG_DDR_32BIT
 
 /* Default Environment */
-#define CONFIG_LOADADDR		0x80000
-#define CONFIG_BOOTCOMMAND					\
-	"sf probe; "						\
-	"sf read ${loadaddr} 0xd0000 0x2d0000; "		\
-	"sf read ${ramdisk_addr_r} 0x3a0000 0x430000; "		\
-	"bootm ${loadaddr} ${ramdisk_addr_r}"
 
 #define CONFIG_EXTRA_ENV_SETTINGS				\
 	"initrd_high=0xffffffff\0"				\

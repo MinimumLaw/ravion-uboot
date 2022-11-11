@@ -11,6 +11,7 @@
 #include <i2c.h>
 #include <init.h>
 #include <mmc.h>
+#include <miiphy.h>
 #include <phy.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
@@ -59,11 +60,11 @@ DECLARE_GLOBAL_DATA_PTR;
  * Memory Controller Registers
  *
  * Assembled based on public information:
- * https://gitlab.nic.cz/turris/mox-boot-builder/-/blob/master/wtmi/main.c#L332-336
+ * https://gitlab.nic.cz/turris/mox-boot-builder/-/blob/v2020.11.26/wtmi/main.c#L332-336
  * https://github.com/MarvellEmbeddedProcessors/mv-ddr-marvell/blob/mv_ddr-armada-18.12/drivers/mv_ddr_mc6.h#L309-L332
  *
  * And checked against the written register values for the various topologies:
- * https://github.com/MarvellEmbeddedProcessors/mv-ddr-marvell/blob/mv_ddr-armada-atf-mainline/a3700/mv_ddr_tim.h
+ * https://github.com/MarvellEmbeddedProcessors/mv-ddr-marvell/blob/master/a3700/mv_ddr_tim.h
  */
 #define A3700_CH0_MC_CTRL2_REG		MVEBU_REGISTER(0x002c4)
 #define A3700_MC_CTRL2_SDRAM_TYPE_MASK	0xf
@@ -87,7 +88,7 @@ int board_init(void)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
-	char *ptr = (char *)&default_environment[0];
+	char *ptr = &default_environment[0];
 	struct udevice *dev;
 	struct mmc *mmc_dev;
 	bool ddr4, emmc;
@@ -131,6 +132,8 @@ int board_late_init(void)
 		dev = mmc_dev->dev;
 		device_remove(dev, DM_REMOVE_NORMAL);
 		device_unbind(dev);
+		if (of_live_active())
+			ofnode_set_enabled(dev_ofnode(dev), false);
 	}
 
 	/* Ensure that 'env default -a' set correct value to $fdtfile */
@@ -254,14 +257,15 @@ int board_xhci_enable(fdt_addr_t base)
 	return 0;
 }
 
+#ifdef CONFIG_LAST_STAGE_INIT
 /* Helper function for accessing switch devices in multi-chip connection mode */
-static int mii_multi_chip_mode_write(struct mii_dev *bus, int dev_smi_addr,
+static int mii_multi_chip_mode_write(struct udevice *bus, int dev_smi_addr,
 				     int smi_addr, int reg, u16 value)
 {
 	u16 smi_cmd = 0;
 
-	if (bus->write(bus, dev_smi_addr, 0,
-		       MVEBU_SW_SMI_DATA_REG, value) != 0) {
+	if (dm_mdio_write(bus, dev_smi_addr, MDIO_DEVAD_NONE,
+			  MVEBU_SW_SMI_DATA_REG, value) != 0) {
 		printf("Error writing to the PHY addr=%02x reg=%02x\n",
 		       smi_addr, reg);
 		return -EFAULT;
@@ -272,8 +276,8 @@ static int mii_multi_chip_mode_write(struct mii_dev *bus, int dev_smi_addr,
 		  (1 << SW_SMI_CMD_SMI_OP_OFF) |
 		  (smi_addr << SW_SMI_CMD_DEV_ADDR_OFF) |
 		  (reg << SW_SMI_CMD_REG_ADDR_OFF);
-	if (bus->write(bus, dev_smi_addr, 0,
-		       MVEBU_SW_SMI_CMD_REG, smi_cmd) != 0) {
+	if (dm_mdio_write(bus, dev_smi_addr, MDIO_DEVAD_NONE,
+			  MVEBU_SW_SMI_CMD_REG, smi_cmd) != 0) {
 		printf("Error writing to the PHY addr=%02x reg=%02x\n",
 		       smi_addr, reg);
 		return -EFAULT;
@@ -283,10 +287,21 @@ static int mii_multi_chip_mode_write(struct mii_dev *bus, int dev_smi_addr,
 }
 
 /* Bring-up board-specific network stuff */
-int board_network_enable(struct mii_dev *bus)
+int last_stage_init(void)
 {
+	struct udevice *bus;
+	ofnode node;
+
 	if (!of_machine_is_compatible("globalscale,espressobin"))
 		return 0;
+
+	node = ofnode_by_compatible(ofnode_null(), "marvell,orion-mdio");
+	if (!ofnode_valid(node) ||
+	    uclass_get_device_by_ofnode(UCLASS_MDIO, node, &bus) ||
+	    device_probe(bus)) {
+		printf("Cannot find MDIO bus\n");
+		return 0;
+	}
 
 	/*
 	 * FIXME: remove this code once Topaz driver gets available
@@ -327,10 +342,12 @@ int board_network_enable(struct mii_dev *bus)
 
 	return 0;
 }
+#endif
 
-#if defined(CONFIG_OF_BOARD_SETUP) && defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#ifdef CONFIG_OF_BOARD_SETUP
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
+#ifdef CONFIG_ENV_IS_IN_SPI_FLASH
 	int ret;
 	int spi_off;
 	int parts_off;
@@ -424,6 +441,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 		return 0;
 	}
 
+#endif
 	return 0;
 }
 #endif

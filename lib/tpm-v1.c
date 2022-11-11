@@ -456,12 +456,13 @@ u32 tpm1_get_permissions(struct udevice *dev, u32 index, u32 *perm)
 		0x0, 0x0, 0x0, 0x4,
 	};
 	const size_t index_offset = 18;
-	const size_t perm_offset = 60;
+	const size_t perm_offset = 74;
 	u8 buf[COMMAND_BUFFER_SIZE], response[COMMAND_BUFFER_SIZE];
 	size_t response_length = sizeof(response);
 	u32 err;
 
-	if (pack_byte_string(buf, sizeof(buf), "d", 0, command, sizeof(command),
+	if (pack_byte_string(buf, sizeof(buf), "sd",
+			     0, command, sizeof(command),
 			     index_offset, index))
 		return TPM_LIB_ERROR;
 	err = tpm_sendrecv_command(dev, buf, response, &response_length);
@@ -840,7 +841,7 @@ u32 tpm1_find_key_sha1(struct udevice *dev, const u8 auth[20],
 	unsigned int i;
 
 	/* fetch list of already loaded keys in the TPM */
-	err = tpm_get_capability(dev, TPM_CAP_HANDLE, TPM_RT_KEY, buf,
+	err = tpm1_get_capability(dev, TPM_CAP_HANDLE, TPM_RT_KEY, buf,
 				 sizeof(buf));
 	if (err)
 		return -1;
@@ -852,7 +853,7 @@ u32 tpm1_find_key_sha1(struct udevice *dev, const u8 auth[20],
 	/* now search a(/ the) key which we can access with the given auth */
 	for (i = 0; i < key_count; ++i) {
 		buf_len = sizeof(buf);
-		err = tpm_get_pub_key_oiap(key_handles[i], auth, buf, &buf_len);
+		err = tpm1_get_pub_key_oiap(dev, key_handles[i], auth, buf, &buf_len);
 		if (err && err != TPM_AUTHFAIL)
 			return -1;
 		if (err)

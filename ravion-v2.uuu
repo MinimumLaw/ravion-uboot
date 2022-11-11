@@ -6,9 +6,30 @@ uuu_version 1.2.135
 #   And files required for Falcon Mode working
 ##############################################
 SDP: boot -f SPL
-# First - write SPL into OCRAM_2/OCRAM_3 sectors
-SDPV: write -f SPL -addr 0x940000
-SDPV: write -f emmc_user.img  -addr 0x10400000
+
+# First - write u-boot & SPL into kenel & ramdisk region
+SDPV: write -f u-boot-dtb.img -addr 0x11400000
+SDPV: write -f SPL -addr 0x1b400000
+# Then load u-boot to high memory and start them
 SDPV: write -f u-boot-dtb.img -addr 0x177fffc0
 SDPV: jump -addr 0x177fffc0
-SDPV: done
+
+FB: delay 250
+FB: ucmd echo "# configure I.MX proceesor eFuse
+FB: ucmd mfgr_fuse
+FB: ucmd echo "# configure eMMC hw-paritions and boot params"
+FB: ucmd mmc bootbus  0 2 0 1
+FB: ucmd mmc partconf 0 1 1 0
+FB: ucmd mmc rst-function 0 1
+FB: ucmd echo "# Select BOOT0 eMMC parttion"
+FB: ucmd mmc dev 0 1
+FB: ucmd echo "# erase 1-st 2M space"
+FB: ucmd mmc erase 0 0x1000
+FB: ucmd echo "# Write SPL at 1K offset with 255K max size"
+FB: ucmd mmc write 0x1b400000 2 0x1fe
+FB: ucmd echo "# write U-BOOT at 1M offset with 1M max size"
+FB: ucmd mmc write 0x11400000 0x800 0x800
+FB: ucmd echo "# create configuration block"
+FB: ucmd cfgblock create
+
+FB: done

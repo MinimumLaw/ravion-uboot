@@ -22,6 +22,7 @@
 #include <dm/uclass-internal.h>
 #include <spi_flash.h>
 
+#include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include "common.h"
 
@@ -323,9 +324,36 @@ static void *k3_sysfw_get_spi_addr(void)
 	struct udevice *dev;
 	fdt_addr_t addr;
 	int ret;
+	unsigned int sf_bus = spl_spi_boot_bus();
 
-	ret = uclass_find_device_by_seq(UCLASS_SPI, CONFIG_SF_DEFAULT_BUS,
-					&dev);
+	ret = uclass_find_device_by_seq(UCLASS_SPI, sf_bus, &dev);
+	if (ret)
+		return NULL;
+
+	addr = dev_read_addr_index(dev, 1);
+	if (addr == FDT_ADDR_T_NONE)
+		return NULL;
+
+	return (void *)(addr + CONFIG_K3_SYSFW_IMAGE_SPI_OFFS);
+}
+
+static void k3_sysfw_spi_copy(u32 *dst, u32 *src, size_t len)
+{
+	size_t i;
+
+	for (i = 0; i < len / sizeof(*dst); i++)
+		*dst++ = *src++;
+}
+#endif
+
+#if CONFIG_IS_ENABLED(NOR_SUPPORT)
+static void *get_sysfw_hf_addr(void)
+{
+	struct udevice *dev;
+	fdt_addr_t addr;
+	int ret;
+
+	ret = uclass_find_first_device(UCLASS_MTD, &dev);
 	if (ret)
 		return NULL;
 
@@ -344,6 +372,9 @@ void k3_sysfw_loader(bool rom_loaded_sysfw,
 	struct spl_image_info spl_image = { 0 };
 	struct spl_boot_device bootdev = { 0 };
 	struct ti_sci_handle *ti_sci;
+#if CONFIG_IS_ENABLED(SPI_LOAD)
+	void *sysfw_spi_base;
+#endif
 	int ret = 0;
 
 	if (rom_loaded_sysfw) {
@@ -370,7 +401,7 @@ void k3_sysfw_loader(bool rom_loaded_sysfw,
 
 	/* Load combined System Controller firmware and config data image */
 	switch (bootdev.boot_device) {
-#if CONFIG_IS_ENABLED(MMC_SUPPORT)
+#if CONFIG_IS_ENABLED(MMC)
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
 	case BOOT_DEVICE_MMC2_2:
@@ -394,9 +425,20 @@ void k3_sysfw_loader(bool rom_loaded_sysfw,
 #endif
 #if CONFIG_IS_ENABLED(SPI_LOAD)
 	case BOOT_DEVICE_SPI:
-		sysfw_load_address = k3_sysfw_get_spi_addr();
-		if (!sysfw_load_address)
+		sysfw_spi_base = k3_sysfw_get_spi_addr();
+		if (!sysfw_spi_base)
 			ret = -ENODEV;
+		k3_sysfw_spi_copy(sysfw_load_address, sysfw_spi_base,
+				  CONFIG_K3_SYSFW_IMAGE_SIZE_MAX);
+		break;
+#endif
+#if CONFIG_IS_ENABLED(NOR_SUPPORT)
+	case BOOT_DEVICE_HYPERFLASH:
+		sysfw_spi_base = get_sysfw_hf_addr();
+		if (!sysfw_spi_base)
+			ret = -ENODEV;
+		k3_sysfw_spi_copy(sysfw_load_address, sysfw_spi_base,
+				  CONFIG_K3_SYSFW_IMAGE_SIZE_MAX);
 		break;
 #endif
 #if CONFIG_IS_ENABLED(YMODEM_SUPPORT)

@@ -728,6 +728,12 @@ static ulong rk3399_mmc_get_clk(struct rockchip_cru *cru, uint clk_id)
 	u32 div, con;
 
 	switch (clk_id) {
+	case HCLK_SDIO:
+	case SCLK_SDIO:
+		con = readl(&cru->clksel_con[15]);
+		/* dwmmc controller have internal div 2 */
+		div = 2;
+		break;
 	case HCLK_SDMMC:
 	case SCLK_SDMMC:
 		con = readl(&cru->clksel_con[16]);
@@ -750,37 +756,46 @@ static ulong rk3399_mmc_get_clk(struct rockchip_cru *cru, uint clk_id)
 		return DIV_TO_RATE(GPLL_HZ, div);
 }
 
+static void rk3399_dwmmc_set_clk(struct rockchip_cru *cru,
+				 unsigned int con, ulong set_rate)
+{
+	/* Select clk_sdmmc source from GPLL by default */
+	/* mmc clock defaulg div 2 internal, provide double in cru */
+	int src_clk_div = DIV_ROUND_UP(GPLL_HZ / 2, set_rate);
+
+	if (src_clk_div > 128) {
+		/* use 24MHz source for 400KHz clock */
+		src_clk_div = DIV_ROUND_UP(OSC_HZ / 2, set_rate);
+		assert(src_clk_div - 1 < 128);
+		rk_clrsetreg(&cru->clksel_con[con],
+			     CLK_EMMC_PLL_MASK | CLK_EMMC_DIV_CON_MASK,
+			     CLK_EMMC_PLL_SEL_24M << CLK_EMMC_PLL_SHIFT |
+			     (src_clk_div - 1) << CLK_EMMC_DIV_CON_SHIFT);
+	} else {
+		rk_clrsetreg(&cru->clksel_con[con],
+			     CLK_EMMC_PLL_MASK | CLK_EMMC_DIV_CON_MASK,
+			     CLK_EMMC_PLL_SEL_GPLL << CLK_EMMC_PLL_SHIFT |
+			     (src_clk_div - 1) << CLK_EMMC_DIV_CON_SHIFT);
+	}
+}
+
 static ulong rk3399_mmc_set_clk(struct rockchip_cru *cru,
 				ulong clk_id, ulong set_rate)
 {
-	int src_clk_div;
-	int aclk_emmc = 198 * MHz;
-
 	switch (clk_id) {
+	case HCLK_SDIO:
+	case SCLK_SDIO:
+		rk3399_dwmmc_set_clk(cru, 15, set_rate);
+		break;
 	case HCLK_SDMMC:
 	case SCLK_SDMMC:
-		/* Select clk_sdmmc source from GPLL by default */
-		/* mmc clock defaulg div 2 internal, provide double in cru */
-		src_clk_div = DIV_ROUND_UP(GPLL_HZ / 2, set_rate);
-
-		if (src_clk_div > 128) {
-			/* use 24MHz source for 400KHz clock */
-			src_clk_div = DIV_ROUND_UP(OSC_HZ / 2, set_rate);
-			assert(src_clk_div - 1 < 128);
-			rk_clrsetreg(&cru->clksel_con[16],
-				     CLK_EMMC_PLL_MASK | CLK_EMMC_DIV_CON_MASK,
-				     CLK_EMMC_PLL_SEL_24M << CLK_EMMC_PLL_SHIFT |
-				     (src_clk_div - 1) << CLK_EMMC_DIV_CON_SHIFT);
-		} else {
-			rk_clrsetreg(&cru->clksel_con[16],
-				     CLK_EMMC_PLL_MASK | CLK_EMMC_DIV_CON_MASK,
-				     CLK_EMMC_PLL_SEL_GPLL << CLK_EMMC_PLL_SHIFT |
-				     (src_clk_div - 1) << CLK_EMMC_DIV_CON_SHIFT);
-		}
+		rk3399_dwmmc_set_clk(cru, 16, set_rate);
 		break;
-	case SCLK_EMMC:
+	case SCLK_EMMC: {
+		int aclk_emmc = 198 * MHz;
 		/* Select aclk_emmc source from GPLL */
-		src_clk_div = DIV_ROUND_UP(GPLL_HZ, aclk_emmc);
+		int src_clk_div = DIV_ROUND_UP(GPLL_HZ, aclk_emmc);
+
 		assert(src_clk_div - 1 < 32);
 
 		rk_clrsetreg(&cru->clksel_con[21],
@@ -797,6 +812,7 @@ static ulong rk3399_mmc_set_clk(struct rockchip_cru *cru,
 			     CLK_EMMC_PLL_SEL_GPLL << CLK_EMMC_PLL_SHIFT |
 			     (src_clk_div - 1) << CLK_EMMC_DIV_CON_SHIFT);
 		break;
+	}
 	default:
 		return -EINVAL;
 	}
@@ -918,6 +934,8 @@ static ulong rk3399_clk_get_rate(struct clk *clk)
 	switch (clk->id) {
 	case 0 ... 63:
 		return 0;
+	case HCLK_SDIO:
+	case SCLK_SDIO:
 	case HCLK_SDMMC:
 	case SCLK_SDMMC:
 	case SCLK_EMMC:
@@ -992,6 +1010,8 @@ static ulong rk3399_clk_set_rate(struct clk *clk, ulong rate)
 	case PCLK_PERILP1:
 		return 0;
 
+	case HCLK_SDIO:
+	case SCLK_SDIO:
 	case HCLK_SDMMC:
 	case SCLK_SDMMC:
 	case SCLK_EMMC:
@@ -1289,7 +1309,7 @@ static int rk3399_clk_disable(struct clk *clk)
 static struct clk_ops rk3399_clk_ops = {
 	.get_rate = rk3399_clk_get_rate,
 	.set_rate = rk3399_clk_set_rate,
-#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	.set_parent = rk3399_clk_set_parent,
 #endif
 	.enable = rk3399_clk_enable,
@@ -1402,11 +1422,12 @@ static int rk3399_clk_probe(struct udevice *dev)
 
 static int rk3399_clk_of_to_plat(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct rk3399_clk_priv *priv = dev_get_priv(dev);
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		struct rk3399_clk_priv *priv = dev_get_priv(dev);
 
-	priv->cru = dev_read_addr_ptr(dev);
-#endif
+		priv->cru = dev_read_addr_ptr(dev);
+	}
+
 	return 0;
 }
 
@@ -1614,11 +1635,12 @@ static int rk3399_pmuclk_probe(struct udevice *dev)
 
 static int rk3399_pmuclk_of_to_plat(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct rk3399_pmuclk_priv *priv = dev_get_priv(dev);
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		struct rk3399_pmuclk_priv *priv = dev_get_priv(dev);
 
-	priv->pmucru = dev_read_addr_ptr(dev);
-#endif
+		priv->pmucru = dev_read_addr_ptr(dev);
+	}
+
 	return 0;
 }
 

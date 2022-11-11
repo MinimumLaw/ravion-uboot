@@ -19,11 +19,11 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CONFIG_BLK
-static struct host_block_dev host_devices[CONFIG_HOST_MAX_DEVICES];
+static struct host_block_dev host_devices[SANDBOX_HOST_MAX_DEVICES];
 
 static struct host_block_dev *find_host_device(int dev)
 {
-	if (dev >= 0 && dev < CONFIG_HOST_MAX_DEVICES)
+	if (dev >= 0 && dev < SANDBOX_HOST_MAX_DEVICES)
 		return &host_devices[dev];
 
 	return NULL;
@@ -125,9 +125,14 @@ int host_dev_bind(int devnum, char *filename, bool removable)
 
 	fd = os_open(filename, OS_O_RDWR);
 	if (fd == -1) {
-		printf("Failed to access host backing file '%s'\n", filename);
-		ret = -ENOENT;
-		goto err;
+		printf("Failed to access host backing file '%s', trying read-only\n",
+		       filename);
+		fd = os_open(filename, OS_O_RDONLY);
+		if (fd == -1) {
+			printf("- still failed\n");
+			ret = -ENOENT;
+			goto err;
+		}
 	}
 	ret = blk_create_device(gd->dm_root, "sandbox_host_blk", str,
 				IF_TYPE_HOST, devnum, 512,
@@ -259,7 +264,7 @@ U_BOOT_DRIVER(sandbox_host_blk) = {
 U_BOOT_LEGACY_BLK(sandbox_host) = {
 	.if_typename	= "host",
 	.if_type	= IF_TYPE_HOST,
-	.max_devs	= CONFIG_HOST_MAX_DEVICES,
+	.max_devs	= SANDBOX_HOST_MAX_DEVICES,
 	.get_dev	= host_get_dev_err,
 };
 #endif

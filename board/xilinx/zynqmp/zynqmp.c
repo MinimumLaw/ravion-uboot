@@ -19,6 +19,7 @@
 #include <sata.h>
 #include <ahci.h>
 #include <scsi.h>
+#include <soc.h>
 #include <malloc.h>
 #include <memalign.h>
 #include <wdt.h>
@@ -44,278 +45,17 @@
 
 #include "pm_cfg_obj.h"
 
-#define ZYNQMP_VERSION_SIZE	7
-#define EFUSE_VCU_DIS_MASK	0x100
-#define EFUSE_VCU_DIS_SHIFT	8
-#define EFUSE_GPU_DIS_MASK	0x20
-#define EFUSE_GPU_DIS_SHIFT	5
-#define IDCODE2_PL_INIT_MASK	0x200
-#define IDCODE2_PL_INIT_SHIFT	9
-
 DECLARE_GLOBAL_DATA_PTR;
 
 #if CONFIG_IS_ENABLED(FPGA) && defined(CONFIG_FPGA_ZYNQMPPL)
-static xilinx_desc zynqmppl = XILINX_ZYNQMP_DESC;
-
-enum {
-	ZYNQMP_VARIANT_EG = BIT(0U),
-	ZYNQMP_VARIANT_EV = BIT(1U),
-	ZYNQMP_VARIANT_CG = BIT(2U),
-	ZYNQMP_VARIANT_DR = BIT(3U),
+static xilinx_desc zynqmppl = {
+	xilinx_zynqmp, csu_dma, 1, &zynqmp_op, 0, &zynqmp_op, NULL,
+	ZYNQMP_FPGA_FLAGS
 };
-
-static const struct {
-	u32 id;
-	u8 device;
-	u8 variants;
-} zynqmp_devices[] = {
-	{
-		.id = 0x04711093,
-		.device = 2,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG,
-	},
-	{
-		.id = 0x04710093,
-		.device = 3,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG,
-	},
-	{
-		.id = 0x04721093,
-		.device = 4,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG |
-			ZYNQMP_VARIANT_EV,
-	},
-	{
-		.id = 0x04720093,
-		.device = 5,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG |
-			ZYNQMP_VARIANT_EV,
-	},
-	{
-		.id = 0x04739093,
-		.device = 6,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG,
-	},
-	{
-		.id = 0x04730093,
-		.device = 7,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG |
-			ZYNQMP_VARIANT_EV,
-	},
-	{
-		.id = 0x04738093,
-		.device = 9,
-		.variants = ZYNQMP_VARIANT_EG | ZYNQMP_VARIANT_CG,
-	},
-	{
-		.id = 0x04740093,
-		.device = 11,
-		.variants = ZYNQMP_VARIANT_EG,
-	},
-	{
-		.id = 0x04750093,
-		.device = 15,
-		.variants = ZYNQMP_VARIANT_EG,
-	},
-	{
-		.id = 0x04759093,
-		.device = 17,
-		.variants = ZYNQMP_VARIANT_EG,
-	},
-	{
-		.id = 0x04758093,
-		.device = 19,
-		.variants = ZYNQMP_VARIANT_EG,
-	},
-	{
-		.id = 0x047E1093,
-		.device = 21,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047E3093,
-		.device = 23,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047E5093,
-		.device = 25,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047E4093,
-		.device = 27,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047E0093,
-		.device = 28,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047E2093,
-		.device = 29,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047E6093,
-		.device = 39,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047FD093,
-		.device = 43,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047F8093,
-		.device = 46,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047FF093,
-		.device = 47,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047FB093,
-		.device = 48,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x047FE093,
-		.device = 49,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-	{
-		.id = 0x046d0093,
-		.device = 67,
-		.variants = ZYNQMP_VARIANT_DR,
-	},
-};
-
-static const struct {
-	u32 id;
-	char *name;
-} zynqmp_svd_devices[] = {
-	{
-		.id = 0x04714093,
-		.name = "xck24"
-	},
-	{
-		.id = 0x04724093,
-		.name = "xck26",
-	},
-};
-
-static char *zynqmp_detect_svd_name(u32 idcode)
-{
-	u32 i;
-
-	for (i = 0; i < ARRAY_SIZE(zynqmp_svd_devices); i++) {
-		if (zynqmp_svd_devices[i].id == (idcode & 0x0FFFFFFF))
-			return zynqmp_svd_devices[i].name;
-	}
-
-	return "unknown";
-}
-
-static char *zynqmp_get_silicon_idcode_name(void)
-{
-	u32 i;
-	u32 idcode, idcode2;
-	char name[ZYNQMP_VERSION_SIZE];
-	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
-
-	ret = xilinx_pm_request(PM_GET_CHIPID, 0, 0, 0, 0, ret_payload);
-	if (ret) {
-		debug("%s: Getting chipid failed\n", __func__);
-		return "unknown";
-	}
-
-	/*
-	 * Firmware returns:
-	 * payload[0][31:0]  = status of the operation
-	 * payload[1]] = IDCODE
-	 * payload[2][19:0]  = Version
-	 * payload[2][28:20] = EXTENDED_IDCODE
-	 * payload[2][29] = PL_INIT
-	 */
-
-	idcode  = ret_payload[1];
-	idcode2 = ret_payload[2] >> ZYNQMP_CSU_VERSION_EMPTY_SHIFT;
-	debug("%s, IDCODE: 0x%0x, IDCODE2: 0x%0x\r\n", __func__, idcode,
-	      idcode2);
-
-	for (i = 0; i < ARRAY_SIZE(zynqmp_devices); i++) {
-		if (zynqmp_devices[i].id == (idcode & 0x0FFFFFFF))
-			break;
-	}
-
-	if (i >= ARRAY_SIZE(zynqmp_devices))
-		return zynqmp_detect_svd_name(idcode);
-
-	/* Add device prefix to the name */
-	ret = snprintf(name, ZYNQMP_VERSION_SIZE, "zu%d",
-		       zynqmp_devices[i].device);
-	if (ret < 0)
-		return "unknown";
-
-	if (zynqmp_devices[i].variants & ZYNQMP_VARIANT_EV) {
-		/* Devices with EV variant might be EG/CG/EV family */
-		if (idcode2 & IDCODE2_PL_INIT_MASK) {
-			u32 family = ((idcode2 & EFUSE_VCU_DIS_MASK) >>
-				      EFUSE_VCU_DIS_SHIFT) << 1 |
-				     ((idcode2 & EFUSE_GPU_DIS_MASK) >>
-				      EFUSE_GPU_DIS_SHIFT);
-
-			/*
-			 * Get family name based on extended idcode values as
-			 * determined on UG1087, EXTENDED_IDCODE register
-			 * description
-			 */
-			switch (family) {
-			case 0x00:
-				strncat(name, "ev", 2);
-				break;
-			case 0x10:
-				strncat(name, "eg", 2);
-				break;
-			case 0x11:
-				strncat(name, "cg", 2);
-				break;
-			default:
-				/* Do not append family name*/
-				break;
-			}
-		} else {
-			/*
-			 * When PL powered down the VCU Disable efuse cannot be
-			 * read. So, ignore the bit and just findout if it is CG
-			 * or EG/EV variant.
-			 */
-			strncat(name, (idcode2 & EFUSE_GPU_DIS_MASK) ? "cg" :
-				"e", 2);
-		}
-	} else if (zynqmp_devices[i].variants & ZYNQMP_VARIANT_CG) {
-		/* Devices with CG variant might be EG or CG family */
-		strncat(name, (idcode2 & EFUSE_GPU_DIS_MASK) ? "cg" : "eg", 2);
-	} else if (zynqmp_devices[i].variants & ZYNQMP_VARIANT_EG) {
-		strncat(name, "eg", 2);
-	} else if (zynqmp_devices[i].variants & ZYNQMP_VARIANT_DR) {
-		strncat(name, "dr", 2);
-	} else {
-		debug("Variant not identified\n");
-	}
-
-	return strdup(name);
-}
 #endif
 
-int board_early_init_f(void)
+int __maybe_unused psu_uboot_init(void)
 {
-#if defined(CONFIG_ZYNQMP_PSU_INIT_ENABLED)
 	int ret;
 
 	ret = psu_init();
@@ -335,16 +75,31 @@ int board_early_init_f(void)
 
 	/* Delay is required for clocks to be propagated */
 	udelay(1000000);
-#endif
-
-#ifdef CONFIG_DEBUG_UART
-	/* Uart debug for sure */
-	debug_uart_init();
-	puts("Debug uart enabled\n"); /* or printch() */
-#endif
-
+	
 	return 0;
 }
+
+#if !defined(CONFIG_SPL_BUILD)
+# if defined(CONFIG_DEBUG_UART_BOARD_INIT)
+void board_debug_uart_init(void)
+{
+#  if defined(CONFIG_ZYNQMP_PSU_INIT_ENABLED)
+	psu_uboot_init();
+#  endif
+}
+# endif
+
+# if defined(CONFIG_BOARD_EARLY_INIT_F)
+int board_early_init_f(void)
+{
+	int ret = 0;
+#  if defined(CONFIG_ZYNQMP_PSU_INIT_ENABLED) && !defined(CONFIG_DEBUG_UART_BOARD_INIT)
+	ret = psu_uboot_init();
+#  endif
+	return ret;
+}
+# endif
+#endif
 
 static int multi_boot(void)
 {
@@ -358,11 +113,40 @@ static int multi_boot(void)
 	return multiboot;
 }
 
-#define PS_SYSMON_ANALOG_BUS_VAL	0x3210
-#define PS_SYSMON_ANALOG_BUS_REG	0xFFA50914
+#if defined(CONFIG_SPL_BUILD)
+static void restore_jtag(void)
+{
+	if (current_el() != 3)
+		return;
+
+	writel(CSU_JTAG_SEC_GATE_DISABLE, &csu_base->jtag_sec);
+	writel(CSU_JTAG_DAP_ENABLE_DEBUG, &csu_base->jtag_dap_cfg);
+	writel(CSU_JTAG_CHAIN_WR_SETUP, &csu_base->jtag_chain_status_wr);
+	writel(CRLAPB_DBG_LPD_CTRL_SETUP_CLK, &crlapb_base->dbg_lpd_ctrl);
+	writel(CRLAPB_RST_LPD_DBG_RESET, &crlapb_base->rst_lpd_dbg);
+	writel(CSU_PCAP_PROG_RELEASE_PL, &csu_base->pcap_prog);
+}
+#endif
+
+static void print_secure_boot(void)
+{
+	u32 status = 0;
+
+	if (zynqmp_mmio_read((ulong)&csu_base->status, &status))
+		return;
+
+	printf("Secure Boot:\t%sauthenticated, %sencrypted\n",
+	       status & ZYNQMP_CSU_STATUS_AUTHENTICATED ? "" : "not ",
+	       status & ZYNQMP_CSU_STATUS_ENCRYPTED ? "" : "not ");
+}
 
 int board_init(void)
 {
+#if CONFIG_IS_ENABLED(FPGA) && defined(CONFIG_FPGA_ZYNQMPPL)
+	struct udevice *soc;
+	char name[SOC_MAX_STR_SIZE];
+	int ret;
+#endif
 #if defined(CONFIG_ZYNQMP_FIRMWARE)
 	struct udevice *dev;
 
@@ -377,6 +161,10 @@ int board_init(void)
 		zynqmp_pmufw_load_config_object(zynqmp_pm_cfg_obj,
 						zynqmp_pm_cfg_obj_size);
 	printf("Silicon version:\t%d\n", zynqmp_get_silicon_version());
+
+	/* the CSU disables the JTAG interface when secure boot is enabled */
+	if (CONFIG_IS_ENABLED(ZYNQMP_RESTORE_JTAG))
+		restore_jtag();
 #else
 	if (CONFIG_IS_ENABLED(DM_I2C) && CONFIG_IS_ENABLED(I2C_EEPROM))
 		xilinx_read_eeprom();
@@ -384,16 +172,20 @@ int board_init(void)
 
 	printf("EL Level:\tEL%d\n", current_el());
 
-	/* Bug in ROM sets wrong value in this register */
-	writel(PS_SYSMON_ANALOG_BUS_VAL, PS_SYSMON_ANALOG_BUS_REG);
-
 #if CONFIG_IS_ENABLED(FPGA) && defined(CONFIG_FPGA_ZYNQMPPL)
-	zynqmppl.name = zynqmp_get_silicon_idcode_name();
-	printf("Chip ID:\t%s\n", zynqmppl.name);
-	fpga_init();
-	fpga_add(fpga_xilinx, &zynqmppl);
+	ret = soc_get(&soc);
+	if (!ret) {
+		ret = soc_get_machine(soc, name, sizeof(name));
+		if (ret >= 0) {
+			zynqmppl.name = strdup(name);
+			fpga_init();
+			fpga_add(fpga_xilinx, &zynqmppl);
+		}
+	}
 #endif
 
+	/* display secure boot information */
+	print_secure_boot();
 	if (current_el() == 3)
 		printf("Multiboot:\t%d\n", multi_boot());
 
@@ -464,11 +256,15 @@ int dram_init(void)
 	return 0;
 }
 
+#if defined(CONFIG_LMB)
 ulong board_get_usable_ram_top(ulong total_size)
 {
 	phys_size_t size;
 	phys_addr_t reg;
 	struct lmb lmb;
+
+	if (!total_size)
+		return gd->ram_top;
 
 	if (!IS_ALIGNED((ulong)gd->fdt_blob, 0x8))
 		panic("Not 64bit aligned DT location: %p\n", gd->fdt_blob);
@@ -477,7 +273,7 @@ ulong board_get_usable_ram_top(ulong total_size)
 	lmb_init(&lmb);
 	lmb_add(&lmb, gd->ram_base, gd->ram_size);
 	boot_fdt_add_mem_rsv_regions(&lmb, (void *)gd->fdt_blob);
-	size = ALIGN(CONFIG_SYS_MALLOC_LEN + total_size, MMU_SECTION_SIZE),
+	size = ALIGN(CONFIG_SYS_MALLOC_LEN + total_size, MMU_SECTION_SIZE);
 	reg = lmb_alloc(&lmb, size, MMU_SECTION_SIZE);
 
 	if (!reg)
@@ -485,6 +281,8 @@ ulong board_get_usable_ram_top(ulong total_size)
 
 	return reg + size;
 }
+#endif
+
 #else
 int dram_init_banksize(void)
 {
@@ -621,7 +419,7 @@ int board_late_init(void)
 	const char *mode;
 	char *new_targets;
 	char *env_targets;
-	int ret;
+	int ret, multiboot;
 
 #if defined(CONFIG_USB_ETHER) && !defined(CONFIG_USB_GADGET_DOWNLOAD)
 	usb_ether_init();
@@ -638,6 +436,10 @@ int board_late_init(void)
 	ret = set_fdtfile();
 	if (ret)
 		return ret;
+
+	multiboot = multi_boot();
+	if (multiboot >= 0)
+		env_set_hex("multiboot", multiboot);
 
 	bootmode = zynqmp_get_bootmode();
 
@@ -672,6 +474,7 @@ int board_late_init(void)
 
 		mode = "mmc";
 		bootseq = dev_seq(dev);
+		env_set("modeboot", "emmcboot");
 		break;
 	case SD_MODE:
 		puts("SD_MODE\n");
@@ -690,7 +493,7 @@ int board_late_init(void)
 		break;
 	case SD1_LSHFT_MODE:
 		puts("LVL_SHFT_");
-		/* fall through */
+		fallthrough;
 	case SD_MODE1:
 		puts("SD_MODE1\n");
 		if (uclass_get_device_by_name(UCLASS_MMC,
@@ -838,12 +641,17 @@ void set_dfu_alt_info(char *interface, char *devstr)
 
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, DFU_ALT_BUF_LEN);
 
-	if (env_get("dfu_alt_info"))
+	if (!CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT) &&
+	    env_get("dfu_alt_info"))
 		return;
 
 	memset(buf, 0, sizeof(buf));
 
 	multiboot = multi_boot();
+	if (multiboot < 0)
+		multiboot = 0;
+
+	multiboot = env_get_hex("multiboot", multiboot);
 	debug("Multiboot: %d\n", multiboot);
 
 	switch (zynqmp_get_bootmode()) {
@@ -855,21 +663,26 @@ void set_dfu_alt_info(char *interface, char *devstr)
 		if (!multiboot)
 			snprintf(buf, DFU_ALT_BUF_LEN,
 				 "mmc %d:1=boot.bin fat %d 1;"
-				 "u-boot.itb fat %d 1",
-				 bootseq, bootseq, bootseq);
+				 "%s fat %d 1",
+				 bootseq, bootseq,
+				 CONFIG_SPL_FS_LOAD_PAYLOAD_NAME, bootseq);
 		else
 			snprintf(buf, DFU_ALT_BUF_LEN,
 				 "mmc %d:1=boot%04d.bin fat %d 1;"
-				 "u-boot.itb fat %d 1",
-				 bootseq, multiboot, bootseq, bootseq);
+				 "%s fat %d 1",
+				 bootseq, multiboot, bootseq,
+				 CONFIG_SPL_FS_LOAD_PAYLOAD_NAME, bootseq);
 		break;
+#if defined(CONFIG_SYS_SPI_U_BOOT_OFFS)
 	case QSPI_MODE_24BIT:
 	case QSPI_MODE_32BIT:
 		snprintf(buf, DFU_ALT_BUF_LEN,
 			 "sf 0:0=boot.bin raw %x 0x1500000;"
-			 "u-boot.itb raw 0x%x 0x500000",
-			 multiboot * SZ_32K, CONFIG_SYS_SPI_U_BOOT_OFFS);
+			 "%s raw 0x%x 0x500000",
+			 multiboot * SZ_32K, CONFIG_SPL_FS_LOAD_PAYLOAD_NAME,
+			 CONFIG_SYS_SPI_U_BOOT_OFFS);
 		break;
+#endif
 	default:
 		return;
 	}
