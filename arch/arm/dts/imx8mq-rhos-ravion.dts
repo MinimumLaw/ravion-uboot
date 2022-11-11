@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include "imx8mq-rhos.dtsi"
+#include "imx8mq-rhos-ravion-u-boot.dtsi"
 
 / {
 	model = "Generic RHOS Module with I.MX8MQ CPU";
