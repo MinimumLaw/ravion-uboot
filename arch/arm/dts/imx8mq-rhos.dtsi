@@ -19,25 +19,39 @@
 		device_type = "memory";
 		reg = <0x00000000 0x40000000 0 0xc0000000>;
 	};
+
+	/* System critical voltage regulators */
+	reg_vin: vin_reg {
+		compatible = "regulator-fixed";
+		regulator-min-microvolt = <33000000>;
+		regulator-max-microvolt = <33000000>;
+		regilator-allways-on;
+	};
+
 };
 
-#warning FIXME: sw4_reg incorrect value!!! For build only!!!
+/*
+ * CPU Operation points
+ */
 &A53_0 {
-	cpu-supply = <&sw4_reg>;
+	cpu-supply = <&reg_arm>;
 };
 
 &A53_1 {
-	cpu-supply = <&sw4_reg>;
+	cpu-supply = <&reg_arm>;
 };
 
 &A53_2 {
-	cpu-supply = <&sw4_reg>;
+	cpu-supply = <&reg_arm>;
 };
 
 &A53_3 {
-	cpu-supply = <&sw4_reg>;
+	cpu-supply = <&reg_arm>;
 };
 
+/*
+ * DRAM Operation points
+ */
 &ddrc {
 	operating-points-v2 = <&ddrc_opp_table>;
 
@@ -50,13 +64,6 @@
 
 		opp-100M {
 			opp-hz = /bits/ 64 <100000000>;
-		};
-
-		/*
-		 * On imx8mq B0 PLL can't be bypassed so low bus is 166M
-		 */
-		opp-166M {
-			opp-hz = /bits/ 64 <166935483>;
 		};
 
 		opp-800M {
@@ -95,6 +102,17 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c1>;
 	status = "okay";
+
+	reg_arm: arm_reg@42 {
+		reg = <0x42>;
+		compatible = "ti,tps62869";
+		regulator0name = "arm_reg";
+		regulator-min-microvolts =  <400000>;
+		regulator-max-microvolts = <1675000>;
+		vin-supply = <&reg_vin>;
+		regulator-boot-on;
+	};
+
 
 	pmic@8 {
 		compatible = "fsl,pfuze100";
@@ -224,7 +242,7 @@
 };
 
 &usb_dwc3_1 {
-	dr_mode = "host";
+	dr_mode = "otg";
 	status = "okay";
 };
 

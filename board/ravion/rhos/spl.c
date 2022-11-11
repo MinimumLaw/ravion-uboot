@@ -27,26 +27,10 @@
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include <spl.h>
-#include "pfuze.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
 extern struct dram_timing_info dram_timing;
-
-#define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
-#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
-static struct i2c_pads_info i2c_pad_info1 = {
-	.scl = {
-		.i2c_mode = IMX8MQ_PAD_I2C1_SCL__I2C1_SCL | PC,
-		.gpio_mode = IMX8MQ_PAD_I2C1_SCL__GPIO5_IO14 | PC,
-		.gp = IMX_GPIO_NR(5, 14),
-	},
-	.sda = {
-		.i2c_mode = IMX8MQ_PAD_I2C1_SDA__I2C1_SDA | PC,
-		.gpio_mode = IMX8MQ_PAD_I2C1_SDA__GPIO5_IO15 | PC,
-		.gp = IMX_GPIO_NR(5, 15),
-	},
-};
 
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(2, 12)
 #define USDHC1_PWR_GPIO IMX_GPIO_NR(2, 10)
@@ -147,47 +131,6 @@ int board_mmc_init(struct bd_info *bis)
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(POWER_LEGACY)
-#define I2C_PMIC	0
-int power_init_board(void)
-{
-	struct pmic *p;
-	int ret;
-	unsigned int reg;
-
-	ret = power_pfuze100_init(I2C_PMIC);
-	if (ret)
-		return -ENODEV;
-
-	p = pmic_get("PFUZE100");
-	ret = pmic_probe(p);
-	if (ret)
-		return -ENODEV;
-
-	pmic_reg_read(p, PFUZE100_DEVICEID, &reg);
-	printf("PMIC:  PFUZE100 ID=0x%02x\n", reg);
-
-	pmic_reg_read(p, PFUZE100_SW3AVOL, &reg);
-	if ((reg & 0x3f) != 0x18) {
-		reg &= ~0x3f;
-		reg |= 0x18;
-		pmic_reg_write(p, PFUZE100_SW3AVOL, reg);
-	}
-
-	ret = pfuze_mode_init(p, APS_PFM);
-	if (ret < 0)
-		return ret;
-
-	/* set SW3A standby mode to off */
-	pmic_reg_read(p, PFUZE100_SW3AMODE, &reg);
-	reg &= ~0xf;
-	reg |= APS_OFF;
-	pmic_reg_write(p, PFUZE100_SW3AMODE, reg);
-
-	return 0;
-}
-#endif
-
 void spl_board_init(void)
 {
 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
@@ -201,11 +144,20 @@ void spl_board_init(void)
 int board_fit_config_name_match(const char *name)
 {
 	/* Just empty function now - can't decide what to choose */
-	debug("%s: %s\n", __func__, name);
+	printf("%s: %s\n", __func__, name);
 
 	return 0;
 }
 #endif
+
+void board_boot_order(u32 *spl_boot_list)
+{
+	puts("Normal boot!\n");
+	spl_boot_list[0] = BOOT_DEVICE_MMC1;
+	spl_boot_list[2] = BOOT_DEVICE_BOARD;
+	spl_boot_list[1] = BOOT_DEVICE_NONE;
+	spl_boot_list[3] = BOOT_DEVICE_NONE;
+}
 
 void board_init_f(ulong dummy)
 {
@@ -222,6 +174,7 @@ void board_init_f(ulong dummy)
 
 	timer_init();
 
+	spl_early_init();
 	preloader_console_init();
 
 	/* Clear the BSS. */
@@ -234,10 +187,6 @@ void board_init_f(ulong dummy)
 	}
 
 	enable_tzc380();
-
-	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
-
-	power_init_board();
 
 	/* DDR initialization */
 	ddr_init(&dram_timing);

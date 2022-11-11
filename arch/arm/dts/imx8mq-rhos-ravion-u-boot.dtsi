@@ -6,6 +6,14 @@
 	u-boot,dm-spl;
 };
 
+&usb3_phy1 {
+	u-boot,dm-spl;
+};
+
+&usb_dwc3_1 {
+	u-boot,dm-spl;
+};
+
 &usdhc1 {
 	mmc-hs400-1_8v;
 };
