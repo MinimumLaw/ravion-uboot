@@ -21,10 +21,19 @@
 	};
 
 	/* System critical voltage regulators */
-	reg_vin: vin_reg {
+	P3V3: vin_reg {
 		compatible = "regulator-fixed";
-		regulator-min-microvolt = <33000000>;
-		regulator-max-microvolt = <33000000>;
+		regulator-name = "P3V3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regilator-allways-on;
+	};
+
+	VDD_SOC_0V9: vin_reg {
+		compatible = "regulator-fixed";
+		regulator-name = "VDD_SOC_0V9";
+		regulator-min-microvolt = <900000>;
+		regulator-max-microvolt = <900000>;
 		regilator-allways-on;
 	};
 
@@ -34,19 +43,19 @@
  * CPU Operation points
  */
 &A53_0 {
-	cpu-supply = <&reg_arm>;
+	cpu-supply = <&VDD_ARM_0V9>;
 };
 
 &A53_1 {
-	cpu-supply = <&reg_arm>;
+	cpu-supply = <&VDD_ARM_0V9>;
 };
 
 &A53_2 {
-	cpu-supply = <&reg_arm>;
+	cpu-supply = <&VDD_ARM_0V9>;
 };
 
 &A53_3 {
-	cpu-supply = <&reg_arm>;
+	cpu-supply = <&VDD_ARM_0V9>;
 };
 
 /*
@@ -103,22 +112,22 @@
 	pinctrl-0 = <&pinctrl_i2c1>;
 	status = "okay";
 
-	reg_arm: arm_reg@42 {
+	VDD_ARM_0V9: arm_reg@42 {
 		reg = <0x42>;
 		compatible = "ti,tps62869";
-		regulator0name = "arm_reg";
+		regulator-name = "VDD_ARM_0V9";
 		regulator-min-microvolts =  <400000>;
 		regulator-max-microvolts = <1675000>;
-		vin-supply = <&reg_vin>;
+		vin-supply = <&P3V3>;
 		regulator-boot-on;
 	};
 
 
-	pmic@8 {
+	pmic: pmic@8 {
 		compatible = "fsl,pfuze100";
 		reg = <0x8>;
 
-		regulators {
+		pmic_regs: regulators {
 			sw1a_reg: sw1ab {
 				regulator-min-microvolt = <825000>;
 				regulator-max-microvolt = <1100000>;
@@ -141,7 +150,7 @@
 				regulator-always-on;
 			};
 
-			sw4_reg: sw4 {
+			P1V8_SW4: sw4 {
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
 				regulator-always-on;
@@ -246,22 +255,24 @@
 	status = "okay";
 };
 
+/*
+ * EMMC
+ */
 &usdhc1 {
-	assigned-clocks = <&clk IMX8MQ_CLK_USDHC1>;
-	assigned-clock-rates = <400000000>;
+
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_emmc>;
-	vqmmc-supply = <&sw4_reg>;
+	vqmmc-supply = <&P1V8_SW4>;
+	voltage-range = <1800000 1800000>;
 	bus-width = <8>;
 	non-removable;
-	no-sd;
-	no-sdio;
 	status = "okay";
 };
 
+/*
+ * SD/MMC interface
+ */
 &usdhc2 {
-	assigned-clocks = <&clk IMX8MQ_CLK_USDHC2>;
-	assigned-clock-rates = <200000000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sdcard>;
 	status = "okay";

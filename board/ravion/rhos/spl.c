@@ -57,9 +57,11 @@ void board_init_f(ulong dummy)
 	memset((void *)gd, 0, sizeof(gd_t));
 
 	arch_cpu_init();
+	clock_init();
 	timer_init();
 
-	init_usb_clk();		/* FixMe: really??? */
+/* FixMe: Really? While this NOT done by CCF?*/
+	init_usb_clk();
 	init_uart_clk(0);
 	init_clk_usdhc(0);
 	init_clk_usdhc(1);

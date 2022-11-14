@@ -2,27 +2,42 @@
 
 #include "imx8mq-u-boot.dtsi"
 
-&pinctrl_uart1 {
-	u-boot,dm-spl;
-};
+/* regulators */
+&P3V3 {			u-boot,dm-spl;	};
+&VDD_SOC_0V9 {		u-boot,dm-spl;	};
+&VDD_ARM_0V9 {		u-boot,dm-spl;	};
 
-&usb3_phy1 {
-	u-boot,dm-spl;
-};
+/* clock */
+&clk {			u-boot,dm-spl;	};
+&ckil {			u-boot,dm-spl;	};
+&osc_25m {		u-boot,dm-spl;	};
+&osc_27m {		u-boot,dm-spl;	};
+&clk_ext1 {		u-boot,dm-spl;	};
+&clk_ext2 {		u-boot,dm-spl;	};
+&clk_ext3 {		u-boot,dm-spl;	};
+&clk_ext4 {		u-boot,dm-spl;	};
 
-&usb_dwc3_1 {
-	u-boot,dm-spl;
-};
+/* console */
+&uart1 {		u-boot,dm-spl;	};
+&pinctrl_uart1 {	u-boot,dm-spl;	};
 
-&usdhc1 {
-	mmc-hs400-1_8v;
-};
+/**/
+&crypto {		u-boot,dm-spl;	};
+&sec_jr0 {		u-boot,dm-spl;	};
+&sec_jr1 {		u-boot,dm-spl;	};
+&sec_jr2 {		u-boot,dm-spl;	};
 
-&usdhc2 {
-	sd-uhs-sdr104;
-	sd-uhs-ddr50;
-};
+/**/
+&i2c1 {			u-boot,dm-spl;	};
+&pmic {			u-boot,dm-spl;	};
+&pmic_regs {		u-boot,dm-spl;	};
 
-&uart1 {
-	u-boot,dm-spl;
-};
+&usb3_phy1 {		u-boot,dm-spl;	};
+
+&usb_dwc3_1 {		u-boot,dm-spl;	};
+
+&usdhc1 {		u-boot,dm-spl;	};
+&pinctrl_emmc {		u-boot,dm-spl;	};
+
+&usdhc2 {		u-boot,dm-spl;	};
+&pinctrl_sdcard {	u-boot,dm-spl;	};
