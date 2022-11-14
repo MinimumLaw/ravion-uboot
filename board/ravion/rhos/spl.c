@@ -44,9 +44,9 @@ void board_boot_order(u32 *spl_boot_list)
 {
 	puts("Normal boot!\n");
 	spl_boot_list[0] = BOOT_DEVICE_MMC1;
-	spl_boot_list[2] = BOOT_DEVICE_BOARD;
-	spl_boot_list[1] = BOOT_DEVICE_NONE;
-	spl_boot_list[3] = BOOT_DEVICE_NONE;
+	spl_boot_list[1] = BOOT_DEVICE_MMC2;
+	spl_boot_list[2] = BOOT_DEVICE_USB;
+	spl_boot_list[3] = BOOT_DEVICE_BOARD;
 }
 
 void board_init_f(ulong dummy)
@@ -58,7 +58,11 @@ void board_init_f(ulong dummy)
 
 	arch_cpu_init();
 	timer_init();
+
 	init_usb_clk();		/* FixMe: really??? */
+	init_uart_clk(0);
+	init_clk_usdhc(0);
+	init_clk_usdhc(1);
 
 	spl_early_init();
 	preloader_console_init();
