@@ -2,10 +2,6 @@
 
 #include "imx8mq-u-boot.dtsi"
 
-/* regulators */
-&P3V3 {			u-boot,dm-spl;	};
-&VDD_SOC_0V9 {		u-boot,dm-spl;	};
-&VDD_ARM_0V9 {		u-boot,dm-spl;	};
 
 /* clock */
 &clk {			u-boot,dm-spl;	};
@@ -17,27 +13,63 @@
 &clk_ext3 {		u-boot,dm-spl;	};
 &clk_ext4 {		u-boot,dm-spl;	};
 
+/* iomux records */
+&iomuxc		{	u-boot,dm-spl;	};
+
 /* console */
 &uart1 {		u-boot,dm-spl;	};
 &pinctrl_uart1 {	u-boot,dm-spl;	};
 
-/**/
+/* Crypto & secure */
+&snvs	{		u-boot,dm-spl;	};
 &crypto {		u-boot,dm-spl;	};
 &sec_jr0 {		u-boot,dm-spl;	};
 &sec_jr1 {		u-boot,dm-spl;	};
 &sec_jr2 {		u-boot,dm-spl;	};
 
-/**/
+/* PMICs */
 &i2c1 {			u-boot,dm-spl;	};
 &pmic {			u-boot,dm-spl;	};
 &pmic_regs {		u-boot,dm-spl;	};
+#if 0
+&sw1a_reg {		u-boot,dm-spl;	};
+&sw1c_reg {		u-boot,dm-spl;	};
+&sw2_reg {		u-boot,dm-spl;	};
+&sw3a_reg {		u-boot,dm-spl;	};
+#endif
+&P1V8_SW4 {		u-boot,dm-spl;	};
+#if 0
+&swbst_reg {		u-boot,dm-spl;	};
+&snvs_reg {		u-boot,dm-spl;	};
+&vref_reg {		u-boot,dm-spl;	};
+&vgen1_reg{		u-boot,dm-spl;	};
+&vgen2_reg{		u-boot,dm-spl;	};
+&vgen3_reg{		u-boot,dm-spl;	};
+&vgen4_reg{		u-boot,dm-spl;	};
+&vgen5_reg{		u-boot,dm-spl;	};
+&vgen6_reg{		u-boot,dm-spl;	};
+#endif
 
-&usb3_phy1 {		u-boot,dm-spl;	};
+/* regulators */
+&P3V3 {			u-boot,dm-spl;	};
+&VDD_SOC_0V9 {		u-boot,dm-spl;	};
+&VDD_ARM_0V9 {		u-boot,dm-spl;	};
+
+/* powerdomain controller */
+&gpc {			u-boot,dm-spl;	};
+
+&usb_dwc3_0 {		u-boot,dm-spl;	};
+&usb3_phy0 {		u-boot,dm-spl;	};
 
 &usb_dwc3_1 {		u-boot,dm-spl;	};
+&pinctrl_otg1 {		u-boot,dm-spl;	};
+
+&usb3_phy1 {		u-boot,dm-spl;	};
+&pinctrl_otg2 {		u-boot,dm-spl;	};
 
 &usdhc1 {		u-boot,dm-spl;	};
 &pinctrl_emmc {		u-boot,dm-spl;	};
 
 &usdhc2 {		u-boot,dm-spl;	};
 &pinctrl_sdcard {	u-boot,dm-spl;	};
+
