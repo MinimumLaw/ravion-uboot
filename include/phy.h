@@ -380,6 +380,7 @@ int phy_teranetics_init(void);
 int phy_ti_init(void);
 int phy_vitesse_init(void);
 int phy_xilinx_init(void);
+int phy_xway_init(void);
 int phy_mscc_init(void);
 int phy_fixed_init(void);
 int phy_ncsi_init(void);
@@ -411,6 +412,8 @@ static inline bool phy_interface_is_sgmii(struct phy_device *phydev)
 	return phydev->interface >= PHY_INTERFACE_MODE_SGMII &&
 		phydev->interface <= PHY_INTERFACE_MODE_QSGMII;
 }
+
+bool phy_interface_is_ncsi(void);
 
 /* PHY UIDs for various PHYs that are referenced in external code */
 #define PHY_UID_CS4340		0x13e51002

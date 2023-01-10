@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-VERSION = 2022
-PATCHLEVEL = 10
+VERSION = 2023
+PATCHLEVEL = 01
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -521,8 +521,8 @@ env_h := include/generated/environment.h
 
 no-dot-config-targets := clean clobber mrproper distclean \
 			 help %docs check% coccicheck \
-			 ubootversion backup tests check qcheck tcheck pylint \
-			 pylint_err
+			 ubootversion backup tests check pcheck qcheck tcheck \
+			 pylint pylint_err
 
 config-targets := 0
 mixed-targets  := 0
@@ -643,6 +643,13 @@ export CFLAGS_EFI	# Compiler flags to add when building EFI app
 export CFLAGS_NON_EFI	# Compiler flags to remove when building EFI app
 export EFI_TARGET	# binutils target if EFI is natively supported
 
+export LTO_ENABLE
+
+# This is y if LTO is enabled for this build. See NO_LTO=1 to disable LTO
+ifeq ($(NO_LTO),)
+LTO_ENABLE=$(if $(CONFIG_LTO),y)
+endif
+
 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
 # that (or fail if absent).  Otherwise, search for a linker script in a
 # standard location.
@@ -708,16 +715,16 @@ endif
 LTO_CFLAGS :=
 LTO_FINAL_LDFLAGS :=
 export LTO_CFLAGS LTO_FINAL_LDFLAGS
-ifdef CONFIG_LTO
+ifeq ($(LTO_ENABLE),y)
 	ifeq ($(cc-name),clang)
-		LTO_CFLAGS		+= -flto
+		LTO_CFLAGS		+= -DLTO_ENABLE -flto
 		LTO_FINAL_LDFLAGS	+= -flto
 
 		AR			= $(shell $(CC) -print-prog-name=llvm-ar)
 		NM			= $(shell $(CC) -print-prog-name=llvm-nm)
 	else
 		NPROC			:= $(shell nproc 2>/dev/null || echo 1)
-		LTO_CFLAGS		+= -flto=$(NPROC)
+		LTO_CFLAGS		+= -DLTO_ENABLE -flto=$(NPROC)
 		LTO_FINAL_LDFLAGS	+= -fuse-linker-plugin -flto=$(NPROC)
 
 		# use plugin aware tools
@@ -1016,12 +1023,12 @@ LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 LDFLAGS_u-boot += $(call ld-option, --no-dynamic-linker)
 
 # ld.lld support
-LDFLAGS_u-boot += -z notext
+LDFLAGS_u-boot += -z notext $(call ld-option,--apply-dynamic-relocs)
 
 LDFLAGS_u-boot += --build-id=none
 
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
-LDFLAGS_u-boot += -Ttext $(CONFIG_SYS_TEXT_BASE)
+LDFLAGS_u-boot += -Ttext $(CONFIG_TEXT_BASE)
 endif
 
 # insure the checker run with the right endianness
@@ -1101,17 +1108,14 @@ define deprecated
 
 endef
 
-PHONY += inputs
-inputs: $(INPUTS-y)
-
-all: .binman_stamp inputs
+# Timestamp file to make sure that binman always runs
+.binman_stamp: $(INPUTS-y) FORCE
 ifeq ($(CONFIG_BINMAN),y)
 	$(call if_changed,binman)
 endif
-
-# Timestamp file to make sure that binman always runs
-.binman_stamp: FORCE
 	@touch $@
+
+all: .binman_stamp
 
 ifeq ($(CONFIG_DEPRECATED),y)
 	$(warning "You have deprecated configuration options enabled in your .config! Please check your configuration.")
@@ -1131,18 +1135,9 @@ ifneq ($(CONFIG_SPL_FIT_GENERATOR),)
 	@echo >&2 "arch-specific scripts with no tests."
 	@echo >&2 "===================================================="
 endif
-ifneq ($(CONFIG_DM),y)
-	@echo >&2 "===================== WARNING ======================"
-	@echo >&2 "This board does not use CONFIG_DM. CONFIG_DM will be"
-	@echo >&2 "compulsory starting with the v2020.01 release."
-	@echo >&2 "Failure to update may result in board removal."
-	@echo >&2 "See doc/develop/driver-model/migration.rst for more info."
-	@echo >&2 "===================================================="
-endif
 	$(call deprecated,CONFIG_WDT,DM watchdog,v2019.10,\
 		$(CONFIG_WATCHDOG)$(CONFIG_HW_WATCHDOG))
 	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C_LEGACY))
-	$(call deprecated,CONFIG_DM_KEYBOARD,Keyboard drivers,v2022.10,$(CONFIG_KEYBOARD))
 	@# CONFIG_SYS_TIMER_RATE has brackets in it for some boards which
 	@# confuses this rule. Use if() to send just a single character which
 	@# is enable to tell 'deprecated' that one of these symbols exists
@@ -1313,7 +1308,7 @@ shell_cmd = { $(call echo-cmd,$(1)) $(cmd_$(1)); }
 
 quiet_cmd_objcopy_uboot = OBJCOPY $@
 ifdef cmd_static_rela
-cmd_objcopy_uboot = $(cmd_objcopy) && $(call shell_cmd,static_rela,$<,$@,$(CONFIG_SYS_TEXT_BASE)) || { rm -f $@; false; }
+cmd_objcopy_uboot = $(cmd_objcopy) && $(call shell_cmd,static_rela,$<,$@,$(CONFIG_TEXT_BASE)) || { rm -f $@; false; }
 else
 cmd_objcopy_uboot = $(cmd_objcopy)
 endif
@@ -1338,8 +1333,8 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
 		$(foreach f,$(BINMAN_TOOLPATHS),--toolpath $(f)) \
                 --toolpath $(objtree)/tools \
 		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
-		build -u -d u-boot.dtb -O . -m --allow-missing \
-		--fake-ext-blobs \
+		build -u -d u-boot.dtb -O . -m \
+		$(if $(BINMAN_ALLOW_MISSING),--allow-missing --ignore-missing) \
 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
 		-I arch/$(ARCH)/dts -a of-list=$(CONFIG_OF_LIST) \
 		$(foreach f,$(BINMAN_INDIRS),-I $(f)) \
@@ -1367,7 +1362,7 @@ u-boot.ldr.hex u-boot.ldr.srec: u-boot.ldr FORCE
 # from the SPL U-Boot version.
 #
 ifndef CONFIG_SYS_UBOOT_START
-CONFIG_SYS_UBOOT_START := $(CONFIG_SYS_TEXT_BASE)
+CONFIG_SYS_UBOOT_START := $(CONFIG_TEXT_BASE)
 endif
 
 # Boards with more complex image requirements can provide an .its source file
@@ -1392,7 +1387,7 @@ endif
 
 ifdef CONFIG_SPL_LOAD_FIT
 MKIMAGEFLAGS_u-boot.img = -f auto -A $(ARCH) -T firmware -C none -O u-boot \
-	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-a $(CONFIG_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
 	-p $(CONFIG_FIT_EXTERNAL_OFFSET) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board" -E \
 	$(patsubst %,-b arch/$(ARCH)/dts/%.dtb,$(subst ",,$(DEVICE_TREE))) \
@@ -1400,10 +1395,10 @@ MKIMAGEFLAGS_u-boot.img = -f auto -A $(ARCH) -T firmware -C none -O u-boot \
 	$(patsubst %,-b arch/$(ARCH)/dts/%.dtbo,$(subst ",,$(CONFIG_OF_OVERLAY_LIST)))
 else
 MKIMAGEFLAGS_u-boot.img = -A $(ARCH) -T firmware -C none -O u-boot \
-	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-a $(CONFIG_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
 MKIMAGEFLAGS_u-boot-ivt.img = -A $(ARCH) -T firmware_ivt -C none -O u-boot \
-	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-a $(CONFIG_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
 u-boot-ivt.img: MKIMAGEOUTPUT = u-boot-ivt.img.log
 endif
@@ -1422,10 +1417,10 @@ KWD_CONFIG_FILE = $(shell \
 	fi)
 
 MKIMAGEFLAGS_u-boot.kwb = -n $(KWD_CONFIG_FILE) \
-	-T kwbimage -a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_TEXT_BASE)
+	-T kwbimage -a $(CONFIG_TEXT_BASE) -e $(CONFIG_TEXT_BASE)
 
-MKIMAGEFLAGS_u-boot-spl.kwb = -n $(KWD_CONFIG_FILE) \
-	-T kwbimage -a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_TEXT_BASE) \
+MKIMAGEFLAGS_u-boot-with-spl.kwb = -n $(KWD_CONFIG_FILE) \
+	-T kwbimage -a $(CONFIG_TEXT_BASE) -e $(CONFIG_TEXT_BASE) \
 	$(if $(KEYDIR),-k $(KEYDIR))
 
 MKIMAGEFLAGS_u-boot.pbl = -n $(srctree)/$(CONFIG_SYS_FSL_PBL_RCW:"%"=%) \
@@ -1434,7 +1429,7 @@ MKIMAGEFLAGS_u-boot.pbl = -n $(srctree)/$(CONFIG_SYS_FSL_PBL_RCW:"%"=%) \
 UBOOT_BIN := u-boot.bin
 
 MKIMAGEFLAGS_u-boot-lzma.img = -A $(ARCH) -T standalone -C lzma -O u-boot \
-	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-a $(CONFIG_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
 	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
 
 u-boot.bin.lzma: u-boot.bin FORCE
@@ -1465,8 +1460,9 @@ u-boot.itb: u-boot-nodtb.bin \
 	$(BOARD_SIZE_CHECK)
 endif
 
-u-boot-spl.kwb: u-boot.bin spl/u-boot-spl.bin FORCE
+u-boot-with-spl.kwb: u-boot.bin spl/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
+	$(BOARD_SIZE_CHECK)
 
 u-boot.sha1:	u-boot.bin
 		tools/ubsha1 u-boot.bin
@@ -1517,7 +1513,7 @@ tpl/u-boot-with-tpl.bin: tpl/u-boot-tpl.bin u-boot.bin FORCE
 SPL: spl/u-boot-spl.bin FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 
-ifeq ($(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8), y)
+#ifeq ($(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8), y)
 ifeq ($(CONFIG_SPL_LOAD_IMX_CONTAINER), y)
 u-boot.cnt: u-boot.bin FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
@@ -1533,7 +1529,7 @@ flash.bin: spl/u-boot-spl.bin u-boot.itb FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 endif
 endif
-endif
+#endif
 
 u-boot.uim: u-boot.bin FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
@@ -1541,7 +1537,7 @@ u-boot.uim: u-boot.bin FORCE
 u-boot-with-spl.imx u-boot-with-nand-spl.imx: SPL $(if $(CONFIG_OF_SEPARATE),u-boot.img,u-boot.uim) FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 
-MKIMAGEFLAGS_u-boot.ubl = -n $(UBL_CONFIG) -T ublimage -e $(CONFIG_SYS_TEXT_BASE)
+MKIMAGEFLAGS_u-boot.ubl = -n $(UBL_CONFIG) -T ublimage -e $(CONFIG_TEXT_BASE)
 
 u-boot.ubl: u-boot-with-spl.bin FORCE
 	$(call if_changed,mkimage)
@@ -1685,8 +1681,8 @@ u-boot-img-spl-at-end.bin: u-boot.img spl/u-boot-spl.bin FORCE
 quiet_cmd_u-boot-elf ?= LD      $@
 	cmd_u-boot-elf ?= $(LD) u-boot-elf.o -o $@ \
 	$(if $(CONFIG_SYS_BIG_ENDIAN),-EB,-EL) \
-	-T u-boot-elf.lds --defsym=$(CONFIG_PLATFORM_ELFENTRY)=$(CONFIG_SYS_TEXT_BASE) \
-	-Ttext=$(CONFIG_SYS_TEXT_BASE)
+	-T u-boot-elf.lds --defsym=$(CONFIG_PLATFORM_ELFENTRY)=$(CONFIG_TEXT_BASE) \
+	-Ttext=$(CONFIG_TEXT_BASE)
 u-boot.elf: u-boot.bin u-boot-elf.lds
 	$(Q)$(OBJCOPY) -I binary $(PLATFORM_ELFFLAGS) $< u-boot-elf.o
 	$(call if_changed,u-boot-elf)
@@ -1707,7 +1703,7 @@ u-boot-mtk.bin: u-boot-with-spl.bin
 	$(call if_changed,copy)
 else
 MKIMAGEFLAGS_u-boot-mtk.bin = -T mtk_image \
-	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_TEXT_BASE) \
+	-a $(CONFIG_TEXT_BASE) -e $(CONFIG_TEXT_BASE) \
 	-n "$(patsubst "%",%,$(CONFIG_MTK_BROM_HEADER_INFO))"
 
 u-boot-mtk.bin: u-boot.bin FORCE
@@ -1724,7 +1720,7 @@ ARCH_POSTLINK := $(wildcard $(srctree)/arch/$(ARCH)/Makefile.postlink)
 
 # Generate linker list symbols references to force compiler to not optimize
 # them away when compiling with LTO
-ifdef CONFIG_LTO
+ifeq ($(LTO_ENABLE),y)
 u-boot-keep-syms-lto := keep-syms-lto.o
 u-boot-keep-syms-lto_c := $(patsubst %.o,%.c,$(u-boot-keep-syms-lto))
 
@@ -1746,7 +1742,7 @@ endif
 
 # Rule to link u-boot
 # May be overridden by arch/$(ARCH)/config.mk
-ifdef CONFIG_LTO
+ifeq ($(LTO_ENABLE),y)
 quiet_cmd_u-boot__ ?= LTO     $@
       cmd_u-boot__ ?=								\
 		$(CC) -nostdlib -nostartfiles					\
@@ -2318,6 +2314,7 @@ help:
 	@echo  'Test targets:'
 	@echo  ''
 	@echo  '  check           - Run all automated tests that use sandbox'
+	@echo  '  pcheck          - Run quick automated tests in parallel'
 	@echo  '  qcheck          - Run quick automated tests that use sandbox'
 	@echo  '  tcheck          - Run quick automated tests on tools'
 	@echo  '  pylint          - Run pylint on all Python files'
@@ -2363,6 +2360,9 @@ help:
 tests check:
 	$(srctree)/test/run
 
+pcheck:
+	$(srctree)/test/run parallel
+
 qcheck:
 	$(srctree)/test/run quick
 
@@ -2372,7 +2372,7 @@ tcheck:
 # Documentation targets
 # ---------------------------------------------------------------------------
 DOC_TARGETS := xmldocs latexdocs pdfdocs htmldocs epubdocs cleandocs \
-	       linkcheckdocs dochelp refcheckdocs
+	       linkcheckdocs dochelp refcheckdocs texinfodocs infodocs
 PHONY += $(DOC_TARGETS)
 $(DOC_TARGETS): scripts_basic FORCE
 	$(Q)$(MAKE) $(build)=doc $@

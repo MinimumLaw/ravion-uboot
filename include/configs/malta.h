@@ -13,13 +13,9 @@
 
 #define CONFIG_MEMSIZE_IN_BYTES
 
-#define CONFIG_SYS_ISA_IO_BASE_ADDRESS	0
-
 /*
  * CPU Configuration
  */
-#define CONFIG_SYS_MHZ			250	/* arbitrary value */
-#define CONFIG_SYS_MIPS_TIMER_FREQ	(CONFIG_SYS_MHZ * 1000000)
 
 /*
  * Memory map

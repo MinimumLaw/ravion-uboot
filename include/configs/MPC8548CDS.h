@@ -229,13 +229,10 @@
 #define CADMUS_BASE_ADDR_PHYS	CADMUS_BASE_ADDR
 #endif
 
-#define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xe4010000	/* Initial RAM address */
 #define CONFIG_SYS_INIT_RAM_SIZE	0x4000		/* Size of used area in RAM */
 
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-
-#define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 
 /* Serial Port */
 #define CONFIG_SYS_NS16550_SERIAL
@@ -254,9 +251,6 @@
 #if !CONFIG_IS_ENABLED(DM_I2C)
 #define CONFIG_SYS_I2C_NOPROBES		{ {0, 0x69} }
 #endif
-
-/* EEPROM */
-#define CONFIG_SYS_I2C_EEPROM_CCID
 
 /*
  * General PCI
@@ -334,13 +328,6 @@
 #endif	/* CONFIG_TSEC_ENET */
 
 /*
- * Environment
- */
-
-#define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
-#define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change */
-
-/*
  * Miscellaneous configurable options
  */
 
@@ -370,15 +357,15 @@
 	"netdev=eth0\0"				\
 	"uboot=" __stringify(CONFIG_UBOOTPATH) "\0"	\
 	"tftpflash=tftpboot $loadaddr $uboot; "	\
-		"protect off " __stringify(CONFIG_SYS_TEXT_BASE)	\
+		"protect off " __stringify(CONFIG_TEXT_BASE)	\
 			" +$filesize; "	\
-		"erase " __stringify(CONFIG_SYS_TEXT_BASE)		\
+		"erase " __stringify(CONFIG_TEXT_BASE)		\
 			" +$filesize; "	\
-		"cp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+		"cp.b $loadaddr " __stringify(CONFIG_TEXT_BASE)	\
 			" $filesize; "	\
-		"protect on " __stringify(CONFIG_SYS_TEXT_BASE)		\
+		"protect on " __stringify(CONFIG_TEXT_BASE)		\
 			" +$filesize; "	\
-		"cmp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
+		"cmp.b $loadaddr " __stringify(CONFIG_TEXT_BASE)	\
 			" $filesize\0"	\
 	"consoledev=ttyS1\0"			\
 	"ramdiskaddr=2000000\0"			\

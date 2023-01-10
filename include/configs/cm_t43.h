@@ -36,7 +36,6 @@
 #define CONFIG_POWER_TPS65218
 
 /* Enabling L2 Cache */
-#define CONFIG_SYS_L2_PL310
 #define CONFIG_SYS_PL310_BASE		0x48242000
 
 /*
@@ -47,7 +46,6 @@
 #define CONFIG_HSMMC2_8BIT
 
 #include <configs/ti_armv7_omap.h>
-#undef CONFIG_SYS_MONITOR_LEN
 
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
@@ -75,7 +73,6 @@
 		"bootz ${loadaddr} - ${fdtaddr}\0"
 
 /* SPL defines. */
-#define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 
 /* EEPROM */
 

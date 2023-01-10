@@ -11,7 +11,6 @@
 
 /* Cache options */
 #ifndef CONFIG_SYS_L2CACHE_OFF
-# define CONFIG_SYS_L2_PL310
 # define CONFIG_SYS_PL310_BASE		0xf8f02000
 #endif
 
@@ -39,10 +38,6 @@
 /* NOR */
 #ifdef CONFIG_MTD_NOR_FLASH
 # define CONFIG_FLASH_SHOW_PROGRESS	10
-#endif
-
-#ifdef CONFIG_NAND_ZYNQ
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #endif
 
 #ifdef CONFIG_USB_EHCI_ZYNQ
@@ -199,9 +194,6 @@
 
 
 /* Extend size of kernel image for uncompression */
-
-/* Boot FreeBSD/vxWorks from an ELF image */
-#define CONFIG_SYS_MMC_MAX_DEVICE	1
 
 /* Address in RAM where the parameters must be copied by SPL. */
 

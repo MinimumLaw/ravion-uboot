@@ -92,7 +92,7 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 	int off;
 	int val;
 	const char *sysclk_path;
-	struct ccsr_gur __iomem *gur = (void *)(CONFIG_SYS_FSL_GUTS_ADDR);
+	struct ccsr_gur __iomem *gur = (void *)(CFG_SYS_FSL_GUTS_ADDR);
 	unsigned int svr;
 	svr = in_be32(&gur->svr);
 
@@ -105,7 +105,7 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 	else {
 		ccsr_sec_t __iomem *sec;
 
-		sec = (void __iomem *)CONFIG_SYS_FSL_SEC_ADDR;
+		sec = (void __iomem *)CFG_SYS_FSL_SEC_ADDR;
 		fdt_fixup_crypto_node(blob, sec_in32(&sec->secvid_ms));
 	}
 #endif
@@ -146,9 +146,9 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 	 * Since second uboot binary has a head, that space need to be
 	 * reserved either(assuming its size is less than 0x1000).
 	 */
-	off = fdt_add_mem_rsv(blob, CONFIG_SYS_TEXT_BASE - UBOOT_HEAD_LEN,
-			CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_SPL_MALLOC_SIZE +
-			UBOOT_HEAD_LEN);
+	off = fdt_add_mem_rsv(blob, CONFIG_TEXT_BASE - UBOOT_HEAD_LEN,
+			      CONFIG_SYS_MONITOR_LEN +
+			      CONFIG_SYS_SPL_MALLOC_SIZE + UBOOT_HEAD_LEN);
 	if (off < 0)
 		printf("Failed to reserve memory for SD boot deep sleep: %s\n",
 		       fdt_strerror(off));

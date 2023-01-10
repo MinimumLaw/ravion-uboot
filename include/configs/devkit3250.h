@@ -36,7 +36,6 @@
  * NAND controller
  */
 #define CONFIG_SYS_NAND_BASE		SLC_NAND_BASE
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
 
 /*
@@ -79,14 +78,13 @@
  * U-Boot Commands
  */
 
-/* U-Boot will be 0x60000 bytes, loaded and run at CONFIG_SYS_TEXT_BASE */
+/* U-Boot will be 0x60000 bytes, loaded and run at CONFIG_TEXT_BASE */
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	0x60000
 
-#define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_TEXT_BASE
 
 /* See common/spl/spl.c  spl_set_header_raw_uboot() */
-#define CONFIG_SYS_MONITOR_LEN		CONFIG_SYS_NAND_U_BOOT_SIZE
 
 /*
  * Include SoC specific configuration

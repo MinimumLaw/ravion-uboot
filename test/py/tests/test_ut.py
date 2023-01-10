@@ -7,6 +7,7 @@ import os.path
 import pytest
 
 import u_boot_utils
+from tests import fs_helper
 
 def mkdir_cond(dirname):
     """Create a directory if it doesn't already exist
@@ -113,6 +114,20 @@ def test_ut_dm_init(u_boot_console):
         data = b'\x00' * (2 * 1024 * 1024)
         with open(fn, 'wb') as fh:
             fh.write(data)
+
+    # Create a file with a single partition
+    fn = u_boot_console.config.source_dir + '/scsi.img'
+    if not os.path.exists(fn):
+        data = b'\x00' * (2 * 1024 * 1024)
+        with open(fn, 'wb') as fh:
+            fh.write(data)
+        u_boot_utils.run_and_log(
+            u_boot_console, f'sfdisk {fn}', stdin=b'type=83')
+
+    fs_helper.mk_fs(u_boot_console.config, 'ext2', 0x200000, '2MB',
+                    use_src_dir=True)
+    fs_helper.mk_fs(u_boot_console.config, 'fat32', 0x100000, '1MB',
+                    use_src_dir=True)
 
 @pytest.mark.buildconfigspec('cmd_bootflow')
 def test_ut_dm_init_bootstd(u_boot_console):

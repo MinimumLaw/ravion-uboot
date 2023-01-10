@@ -27,8 +27,8 @@
 /* Miscellaneous configurable options */
 
 /* MMC Configs */
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
-#define CONFIG_SYS_FSL_USDHC_NUM	3
+#define CFG_SYS_FSL_ESDHC_ADDR	0
+#define CFG_SYS_FSL_USDHC_NUM	3
 
 /* UART */
 #define CONFIG_MXC_UART_BASE		UART1_BASE
@@ -60,8 +60,7 @@
 	"fdtfile=imx6q-dhcom-pdk2.dtb\0"\
 	"update_sf=" /* Erase SPI NOR and install U-Boot from SD */	\
 		"load mmc 0:1 ${loadaddr} /boot/u-boot-with-spl.imx && "\
-		"sf probe && sf erase 0x0 0x100000 && "			\
-		"sf write ${loadaddr} 0x400 ${filesize}\0"		\
+		"sf probe && sf update ${loadaddr} 0x400 ${filesize}\0"	\
 	BOOTENV
 
 #define BOOT_TARGET_DEVICES(func) \

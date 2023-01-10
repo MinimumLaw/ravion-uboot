@@ -340,7 +340,7 @@ class TestFunctional(unittest.TestCase):
                     use_expanded=False, verbosity=None, allow_missing=False,
                     allow_fake_blobs=False, extra_indirs=None, threads=None,
                     test_section_timeout=False, update_fdt_in_elf=None,
-                    force_missing_bintools=''):
+                    force_missing_bintools='', ignore_missing=False):
         """Run binman with a given test file
 
         Args:
@@ -403,6 +403,8 @@ class TestFunctional(unittest.TestCase):
                 args.append('-a%s=%s' % (arg, value))
         if allow_missing:
             args.append('-M')
+            if ignore_missing:
+                args.append('-W')
         if allow_fake_blobs:
             args.append('--fake-ext-blobs')
         if force_missing_bintools:
@@ -3725,9 +3727,22 @@ class TestFunctional(unittest.TestCase):
     def testExtblobMissingOk(self):
         """Test an image with an missing external blob that is allowed"""
         with test_util.capture_sys_output() as (stdout, stderr):
-            self._DoTestFile('158_blob_ext_missing.dts', allow_missing=True)
+            ret = self._DoTestFile('158_blob_ext_missing.dts',
+                                   allow_missing=True)
+        self.assertEqual(103, ret)
         err = stderr.getvalue()
         self.assertRegex(err, "Image 'main-section'.*missing.*: blob-ext")
+        self.assertIn('Some images are invalid', err)
+
+    def testExtblobMissingOkFlag(self):
+        """Test an image with an missing external blob allowed with -W"""
+        with test_util.capture_sys_output() as (stdout, stderr):
+            ret = self._DoTestFile('158_blob_ext_missing.dts',
+                                   allow_missing=True, ignore_missing=True)
+        self.assertEqual(0, ret)
+        err = stderr.getvalue()
+        self.assertRegex(err, "Image 'main-section'.*missing.*: blob-ext")
+        self.assertIn('Some images are invalid', err)
 
     def testExtblobMissingOkSect(self):
         """Test an image with an missing external blob that is allowed"""
@@ -5782,7 +5797,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         # Check that the data appears in the file somewhere
         self.assertIn(U_BOOT_SPL_DATA, data)
 
-        # Get struct image_header -> ih_name
+        # Get struct legacy_img_hdr -> ih_name
         name = data[0x20:0x40]
 
         # Build the filename that we expect to be placed in there, by virtue of
@@ -5799,7 +5814,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         # Check that the data appears in the file somewhere
         self.assertIn(U_BOOT_SPL_DATA, data)
 
-        # Get struct image_header -> ih_name
+        # Get struct legacy_img_hdr -> ih_name
         name = data[0x20:0x40]
 
         # Build the filename that we expect to be placed in there, by virtue of
@@ -5995,6 +6010,72 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         self.assertIn('Expected __bss_size symbol in vpl/u-boot-vpl',
                       str(e.exception))
 
+    def testSymlink(self):
+        """Test that image files can be named"""
+        retcode = self._DoTestFile('259_symlink.dts', debug=True, map=True)
+        self.assertEqual(0, retcode)
+        image = control.images['test_image']
+        fname = tools.get_output_filename('test_image.bin')
+        sname = tools.get_output_filename('symlink_to_test.bin')
+        self.assertTrue(os.path.islink(sname))
+        self.assertEqual(os.readlink(sname), fname)
+
+    def testSymbolsElf(self):
+        """Test binman can assign symbols embedded in an ELF file"""
+        if not elf.ELF_TOOLS:
+            self.skipTest('Python elftools not available')
+        self._SetupTplElf('u_boot_binman_syms')
+        self._SetupVplElf('u_boot_binman_syms')
+        self._SetupSplElf('u_boot_binman_syms')
+        data = self._DoReadFileDtb('260_symbols_elf.dts')[0]
+        image_fname = tools.get_output_filename('image.bin')
+
+        image = control.images['image']
+        entries = image.GetEntries()
+
+        for entry in entries.values():
+            # No symbols in u-boot and it has faked contents anyway
+            if entry.name == 'u-boot':
+                continue
+            edata = data[entry.image_pos:entry.image_pos + entry.size]
+            efname = tools.get_output_filename(f'edata-{entry.name}')
+            tools.write_file(efname, edata)
+
+            syms = elf.GetSymbolFileOffset(efname, ['_binman_u_boot'])
+            re_name = re.compile('_binman_(u_boot_(.*))_prop_(.*)')
+            for name, sym in syms.items():
+                msg = 'test'
+                val = elf.GetSymbolValue(sym, edata, msg)
+                entry_m = re_name.match(name)
+                if entry_m:
+                    ename, prop = entry_m.group(1), entry_m.group(3)
+                entry, entry_name, prop_name = image.LookupEntry(entries,
+                                                                 name, msg)
+                if prop_name == 'offset':
+                    expect_val = entry.offset
+                elif prop_name == 'image_pos':
+                    expect_val = entry.image_pos
+                elif prop_name == 'size':
+                    expect_val = entry.size
+                self.assertEqual(expect_val, val)
+
+    def testSymbolsElfBad(self):
+        """Check error when trying to write symbols without the elftools lib"""
+        if not elf.ELF_TOOLS:
+            self.skipTest('Python elftools not available')
+        self._SetupTplElf('u_boot_binman_syms')
+        self._SetupVplElf('u_boot_binman_syms')
+        self._SetupSplElf('u_boot_binman_syms')
+        try:
+            elf.ELF_TOOLS = False
+            with self.assertRaises(ValueError) as exc:
+                self._DoReadFileDtb('260_symbols_elf.dts')
+        finally:
+            elf.ELF_TOOLS = True
+        self.assertIn(
+            "Section '/binman': entry '/binman/u-boot-spl-elf': "
+            'Cannot write symbols to an ELF file without Python elftools',
+            str(exc.exception))
 
 if __name__ == "__main__":
     unittest.main()

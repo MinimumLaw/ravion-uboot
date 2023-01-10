@@ -30,7 +30,7 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 #define USABLE_RAM_SIZE		0x80000000ULL
 
-ulong board_get_usable_ram_top(ulong total_size)
+phys_size_t board_get_usable_ram_top(phys_size_t total_size)
 {
 	unsigned long top = CONFIG_SYS_SDRAM_BASE + min(gd->ram_size, USABLE_RAM_SIZE);
 
@@ -53,6 +53,8 @@ __weak int dram_init_banksize(void)
 		return a8k_dram_init_banksize();
 	else if (CONFIG_IS_ENABLED(ARMADA_3700))
 		return a3700_dram_init_banksize();
+	else if (CONFIG_IS_ENABLED(ALLEYCAT_5))
+		return alleycat5_dram_init_banksize();
 	else
 		return fdtdec_setup_memory_banksize();
 }
@@ -67,6 +69,9 @@ __weak int dram_init(void)
 
 	if (CONFIG_IS_ENABLED(ARMADA_3700))
 		return a3700_dram_init();
+
+	if (CONFIG_IS_ENABLED(ALLEYCAT_5))
+		return alleycat5_dram_init();
 
 	if (fdtdec_setup_mem_size_base() != 0)
 		return -EINVAL;

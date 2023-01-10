@@ -36,7 +36,7 @@
  * CONFIG_SYS_FLASH_BASE has the final address (core view)
  * CONFIG_SYS_FLASH_BASE_PHYS has the final address (IFC view)
  * CONFIG_SYS_FLASH_BASE_PHYS_EARLY has the temporary IFC address
- * CONFIG_SYS_TEXT_BASE is linked to 0x60000000 for booting
+ * CONFIG_TEXT_BASE is linked to 0x60000000 for booting
  */
 #define CONFIG_SYS_FLASH_BASE			0x60000000
 #define CONFIG_SYS_FLASH_BASE_PHYS		CONFIG_SYS_FLASH_BASE
@@ -53,10 +53,6 @@
 #define CFG_UART_MUX_SHIFT	1
 #define CFG_LPUART_EN		0x2
 #endif
-
-/* EEPROM */
-#define CONFIG_SYS_I2C_EEPROM_NXID
-#define CONFIG_SYS_EEPROM_BUS_NUM		0
 
 /*
  * IFC Definitions
@@ -131,7 +127,6 @@
 #define CONFIG_SYS_NAND_FTIM3           0x0
 
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
 #endif
 

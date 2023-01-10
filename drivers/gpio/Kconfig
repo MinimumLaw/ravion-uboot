@@ -110,9 +110,8 @@ config BCM2835_GPIO
 
 config BCM6345_GPIO
 	bool "BCM6345 GPIO driver"
-	depends on DM_GPIO && (ARCH_BMIPS || ARCH_BCM68360 || \
-			       ARCH_BCM6858 || ARCH_BCM63158 || \
-			       ARCH_BCM6753)
+	depends on DM_GPIO && (ARCH_BMIPS || BCM6856 || \
+			       BCM6858 || BCM63158 || BCM6855)
 	help
 	  This driver supports the GPIO banks on BCM6345 SoCs.
 
@@ -303,14 +302,14 @@ config CMD_PCA953X
 	  legacy GPIO interface. Several subcommands are provided which mirror
 	  the standard 'gpio' command. It should use that instead.
 
-config PM8916_GPIO
-	bool "Qualcomm PM8916 PMIC GPIO/keypad driver"
-	depends on DM_GPIO && PMIC_PM8916
+config QCOM_PMIC_GPIO
+	bool "Qualcomm generic PMIC GPIO/keypad driver"
+	depends on DM_GPIO && PMIC_QCOM
 	help
 	  Support for GPIO pins and power/reset buttons found on
-	  Qualcomm PM8916 PMIC.
+	  Qualcomm SoCs PMIC.
 	  Default name for GPIO bank is "pm8916".
-	  Power and reset buttons are placed in "pm8916_key" bank and
+	  Power and reset buttons are placed in "pwkey_qcom" bank and
           have gpio numbers 0 and 1 respectively.
 
 config PCF8575_GPIO
@@ -604,5 +603,17 @@ config TURRIS_OMNIA_MCU
 	default y if TARGET_TURRIS_OMNIA
 	help
 	   Support for GPIOs on MCU connected to Turris Omnia via i2c.
+
+config FTGPIO010
+	bool "Faraday Technology FTGPIO010 driver"
+	depends on DM_GPIO
+	help
+	   Support for GPIOs on Faraday Technology's FTGPIO010 controller.
+
+config ADP5585_GPIO
+	bool "ADP5585 GPIO driver"
+	depends on DM_GPIO && DM_I2C
+	help
+	  Support ADP5585 GPIO expander.
 
 endif

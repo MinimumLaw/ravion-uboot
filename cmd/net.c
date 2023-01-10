@@ -14,8 +14,10 @@
 #include <env.h>
 #include <image.h>
 #include <net.h>
+#include <net6.h>
 #include <net/udp.h>
 #include <net/sntp.h>
+#include <net/ncsi.h>
 
 static int netboot_common(enum proto_t, struct cmd_tbl *, int, char * const []);
 
@@ -44,11 +46,21 @@ int do_tftpb(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_IPV6)
+U_BOOT_CMD(
+	tftpboot,	4,	1,	do_tftpb,
+	"boot image via network using TFTP protocol\n"
+	"To use IPv6 add -ipv6 parameter or use IPv6 hostIPaddr framed "
+	"with [] brackets",
+	"[loadAddress] [[hostIPaddr:]bootfilename] [" USE_IP6_CMD_PARAM "]"
+);
+#else
 U_BOOT_CMD(
 	tftpboot,	3,	1,	do_tftpb,
 	"load file via network using TFTP protocol",
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
 );
+#endif
 #endif
 
 #ifdef CONFIG_CMD_TFTPPUT
@@ -121,6 +133,19 @@ U_BOOT_CMD(
 	nfs,	3,	1,	do_nfs,
 	"boot image via network using NFS protocol",
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
+);
+#endif
+
+#if defined(CONFIG_CMD_WGET)
+static int do_wget(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
+{
+	return netboot_common(WGET, cmdtp, argc, argv);
+}
+
+U_BOOT_CMD(
+	wget,   3,      1,      do_wget,
+	"boot image via network using HTTP protocol",
+	"[loadAddress] [[hostIPaddr:]path and image name]"
 );
 #endif
 
@@ -292,12 +317,36 @@ static int netboot_common(enum proto_t proto, struct cmd_tbl *cmdtp, int argc,
 	if (s != NULL)
 		image_load_addr = hextoul(s, NULL);
 
+	if (IS_ENABLED(CONFIG_IPV6)) {
+		use_ip6 = false;
+
+		/* IPv6 parameter has to be always *last* */
+		if (!strcmp(argv[argc - 1], USE_IP6_CMD_PARAM)) {
+			use_ip6 = true;
+			/* It is a hack not to break switch/case code */
+			--argc;
+		}
+	}
+
 	if (parse_args(proto, argc, argv)) {
 		bootstage_error(BOOTSTAGE_ID_NET_START);
 		return CMD_RET_USAGE;
 	}
 
 	bootstage_mark(BOOTSTAGE_ID_NET_START);
+
+	if (IS_ENABLED(CONFIG_IPV6) && !use_ip6) {
+		char *s, *e;
+		size_t len;
+
+		s = strchr(net_boot_file_name, '[');
+		e = strchr(net_boot_file_name, ']');
+		if (s && e) {
+			len = e - s;
+			if (!string_to_ip6(s + 1, len - 1, &net_server_ip6))
+				use_ip6 = true;
+		}
+	}
 
 	size = net_loop(proto);
 	if (size < 0) {
@@ -353,6 +402,32 @@ U_BOOT_CMD(
 	"pingAddress"
 );
 #endif
+
+#if IS_ENABLED(CONFIG_CMD_PING6)
+int do_ping6(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (string_to_ip6(argv[1], strlen(argv[1]), &net_ping_ip6))
+		return CMD_RET_USAGE;
+
+	use_ip6 = true;
+	if (net_loop(PING6) < 0) {
+		use_ip6 = false;
+		printf("ping6 failed; host %pI6c is not alive\n",
+		       &net_ping_ip6);
+		return 1;
+	}
+
+	use_ip6 = false;
+	printf("host %pI6c is alive\n", &net_ping_ip6);
+	return 0;
+}
+
+U_BOOT_CMD(
+	ping6,  2,      1,      do_ping6,
+	"send ICMPv6 ECHO_REQUEST to network host",
+	"pingAddress"
+);
+#endif /* CONFIG_CMD_PING6 */
 
 #if defined(CONFIG_CMD_CDP)
 
@@ -566,3 +641,24 @@ U_BOOT_CMD(
 	"list - list available devices\n"
 );
 #endif // CONFIG_DM_ETH
+
+#if defined(CONFIG_CMD_NCSI)
+static int do_ncsi(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (!phy_interface_is_ncsi() || !ncsi_active()) {
+		printf("Device not configured for NC-SI\n");
+		return CMD_RET_FAILURE;
+	}
+
+	if (net_loop(NCSI) < 0)
+		return CMD_RET_FAILURE;
+
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(
+	ncsi,	1,	1,	do_ncsi,
+	"Configure attached NIC via NC-SI",
+	""
+);
+#endif  /* CONFIG_CMD_NCSI */

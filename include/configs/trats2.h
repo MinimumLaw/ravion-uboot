@@ -13,7 +13,6 @@
 #include <configs/exynos4-common.h>
 
 #ifndef CONFIG_SYS_L2CACHE_OFF
-#define CONFIG_SYS_L2_PL310
 #define CONFIG_SYS_PL310_BASE	0x10502000
 #endif
 
@@ -119,9 +118,6 @@
 /* Common misc for Samsung */
 #define CONFIG_MISC_COMMON
 
-/* Download menu - Samsung common */
-#define CONFIG_LCD_MENU
-
 /* Download menu - definitions for check keys */
 #ifndef __ASSEMBLY__
 
@@ -134,11 +130,5 @@
 #define KEY_VOL_UP_GPIO			EXYNOS4X12_GPIO_X22
 #define KEY_VOL_DOWN_GPIO		EXYNOS4X12_GPIO_X33
 #endif /* __ASSEMBLY__ */
-
-/* LCD console */
-#define LCD_BPP                 LCD_COLOR16
-
-/* LCD */
-#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE ((500 * 160 * 4) + 54)
 
 #endif	/* __CONFIG_H */

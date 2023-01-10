@@ -14,18 +14,12 @@
 #define CONFIG_SYS_AT91_SLOW_CLOCK      32768
 #define CONFIG_SYS_AT91_MAIN_CLOCK      12000000 /* from 12 MHz crystal */
 
-/* general purpose I/O */
-
-/* LCD */
-#define LCD_BPP				LCD_COLOR8
-
 /* SDRAM */
 #define CONFIG_SYS_SDRAM_BASE           0x70000000
 #define CONFIG_SYS_SDRAM_SIZE		0x08000000
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_SYS_MAX_NAND_DEVICE		1
 #define CONFIG_SYS_NAND_BASE			ATMEL_BASE_CS3
 #define CONFIG_SYS_NAND_DBW_8
 /* our ALE is AD21 */
@@ -36,8 +30,6 @@
 #define CONFIG_SYS_NAND_READY_PIN		AT91_PIN_PC8
 
 #endif
-
-#define CONFIG_SYS_MONITOR_LEN		0x80000
 
 #ifdef CONFIG_SD_BOOT
 #elif CONFIG_NAND_BOOT

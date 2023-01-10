@@ -21,18 +21,16 @@
  */
 #define CONFIG_SYS_BOOTMAPSZ		SZ_256M
 
-/* Extend size of kernel image for uncompression */
-
-/*MMC SD*/
-#define CONFIG_SYS_MMC_MAX_DEVICE	3
-
 /* NAND support */
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 
 /* Ethernet need */
 #ifdef CONFIG_DWC_ETH_QOS
 #define CONFIG_SERVERIP                 192.168.1.1
 #endif
+
+#define STM32MP_FIP_IMAGE_GUID \
+	EFI_GUID(0x19d5df83, 0x11b0, 0x457b, 0xbe, 0x2c, \
+		 0x75, 0x59, 0xc1, 0x31, 0x42, 0xa5)
 
 /*****************************************************************************/
 #ifdef CONFIG_DISTRO_DEFAULTS

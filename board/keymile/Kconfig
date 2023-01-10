@@ -11,6 +11,9 @@ if VENDOR_KM
 
 menu "KM Board Setup"
 
+config SYS_I2C_INIT_BOARD
+	def_bool y if ARM
+
 config HUSH_INIT_VAR
 	def_bool y
 
@@ -167,7 +170,6 @@ config PG_WCOM_UBOOT_UPDATE
 
 source "board/keymile/km83xx/Kconfig"
 source "board/keymile/kmcent2/Kconfig"
-source "board/keymile/km_arm/Kconfig"
 source "board/keymile/pg-wcom-ls102xa/Kconfig"
 
 endmenu

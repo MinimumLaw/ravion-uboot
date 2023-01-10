@@ -78,7 +78,6 @@
  * (CONFIG_SYS_INIT_L3_VADDR) will be different.
  */
 #define CONFIG_SYS_INIT_L3_VADDR	0xFFFC0000
-#define CONFIG_SYS_L3_SIZE		256 << 10
 #define SPL_ENV_ADDR			(CONFIG_SPL_GD_ADDR + 4 * 1024)
 
 #define CONFIG_SYS_DCSRBAR		0xf0000000
@@ -213,7 +212,6 @@
 
 #define CONFIG_SYS_NAND_DDR_LAW		11
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 
 #if defined(CONFIG_MTD_RAW_NAND)
 #define CONFIG_SYS_CSPR0_EXT		CONFIG_SYS_NAND_CSPR_EXT
@@ -255,7 +253,6 @@
 
 /* define to use L1 as initial stack */
 #define CONFIG_L1_INIT_RAM
-#define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xfdd00000	/* Initial L1 address */
 #define CONFIG_SYS_INIT_RAM_ADDR_PHYS_HIGH	0xf
 #define CONFIG_SYS_INIT_RAM_ADDR_PHYS_LOW	0xfe03c000
@@ -266,8 +263,6 @@
 #define CONFIG_SYS_INIT_RAM_SIZE		0x00004000
 
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-
-#define CONFIG_SYS_MONITOR_LEN		(768 * 1024)
 
 /* Serial Port - controlled on board with jumper J8
  * open - index 2
@@ -292,11 +287,6 @@
 #if defined(CONFIG_TARGET_T1042RDB_PI)	|| \
 	defined(CONFIG_TARGET_T1040D4RDB)	|| \
 	defined(CONFIG_TARGET_T1042D4RDB)
-/* LDI/DVI Encoder for display */
-#define CONFIG_SYS_I2C_LDI_ADDR		0x38
-#define CONFIG_SYS_I2C_DVI_ADDR		0x75
-#define CONFIG_SYS_I2C_DVI_BUS_NUM	0
-
 /*
  * RTC configuration
  */
@@ -356,7 +346,7 @@
 */
 
 #ifdef CONFIG_MMC
-#define CONFIG_SYS_FSL_ESDHC_ADDR       CONFIG_SYS_MPC85xx_ESDHC_ADDR
+#define CFG_SYS_FSL_ESDHC_ADDR       CFG_SYS_MPC85xx_ESDHC_ADDR
 #endif
 
 /* Qman/Bman */
@@ -423,12 +413,6 @@
 #endif
 
 /*
- * Environment
- */
-#define CONFIG_LOADS_ECHO		/* echo on for serial download */
-#define CONFIG_SYS_LOADS_BAUD_CHANGE	/* allow baudrate change */
-
-/*
  * Miscellaneous configurable options
  */
 
@@ -470,7 +454,7 @@
 	"usb2:dr_mode=host,phy_type=" __stringify(__USB_PHY_TYPE) "\0"\
 	"netdev=eth0\0"						\
 	"uboot=" __stringify(CONFIG_UBOOTPATH) "\0"		\
-	"ubootaddr=" __stringify(CONFIG_SYS_TEXT_BASE) "\0"	\
+	"ubootaddr=" __stringify(CONFIG_TEXT_BASE) "\0"	\
 	"tftpflash=tftpboot $loadaddr $uboot && "		\
 	"protect off $ubootaddr +$filesize && "			\
 	"erase $ubootaddr +$filesize && "			\

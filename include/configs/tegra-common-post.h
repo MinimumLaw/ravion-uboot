@@ -7,8 +7,6 @@
 #ifndef __TEGRA_COMMON_POST_H
 #define __TEGRA_COMMON_POST_H
 
-#define CONFIG_SYS_NONCACHED_MEMORY	(1 << 20)	/* 1 MiB */
-
 #if CONFIG_IS_ENABLED(CMD_USB)
 # define BOOT_TARGET_USB(func) func(USB, usb, 0)
 #else
@@ -37,13 +35,7 @@
 #define STDIN_KBD_USB ""
 #endif
 
-#ifdef CONFIG_LCD
-#define STDOUT_LCD ",lcd"
-#else
-#define STDOUT_LCD ""
-#endif
-
-#ifdef CONFIG_DM_VIDEO
+#ifdef CONFIG_VIDEO
 #define STDOUT_VIDEO ",vidconsole"
 #else
 #define STDOUT_VIDEO ""
@@ -57,8 +49,8 @@
 
 #define TEGRA_DEVICE_SETTINGS \
 	"stdin=serial" STDIN_KBD_KBC STDIN_KBD_USB STDOUT_CROS_EC "\0" \
-	"stdout=serial" STDOUT_LCD STDOUT_VIDEO "\0" \
-	"stderr=serial" STDOUT_LCD STDOUT_VIDEO "\0" \
+	"stdout=serial" STDOUT_VIDEO "\0" \
+	"stderr=serial" STDOUT_VIDEO "\0" \
 	""
 
 #ifndef BOARD_EXTRA_ENV_SETTINGS

@@ -27,7 +27,6 @@
 #define __SW_BOOT_NOR_BANK_UP	0x5c /* (__SW_BOOT_NOR | __SW_NOR_BANK_UP) */
 #define __SW_BOOT_NOR_BANK_LO	0x5e /* (__SW_BOOT_NOR | __SW_NOR_BANK_LO) */
 #define __SW_BOOT_NOR_BANK_MASK	0x01 /* (__SW_BOOT_MASK & __SW_NOR_BANK_MASK) */
-#define CONFIG_SYS_L2_SIZE	(256 << 10)
 #endif
 
 /*
@@ -58,7 +57,6 @@
 #define __SW_BOOT_NOR_BANK_UP	0x64 /* (__SW_BOOT_NOR | __SW_NOR_BANK_UP) */
 #define __SW_BOOT_NOR_BANK_LO	0x66 /* (__SW_BOOT_NOR | __SW_NOR_BANK_LO) */
 #define __SW_BOOT_NOR_BANK_MASK	0x01 /* (__SW_BOOT_MASK & __SW_NOR_BANK_MASK) */
-#define CONFIG_SYS_L2_SIZE	(256 << 10)
 /*
  * Dynamic MTD Partition support with mtdparts
  */
@@ -79,7 +77,6 @@
 #define __SW_BOOT_NOR_BANK_UP	0xc8 /* (__SW_BOOT_NOR | __SW_NOR_BANK_UP) */
 #define __SW_BOOT_NOR_BANK_LO	0xca /* (__SW_BOOT_NOR | __SW_NOR_BANK_LO) */
 #define __SW_BOOT_NOR_BANK_MASK	0x01 /* (__SW_BOOT_MASK & __SW_NOR_BANK_MASK) */
-#define CONFIG_SYS_L2_SIZE	(512 << 10)
 /*
  * Dynamic MTD Partition support with mtdparts
  */
@@ -87,8 +84,8 @@
 
 #ifdef CONFIG_SDCARD
 #define CONFIG_SYS_MMC_U_BOOT_SIZE	(768 << 10)
-#define CONFIG_SYS_MMC_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_MMC_U_BOOT_START	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MMC_U_BOOT_DST	CONFIG_TEXT_BASE
+#define CONFIG_SYS_MMC_U_BOOT_START	CONFIG_TEXT_BASE
 #ifdef CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR
 #define CONFIG_SYS_MMC_U_BOOT_OFFS	(CONFIG_SPL_PAD_TO - CONFIG_FSL_PREPBL_ESDHC_BOOT_SECTOR_DATA*512)
 #else
@@ -96,8 +93,8 @@
 #endif
 #elif defined(CONFIG_SPIFLASH)
 #define CONFIG_SYS_SPI_FLASH_U_BOOT_SIZE	(768 << 10)
-#define CONFIG_SYS_SPI_FLASH_U_BOOT_DST		CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_SPI_FLASH_U_BOOT_START	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_SPI_FLASH_U_BOOT_DST		CONFIG_TEXT_BASE
+#define CONFIG_SYS_SPI_FLASH_U_BOOT_START	CONFIG_TEXT_BASE
 #define CONFIG_SYS_SPI_FLASH_U_BOOT_OFFS	CONFIG_SPL_PAD_TO
 #elif defined(CONFIG_MTD_RAW_NAND)
 #ifdef CONFIG_TPL_BUILD
@@ -218,7 +215,6 @@
 #endif
 
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 
 #define CONFIG_SYS_NAND_BR_PRELIM (BR_PHYS_ADDR(CONFIG_SYS_NAND_BASE_PHYS) \
 	| (2<<BR_DECC_SHIFT)	/* Use HW ECC */ \
@@ -245,7 +241,6 @@
 #endif
 #endif /* CONFIG_NAND_FSL_ELBC */
 
-#define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xffd00000 /* stack in RAM */
 #ifdef CONFIG_PHYS_64BIT
 #define CONFIG_SYS_INIT_RAM_ADDR_PHYS_HIGH 0xf
@@ -264,8 +259,6 @@
 #define CONFIG_SYS_INIT_RAM_SIZE	0x00004000
 
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-
-#define CONFIG_SYS_MONITOR_LEN	(768 * 1024)
 
 #define CONFIG_SYS_CPLD_BASE	0xffa00000
 #ifdef CONFIG_PHYS_64BIT
@@ -419,15 +412,12 @@
 #endif
 #endif
 
-#define CONFIG_LOADS_ECHO		/* echo on for serial download */
-#define CONFIG_SYS_LOADS_BAUD_CHANGE	/* allow baudrate change */
-
 /*
  * USB
  */
 
 #ifdef CONFIG_MMC
-#define CONFIG_SYS_FSL_ESDHC_ADDR	CONFIG_SYS_MPC85xx_ESDHC_ADDR
+#define CFG_SYS_FSL_ESDHC_ADDR	CFG_SYS_MPC85xx_ESDHC_ADDR
 #endif
 
 /*
@@ -456,11 +446,11 @@
 "loadaddr=1000000\0"	\
 "bootfile=uImage\0"	\
 "tftpflash=tftpboot $loadaddr $uboot; "	\
-	"protect off " __stringify(CONFIG_SYS_TEXT_BASE) " +$filesize; " \
-	"erase " __stringify(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
-	"cp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE) " $filesize; " \
-	"protect on " __stringify(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
-	"cmp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE) " $filesize\0" \
+	"protect off " __stringify(CONFIG_TEXT_BASE) " +$filesize; " \
+	"erase " __stringify(CONFIG_TEXT_BASE) " +$filesize; "	\
+	"cp.b $loadaddr " __stringify(CONFIG_TEXT_BASE) " $filesize; " \
+	"protect on " __stringify(CONFIG_TEXT_BASE) " +$filesize; "	\
+	"cmp.b $loadaddr " __stringify(CONFIG_TEXT_BASE) " $filesize\0" \
 "hwconfig=usb1:dr_mode=host,phy_type=ulpi\0"    \
 "consoledev=ttyS0\0"	\
 "ramdiskaddr=2000000\0"	\

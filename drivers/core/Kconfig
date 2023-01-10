@@ -1,7 +1,7 @@
 menu "Generic Driver Options"
 
 config DM
-	bool "Enable Driver Model"
+	def_bool y
 	help
 	  This config option enables Driver Model. This brings in the core
 	  support, including scanning of platform data on start-up. If
@@ -350,6 +350,20 @@ config SPL_OF_TRANSLATE
 	  used for the address translation. This function is faster and
 	  smaller in size than fdt_translate_address().
 
+config TPL_OF_TRANSLATE
+	bool "Translate addresses using fdt_translate_address in TPL"
+	depends on TPL_DM && TPL_OF_CONTROL
+	help
+	  If this option is enabled, the reg property will be translated
+	  using the fdt_translate_address() function. This is necessary
+	  on some platforms (e.g. MVEBU) using complex "ranges"
+	  properties in many nodes. As this translation is not handled
+	  correctly in the default simple_bus_translate() function.
+
+	  If this option is not enabled, simple_bus_translate() will be
+	  used for the address translation. This function is faster and
+	  smaller in size than fdt_translate_address()
+
 config VPL_OF_TRANSLATE
 	bool "Translate addresses using fdt_translate_address in SPL"
 	depends on SPL_DM && VPL_OF_CONTROL
@@ -399,6 +413,30 @@ config OF_ISA_BUS
 config DM_DEV_READ_INLINE
 	bool
 	default y if !OF_LIVE
+
+config OFNODE_MULTI_TREE
+	bool "Allow the ofnode interface to access any tree"
+	default y if EVENT && !DM_DEV_READ_INLINE && !DM_INLINE_OFNODE
+	help
+	  Normally U-Boot makes use of its control FDT, the one used to bind
+	  devices and provide options. In some cases, U-Boot must also process
+	  a separate FDT, e.g. one provided by the operating system, which
+	  needs additions to the /chosen node.
+
+	  This works fine with live tree (OF_LIVE), but with flat tree the
+	  offset provided in ofnode is only useful with the control FDT. This
+	  option adds a 'tree ID' to the offset, so that multiple trees can
+	  be used. Call oftree_from_fdt() to register a new tree.
+
+config OFNODE_MULTI_TREE_MAX
+	int "Maximum number of FDTs"
+	range 2 8
+	depends on OFNODE_MULTI_TREE
+	default 4
+	help
+	  Sets the maximum number of device trees which can be used with the
+	  ofnode interface when using flat trees (OF_LIVE). This is only
+	  available in U-Boot proper and only after relocation.
 
 config ACPIGEN
 	bool "Support ACPI table generation in driver model"

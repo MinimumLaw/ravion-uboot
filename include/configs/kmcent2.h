@@ -154,7 +154,6 @@
  *  Config the L3 Cache as L3 SRAM
  */
 #define CONFIG_SYS_INIT_L3_ADDR		0xFFFC0000
-#define CONFIG_SYS_L3_SIZE		256 << 10
 
 #define CONFIG_SYS_DCSRBAR		0xf0000000
 #define CONFIG_SYS_DCSRBAR_PHYS		0xf00000000ull
@@ -179,11 +178,8 @@
  * @CONFIG_KM_RESERVED_PRAM: reserved pram for special purpose
  * @CONFIG_KM_PHRAM: address for /var
  * @CONFIG_KM_PNVRAM: address for PNVRAM (for the application)
- * @CONFIG_KM_ROOTFSSIZE: address for rootfilesystem in RAM
  */
 
-/* size of rootfs in RAM */
-#define CONFIG_KM_ROOTFSSIZE	0x0
 /* set the default PRAM value to at least PNVRAM + PHRAM when pram env variable
  * is not valid yet, which is the case for when u-boot copies itself to RAM
  */
@@ -281,7 +277,6 @@
 
 /* More NAND Flash Params */
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 
 /* QRIO on IFC CS2 */
 #define CONFIG_SYS_QRIO_BASE		0xfb000000
@@ -317,7 +312,6 @@
 #define CONFIG_HWCONFIG
 
 /* define to use L1 as initial stack */
-#define CONFIG_SYS_INIT_RAM_LOCK
 #define CONFIG_SYS_INIT_RAM_ADDR	0xfdd00000	/* Initial L1 address */
 #define CONFIG_SYS_INIT_RAM_ADDR_PHYS_HIGH	0xf
 #define CONFIG_SYS_INIT_RAM_ADDR_PHYS_LOW	0xfe03c000
@@ -328,8 +322,6 @@
 #define CONFIG_SYS_INIT_RAM_SIZE		0x00004000
 
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-
-#define CONFIG_SYS_MONITOR_LEN		0xc0000         /* 768k */
 
 /*
  * Serial Port - controlled on board with jumper J8
