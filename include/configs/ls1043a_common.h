@@ -33,7 +33,7 @@
 
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000
-#define CONFIG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
+#define CFG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 #define CONFIG_SYS_DDR_BLOCK2_BASE      0x880000000ULL
 
@@ -54,16 +54,13 @@
  * size increases then increase this size in case of secure boot as
  * it uses raw u-boot image instead of fit image.
  */
-#define CONFIG_SYS_MONITOR_LEN		(0x100000 + CONFIG_U_BOOT_HDR_SIZE)
-#else
-#define CONFIG_SYS_MONITOR_LEN		0x100000
 #endif /* ifdef CONFIG_NXP_ESBC */
 #endif
 
 /* NAND SPL */
 #ifdef CONFIG_NAND_BOOT
-#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_TEXT_BASE
 
 #ifdef CONFIG_NXP_ESBC
 #define CONFIG_U_BOOT_HDR_SIZE				(16 << 10)
@@ -76,9 +73,6 @@
  * size increases then increase this size in case of secure boot as
  * it uses raw u-boot image instead of fit image.
  */
-#define CONFIG_SYS_MONITOR_LEN		(0x100000 + CONFIG_U_BOOT_HDR_SIZE)
-#else
-#define CONFIG_SYS_MONITOR_LEN		0x100000
 #endif /* ifdef CONFIG_U_BOOT_HDR_SIZE */
 
 #endif
@@ -93,7 +87,7 @@
  * CONFIG_SYS_FLASH_BASE has the final address (core view)
  * CONFIG_SYS_FLASH_BASE_PHYS has the final address (IFC view)
  * CONFIG_SYS_FLASH_BASE_PHYS_EARLY has the temporary IFC address
- * CONFIG_SYS_TEXT_BASE is linked to 0x60000000 for booting
+ * CONFIG_TEXT_BASE is linked to 0x60000000 for booting
  */
 #define CONFIG_SYS_FLASH_BASE			0x60000000
 #define CONFIG_SYS_FLASH_BASE_PHYS		CONFIG_SYS_FLASH_BASE

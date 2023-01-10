@@ -36,18 +36,12 @@
 /** Maximum size of image supported for bootm (and bootable FIT images) */
 
 /** Memory base address */
-#define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_SDRAM_BASE		CONFIG_TEXT_BASE
 
 /** Stack starting address */
 
 /** Heap size for U-Boot */
 
-#define CONFIG_SYS_MMC_MAX_BLK_COUNT	8192
-
 /** EMMC specific defines */
-
-#if defined(CONFIG_NAND_OCTEONTX)
-#define CONFIG_SYS_MAX_NAND_DEVICE 8
-#endif
 
 #endif /* __OCTEONTX_COMMON_H__ */

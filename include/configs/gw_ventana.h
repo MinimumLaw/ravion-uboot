@@ -20,10 +20,9 @@
 #define CONFIG_MXC_UART_BASE	       UART2_BASE
 
 /* NAND */
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 
 /* MMC Configs */
-#define CONFIG_SYS_FSL_ESDHC_ADDR      0
+#define CFG_SYS_FSL_ESDHC_ADDR      0
 
 /*
  * PCI express
@@ -47,7 +46,6 @@
 /* Framebuffer and LCD */
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
-#define CONFIG_HIDE_LOGO_VERSION  /* Custom config to hide U-boot version */
 
 /* Miscellaneous configurable options */
 #define CONFIG_HWCONFIG

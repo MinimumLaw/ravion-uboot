@@ -274,7 +274,7 @@ config HAS_CUSTOM_SYS_INIT_SP_ADDR
 config CUSTOM_SYS_INIT_SP_ADDR
 	hex "Static location for the initial stack pointer"
 	depends on HAS_CUSTOM_SYS_INIT_SP_ADDR
-	default SYS_TEXT_BASE if TFABOOT
+	default TEXT_BASE if TFABOOT
 
 config SYS_MALLOC_F
 	bool "Enable malloc() pool before relocation"
@@ -312,9 +312,9 @@ config SYS_MALLOC_LEN
 	default 0x4000000 if SANDBOX
 	default 0x2000000 if ARCH_ROCKCHIP || ARCH_OMAP2PLUS || ARCH_MESON
 	default 0x200000 if ARCH_BMIPS || X86
-	default 0x120000 if MACH_SUNIV
-	default 0x220000 if MACH_SUN8I_V3S
-	default 0x4020000 if ARCH_SUNXI
+	default 0x4020000 if SUNXI_MINIMUM_DRAM_MB >= 256
+	default 0x220000 if SUNXI_MINIMUM_DRAM_MB >= 64
+	default 0x120000 if SUNXI_MINIMUM_DRAM_MB >= 32
 	default 0x400000
 	help
 	  This defines memory to be allocated for Dynamic allocation
@@ -456,7 +456,7 @@ config BUILD_TARGET
 	string "Build target special images"
 	default "u-boot-with-spl.sfp" if TARGET_SOCFPGA_ARRIA10
 	default "u-boot-with-spl.sfp" if TARGET_SOCFPGA_GEN5
-	default "u-boot-spl.kwb" if ARCH_MVEBU && SPL
+	default "u-boot-with-spl.kwb" if ARCH_MVEBU && SPL
 	default "u-boot-elf.srec" if RCAR_GEN3
 	default "u-boot.itb" if !BINMAN && SPL_LOAD_FIT && (ARCH_ROCKCHIP || \
 				ARCH_SUNXI || RISCV || ARCH_ZYNQMP)
@@ -540,7 +540,7 @@ config PLATFORM_ELFENTRY
 
 config STACK_SIZE
 	hex "Define max stack size that can be used by U-Boot"
-	default 0x4000000 if ARCH_VERSAL || ARCH_ZYNQMP
+	default 0x4000000 if ARCH_VERSAL_NET || ARCH_VERSAL || ARCH_ZYNQMP
 	default 0x200000 if MICROBLAZE
 	default 0x1000000
 	help
@@ -582,6 +582,18 @@ config SYS_SRAM_SIZE
 	default 0x10000 if TARGET_DEVKIT8000
 	default 0x10000 if TARGET_TRICORDER
 	default 0x0
+
+config SYS_MONITOR_LEN
+	int "Maximum size in bytes reserved for U-Boot in memory"
+	default 1048576 if X86
+	default 786432 if ARCH_SUNXI
+	default 0
+	help
+	  Size of memory reserved for monitor code, used to determine
+	  _at_compile_time_ (!) if the environment is embedded within the
+	  U-Boot image, or in a separate flash sector, among other uses where
+	  we need to set a maximum size of the U-Boot binary itself that will
+	  be loaded.
 
 config MP
 	bool "Support for multiprocessor"

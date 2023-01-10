@@ -493,7 +493,7 @@ bool soc_is_j7200(void)
 }
 
 #ifdef CONFIG_ARM64
-void board_prep_linux(bootm_headers_t *images)
+void board_prep_linux(struct bootm_headers *images)
 {
 	debug("Linux kernel Image start = 0x%lx end = 0x%lx\n",
 	      images->os.start, images->os.end);
@@ -605,6 +605,10 @@ int misc_init_r(void)
 		if (ret)
 			printf("Failed to probe am65_cpsw_nuss driver\n");
 	}
+
+	/* Default FIT boot on non-GP devices */
+	if (get_device_type() != K3_DEVICE_TYPE_GP)
+		env_set("boot_fit", "1");
 
 	return 0;
 }

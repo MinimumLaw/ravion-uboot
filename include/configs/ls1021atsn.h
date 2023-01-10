@@ -50,9 +50,6 @@
  * size increases then increase this size in case of secure boot as
  * it uses raw U-Boot image instead of FIT image.
  */
-#define CONFIG_SYS_MONITOR_LEN		(0x100000 + CONFIG_U_BOOT_HDR_SIZE)
-#else
-#define CONFIG_SYS_MONITOR_LEN		0x100000
 #endif /* ifdef CONFIG_U_BOOT_HDR_SIZE */
 #endif
 
@@ -70,10 +67,6 @@
 #define CONFIG_SYS_NS16550_CLK		get_serial_clock()
 
 /* I2C */
-
-/* EEPROM */
-#define CONFIG_SYS_I2C_EEPROM_NXID
-#define CONFIG_SYS_EEPROM_BUS_NUM	0
 
 /* PCIe */
 #define FSL_PCIE_COMPAT			"fsl,ls1021a-pcie"

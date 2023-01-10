@@ -31,8 +31,6 @@
 #define V_OSCK			26000000	/* Clock output from T2 */
 #define V_SCLK			(V_OSCK >> 1)
 
-#define CONFIG_UBI_SIZE			(512 << 10)
-
 /*
  * Hardware drivers
  */
@@ -80,15 +78,16 @@
 	"kernaddr=0x82008000\0" \
 	"initrdaddr=0x84008000\0" \
 	"scriptaddr=0x86008000\0" \
+	"fileloadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"fileload=${mmctype}load mmc ${mmcnum}:${mmcpart} " \
-		"${loadaddr} ${mmcfile}\0" \
-	"kernload=setenv loadaddr ${kernaddr};" \
+		"${fileloadaddr} ${mmcfile}\0" \
+	"kernload=setenv fileloadaddr ${kernaddr};" \
 		"setenv mmcfile ${mmckernfile};" \
 		"run fileload\0" \
-	"initrdload=setenv loadaddr ${initrdaddr};" \
+	"initrdload=setenv fileloadaddr ${initrdaddr};" \
 		"setenv mmcfile ${mmcinitrdfile};" \
 		"run fileload\0" \
-	"scriptload=setenv loadaddr ${scriptaddr};" \
+	"scriptload=setenv fileloadaddr ${scriptaddr};" \
 		"setenv mmcfile ${mmcscriptfile};" \
 		"run fileload\0" \
 	"scriptboot=echo Running ${mmcscriptfile} from mmc " \

@@ -65,7 +65,7 @@ static int scmi_bind_protocols(struct udevice *dev)
 		struct driver *drv = NULL;
 		u32 protocol_id;
 
-		if (!ofnode_is_available(node))
+		if (!ofnode_is_enabled(node))
 			continue;
 
 		if (ofnode_read_u32(node, "reg", &protocol_id))
@@ -137,7 +137,7 @@ int devm_scmi_of_get_channel(struct udevice *dev, struct scmi_channel **channel)
 		return -ENODEV;
 
 	if (transport_dev_ops(parent)->of_get_channel)
-		return transport_dev_ops(parent)->of_get_channel(dev, channel);
+		return transport_dev_ops(parent)->of_get_channel(parent, channel);
 
 	/* Drivers without a get_channel operator don't need a channel ref */
 	*channel = NULL;

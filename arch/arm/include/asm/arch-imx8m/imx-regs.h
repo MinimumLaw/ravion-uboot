@@ -44,10 +44,14 @@
 #define I2C3_BASE_ADDR		0x30A40000
 #define I2C4_BASE_ADDR		0x30A50000
 #define UART4_BASE_ADDR		0x30A60000
+#ifdef CONFIG_IMX8MP
+#define I2C5_BASE_ADDR          0x30AD0000
+#define I2C6_BASE_ADDR          0x30AE0000
+#endif
 #define USDHC1_BASE_ADDR	0x30B40000
 #define USDHC2_BASE_ADDR	0x30B50000
 #define QSPI0_AMBA_BASE     0x08000000
-#ifdef CONFIG_IMX8MM
+#if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MP)
 #define USDHC3_BASE_ADDR	0x30B60000
 #endif
 #define UART_BASE_ADDR(n)	(			\
@@ -87,12 +91,12 @@
 #define CAAM_ARB_BASE_ADDR              (0x00100000)
 #define CAAM_ARB_END_ADDR               (0x00107FFF)
 #define CAAM_IPS_BASE_ADDR              (0x30900000)
-#define CONFIG_SYS_FSL_SEC_OFFSET       (0)
-#define CONFIG_SYS_FSL_SEC_ADDR         (CAAM_IPS_BASE_ADDR + \
-					 CONFIG_SYS_FSL_SEC_OFFSET)
-#define CONFIG_SYS_FSL_JR0_OFFSET       (0x1000)
-#define CONFIG_SYS_FSL_JR0_ADDR         (CONFIG_SYS_FSL_SEC_ADDR + \
-					 CONFIG_SYS_FSL_JR0_OFFSET)
+#define CFG_SYS_FSL_SEC_OFFSET       (0)
+#define CFG_SYS_FSL_SEC_ADDR         (CAAM_IPS_BASE_ADDR + \
+					 CFG_SYS_FSL_SEC_OFFSET)
+#define CFG_SYS_FSL_JR0_OFFSET       (0x1000)
+#define CFG_SYS_FSL_JR0_ADDR         (CFG_SYS_FSL_SEC_ADDR + \
+					 CFG_SYS_FSL_JR0_OFFSET)
 #if !defined(__ASSEMBLY__)
 #include <asm/types.h>
 #include <linux/bitops.h>

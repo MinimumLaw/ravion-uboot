@@ -124,8 +124,6 @@
 #define CONFIG_SYS_SERIAL0		V2M_UART0
 #define CONFIG_SYS_SERIAL1		V2M_UART1
 
-#define CONFIG_SYS_MMC_MAX_BLK_COUNT	127
-
 /* Miscellaneous configurable options */
 #define LINUX_BOOT_PARAM_ADDR		(V2M_BASE + 0x2000)
 
@@ -149,6 +147,7 @@
 #include <config_distro_bootcmd.h>
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+                "loadaddr=0x60100000\0" \
                 "kernel_addr_r=0x60100000\0" \
                 "fdt_addr_r=0x60000000\0" \
                 "bootargs=console=tty0 console=ttyAMA0,38400n8\0" \

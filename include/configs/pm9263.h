@@ -136,12 +136,6 @@
 		 AT91_WDT_MR_WDDIS |				\
 		 AT91_WDT_MR_WDD(0xfff))
 
-/*
- * Hardware drivers
- */
-/* LCD */
-#define LCD_BPP				LCD_COLOR8
-
 /* SDRAM */
 #define PHYS_SDRAM		0x20000000
 #define PHYS_SDRAM_SIZE		0x04000000	/* 64 megs */
@@ -152,7 +146,6 @@
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x40000000
 #define CONFIG_SYS_NAND_DBW_8		1
 /* our ALE is AD21 */

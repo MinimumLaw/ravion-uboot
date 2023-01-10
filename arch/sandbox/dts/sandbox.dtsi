@@ -27,6 +27,12 @@
 		};
 	};
 
+	alarm_wdt: alarm-wdt {
+		compatible = "sandbox,alarm-wdt";
+		timeout-sec = <5>;
+		u-boot,autostart;
+	};
+
 	audio: audio-codec {
 		compatible = "sandbox,audio-codec";
 		#sound-dai-cells = <1>;
@@ -239,10 +245,15 @@
 
 	reset@1 {
 		compatible = "sandbox,reset";
+		u-boot,dm-pre-proper;
 	};
 
 	rng {
 		compatible = "sandbox,sandbox-rng";
+	};
+
+	scsi {
+		compatible = "sandbox,scsi";
 	};
 
 	sound {
@@ -438,6 +449,10 @@
 
 	sandbox_tee {
 		compatible = "sandbox,tee";
+	};
+
+	thermal {
+		compatible = "sandbox,thermal";
 	};
 };
 

@@ -13,6 +13,7 @@
 #include <api.h>
 #include <bootstage.h>
 #include <cpu_func.h>
+#include <cyclic.h>
 #include <display_options.h>
 #include <exports.h>
 #ifdef CONFIG_MTD_NOR_FLASH
@@ -233,6 +234,8 @@ static int initr_dm(void)
 {
 	int ret;
 
+	oftree_reset();
+
 	/* Save the pre-reloc driver model and start a new one */
 	gd->dm_root_f = gd->dm_root;
 	gd->dm_root = NULL;
@@ -340,7 +343,7 @@ static int initr_flash(void)
 	/*
 	 * Compute and print flash CRC if flashchecksum is set to 'y'
 	 *
-	 * NOTE: Maybe we should add some WATCHDOG_RESET()? XXX
+	 * NOTE: Maybe we should add some schedule()? XXX
 	 */
 	if (env_get_yesno("flashchecksum") == 1) {
 		const uchar *flash_base = (const uchar *)CONFIG_SYS_FLASH_BASE;
@@ -366,7 +369,7 @@ static int initr_flash(void)
 
 #if defined(CONFIG_OXC) || defined(CONFIG_RMU)
 	/* flash mapped at end of memory map */
-	bd->bi_flashoffset = CONFIG_SYS_TEXT_BASE + flash_size;
+	bd->bi_flashoffset = CONFIG_TEXT_BASE + flash_size;
 #elif CONFIG_SYS_MONITOR_BASE == CONFIG_SYS_FLASH_BASE
 	bd->bi_flashoffset = monitor_flash_len;	/* reserved area for monitor */
 #endif
@@ -576,6 +579,9 @@ static int run_main_loop(void)
 #ifdef CONFIG_SANDBOX
 	sandbox_main_loop_init();
 #endif
+
+	event_notify_null(EVT_MAIN_LOOP);
+
 	/* main_loop() can return to retry autoboot, if so just run it again */
 	for (;;)
 		main_loop();
@@ -688,7 +694,7 @@ static init_fnc_t init_sequence_r[] = {
 	/* initialize higher level parts of CPU like time base and timers */
 	cpu_init_r,
 #endif
-#ifdef CONFIG_EFI_SETUP_EARLY
+#ifdef CONFIG_EFI_LOADER
 	efi_init_early,
 #endif
 #ifdef CONFIG_CMD_NAND

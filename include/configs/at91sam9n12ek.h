@@ -14,11 +14,6 @@
 #define CONFIG_SYS_AT91_MAIN_CLOCK	16000000	/* main clock xtal */
 
 /* Misc CPU related */
-
-/* LCD */
-#define LCD_BPP				LCD_COLOR16
-#define LCD_OUTPUT_BPP			24
-
 #define CONFIG_SYS_SDRAM_BASE		0x20000000
 #define CONFIG_SYS_SDRAM_SIZE		0x08000000
 
@@ -26,7 +21,6 @@
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x40000000
 #define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
 #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
@@ -40,8 +34,6 @@
 	"bootargs_mmc=root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait\0"
 
 /* SPL */
-
-#define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 
 #define CONFIG_SYS_MASTER_CLOCK		132096000
 #define CONFIG_SYS_AT91_PLLA		0x20953f03

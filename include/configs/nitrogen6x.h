@@ -16,8 +16,8 @@
 #define CONFIG_MXC_UART_BASE	       UART2_BASE
 
 /* MMC Configs */
-#define CONFIG_SYS_FSL_ESDHC_ADDR      0
-#define CONFIG_SYS_FSL_USDHC_NUM       2
+#define CFG_SYS_FSL_ESDHC_ADDR      0
+#define CFG_SYS_FSL_USDHC_NUM       2
 
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_MXC_PHYADDR		6
@@ -27,7 +27,6 @@
 #define CONFIG_MXC_USB_FLAGS	0
 
 /* Framebuffer and LCD */
-#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE (6 * 1024 * 1024)
 #define CONFIG_IMX_HDMI
 #define CONFIG_IMX_VIDEO_SKIP
 
@@ -76,7 +75,7 @@
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"fdt_addr_r=0x18000000\0" \
-	"fdtfile=" __stringify(CONFIG_DEFAULT_DEVICE_TREE) ".dtb\0" \
+	"fdtfile=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0"  \
 	"pxefile_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"scriptaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \

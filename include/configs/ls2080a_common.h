@@ -18,7 +18,7 @@
 
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000UL
-#define CONFIG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
+#define CFG_SYS_FSL_DDR_SDRAM_BASE_PHY	0
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_SDRAM_BASE
 #define CONFIG_SYS_DDR_BLOCK2_BASE	0x8080000000ULL
 
@@ -61,7 +61,7 @@
  * CONFIG_SYS_FLASH_BASE has the final address (core view)
  * CONFIG_SYS_FLASH_BASE_PHYS has the final address (IFC view)
  * CONFIG_SYS_FLASH_BASE_PHYS_EARLY has the temporary IFC address
- * CONFIG_SYS_TEXT_BASE is linked to 0x30000000 for booting
+ * CONFIG_TEXT_BASE is linked to 0x30000000 for booting
  */
 
 #define CONFIG_SYS_FLASH_BASE			0x580000000ULL
@@ -132,7 +132,6 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SYS_NAND_U_BOOT_DST	0x80400000
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_NAND_U_BOOT_DST
 #endif
-#define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
 
 #include <asm/arch/soc.h>
 

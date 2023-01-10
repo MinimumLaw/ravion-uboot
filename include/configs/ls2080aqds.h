@@ -103,7 +103,6 @@
 #define CONFIG_SYS_NAND_FTIM3		0x0
 
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
 
 #define QIXIS_LBMAP_SWITCH		0x06
@@ -234,10 +233,6 @@
 #define RTC
 #define CONFIG_RTC_DS3231               1
 #define CONFIG_SYS_I2C_RTC_ADDR         0x68
-
-/* EEPROM */
-#define CONFIG_SYS_I2C_EEPROM_NXID
-#define CONFIG_SYS_EEPROM_BUS_NUM	0
 
 /* Initial environment variables */
 #undef CONFIG_EXTRA_ENV_SETTINGS

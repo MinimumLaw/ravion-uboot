@@ -23,7 +23,7 @@
  */
 
 /*
- * Custom CONFIG_SYS_TEXT_BASE can be done in <board>.h
+ * Custom CONFIG_TEXT_BASE can be done in <board>.h
  */
 
 /* additions for new ARM relocation support */
@@ -61,8 +61,5 @@
 /*
  * Common NAND configuration
  */
-#ifdef CONFIG_CMD_NAND
-#define CONFIG_SYS_MAX_NAND_DEVICE     1
-#endif
 
 #endif /* _MV_COMMON_H */

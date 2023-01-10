@@ -35,14 +35,11 @@
 	BOOT_TARGET_DEVICE_UBIFS(func)	\
 	BOOT_TARGET_DEVICE_USB(func)
 
-#define CONFIG_SYS_MONITOR_LEN		0x00200000	/* 2MB */
-
 #if !defined(CONFIG_ARM64)
 /* Time clock 1MHz */
 #define CONFIG_SYS_TIMER_RATE			1000000
 #endif
 
-#define CONFIG_SYS_MAX_NAND_DEVICE			1
 #define CONFIG_SYS_NAND_REGS_BASE			0x68100000
 #define CONFIG_SYS_NAND_DATA_BASE			0x68000000
 
@@ -169,7 +166,7 @@
 
 /* only for SPL */
 
-/* subtract sizeof(struct image_header) */
+/* subtract sizeof(struct legacy_img_hdr) */
 #define CONFIG_SYS_UBOOT_BASE			(0x130000 - 0x40)
 
 #endif /* __CONFIG_UNIPHIER_H__ */

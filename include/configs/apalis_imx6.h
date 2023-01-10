@@ -22,8 +22,8 @@
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 /* MMC Configs */
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
-#define CONFIG_SYS_FSL_USDHC_NUM	3
+#define CFG_SYS_FSL_ESDHC_ADDR	0
+#define CFG_SYS_FSL_USDHC_NUM	3
 
 /* Network */
 #define PHY_ANEG_TIMEOUT		15000 /* PHY needs longer aneg time */
@@ -70,11 +70,11 @@
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"bootm_size=0x20000000\0" \
-	"fdt_addr_r=0x12100000\0" \
-	"kernel_addr_r=0x11000000\0" \
-	"pxefile_addr_r=0x17100000\0" \
-	"ramdisk_addr_r=0x12200000\0" \
-	"scriptaddr=0x17000000\0"
+	"fdt_addr_r=0x18200000\0" \
+	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"pxefile_addr_r=0x18300000\0" \
+	"ramdisk_addr_r=0x18400000\0" \
+	"scriptaddr=0x18280000\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	BOOTENV \

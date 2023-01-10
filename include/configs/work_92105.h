@@ -42,7 +42,6 @@
  */
 
 /* driver configuration */
-#define CONFIG_SYS_MAX_NAND_DEVICE 1
 #define CONFIG_SYS_MAX_NAND_CHIPS 1
 #define CONFIG_SYS_NAND_BASE MLC_NAND_BASE
 
@@ -63,10 +62,9 @@
 /* Use the framework and generic lib */
 /* SPL will use serial */
 /* SPL will load U-Boot from NAND offset 0x40000 */
-/* U-Boot will be 0x40000 bytes, loaded and run at CONFIG_SYS_TEXT_BASE */
-#define CONFIG_SYS_MONITOR_LEN 0x40000 /* actually, MAX size */
-#define CONFIG_SYS_NAND_U_BOOT_START CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_NAND_U_BOOT_DST   CONFIG_SYS_TEXT_BASE
+/* U-Boot will be 0x40000 bytes, loaded and run at CONFIG_TEXT_BASE */
+#define CONFIG_SYS_NAND_U_BOOT_START CONFIG_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_DST   CONFIG_TEXT_BASE
 
 /*
  * Include SoC specific configuration

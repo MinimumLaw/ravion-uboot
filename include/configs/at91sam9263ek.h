@@ -22,13 +22,6 @@
 #define CONFIG_SYS_AT91_MAIN_CLOCK	16367660 /* 16.367 MHz crystal */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
 
-/*
- * Hardware drivers
- */
-
-/* LCD */
-#define LCD_BPP				LCD_COLOR8
-
 /* SDRAM */
 #define CONFIG_SYS_SDRAM_BASE		ATMEL_BASE_CS1
 #define CONFIG_SYS_SDRAM_SIZE		0x04000000
@@ -40,9 +33,6 @@
 #ifdef CONFIG_SYS_USE_NORFLASH
 #define PHYS_FLASH_1				0x10000000
 #define CONFIG_SYS_FLASH_BASE			PHYS_FLASH_1
-
-#define CONFIG_SYS_MONITOR_SEC	1:0-3
-#define CONFIG_SYS_MONITOR_LEN	(256 << 10)
 
 /* Address and size of Primary Environment Sector */
 
@@ -160,7 +150,6 @@
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_SYS_MAX_NAND_DEVICE		1
 #define CONFIG_SYS_NAND_BASE			ATMEL_BASE_CS3
 #define CONFIG_SYS_NAND_DBW_8			1
 /* our ALE is AD21 */

@@ -89,7 +89,7 @@ static struct rom_extended_boot_data bootdata __section(".data");
 static void store_boot_info_from_rom(void)
 {
 	bootindex = *(u32 *)(CONFIG_SYS_K3_BOOT_PARAM_TABLE_INDEX);
-	memcpy(&bootdata, (uintptr_t *)ROM_ENTENDED_BOOT_DATA_INFO,
+	memcpy(&bootdata, (uintptr_t *)ROM_EXTENDED_BOOT_DATA_INFO,
 	       sizeof(struct rom_extended_boot_data));
 }
 
@@ -164,7 +164,7 @@ void board_init_f(ulong dummy)
 		if (ret)
 			panic("DRAM 0 init failed: %d\n", ret);
 
-		ret = uclass_next_device(&dev);
+		ret = uclass_next_device_err(&dev);
 		if (ret)
 			panic("DRAM 1 init failed: %d\n", ret);
 	}

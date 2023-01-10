@@ -21,7 +21,7 @@
 #include <asm/hardware.h>
 
 /*
- * Warning: changing CONFIG_SYS_TEXT_BASE requires
+ * Warning: changing CONFIG_TEXT_BASE requires
  * adapting the initial boot program.
  * Since the linker has to swallow that define, we must use a pure
  * hex number here!
@@ -52,7 +52,6 @@
 
 /* NAND flash */
 #ifdef CONFIG_CMD_NAND
-# define CONFIG_SYS_MAX_NAND_DEVICE		1
 # define CONFIG_SYS_NAND_BASE			ATMEL_BASE_CS3 /* 0x40000000 */
 # define CONFIG_SYS_NAND_DBW_8
 # define CONFIG_SYS_NAND_MASK_ALE		(1 << 21)

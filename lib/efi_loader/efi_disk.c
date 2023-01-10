@@ -19,7 +19,9 @@
 #include <part.h>
 #include <malloc.h>
 
-struct efi_system_partition efi_system_partition;
+struct efi_system_partition efi_system_partition = {
+	.uclass_id = UCLASS_INVALID,
+};
 
 const efi_guid_t efi_block_io_guid = EFI_BLOCK_IO_PROTOCOL_GUID;
 const efi_guid_t efi_system_partition_guid = PARTITION_SYSTEM_GUID;
@@ -123,9 +125,11 @@ static efi_status_t efi_disk_rw_blocks(struct efi_block_io *this,
 	if (CONFIG_IS_ENABLED(PARTITIONS) &&
 	    device_get_uclass_id(diskobj->header.dev) == UCLASS_PARTITION) {
 		if (direction == EFI_DISK_READ)
-			n = dev_read(diskobj->header.dev, lba, blocks, buffer);
+			n = disk_blk_read(diskobj->header.dev, lba, blocks,
+					  buffer);
 		else
-			n = dev_write(diskobj->header.dev, lba, blocks, buffer);
+			n = disk_blk_write(diskobj->header.dev, lba, blocks,
+					   buffer);
 	} else {
 		/* dev is a block device (UCLASS_BLK) */
 		struct blk_desc *desc;
@@ -395,7 +399,7 @@ static efi_status_t efi_disk_add_dev(
 {
 	struct efi_disk_obj *diskobj;
 	struct efi_object *handle;
-	const efi_guid_t *guid = NULL;
+	const efi_guid_t *esp_guid = NULL;
 	efi_status_t ret;
 
 	/* Don't add empty devices */
@@ -414,6 +418,11 @@ static efi_status_t efi_disk_add_dev(
 		struct efi_device_path *node = efi_dp_part_node(desc, part);
 		struct efi_handler *handler;
 		void *protocol_interface;
+
+		if (!node) {
+			ret = EFI_OUT_OF_RESOURCES;
+			goto error;
+		}
 
 		/* Parent must expose EFI_BLOCK_IO_PROTOCOL */
 		ret = efi_search_protocol(parent, &efi_block_io_guid, &handler);
@@ -434,7 +443,7 @@ static efi_status_t efi_disk_add_dev(
 		efi_free_pool(node);
 		diskobj->media.last_block = part_info->size - 1;
 		if (part_info->bootable & PART_EFI_SYSTEM_PARTITION)
-			guid = &efi_system_partition_guid;
+			esp_guid = &efi_system_partition_guid;
 	} else {
 		diskobj->dp = efi_dp_from_part(desc, part);
 		diskobj->media.last_block = desc->lba - 1;
@@ -449,10 +458,16 @@ static efi_status_t efi_disk_add_dev(
 	 * in this case.
 	 */
 	handle = &diskobj->header;
-	ret = EFI_CALL(efi_install_multiple_protocol_interfaces(
-			&handle, &efi_guid_device_path, diskobj->dp,
-			&efi_block_io_guid, &diskobj->ops,
-			guid, NULL, NULL));
+	ret = efi_install_multiple_protocol_interfaces(
+					&handle,
+					&efi_guid_device_path, diskobj->dp,
+					&efi_block_io_guid, &diskobj->ops,
+					/*
+					 * esp_guid must be last entry as it
+					 * can be NULL. Its interface is NULL.
+					 */
+					esp_guid, NULL,
+					NULL);
 	if (ret != EFI_SUCCESS)
 		goto error;
 
@@ -498,13 +513,13 @@ static efi_status_t efi_disk_add_dev(
 		  diskobj->media.last_block);
 
 	/* Store first EFI system partition */
-	if (part && !efi_system_partition.if_type) {
+	if (part && efi_system_partition.uclass_id == UCLASS_INVALID) {
 		if (part_info->bootable & PART_EFI_SYSTEM_PARTITION) {
-			efi_system_partition.if_type = desc->if_type;
+			efi_system_partition.uclass_id = desc->uclass_id;
 			efi_system_partition.devnum = desc->devnum;
 			efi_system_partition.part = part;
 			EFI_PRINT("EFI system partition: %s %x:%x\n",
-				  blk_get_if_type_name(desc->if_type),
+				  blk_get_uclass_name(desc->uclass_id),
 				  desc->devnum, part);
 		}
 	}
@@ -540,7 +555,7 @@ static int efi_disk_create_raw(struct udevice *dev)
 		if (ret == EFI_NOT_READY)
 			log_notice("Disk %s not ready\n", dev->name);
 		else
-			log_err("Adding disk for %s failed\n", dev->name);
+			log_err("Adding disk for %s failed (err=%ld/%#lx)\n", dev->name, ret, ret);
 
 		return -1;
 	}
@@ -620,7 +635,7 @@ static int efi_disk_create_part(struct udevice *dev)
  *
  * @return	0 on success, -1 otherwise
  */
-static int efi_disk_probe(void *ctx, struct event *event)
+int efi_disk_probe(void *ctx, struct event *event)
 {
 	struct udevice *dev;
 	enum uclass_id id;
@@ -640,7 +655,7 @@ static int efi_disk_probe(void *ctx, struct event *event)
 	 * has already created an efi_disk at this moment.
 	 */
 	desc = dev_get_uclass_plat(dev);
-	if (desc->if_type != IF_TYPE_EFI_LOADER) {
+	if (desc->uclass_id != UCLASS_EFI_LOADER) {
 		ret = efi_disk_create_raw(dev);
 		if (ret)
 			return -1;
@@ -675,7 +690,7 @@ static int efi_disk_delete_raw(struct udevice *dev)
 		return -1;
 
 	desc = dev_get_uclass_plat(dev);
-	if (desc->if_type != IF_TYPE_EFI_LOADER) {
+	if (desc->uclass_id != UCLASS_EFI_LOADER) {
 		diskobj = container_of(handle, struct efi_disk_obj, header);
 		efi_free_pool(diskobj->dp);
 	}
@@ -724,7 +739,7 @@ static int efi_disk_delete_part(struct udevice *dev)
  *
  * @return	0 on success, -1 otherwise
  */
-static int efi_disk_remove(void *ctx, struct event *event)
+int efi_disk_remove(void *ctx, struct event *event)
 {
 	enum uclass_id id;
 	struct udevice *dev;
@@ -740,23 +755,53 @@ static int efi_disk_remove(void *ctx, struct event *event)
 		return 0;
 }
 
-efi_status_t efi_disk_init(void)
+/**
+ * efi_disk_get_device_name() - get U-Boot device name associated with EFI handle
+ *
+ * @handle:	pointer to the EFI handle
+ * @buf:	pointer to the buffer to store the string
+ * @size:	size of buffer
+ * Return:	status code
+ */
+efi_status_t efi_disk_get_device_name(const efi_handle_t handle, char *buf, int size)
 {
-	int ret;
+	int count;
+	int diskid;
+	enum uclass_id id;
+	unsigned int part;
+	struct udevice *dev;
+	struct blk_desc *desc;
+	const char *if_typename;
+	bool is_partition = false;
+	struct disk_part *part_data;
 
-	ret = event_register("efi_disk add", EVT_DM_POST_PROBE,
-			     efi_disk_probe, NULL);
-	if (ret) {
-		log_err("Event registration for efi_disk add failed\n");
-		return EFI_OUT_OF_RESOURCES;
+	if (!handle || !buf || !size)
+		return EFI_INVALID_PARAMETER;
+
+	dev = handle->dev;
+	id = device_get_uclass_id(dev);
+	if (id == UCLASS_BLK) {
+		desc = dev_get_uclass_plat(dev);
+	} else if (id == UCLASS_PARTITION) {
+		desc = dev_get_uclass_plat(dev_get_parent(dev));
+		is_partition = true;
+	} else {
+		return EFI_INVALID_PARAMETER;
+	}
+	if_typename = blk_get_uclass_name(desc->uclass_id);
+	diskid = desc->devnum;
+
+	if (is_partition) {
+		part_data = dev_get_uclass_plat(dev);
+		part = part_data->partnum;
+		count = snprintf(buf, size, "%s %d:%u", if_typename, diskid,
+				 part);
+	} else {
+		count = snprintf(buf, size, "%s %d", if_typename, diskid);
 	}
 
-	ret = event_register("efi_disk del", EVT_DM_PRE_REMOVE,
-			     efi_disk_remove, NULL);
-	if (ret) {
-		log_err("Event registration for efi_disk del failed\n");
-		return EFI_OUT_OF_RESOURCES;
-	}
+	if (count < 0 || (count + 1) > size)
+		return EFI_INVALID_PARAMETER;
 
 	return EFI_SUCCESS;
 }

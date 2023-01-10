@@ -9,7 +9,6 @@
 #include <asm/arch/imx-regs.h>
 #include <linux/sizes.h>
 
-#define CONFIG_SYS_MONITOR_LEN				SZ_512K
 #define CONFIG_SYS_UBOOT_BASE	\
 	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
@@ -25,19 +24,11 @@
 #define CONFIG_SYS_I2C
 #endif /* CONFIG_SPL_BUILD */
 
-/* ENET Config */
-/* ENET1 */
-#if defined(CONFIG_CMD_NET)
-#define CONFIG_FEC_MXC_PHYADDR		7
-
-#define PHY_ANEG_TIMEOUT 20000
-#endif /* CONFIG_CMD_NET */
-
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"fdt_addr_r=0x50200000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"kernel_comp_addr_r=0x40200000\0" \
-	"kernel_comp_size=0x08080000\0" \
+	"kernel_comp_size=0x08000000\0" \
 	"ramdisk_addr_r=0x50300000\0" \
 	"scriptaddr=0x50280000\0"
 

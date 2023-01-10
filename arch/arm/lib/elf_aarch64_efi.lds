@@ -7,6 +7,12 @@
 
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64")
 OUTPUT_ARCH(aarch64)
+
+PHDRS
+{
+	data PT_LOAD FLAGS(3); /* SHF_WRITE | SHF_ALLOC */
+}
+
 ENTRY(_start)
 SECTIONS
 {
@@ -18,11 +24,13 @@ SECTIONS
 		*(.gnu.linkonce.t.*)
 		*(.srodata)
 		*(.rodata*)
+		. = ALIGN(16);
+		*(.dynamic);
 		. = ALIGN(512);
 	}
 	_etext = .;
 	_text_size = . - _text;
-	.dynamic  : { *(.dynamic) }
+	. = ALIGN(4096);
 	.data : {
 		_data = .;
 		*(.sdata)
@@ -47,12 +55,12 @@ SECTIONS
 		. = ALIGN(512);
 		_bss_end = .;
 		_edata = .;
-	}
+	} :data
+	_data_size = _edata - _data;
 	.rela.dyn : { *(.rela.dyn) }
 	.rela.plt : { *(.rela.plt) }
 	.rela.got : { *(.rela.got) }
 	.rela.data : { *(.rela.data) *(.rela.data*) }
-	_data_size = . - _etext;
 
 	. = ALIGN(4096);
 	.dynsym   : { *(.dynsym) }

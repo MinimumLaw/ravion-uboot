@@ -14,11 +14,11 @@
 #include "mx7_common.h"
 
 /* MMC Config*/
-#define CONFIG_SYS_FSL_ESDHC_ADDR	0
+#define CFG_SYS_FSL_ESDHC_ADDR	0
 #ifdef CONFIG_TARGET_COLIBRI_IMX7_NAND
-#define CONFIG_SYS_FSL_USDHC_NUM	1
+#define CFG_SYS_FSL_USDHC_NUM	1
 #elif CONFIG_TARGET_COLIBRI_IMX7_EMMC
-#define CONFIG_SYS_FSL_USDHC_NUM	2
+#define CFG_SYS_FSL_USDHC_NUM	2
 #endif
 
 #define CONFIG_IPADDR			192.168.10.2
@@ -83,11 +83,11 @@
 
 #define MEM_LAYOUT_ENV_SETTINGS \
 	"bootm_size=0x10000000\0" \
-	"fdt_addr_r=0x82000000\0" \
-	"kernel_addr_r=0x81000000\0" \
-	"pxefile_addr_r=0x87100000\0" \
-	"ramdisk_addr_r=0x82100000\0" \
-	"scriptaddr=0x87000000\0"
+	"fdt_addr_r=0x88200000\0" \
+	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"pxefile_addr_r=0x88300000\0" \
+	"ramdisk_addr_r=0x88400000\0" \
+	"scriptaddr=0x88280000\0"
 
 #define UBI_BOOTCMD	\
 	"ubiargs=ubi.mtd=ubi root=ubi0:rootfs rootfstype=ubifs " \
@@ -166,7 +166,6 @@
 
 #ifdef CONFIG_TARGET_COLIBRI_IMX7_NAND
 /* NAND stuff */
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x40000000
 #define CONFIG_SYS_NAND_MX7_GPMI_62_ECC_BYTES
 #endif

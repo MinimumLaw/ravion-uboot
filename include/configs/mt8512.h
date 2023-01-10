@@ -9,12 +9,8 @@
 #ifndef __MT8512_H
 #define __MT8512_H
 
-#include <linux/sizes.h>
-
-#define CONFIG_SYS_NONCACHED_MEMORY		SZ_1M
-
 /* Uboot definition */
-#define CONFIG_SYS_UBOOT_START			CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_UBOOT_START			CONFIG_TEXT_BASE
 
 #define ENV_BOOT_READ_IMAGE \
 	"boot_rd_img=mmc dev 0" \

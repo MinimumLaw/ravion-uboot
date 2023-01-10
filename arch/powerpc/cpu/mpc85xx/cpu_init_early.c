@@ -30,7 +30,7 @@ void setup_ifc(void)
 	_mas0 = MAS0_TLBSEL(1) | MAS0_ESEL(15);
 	_mas1 = MAS1_VALID | MAS1_TID(0) | MAS1_TS | MAS1_IPROT |
 			MAS1_TSIZE(BOOKE_PAGESZ_4M);
-	_mas2 = FSL_BOOKE_MAS2(CONFIG_SYS_TEXT_BASE, MAS2_I|MAS2_G);
+	_mas2 = FSL_BOOKE_MAS2(CONFIG_TEXT_BASE, MAS2_I | MAS2_G);
 	_mas3 = FSL_BOOKE_MAS3(flash_phys, 0, MAS3_SW|MAS3_SR|MAS3_SX);
 	_mas7 = FSL_BOOKE_MAS7(flash_phys);
 
@@ -58,7 +58,7 @@ void setup_ifc(void)
 			MAS0_ESEL(CONFIG_SYS_PPC_E500_DEBUG_TLB);
 	_mas1 = MAS1_VALID | MAS1_TID(0) | MAS1_IPROT |
 			MAS1_TSIZE(BOOKE_PAGESZ_4M);
-	_mas2 = FSL_BOOKE_MAS2(CONFIG_SYS_TEXT_BASE, MAS2_I|MAS2_G);
+	_mas2 = FSL_BOOKE_MAS2(CONFIG_TEXT_BASE, MAS2_I | MAS2_G);
 	_mas3 = FSL_BOOKE_MAS3(flash_phys, 0, MAS3_SW|MAS3_SR|MAS3_SX);
 	_mas7 = FSL_BOOKE_MAS7(flash_phys);
 
@@ -76,7 +76,7 @@ void setup_ifc(void)
 	ifc_out32(&(ifc_regs.gregs->csor_cs[0].csor), CONFIG_SYS_CSOR0);
 	ifc_out32(&(ifc_regs.gregs->amask_cs[0].amask), CONFIG_SYS_AMASK0);
 
-	return ;
+	return;
 }
 #endif
 
@@ -85,10 +85,10 @@ void cpu_init_early_f(void *fdt)
 {
 	u32 mas0, mas1, mas2, mas3, mas7;
 #ifdef CONFIG_SYS_FSL_ERRATUM_P1010_A003549
-	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+	ccsr_gur_t *gur = (void *)(CFG_SYS_MPC85xx_GUTS_ADDR);
 #endif
 #ifdef CONFIG_A003399_NOR_WORKAROUND
-	ccsr_l2cache_t *l2cache = (void *)CONFIG_SYS_MPC85xx_L2_ADDR;
+	ccsr_l2cache_t *l2cache = (void *)CFG_SYS_MPC85xx_L2_ADDR;
 	u32  *dst, *src;
 	void (*setup_ifc_sram)(void);
 	int i;

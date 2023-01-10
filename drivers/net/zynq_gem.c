@@ -328,7 +328,7 @@ static int zynq_phy_init(struct udevice *dev)
 
 	priv->phydev = phy_connect(priv->bus, priv->phyaddr, dev,
 				   priv->interface);
-	if (!priv->phydev)
+	if (IS_ERR_OR_NULL(priv->phydev))
 		return -ENODEV;
 
 	if (priv->max_speed) {
@@ -500,10 +500,13 @@ static int zynq_gem_init(struct udevice *dev)
 	}
 #endif
 
-	ret = clk_set_rate(&priv->tx_clk, clk_rate);
-	if (IS_ERR_VALUE(ret)) {
-		dev_err(dev, "failed to set tx clock rate\n");
-		return ret;
+	ret = clk_get_rate(&priv->tx_clk);
+	if (ret != clk_rate) {
+		ret = clk_set_rate(&priv->tx_clk, clk_rate);
+		if (IS_ERR_VALUE(ret)) {
+			dev_err(dev, "failed to set tx clock rate %ld\n", clk_rate);
+			return ret;
+		}
 	}
 
 	ret = clk_enable(&priv->tx_clk);
@@ -657,21 +660,6 @@ static void zynq_gem_halt(struct udevice *dev)
 
 	clrsetbits_le32(&regs->nwctrl, ZYNQ_GEM_NWCTRL_RXEN_MASK |
 						ZYNQ_GEM_NWCTRL_TXEN_MASK, 0);
-}
-
-__weak int zynq_board_read_rom_ethaddr(unsigned char *ethaddr)
-{
-	return -ENOSYS;
-}
-
-static int zynq_gem_read_rom_mac(struct udevice *dev)
-{
-	struct eth_pdata *pdata = dev_get_plat(dev);
-
-	if (!pdata)
-		return -ENOSYS;
-
-	return zynq_board_read_rom_ethaddr(pdata->enetaddr);
 }
 
 static int zynq_gem_miiphy_read(struct mii_dev *bus, int addr,
@@ -881,7 +869,6 @@ static const struct eth_ops zynq_gem_ops = {
 	.free_pkt		= zynq_gem_free_pkt,
 	.stop			= zynq_gem_halt,
 	.write_hwaddr		= zynq_gem_setup_mac,
-	.read_rom_hwaddr	= zynq_gem_read_rom_mac,
 };
 
 static int zynq_gem_of_to_plat(struct udevice *dev)
