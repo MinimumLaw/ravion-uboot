@@ -90,6 +90,10 @@ int board_init(void)
 
 int board_late_init(void)
 {
+	/* restore critical boot env */
+	env_set("bootdelay","-2");
+	env_set("boot_syslinux_conf","extlinux/extlinux.conf");
+
 	/* check boot from USB */
 	if (is_boot_from_usb()) {
 		puts("Factory mode enabled!\n");

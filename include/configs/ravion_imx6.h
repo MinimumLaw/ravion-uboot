@@ -62,8 +62,6 @@ SDRAM START - 0x1000 0000
 #include "imx6_spl.h"
 /* SPL Basic params */
 #define CONFIG_MXC_UART_BASE		UART1_BASE  /* debug console */
-/* SPL MMC Configuration */
-#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC3_BASE_ADDR
 #endif
 
 #define BOOT_TARGET_DEVICES(func) \
