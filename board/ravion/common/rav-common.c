@@ -75,7 +75,7 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 
 int show_board_info(void)
 {
-	/* check config bloack present and valid */
+	/* check config block present and valid */
 	if (read_rav_cfg_block()) {
 		printf( "No config block found!\n"
 			"Module personalisation required!\n");

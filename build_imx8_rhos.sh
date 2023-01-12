@@ -14,6 +14,6 @@ fi
 if [ -f .config ]; then
 	make $*
 else
-	make imx8mq_evk_defconfig
+	make imx8mq_rhos_defconfig
 	make $*
 fi
