@@ -108,6 +108,7 @@ SDRAM START - 0x1000 0000
  * Required for back compatible
  ****************************************************************************/
 #define DISTRO_FIXUP \
+	"usb_pgood_delay=50\0" \
 	"board=kitsbimx6\0" \
 	"ravion_fixup=" \
 	    "env info -d && saveenv; " \
