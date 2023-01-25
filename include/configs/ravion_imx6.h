@@ -108,7 +108,7 @@ SDRAM START - 0x1000 0000
  * Required for back compatible
  ****************************************************************************/
 #define DISTRO_FIXUP \
-	"usb_pgood_delay=50\0" \
+	"usb_pgood_delay=250\0" \
 	"board=kitsbimx6\0" \
 	"ravion_fixup=" \
 	    "env info -d && saveenv; " \
@@ -120,7 +120,7 @@ SDRAM START - 0x1000 0000
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"__INF0__=Ravion-V2 I.MX6 CPU Module BSP package\0" \
 	"__INF1__=Created: Alex A. Mihaylov AKA MinimumLaw, MinimumLaw@Rambler.Ru\0" \
-	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2022\0" \
+	"__INF2__=Request: Radioavionica Corp, Saint-Petersburg, Russia, 2023\0" \
 	"__INF3__=License: GPL v2 and above, https://github.com/MinimumLaw\0" \
 	MEM_LAYOUT_ENV_SETTINGS \
 	VARIANT \
