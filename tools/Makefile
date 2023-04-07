@@ -27,30 +27,27 @@ ifneq ($(HOST_TOOLS_ALL),)
 CONFIG_ARCH_KIRKWOOD = y
 CONFIG_CMD_LOADS = y
 CONFIG_CMD_NET = y
-CONFIG_XWAY_SWAP_BYTES = y
 CONFIG_NETCONSOLE = y
-CONFIG_SHA1_CHECK_UB_IMG = y
 CONFIG_ARCH_SUNXI = y
 endif
 
 subdir-$(HOST_TOOLS_ALL) += gdb
 
 # Merge all the different vars for envcrc into one
-ENVCRC-$(CONFIG_ENV_IS_EMBEDDED) = y
 ENVCRC-$(CONFIG_ENV_IS_IN_EEPROM) = y
 ENVCRC-$(CONFIG_ENV_IS_IN_FLASH) = y
 ENVCRC-$(CONFIG_ENV_IS_IN_ONENAND) = y
 ENVCRC-$(CONFIG_ENV_IS_IN_NAND) = y
 ENVCRC-$(CONFIG_ENV_IS_IN_NVRAM) = y
 ENVCRC-$(CONFIG_ENV_IS_IN_SPI_FLASH) = y
-CONFIG_BUILD_ENVCRC ?= $(ENVCRC-y)
+BUILD_ENVCRC ?= $(ENVCRC-y)
 
 hostprogs-$(CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER) += atmel_pmecc_params
 
 hostprogs-$(CONFIG_VIDEO_LOGO) += bmp_logo
 HOSTCFLAGS_bmp_logo.o := -pedantic
 
-hostprogs-$(CONFIG_BUILD_ENVCRC) += envcrc
+hostprogs-$(BUILD_ENVCRC) += envcrc
 envcrc-objs := envcrc.o lib/crc32.o env/embedded.o lib/sha1.o
 
 hostprogs-$(CONFIG_CMD_NET) += gen_eth_addr
@@ -62,9 +59,6 @@ HOSTCFLAGS_gen_ethaddr_crc.o := -pedantic
 
 hostprogs-$(CONFIG_CMD_LOADS) += img2srec
 HOSTCFLAGS_img2srec.o := -pedantic
-
-hostprogs-$(CONFIG_XWAY_SWAP_BYTES) += xway-swap-bytes
-HOSTCFLAGS_xway-swap-bytes.o := -pedantic
 
 hostprogs-y += mkenvimage
 mkenvimage-objs := mkenvimage.o os_support.o lib/crc32.o
@@ -159,9 +153,9 @@ fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
 file2include-objs := file2include.o
 
 ifneq ($(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_TOOLS_LIBCRYPTO),)
-# Add CONFIG_MXS into host CFLAGS, so we can check whether or not register
+# Add CFG_MXS into host CFLAGS, so we can check whether or not register
 # the mxsimage support within tools/mxsimage.c .
-HOSTCFLAGS_mxsimage.o += -DCONFIG_MXS
+HOSTCFLAGS_mxsimage.o += -DCFG_MXS
 endif
 
 ifdef CONFIG_TOOLS_LIBCRYPTO
@@ -218,15 +212,13 @@ hostprogs-$(CONFIG_ARCH_SUNXI) += sunxi-spl-image-builder
 sunxi-spl-image-builder-objs := sunxi-spl-image-builder.o lib/bch.o
 
 hostprogs-$(CONFIG_NETCONSOLE) += ncb
-hostprogs-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1
-
-ubsha1-objs := os_support.o ubsha1.o lib/sha1.o
-
-HOSTCFLAGS_ubsha1.o := -pedantic
 
 hostprogs-$(CONFIG_ARCH_KIRKWOOD) += kwboot
 hostprogs-$(CONFIG_ARCH_MVEBU) += kwboot
+
 hostprogs-y += proftool
+proftool-objs = proftool.o lib/abuf.o
+
 hostprogs-$(CONFIG_STATIC_RELA) += relocate-rela
 hostprogs-$(CONFIG_RISCV) += prelink-riscv
 
@@ -274,6 +266,10 @@ $(obj)/boot/%.c $(obj)/common/%.c $(obj)/env/%.c $(obj)/lib/%.c:
 clean-dirs := lib common
 
 always := $(hostprogs-y)
+
+# Host tool to dump the currently configured default environment,
+# build it on demand, i.e. not add it to 'always'.
+hostprogs-y += printinitialenv
 
 # Generated LCD/video logo
 LOGO_H = $(objtree)/include/bmp_logo.h

@@ -112,10 +112,13 @@ config VIDEO_BPP32
 
 config VIDEO_ANSI
 	bool "Support ANSI escape sequences in video console"
-	default y
+	default y if EFI_LOADER
 	help
 	  Enable ANSI escape sequence decoding for a more fully functional
-	  console.
+	  console. Functionality includes changing the text colour and moving
+	  the cursor. These date from the 1970s and are still widely used today
+	  to control a text terminal. U-Boot implements these by decoding the
+	  sequences and performing the appropriate operation.
 
 config VIDEO_MIPI_DSI
 	bool "Support MIPI DSI interface"
@@ -573,6 +576,8 @@ config ATMEL_HLCD
 	help
 	   HLCDC supports video output to an attached LCD panel.
 
+source "drivers/video/ti/Kconfig"
+
 source "drivers/video/exynos/Kconfig"
 
 config LOGICORE_DP_TX
@@ -622,7 +627,7 @@ config VIDEO_ARM_MALIDP
 
 config VIDEO_SANDBOX_SDL
 	bool "Enable sandbox video console using SDL"
-	depends on SANDBOX
+	depends on SANDBOX_SDL
 	help
 	  When using sandbox you can enable an emulated LCD display which
 	  appears as an SDL (Simple DirectMedia Layer) window. This is a
@@ -630,6 +635,8 @@ config VIDEO_SANDBOX_SDL
 	  a normal bitmap display and can display images as well as text.
 
 source "drivers/video/stm32/Kconfig"
+
+source "drivers/video/tidss/Kconfig"
 
 config VIDEO_TEGRA20
 	bool "Enable LCD support on Tegra20"

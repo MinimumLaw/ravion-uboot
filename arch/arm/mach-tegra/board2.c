@@ -56,6 +56,7 @@ __weak void gpio_early_init_uart(void) {}
 __weak void pin_mux_display(void) {}
 __weak void start_cpu_fan(void) {}
 __weak void cboot_late_init(void) {}
+__weak void nvidia_board_late_init(void) {}
 
 #if defined(CONFIG_TEGRA_NAND)
 __weak void pin_mux_nand(void)
@@ -89,7 +90,7 @@ int checkboard(void)
 {
 	int board_id = tegra_board_id();
 
-	printf("Board: %s", CONFIG_TEGRA_BOARD_STRING);
+	printf("Board: %s", CFG_TEGRA_BOARD_STRING);
 	if (board_id != -1)
 		printf(", ID: %d\n", board_id);
 	printf("\n");
@@ -267,6 +268,7 @@ int board_late_init(void)
 #endif
 	start_cpu_fan();
 	cboot_late_init();
+	nvidia_board_late_init();
 
 	return 0;
 }
@@ -370,7 +372,7 @@ int dram_init_banksize(void)
 
 	/* fall back to default DRAM bank size computation */
 
-	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_dram[0].start = CFG_SYS_SDRAM_BASE;
 	gd->bd->bi_dram[0].size = usable_ram_size_below_4g();
 
 #ifdef CONFIG_PCI
@@ -412,5 +414,5 @@ phys_size_t board_get_usable_ram_top(phys_size_t total_size)
 
 	/* fall back to default usable RAM computation */
 
-	return CONFIG_SYS_SDRAM_BASE + usable_ram_size_below_4g();
+	return CFG_SYS_SDRAM_BASE + usable_ram_size_below_4g();
 }

@@ -175,11 +175,14 @@ static __maybe_unused int efi_lmb_reserve(struct lmb *lmb)
 		return 1;
 
 	for (i = 0, map = memmap; i < map_size / sizeof(*map); ++map, ++i) {
-		if (map->type != EFI_CONVENTIONAL_MEMORY)
-			lmb_reserve(lmb,
-				    map_to_sysmem((void *)(uintptr_t)
-						  map->physical_start),
-				    map->num_pages * EFI_PAGE_SIZE);
+		if (map->type != EFI_CONVENTIONAL_MEMORY) {
+			lmb_reserve_flags(lmb,
+					  map_to_sysmem((void *)(uintptr_t)
+							map->physical_start),
+					  map->num_pages * EFI_PAGE_SIZE,
+					  map->type == EFI_RESERVED_MEMORY_TYPE
+					      ? LMB_NOMAP : LMB_NONE);
+		}
 	}
 	efi_free_pool(memmap);
 
@@ -244,8 +247,10 @@ static long lmb_add_region_flags(struct lmb_region *rgn, phys_addr_t base,
 		phys_addr_t rgnbase = rgn->region[i].base;
 		phys_size_t rgnsize = rgn->region[i].size;
 		phys_size_t rgnflags = rgn->region[i].flags;
+		phys_addr_t end = base + size - 1;
+		phys_addr_t rgnend = rgnbase + rgnsize - 1;
 
-		if (rgnbase == base && rgnsize == size) {
+		if (rgnbase <= base && end <= rgnend) {
 			if (flags == rgnflags)
 				/* Already have this region, so we're done */
 				return 0;

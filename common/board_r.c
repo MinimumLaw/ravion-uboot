@@ -155,7 +155,7 @@ static int initr_reloc_global_data(void)
 	 * The fdt_blob needs to be moved to new relocation address
 	 * incase of FDT blob is embedded with in image
 	 */
-	if (CONFIG_IS_ENABLED(OF_EMBED) && CONFIG_IS_ENABLED(NEEDS_MANUAL_RELOC))
+	if (IS_ENABLED(CONFIG_OF_EMBED) && IS_ENABLED(CONFIG_NEEDS_MANUAL_RELOC))
 		gd->fdt_blob += gd->reloc_off;
 
 #ifdef CONFIG_EFI_LOADER
@@ -346,7 +346,7 @@ static int initr_flash(void)
 	 * NOTE: Maybe we should add some schedule()? XXX
 	 */
 	if (env_get_yesno("flashchecksum") == 1) {
-		const uchar *flash_base = (const uchar *)CONFIG_SYS_FLASH_BASE;
+		const uchar *flash_base = (const uchar *)CFG_SYS_FLASH_BASE;
 
 		printf("  CRC: %08X", crc32(0,
 					    flash_base,
@@ -356,8 +356,8 @@ static int initr_flash(void)
 	putc('\n');
 
 	/* update start of FLASH memory    */
-#ifdef CONFIG_SYS_FLASH_BASE
-	bd->bi_flashstart = CONFIG_SYS_FLASH_BASE;
+#ifdef CFG_SYS_FLASH_BASE
+	bd->bi_flashstart = CFG_SYS_FLASH_BASE;
 #endif
 	/* size of FLASH memory (final value) */
 	bd->bi_flashsize = flash_size;
@@ -370,7 +370,7 @@ static int initr_flash(void)
 #if defined(CONFIG_OXC) || defined(CONFIG_RMU)
 	/* flash mapped at end of memory map */
 	bd->bi_flashoffset = CONFIG_TEXT_BASE + flash_size;
-#elif CONFIG_SYS_MONITOR_BASE == CONFIG_SYS_FLASH_BASE
+#elif CONFIG_SYS_MONITOR_BASE == CFG_SYS_FLASH_BASE
 	bd->bi_flashoffset = monitor_flash_len;	/* reserved area for monitor */
 #endif
 	return 0;
@@ -452,8 +452,8 @@ static int initr_env(void)
 		env_set_hex("fdtcontroladdr",
 			    (unsigned long)map_to_sysmem(gd->fdt_blob));
 
-	#if (CONFIG_IS_ENABLED(SAVE_PREV_BL_INITRAMFS_START_ADDR) || \
-						CONFIG_IS_ENABLED(SAVE_PREV_BL_FDT_ADDR))
+	#if (IS_ENABLED(CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR) || \
+						IS_ENABLED(CONFIG_SAVE_PREV_BL_FDT_ADDR))
 		save_prev_bl_data();
 	#endif
 
@@ -533,7 +533,7 @@ static int initr_ide(void)
 }
 #endif
 
-#if defined(CONFIG_PRAM)
+#if defined(CFG_PRAM)
 /*
  * Export available size of memory for Linux, taking into account the
  * protected RAM at top of memory
@@ -543,7 +543,7 @@ int initr_mem(void)
 	ulong pram = 0;
 	char memsz[32];
 
-	pram = env_get_ulong("pram", 10, CONFIG_PRAM);
+	pram = env_get_ulong("pram", 10, CFG_PRAM);
 	sprintf(memsz, "%ldk", (long int)((gd->ram_size / 1024) - pram));
 	env_set("mem", memsz);
 
@@ -609,7 +609,7 @@ static init_fnc_t init_sequence_r[] = {
 	 */
 #endif
 	initr_reloc_global_data,
-#if CONFIG_IS_ENABLED(NEEDS_MANUAL_RELOC) && CONFIG_IS_ENABLED(EVENT)
+#if IS_ENABLED(CONFIG_NEEDS_MANUAL_RELOC) && CONFIG_IS_ENABLED(EVENT)
 	event_manual_reloc,
 #endif
 #if defined(CONFIG_SYS_INIT_RAM_LOCK) && defined(CONFIG_E500)
@@ -756,9 +756,6 @@ static init_fnc_t init_sequence_r[] = {
 	initr_status_led,
 #endif
 	/* PPC has a udelay(20) here dating from 2002. Why? */
-#if defined(CONFIG_GPIO_HOG)
-	gpio_hog_probe_all,
-#endif
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
 #endif
@@ -791,7 +788,7 @@ static init_fnc_t init_sequence_r[] = {
 	 */
 	last_stage_init,
 #endif
-#if defined(CONFIG_PRAM)
+#if defined(CFG_PRAM)
 	initr_mem,
 #endif
 	run_main_loop,
@@ -799,6 +796,15 @@ static init_fnc_t init_sequence_r[] = {
 
 void board_init_r(gd_t *new_gd, ulong dest_addr)
 {
+	/*
+	 * The pre-relocation drivers may be using memory that has now gone
+	 * away. Mark serial as unavailable - this will fall back to the debug
+	 * UART if available.
+	 *
+	 * Do the same with log drivers since the memory may not be available.
+	 */
+	gd->flags &= ~(GD_FLG_SERIAL_READY | GD_FLG_LOG_READY);
+
 	/*
 	 * Set up the new global data pointer. So far only x86 does this
 	 * here.

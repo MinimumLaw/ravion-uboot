@@ -36,10 +36,9 @@ config TIMESTAMP
 	  loaded that does not, the message 'Wrong FIT format: no timestamp'
 	  is shown.
 
-if FIT
-
 config FIT_EXTERNAL_OFFSET
 	hex "FIT external data offset"
+	depends on FIT
 	default 0x0
 	help
 	  This specifies a data offset in fit image.
@@ -50,6 +49,7 @@ config FIT_EXTERNAL_OFFSET
 
 config FIT_FULL_CHECK
 	bool "Do a full check of the FIT before using it"
+	depends on FIT
 	default y
 	help
 	  Enable this do a full check of the FIT to make sure it is valid. This
@@ -59,7 +59,7 @@ config FIT_FULL_CHECK
 
 config FIT_SIGNATURE
 	bool "Enable signature verification of FIT uImages"
-	depends on DM
+	depends on DM && FIT
 	select HASH
 	imply RSA
 	imply RSA_VERIFY
@@ -97,7 +97,7 @@ config FIT_RSASSA_PSS
 
 config FIT_CIPHER
 	bool "Enable ciphering data in a FIT uImages"
-	depends on DM
+	depends on DM && FIT
 	select AES
 	help
 	  Enable the feature of data ciphering/unciphering in the tool mkimage
@@ -105,6 +105,7 @@ config FIT_CIPHER
 
 config FIT_VERBOSE
 	bool "Show verbose messages when FIT images fail"
+	depends on FIT
 	help
 	  Generally a system will have valid FIT images so debug messages
 	  are a waste of code space. If you are debugging your images then
@@ -113,6 +114,7 @@ config FIT_VERBOSE
 
 config FIT_BEST_MATCH
 	bool "Select the best match for the kernel device tree"
+	depends on FIT
 	help
 	  When no configuration is explicitly selected, default to the
 	  one whose fdt's compatibility field best matches that of
@@ -122,6 +124,7 @@ config FIT_BEST_MATCH
 
 config FIT_IMAGE_POST_PROCESS
 	bool "Enable post-processing of FIT artifacts after loading by U-Boot"
+	depends on FIT
 	depends on TI_SECURE_DEVICE || SOCFPGA_SECURE_VAB_AUTH
 	default y if TI_SECURE_DEVICE
 	help
@@ -137,15 +140,14 @@ config FIT_IMAGE_POST_PROCESS
 
 config FIT_PRINT
         bool "Support FIT printing"
+	depends on FIT
         default y
         help
           Support printing the content of the fitImage in a verbose manner.
 
-if SPL
-
 config SPL_FIT
 	bool "Support Flattened Image Tree within SPL"
-	depends on SPL
+	depends on SPL && FIT
 	select SPL_HASH
 	select SPL_OF_LIBFDT
 
@@ -157,12 +159,12 @@ config SPL_FIT_PRINT
 
 config SPL_FIT_FULL_CHECK
 	bool "Do a full check of the FIT before using it"
+	depends on SPL_FIT
 	help
 	  Enable this do a full check of the FIT to make sure it is valid. This
 	  helps to protect against carefully crafted FITs which take advantage
 	  of bugs or omissions in the code. This includes a bad structure,
 	  multiple root nodes and the like.
-
 
 config SPL_FIT_SIGNATURE
 	bool "Enable signature verification of FIT firmware within SPL"
@@ -196,6 +198,7 @@ config SPL_FIT_RSASSA_PSS
 
 config SPL_LOAD_FIT
 	bool "Enable SPL loading U-Boot as a FIT (basic fitImage features)"
+	depends on SPL && FIT
 	select SPL_FIT
 	help
 	  Normally with the SPL framework a legacy image is generated as part
@@ -217,7 +220,7 @@ config SPL_LOAD_FIT
 
 config SPL_LOAD_FIT_ADDRESS
 	hex "load address of fit image"
-	depends on SPL_LOAD_FIT
+	depends on SPL_LOAD_FIT || SPL_RAM_SUPPORT || TPL_RAM_SUPPORT
 	default 0x0
 	help
 	  Specify the load address of the fit image that will be loaded
@@ -243,6 +246,7 @@ config SPL_LOAD_FIT_APPLY_OVERLAY_BUF_SZ
 
 config SPL_LOAD_FIT_FULL
 	bool "Enable SPL loading U-Boot as a FIT (full fitImage features)"
+	depends on FIT
 	select SPL_FIT
 	help
 	  Normally with the SPL framework a legacy image is generated as part
@@ -277,20 +281,18 @@ config SPL_FIT_SOURCE
 
 config USE_SPL_FIT_GENERATOR
 	bool "Use a script to generate the .its script"
-	default y if SPL_FIT && (!ARCH_SUNXI && !RISCV)
+	depends on SPL_FIT
+	default y if SPL_FIT && ARCH_ZYNQMP
 
 config SPL_FIT_GENERATOR
 	string ".its file generator script for U-Boot FIT image"
 	depends on USE_SPL_FIT_GENERATOR
-	default "arch/arm/mach-rockchip/make_fit_atf.py" if SPL_LOAD_FIT && ARCH_ROCKCHIP
 	default "arch/arm/mach-zynqmp/mkimage_fit_atf.sh" if SPL_LOAD_FIT && ARCH_ZYNQMP
 	help
 	  Specifies a (platform specific) script file to generate the FIT
 	  source file used to build the U-Boot FIT image file. This gets
 	  passed a list of supported device tree file stub names to
 	  include in the generated image.
-
-endif # SPL
 
 if VPL
 
@@ -342,13 +344,37 @@ config VPL_FIT_SIGNATURE_MAX_SIZE
 
 endif # VPL
 
-endif # FIT
-
 config PXE_UTILS
 	bool
 	select MENU
 	help
 	  Utilities for parsing PXE file formats.
+
+config BOOT_DEFAULTS
+	bool  # Common defaults for standard boot and distroboot
+	imply USE_BOOTCOMMAND
+	select CMD_ENV_EXISTS
+	select CMD_EXT2
+	select CMD_EXT4
+	select CMD_FAT
+	select CMD_FS_GENERIC
+	select CMD_PART if PARTITIONS
+	select CMD_DHCP if CMD_NET
+	select CMD_PING if CMD_NET
+	select CMD_PXE if CMD_NET
+	select SUPPORT_RAW_INITRD
+	select ENV_VARS_UBOOT_CONFIG
+	select CMD_BOOTI if ARM64
+	select CMD_BOOTZ if ARM && !ARM64
+	imply CMD_MII if NET
+	imply USB_STORAGE
+	imply EFI_PARTITION
+	imply ISO_PARTITION
+	help
+	  These are not required but are commonly needed to support a good
+	  selection of booting methods. Enable this to improve the capability
+	  of U-Boot to boot various images. Currently much functionality is
+	  tied to enabling the command that exercises it.
 
 config BOOTSTD
 	bool "Standard boot support"
@@ -405,6 +431,16 @@ config VPL_BOOTSTD
 	  handle the firmware part of VBE.
 
 if BOOTSTD
+
+config BOOTSTD_DEFAULTS
+	bool "Select some common defaults for standard boot"
+	depends on BOOTSTD
+	imply USE_BOOTCOMMAND
+	select BOOT_DEFAULTS
+	help
+	  These are not required but are commonly needed to support a good
+	  selection of booting methods. Enable this to improve the capability
+	  of U-Boot to boot various images.
 
 config BOOTSTD_BOOTCOMMAND
 	bool "Use bootstd to boot"
@@ -473,6 +509,7 @@ config BOOTMETH_VBE
 	depends on FIT
 	default y
 	select BOOTMETH_GLOBAL
+	select EVENT
 	help
 	  Enables support for VBE boot. This is a standard boot method which
 	  supports selection of various firmware components, seleciton of an OS to
@@ -481,6 +518,7 @@ config BOOTMETH_VBE
 config SPL_BOOTMETH_VBE
 	bool "Bootdev support for Verified Boot for Embedded (SPL)"
 	depends on SPL && FIT
+	select EVENT
 	default y if VPL
 	help
 	  Enables support for VBE boot. This is a standard boot method which
@@ -490,6 +528,7 @@ config SPL_BOOTMETH_VBE
 config VPL_BOOTMETH_VBE
 	bool "Bootdev support for Verified Boot for Embedded (VPL)"
 	depends on VPL && FIT
+	select EVENT
 	default y
 	help
 	  Enables support for VBE boot. This is a standard boot method which
@@ -555,6 +594,19 @@ config VPL_BOOTMETH_VBE_SIMPLE_FW
 	  decision is made.
 
 endif # BOOTMETH_VBE
+
+config EXPO
+	bool "Support for expos - groups of scenes displaying a UI"
+	depends on VIDEO
+	default y if BOOTMETH_VBE
+	help
+	  An expo is a way of presenting and collecting information from the
+	  user. It consists of a collection of 'scenes' of which only one is
+	  presented at a time. An expo is typically used to show a boot menu
+	  and allow settings to be changed.
+
+	  The expo can be presented in graphics form using a vidconsole, or in
+	  text form on a serial console.
 
 config BOOTMETH_SANDBOX
 	def_bool y
@@ -654,7 +706,7 @@ config SYS_MONITOR_BASE
 	default TEXT_BASE
 	help
 	  The physical start address of boot monitor code (which is the same as
-	  CONFIG_TEXT_BASE when linking) and the same as CONFIG_SYS_FLASH_BASE
+	  CONFIG_TEXT_BASE when linking) and the same as CFG_SYS_FLASH_BASE
 	  when booting from flash.
 
 config SPL_SYS_MONITOR_BASE
@@ -771,11 +823,24 @@ config SYS_BOOT_RAMDISK_HIGH
 	depends on CMD_BOOTM || CMD_BOOTI || CMD_BOOTZ
 	depends on !(NIOS2 || SANDBOX || SH || XTENSA)
 	def_bool y
+	select LMB
 	help
 	  Enable initrd_high functionality.  If defined then the initrd_high
 	  feature is enabled and the boot* ramdisk subcommand is enabled.
 
 endmenu		# Boot images
+
+config DISTRO_DEFAULTS
+	bool "Select defaults suitable for booting general purpose Linux distributions"
+	select BOOT_DEFAULTS
+	select AUTO_COMPLETE
+	select CMDLINE_EDITING
+	select CMD_SYSBOOT
+	select HUSH_PARSER
+	select SYS_LONGHELP
+	help
+	  Select this to enable various options and commands which are suitable
+	  for building u-boot for booting general purpose Linux distributions.
 
 menu "Boot timing"
 

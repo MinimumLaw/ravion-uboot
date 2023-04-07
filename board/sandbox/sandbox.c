@@ -29,7 +29,7 @@
  */
 gd_t *gd;
 
-#if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
+#if IS_ENABLED(CONFIG_EFI_HAVE_CAPSULE_SUPPORT)
 /* GUIDs for capsule updatable firmware images */
 #define SANDBOX_UBOOT_IMAGE_GUID \
 	EFI_GUID(0x09d7cf52, 0x0720, 0x4710, 0x91, 0xd1, \
@@ -115,7 +115,7 @@ enum env_location env_get_location(enum env_operation op, int prio)
 
 int dram_init(void)
 {
-	gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
+	gd->ram_size = CFG_SYS_SDRAM_SIZE;
 	return 0;
 }
 
@@ -173,7 +173,7 @@ int board_late_init(void)
 int init_addr_map(void)
 {
 	if (IS_ENABLED(CONFIG_ADDR_MAP))
-		addrmap_set_entry(0, 0, CONFIG_SYS_SDRAM_SIZE, 0);
+		addrmap_set_entry(0, 0, CFG_SYS_SDRAM_SIZE, 0);
 
 	return 0;
 }

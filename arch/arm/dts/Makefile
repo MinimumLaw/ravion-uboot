@@ -153,6 +153,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399-nanopi-r4s.dtb \
 	rk3399-orangepi.dtb \
 	rk3399-pinebook-pro.dtb \
+	rk3399-pinephone-pro.dtb \
 	rk3399-puma-haikou.dtb \
 	rk3399-roc-pc.dtb \
 	rk3399-roc-pc-mezzanine.dtb \
@@ -164,11 +165,20 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399pro-rock-pi-n10.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RK3568) += \
-	rk3568-evb.dtb
+	rk3568-evb.dtb \
+	rk3566-radxa-cm3-io.dtb \
+	rk3568-rock-3a.dtb
+
+dtb-$(CONFIG_ROCKCHIP_RK3588) += \
+	rk3588-edgeble-neu6a-io.dtb \
+	rk3588-rock-5b.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RV1108) += \
 	rv1108-elgin-r1.dtb \
 	rv1108-evb.dtb
+
+dtb-$(CONFIG_ROCKCHIP_RV1126) += \
+	rv1126-edgeble-neu2-io.dtb
 
 dtb-$(CONFIG_ARCH_S5P4418) += \
 	s5p4418-nanopi2.dtb
@@ -198,7 +208,9 @@ dtb-$(CONFIG_ARCH_MESON) += \
 	meson-g12b-gtking.dtb \
 	meson-g12b-gtking-pro.dtb \
 	meson-g12b-gsking-x.dtb \
+	meson-g12b-odroid-go-ultra.dtb \
 	meson-g12b-odroid-n2.dtb \
+	meson-g12b-odroid-n2l.dtb \
 	meson-g12b-odroid-n2-plus.dtb \
 	meson-sm1-bananapi-m5.dtb \
 	meson-sm1-khadas-vim3l.dtb \
@@ -241,6 +253,8 @@ dtb-$(CONFIG_ARCH_MVEBU) +=			\
 	armada-385-atl-x530.dtb			\
 	armada-385-atl-x530DP.dtb		\
 	armada-385-db-88f6820-amc.dtb		\
+	armada-385-synology-ds116.dtb		\
+	armada-385-thecus-n2350.dtb		\
 	armada-385-turris-omnia.dtb		\
 	armada-388-clearfog.dtb			\
 	armada-388-gp.dtb			\
@@ -336,7 +350,6 @@ dtb-$(CONFIG_ARCH_ZYNQ) += \
 	zynq-zybo-z7.dtb
 dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	avnet-ultra96-rev1.dtb			\
-	avnet-ultrazedev-cc-v1.0-ultrazedev-som-v1.0.dtb	\
 	zynqmp-a2197-revA.dtb			\
 	zynqmp-dlc21-revA.dtb			\
 	zynqmp-e-a2197-00-revA.dtb		\
@@ -350,6 +363,8 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-mini-emmc1.dtb			\
 	zynqmp-mini-nand.dtb			\
 	zynqmp-mini-qspi.dtb			\
+	zynqmp-sm-k24-revA.dtb			\
+	zynqmp-smk-k24-revA.dtb			\
 	zynqmp-sm-k26-revA.dtb			\
 	zynqmp-smk-k26-revA.dtb			\
 	zynqmp-sck-kr-g-revA.dtbo		\
@@ -433,6 +448,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_agilex_socdk.dtb			\
 	socfpga_arria5_secu1.dtb			\
 	socfpga_arria5_socdk.dtb			\
+	socfpga_arria10_chameleonv3_270_2.dtb		\
 	socfpga_arria10_chameleonv3_270_3.dtb		\
 	socfpga_arria10_chameleonv3_480_2.dtb		\
 	socfpga_arria10_socdk_sdmmc.dtb			\
@@ -955,6 +971,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-kontron-bl.dtb \
 	imx8mm-kontron-bl-osm-s.dtb \
 	imx8mm-mx8menlo.dtb \
+	imx8mm-phg.dtb \
 	imx8mm-venice.dtb \
 	imx8mm-venice-gw71xx-0x.dtb \
 	imx8mm-venice-gw72xx-0x.dtb \
@@ -1249,7 +1266,9 @@ dtb-$(CONFIG_SOC_K3_J721E) += k3-j721e-common-proc-board.dtb \
 			      k3-j7200-r5-common-proc-board.dtb \
 			      k3-j721e-sk.dtb \
 			      k3-j721e-r5-sk.dtb
-dtb-$(CONFIG_SOC_K3_J721S2) += k3-j721s2-common-proc-board.dtb\
+dtb-$(CONFIG_SOC_K3_J721S2) += k3-am68-sk-base-board.dtb\
+			       k3-am68-sk-r5-base-board.dtb\
+			       k3-j721s2-common-proc-board.dtb\
 			       k3-j721s2-r5-common-proc-board.dtb
 dtb-$(CONFIG_SOC_K3_AM642) += k3-am642-evm.dtb \
 			      k3-am642-r5-evm.dtb \
@@ -1258,6 +1277,9 @@ dtb-$(CONFIG_SOC_K3_AM642) += k3-am642-evm.dtb \
 
 dtb-$(CONFIG_SOC_K3_AM625) += k3-am625-sk.dtb \
 			      k3-am625-r5-sk.dtb
+
+dtb-$(CONFIG_SOC_K3_AM625) += k3-am62a7-sk.dtb \
+			      k3-am62a7-r5-sk.dtb
 
 dtb-$(CONFIG_ARCH_MEDIATEK) += \
 	mt7622-rfb.dtb \

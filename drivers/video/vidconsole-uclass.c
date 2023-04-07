@@ -19,11 +19,6 @@
 #include <video_font.h>		/* Bitmap font for code page 437 */
 #include <linux/ctype.h>
 
-/* By default we scroll by a single line */
-#ifndef CONFIG_CONSOLE_SCROLL_LINES
-#define CONFIG_CONSOLE_SCROLL_LINES 1
-#endif
-
 int vidconsole_putc_xy(struct udevice *dev, uint x, uint y, char ch)
 {
 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
@@ -555,6 +550,39 @@ static void vidconsole_puts(struct stdio_dev *sdev, const char *s)
 		console_puts_select_stderr(true, "[vc err: video_sync]");
 #endif
 	}
+}
+
+void vidconsole_list_fonts(struct udevice *dev)
+{
+	struct vidfont_info info;
+	int ret, i;
+
+	for (i = 0, ret = 0; !ret; i++) {
+		ret = vidconsole_get_font(dev, i, &info);
+		if (!ret)
+			printf("%s\n", info.name);
+	}
+}
+
+int vidconsole_get_font(struct udevice *dev, int seq,
+			struct vidfont_info *info)
+{
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+
+	if (!ops->get_font)
+		return -ENOSYS;
+
+	return ops->get_font(dev, seq, info);
+}
+
+int vidconsole_select_font(struct udevice *dev, const char *name, uint size)
+{
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+
+	if (!ops->select_font)
+		return -ENOSYS;
+
+	return ops->select_font(dev, name, size);
 }
 
 /* Set up the number of rows and colours (rotated drivers override this) */

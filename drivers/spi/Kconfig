@@ -429,6 +429,16 @@ config SANDBOX_SPI
 		};
 	  };
 
+config SANDBOX_SPI_MAX_BUS
+	int
+	depends on SANDBOX
+	default 1
+
+config SANDBOX_SPI_MAX_CS
+	int
+	depends on SANDBOX
+	default 10
+
 config SPI_ASPEED_SMC
 	bool "ASPEED SPI flash controller driver"
 	depends on DM_SPI && SPI_MEM
@@ -450,6 +460,14 @@ config SOFT_SPI
 	help
 	 Enable Soft SPI driver. This driver is to use GPIO simulate
 	 the SPI protocol.
+
+config SPI_SN_F_OSPI
+	tristate "Socionext F_OSPI SPI flash controller"
+	depends on SPI_MEM
+	help
+	  This enables support for the Socionext F_OSPI controller
+	  for connecting an SPI flash memory over up to 8-bit wide bus.
+	  It supports indirect access mode only.
 
 config SPI_SUNXI
 	bool "Allwinner SoC SPI controllers"

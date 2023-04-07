@@ -385,6 +385,7 @@ config SPL_STACK_R_ADDR
 config SPL_STACK_R_MALLOC_SIMPLE_LEN
 	depends on SPL_STACK_R && SPL_SYS_MALLOC_SIMPLE
 	hex "Size of malloc_simple heap after switching to DRAM SPL stack"
+	default 0x400000 if ARCH_K3 && ARM64
 	default 0x100000
 	help
 	  Specify the amount of the stack to use as memory pool for
@@ -1232,6 +1233,11 @@ config SPL_SATA
 	  expense and power consumption. This enables loading from SATA
 	  using a configured device.
 
+config SYS_SATA_FAT_BOOT_PARTITION
+	int "Partition on the SATA disk to load U-Boot from"
+	depends on SPL_SATA && SPL_FS_FAT
+	default 1
+
 config SPL_SATA_RAW_U_BOOT_USE_SECTOR
 	bool "SATA raw mode: by sector"
 	depends on SPL_SATA
@@ -1342,7 +1348,7 @@ config SPL_USB_HOST
 
 config SPL_USB_STORAGE
 	bool "Support loading from USB"
-	depends on SPL_USB_HOST && !(BLK && !DM_USB)
+	depends on SPL_USB_HOST
 	help
 	  Enable support for USB devices in SPL. This allows use of USB
 	  devices such as hard drives and flash drivers for loading U-Boot.

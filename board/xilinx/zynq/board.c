@@ -55,7 +55,7 @@ int board_late_init(void)
 		return 0;
 	}
 
-	if (!CONFIG_IS_ENABLED(ENV_VARS_UBOOT_RUNTIME_CONFIG))
+	if (!IS_ENABLED(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG))
 		return 0;
 
 	switch ((zynq_slcr_get_boot_mode()) & ZYNQ_BM_MASK) {
@@ -105,7 +105,7 @@ int board_late_init(void)
 	return board_late_init_xilinx();
 }
 
-#if !defined(CONFIG_SYS_SDRAM_BASE) && !defined(CONFIG_SYS_SDRAM_SIZE)
+#if !defined(CFG_SYS_SDRAM_BASE) && !defined(CFG_SYS_SDRAM_SIZE)
 int dram_init_banksize(void)
 {
 	return fdtdec_setup_memory_banksize();
@@ -123,8 +123,8 @@ int dram_init(void)
 #else
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
-				    CONFIG_SYS_SDRAM_SIZE);
+	gd->ram_size = get_ram_size((void *)CFG_SYS_SDRAM_BASE,
+				    CFG_SYS_SDRAM_SIZE);
 
 	zynq_ddrc_init();
 

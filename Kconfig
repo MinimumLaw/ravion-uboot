@@ -191,33 +191,6 @@ config XEN
 
 	  [1] - https://xenproject.org/
 
-config DISTRO_DEFAULTS
-	bool "Select defaults suitable for booting general purpose Linux distributions"
-	select AUTO_COMPLETE
-	select CMDLINE_EDITING
-	select CMD_BOOTI if ARM64
-	select CMD_BOOTZ if ARM && !ARM64
-	select CMD_DHCP if CMD_NET
-	select CMD_ENV_EXISTS
-	select CMD_EXT2
-	select CMD_EXT4
-	select CMD_FAT
-	select CMD_FS_GENERIC
-	select CMD_PART if PARTITIONS
-	select CMD_PING if CMD_NET
-	select CMD_PXE if NET
-	select CMD_SYSBOOT
-	select ENV_VARS_UBOOT_CONFIG
-	select HUSH_PARSER
-	select SUPPORT_RAW_INITRD
-	select SYS_LONGHELP
-	imply CMD_MII if NET
-	imply USB_STORAGE
-	imply USE_BOOTCOMMAND
-	help
-	  Select this to enable various options and commands which are suitable
-	  for building u-boot for booting general purpose Linux distributions.
-
 config ENV_VARS_UBOOT_CONFIG
 	bool "Add arch, board, vendor and soc variables to default environment"
 	help
@@ -264,8 +237,8 @@ config HAS_CUSTOM_SYS_INIT_SP_ADDR
 	default y if TFABOOT
 	help
 	  Typically, we use an initial stack pointer address that is calculated
-	  by taking the statically defined CONFIG_SYS_INIT_RAM_ADDR, adding the
-	  statically defined CONFIG_SYS_INIT_RAM_SIZE and then subtracting the
+	  by taking the statically defined CFG_SYS_INIT_RAM_ADDR, adding the
+	  statically defined CFG_SYS_INIT_RAM_SIZE and then subtracting the
 	  build-time constant of GENERATED_GBL_DATA_SIZE.  On MIPS a different
 	  but statica calculation is performed.  However, some platforms will
 	  take a different approach.  Say Y here to define the address statically
@@ -333,7 +306,7 @@ config SPL_SYS_MALLOC_F_LEN
 	  particular needs this to operate, so that it can allocate the
 	  initial serial device and any others that are needed.
 
-	  It is possible to enable CONFIG_SYS_SPL_MALLOC_START to start a new
+	  It is possible to enable CFG_SYS_SPL_MALLOC_START to start a new
 	  malloc() region in SDRAM once it is inited.
 
 config TPL_SYS_MALLOC_F_LEN
@@ -456,11 +429,12 @@ config BUILD_TARGET
 	string "Build target special images"
 	default "u-boot-with-spl.sfp" if TARGET_SOCFPGA_ARRIA10
 	default "u-boot-with-spl.sfp" if TARGET_SOCFPGA_GEN5
-	default "u-boot-with-spl.kwb" if ARCH_MVEBU && SPL
+	default "u-boot-with-spl.kwb" if ARMADA_32BIT && SPL
 	default "u-boot-elf.srec" if RCAR_GEN3
 	default "u-boot.itb" if !BINMAN && SPL_LOAD_FIT && (ARCH_ROCKCHIP || \
 				ARCH_SUNXI || RISCV || ARCH_ZYNQMP)
-	default "u-boot.kwb" if ARCH_KIRKWOOD
+	default "u-boot.kwb" if (ARCH_KIRKWOOD || ARMADA_32BIT) && !SPL
+	default "u-boot-with-spl.bin" if MPC85xx && !E500MC && !E5500 && !E6500 && SPL
 	default "u-boot-with-spl.bin" if ARCH_AT91 && SPL_NAND_SUPPORT
 	default "u-boot-with-spl.imx" if ARCH_MX6 && SPL
 	help

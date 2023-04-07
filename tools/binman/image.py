@@ -77,7 +77,7 @@ class Image(section.Entry_section):
                  generate=True):
         super().__init__(None, 'section', node, test=test)
         self.copy_to_orig = copy_to_orig
-        self.name = 'main-section'
+        self.name = name
         self.image_name = name
         self._filename = '%s.bin' % self.image_name
         self.fdtmap_dtb = None
@@ -94,9 +94,6 @@ class Image(section.Entry_section):
 
     def ReadNode(self):
         super().ReadNode()
-        filename = fdt_util.GetString(self._node, 'filename')
-        if filename:
-            self._filename = filename
         self.allow_repack = fdt_util.GetBool(self._node, 'allow-repack')
         self._symlink = fdt_util.GetString(self._node, 'symlink')
 

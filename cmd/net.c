@@ -4,6 +4,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_CATEGORY	UCLASS_ETH
+
 /*
  * Boot support
  */
@@ -13,6 +15,7 @@
 #include <dm.h>
 #include <env.h>
 #include <image.h>
+#include <log.h>
 #include <net.h>
 #include <net6.h>
 #include <net/udp.h>
@@ -120,6 +123,38 @@ U_BOOT_CMD(
 	"boot image via network using DHCP/TFTP protocol",
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
 );
+
+int dhcp_run(ulong addr, const char *fname, bool autoload)
+{
+	char *dhcp_argv[] = {"dhcp", NULL, (char *)fname, NULL};
+	struct cmd_tbl cmdtp = {};	/* dummy */
+	char file_addr[17];
+	int old_autoload;
+	int ret, result;
+
+	log_debug("addr=%lx, fname=%s, autoload=%d\n", addr, fname, autoload);
+	old_autoload = env_get_yesno("autoload");
+	ret = env_set("autoload", autoload ? "y" : "n");
+	if (ret)
+		return log_msg_ret("en1", -EINVAL);
+
+	if (autoload) {
+		sprintf(file_addr, "%lx", addr);
+		dhcp_argv[1] = file_addr;
+	}
+
+	result = do_dhcp(&cmdtp, 0, !autoload ? 1 : fname ? 3 : 2, dhcp_argv);
+
+	ret = env_set("autoload", old_autoload == -1 ? NULL :
+		      old_autoload ? "y" : "n");
+	if (ret)
+		return log_msg_ret("en2", -EINVAL);
+
+	if (result)
+		return log_msg_ret("res", -ENOENT);
+
+	return 0;
+}
 #endif
 
 #if defined(CONFIG_CMD_NFS)
@@ -245,7 +280,7 @@ static int parse_args(enum proto_t proto, int argc, char *const argv[])
 
 	switch (argc) {
 	case 1:
-		if (CONFIG_IS_ENABLED(CMD_TFTPPUT) && proto == TFTPPUT)
+		if (IS_ENABLED(CONFIG_CMD_TFTPPUT) && proto == TFTPPUT)
 			return 1;
 
 		/* refresh bootfile name from env */
@@ -254,7 +289,7 @@ static int parse_args(enum proto_t proto, int argc, char *const argv[])
 		break;
 
 	case 2:
-		if (CONFIG_IS_ENABLED(CMD_TFTPPUT) && proto == TFTPPUT)
+		if (IS_ENABLED(CONFIG_CMD_TFTPPUT) && proto == TFTPPUT)
 			return 1;
 		/*
 		 * Only one arg - accept two forms:
@@ -276,7 +311,7 @@ static int parse_args(enum proto_t proto, int argc, char *const argv[])
 		break;
 
 	case 3:
-		if (CONFIG_IS_ENABLED(CMD_TFTPPUT) && proto == TFTPPUT) {
+		if (IS_ENABLED(CONFIG_CMD_TFTPPUT) && proto == TFTPPUT) {
 			if (parse_addr_size(argv))
 				return 1;
 		} else {
@@ -597,7 +632,6 @@ U_BOOT_CMD(
 
 #endif  /* CONFIG_CMD_LINK_LOCAL */
 
-#ifdef CONFIG_DM_ETH
 static int do_net_list(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	const struct udevice *current = eth_get_dev();
@@ -640,7 +674,6 @@ U_BOOT_CMD(
 	"NET sub-system",
 	"list - list available devices\n"
 );
-#endif // CONFIG_DM_ETH
 
 #if defined(CONFIG_CMD_NCSI)
 static int do_ncsi(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
