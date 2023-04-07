@@ -7,7 +7,7 @@
 #ifndef __TEGRA_COMMON_POST_H
 #define __TEGRA_COMMON_POST_H
 
-#if CONFIG_IS_ENABLED(CMD_USB)
+#if IS_ENABLED(CONFIG_CMD_USB)
 # define BOOT_TARGET_USB(func) func(USB, usb, 0)
 #else
 # define BOOT_TARGET_USB(func)
@@ -65,16 +65,12 @@
 #define INITRD_HIGH "ffffffff"
 #endif
 
-#define CONFIG_EXTRA_ENV_SETTINGS \
+#define CFG_EXTRA_ENV_SETTINGS \
 	TEGRA_DEVICE_SETTINGS \
 	MEM_LAYOUT_ENV_SETTINGS \
 	"fdt_high=" FDT_HIGH "\0" \
 	"initrd_high=" INITRD_HIGH "\0" \
 	BOOTENV \
 	BOARD_EXTRA_ENV_SETTINGS
-
-#if defined(CONFIG_TEGRA20_SFLASH) || defined(CONFIG_TEGRA20_SLINK) || defined(CONFIG_TEGRA114_SPI)
-#define CONFIG_TEGRA_SPI
-#endif
 
 #endif /* __TEGRA_COMMON_POST_H */

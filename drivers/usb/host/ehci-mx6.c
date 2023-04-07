@@ -70,8 +70,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UCMD_RESET		(1 << 1) /* controller reset */
 
 /* If this is not defined, assume MX6/MX7/MX8M SoC default */
-#ifndef CONFIG_MXC_USB_PORTSC
-#define CONFIG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
+#ifndef CFG_MXC_USB_PORTSC
+#define CFG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
 #endif
 
 /* Base address for this IP block is 0x02184800 */
@@ -360,7 +360,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	if (index > 3)
 		return -EINVAL;
 
-	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+	if (IS_ENABLED(CONFIG_IMX_MODULE_FUSE)) {
 		if (usb_fused((ulong)ehci)) {
 			printf("SoC fuse indicates USB@0x%lx is unavailable.\n",
 			       (ulong)ehci);
@@ -411,7 +411,7 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		return 0;
 
 	setbits_le32(&ehci->usbmode, CM_HOST);
-	writel(CONFIG_MXC_USB_PORTSC, &ehci->portsc);
+	writel(CFG_MXC_USB_PORTSC, &ehci->portsc);
 	setbits_le32(&ehci->portsc, USB_EN);
 
 	mdelay(10);
@@ -454,7 +454,7 @@ static u32 mx6_portsc(enum usb_phy_interface phy_type)
 	case USBPHY_INTERFACE_MODE_HSIC:
 		return PORT_PTS_HSIC;
 	default:
-		return CONFIG_MXC_USB_PORTSC;
+		return CFG_MXC_USB_PORTSC;
 	}
 }
 
@@ -641,7 +641,7 @@ static int ehci_usb_probe(struct udevice *dev)
 	struct ehci_hcor *hcor;
 	int ret;
 
-	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
+	if (IS_ENABLED(CONFIG_IMX_MODULE_FUSE)) {
 		if (usb_fused((ulong)ehci)) {
 			printf("SoC fuse indicates USB@0x%lx is unavailable.\n",
 			       (ulong)ehci);

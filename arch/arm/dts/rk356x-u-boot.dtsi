@@ -12,13 +12,25 @@
 	};
 
 	chosen {
-		u-boot,spl-boot-order = &sdhci, &sdmmc0;
+		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc0;
 	};
 
 	dmc: dmc {
 		compatible = "rockchip,rk3568-dmc";
 		u-boot,dm-pre-reloc;
 		status = "okay";
+	};
+
+	otp: nvmem@fe38c000 {
+		compatible = "rockchip,rk3568-otp";
+		reg = <0x0 0xfe38c000 0x0 0x4000>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		status = "okay";
+
+		cpu_id: id@a {
+			reg = <0x0a 0x10>;
+		};
 	};
 };
 

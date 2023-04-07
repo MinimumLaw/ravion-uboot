@@ -123,7 +123,7 @@ int event_notify(enum event_t type, void *data, int size)
 
 	ret = notify_static(&event);
 	if (ret)
-		return log_msg_ret("dyn", ret);
+		return log_msg_ret("sta", ret);
 
 	if (CONFIG_IS_ENABLED(EVENT_DYNAMIC)) {
 		ret = notify_dynamic(&event);
@@ -155,7 +155,7 @@ void event_show_spy_list(void)
 	}
 }
 
-#if CONFIG_IS_ENABLED(NEEDS_MANUAL_RELOC)
+#if IS_ENABLED(CONFIG_NEEDS_MANUAL_RELOC)
 int event_manual_reloc(void)
 {
 	struct evspy_info *spy, *end;

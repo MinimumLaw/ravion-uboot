@@ -164,6 +164,16 @@ config SILENT_CONSOLE_UPDATE_ON_RELOC
 	  (e.g. NAND). This option makes the value of the 'silent'
 	  environment variable take effect at relocation.
 
+config SILENT_CONSOLE_UNTIL_ENV
+	bool "Keep console silent until environment is loaded"
+	depends on SILENT_CONSOLE
+	help
+	  This option makes sure U-Boot will never use the console unless the
+	  environment from flash does not contain the 'silent' variable.  If
+	  set, the console is kept silent until after the environment was
+	  loaded.  Use this in combination with PRE_CONSOLE_BUFFER to print out
+	  earlier messages after loading the environment when allowed.
+
 config PRE_CONSOLE_BUFFER
 	bool "Buffer characters before the console is available"
 	help
@@ -594,24 +604,23 @@ config CYCLIC_MAX_CPU_TIME_US
 endif # CYCLIC
 
 config EVENT
-	bool "General-purpose event-handling mechanism"
-	default y if SANDBOX
+	bool
 	help
-	  This enables sending and processing of events, to allow interested
-	  parties to be alerted when something happens. This is an attempt to
-	  stem the flow of weak functions, hooks, functions in board_f.c
-	  and board_r.c and the Kconfig options below.
+	  This adds a framework for general purpose sending and processing of
+	  events, to allow interested parties to be alerted when something
+	  happens. This is an attempt to stem the flow of weak functions,
+	  hooks, functions in board_f.c and board_r.c and the Kconfig options
+	  below.
 
 	  See doc/develop/event.rst for more information.
 
 if EVENT
 
 config EVENT_DYNAMIC
-	bool "Support event registration at runtime"
-	default y if SANDBOX
+	bool
 	help
 	  Enable this to support adding an event spy at runtime, without adding
-	  it to the EVENT_SPy() linker list. This increases code size slightly
+	  it to the EVENT_SPY() linker list. This increases code size slightly
 	  but provides more flexibility for boards and subsystems that need it.
 
 config EVENT_DEBUG
@@ -675,6 +684,10 @@ config BOARD_LATE_INIT
 config CLOCKS
 	bool "Call set_cpu_clk_info"
 	depends on ARM
+
+config HWCONFIG
+	bool "hwconfig infrastructure"
+	default y if PPC || ARCH_LS1021A || FSL_LSCH2 || FSL_LSCH3
 
 config SYS_FSL_CLK
 	bool
@@ -861,7 +874,7 @@ config UPDATE_COMMON
 
 config UPDATE_TFTP
 	bool "Auto-update using fitImage via TFTP"
-	depends on FIT
+	depends on FIT && OF_LIBFDT && !MTD_NOR_FLASH
 	select UPDATE_COMMON
 	help
 	  This option allows performing update of NOR with data in fitImage
@@ -870,16 +883,24 @@ config UPDATE_TFTP
 config UPDATE_TFTP_CNT_MAX
 	int "The number of connection retries during auto-update"
 	default 0
-	depends on UPDATE_TFTP
+	depends on UPDATE_TFTP || DFU_TFTP
 
 config UPDATE_TFTP_MSEC_MAX
 	int "Delay in mSec to wait for the TFTP server during auto-update"
 	default 100
-	depends on UPDATE_TFTP
+	depends on UPDATE_TFTP || DFU_TFTP
+
+config UPDATE_LOAD_ADDR
+	hex "Address in memory to load the update to"
+	depends on UPDATE_TFTP || DFU_TFTP
+	default 0x100000
+	help
+	  This option defines the location in memory to be used to load the
+	  update to, if 'loadaddr' is not set in the environment.
 
 config UPDATE_FIT
 	bool "Firmware update using fitImage"
-	depends on FIT
+	depends on FIT && OF_LIBFDT
 	depends on DFU
 	select UPDATE_COMMON
 	help
@@ -1082,3 +1103,6 @@ config FDT_SIMPLEFB
 	  These functions can be used by board to indicate to the OS
 	  the presence of the simple frame buffer with associated reserved
 	  memory
+
+config IO_TRACE
+	bool

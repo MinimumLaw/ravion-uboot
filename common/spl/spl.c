@@ -43,8 +43,8 @@
 DECLARE_GLOBAL_DATA_PTR;
 DECLARE_BINMAN_MAGIC_SYM;
 
-#ifndef CONFIG_SYS_UBOOT_START
-#define CONFIG_SYS_UBOOT_START	CONFIG_TEXT_BASE
+#ifndef CFG_SYS_UBOOT_START
+#define CFG_SYS_UBOOT_START	CONFIG_TEXT_BASE
 #endif
 
 u32 *boot_params_ptr = NULL;
@@ -250,7 +250,7 @@ void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 		spl_image->entry_point = u_boot_pos;
 		spl_image->load_addr = u_boot_pos;
 	} else {
-		spl_image->entry_point = CONFIG_SYS_UBOOT_START;
+		spl_image->entry_point = CFG_SYS_UBOOT_START;
 		spl_image->load_addr = CONFIG_TEXT_BASE;
 	}
 	spl_image->os = IH_OS_U_BOOT;
@@ -527,8 +527,8 @@ static int spl_common_init(bool setup_malloc)
 
 #if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (setup_malloc) {
-#ifdef CONFIG_MALLOC_F_ADDR
-		gd->malloc_base = CONFIG_MALLOC_F_ADDR;
+#ifdef CFG_MALLOC_F_ADDR
+		gd->malloc_base = CFG_MALLOC_F_ADDR;
 #endif
 		gd->malloc_limit = CONFIG_VAL(SYS_MALLOC_F_LEN);
 		gd->malloc_ptr = 0;
@@ -785,9 +785,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			hang();
 		}
 	}
-
-	if (CONFIG_IS_ENABLED(GPIO_HOG))
-		gpio_hog_probe_all();
 
 #if CONFIG_IS_ENABLED(BOARD_INIT)
 	spl_board_init();

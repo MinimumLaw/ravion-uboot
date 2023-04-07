@@ -229,6 +229,7 @@ enum image_type_t {
 	IH_TYPE_COPRO,			/* Coprocessor Image for remoteproc*/
 	IH_TYPE_SUNXI_EGON,		/* Allwinner eGON Boot Image */
 	IH_TYPE_SUNXI_TOC0,		/* Allwinner TOC0 Boot Image */
+	IH_TYPE_FDT_LEGACY,		/* Binary Flat Device Tree Blob	in a Legacy Image */
 
 	IH_TYPE_COUNT,			/* Number of image types */
 };
@@ -709,16 +710,18 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		   enum fit_load_op load_op, ulong *datap, ulong *lenp);
 
 /**
- * image_source_script() - Execute a script
+ * image_locate_script() - Locate the raw script in an image
  *
- * Executes a U-Boot script at a particular address in memory. The script should
- * have a header (FIT or legacy) with the script type (IH_TYPE_SCRIPT).
- *
- * @addr: Address of script
- * @fit_uname: FIT subimage name
- * Return: result code (enum command_ret_t)
+ * @buf: Address of image
+ * @size: Size of image in bytes
+ * @fit_uname: Node name of FIT image to read
+ * @confname: Node name of FIT config to read
+ * @datap: Returns pointer to raw script on success
+ * @lenp: Returns size of raw script on success
+ * @return 0 if OK, non-zero on error
  */
-int image_source_script(ulong addr, const char *fit_uname);
+int image_locate_script(void *buf, int size, const char *fit_uname,
+			const char *confname, char **datap, uint *lenp);
 
 /**
  * fit_get_node_from_config() - Look up an image a FIT by type
@@ -1031,6 +1034,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 #define FIT_FPGA_PROP		"fpga"
 #define FIT_FIRMWARE_PROP	"firmware"
 #define FIT_STANDALONE_PROP	"standalone"
+#define FIT_SCRIPT_PROP		"script"
 #define FIT_PHASE_PROP		"phase"
 
 #define FIT_MAX_HASH_LEN	HASH_MAX_DIGEST_SIZE
@@ -1258,7 +1262,14 @@ int fit_image_verify_with_data(const void *fit, int image_noffset,
 			       size_t size);
 
 int fit_image_verify(const void *fit, int noffset);
+#if CONFIG_IS_ENABLED(FIT_SIGNATURE)
 int fit_config_verify(const void *fit, int conf_noffset);
+#else
+static inline int fit_config_verify(const void *fit, int conf_noffset)
+{
+	return 0;
+}
+#endif
 int fit_all_image_verify(const void *fit);
 int fit_config_decrypt(const void *fit, int conf_noffset);
 int fit_image_check_os(const void *fit, int noffset, uint8_t os);

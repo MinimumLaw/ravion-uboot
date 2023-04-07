@@ -181,7 +181,7 @@ int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr)
 	if (!*loadaddr)
 		return 0;
 
-	if (!uclass_get_device(UCLASS_FS_FIRMWARE_LOADER, 0, &fsdev)) {
+	if (!get_fs_loader(&fsdev)) {
 		size = request_firmware_into_buf(fsdev, name, (void *)*loadaddr,
 						 0, 0);
 	}
@@ -561,7 +561,7 @@ void remove_fwl_configs(struct fwl_data *fwl_data, size_t fwl_data_size)
 void spl_enable_dcache(void)
 {
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
-	phys_addr_t ram_top = CONFIG_SYS_SDRAM_BASE;
+	phys_addr_t ram_top = CFG_SYS_SDRAM_BASE;
 
 	dram_init();
 
