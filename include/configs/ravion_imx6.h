@@ -59,7 +59,7 @@ SDRAM START - 0x1000 0000
 
 #ifdef CONFIG_SPL		/* SPL BUILD */
 /* #warning SPL Build */
-#include "imx6_spl.h"
+//#include "imx6_spl.h"
 /* SPL Basic params */
 #define CONFIG_MXC_UART_BASE		UART1_BASE  /* debug console */
 #endif
@@ -138,7 +138,7 @@ SDRAM START - 0x1000 0000
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
 
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM
-#define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
-#define CONFIG_SYS_INIT_RAM_SIZE	IRAM_SIZE
+#define CFG_SYS_INIT_RAM_ADDR		IRAM_BASE_ADDR
+#define CFG_SYS_INIT_RAM_SIZE		IRAM_SIZE
 
 #endif	/* __CONFIG_H */
