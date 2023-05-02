@@ -12,7 +12,13 @@
 	};
 };
 
+&sdhci {
+	u-boot,dm-spl;
+	status = "okay";
+};
+
 &sdmmc0 {
+	u-boot,dm-spl;
 	status = "okay";
 };
 
