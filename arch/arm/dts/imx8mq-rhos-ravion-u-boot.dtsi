@@ -31,14 +31,11 @@
 &i2c1 {			u-boot,dm-spl;	};
 &pmic {			u-boot,dm-spl;	};
 &pmic_regs {		u-boot,dm-spl;	};
-#if 0
 &sw1a_reg {		u-boot,dm-spl;	};
 &sw1c_reg {		u-boot,dm-spl;	};
 &sw2_reg {		u-boot,dm-spl;	};
 &sw3a_reg {		u-boot,dm-spl;	};
-#endif
 &P1V8_SW4 {		u-boot,dm-spl;	};
-#if 0
 &swbst_reg {		u-boot,dm-spl;	};
 &snvs_reg {		u-boot,dm-spl;	};
 &vref_reg {		u-boot,dm-spl;	};
@@ -48,7 +45,6 @@
 &vgen4_reg{		u-boot,dm-spl;	};
 &vgen5_reg{		u-boot,dm-spl;	};
 &vgen6_reg{		u-boot,dm-spl;	};
-#endif
 
 /* regulators */
 &P3V3 {			u-boot,dm-spl;	};

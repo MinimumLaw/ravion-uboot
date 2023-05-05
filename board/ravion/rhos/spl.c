@@ -31,14 +31,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-extern struct dram_timing_info dram_timing_b0;
-
-static void spl_dram_init(void)
-{
-	/* ddr init */
-	ddr_init(&dram_timing);
-}
-
 #define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE)
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 static struct i2c_pads_info i2c_pad_info1 = {
@@ -236,7 +228,7 @@ void board_init_f(ulong dummy)
 	power_init_board();
 
 	/* DDR initialization */
-	spl_dram_init();
+	ddr_init(&dram_timing);
 
 	board_init_r(NULL, 0);
 }
