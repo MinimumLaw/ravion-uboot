@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: (GPL-2.0 OR MIT)
 
-#include "imx8mq-u-boot.dtsi"
-
-
 /* clock */
 &clk {			u-boot,dm-spl;	};
 &ckil {			u-boot,dm-spl;	};

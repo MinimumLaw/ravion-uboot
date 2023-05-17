@@ -6,7 +6,7 @@
 /dts-v1/;
 
 #include "imx8mq.dtsi"
-#include "imx8mq-u-boot.dtsi"
+#include "imx8mq-rhos-u-boot.dtsi"
 
 / {
 	model = "RHOS CPU module with I.MX8MQ CPU";
