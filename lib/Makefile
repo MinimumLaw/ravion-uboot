@@ -66,7 +66,7 @@ obj-$(CONFIG_$(SPL_TPL_)CRC8) += crc8.o
 
 obj-y += crypto/
 
-obj-$(CONFIG_$(SPL_TPL_)GENERATE_ACPI_TABLE) += acpi/
+obj-$(CONFIG_$(SPL_TPL_)ACPI) += acpi/
 obj-$(CONFIG_$(SPL_)MD5) += md5.o
 obj-$(CONFIG_ECDSA) += ecdsa/
 obj-$(CONFIG_$(SPL_)RSA) += rsa/
@@ -127,7 +127,7 @@ obj-$(CONFIG_LIB_UUID) += uuid.o
 obj-$(CONFIG_LIB_RAND) += rand.o
 obj-y += panic.o
 
-ifeq ($(CONFIG_$(SPL_TPL_)BUILD),y)
+ifeq ($(CONFIG_SPL_BUILD),y)
 # SPL U-Boot may use full-printf, tiny-printf or none at all
 ifdef CONFIG_$(SPL_TPL_)USE_TINY_PRINTF
 obj-$(CONFIG_$(SPL_TPL_)SPRINTF) += tiny-printf.o

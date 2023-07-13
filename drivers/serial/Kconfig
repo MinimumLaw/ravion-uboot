@@ -415,6 +415,14 @@ config DEBUG_UART_SEMIHOSTING
 	  start up driver model. The driver will be available until the real
 	  driver model serial is running.
 
+config DEBUG_UART_SCIF
+	bool "Renesas SCIF UART"
+	depends on SH || ARCH_RMOBILE
+	help
+	  Select this to enable a debug UART using the serial_sh driver. You
+	  will need to provide parameters to make this work. The driver will
+	  be available until the real driver-model serial is running.
+
 config DEBUG_UART_SIFIVE
 	bool "SiFive UART"
 	depends on SIFIVE_SERIAL
@@ -660,6 +668,16 @@ config COREBOOT_SERIAL
 	  comes from the coreboot 'sysinfo' tables. This allows U-Boot to have
 	  a serial console on any platform without needing to change the
 	  device tree, etc.
+
+config COREBOOT_SERIAL_FROM_DBG2
+	bool "Obtain UART from ACPI tables"
+	depends on COREBOOT_SERIAL
+	default y if !SPL
+	help
+	  Select this to try to find a DBG2 record in the ACPI tables, in the
+	  event that coreboot does not provide information about the UART in the
+	  normal sysinfo tables. This provides a useful fallback when serial
+	  is not enabled in coreboot.
 
 config CORTINA_UART
 	bool "Cortina UART support"
@@ -938,6 +956,8 @@ config MSM_SERIAL
 
 config MSM_GENI_SERIAL
 	bool "Qualcomm on-chip GENI UART"
+	select MISC
+	imply QCOM_GENI_SE
 	help
 	  Support UART based on Generic Interface (GENI) Serial Engine (SE),
 	  used on Qualcomm Snapdragon SoCs. Should support all qualcomm SOCs
@@ -945,6 +965,14 @@ config MSM_GENI_SERIAL
 	  i.e. newer ones, starting from SDM845.
 	  Driver works in FIFO mode.
 	  Multiple baudrates supported.
+
+config MXS_AUART_SERIAL
+	bool "MXS AUART"
+	depends on DM_SERIAL
+	help
+	  Support for Freescale i.MX23 / i.MX28 AUART or Application UART IP.
+	  This IP is present in the aforementioned SoCs, however this is not
+	  the IP used to drive the Debug UART port, for that see PL01X_SERIAL .
 
 config OCTEON_SERIAL_BOOTCMD
 	bool "MIPS Octeon PCI remote bootcmd input"

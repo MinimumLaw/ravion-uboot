@@ -800,10 +800,19 @@ static int dw_mipi_dsi_init(struct udevice *dev,
 	dsi->dsi_host.ops = &dw_mipi_dsi_host_ops;
 	device->host = &dsi->dsi_host;
 
-	dsi->base = (void *)dev_read_addr(device->dev);
-	if ((fdt_addr_t)dsi->base == FDT_ADDR_T_NONE) {
+	dsi->base = dev_read_addr_ptr(device->dev);
+	if (!dsi->base) {
 		dev_err(device->dev, "dsi dt register address error\n");
 		return -EINVAL;
+	}
+
+	/*
+	 * The Rockchip based devices don't have px_clk, so simply move
+	 * on.
+	 */
+	if (IS_ENABLED(CONFIG_DISPLAY_ROCKCHIP_DW_MIPI)) {
+		dw_mipi_dsi_bridge_set(dsi, timings);
+		return 0;
 	}
 
 	ret = clk_get_by_name(device->dev, "px_clk", &clk);

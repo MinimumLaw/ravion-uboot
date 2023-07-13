@@ -68,7 +68,7 @@ struct global_data {
 	 * @mem_clk: memory clock rate in Hz
 	 */
 	unsigned long mem_clk;
-#if defined(CONFIG_VIDEO)
+#if CONFIG_IS_ENABLED(VIDEO)
 	/**
 	 * @fb_base: base address of frame buffer memory
 	 */
@@ -359,7 +359,7 @@ struct global_data {
 	 */
 	struct membuff console_in;
 #endif
-#ifdef CONFIG_VIDEO
+#if CONFIG_IS_ENABLED(VIDEO)
 	/**
 	 * @video_top: top of video frame buffer area
 	 */
@@ -457,7 +457,7 @@ struct global_data {
 	 */
 	fdt_addr_t translation_offset;
 #endif
-#ifdef CONFIG_GENERATE_ACPI_TABLE
+#ifdef CONFIG_ACPI
 	/**
 	 * @acpi_ctx: ACPI context pointer
 	 */
@@ -536,7 +536,7 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #define gd_dm_priv_base()		NULL
 #endif
 
-#ifdef CONFIG_GENERATE_ACPI_TABLE
+#ifdef CONFIG_ACPI
 #define gd_acpi_ctx()		gd->acpi_ctx
 #define gd_acpi_start()		gd->acpi_start
 #define gd_set_acpi_start(addr)	gd->acpi_start = addr
@@ -650,6 +650,10 @@ enum gd_flags {
 	 * @GD_FLG_FDT_CHANGED: Device tree change has been detected by tests
 	 */
 	GD_FLG_FDT_CHANGED = 0x100000,
+	/**
+	 * @GD_FLG_OF_TAG_MIGRATE: Device tree has old u-boot,dm- tags
+	 */
+	GD_FLG_OF_TAG_MIGRATE = 0x200000,
 };
 
 #endif /* __ASSEMBLY__ */

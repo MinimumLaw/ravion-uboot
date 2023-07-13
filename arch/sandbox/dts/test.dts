@@ -80,14 +80,14 @@
 	};
 
 	bootstd {
-		u-boot,dm-vpl;
+		bootph-verify;
 		compatible = "u-boot,boot-std";
 
 		filename-prefixes = "/", "/boot/";
 		bootdev-order = "mmc2", "mmc1";
 
-		syslinux {
-			compatible = "u-boot,distro-syslinux";
+		extlinux {
+			compatible = "u-boot,extlinux";
 		};
 
 		efi {
@@ -104,7 +104,7 @@
 		 * before the parititon starts
 		 */
 		firmware0 {
-			u-boot,dm-vpl;
+			bootph-verify;
 			compatible = "fwupd,vbe-simple";
 			storage = "mmc1";
 			skip-offset = <0x200>;
@@ -125,11 +125,11 @@
 		 * running U-Boot
 		 */
 		firmware1 {
-			u-boot,dm-vpl;
+			bootph-verify;
 			status = "disabled";
 			compatible = "fwupd,vbe-simple";
 			storage = "mmc3";
-			skip-offset = <0x400000>;
+			skip-offset = <0x800000>;
 			area-start = <0>;
 			area-size = <0xe00000>;
 			state-offset = <0xdffc00>;
@@ -260,7 +260,7 @@
 		compatible = "denx,u-boot-fdt-test";
 		ping-expect = <0>;
 		ping-add = <0>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		test-gpios = <&gpio_a 1>, <&gpio_a 4>,
 			<&gpio_b 5 GPIO_ACTIVE_HIGH 3 2 1>,
 			<0>, <&gpio_a 12>;
@@ -344,7 +344,7 @@
 				vsync-len = <13>;
 			};
 		};
-		panel-timings {
+		panel-timing {
 			clock-frequency = <6500000>;
 			hactive = <240>;
 			vactive = <320>;
@@ -889,7 +889,7 @@
 	};
 
 	lcd {
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		compatible = "sandbox,lcd-sdl";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinmux_lcd_pins>;
@@ -959,21 +959,21 @@
 			reg = <0x1>;
 			timebase-frequency = <3000000>;
 			compatible = "sandbox,cpu_sandbox";
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		cpu2: cpu@2 {
 			device_type = "cpu";
 			reg = <0x2>;
 			compatible = "sandbox,cpu_sandbox";
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		cpu3: cpu@3 {
 			device_type = "cpu";
 			reg = <0x3>;
 			compatible = "sandbox,cpu_sandbox";
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 	};
 
@@ -1213,12 +1213,12 @@
 
 	reset@0 {
 		compatible = "sandbox,warm-reset";
-		u-boot,dm-pre-proper;
+		bootph-some-ram;
 	};
 
 	reset@1 {
 		compatible = "sandbox,reset";
-		u-boot,dm-pre-proper;
+		bootph-some-ram;
 	};
 
 	resetc: reset-ctl {
@@ -1367,9 +1367,13 @@
 		compatible = "sandbox,tpm2";
 	};
 
+	tpm {
+		compatible = "google,sandbox-tpm";
+	};
+
 	uart0: serial {
 		compatible = "sandbox,serial";
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinmux_uart0_pins>;
 	};
@@ -1797,6 +1801,24 @@
 	fwu-mdata {
 		compatible = "u-boot,fwu-mdata-gpt";
 		fwu-mdata-store = <&mmc0>;
+	};
+
+	nvmxip-qspi1@08000000 {
+		compatible = "nvmxip,qspi";
+		reg = <0x08000000 0x00200000>;
+		lba_shift = <9>;
+		lba = <4096>;
+	};
+
+	nvmxip-qspi2@08200000 {
+		compatible = "nvmxip,qspi";
+		reg = <0x08200000 0x00100000>;
+		lba_shift = <9>;
+		lba = <2048>;
+	};
+
+	extcon {
+		compatible = "sandbox,extcon";
 	};
 };
 

@@ -519,20 +519,6 @@ static int initr_post(void)
 }
 #endif
 
-#if defined(CONFIG_IDE) && !defined(CONFIG_BLK)
-static int initr_ide(void)
-{
-	puts("IDE:   ");
-#if defined(CONFIG_START_IDE)
-	if (board_start_ide())
-		ide_init();
-#else
-	ide_init();
-#endif
-	return 0;
-}
-#endif
-
 #if defined(CFG_PRAM)
 /*
  * Export available size of memory for Linux, taking into account the
@@ -569,6 +555,13 @@ static int dm_announce(void)
 			printf("Warning: Unexpected devicetree source (not from a prior stage)");
 			printf("Warning: U-Boot may not function properly\n");
 		}
+		if (IS_ENABLED(CONFIG_OF_TAG_MIGRATE) &&
+		    (gd->flags & GD_FLG_OF_TAG_MIGRATE))
+			/*
+			 * U-Boot will silently fail to work after 2023.07 if
+			 * there are old tags present
+			 */
+			printf("Warning: Device tree includes old 'u-boot,dm-' tags: please fix by 2023.07!\n");
 	}
 
 	return 0;
@@ -775,9 +768,6 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_POST
 	initr_post,
-#endif
-#if defined(CONFIG_IDE) && !defined(CONFIG_BLK)
-	initr_ide,
 #endif
 #ifdef CONFIG_LAST_STAGE_INIT
 	INIT_FUNC_WATCHDOG_RESET

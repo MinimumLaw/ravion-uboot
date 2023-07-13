@@ -108,7 +108,7 @@ void eqos_flush_desc_generic(void *desc)
 	flush_dcache_range(start, end);
 }
 
-void eqos_inval_buffer_tegra186(void *buf, size_t size)
+static void eqos_inval_buffer_tegra186(void *buf, size_t size)
 {
 	unsigned long start = (unsigned long)buf & ~(ARCH_DMA_MINALIGN - 1);
 	unsigned long end = ALIGN(start + size, ARCH_DMA_MINALIGN);
@@ -761,6 +761,12 @@ static int eqos_start(struct udevice *dev)
 
 	eqos->reg_access_ok = true;
 
+	/*
+	 * Assert the SWR first, the actually reset the MAC and to latch in
+	 * e.g. i.MX8M Plus GPR[1] content, which selects interface mode.
+	 */
+	setbits_le32(&eqos->dma_regs->mode, EQOS_DMA_MODE_SWR);
+
 	ret = wait_for_bit_le32(&eqos->dma_regs->mode,
 				EQOS_DMA_MODE_SWR, false,
 				eqos->config->swr_wait, false);
@@ -788,9 +794,21 @@ static int eqos_start(struct udevice *dev)
 	 */
 	if (!eqos->phy) {
 		int addr = -1;
-		addr = eqos_get_phy_addr(eqos, dev);
-		eqos->phy = phy_connect(eqos->mii, addr, dev,
-					eqos->config->interface(dev));
+		ofnode fixed_node;
+
+		if (IS_ENABLED(CONFIG_PHY_FIXED)) {
+			fixed_node = ofnode_find_subnode(dev_ofnode(dev),
+							 "fixed-link");
+			if (ofnode_valid(fixed_node))
+				eqos->phy = fixed_phy_create(dev_ofnode(dev));
+		}
+
+		if (!eqos->phy) {
+			addr = eqos_get_phy_addr(eqos, dev);
+			eqos->phy = phy_connect(eqos->mii, addr, dev,
+						eqos->config->interface(dev));
+		}
+
 		if (!eqos->phy) {
 			pr_err("phy_connect() failed");
 			goto err_stop_resets;
@@ -1383,7 +1401,6 @@ static int eqos_probe_resources_tegra186(struct udevice *dev)
 	if (ret) {
 		pr_err("clk_get_by_name(ptp_ref) failed: %d", ret);
 		goto err_free_clk_rx;
-		return ret;
 	}
 
 	ret = clk_get_by_name(dev, "tx", &eqos->clk_tx);
@@ -1410,13 +1427,6 @@ err_free_reset_eqos:
 
 	debug("%s: returns %d\n", __func__, ret);
 	return ret;
-}
-
-/* board-specific Ethernet Interface initializations. */
-__weak int board_interface_eth_init(struct udevice *dev,
-				    phy_interface_t interface_type)
-{
-	return 0;
 }
 
 static int eqos_probe_resources_stm32(struct udevice *dev)
@@ -1501,7 +1511,7 @@ static int eqos_remove_resources_tegra186(struct udevice *dev)
 
 static int eqos_remove_resources_stm32(struct udevice *dev)
 {
-	struct eqos_priv *eqos = dev_get_priv(dev);
+	struct eqos_priv * __maybe_unused eqos = dev_get_priv(dev);
 
 	debug("%s(dev=%p):\n", __func__, dev);
 
@@ -1512,9 +1522,6 @@ static int eqos_remove_resources_stm32(struct udevice *dev)
 	if (clk_valid(&eqos->clk_ck))
 		clk_free(&eqos->clk_ck);
 #endif
-
-	if (dm_gpio_is_valid(&eqos->phy_reset_gpio))
-		dm_gpio_free(dev, &eqos->phy_reset_gpio);
 
 	debug("%s: OK\n", __func__);
 	return 0;

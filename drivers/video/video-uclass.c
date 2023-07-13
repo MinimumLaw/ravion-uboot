@@ -78,24 +78,40 @@ void video_set_flush_dcache(struct udevice *dev, bool flush)
 	priv->flush_dcache = flush;
 }
 
+static ulong alloc_fb_(ulong align, ulong size, ulong *addrp)
+{
+	ulong base;
+
+	align = align ? align : 1 << 20;
+	base = *addrp - size;
+	base &= ~(align - 1);
+	size = *addrp - base;
+	*addrp = base;
+
+	return size;
+}
+
 static ulong alloc_fb(struct udevice *dev, ulong *addrp)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
-	ulong base, align, size;
+	ulong size;
 
-	if (!plat->size)
+	if (!plat->size) {
+		if (IS_ENABLED(CONFIG_VIDEO_COPY) && plat->copy_size) {
+			size = alloc_fb_(plat->align, plat->copy_size, addrp);
+			plat->copy_base = *addrp;
+			return size;
+		}
+
 		return 0;
+	}
 
 	/* Allow drivers to allocate the frame buffer themselves */
 	if (plat->base)
 		return 0;
 
-	align = plat->align ? plat->align : 1 << 20;
-	base = *addrp - plat->size;
-	base &= ~(align - 1);
-	plat->base = base;
-	size = *addrp - base;
-	*addrp = base;
+	size = alloc_fb_(plat->align, plat->size, addrp);
+	plat->base = *addrp;
 
 	return size;
 }
@@ -116,7 +132,7 @@ int video_reserve(ulong *addrp)
 
 	/* Allocate space for PCI video devices in case there were not bound */
 	if (*addrp == gd->video_top)
-		*addrp -= CONFIG_VIDEO_PCI_DEFAULT_FB_SIZE;
+		*addrp -= CONFIG_VAL(VIDEO_PCI_DEFAULT_FB_SIZE);
 
 	gd->video_bottom = *addrp;
 	gd->fb_base = *addrp;
@@ -133,7 +149,7 @@ int video_fill(struct udevice *dev, u32 colour)
 
 	switch (priv->bpix) {
 	case VIDEO_BPP16:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
+		if (CONFIG_IS_ENABLED(VIDEO_BPP16)) {
 			u16 *ppix = priv->fb;
 			u16 *end = priv->fb + priv->fb_size;
 
@@ -142,7 +158,7 @@ int video_fill(struct udevice *dev, u32 colour)
 			break;
 		}
 	case VIDEO_BPP32:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
+		if (CONFIG_IS_ENABLED(VIDEO_BPP32)) {
 			u32 *ppix = priv->fb;
 			u32 *end = priv->fb + priv->fb_size;
 
@@ -196,14 +212,14 @@ u32 video_index_to_colour(struct video_priv *priv, unsigned int idx)
 {
 	switch (priv->bpix) {
 	case VIDEO_BPP16:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
+		if (CONFIG_IS_ENABLED(VIDEO_BPP16)) {
 			return ((colours[idx].r >> 3) << 11) |
 			       ((colours[idx].g >> 2) <<  5) |
 			       ((colours[idx].b >> 3) <<  0);
 		}
 		break;
 	case VIDEO_BPP32:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
+		if (CONFIG_IS_ENABLED(VIDEO_BPP32)) {
 			if (priv->format == VIDEO_X2R10G10B10)
 				return (colours[idx].r << 22) |
 				       (colours[idx].g << 12) |
@@ -497,8 +513,8 @@ static int video_post_probe(struct udevice *dev)
 		return ret;
 	}
 
-	if (IS_ENABLED(CONFIG_VIDEO_LOGO) &&
-	    !IS_ENABLED(CONFIG_SPLASH_SCREEN) && !plat->hide_logo) {
+	if (CONFIG_IS_ENABLED(VIDEO_LOGO) &&
+	    !CONFIG_IS_ENABLED(SPLASH_SCREEN) && !plat->hide_logo) {
 		ret = show_splash(dev);
 		if (ret) {
 			log_debug("Cannot show splash screen\n");
@@ -529,8 +545,8 @@ static int video_post_bind(struct udevice *dev)
 	addr = uc_priv->video_ptr;
 	size = alloc_fb(dev, &addr);
 	if (addr < gd->video_bottom) {
-		/* Device tree node may need the 'u-boot,dm-pre-reloc' or
-		 * 'u-boot,dm-pre-proper' tag
+		/* Device tree node may need the 'bootph-all' or
+		 * 'bootph-some-ram' tag
 		 */
 		printf("Video device '%s' cannot allocate frame buffer memory -ensure the device is set up before relocation\n",
 		       dev->name);

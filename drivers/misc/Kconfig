@@ -348,7 +348,7 @@ config NPCM_HOST
 
 config SPL_MXC_OCOTP
 	bool "Enable MXC OCOTP driver in SPL"
-	depends on SPL_MISC && (ARCH_IMX8M || ARCH_MX6 || ARCH_MX7 || ARCH_MX7ULP || ARCH_VF610)
+	depends on SPL_DRIVERS_MISC && (ARCH_IMX8M || ARCH_MX6 || ARCH_MX7 || ARCH_MX7ULP || ARCH_VF610)
 	default y
 	help
 	  If you say Y here, you will get support for the One Time
@@ -510,6 +510,13 @@ config WINBOND_W83627
 	  W83627 Super I/O driver. This can be used to enable the
 	  legacy UART or other devices in the Winbond Super IO chips
 	  on X86 platforms.
+
+config QCOM_GENI_SE
+	bool "Qualcomm GENI Serial Engine Driver"
+	depends on ARCH_SNAPDRAGON
+	help
+	  The driver manages Generic Interface (GENI) firmware based
+	  Qualcomm Technologies, Inc. Universal Peripheral (QUP) Wrapper.
 
 config QFW
 	bool
