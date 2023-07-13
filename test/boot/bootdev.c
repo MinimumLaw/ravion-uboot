@@ -19,9 +19,9 @@
 
 /* Allow reseting the USB-started flag */
 #if defined(CONFIG_USB_HOST) || defined(CONFIG_USB_GADGET)
-extern char usb_started;
+extern bool usb_started;
 #else
-char usb_started;
+#include <usb.h>
 #endif
 
 /* Check 'bootdev list' command */
@@ -124,7 +124,8 @@ static int bootdev_test_labels(struct unit_test_state *uts)
 		    mflags);
 
 	/* Check invalid uclass */
-	ut_asserteq(-EINVAL, bootdev_find_by_label("fred0", &dev, &mflags));
+	ut_asserteq(-EPFNOSUPPORT,
+		    bootdev_find_by_label("fred0", &dev, &mflags));
 
 	/* Check unknown sequence number */
 	ut_asserteq(-ENOENT, bootdev_find_by_label("mmc6", &dev, &mflags));
@@ -179,9 +180,8 @@ static int bootdev_test_any(struct unit_test_state *uts)
 
 	/* Check invalid uclass */
 	mflags = 123;
-	ut_asserteq(-EINVAL, bootdev_find_by_any("fred0", &dev, &mflags));
-	ut_assert_nextline("Unknown uclass 'fred0' in label");
-	ut_assert_nextline("Cannot find bootdev 'fred0' (err=-22)");
+	ut_asserteq(-EPFNOSUPPORT, bootdev_find_by_any("fred0", &dev, &mflags));
+	ut_assert_nextline("Cannot find bootdev 'fred0' (err=-96)");
 	ut_asserteq(123, mflags);
 	ut_assert_console_end();
 
@@ -289,7 +289,7 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 
 	/* try again but enable hunting, which brings in SCSI */
 	bootflow_iter_uninit(&iter);
-	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, BOOTFLOWF_HUNT,
+	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, BOOTFLOWIF_HUNT,
 					&bflow));
 	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
 	ut_asserteq(7, iter.num_devs);
@@ -306,6 +306,7 @@ static int bootdev_test_hunter(struct unit_test_state *uts)
 {
 	struct bootstd_priv *std;
 
+	usb_started = false;
 	test_set_skip_delays(true);
 
 	/* get access to the used hunters */
@@ -346,6 +347,7 @@ static int bootdev_test_cmd_hunt(struct unit_test_state *uts)
 	struct bootstd_priv *std;
 
 	test_set_skip_delays(true);
+	usb_started = false;
 
 	/* get access to the used hunters */
 	ut_assertok(bootstd_get_priv(&std));
@@ -376,7 +378,6 @@ static int bootdev_test_cmd_hunt(struct unit_test_state *uts)
 	ut_assert_nextline("Hunting with: simple_bus");
 	ut_assert_nextline("Found 2 extension board(s).");
 	ut_assert_nextline("Hunting with: ide");
-	ut_assert_nextline("Bus 0: not available  ");
 
 	/* mmc hunter has already been used so should not run again */
 
@@ -427,8 +428,8 @@ static int bootdev_test_hunt_scan(struct unit_test_state *uts)
 
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter,
-					BOOTFLOWF_SHOW | BOOTFLOWF_HUNT |
-					BOOTFLOWF_SKIP_GLOBAL, &bflow));
+					BOOTFLOWIF_SHOW | BOOTFLOWIF_HUNT |
+					BOOTFLOWIF_SKIP_GLOBAL, &bflow));
 	ut_asserteq(BIT(MMC_HUNTER) | BIT(1), std->hunters_used);
 
 	return 0;
@@ -475,6 +476,7 @@ BOOTSTD_TEST(bootdev_test_bootable, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 /* Check hunting for bootdev of a particular priority */
 static int bootdev_test_hunt_prio(struct unit_test_state *uts)
 {
+	usb_started = false;
 	test_set_skip_delays(true);
 
 	console_record_reset_enable();
@@ -487,7 +489,6 @@ static int bootdev_test_hunt_prio(struct unit_test_state *uts)
 	/* now try a different priority, verbosely */
 	ut_assertok(bootdev_hunt_prio(BOOTDEVP_5_SCAN_SLOW, true));
 	ut_assert_nextline("Hunting with: ide");
-	ut_assert_nextline("Bus 0: not available  ");
 	ut_assert_nextline("Hunting with: usb");
 	ut_assert_nextline(
 		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
@@ -504,6 +505,8 @@ static int bootdev_test_hunt_label(struct unit_test_state *uts)
 	struct bootstd_priv *std;
 	int mflags;
 
+	usb_started = false;
+
 	/* get access to the used hunters */
 	ut_assertok(bootstd_get_priv(&std));
 
@@ -512,9 +515,8 @@ static int bootdev_test_hunt_label(struct unit_test_state *uts)
 	old = (void *)&mflags;   /* arbitrary pointer to check against dev */
 	dev = old;
 	mflags = 123;
-	ut_asserteq(-EINVAL,
+	ut_asserteq(-EPFNOSUPPORT,
 		    bootdev_hunt_and_find_by_label("fred", &dev, &mflags));
-	ut_assert_nextline("Unknown uclass 'fred' in label");
 	ut_asserteq_ptr(old, dev);
 	ut_asserteq(123, mflags);
 	ut_assert_console_end();
@@ -525,7 +527,6 @@ static int bootdev_test_hunt_label(struct unit_test_state *uts)
 		    bootdev_hunt_and_find_by_label("mmc4", &dev, &mflags));
 	ut_asserteq_ptr(old, dev);
 	ut_asserteq(123, mflags);
-	ut_assert_nextline("Unknown seq 4 for label 'mmc4'");
 	ut_assert_console_end();
 
 	ut_assertok(bootstd_test_check_mmc_hunter(uts));
@@ -649,7 +650,7 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 	iter.part = 0;
 	uclass_first_device(UCLASS_BOOTMETH, &bflow.method);
 	iter.cur_prio = 0;
-	iter.flags = BOOTFLOWF_SHOW;
+	iter.flags = BOOTFLOWIF_SHOW;
 
 	dev = NULL;
 	console_record_reset_enable();
@@ -662,7 +663,7 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 	ut_assert_console_end();
 
 	/* now try again with hunting enabled */
-	iter.flags = BOOTFLOWF_SHOW | BOOTFLOWF_HUNT;
+	iter.flags = BOOTFLOWIF_SHOW | BOOTFLOWIF_HUNT;
 	iter.cur_prio = 0;
 	iter.part = 0;
 

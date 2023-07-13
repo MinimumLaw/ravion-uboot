@@ -55,7 +55,7 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
 		break;
 	}
 
-	printf(", err=%d\n", err);
+	printf(", err=%dE\n", err);
 }
 
 /**
@@ -125,7 +125,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			dev = std->cur_bootdev;
 	} else {
 		if (has_args) {
-			printf("Flags not supported: enable CONFIG_BOOTFLOW_FULL\n");
+			printf("Flags not supported: enable CONFIG_BOOTSTD_FULL\n");
 			return CMD_RET_USAGE;
 		}
 		boot = true;
@@ -135,13 +135,13 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	flags = 0;
 	if (list)
-		flags |= BOOTFLOWF_SHOW;
+		flags |= BOOTFLOWIF_SHOW;
 	if (all)
-		flags |= BOOTFLOWF_ALL;
+		flags |= BOOTFLOWIF_ALL;
 	if (no_global)
-		flags |= BOOTFLOWF_SKIP_GLOBAL;
+		flags |= BOOTFLOWIF_SKIP_GLOBAL;
 	if (!no_hunter)
-		flags |= BOOTFLOWF_HUNT;
+		flags |= BOOTFLOWIF_HUNT;
 
 	/*
 	 * If we have a device, just scan for bootflows attached to that device
@@ -180,6 +180,9 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	bootflow_iter_uninit(&iter);
 	if (list)
 		show_footer(i, num_valid);
+
+	if (IS_ENABLED(CONFIG_CMD_BOOTFLOW_FULL) && !num_valid && !list)
+		printf("No bootflows found; try again with -l\n");
 
 	return 0;
 }
@@ -387,6 +390,11 @@ static int do_bootflow_menu(struct cmd_tbl *cmdtp, int flag, int argc,
 	bool text_mode = false;
 	int ret;
 
+	if (!IS_ENABLED(CONFIG_EXPO)) {
+		printf("Menu not supported\n");
+		return CMD_RET_FAILURE;
+	}
+
 	if (argc > 1 && *argv[1] == '-')
 		text_mode = strchr(argv[1], 't');
 
@@ -394,20 +402,15 @@ static int do_bootflow_menu(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (ret)
 		return CMD_RET_FAILURE;
 
-	if (IS_ENABLED(CONFIG_EXPO)) {
-		ret = bootflow_menu_run(std, text_mode, &bflow);
-		if (ret) {
-			if (ret == -EAGAIN)
-				printf("Nothing chosen\n");
-			else
-				printf("Menu failed (err=%d)\n", ret);
+	ret = bootflow_menu_run(std, text_mode, &bflow);
+	if (ret) {
+		if (ret == -EAGAIN)
+			printf("Nothing chosen\n");
+		else {
+			printf("Menu failed (err=%d)\n", ret);
+			return CMD_RET_FAILURE;
 		}
-	} else {
-		printf("Menu not supported\n");
-		ret = -ENOSYS;
 	}
-	if (ret)
-		return CMD_RET_FAILURE;
 
 	printf("Selected: %s\n", bflow->os_name ? bflow->os_name : bflow->name);
 	std->cur_bootflow = bflow;

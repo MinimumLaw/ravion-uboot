@@ -154,7 +154,7 @@ bootmeths
 This environment variable can be used to control the list of bootmeths used and
 their ordering for example::
 
-   setenv bootmeths "syslinux efi"
+   setenv bootmeths "extlinux efi"
 
 Entries may be removed or re-ordered in this list to affect the order the
 bootmeths are tried on each bootdev. If the variable is empty, the default
@@ -389,8 +389,8 @@ Configuration
 -------------
 
 Standard boot is enabled with `CONFIG_BOOTSTD`. Each bootmeth has its own CONFIG
-option also. For example, `CONFIG_BOOTMETH_DISTRO` enables support for distro
-boot from a disk.
+option also. For example, `CONFIG_BOOTMETH_EXTLINUX` enables support for
+booting from a disk using an `extlinux.conf` file.
 
 To enable all feature sof standard boot, use `CONFIG_BOOTSTD_FULL`. This
 includes the full set of commands, more error messages when things go wrong and
@@ -406,8 +406,8 @@ Available bootmeth drivers
 
 Bootmeth drivers are provided for:
 
-   - distro boot from a disk (syslinux)
-   - distro boot from a network (PXE)
+   - extlinux / syslinux boot from a disk
+   - extlinux boot from a network (PXE)
    - U-Boot scripts from disk, network or SPI flash
    - EFI boot using bootefi from disk
    - VBE
@@ -489,22 +489,22 @@ in a valid bootflow, whether to iterate through just a single bootdev, etc.
 Then the iterator is set up to according to the parameters given:
 
 - When `dev` is provided, then a single bootdev is scanned. In this case,
-  `BOOTFLOWF_SKIP_GLOBAL` and `BOOTFLOWF_SINGLE_DEV` are set. No hunters are
+  `BOOTFLOWIF_SKIP_GLOBAL` and `BOOTFLOWIF_SINGLE_DEV` are set. No hunters are
   used in this case
 
 - Otherwise, when `label` is provided, then a single label or named bootdev is
-  scanned. In this case `BOOTFLOWF_SKIP_GLOBAL` is set and there are three
+  scanned. In this case `BOOTFLOWIF_SKIP_GLOBAL` is set and there are three
   options (with an effect on the `iter_incr()` function described later):
 
   - If `label` indicates a numeric bootdev number (e.g. "2") then
     `BOOTFLOW_METHF_SINGLE_DEV` is set. In this case, moving to the next bootdev
     simple stops, since there is only one. No hunters are used.
   - If `label` indicates a particular media device (e.g. "mmc1") then
-    `BOOTFLOWF_SINGLE_MEDIA` is set. In this case, moving to the next bootdev
+    `BOOTFLOWIF_SINGLE_MEDIA` is set. In this case, moving to the next bootdev
     processes just the children of the media device. Hunters are used, in this
     example just the "mmc" hunter.
   - If `label` indicates a media uclass (e.g. "mmc") then
-    `BOOTFLOWF_SINGLE_UCLASS` is set. In this case, all bootdevs in that uclass
+    `BOOTFLOWIF_SINGLE_UCLASS` is set. In this case, all bootdevs in that uclass
     are used. Hunters are used, in this example just the "mmc" hunter
 
 - Otherwise, none of the above flags is set and iteration is set up to work
@@ -543,7 +543,7 @@ bootdev.
 With the iterator ready, `bootflow_scan_first()` checks whether the current
 settings produce a valid bootflow. This is handled by `bootflow_check()`, which
 either returns 0 (if it got something) or an error if not (more on that later).
-If the `BOOTFLOWF_ALL` iterator flag is set, even errors are returned as
+If the `BOOTFLOWIF_ALL` iterator flag is set, even errors are returned as
 incomplete bootflows, but normally an error results in moving onto the next
 iteration.
 
@@ -651,7 +651,7 @@ e.g. updating the state, depending on what it finds. For global bootmeths the
 Based on what the bootdev or bootmeth responds with, `bootflow_check()` either
 returns a valid bootflow, or a partial one with an error. A partial bootflow
 is one that has some fields set up, but did not reach the `BOOTFLOWST_READY`
-state. As noted before, if the `BOOTFLOWF_ALL` iterator flag is set, then all
+state. As noted before, if the `BOOTFLOWIF_ALL` iterator flag is set, then all
 bootflows are returned, even partial ones. This can help with debugging.
 
 So at this point you can see that total control over whether a bootflow can
@@ -683,8 +683,8 @@ This feature can be added as needed. Note that sandbox is a special case, since
 in that case the host filesystem can be accessed even though the block device
 is NULL.
 
-If we take the example of the `bootmeth_distro` driver, this call ends up at
-`distro_read_bootflow()`. It has the filesystem ready, so tries various
+If we take the example of the `bootmeth_extlinux` driver, this call ends up at
+`extlinux_read_bootflow()`. It has the filesystem ready, so tries various
 filenames to try to find the `extlinux.conf` file, reading it if possible. If
 all goes well the bootflow ends up in the `BOOTFLOWST_READY` state.
 
@@ -697,12 +697,12 @@ the  `BOOTFLOWST_READY` state.
 
 That is the basic operation of scanning for bootflows. The process of booting a
 bootflow is handled by the bootmeth driver for that bootflow. In the case of
-distro boot, this parses and processes the `extlinux.conf` file that was read.
-See `distro_boot()` for how that works. The processing may involve reading
+extlinux boot, this parses and processes the `extlinux.conf` file that was read.
+See `extlinux_boot()` for how that works. The processing may involve reading
 additional files, which is handled by the `read_file()` method, which is
-`distro_read_file()` in this case. All bootmethds should support reading files,
-since the bootflow is typically only the basic instructions and does not include
-the operating system itself, ramdisk, device tree, etc.
+`extlinux_read_file()` in this case. All bootmethds should support reading
+files, since the bootflow is typically only the basic instructions and does not
+include the operating system itself, ramdisk, device tree, etc.
 
 The vast majority of the bootstd code is concerned with iterating through
 partitions on bootdevs and using bootmethds to find bootflows.

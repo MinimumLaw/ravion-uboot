@@ -9,6 +9,7 @@ obj-$(CONFIG_$(SPL_TPL_)DM) += core/
 obj-$(CONFIG_$(SPL_TPL_)DMA) += dma/
 obj-$(CONFIG_$(SPL_TPL_)DMA_LEGACY) += dma/
 obj-$(CONFIG_$(SPL_TPL_)DFU) += dfu/
+obj-$(CONFIG_$(SPL_TPL_)EXTCON) += extcon/
 obj-$(CONFIG_$(SPL_TPL_)GPIO) += gpio/
 obj-$(CONFIG_$(SPL_TPL_)DRIVERS_MISC) += misc/
 obj-$(CONFIG_$(SPL_TPL_)SYSRESET) += sysreset/
@@ -18,7 +19,6 @@ obj-$(CONFIG_$(SPL_TPL_)INPUT) += input/
 obj-$(CONFIG_$(SPL_TPL_)LED) += led/
 obj-$(CONFIG_$(SPL_TPL_)MMC) += mmc/
 obj-y += mtd/
-obj-$(CONFIG_$(SPL_)MULTIPLEXER) += mux/
 obj-$(CONFIG_$(SPL_TPL_)ETH) += net/
 obj-$(CONFIG_$(SPL_TPL_)PCH) += pch/
 obj-$(CONFIG_$(SPL_TPL_)PCI) += pci/
@@ -62,6 +62,7 @@ obj-$(CONFIG_SPL_USB_HOST) += usb/host/
 obj-$(CONFIG_SPL_SATA) += ata/ scsi/
 obj-$(CONFIG_SPL_LEGACY_BLOCK) += block/
 obj-$(CONFIG_SPL_THERMAL) += thermal/
+obj-$(CONFIG_SPL_VIDEO) +=video/
 
 endif
 endif
@@ -87,6 +88,7 @@ obj-$(CONFIG_FASTBOOT) += fastboot/
 obj-$(CONFIG_FWU_MDATA) += fwu-mdata/
 obj-y += misc/
 obj-$(CONFIG_MMC) += mmc/
+obj-$(CONFIG_MULTIPLEXER) += mux/
 obj-$(CONFIG_NVME) += nvme/
 obj-$(CONFIG_PCI_ENDPOINT) += pci_endpoint/
 obj-y += dfu/

@@ -1119,7 +1119,7 @@ static int do_request_sense(struct fsg_common *common, struct fsg_buffhd *bh)
 {
 	struct fsg_lun	*curlun = &common->luns[common->lun];
 	u8		*buf = (u8 *) bh->buf;
-	u32		sd, sdinfo;
+	u32		sd, sdinfo = 0;
 	int		valid;
 
 	/*
@@ -1147,7 +1147,6 @@ static int do_request_sense(struct fsg_common *common, struct fsg_buffhd *bh)
 	if (!curlun) {		/* Unsupported LUNs are okay */
 		common->bad_lun_okay = 1;
 		sd = SS_LOGICAL_UNIT_NOT_SUPPORTED;
-		sdinfo = 0;
 		valid = 0;
 	} else {
 		sd = curlun->sense_data;
