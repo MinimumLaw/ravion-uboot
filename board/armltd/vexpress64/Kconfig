@@ -7,13 +7,6 @@ config SYS_VENDOR
 	default "armltd"
 
 config SYS_CONFIG_NAME
-	default "vexpress_aemv8"
-
-config JUNO_DTB_PART
-	string "NOR flash partition holding DTB"
-	default "board.dtb"
-	help
-	  The ARM partition name in the NOR flash memory holding the
-	  device tree blob to configure U-Boot.
+	default "vexpress_aemv8a"
 
 endif

@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <blk.h>
 
 int init_sata(int dev)
 {

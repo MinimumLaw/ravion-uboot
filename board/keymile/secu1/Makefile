@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2020 Hitachi Power Grids
+# (C) Copyright 2020 ABB
 #
 # SPDX-License-Identifier:	GPL-2.0+
 #

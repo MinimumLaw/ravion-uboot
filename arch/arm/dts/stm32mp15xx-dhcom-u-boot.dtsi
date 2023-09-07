@@ -4,12 +4,8 @@
  */
 
 #include <dt-bindings/clock/stm32mp1-clksrc.h>
-#include "stm32mp15-u-boot.dtsi"
-#include "stm32mp15-ddr3-dhsom-2x1Gb-1066-binG.dtsi"
-#include "stm32mp15-ddr3-dhsom-2x2Gb-1066-binG.dtsi"
-#include "stm32mp15-ddr3-dhsom-2x4Gb-1066-binG.dtsi"
-
-/delete-node/ &ksz8851;
+#include "stm32mp157-u-boot.dtsi"
+#include "stm32mp15-ddr3-2x4Gb-1066-binG.dtsi"
 
 / {
 	aliases {
@@ -20,8 +16,6 @@
 		mmc1 = &sdmmc2;
 		spi0 = &qspi;
 		usb0 = &usbotg_hs;
-		eeprom0 = &eeprom0;
-		ethernet1 = &ks8851;
 	};
 
 	config {
@@ -29,39 +23,24 @@
 		u-boot,error-led = "error";
 		st,fastboot-gpios = <&gpioa 13 GPIO_ACTIVE_LOW>;
 		st,stm32prog-gpios = <&gpioa 14 GPIO_ACTIVE_LOW>;
-		dh,som-coding-gpios = <&gpiof 12 0>, <&gpiof 13 0>, <&gpiof 15 0>;
-		dh,ddr3-coding-gpios = <&gpioz 6 0>, <&gpioz 7 0>;
 	};
 
-	/* This is actually on FMC2, but we do not have bus driver for that */
-	ks8851: ks8851mll@64000000 {
-		compatible = "micrel,ks8851-mll";
-		reg = <0x64000000 0x20000>;
-	};
-};
+	led {
+		red {
+			label = "error";
+			gpios = <&gpioa 13 GPIO_ACTIVE_LOW>;
+			default-state = "off";
+			status = "okay";
+		};
 
-&ethernet0 {
-	phy-reset-gpios = <&gpioh 3 GPIO_ACTIVE_LOW>;
-	/delete-property/ st,eth-ref-clk-sel;
-};
-
-&ethernet0_rmii_pins_a {
-	pins1 {
-		pinmux = <STM32_PINMUX('G', 13, AF11)>, /* ETH1_RMII_TXD0 */
-			 <STM32_PINMUX('G', 14, AF11)>, /* ETH1_RMII_TXD1 */
-			 <STM32_PINMUX('B', 11, AF11)>, /* ETH1_RMII_TX_EN */
-			 <STM32_PINMUX('A', 1, AF11)>,  /* ETH1_RMII_REF_CLK */
-			 <STM32_PINMUX('A', 2, AF11)>,  /* ETH1_MDIO */
-			 <STM32_PINMUX('C', 1, AF11)>;  /* ETH1_MDC */
+		blue {
+			default-state = "on";
+		};
 	};
 };
 
 &i2c4 {
 	u-boot,dm-pre-reloc;
-	u-boot,dm-spl;
-
-	eeprom0: eeprom@50 {
-	};
 };
 
 &i2c4_pins_a {
@@ -71,39 +50,8 @@
 	};
 };
 
-&phy0 {
-	/delete-property/ reset-gpios;
-};
-
-&pinctrl {
-	/* These should bound to FMC2 bus driver, but we do not have one */
-	pinctrl-0 = <&fmc_pins_b &mco2_pins_a>;
-	pinctrl-1 = <&fmc_sleep_pins_b &mco2_sleep_pins_a>;
-	pinctrl-names = "default", "sleep";
-
-	mco2_pins_a: mco2-0 {
-		pins {
-			pinmux = <STM32_PINMUX('G', 2, AF1)>; /* MCO2 */
-			bias-disable;
-			drive-push-pull;
-			slew-rate = <2>;
-		};
-	};
-
-	mco2_sleep_pins_a: mco2-sleep-0 {
-		pins {
-			pinmux = <STM32_PINMUX('G', 2, ANALOG)>; /* MCO2 */
-		};
-	};
-};
-
 &pmic {
 	u-boot,dm-pre-reloc;
-	u-boot,dm-spl;
-
-	regulators {
-		u-boot,dm-spl;
-	};
 };
 
 &flash0 {
@@ -151,7 +99,7 @@
 		CLK_PLL4_HSE
 		CLK_RTC_LSE
 		CLK_MCO1_DISABLED
-		CLK_MCO2_PLL4P
+		CLK_MCO2_DISABLED
 	>;
 
 	st,clkdiv = <
@@ -165,7 +113,7 @@
 		2 /*APB5*/
 		23 /*RTC*/
 		0 /*MCO1*/
-		1 /*MCO2*/
+		0 /*MCO2*/
 	>;
 
 	st,pkcs = <
@@ -206,6 +154,15 @@
 		CLK_LPTIM45_LSE
 	>;
 
+	/* VCO = 1300.0 MHz => P = 650 (CPU) */
+	pll1: st,pll@0 {
+		compatible = "st,stm32mp1-pll";
+		reg = <0>;
+		cfg = < 2 80 0 0 0 PQR(1,0,0) >;
+		frac = < 0x800 >;
+		u-boot,dm-pre-reloc;
+	};
+
 	/* VCO = 1066.0 MHz => P = 266 (AXI), Q = 533 (GPU), R = 533 (DDR) */
 	pll2: st,pll@1 {
 		compatible = "st,stm32mp1-pll";
@@ -228,25 +185,18 @@
 	pll4: st,pll@3 {
 		compatible = "st,stm32mp1-pll";
 		reg = <3>;
-		cfg = < 1 49 5 11 11 PQR(1,1,1) >;
+		cfg = < 1 49 11 11 11 PQR(1,1,1) >;
 		u-boot,dm-pre-reloc;
 	};
 };
 
 &sdmmc1 {
 	u-boot,dm-spl;
-	st,use-ckin;
-	st,cmd-gpios = <&gpiod 2 0>;
-	st,ck-gpios = <&gpioc 12 0>;
-	st,ckin-gpios = <&gpioe 4 0>;
 };
 
 &sdmmc1_b4_pins_a {
 	u-boot,dm-spl;
-	pins1 {
-		u-boot,dm-spl;
-	};
-	pins2 {
+	pins {
 		u-boot,dm-spl;
 	};
 };
@@ -293,40 +243,4 @@
 		/* pull-up on rx to avoid floating level */
 		bias-pull-up;
 	};
-};
-
-&reg11 {
-	u-boot,dm-spl;
-};
-
-&reg18 {
-	u-boot,dm-spl;
-};
-
-&usb33 {
-	u-boot,dm-spl;
-};
-
-&usbotg_hs_pins_a {
-	u-boot,dm-spl;
-};
-
-&usbotg_hs {
-	u-boot,dm-spl;
-};
-
-&usbphyc {
-	u-boot,dm-spl;
-};
-
-&usbphyc_port0 {
-	u-boot,dm-spl;
-};
-
-&usbphyc_port1 {
-	u-boot,dm-spl;
-};
-
-&vdd_usb {
-	u-boot,dm-spl;
 };

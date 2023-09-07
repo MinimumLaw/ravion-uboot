@@ -17,7 +17,6 @@
  * or by defining a preprocessor macro in arch/include/asm/div64.h.
  */
 
-#include <linux/bitops.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>
 #include <linux/math64.h>

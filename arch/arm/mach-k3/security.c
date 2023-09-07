@@ -10,15 +10,12 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <hang.h>
-#include <image.h>
-#include <log.h>
-#include <asm/cache.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
 #include <mach/spl.h>
 #include <spl.h>
 #include <asm/arch/sys_proto.h>
 
-void ti_secure_image_post_process(void **p_image, size_t *p_size)
+void board_fit_image_post_process(void **p_image, size_t *p_size)
 {
 	struct ti_sci_handle *ti_sci = get_ti_sci_handle();
 	struct ti_sci_proc_ops *proc_ops = &ti_sci->ops.proc_ops;

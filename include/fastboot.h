@@ -32,34 +32,32 @@ enum {
 	FASTBOOT_COMMAND_CONTINUE,
 	FASTBOOT_COMMAND_REBOOT,
 	FASTBOOT_COMMAND_REBOOT_BOOTLOADER,
-	FASTBOOT_COMMAND_REBOOT_FASTBOOTD,
-	FASTBOOT_COMMAND_REBOOT_RECOVERY,
 	FASTBOOT_COMMAND_SET_ACTIVE,
 #if CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_FORMAT)
 	FASTBOOT_COMMAND_OEM_FORMAT,
-#endif
-#if CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_PARTCONF)
-	FASTBOOT_COMMAND_OEM_PARTCONF,
-#endif
-#if CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_BOOTBUS)
-	FASTBOOT_COMMAND_OEM_BOOTBUS,
 #endif
 #if CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT)
 	FASTBOOT_COMMAND_ACMD,
 	FASTBOOT_COMMAND_UCMD,
 #endif
-
+#ifdef CONFIG_FSL_FASTBOOT
+	FASTBOOT_COMMAND_UPLOAD,
+	FASTBOOT_COMMAND_GETSTAGED,
+#ifdef CONFIG_FASTBOOT_LOCK
+	FASTBOOT_COMMAND_FLASHING,
+	FASTBOOT_COMMAND_OEM,
+#endif
+#ifdef CONFIG_AVB_SUPPORT
+	FASTBOOT_COMMAND_SETACTIVE,
+#endif
+#ifdef CONFIG_AVB_ATX
+	FASTBOOT_COMMAND_STAGE,
+#endif
+#endif
+#ifdef CONFIG_ANDROID_RECOVERY
+	FASTBOOT_COMMAND_RECOVERY_FASTBOOT,
+#endif
 	FASTBOOT_COMMAND_COUNT
-};
-
-/**
- * Reboot reasons
- */
-enum fastboot_reboot_reason {
-	FASTBOOT_REBOOT_REASON_BOOTLOADER,
-	FASTBOOT_REBOOT_REASON_FASTBOOTD,
-	FASTBOOT_REBOOT_REASON_RECOVERY,
-	FASTBOOT_REBOOT_REASONS_COUNT
 };
 
 /**
@@ -99,7 +97,7 @@ void fastboot_okay(const char *reason, char *response);
  * which sets whatever flag your board specific Android bootloader flow
  * requires in order to re-enter the bootloader.
  */
-int fastboot_set_reboot_flag(enum fastboot_reboot_reason reason);
+int fastboot_set_reboot_flag(void);
 
 /**
  * fastboot_set_progress_callback() - set progress callback
@@ -176,4 +174,9 @@ void fastboot_data_complete(char *response);
 #if CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT)
 void fastboot_acmd_complete(void);
 #endif
+
+int fastboot_tx_write_more(const char *buffer);
+
+int fastboot_tx_write(const char *buffer, unsigned int buffer_size);
+
 #endif /* _FASTBOOT_H_ */

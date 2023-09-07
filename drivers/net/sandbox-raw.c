@@ -6,14 +6,12 @@
  * Joe Hershberger <joe.hershberger@ni.com>
  */
 
-#include <log.h>
 #include <asm/eth-raw-os.h>
 #include <common.h>
 #include <dm.h>
 #include <env.h>
 #include <malloc.h>
 #include <net.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -23,7 +21,7 @@ static struct in_addr arp_ip;
 static int sb_eth_raw_start(struct udevice *dev)
 {
 	struct eth_sandbox_raw_priv *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	int ret;
 
 	debug("eth_sandbox_raw: Start\n");
@@ -66,7 +64,7 @@ static int sb_eth_raw_send(struct udevice *dev, void *packet, int length)
 
 static int sb_eth_raw_recv(struct udevice *dev, int flags, uchar **packetp)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct eth_sandbox_raw_priv *priv = dev_get_priv(dev);
 	int retval = 0;
 	int length;
@@ -135,7 +133,7 @@ static void sb_eth_raw_stop(struct udevice *dev)
 
 static int sb_eth_raw_read_rom_hwaddr(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 
 	net_random_ethaddr(pdata->enetaddr);
 
@@ -150,9 +148,9 @@ static const struct eth_ops sb_eth_raw_ops = {
 	.read_rom_hwaddr	= sb_eth_raw_read_rom_hwaddr,
 };
 
-static int sb_eth_raw_of_to_plat(struct udevice *dev)
+static int sb_eth_raw_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct eth_sandbox_raw_priv *priv = dev_get_priv(dev);
 	const char *ifname;
 	int ret;
@@ -161,7 +159,7 @@ static int sb_eth_raw_of_to_plat(struct udevice *dev)
 
 	ifname = dev_read_string(dev, "host-raw-interface");
 	if (ifname) {
-		strlcpy(priv->host_ifname, ifname, IFNAMSIZ);
+		strncpy(priv->host_ifname, ifname, IFNAMSIZ);
 		printf(": Using %s from DT\n", priv->host_ifname);
 	}
 	if (dev_read_u32(dev, "host-raw-interface-idx",
@@ -192,8 +190,8 @@ U_BOOT_DRIVER(eth_sandbox_raw) = {
 	.name	= "eth_sandbox_raw",
 	.id	= UCLASS_ETH,
 	.of_match = sb_eth_raw_ids,
-	.of_to_plat = sb_eth_raw_of_to_plat,
+	.ofdata_to_platdata = sb_eth_raw_ofdata_to_platdata,
 	.ops	= &sb_eth_raw_ops,
-	.priv_auto	= sizeof(struct eth_sandbox_raw_priv),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct eth_sandbox_raw_priv),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };

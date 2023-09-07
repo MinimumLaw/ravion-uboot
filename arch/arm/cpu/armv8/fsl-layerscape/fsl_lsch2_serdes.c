@@ -4,9 +4,7 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/arch/fsl_serdes.h>
 #include <asm/arch/soc.h>
@@ -249,7 +247,7 @@ int setup_serdes_volt(u32 svdd)
 
 	/*
 	 * If SVDD set failed, will not return directly, so that the
-	 * serdes lanes can complete resetting.
+	 * serdes lanes can complete reseting.
 	 */
 	ret = set_serdes_volt(svdd_tar);
 	if (ret)

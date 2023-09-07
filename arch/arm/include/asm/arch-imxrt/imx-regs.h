@@ -17,14 +17,4 @@
 
 #define ANATOP_BASE_ADDR	0x400d8000
 
-#define MXS_LCDIF_BASE		0x402b8000
-
-#if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
-#include <asm/mach-imx/regs-lcdif.h>
-#endif
-
-#define USB_BASE_ADDR		0x402E0000
-#define USB_PHY0_BASE_ADDR	0x400D9000
-#define USB_PHY1_BASE_ADDR	0x400DA000
-
 #endif /* __ASM_ARCH_IMX_REGS_H__ */

@@ -11,7 +11,6 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/clk.h>

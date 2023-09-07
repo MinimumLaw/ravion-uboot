@@ -10,9 +10,6 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <hang.h>
-#include <log.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/system.h>
 #include <asm/armv8/mmu.h>
 
@@ -719,11 +716,6 @@ int icache_status(void)
 	return (get_sctlr() & CR_I) != 0;
 }
 
-int mmu_status(void)
-{
-	return (get_sctlr() & CR_M) != 0;
-}
-
 void invalidate_icache_all(void)
 {
 	__asm_invalidate_icache_all();
@@ -741,11 +733,6 @@ void icache_disable(void)
 }
 
 int icache_status(void)
-{
-	return 0;
-}
-
-int mmu_status(void)
 {
 	return 0;
 }

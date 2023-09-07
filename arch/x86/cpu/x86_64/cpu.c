@@ -7,8 +7,20 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <debug_uart.h>
-#include <init.h>
-#include <asm/global_data.h>
+
+/*
+ * Global declaration of gd.
+ *
+ * As we write to it before relocation we have to make sure it is not put into
+ * a .bss section which may overlap a .rela section. Initialization forces it
+ * into a .data section which cannot overlap any .rela section.
+ */
+struct global_data *global_data_ptr = (struct global_data *)~0;
+
+void arch_setup_gd(gd_t *new_gd)
+{
+	global_data_ptr = new_gd;
+}
 
 int cpu_has_64bit(void)
 {
@@ -36,17 +48,22 @@ int x86_mp_init(void)
 	return 0;
 }
 
-int x86_cpu_reinit_f(void)
+int misc_init_r(void)
 {
 	return 0;
 }
 
-int cpu_phys_address_size(void)
+int checkcpu(void)
 {
-	return CONFIG_CPU_ADDR_BITS;
+	return 0;
 }
 
-int x86_cpu_init_f(void)
+int print_cpuinfo(void)
+{
+	return 0;
+}
+
+int x86_cpu_reinit_f(void)
 {
 	return 0;
 }

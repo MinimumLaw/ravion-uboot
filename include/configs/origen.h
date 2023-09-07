@@ -19,6 +19,18 @@
 #define PHYS_SDRAM_1			CONFIG_SYS_SDRAM_BASE
 #define SDRAM_BANK_SIZE			(256 << 20)	/* 256 MB */
 
+/* memtest works on */
+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x6000000)
+#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x3E00000)
+
+#define CONFIG_MACH_TYPE		MACH_TYPE_ORIGEN
+
+/* select serial console configuration */
+
+/* Console configuration */
+#define CONFIG_DEFAULT_CONSOLE		"console=ttySAC1,115200n8\0"
+
 #define CONFIG_SYS_MEM_TOP_HIDE	(1 << 20)	/* ram console */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
@@ -45,12 +57,29 @@
         "loadbootscript=load mmc ${mmcdev} ${loadaddr} boot.scr\0" \
         "bootscript=echo Running bootscript from mmc${mmcdev} ...; " \
                 "source ${loadaddr}\0"
+#define CONFIG_BOOTCOMMAND \
+	"if mmc rescan; then " \
+		"echo SD/MMC found on device ${mmcdev};" \
+		"if run loadbootenv; then " \
+			"echo Loaded environment from ${bootenv};" \
+			"run importbootenv;" \
+		"fi;" \
+		"if test -n $uenvcmd; then " \
+			"echo Running uenvcmd ...;" \
+			"run uenvcmd;" \
+		"fi;" \
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"fi; " \
+	"fi;" \
+	"load mmc ${mmcdev} ${loadaddr} uImage; bootm ${loadaddr} "
 
 #define CONFIG_CLK_1000_400_200
 
 /* MIU (Memory Interleaving Unit) */
 #define CONFIG_MIU_2BIT_21_7_INTERLEAVED
 
+#define CONFIG_SYS_MMC_ENV_DEV		0
 #define RESERVE_BLOCK_SIZE		(512)
 #define BL1_SIZE			(16 << 10) /*16 K reserved for BL1*/
 

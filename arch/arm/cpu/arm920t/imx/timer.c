@@ -18,7 +18,6 @@
 #if defined (CONFIG_IMX)
 
 #include <asm/arch/imx-regs.h>
-#include <linux/delay.h>
 
 int timer_init (void)
 {
@@ -49,7 +48,7 @@ ulong get_timer (ulong base)
 	return get_timer_masked() - base;
 }
 
-void __udelay(unsigned long usec)
+void __udelay (unsigned long usec)
 {
 	ulong endtime = get_timer_masked() + usec;
 	signed long diff;
@@ -81,7 +80,7 @@ ulong get_tbclk(void)
 /*
  * Reset the cpu by setting up the watchdog timer and let him time out
  */
-void reset_cpu(void)
+void reset_cpu(ulong ignored)
 {
 	/* Disable watchdog and set Time-Out field to 0 */
 	WCR = 0x00000000;

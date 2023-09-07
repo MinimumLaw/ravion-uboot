@@ -10,7 +10,6 @@
 #include <sysreset.h>
 #include <asm/io.h>
 #include <asm/arch/reset_manager.h>
-#include <linux/bitops.h>
 
 struct socfpga_sysreset_data {
 	void __iomem *rstmgr_base;
@@ -40,7 +39,7 @@ static int socfpga_sysreset_probe(struct udevice *dev)
 {
 	struct socfpga_sysreset_data *data = dev_get_priv(dev);
 
-	data->rstmgr_base = dev_read_addr_ptr(dev);
+	data->rstmgr_base = devfdt_get_addr_ptr(dev);
 	return 0;
 }
 
@@ -51,7 +50,7 @@ static struct sysreset_ops socfpga_sysreset = {
 U_BOOT_DRIVER(sysreset_socfpga) = {
 	.id	= UCLASS_SYSRESET,
 	.name	= "socfpga_sysreset",
-	.priv_auto	= sizeof(struct socfpga_sysreset_data),
+	.priv_auto_alloc_size = sizeof(struct socfpga_sysreset_data),
 	.ops	= &socfpga_sysreset,
 	.probe	= socfpga_sysreset_probe,
 };

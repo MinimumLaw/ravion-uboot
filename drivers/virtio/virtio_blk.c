@@ -7,7 +7,6 @@
 #include <common.h>
 #include <blk.h>
 #include <dm.h>
-#include <part.h>
 #include <virtio_types.h>
 #include <virtio.h>
 #include <virtio_ring.h>
@@ -72,7 +71,7 @@ static ulong virtio_blk_write(struct udevice *dev, lbaint_t start,
 static int virtio_blk_bind(struct udevice *dev)
 {
 	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
-	struct blk_desc *desc = dev_get_uclass_plat(dev);
+	struct blk_desc *desc = dev_get_uclass_platdata(dev);
 	int devnum;
 
 	desc->if_type = IF_TYPE_VIRTIO;
@@ -106,7 +105,7 @@ static int virtio_blk_bind(struct udevice *dev)
 static int virtio_blk_probe(struct udevice *dev)
 {
 	struct virtio_blk_priv *priv = dev_get_priv(dev);
-	struct blk_desc *desc = dev_get_uclass_plat(dev);
+	struct blk_desc *desc = dev_get_uclass_platdata(dev);
 	u64 cap;
 	int ret;
 
@@ -115,7 +114,6 @@ static int virtio_blk_probe(struct udevice *dev)
 		return ret;
 
 	desc->blksz = 512;
-	desc->log2blksz = 9;
 	virtio_cread(dev, struct virtio_blk_config, capacity, &cap);
 	desc->lba = cap;
 
@@ -134,6 +132,6 @@ U_BOOT_DRIVER(virtio_blk) = {
 	.bind	= virtio_blk_bind,
 	.probe	= virtio_blk_probe,
 	.remove	= virtio_reset,
-	.priv_auto	= sizeof(struct virtio_blk_priv),
+	.priv_auto_alloc_size = sizeof(struct virtio_blk_priv),
 	.flags	= DM_FLAG_ACTIVE_DMA,
 };

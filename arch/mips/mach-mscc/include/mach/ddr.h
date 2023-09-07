@@ -9,7 +9,6 @@
 #include <asm/cacheops.h>
 #include <asm/io.h>
 #include <asm/reboot.h>
-#include <linux/bitops.h>
 #include <mach/common.h>
 
 #define MIPS_VCOREIII_MEMORY_DDR3

@@ -7,13 +7,8 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <env.h>
-#include <image.h>
-#include <init.h>
-#include <log.h>
 #include <serial.h>
 #include <spl.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -273,7 +268,7 @@ static void spl_dram_init(void)
 #endif
 }
 
-#ifdef CONFIG_SPL_SPI
+#ifdef CONFIG_SPL_SPI_SUPPORT
 static void displ5_init_ecspi(void)
 {
 	displ5_set_iomux_ecspi_spl();
@@ -283,13 +278,13 @@ static void displ5_init_ecspi(void)
 static inline void displ5_init_ecspi(void) { }
 #endif
 
-#ifdef CONFIG_SPL_MMC
+#ifdef CONFIG_SPL_MMC_SUPPORT
 static struct fsl_esdhc_cfg usdhc_cfg = {
 	.esdhc_base = USDHC4_BASE_ADDR,
 	.max_bus_width = 8,
 };
 
-int board_mmc_init(struct bd_info *bd)
+int board_mmc_init(bd_t *bd)
 {
 	displ5_set_iomux_usdhc_spl();
 
@@ -327,10 +322,8 @@ void board_init_f(ulong dummy)
 	displ5_set_iomux_misc_spl();
 
 	/* Initialize and reset WDT in SPL */
-#ifdef CONFIG_SPL_WATCHDOG
 	hw_watchdog_init();
 	WATCHDOG_RESET();
-#endif
 
 	/* load/boot image from boot device */
 	board_init_r(NULL, 0);
@@ -378,7 +371,7 @@ void board_boot_order(u32 *spl_boot_list)
 #endif
 }
 
-void reset_cpu(void) {}
+void reset_cpu(ulong addr) {}
 
 #ifdef CONFIG_SPL_LOAD_FIT
 int board_fit_config_name_match(const char *name)

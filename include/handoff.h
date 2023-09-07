@@ -20,10 +20,12 @@
 struct spl_handoff {
 	struct arch_spl_handoff arch;
 	u64 ram_size;
+#ifdef CONFIG_NR_DRAM_BANKS
 	struct {
 		u64 start;
 		u64 size;
 	} ram_bank[CONFIG_NR_DRAM_BANKS];
+#endif
 };
 
 void handoff_save_dram(struct spl_handoff *ho);
@@ -38,7 +40,7 @@ void handoff_load_dram_banks(struct spl_handoff *ho);
  * write_spl_handoff().
  *
  * @ho: Handoff area to fill in
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int handoff_arch_save(struct spl_handoff *ho);
 

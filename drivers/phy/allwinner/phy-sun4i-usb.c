@@ -13,7 +13,6 @@
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
-#include <log.h>
 #include <dm/device.h>
 #include <generic-phy.h>
 #include <phy-sun4i-usb.h>
@@ -23,10 +22,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <dm/device_compat.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/err.h>
-#include <power/regulator.h>
 
 #define REG_ISCR			0x00
 #define REG_PHYCTL_A10			0x04
@@ -125,6 +121,7 @@ struct sun4i_usb_phy_info {
 
 struct sun4i_usb_phy_plat {
 	void __iomem *pmu;
+	int power_on_count;
 	int gpio_vbus;
 	int gpio_vbus_det;
 	int gpio_id_det;
@@ -137,7 +134,6 @@ struct sun4i_usb_phy_data {
 	void __iomem *base;
 	const struct sun4i_usb_phy_cfg *cfg;
 	struct sun4i_usb_phy_plat *usb_phy;
-	struct udevice *vbus_power_supply;
 };
 
 static int initial_usb_scan_delay = CONFIG_INITIAL_USB_SCAN_DELAY;
@@ -224,6 +220,10 @@ static int sun4i_usb_phy_power_on(struct phy *phy)
 		initial_usb_scan_delay = 0;
 	}
 
+	usb_phy->power_on_count++;
+	if (usb_phy->power_on_count != 1)
+		return 0;
+
 	if (usb_phy->gpio_vbus >= 0)
 		gpio_set_value(usb_phy->gpio_vbus, SUNXI_GPIO_PULL_UP);
 
@@ -234,6 +234,10 @@ static int sun4i_usb_phy_power_off(struct phy *phy)
 {
 	struct sun4i_usb_phy_data *data = dev_get_priv(phy->dev);
 	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
+
+	usb_phy->power_on_count--;
+	if (usb_phy->power_on_count != 0)
+		return 0;
 
 	if (usb_phy->gpio_vbus >= 0)
 		gpio_set_value(usb_phy->gpio_vbus, SUNXI_GPIO_PULL_DISABLE);
@@ -265,20 +269,17 @@ static int sun4i_usb_phy_init(struct phy *phy)
 
 	ret = clk_enable(&usb_phy->clocks);
 	if (ret) {
-		dev_err(phy->dev, "failed to enable usb_%ldphy clock\n",
-			phy->id);
+		dev_err(dev, "failed to enable usb_%ldphy clock\n", phy->id);
 		return ret;
 	}
 
 	ret = reset_deassert(&usb_phy->resets);
 	if (ret) {
-		dev_err(phy->dev, "failed to deassert usb_%ldreset reset\n",
-			phy->id);
+		dev_err(dev, "failed to deassert usb_%ldreset reset\n", phy->id);
 		return ret;
 	}
 
-	if (data->cfg->type == sun8i_a83t_phy ||
-	    data->cfg->type == sun50i_h6_phy) {
+	if (data->cfg->type == sun8i_a83t_phy) {
 		if (phy->id == 0) {
 			val = readl(data->base + data->cfg->phyctl_offset);
 			val |= PHY_CTL_VBUSVLDEXT;
@@ -306,21 +307,9 @@ static int sun4i_usb_phy_init(struct phy *phy)
 				    data->cfg->disc_thresh, PHY_DISCON_TH_LEN);
 	}
 
-#ifdef CONFIG_USB_MUSB_SUNXI
-	/* Needed for HCI and conflicts with MUSB, keep PHY0 on MUSB */
-	if (usb_phy->id != 0)
-		sun4i_usb_phy_passby(phy, true);
-
-	/* Route PHY0 to MUSB to allow USB gadget */
-	if (data->cfg->phy0_dual_route)
-		sun4i_usb_phy0_reroute(data, true);
-#else
 	sun4i_usb_phy_passby(phy, true);
 
-	/* Route PHY0 to HCI to allow USB host */
-	if (data->cfg->phy0_dual_route)
-		sun4i_usb_phy0_reroute(data, false);
-#endif
+	sun4i_usb_phy0_reroute(data, true);
 
 	return 0;
 }
@@ -332,8 +321,7 @@ static int sun4i_usb_phy_exit(struct phy *phy)
 	int ret;
 
 	if (phy->id == 0) {
-		if (data->cfg->type == sun8i_a83t_phy ||
-		    data->cfg->type == sun50i_h6_phy) {
+		if (data->cfg->type == sun8i_a83t_phy) {
 			void __iomem *phyctl = data->base +
 				data->cfg->phyctl_offset;
 
@@ -345,15 +333,13 @@ static int sun4i_usb_phy_exit(struct phy *phy)
 
 	ret = clk_disable(&usb_phy->clocks);
 	if (ret) {
-		dev_err(phy->dev, "failed to disable usb_%ldphy clock\n",
-			phy->id);
+		dev_err(dev, "failed to disable usb_%ldphy clock\n", phy->id);
 		return ret;
 	}
 
 	ret = reset_assert(&usb_phy->resets);
 	if (ret) {
-		dev_err(phy->dev, "failed to assert usb_%ldreset reset\n",
-			phy->id);
+		dev_err(dev, "failed to assert usb_%ldreset reset\n", phy->id);
 		return ret;
 	}
 
@@ -384,21 +370,22 @@ int sun4i_usb_phy_vbus_detect(struct phy *phy)
 {
 	struct sun4i_usb_phy_data *data = dev_get_priv(phy->dev);
 	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
-	int err = 1, retries = 3;
+	int err, retries = 3;
 
-	if (usb_phy->gpio_vbus_det >= 0) {
+	debug("%s: id_det = %d\n", __func__, usb_phy->gpio_id_det);
+
+	if (usb_phy->gpio_vbus_det < 0)
+		return usb_phy->gpio_vbus_det;
+
+	err = gpio_get_value(usb_phy->gpio_vbus_det);
+	/*
+	 * Vbus may have been provided by the board and just been turned of
+	 * some milliseconds ago on reset, what we're measuring then is a
+	 * residual charge on Vbus, sleep a bit and try again.
+	 */
+	while (err > 0 && retries--) {
+		mdelay(100);
 		err = gpio_get_value(usb_phy->gpio_vbus_det);
-		/*
-		 * Vbus may have been provided by the board and just turned off
-		 * some milliseconds ago on reset. What we're measuring then is
-		 * a residual charge on Vbus. Sleep a bit and try again.
-		 */
-		while (err > 0 && retries--) {
-			mdelay(100);
-			err = gpio_get_value(usb_phy->gpio_vbus_det);
-		}
-	} else if (data->vbus_power_supply) {
-		err = regulator_get_enable(data->vbus_power_supply);
 	}
 
 	return err;
@@ -408,6 +395,8 @@ int sun4i_usb_phy_id_detect(struct phy *phy)
 {
 	struct sun4i_usb_phy_data *data = dev_get_priv(phy->dev);
 	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
+
+	debug("%s: id_det = %d\n", __func__, usb_phy->gpio_id_det);
 
 	if (usb_phy->gpio_id_det < 0)
 		return usb_phy->gpio_id_det;
@@ -430,7 +419,7 @@ static struct phy_ops sun4i_usb_phy_ops = {
 
 static int sun4i_usb_phy_probe(struct udevice *dev)
 {
-	struct sun4i_usb_phy_plat *plat = dev_get_plat(dev);
+	struct sun4i_usb_phy_plat *plat = dev_get_platdata(dev);
 	struct sun4i_usb_phy_data *data = dev_get_priv(dev);
 	int i, ret;
 
@@ -441,9 +430,6 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 	data->base = (void __iomem *)devfdt_get_addr_name(dev, "phy_ctrl");
 	if (IS_ERR(data->base))
 		return PTR_ERR(data->base);
-
-	device_get_supply_regulator(dev, "usb0_vbus_power-supply",
-				    &data->vbus_power_supply);
 
 	data->usb_phy = plat;
 	for (i = 0; i < data->cfg->num_phys; i++) {
@@ -651,6 +637,6 @@ U_BOOT_DRIVER(sun4i_usb_phy) = {
 	.of_match = sun4i_usb_phy_ids,
 	.ops = &sun4i_usb_phy_ops,
 	.probe = sun4i_usb_phy_probe,
-	.plat_auto	= sizeof(struct sun4i_usb_phy_plat[MAX_PHYS]),
-	.priv_auto	= sizeof(struct sun4i_usb_phy_data),
+	.platdata_auto_alloc_size = sizeof(struct sun4i_usb_phy_plat[MAX_PHYS]),
+	.priv_auto_alloc_size = sizeof(struct sun4i_usb_phy_data),
 };

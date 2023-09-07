@@ -9,7 +9,6 @@
 #define _MAX98088_H
 
 /* MAX98088 Registers Definition */
-#include <linux/bitops.h>
 #define M98088_REG_IRQ_STATUS		0x00
 #define M98088_REG_MIC_STATUS		0x01
 #define M98088_REG_JACK_STAUS		0x02

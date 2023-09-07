@@ -8,7 +8,7 @@
 
 #include <asm/arch/sci/types.h>
 
-struct imx8_power_domain_plat {
+struct imx8_power_domain_platdata {
 	sc_rsrc_t resource_id;
 };
 

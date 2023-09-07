@@ -48,7 +48,6 @@
 
 #include <common.h>
 #include <malloc.h>
-#include <linux/bitops.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
@@ -98,9 +97,9 @@ struct mvebu_mbus_soc_data {
 };
 
 struct mvebu_mbus_state mbus_state
-	__section(".data");
+	__attribute__ ((section(".data")));
 static struct mbus_dram_target_info mbus_dram_info
-	__section(".data");
+	__attribute__ ((section(".data")));
 
 /*
  * Functions to manipulate the address decoding windows
@@ -412,7 +411,7 @@ int mvebu_mbus_del_window(phys_addr_t base, size_t size)
 	return 0;
 }
 
-#ifndef CONFIG_ARCH_KIRKWOOD
+#ifndef CONFIG_KIRKWOOD
 static void mvebu_mbus_get_lowest_base(struct mvebu_mbus_state *mbus,
 				       phys_addr_t *base)
 {
@@ -480,7 +479,7 @@ int mbus_dt_setup_win(struct mvebu_mbus_state *mbus,
 			return -ENOMEM;
 	}
 
-#ifndef CONFIG_ARCH_KIRKWOOD
+#ifndef CONFIG_KIRKWOOD
 	/*
 	 * Re-configure the mbus bridge registers each time this function
 	 * is called. Since it may get called from the board code in
@@ -498,7 +497,7 @@ int mvebu_mbus_probe(struct mbus_win windows[], int count)
 	int ret;
 	int i;
 
-#if defined(CONFIG_ARCH_KIRKWOOD)
+#if defined(CONFIG_KIRKWOOD)
 	mbus_state.soc = &kirkwood_mbus_data;
 #endif
 #if defined(CONFIG_ARCH_MVEBU)

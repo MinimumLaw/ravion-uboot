@@ -4,6 +4,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <common.h>
 #include <cpu_func.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
@@ -15,7 +16,6 @@
 #include <asm/processor.h>
 #include <asm/psci.h>
 #include <asm/secure.h>
-#include <asm/system.h>
 
 #include "../debug.h"
 #include "../soc-info.h"
@@ -158,5 +158,5 @@ s32 __secure psci_cpu_on(u32 function_id, u32 cpuid, u32 entry_point,
 
 void __secure psci_system_reset(void)
 {
-	reset_cpu();
+	reset_cpu(0);
 }

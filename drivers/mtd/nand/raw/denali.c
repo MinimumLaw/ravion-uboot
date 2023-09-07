@@ -5,18 +5,12 @@
  * Copyright (C) 2009-2010, Intel Corporation and its suppliers.
  */
 
-#include <common.h>
 #include <dm.h>
 #include <malloc.h>
 #include <nand.h>
-#include <asm/cache.h>
-#include <asm/dma-mapping.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/dma-direction.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/errno.h>
@@ -1095,7 +1089,6 @@ static void denali_hw_init(struct denali_nand_info *denali)
 	iowrite32(CHIP_EN_DONT_CARE__FLAG, denali->reg + CHIP_ENABLE_DONT_CARE);
 
 	iowrite32(0xffff, denali->reg + SPARE_AREA_MARKER);
-	iowrite32(WRITE_PROTECT__FLAG, denali->reg + WRITE_PROTECT);
 }
 
 int denali_calc_ecc_bytes(int step_size, int strength)
@@ -1220,17 +1213,6 @@ static int denali_multidev_fixup(struct denali_nand_info *denali)
 	return 0;
 }
 
-int denali_wait_reset_complete(struct denali_nand_info *denali)
-{
-	u32 irq_status;
-
-	irq_status = denali_wait_for_irq(denali, INTR__RST_COMP);
-	if (!(irq_status & INTR__RST_COMP))
-		return -EIO;
-
-	return 0;
-}
-
 int denali_init(struct denali_nand_info *denali)
 {
 	struct nand_chip *chip = &denali->nand;
@@ -1246,7 +1228,7 @@ int denali_init(struct denali_nand_info *denali)
 
 	denali->active_bank = DENALI_INVALID_BANK;
 
-	chip->flash_node = dev_ofnode(denali->dev);
+	chip->flash_node = dev_of_offset(denali->dev);
 	/* Fallback to the default name if DT did not give "label" property */
 	if (!mtd->name)
 		mtd->name = "denali-nand";

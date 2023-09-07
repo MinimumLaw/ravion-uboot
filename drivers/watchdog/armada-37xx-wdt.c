@@ -8,7 +8,6 @@
 #include <common.h>
 #include <dm.h>
 #include <wdt.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>
@@ -58,11 +57,13 @@ static void counter_disable(struct a37xx_wdt *priv, int id)
 	clrbits_le32(priv->reg + CNTR_CTRL(id), CNTR_CTRL_ENABLE);
 }
 
-static void init_counter(struct a37xx_wdt *priv, int id, u32 mode, u32 trig_src)
+static int init_counter(struct a37xx_wdt *priv, int id, u32 mode, u32 trig_src)
 {
 	u32 reg;
 
 	reg = readl(priv->reg + CNTR_CTRL(id));
+	if (reg & CNTR_CTRL_ACTIVE)
+		return -EBUSY;
 
 	reg &= ~(CNTR_CTRL_MODE_MASK | CNTR_CTRL_PRESCALE_MASK |
 		 CNTR_CTRL_TRIG_SRC_MASK);
@@ -77,6 +78,8 @@ static void init_counter(struct a37xx_wdt *priv, int id, u32 mode, u32 trig_src)
 	reg |= trig_src;
 
 	writel(reg, priv->reg + CNTR_CTRL(id));
+
+	return 0;
 }
 
 static int a37xx_wdt_reset(struct udevice *dev)
@@ -112,9 +115,16 @@ static int a37xx_wdt_expire_now(struct udevice *dev, ulong flags)
 static int a37xx_wdt_start(struct udevice *dev, u64 ms, ulong flags)
 {
 	struct a37xx_wdt *priv = dev_get_priv(dev);
+	int err;
 
-	init_counter(priv, 0, CNTR_CTRL_MODE_ONESHOT, 0);
-	init_counter(priv, 1, CNTR_CTRL_MODE_HWSIG, CNTR_CTRL_TRIG_SRC_PREV_CNTR);
+	err = init_counter(priv, 0, CNTR_CTRL_MODE_ONESHOT, 0);
+	if (err < 0)
+		return err;
+
+	err = init_counter(priv, 1, CNTR_CTRL_MODE_HWSIG,
+			   CNTR_CTRL_TRIG_SRC_PREV_CNTR);
+	if (err < 0)
+		return err;
 
 	priv->timeout = ms * priv->clk_rate / 1000 / CNTR_CTRL_PRESCALE_MIN;
 
@@ -144,9 +154,12 @@ static int a37xx_wdt_probe(struct udevice *dev)
 	struct a37xx_wdt *priv = dev_get_priv(dev);
 	fdt_addr_t addr;
 
-	priv->sel_reg = (void __iomem *)MVEBU_REGISTER(0x0d064);
+	addr = dev_read_addr_index(dev, 0);
+	if (addr == FDT_ADDR_T_NONE)
+		goto err;
+	priv->sel_reg = (void __iomem *)addr;
 
-	addr = dev_read_addr(dev);
+	addr = dev_read_addr_index(dev, 1);
 	if (addr == FDT_ADDR_T_NONE)
 		goto err;
 	priv->reg = (void __iomem *)addr;
@@ -183,6 +196,6 @@ U_BOOT_DRIVER(a37xx_wdt) = {
 	.id = UCLASS_WDT,
 	.of_match = a37xx_wdt_ids,
 	.probe = a37xx_wdt_probe,
-	.priv_auto	= sizeof(struct a37xx_wdt),
+	.priv_auto_alloc_size = sizeof(struct a37xx_wdt),
 	.ops = &a37xx_wdt_ops,
 };

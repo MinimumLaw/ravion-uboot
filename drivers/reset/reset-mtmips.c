@@ -8,10 +8,8 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <reset-uclass.h>
-#include <linux/bitops.h>
 #include <linux/io.h>
 
 struct mtmips_reset_priv {
@@ -58,7 +56,7 @@ static int mtmips_reset_probe(struct udevice *dev)
 	return 0;
 }
 
-static int mtmips_reset_of_to_plat(struct udevice *dev)
+static int mtmips_reset_ofdata_to_platdata(struct udevice *dev)
 {
 	struct mtmips_reset_priv *priv = dev_get_priv(dev);
 
@@ -78,9 +76,8 @@ U_BOOT_DRIVER(mtmips_reset) = {
 	.name = "mtmips-reset",
 	.id = UCLASS_RESET,
 	.of_match = mtmips_reset_ids,
-	.of_to_plat = mtmips_reset_of_to_plat,
+	.ofdata_to_platdata = mtmips_reset_ofdata_to_platdata,
 	.probe = mtmips_reset_probe,
-	.priv_auto	= sizeof(struct mtmips_reset_priv),
+	.priv_auto_alloc_size = sizeof(struct mtmips_reset_priv),
 	.ops = &mtmips_reset_ops,
-	.flags = DM_FLAG_PRE_RELOC,
 };

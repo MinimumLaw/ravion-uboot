@@ -6,15 +6,8 @@
 #include <common.h>
 #include <clock_legacy.h>
 #include <cpu_func.h>
-#include <debug_uart.h>
 #include <env.h>
-#include <hang.h>
-#include <image.h>
-#include <init.h>
-#include <log.h>
 #include <spl.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <fsl_ifc.h>
 #include <i2c.h>
@@ -27,7 +20,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 u32 spl_boot_device(void)
 {
-#ifdef CONFIG_SPL_MMC
+#ifdef CONFIG_SPL_MMC_SUPPORT
 	return BOOT_DEVICE_MMC1;
 #endif
 #ifdef CONFIG_SPL_NAND_SUPPORT
@@ -66,19 +59,10 @@ void spl_board_init(void)
 
 void board_init_f(ulong dummy)
 {
-	int ret;
-
 	icache_enable();
 	/* Clear global data */
 	memset((void *)gd, 0, sizeof(gd_t));
-	if (IS_ENABLED(CONFIG_DEBUG_UART))
-		debug_uart_init();
 	board_early_init_f();
-	ret = spl_early_init();
-	if (ret) {
-		debug("spl_early_init() failed: %d\n", ret);
-		hang();
-	}
 	timer_init();
 #ifdef CONFIG_ARCH_LS2080A
 	env_init();
@@ -88,14 +72,12 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 	spl_set_bd();
 
-#if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
-#ifdef CONFIG_SPL_I2C
+#ifdef CONFIG_SYS_I2C
+#ifdef CONFIG_SPL_I2C_SUPPORT
 	i2c_init_all();
 #endif
 #endif
-#if defined(CONFIG_VID) && (defined(CONFIG_ARCH_LS1088A) || \
-			    defined(CONFIG_ARCH_LX2160A) || \
-			    defined(CONFIG_ARCH_LX2162A))
+#ifdef CONFIG_VID
 	init_func_vid();
 #endif
 	dram_init();
@@ -149,4 +131,13 @@ int spl_start_uboot(void)
 	return 1;
 }
 #endif	/* CONFIG_SPL_OS_BOOT */
+#ifdef CONFIG_SPL_LOAD_FIT
+__weak int board_fit_config_name_match(const char *name)
+{
+	/* Just empty function now - can't decide what to choose */
+	debug("%s: %s\n", __func__, name);
+
+	return 0;
+}
+#endif
 #endif /* CONFIG_SPL_BUILD */

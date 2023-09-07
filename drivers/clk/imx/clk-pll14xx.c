@@ -11,9 +11,7 @@
 #include <clk-uclass.h>
 #include <dm/device.h>
 #include <dm/devres.h>
-#include <linux/bitops.h>
 #include <linux/clk-provider.h>
-#include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/iopoll.h>
 #include <clk.h>

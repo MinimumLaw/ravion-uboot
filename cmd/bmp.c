@@ -15,11 +15,11 @@
 #include <gzip.h>
 #include <image.h>
 #include <lcd.h>
-#include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <splash.h>
 #include <video.h>
+#include <video_link.h>
 #include <asm/byteorder.h>
 
 static int bmp_info (ulong addr);
@@ -92,8 +92,7 @@ struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
 }
 #endif
 
-static int do_bmp_info(struct cmd_tbl *cmdtp, int flag, int argc,
-		       char *const argv[])
+static int do_bmp_info(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 
@@ -102,7 +101,7 @@ static int do_bmp_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		addr = image_load_addr;
 		break;
 	case 2:		/* use argument */
-		addr = hextoul(argv[1], NULL);
+		addr = simple_strtoul(argv[1], NULL, 16);
 		break;
 	default:
 		return CMD_RET_USAGE;
@@ -111,8 +110,7 @@ static int do_bmp_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	return (bmp_info(addr));
 }
 
-static int do_bmp_display(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
+static int do_bmp_display(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 	int x = 0, y = 0;
@@ -124,18 +122,18 @@ static int do_bmp_display(struct cmd_tbl *cmdtp, int flag, int argc,
 		addr = image_load_addr;
 		break;
 	case 2:		/* use argument */
-		addr = hextoul(argv[1], NULL);
+		addr = simple_strtoul(argv[1], NULL, 16);
 		break;
 	case 4:
-		addr = hextoul(argv[1], NULL);
+		addr = simple_strtoul(argv[1], NULL, 16);
 		if (!strcmp(argv[2], "m"))
 			x = BMP_ALIGN_CENTER;
 		else
-			x = dectoul(argv[2], NULL);
+			x = simple_strtoul(argv[2], NULL, 10);
 		if (!strcmp(argv[3], "m"))
 			y = BMP_ALIGN_CENTER;
 		else
-			y = dectoul(argv[3], NULL);
+			y = simple_strtoul(argv[3], NULL, 10);
 		break;
 	default:
 		return CMD_RET_USAGE;
@@ -144,7 +142,7 @@ static int do_bmp_display(struct cmd_tbl *cmdtp, int flag, int argc,
 	 return (bmp_display(addr, x, y));
 }
 
-static struct cmd_tbl cmd_bmp_sub[] = {
+static cmd_tbl_t cmd_bmp_sub[] = {
 	U_BOOT_CMD_MKENT(info, 3, 0, do_bmp_info, "", ""),
 	U_BOOT_CMD_MKENT(display, 5, 0, do_bmp_display, "", ""),
 };
@@ -165,9 +163,9 @@ void bmp_reloc(void) {
  * Return:      None
  *
  */
-static int do_bmp(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_bmp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	struct cmd_tbl *c;
+	cmd_tbl_t *c;
 
 	/* Strip off leading 'bmp' command argument */
 	argc--;
@@ -255,8 +253,15 @@ int bmp_display(ulong addr, int x, int y)
 	addr = map_to_sysmem(bmp);
 
 #ifdef CONFIG_DM_VIDEO
+#ifdef CONFIG_VIDEO_LINK
+	dev = video_link_get_video_device();
+	if (!dev) {
+		ret = -ENODEV;
+	} else {
+#else
 	ret = uclass_first_device_err(UCLASS_VIDEO, &dev);
 	if (!ret) {
+#endif
 		bool align = false;
 
 		if (CONFIG_IS_ENABLED(SPLASH_SCREEN_ALIGN) ||

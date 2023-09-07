@@ -13,10 +13,13 @@
 
 #include <configs/exynos4-common.h>
 
+#define CONFIG_SYS_L2CACHE_OFF
 #ifndef CONFIG_SYS_L2CACHE_OFF
 #define CONFIG_SYS_L2_PL310
 #define CONFIG_SYS_PL310_BASE	0x10502000
 #endif
+
+#define CONFIG_MACH_TYPE	4289
 
 #define CONFIG_SYS_SDRAM_BASE	0x40000000
 #define SDRAM_BANK_SIZE		(256 << 20)	/* 256 MB */
@@ -25,12 +28,27 @@
 #define CONFIG_SYS_MEM_TOP_HIDE		(1UL << 20UL)
 #define CONFIG_TZSW_RESERVED_DRAM_SIZE	CONFIG_SYS_MEM_TOP_HIDE
 
+/* memtest works on */
+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5E00000)
+#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x3E00000)
+
 #include <linux/sizes.h>
+
+/* select serial console configuration */
+
+/* Console configuration */
+
+#define CONFIG_BOOTCOMMAND		"run distro_bootcmd ; run autoboot"
+#define CONFIG_DEFAULT_CONSOLE		"console=ttySAC1,115200n8\0"
 
 #define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_LOAD_ADDR \
 					- GENERATED_GBL_DATA_SIZE)
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
+
+#define CONFIG_SYS_MMC_ENV_DEV		CONFIG_MMC_DEFAULT_DEV
+#define CONFIG_ENV_OVERWRITE
 
 /* Partitions name */
 #define PARTS_BOOT		"boot"
@@ -46,6 +64,7 @@
 	""PARTS_BOOT" part 0 1;" \
 	""PARTS_ROOT" part 0 2\0" \
 
+#define CONFIG_SET_DFU_ALT_INFO
 #define CONFIG_SET_DFU_ALT_BUF_LEN	(SZ_1K)
 
 #define CONFIG_DFU_ALT_BOOT_EMMC \
@@ -136,7 +155,7 @@
 		"elif test -e mmc ${mmcbootdev} uImage; then; " \
 			"run boot_uimg;" \
 		"fi;\0" \
-	"console=console=ttySAC1,115200n8\0" \
+	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mmcbootdev=0\0" \
 	"mmcbootpart=1\0" \
 	"mmcrootdev=0\0" \
@@ -165,5 +184,7 @@
  * TODO: Add Odroid X support
  */
 #define CONFIG_MISC_COMMON
+
+#undef CONFIG_REVISION_TAG
 
 #endif	/* __CONFIG_H */

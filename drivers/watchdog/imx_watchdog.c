@@ -16,10 +16,6 @@
 #include <asm/arch/immap_lsch2.h>
 #endif
 #include <fsl_wdog.h>
-#include <div64.h>
-
-#define TIMEOUT_MAX	128000
-#define TIMEOUT_MIN	500
 
 static void imx_watchdog_expire_now(struct watchdog_regs *wdog, bool ext_reset)
 {
@@ -44,7 +40,7 @@ static void imx_watchdog_expire_now(struct watchdog_regs *wdog, bool ext_reset)
 
 #if !defined(CONFIG_IMX_WATCHDOG) || \
     (defined(CONFIG_IMX_WATCHDOG) && !CONFIG_IS_ENABLED(WDT))
-void __attribute__((weak)) reset_cpu(void)
+void __attribute__((weak)) reset_cpu(ulong addr)
 {
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
@@ -61,9 +57,9 @@ static void imx_watchdog_reset(struct watchdog_regs *wdog)
 #endif /* CONFIG_WATCHDOG_RESET_DISABLE*/
 }
 
-static void imx_watchdog_init(struct watchdog_regs *wdog, bool ext_reset,
-			      u64 timeout)
+static void imx_watchdog_init(struct watchdog_regs *wdog, bool ext_reset)
 {
+	u16 timeout;
 	u16 wcr;
 
 	/*
@@ -74,11 +70,7 @@ static void imx_watchdog_init(struct watchdog_regs *wdog, bool ext_reset,
 #ifndef CONFIG_WATCHDOG_TIMEOUT_MSECS
 #define CONFIG_WATCHDOG_TIMEOUT_MSECS 128000
 #endif
-
-	timeout = max_t(u64, timeout, TIMEOUT_MIN);
-	timeout = min_t(u64, timeout, TIMEOUT_MAX);
-	timeout = lldiv(timeout, 500) - 1;
-
+	timeout = (CONFIG_WATCHDOG_TIMEOUT_MSECS / 500) - 1;
 #ifdef CONFIG_FSL_LSCH2
 	wcr = (WCR_WDA | WCR_SRS | WCR_WDE) << 8 | timeout;
 #else
@@ -103,7 +95,7 @@ void hw_watchdog_init(void)
 {
 	struct watchdog_regs *wdog = (struct watchdog_regs *)WDOG1_BASE_ADDR;
 
-	imx_watchdog_init(wdog, true, CONFIG_WATCHDOG_TIMEOUT_MSECS);
+	imx_watchdog_init(wdog, true);
 }
 #else
 struct imx_wdt_priv {
@@ -134,7 +126,7 @@ static int imx_wdt_start(struct udevice *dev, u64 timeout, ulong flags)
 {
 	struct imx_wdt_priv *priv = dev_get_priv(dev);
 
-	imx_watchdog_init(priv->base, priv->ext_reset, timeout);
+	imx_watchdog_init(priv->base, priv->ext_reset);
 
 	return 0;
 }
@@ -169,7 +161,7 @@ U_BOOT_DRIVER(imx_wdt) = {
 	.of_match	= imx_wdt_ids,
 	.probe		= imx_wdt_probe,
 	.ops		= &imx_wdt_ops,
-	.priv_auto	= sizeof(struct imx_wdt_priv),
+	.priv_auto_alloc_size = sizeof(struct imx_wdt_priv),
 	.flags		= DM_FLAG_PRE_RELOC,
 };
 #endif

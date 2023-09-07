@@ -8,9 +8,7 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -30,3 +28,4 @@ int dram_init(void)
 	gd->ram_size = imx_ddr_size();
 	return 0;
 }
+

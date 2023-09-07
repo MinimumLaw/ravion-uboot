@@ -5,9 +5,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <env.h>
-#include <init.h>
-#include <log.h>
 #include <asm/arch-tegra/ap.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
@@ -15,7 +12,6 @@
 #include <asm/arch/pinmux.h>
 #include <env_internal.h>
 #include <pci_tegra.h>
-#include <linux/delay.h>
 #include <power/as3722.h>
 #include <power/pmic.h>
 
@@ -38,24 +34,8 @@
 int arch_misc_init(void)
 {
 	if (readl(NV_PA_BASE_SRAM + NVBOOTINFOTABLE_BOOTTYPE) ==
-	    NVBOOTTYPE_RECOVERY) {
-		printf("USB recovery mode, attempting to boot Toradex Easy "
-		       "Installer\n");
-		env_set("bootdelay", "-2");
-		env_set("defargs", "pcie_aspm=off user_debug=30");
-		env_set("fdt_high", "");
-		env_set("initrd_high", "");
-
-		env_set("setup", "env set setupargs igb_mac=${ethaddr} "
-			"consoleblank=0 no_console_suspend=1 "
-			"console=${console},${baudrate}n8 ${memargs}");
-		env_set("teziargs", "rootfstype=squashfs root=/dev/ram quiet "
-			"autoinstall");
-		env_set("vidargs", "video=HDMI-A-1:640x480-16@60D");
-		env_set("bootcmd", "run setup; env set bootargs ${defargs} "
-			"${setupargs} ${vidargs} ${teziargs}; bootm 0x80208000"
-			"#config@${soc}-${fdt_module}-${fdt_board}.dtb");
-	}
+	    NVBOOTTYPE_RECOVERY)
+		printf("USB recovery mode\n");
 
 	/* PCB Version Indication: V1.2 and later have GPIO_PV0 wired to GND */
 	gpio_request(TEGRA_GPIO(V, 0), "PCB Version Indication");
@@ -100,7 +80,7 @@ int checkboard(void)
 }
 
 #if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	return ft_common_board_setup(blob, bd);
 }
@@ -171,7 +151,7 @@ int tegra_pcie_board_init(void)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_PMIC,
-					  DM_DRIVER_GET(pmic_as3722), &dev);
+					  DM_GET_DRIVER(pmic_as3722), &dev);
 	if (ret) {
 		pr_err("failed to find AS3722 PMIC: %d\n", ret);
 		return ret;
@@ -210,7 +190,7 @@ void tegra_pcie_board_port_reset(struct tegra_pcie_port *port)
 		int ret;
 
 		ret = uclass_get_device_by_driver(UCLASS_PMIC,
-						  DM_DRIVER_GET(pmic_as3722),
+						  DM_GET_DRIVER(pmic_as3722),
 						  &dev);
 		if (ret) {
 			debug("%s: Failed to find PMIC\n", __func__);

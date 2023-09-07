@@ -74,11 +74,10 @@ enum {
 /*
  * Default Device Address MAP BAR values
  */
-#define MBUS_PCI_MAX_PORTS	6
 #define MBUS_PCI_MEM_BASE	MVEBU_SDRAM_SIZE_MAX
-#define MBUS_PCI_MEM_SIZE	((MBUS_PCI_MAX_PORTS * 128) << 20)
+#define MBUS_PCI_MEM_SIZE	(128 << 20)
 #define MBUS_PCI_IO_BASE	0xF1100000
-#define MBUS_PCI_IO_SIZE	((MBUS_PCI_MAX_PORTS * 64) << 10)
+#define MBUS_PCI_IO_SIZE	(64 << 10)
 #define MBUS_SPI_BASE		0xF4000000
 #define MBUS_SPI_SIZE		(8 << 20)
 #define MBUS_DFX_BASE		0xF6000000
@@ -143,13 +142,11 @@ int mvebu_mbus_probe(struct mbus_win windows[], int count);
 int mvebu_soc_family(void);
 u32 mvebu_get_nand_clock(void);
 
-void __noreturn return_to_bootrom(void);
+void return_to_bootrom(void);
 
 #ifndef CONFIG_DM_MMC
 int mv_sdh_init(unsigned long regbase, u32 max_clk, u32 min_clk, u32 quirks);
 #endif
-
-u32 get_boot_device(void);
 
 void get_sar_freq(struct sar_freq_modes *sar_freq);
 
@@ -167,24 +164,11 @@ int serdes_phy_config(void);
 int ddr3_init(void);
 
 /* Auto Voltage Scaling */
-#if defined(CONFIG_ARMADA_38X)
+#if defined(CONFIG_ARMADA_38X) || defined(CONFIG_ARMADA_39X)
 void mv_avs_init(void);
-void mv_rtc_config(void);
 #else
 static inline void mv_avs_init(void) {}
-static inline void mv_rtc_config(void) {}
 #endif
-
-/* A8K dram functions */
-u64 a8k_dram_scan_ap_sz(void);
-int a8k_dram_init_banksize(void);
-
-/* A3700 dram functions */
-int a3700_dram_init(void);
-int a3700_dram_init_banksize(void);
-
-/* A3700 PCIe regions fixer for device tree */
-int a3700_fdt_fix_pcie_regions(void *blob);
 
 /*
  * get_ref_clk

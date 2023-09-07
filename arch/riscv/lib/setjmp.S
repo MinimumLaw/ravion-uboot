@@ -54,8 +54,12 @@ ENTRY(longjmp)
 	LOAD_IDX(sp, 13)
 
 	/* Move the return value in place, but return 1 if passed 0. */
-	seqz a0, a1
-	add a0, a0, a1
+	beq a1, zero, longjmp_1
+	mv a0, a1
+	ret
+
+	longjmp_1:
+	li a0, 1
 	ret
 ENDPROC(longjmp)
 .popsection

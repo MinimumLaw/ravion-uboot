@@ -21,6 +21,9 @@ config SYS_CONFIG_NAME
 	  Based on this option include/configs/<CONFIG_SYS_CONFIG_NAME>.h header
 	  will be used for board configuration.
 
+config GICV3
+	def_bool y
+
 config SYS_MALLOC_LEN
 	default 0x2000000
 
@@ -52,14 +55,5 @@ config DEFINE_TCM_OCM_MMAP
 	help
 	  This option if enabled defines the TCM and OCM memory and its
 	  memory attributes in MMU table entry.
-
-config VERSAL_NO_DDR
-	bool "Disable DDR MMU mapping"
-	help
-	  This option configures MMU with no DDR to avoid speculative
-	  access to DDR memory where DDR is not present.
-
-source "board/xilinx/Kconfig"
-source "board/xilinx/versal/Kconfig"
 
 endif

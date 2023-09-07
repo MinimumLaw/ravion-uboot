@@ -15,7 +15,7 @@
 #include <asm/arch/at91_rstc.h>
 
 /* Reset the cpu by telling the reset controller to do so */
-void reset_cpu(void)
+void reset_cpu(ulong ignored)
 {
 	at91_rstc_t *rstc = (at91_rstc_t *)ATMEL_BASE_RSTC;
 

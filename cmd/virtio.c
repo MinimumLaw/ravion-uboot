@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <blk.h>
 #include <command.h>
 #include <dm.h>
 #include <virtio_types.h>
@@ -13,8 +12,7 @@
 
 static int virtio_curr_dev;
 
-static int do_virtio(struct cmd_tbl *cmdtp, int flag, int argc,
-		     char *const argv[])
+static int do_virtio(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc == 2 && !strcmp(argv[1], "scan")) {
 		/* make sure all virtio devices are enumerated */

@@ -10,7 +10,6 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -28,13 +27,13 @@ struct hisi_mmc_data {
 	bool use_fifo;
 };
 
-static int hi6220_dwmmc_of_to_plat(struct udevice *dev)
+static int hi6220_dwmmc_ofdata_to_platdata(struct udevice *dev)
 {
 	struct hi6220_dwmmc_priv_data *priv = dev_get_priv(dev);
 	struct dwmci_host *host = &priv->host;
 
 	host->name = dev->name;
-	host->ioaddr = dev_read_addr_ptr(dev);
+	host->ioaddr = (void *)devfdt_get_addr(dev);
 	host->buswidth = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
 					"bus-width", 4);
 
@@ -51,7 +50,7 @@ static int hi6220_dwmmc_of_to_plat(struct udevice *dev)
 
 static int hi6220_dwmmc_probe(struct udevice *dev)
 {
-	struct hi6220_dwmmc_plat *plat = dev_get_plat(dev);
+	struct hi6220_dwmmc_plat *plat = dev_get_platdata(dev);
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct hi6220_dwmmc_priv_data *priv = dev_get_priv(dev);
 	struct dwmci_host *host = &priv->host;
@@ -75,7 +74,7 @@ static int hi6220_dwmmc_probe(struct udevice *dev)
 
 static int hi6220_dwmmc_bind(struct udevice *dev)
 {
-	struct hi6220_dwmmc_plat *plat = dev_get_plat(dev);
+	struct hi6220_dwmmc_plat *plat = dev_get_platdata(dev);
 	int ret;
 
 	ret = dwmci_bind(dev, &plat->mmc, &plat->cfg);
@@ -109,10 +108,10 @@ U_BOOT_DRIVER(hi6220_dwmmc_drv) = {
 	.name = "hi6220_dwmmc",
 	.id = UCLASS_MMC,
 	.of_match = hi6220_dwmmc_ids,
-	.of_to_plat = hi6220_dwmmc_of_to_plat,
+	.ofdata_to_platdata = hi6220_dwmmc_ofdata_to_platdata,
 	.ops = &dm_dwmci_ops,
 	.bind = hi6220_dwmmc_bind,
 	.probe = hi6220_dwmmc_probe,
-	.priv_auto	= sizeof(struct hi6220_dwmmc_priv_data),
-	.plat_auto	= sizeof(struct hi6220_dwmmc_plat),
+	.priv_auto_alloc_size = sizeof(struct hi6220_dwmmc_priv_data),
+	.platdata_auto_alloc_size = sizeof(struct hi6220_dwmmc_plat),
 };

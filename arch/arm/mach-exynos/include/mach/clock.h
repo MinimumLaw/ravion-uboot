@@ -8,7 +8,6 @@
 #define __ASM_ARM_ARCH_CLOCK_H_
 
 #ifndef __ASSEMBLY__
-#include <linux/bitops.h>
 struct exynos4_clock {
 	unsigned char	res1[0x4200];
 	unsigned int	src_leftbus;

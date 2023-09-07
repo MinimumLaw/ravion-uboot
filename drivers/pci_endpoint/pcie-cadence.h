@@ -14,7 +14,6 @@
 #include <common.h>
 #include <pci_ep.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 
 /*
  * Local Management Registers

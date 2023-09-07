@@ -14,7 +14,6 @@
 #include <clk-uclass.h>
 #include <i2c.h>
 #include <dm/device_compat.h>
-#include <linux/bitops.h>
 
 #define MAX_NUMBER_OF_PLLS		4
 #define MAX_NUMER_OF_OUTPUTS		9
@@ -86,12 +85,18 @@ static int cdce9xx_reg_write(struct udevice *dev, u8 addr, u8 val)
 	return ret;
 }
 
-static int cdce9xx_clk_request(struct clk *clk)
+static int cdce9xx_clk_of_xlate(struct clk *clk,
+				struct ofnode_phandle_args *args)
 {
 	struct cdce9xx_clk_data *data = dev_get_priv(clk->dev);
 
-	if (clk->id > data->chip->num_outputs)
+	if (args->args_count != 1)
 		return -EINVAL;
+
+	if (args->args[0] > data->chip->num_outputs)
+		return -EINVAL;
+
+	clk->id = args->args[0];
 
 	return 0;
 }
@@ -235,7 +240,7 @@ static const struct udevice_id cdce9xx_clk_of_match[] = {
 };
 
 static const struct clk_ops cdce9xx_clk_ops = {
-	.request = cdce9xx_clk_request,
+	.of_xlate = cdce9xx_clk_of_xlate,
 	.get_rate = cdce9xx_clk_get_rate,
 	.set_rate = cdce9xx_clk_set_rate,
 };
@@ -245,6 +250,6 @@ U_BOOT_DRIVER(cdce9xx_clk) = {
 	.id = UCLASS_CLK,
 	.of_match = cdce9xx_clk_of_match,
 	.probe = cdce9xx_clk_probe,
-	.priv_auto	= sizeof(struct cdce9xx_clk_data),
+	.priv_auto_alloc_size = sizeof(struct cdce9xx_clk_data),
 	.ops = &cdce9xx_clk_ops,
 };

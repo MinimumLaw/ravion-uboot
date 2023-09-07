@@ -11,9 +11,7 @@
 #include <net.h>
 #include <netdev.h>
 #include <asm/cpm_8xx.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 
 #include <phy.h>
 #include <linux/mii.h>
@@ -113,13 +111,13 @@ static struct common_buf_desc __iomem *rtx;
 
 static int fec_send(struct eth_device *dev, void *packet, int length);
 static int fec_recv(struct eth_device *dev);
-static int fec_init(struct eth_device *dev, struct bd_info *bd);
+static int fec_init(struct eth_device *dev, bd_t *bd);
 static void fec_halt(struct eth_device *dev);
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
 static void __mii_init(void);
 #endif
 
-int fec_initialize(struct bd_info *bis)
+int fec_initialize(bd_t *bis)
 {
 	struct eth_device *dev;
 	struct ether_fcc_info_s *efis;
@@ -160,7 +158,7 @@ int fec_initialize(struct bd_info *bis)
 		struct mii_dev *mdiodev = mdio_alloc();
 		if (!mdiodev)
 			return -ENOMEM;
-		strlcpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
+		strncpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
 		mdiodev->read = fec8xx_miiphy_read;
 		mdiodev->write = fec8xx_miiphy_write;
 
@@ -346,7 +344,7 @@ static inline void fec_half_duplex(struct eth_device *dev)
 
 static void fec_pin_init(int fecidx)
 {
-	struct bd_info           *bd = gd->bd;
+	bd_t           *bd = gd->bd;
 	immap_t __iomem *immr = (immap_t __iomem *)CONFIG_SYS_IMMR;
 
 	/*
@@ -497,7 +495,7 @@ static int fec_reset(fec_t __iomem *fecp)
 	return 0;
 }
 
-static int fec_init(struct eth_device *dev, struct bd_info *bd)
+static int fec_init(struct eth_device *dev, bd_t *bd)
 {
 	struct ether_fcc_info_s *efis = dev->priv;
 	immap_t __iomem *immr = (immap_t __iomem *)CONFIG_SYS_IMMR;

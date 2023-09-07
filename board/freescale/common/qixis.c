@@ -32,7 +32,7 @@
 #ifdef CONFIG_SYS_I2C_FPGA_ADDR
 u8 qixis_read_i2c(unsigned int reg)
 {
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	return i2c_reg_read(CONFIG_SYS_I2C_FPGA_ADDR, reg);
 #else
 	struct udevice *dev;
@@ -47,7 +47,7 @@ u8 qixis_read_i2c(unsigned int reg)
 void qixis_write_i2c(unsigned int reg, u8 value)
 {
 	u8 val = value;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_reg_write(CONFIG_SYS_I2C_FPGA_ADDR, reg, val);
 #else
 	struct udevice *dev;
@@ -233,8 +233,7 @@ void __weak qixis_dump_switch(void)
 	puts("Reverse engineering switch is not implemented for this board\n");
 }
 
-static int qixis_reset_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
-			   char *const argv[])
+static int qixis_reset_cmd(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int i;
 
@@ -317,19 +316,6 @@ static int qixis_reset_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
 		QIXIS_WRITE(rcfg_ctl, 0);
 		set_lbmap(QIXIS_LBMAP_QSPI);
 		set_rcw_src(QIXIS_RCW_SRC_QSPI);
-		qixis_write_i2c(offsetof(struct qixis, rcfg_ctl),
-				QIXIS_RCFG_CTL_RECONFIG_IDLE);
-		qixis_write_i2c(offsetof(struct qixis, rcfg_ctl),
-				QIXIS_RCFG_CTL_RECONFIG_START);
-#else
-		printf("Not implemented\n");
-#endif
-	} else if (strcmp(argv[1], "xspi") == 0) {
-#ifdef QIXIS_LBMAP_XSPI
-		QIXIS_WRITE(rst_ctl, 0x30);
-		QIXIS_WRITE(rcfg_ctl, 0);
-		set_lbmap(QIXIS_LBMAP_XSPI);
-		set_rcw_src(QIXIS_RCW_SRC_XSPI);
 		qixis_write_i2c(offsetof(struct qixis, rcfg_ctl),
 				QIXIS_RCFG_CTL_RECONFIG_IDLE);
 		qixis_write_i2c(offsetof(struct qixis, rcfg_ctl),

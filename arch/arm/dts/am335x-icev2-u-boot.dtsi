@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com/
  */
-
-#include "am33xx-u-boot.dtsi"
-
 / {
 	xtal25mhz: xtal25mhz {
 		compatible = "fixed-clock";

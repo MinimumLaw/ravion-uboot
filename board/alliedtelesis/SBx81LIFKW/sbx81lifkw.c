@@ -5,11 +5,7 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <net.h>
-#include <asm/global_data.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/io.h>
 #include <miiphy.h>
 #include <netdev.h>

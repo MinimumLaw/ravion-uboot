@@ -554,7 +554,7 @@ from glob import iglob
 from os.path import dirname, exists, expandvars, islink, join, realpath
 
 
-VERSION = (14, 1, 0)
+VERSION = (12, 14, 0)
 
 
 # File layout:
@@ -773,8 +773,8 @@ class Kconfig(object):
       See Kconfig.load_config() as well.
 
     srctree:
-      The value the $srctree environment variable had when the Kconfig instance
-      was created, or the empty string if $srctree wasn't set. This gives nice
+      The value of the $srctree environment variable when the configuration was
+      loaded, or the empty string if $srctree wasn't set. This gives nice
       behavior with os.path.join(), which treats "" as the current directory,
       without adding "./".
 
@@ -789,22 +789,13 @@ class Kconfig(object):
       if multiple configurations are loaded with different values for $srctree.
 
     config_prefix:
-      The value the CONFIG_ environment variable had when the Kconfig instance
-      was created, or "CONFIG_" if CONFIG_ wasn't set. This is the prefix used
-      (and expected) on symbol names in .config files and C headers. Used in
-      the same way in the C tools.
+      The value of the $CONFIG_ environment variable when the configuration was
+      loaded. This is the prefix used (and expected) on symbol names in .config
+      files and C headers. Defaults to "CONFIG_". Used in the same way in the C
+      tools.
 
-    config_header:
-      The value the KCONFIG_CONFIG_HEADER environment variable had when the
-      Kconfig instance was created, or the empty string if
-      KCONFIG_CONFIG_HEADER wasn't set. This string is inserted verbatim at the
-      beginning of configuration files. See write_config().
-
-    header_header:
-      The value the KCONFIG_AUTOHEADER_HEADER environment variable had when the
-      Kconfig instance was created, or the empty string if
-      KCONFIG_AUTOHEADER_HEADER wasn't set. This string is inserted verbatim at
-      the beginning of header files. See write_autoconf().
+      Like for srctree, only the value of $CONFIG_ when the configuration is
+      loaded matters.
 
     filename/linenr:
       The current parsing location, for use in Python preprocessor functions.
@@ -819,13 +810,11 @@ class Kconfig(object):
         "_warn_assign_no_prompt",
         "choices",
         "comments",
-        "config_header",
         "config_prefix",
         "const_syms",
         "defconfig_list",
         "defined_syms",
         "env_vars",
-        "header_header",
         "kconfig_filenames",
         "m",
         "menus",
@@ -865,7 +854,7 @@ class Kconfig(object):
     #
 
     def __init__(self, filename="Kconfig", warn=True, warn_to_stderr=True,
-                 encoding="utf-8", suppress_traceback=False):
+                 encoding="utf-8"):
         """
         Creates a new Kconfig object by parsing Kconfig files.
         Note that Kconfig files are not the same as .config files (which store
@@ -930,35 +919,7 @@ class Kconfig(object):
           anyway.
 
           Related PEP: https://www.python.org/dev/peps/pep-0538/
-
-        suppress_traceback (default: False):
-          Helper for tools. When True, any EnvironmentError or KconfigError
-          generated during parsing is caught, the exception message is printed
-          to stderr together with the command name, and sys.exit(1) is called
-          (which generates SystemExit).
-
-          This hides the Python traceback for "expected" errors like syntax
-          errors in Kconfig files.
-
-          Other exceptions besides EnvironmentError and KconfigError are still
-          propagated when suppress_traceback is True.
         """
-        try:
-            self._init(filename, warn, warn_to_stderr, encoding)
-        except (EnvironmentError, KconfigError) as e:
-            if suppress_traceback:
-                cmd = sys.argv[0]  # Empty string if missing
-                if cmd:
-                    cmd += ": "
-                # Some long exception messages have extra newlines for better
-                # formatting when reported as an unhandled exception. Strip
-                # them here.
-                sys.exit(cmd + str(e).strip())
-            raise
-
-    def _init(self, filename, warn, warn_to_stderr, encoding):
-        # See __init__()
-
         self._encoding = encoding
 
         self.srctree = os.getenv("srctree", "")
@@ -981,9 +942,6 @@ class Kconfig(object):
         self._set_match = _re_match(self.config_prefix + r"([^=]+)=(.*)")
         self._unset_match = _re_match(r"# {}([^ ]+) is not set".format(
             self.config_prefix))
-
-        self.config_header = os.getenv("KCONFIG_CONFIG_HEADER", "")
-        self.header_header = os.getenv("KCONFIG_AUTOHEADER_HEADER", "")
 
         self.syms = {}
         self.const_syms = {}
@@ -1080,9 +1038,8 @@ class Kconfig(object):
         self._readline = self._open(join(self.srctree, filename), "r").readline
 
         try:
-            # Parse the Kconfig files. Returns the last node, which we
-            # terminate with '.next = None'.
-            self._parse_block(None, self.top_node, self.top_node).next = None
+            # Parse the Kconfig files
+            self._parse_block(None, self.top_node, self.top_node)
             self.top_node.list = self.top_node.next
             self.top_node.next = None
         except UnicodeDecodeError as e:
@@ -1288,7 +1245,7 @@ class Kconfig(object):
                             self._warn("'{}' is not a valid value for the {} "
                                        "symbol {}. Assignment ignored."
                                        .format(val, TYPE_TO_STR[sym.orig_type],
-                                               sym.name_and_loc),
+                                               _name_and_loc(sym)),
                                        filename, linenr)
                             continue
 
@@ -1315,7 +1272,7 @@ class Kconfig(object):
                         if not match:
                             self._warn("malformed string literal in "
                                        "assignment to {}. Assignment ignored."
-                                       .format(sym.name_and_loc),
+                                       .format(_name_and_loc(sym)),
                                        filename, linenr)
                             continue
 
@@ -1384,7 +1341,7 @@ class Kconfig(object):
             user_val = sym.user_value
 
         msg = '{} set more than once. Old value "{}", new value "{}".'.format(
-            sym.name_and_loc, user_val, new_val)
+            _name_and_loc(sym), user_val, new_val)
 
         if user_val == new_val:
             if self.warn_assign_redun:
@@ -1392,29 +1349,8 @@ class Kconfig(object):
         elif self.warn_assign_override:
             self._warn(msg, filename, linenr)
 
-    def load_allconfig(self, filename):
-        """
-        Helper for all*config. Loads (merges) the configuration file specified
-        by KCONFIG_ALLCONFIG, if any. See Documentation/kbuild/kconfig.txt in
-        the Linux kernel.
-
-        Disables warnings for duplicated assignments within configuration files
-        for the duration of the call
-        (kconf.warn_assign_override/warn_assign_redun = False), and restores
-        the previous warning settings at the end. The KCONFIG_ALLCONFIG
-        configuration file is expected to override symbols.
-
-        Exits with sys.exit() (which raises a SystemExit exception) and prints
-        an error to stderr if KCONFIG_ALLCONFIG is set but the configuration
-        file can't be opened.
-
-        filename:
-          Command-specific configuration filename - "allyes.config",
-          "allno.config", etc.
-        """
-        load_allconfig(self, filename)
-
-    def write_autoconf(self, filename=None, header=None):
+    def write_autoconf(self, filename,
+                       header="/* Generated by Kconfiglib (https://github.com/ulfalizer/Kconfiglib) */\n"):
         r"""
         Writes out symbol values as a C header file, matching the format used
         by include/generated/autoconf.h in the kernel.
@@ -1428,43 +1364,22 @@ class Kconfig(object):
         like the modification time and possibly triggering redundant work in
         build tools.
 
-        filename (default: None):
-          Path to write header to.
+        filename:
+          Self-explanatory.
 
-          If None (the default), the path in the environment variable
-          KCONFIG_AUTOHEADER is used if set, and "include/generated/autoconf.h"
-          otherwise. This is compatible with the C tools.
-
-        header (default: None):
-          Text inserted verbatim at the beginning of the file. You would
-          usually want it enclosed in '/* */' to make it a C comment, and
-          include a trailing newline.
-
-          If None (the default), the value of the environment variable
-          KCONFIG_AUTOHEADER_HEADER had when the Kconfig instance was created
-          will be used if it was set, and no header otherwise. See the
-          Kconfig.header_header attribute.
-
-        Returns a string with a message saying that the header got saved, or
-        that there were no changes to it. This is meant to reduce boilerplate
-        in tools, which can do e.g. print(kconf.write_autoconf()).
+        header (default: "/* Generated by Kconfiglib (https://github.com/ulfalizer/Kconfiglib) */\n"):
+          Text that will be inserted verbatim at the beginning of the file. You
+          would usually want it enclosed in '/* */' to make it a C comment,
+          and include a final terminating newline.
         """
-        if filename is None:
-            filename = os.getenv("KCONFIG_AUTOHEADER",
-                                 "include/generated/autoconf.h")
-
-        if self._write_if_changed(filename, self._autoconf_contents(header)):
-            return "Kconfig header saved to '{}'".format(filename)
-        return "No change to Kconfig header in '{}'".format(filename)
+        self._write_if_changed(filename, self._autoconf_contents(header))
 
     def _autoconf_contents(self, header):
         # write_autoconf() helper. Returns the contents to write as a string,
-        # with 'header' or KCONFIG_AUTOHEADER_HEADER at the beginning.
+        # with 'header' at the beginning.
 
-        if header is None:
-            header = self.header_header
-
-        chunks = [header]  # "".join()ed later
+        # "".join()ed later
+        chunks = [header]
         add = chunks.append
 
         for sym in self.unique_defined_syms:
@@ -1500,8 +1415,9 @@ class Kconfig(object):
 
         return "".join(chunks)
 
-    def write_config(self, filename=None, header=None, save_old=True,
-                     verbose=None):
+    def write_config(self, filename=None,
+                     header="# Generated by Kconfiglib (https://github.com/ulfalizer/Kconfiglib)\n",
+                     save_old=True, verbose=None):
         r"""
         Writes out symbol values in the .config format. The format matches the
         C implementation, including ordering.
@@ -1523,21 +1439,16 @@ class Kconfig(object):
         (OSError/IOError). KconfigError is never raised here.
 
         filename (default: None):
-          Path to write configuration to (a string).
+          Filename to save configuration to (a string).
 
-          If None (the default), the path in the environment variable
+          If None (the default), the filename in the environment variable
           KCONFIG_CONFIG is used if set, and ".config" otherwise. See
           standard_config_filename().
 
-        header (default: None):
-          Text inserted verbatim at the beginning of the file. You would
-          usually want each line to start with '#' to make it a comment, and
-          include a trailing newline.
-
-          if None (the default), the value of the environment variable
-          KCONFIG_CONFIG_HEADER had when the Kconfig instance was created will
-          be used if it was set, and no header otherwise. See the
-          Kconfig.config_header attribute.
+        header (default: "# Generated by Kconfiglib (https://github.com/ulfalizer/Kconfiglib)\n"):
+          Text that will be inserted verbatim at the beginning of the file. You
+          would usually want each line to start with '#' to make it a comment,
+          and include a final terminating newline.
 
         save_old (default: True):
           If True and <filename> already exists, a copy of it will be saved to
@@ -1570,7 +1481,7 @@ class Kconfig(object):
 
         contents = self._config_contents(header)
         if self._contents_eq(filename, contents):
-            return "No change to configuration in '{}'".format(filename)
+            return "No change to '{}'".format(filename)
 
         if save_old:
             _save_old(filename)
@@ -1582,7 +1493,7 @@ class Kconfig(object):
 
     def _config_contents(self, header):
         # write_config() helper. Returns the contents to write as a string,
-        # with 'header' or KCONFIG_CONFIG_HEADER at the beginning.
+        # with 'header' at the beginning.
         #
         # More memory friendly would be to 'yield' the strings and
         # "".join(_config_contents()), but it was a bit slower on my system.
@@ -1594,14 +1505,12 @@ class Kconfig(object):
         for sym in self.unique_defined_syms:
             sym._visited = False
 
-        if header is None:
-            header = self.config_header
-
-        chunks = [header]  # "".join()ed later
-        add = chunks.append
-
         # Did we just print an '# end of ...' comment?
         after_end_comment = False
+
+        # "".join()ed later
+        chunks = [header]
+        add = chunks.append
 
         node = self.top_node
         while 1:
@@ -1655,7 +1564,8 @@ class Kconfig(object):
                 add("\n#\n# {}\n#\n".format(node.prompt[0]))
                 after_end_comment = False
 
-    def write_min_config(self, filename, header=None):
+    def write_min_config(self, filename,
+                         header="# Generated by Kconfiglib (https://github.com/ulfalizer/Kconfiglib)\n"):
         """
         Writes out a "minimal" configuration file, omitting symbols whose value
         matches their default value. The format matches the one produced by
@@ -1671,35 +1581,31 @@ class Kconfig(object):
         (OSError/IOError). KconfigError is never raised here.
 
         filename:
-          Path to write minimal configuration to.
+          Self-explanatory.
 
-        header (default: None):
-          Text inserted verbatim at the beginning of the file. You would
-          usually want each line to start with '#' to make it a comment, and
-          include a final terminating newline.
+        header (default: "# Generated by Kconfiglib (https://github.com/ulfalizer/Kconfiglib)\n"):
+          Text that will be inserted verbatim at the beginning of the file. You
+          would usually want each line to start with '#' to make it a comment,
+          and include a final terminating newline.
 
-          if None (the default), the value of the environment variable
-          KCONFIG_CONFIG_HEADER had when the Kconfig instance was created will
-          be used if it was set, and no header otherwise. See the
-          Kconfig.config_header attribute.
-
-        Returns a string with a message saying the minimal configuration got
-        saved, or that there were no changes to it. This is meant to reduce
-        boilerplate in tools, which can do e.g.
+        Returns a string with a message saying which file got saved. This is
+        meant to reduce boilerplate in tools, which can do e.g.
         print(kconf.write_min_config()).
         """
-        if self._write_if_changed(filename, self._min_config_contents(header)):
-            return "Minimal configuration saved to '{}'".format(filename)
-        return "No change to minimal configuration in '{}'".format(filename)
+        contents = self._min_config_contents(header)
+        if self._contents_eq(filename, contents):
+            return "No change to '{}'".format(filename)
+
+        with self._open(filename, "w") as f:
+            f.write(contents)
+
+        return "Minimal configuration saved to '{}'".format(filename)
 
     def _min_config_contents(self, header):
         # write_min_config() helper. Returns the contents to write as a string,
-        # with 'header' or KCONFIG_CONFIG_HEADER at the beginning.
+        # with 'header' at the beginning.
 
-        if header is None:
-            header = self.config_header
-
-        chunks = [header]  # "".join()ed later
+        chunks = [header]
         add = chunks.append
 
         for sym in self.unique_defined_syms:
@@ -2216,9 +2122,9 @@ class Kconfig(object):
         # it's part of a different construct
         if self._reuse_tokens:
             self._reuse_tokens = False
-            # self._tokens_i is known to be 1 here, because _parse_props()
-            # leaves it like that when it can't recognize a line (or parses a
-            # help text)
+            # self._tokens_i is known to be 1 here, because _parse_properties()
+            # leaves it like that when it can't recognize a line (or parses
+            # a help text)
             return True
 
         # readline() returns '' over and over at EOF, which we rely on for help
@@ -2235,7 +2141,7 @@ class Kconfig(object):
 
         self._tokens = self._tokenize(line)
         # Initialize to 1 instead of 0 to factor out code from _parse_block()
-        # and _parse_props(). They immediately fetch self._tokens[0].
+        # and _parse_properties(). They immediately fetch self._tokens[0].
         self._tokens_i = 1
 
         return True
@@ -2266,15 +2172,10 @@ class Kconfig(object):
         # differs, but it breaks stuff like write_config("/dev/null"), which is
         # used out there to force evaluation-related warnings to be generated.
         # This simple version is pretty failsafe and portable.
-        #
-        # Returns True if the file has changed and is updated, and False
-        # otherwise.
 
-        if self._contents_eq(filename, contents):
-            return False
-        with self._open(filename, "w") as f:
-            f.write(contents)
-        return True
+        if not self._contents_eq(filename, contents):
+            with self._open(filename, "w") as f:
+                f.write(contents)
 
     def _contents_eq(self, filename, contents):
         # Returns True if the contents of 'filename' is 'contents' (a string),
@@ -2702,9 +2603,10 @@ class Kconfig(object):
         while 1:
             match = _name_special_search(s, i)
 
-            if match.group() != "$(":
+            if match.group() == "$(":
+                s, i = self._expand_macro(s, match.start(), ())
+            else:
                 return (s, match.start())
-            s, i = self._expand_macro(s, match.start(), ())
 
     def _expand_str(self, s, i):
         # Expands a quoted string starting at index 'i' in 's'. Handles both
@@ -2747,12 +2649,14 @@ class Kconfig(object):
         # Returns the expanded 's' (including the part before the macro) and
         # the index of the first character after the expanded macro in 's'.
 
-        res = s[:i]
+        start = i
         i += 2  # Skip over "$("
 
-        arg_start = i  # Start of current macro argument
-        new_args = []  # Arguments of this macro call
-        nesting = 0  # Current parentheses nesting level
+        # Start of current macro argument
+        arg_start = i
+
+        # Arguments of this macro call
+        new_args = []
 
         while 1:
             match = _macro_special_search(s, i)
@@ -2760,19 +2664,12 @@ class Kconfig(object):
                 self._parse_error("missing end parenthesis in macro expansion")
 
 
-            if match.group() == "(":
-                nesting += 1
-                i = match.end()
-
-            elif match.group() == ")":
-                if nesting:
-                    nesting -= 1
-                    i = match.end()
-                    continue
-
+            if match.group() == ")":
                 # Found the end of the macro
 
                 new_args.append(s[arg_start:match.start()])
+
+                prefix = s[:start]
 
                 # $(1) is replaced by the first argument to the function, etc.,
                 # provided at least that many arguments were passed
@@ -2780,22 +2677,19 @@ class Kconfig(object):
                 try:
                     # Does the macro look like an integer, with a corresponding
                     # argument? If so, expand it to the value of the argument.
-                    res += args[int(new_args[0])]
+                    prefix += args[int(new_args[0])]
                 except (ValueError, IndexError):
                     # Regular variables are just functions without arguments,
                     # and also go through the function value path
-                    res += self._fn_val(new_args)
+                    prefix += self._fn_val(new_args)
 
-                return (res + s[match.end():], len(res))
+                return (prefix + s[match.end():],
+                        len(prefix))
 
             elif match.group() == ",":
-                i = match.end()
-                if nesting:
-                    continue
-
                 # Found the end of a macro argument
                 new_args.append(s[arg_start:match.start()])
-                arg_start = i
+                arg_start = i = match.end()
 
             else:  # match.group() == "$("
                 # A nested macro call within the macro
@@ -2902,7 +2796,7 @@ class Kconfig(object):
         #
         # prev:
         #   The previous menu node. New nodes will be added after this one (by
-        #   modifying 'next' pointers).
+        #   modifying their 'next' pointer).
         #
         #   'prev' is reused to parse a list of child menu nodes (for a menu or
         #   Choice): After parsing the children, the 'next' pointer is assigned
@@ -2938,11 +2832,11 @@ class Kconfig(object):
 
                 sym.nodes.append(node)
 
-                self._parse_props(node)
+                self._parse_properties(node)
 
                 if node.is_menuconfig and not node.prompt:
                     self._warn("the menuconfig symbol {} has no prompt"
-                               .format(sym.name_and_loc))
+                               .format(_name_and_loc(sym)))
 
                 # Equivalent to
                 #
@@ -3024,7 +2918,7 @@ class Kconfig(object):
 
                 self.menus.append(node)
 
-                self._parse_props(node)
+                self._parse_properties(node)
                 self._parse_block(_T_ENDMENU, node, node)
                 node.list = node.next
 
@@ -3044,7 +2938,7 @@ class Kconfig(object):
 
                 self.comments.append(node)
 
-                self._parse_props(node)
+                self._parse_properties(node)
 
                 prev.next = prev = node
 
@@ -3076,7 +2970,7 @@ class Kconfig(object):
 
                 choice.nodes.append(node)
 
-                self._parse_props(node)
+                self._parse_properties(node)
                 self._parse_block(_T_ENDCHOICE, node, node)
                 node.list = node.next
 
@@ -3094,16 +2988,17 @@ class Kconfig(object):
                     "no corresponding 'menu'"   if t0 is _T_ENDMENU else
                     "unrecognized construct")
 
-        # End of file reached. Return the last node.
+        # End of file reached. Terminate the final node and return it.
 
         if end_token:
             raise KconfigError(
-                "error: expected '{}' at end of '{}'"
+                "expected '{}' at end of '{}'"
                 .format("endchoice" if end_token is _T_ENDCHOICE else
                         "endif"     if end_token is _T_ENDIF else
                         "endmenu",
                         self.filename))
 
+        prev.next = None
         return prev
 
     def _parse_cond(self):
@@ -3117,7 +3012,7 @@ class Kconfig(object):
 
         return expr
 
-    def _parse_props(self, node):
+    def _parse_properties(self, node):
         # Parses and adds properties to the MenuNode 'node' (type, 'prompt',
         # 'default's, etc.) Properties are later copied up to symbols and
         # choices in a separate pass after parsing, in e.g.
@@ -3143,7 +3038,7 @@ class Kconfig(object):
 
             if t0 in _TYPE_TOKENS:
                 # Relies on '_T_BOOL is BOOL', etc., to save a conversion
-                self._set_type(node.item, t0)
+                self._set_type(node, t0)
                 if self._tokens[1] is not None:
                     self._parse_prompt(node)
 
@@ -3173,7 +3068,7 @@ class Kconfig(object):
                                       self._parse_cond()))
 
             elif t0 in _DEF_TOKEN_TO_TYPE:
-                self._set_type(node.item, _DEF_TOKEN_TO_TYPE[t0])
+                self._set_type(node, _DEF_TOKEN_TO_TYPE[t0])
                 node.defaults.append((self._parse_expr(False),
                                       self._parse_cond()))
 
@@ -3274,15 +3169,14 @@ class Kconfig(object):
                 self._reuse_tokens = True
                 return
 
-    def _set_type(self, sc, new_type):
-        # Sets the type of 'sc' (symbol or choice) to 'new_type'
-
+    def _set_type(self, node, new_type):
         # UNKNOWN is falsy
-        if sc.orig_type and sc.orig_type is not new_type:
+        if node.item.orig_type and node.item.orig_type is not new_type:
             self._warn("{} defined with multiple types, {} will be used"
-                       .format(sc.name_and_loc, TYPE_TO_STR[new_type]))
+                       .format(_name_and_loc(node.item),
+                               TYPE_TO_STR[new_type]))
 
-        sc.orig_type = new_type
+        node.item.orig_type = new_type
 
     def _parse_prompt(self, node):
         # 'prompt' properties override each other within a single definition of
@@ -3290,7 +3184,7 @@ class Kconfig(object):
         # multiple times
 
         if node.prompt:
-            self._warn(node.item.name_and_loc +
+            self._warn(_name_and_loc(node.item) +
                        " defined with multiple prompts in single location")
 
         prompt = self._tokens[1]
@@ -3300,7 +3194,7 @@ class Kconfig(object):
             self._parse_error("expected prompt string")
 
         if prompt != prompt.strip():
-            self._warn(node.item.name_and_loc +
+            self._warn(_name_and_loc(node.item) +
                        " has leading or trailing whitespace in its prompt")
 
             # This avoid issues for e.g. reStructuredText documentation, where
@@ -3311,7 +3205,7 @@ class Kconfig(object):
 
     def _parse_help(self, node):
         if node.help is not None:
-            self._warn(node.item.name_and_loc + " defined with more than "
+            self._warn(_name_and_loc(node.item) + " defined with more than "
                        "one help text -- only the last one will be used")
 
         # Micro-optimization. This code is pretty hot.
@@ -3367,7 +3261,7 @@ class Kconfig(object):
             self._line_after_help(line)
 
     def _empty_help(self, node, line):
-        self._warn(node.item.name_and_loc +
+        self._warn(_name_and_loc(node.item) +
                    " has 'help' but empty help text")
         node.help = ""
         if line:
@@ -3472,7 +3366,7 @@ class Kconfig(object):
         # The calculated sets might be larger than necessary as we don't do any
         # complex analysis of the expressions.
 
-        depend_on = _depend_on  # Micro-optimization
+        make_depend_on = _make_depend_on  # Micro-optimization
 
         # Only calculate _dependents for defined symbols. Constant and
         # undefined symbols could theoretically be selected/implied, but it
@@ -3483,29 +3377,29 @@ class Kconfig(object):
             # The prompt conditions
             for node in sym.nodes:
                 if node.prompt:
-                    depend_on(sym, node.prompt[1])
+                    make_depend_on(sym, node.prompt[1])
 
             # The default values and their conditions
             for value, cond in sym.defaults:
-                depend_on(sym, value)
-                depend_on(sym, cond)
+                make_depend_on(sym, value)
+                make_depend_on(sym, cond)
 
             # The reverse and weak reverse dependencies
-            depend_on(sym, sym.rev_dep)
-            depend_on(sym, sym.weak_rev_dep)
+            make_depend_on(sym, sym.rev_dep)
+            make_depend_on(sym, sym.weak_rev_dep)
 
             # The ranges along with their conditions
             for low, high, cond in sym.ranges:
-                depend_on(sym, low)
-                depend_on(sym, high)
-                depend_on(sym, cond)
+                make_depend_on(sym, low)
+                make_depend_on(sym, high)
+                make_depend_on(sym, cond)
 
             # The direct dependencies. This is usually redundant, as the direct
             # dependencies get propagated to properties, but it's needed to get
             # invalidation solid for 'imply', which only checks the direct
             # dependencies (even if there are no properties to propagate it
             # to).
-            depend_on(sym, sym.direct_dep)
+            make_depend_on(sym, sym.direct_dep)
 
             # In addition to the above, choice symbols depend on the choice
             # they're in, but that's handled automatically since the Choice is
@@ -3518,11 +3412,11 @@ class Kconfig(object):
             # The prompt conditions
             for node in choice.nodes:
                 if node.prompt:
-                    depend_on(choice, node.prompt[1])
+                    make_depend_on(choice, node.prompt[1])
 
             # The default symbol conditions
             for _, cond in choice.defaults:
-                depend_on(choice, cond)
+                make_depend_on(choice, cond)
 
     def _add_choice_deps(self):
         # Choices also depend on the choice symbols themselves, because the
@@ -3747,26 +3641,26 @@ class Kconfig(object):
                     if target_sym.orig_type not in _BOOL_TRISTATE_UNKNOWN:
                         self._warn("{} selects the {} symbol {}, which is not "
                                    "bool or tristate"
-                                   .format(sym.name_and_loc,
+                                   .format(_name_and_loc(sym),
                                            TYPE_TO_STR[target_sym.orig_type],
-                                           target_sym.name_and_loc))
+                                           _name_and_loc(target_sym)))
 
                 for target_sym, _ in sym.implies:
                     if target_sym.orig_type not in _BOOL_TRISTATE_UNKNOWN:
                         self._warn("{} implies the {} symbol {}, which is not "
                                    "bool or tristate"
-                                   .format(sym.name_and_loc,
+                                   .format(_name_and_loc(sym),
                                            TYPE_TO_STR[target_sym.orig_type],
-                                           target_sym.name_and_loc))
+                                           _name_and_loc(target_sym)))
 
             elif sym.orig_type:  # STRING/INT/HEX
                 for default, _ in sym.defaults:
                     if default.__class__ is not Symbol:
                         raise KconfigError(
-                            "the {} symbol {} has a malformed default {} -- "
-                            "expected a single symbol"
-                            .format(TYPE_TO_STR[sym.orig_type],
-                                    sym.name_and_loc, expr_str(default)))
+                            "the {} symbol {} has a malformed default {} -- expected "
+                            "a single symbol"
+                            .format(TYPE_TO_STR[sym.orig_type], _name_and_loc(sym),
+                                    expr_str(default)))
 
                     if sym.orig_type is STRING:
                         if not default.is_constant and not default.nodes and \
@@ -3777,22 +3671,22 @@ class Kconfig(object):
                             # (and no symbol named 'foo' exists).
                             self._warn("style: quotes recommended around "
                                        "default value for string symbol "
-                                       + sym.name_and_loc)
+                                       + _name_and_loc(sym))
 
                     elif not num_ok(default, sym.orig_type):  # INT/HEX
                         self._warn("the {0} symbol {1} has a non-{0} default {2}"
                                    .format(TYPE_TO_STR[sym.orig_type],
-                                           sym.name_and_loc,
-                                           default.name_and_loc))
+                                           _name_and_loc(sym),
+                                           _name_and_loc(default)))
 
                 if sym.selects or sym.implies:
                     self._warn("the {} symbol {} has selects or implies"
                                .format(TYPE_TO_STR[sym.orig_type],
-                                       sym.name_and_loc))
+                                       _name_and_loc(sym)))
 
             else:  # UNKNOWN
                 self._warn("{} defined without a type"
-                           .format(sym.name_and_loc))
+                           .format(_name_and_loc(sym)))
 
 
             if sym.ranges:
@@ -3800,7 +3694,7 @@ class Kconfig(object):
                     self._warn(
                         "the {} symbol {} has ranges, but is not int or hex"
                         .format(TYPE_TO_STR[sym.orig_type],
-                                sym.name_and_loc))
+                                _name_and_loc(sym)))
                 else:
                     for low, high, _ in sym.ranges:
                         if not num_ok(low, sym.orig_type) or \
@@ -3809,9 +3703,9 @@ class Kconfig(object):
                             self._warn("the {0} symbol {1} has a non-{0} "
                                        "range [{2}, {3}]"
                                        .format(TYPE_TO_STR[sym.orig_type],
-                                               sym.name_and_loc,
-                                               low.name_and_loc,
-                                               high.name_and_loc))
+                                               _name_and_loc(sym),
+                                               _name_and_loc(low),
+                                               _name_and_loc(high)))
 
     def _check_choice_sanity(self):
         # Checks various choice properties that are handiest to check after
@@ -3820,43 +3714,43 @@ class Kconfig(object):
         def warn_select_imply(sym, expr, expr_type):
             msg = "the choice symbol {} is {} by the following symbols, but " \
                   "select/imply has no effect on choice symbols" \
-                  .format(sym.name_and_loc, expr_type)
+                  .format(_name_and_loc(sym), expr_type)
 
             # si = select/imply
             for si in split_expr(expr, OR):
-                msg += "\n - " + split_expr(si, AND)[0].name_and_loc
+                msg += "\n - " + _name_and_loc(split_expr(si, AND)[0])
 
             self._warn(msg)
 
         for choice in self.unique_choices:
             if choice.orig_type not in _BOOL_TRISTATE:
                 self._warn("{} defined with type {}"
-                           .format(choice.name_and_loc,
+                           .format(_name_and_loc(choice),
                                    TYPE_TO_STR[choice.orig_type]))
 
             for node in choice.nodes:
                 if node.prompt:
                     break
             else:
-                self._warn(choice.name_and_loc + " defined without a prompt")
+                self._warn(_name_and_loc(choice) + " defined without a prompt")
 
             for default, _ in choice.defaults:
                 if default.__class__ is not Symbol:
                     raise KconfigError(
                         "{} has a malformed default {}"
-                        .format(choice.name_and_loc, expr_str(default)))
+                        .format(_name_and_loc(choice), expr_str(default)))
 
                 if default.choice is not choice:
                     self._warn("the default selection {} of {} is not "
                                "contained in the choice"
-                               .format(default.name_and_loc,
-                                       choice.name_and_loc))
+                               .format(_name_and_loc(default),
+                                       _name_and_loc(choice)))
 
             for sym in choice.syms:
                 if sym.defaults:
                     self._warn("default on the choice symbol {} will have "
                                "no effect, as defaults do not affect choice "
-                               "symbols".format(sym.name_and_loc))
+                               "symbols".format(_name_and_loc(sym)))
 
                 if sym.rev_dep is not sym.kconfig.n:
                     warn_select_imply(sym, sym.rev_dep, "selected")
@@ -3868,15 +3762,15 @@ class Kconfig(object):
                     if node.parent.item is choice:
                         if not node.prompt:
                             self._warn("the choice symbol {} has no prompt"
-                                       .format(sym.name_and_loc))
+                                       .format(_name_and_loc(sym)))
 
                     elif node.prompt:
                         self._warn("the choice symbol {} is defined with a "
                                    "prompt outside the choice"
-                                   .format(sym.name_and_loc))
+                                   .format(_name_and_loc(sym)))
 
     def _parse_error(self, msg):
-        raise KconfigError("{}error: couldn't parse '{}': {}".format(
+        raise KconfigError("{}couldn't parse '{}': {}".format(
             "" if self.filename is None else
                 "{}:{}: ".format(self.filename, self.linenr),
             self._line.strip(), msg))
@@ -4013,13 +3907,6 @@ class Symbol(object):
       The type as given in the Kconfig file, without any magic applied. Used
       when printing the symbol.
 
-    tri_value:
-      The tristate value of the symbol as an integer. One of 0, 1, 2,
-      representing n, m, y. Always 0 (n) for non-bool/tristate symbols.
-
-      This is the symbol value that's used outside of relation expressions
-      (A, !A, A && B, A || B).
-
     str_value:
       The value of the symbol as a string. Gives the value for string/int/hex
       symbols. For bool/tristate symbols, gives "n", "m", or "y".
@@ -4027,20 +3914,17 @@ class Symbol(object):
       This is the symbol value that's used in relational expressions
       (A = B, A != B, etc.)
 
-      Gotcha: For int/hex symbols, the exact format of the value is often
-      preserved (e.g. when writing a .config file), hence why you can't get it
+      Gotcha: For int/hex symbols, the exact format of the value must often be
+      preserved (e.g., when writing a .config file), hence why you can't get it
       directly as an int. Do int(int_sym.str_value) or
       int(hex_sym.str_value, 16) to get the integer value.
 
-    user_value:
-      The user value of the symbol. None if no user value has been assigned
-      (via Kconfig.load_config() or Symbol.set_value()).
+    tri_value:
+      The tristate value of the symbol as an integer. One of 0, 1, 2,
+      representing n, m, y. Always 0 (n) for non-bool/tristate symbols.
 
-      Holds 0, 1, or 2 for bool/tristate symbols, and a string for the other
-      symbol types.
-
-      WARNING: Do not assign directly to this. It will break things. Use
-      Symbol.set_value().
+      This is the symbol value that's used outside of relation expressions
+      (A, !A, A && B, A || B).
 
     assignable:
       A tuple containing the tristate user values that can currently be
@@ -4081,6 +3965,16 @@ class Symbol(object):
       The visibility of the symbol. One of 0, 1, 2, representing n, m, y. See
       the module documentation for an overview of symbol values and visibility.
 
+    user_value:
+      The user value of the symbol. None if no user value has been assigned
+      (via Kconfig.load_config() or Symbol.set_value()).
+
+      Holds 0, 1, or 2 for bool/tristate symbols, and a string for the other
+      symbol types.
+
+      WARNING: Do not assign directly to this. It will break things. Use
+      Symbol.set_value().
+
     config_string:
       The .config assignment string that would get written out for the symbol
       by Kconfig.write_config(). Returns the empty string if no .config
@@ -4107,15 +4001,6 @@ class Symbol(object):
       There usually won't be any great harm in just writing all symbols either,
       though you might get some special symbols and possibly some "redundant"
       n-valued symbol entries in there.
-
-    name_and_loc:
-      Holds a string like
-
-        "MY_SYMBOL (defined at foo/Kconfig:12, bar/Kconfig:14)"
-
-      , giving the name of the symbol and its definition location(s).
-
-      If the symbol is undefined, the location is given as "(undefined)".
 
     nodes:
       A list of MenuNodes for this symbol. Will contain a single MenuNode for
@@ -4347,7 +4232,7 @@ class Symbol(object):
                         "being outside the active range ([{}, {}]) -- falling "
                         "back on defaults"
                         .format(num2str(user_val), TYPE_TO_STR[self.orig_type],
-                                self.name_and_loc,
+                                _name_and_loc(self),
                                 num2str(low), num2str(high)))
                 else:
                     # If the user value is well-formed and satisfies range
@@ -4397,7 +4282,7 @@ class Symbol(object):
                             self.kconfig._warn(
                                 "default value {} on {} clamped to {} due to "
                                 "being outside the active range ([{}, {}])"
-                                .format(val_num, self.name_and_loc,
+                                .format(val_num, _name_and_loc(self),
                                         num2str(clamp), num2str(low),
                                         num2str(high)))
 
@@ -4438,7 +4323,7 @@ class Symbol(object):
                 self.kconfig._warn(
                     "The {} symbol {} is being evaluated in a logical context "
                     "somewhere. It will always evaluate to n."
-                    .format(TYPE_TO_STR[self.orig_type], self.name_and_loc))
+                    .format(TYPE_TO_STR[self.orig_type], _name_and_loc(self)))
 
             self._cached_tri_val = 0
             return 0
@@ -4548,13 +4433,6 @@ class Symbol(object):
         return '{}{}="{}"\n' \
                .format(self.kconfig.config_prefix, self.name, escape(val))
 
-    @property
-    def name_and_loc(self):
-        """
-        See the class documentation.
-        """
-        return self.name + " " + _locs(self)
-
     def set_value(self, value):
         """
         Sets the user value of the symbol.
@@ -4576,8 +4454,8 @@ class Symbol(object):
         value:
           The user value to give to the symbol. For bool and tristate symbols,
           n/m/y can be specified either as 0/1/2 (the usual format for tristate
-          values in Kconfiglib) or as one of the strings "n", "m", or "y". For
-          other symbol types, pass a string.
+          values in Kconfiglib) or as one of the strings "n"/"m"/"y". For other
+          symbol types, pass a string.
 
           Note that the value for an int/hex symbol is passed as a string, e.g.
           "123" or "0x0123". The format of this string is preserved in the
@@ -4624,7 +4502,7 @@ class Symbol(object):
                 "assignment ignored"
                 .format(TRI_TO_STR[value] if value in TRI_TO_STR else
                             "'{}'".format(value),
-                        self.name_and_loc, TYPE_TO_STR[self.orig_type]))
+                        _name_and_loc(self), TYPE_TO_STR[self.orig_type]))
 
             return False
 
@@ -4912,7 +4790,7 @@ class Symbol(object):
                 return
 
         if self.kconfig._warn_assign_no_prompt:
-            self.kconfig._warn(self.name_and_loc + " has no prompt, meaning "
+            self.kconfig._warn(_name_and_loc(self) + " has no prompt, meaning "
                                "user values have no effect on it")
 
     def _str_default(self):
@@ -4958,7 +4836,7 @@ class Symbol(object):
 
         msg = "{} has direct dependencies {} with value {}, but is " \
               "currently being {}-selected by the following symbols:" \
-              .format(self.name_and_loc, expr_str(self.direct_dep),
+              .format(_name_and_loc(self), expr_str(self.direct_dep),
                       TRI_TO_STR[expr_value(self.direct_dep)],
                       TRI_TO_STR[expr_value(self.rev_dep)])
 
@@ -4976,7 +4854,7 @@ class Symbol(object):
 
             msg += "\n - {}, with value {}, direct dependencies {} " \
                    "(value: {})" \
-                   .format(selecting_sym.name_and_loc,
+                   .format(_name_and_loc(selecting_sym),
                            selecting_sym.str_value,
                            expr_str(selecting_sym.direct_dep),
                            TRI_TO_STR[expr_value(selecting_sym.direct_dep)])
@@ -5060,20 +4938,11 @@ class Choice(object):
         Corresponding attributes have the same name in the Symbol and Choice
         classes, for consistency and compatibility.
 
-    str_value:
-      Like choice.tri_value, but gives the value as one of the strings
-      "n", "m", or "y"
-
-    user_value:
-      The value (mode) selected by the user through Choice.set_value(). Either
-      0, 1, or 2, or None if the user hasn't selected a mode. See
-      Symbol.user_value.
-
-      WARNING: Do not assign directly to this. It will break things. Use
-      Choice.set_value() instead.
-
     assignable:
       See the symbol class documentation. Gives the assignable values (modes).
+
+    visibility:
+      See the Symbol class documentation. Acts on the value (mode).
 
     selection:
       The Symbol instance of the currently selected symbol. None if the Choice
@@ -5083,6 +4952,14 @@ class Choice(object):
       WARNING: Do not assign directly to this. It will break things. Call
       sym.set_value(2) on the choice symbol you want to select instead.
 
+    user_value:
+      The value (mode) selected by the user through Choice.set_value(). Either
+      0, 1, or 2, or None if the user hasn't selected a mode. See
+      Symbol.user_value.
+
+      WARNING: Do not assign directly to this. It will break things. Use
+      Choice.set_value() instead.
+
     user_selection:
       The symbol selected by the user (by setting it to y). Ignored if the
       choice is not in y mode, but still remembered so that the choice "snaps
@@ -5091,19 +4968,6 @@ class Choice(object):
 
       WARNING: Do not assign directly to this. It will break things. Call
       sym.set_value(2) on the choice symbol to be selected instead.
-
-    visibility:
-      See the Symbol class documentation. Acts on the value (mode).
-
-    name_and_loc:
-      Holds a string like
-
-        "<choice MY_CHOICE> (defined at foo/Kconfig:12)"
-
-      , giving the name of the choice and its definition location(s). If the
-      choice has no name (isn't defined with 'choice MY_CHOICE'), then it will
-      be shown as "<choice>" before the list of locations (always a single one
-      in that case).
 
     syms:
       List of symbols contained in the choice.
@@ -5225,14 +5089,6 @@ class Choice(object):
         return self._cached_vis
 
     @property
-    def name_and_loc(self):
-        """
-        See the class documentation.
-        """
-        # Reuse the expression format, which is '<choice (name, if any)>'.
-        return standard_sc_expr_str(self) + " " + _locs(self)
-
-    @property
     def selection(self):
         """
         See the class documentation.
@@ -5272,7 +5128,7 @@ class Choice(object):
                 "assignment ignored"
                 .format(TRI_TO_STR[value] if value in TRI_TO_STR else
                             "'{}'".format(value),
-                        self.name_and_loc, TYPE_TO_STR[self.orig_type]))
+                        _name_and_loc(self), TYPE_TO_STR[self.orig_type]))
 
             return False
 
@@ -5395,8 +5251,8 @@ class Choice(object):
 
         self._cached_selection = _NO_CACHED_SELECTION
 
-        # is_constant is checked by _depend_on(). Just set it to avoid having
-        # to special-case choices.
+        # is_constant is checked by _make_depend_on(). Just set it to avoid
+        # having to special-case choices.
         self.is_constant = self.is_optional = False
 
         # See Kconfig._build_dep()
@@ -6194,32 +6050,25 @@ def unescape(s):
 _unescape_sub = re.compile(r"\\(.)").sub
 
 
-def standard_kconfig(description=None):
+def standard_kconfig():
     """
-    Argument parsing helper for tools that take a single optional Kconfig file
-    argument (default: Kconfig). Returns the Kconfig instance for the parsed
-    configuration. Uses argparse internally.
+    Helper for tools. Loads the top-level Kconfig specified as the first
+    command-line argument, or "Kconfig" if there are no command-line arguments.
+    Returns the Kconfig instance.
 
-    Exits with sys.exit() (which raises SystemExit) on errors.
-
-    description (default: None):
-      The 'description' passed to argparse.ArgumentParser().
-      argparse.RawDescriptionHelpFormatter is used, so formatting is preserved.
+    Exits with sys.exit() (which raises a SystemExit exception) and prints a
+    usage note to stderr if more than one command-line argument is passed.
     """
-    import argparse
+    if len(sys.argv) > 2:
+        sys.exit("usage: {} [Kconfig]".format(sys.argv[0]))
 
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=description)
-
-    parser.add_argument(
-        "kconfig",
-        metavar="KCONFIG",
-        default="Kconfig",
-        nargs="?",
-        help="Top-level Kconfig file (default: Kconfig)")
-
-    return Kconfig(parser.parse_args().kconfig, suppress_traceback=True)
+    # Only show backtraces for unexpected exceptions
+    try:
+        return Kconfig("Kconfig" if len(sys.argv) < 2 else sys.argv[1])
+    except (EnvironmentError, KconfigError) as e:
+        # Some long exception messages have extra newlines for better
+        # formatting when reported as an unhandled exception. Strip them here.
+        sys.exit(str(e).strip())
 
 
 def standard_config_filename():
@@ -6235,9 +6084,25 @@ def standard_config_filename():
 
 def load_allconfig(kconf, filename):
     """
-    Use Kconfig.load_allconfig() instead, which was added in Kconfiglib 13.4.0.
-    Supported for backwards compatibility. Might be removed at some point after
-    a long period of deprecation warnings.
+    Helper for all*config. Loads (merges) the configuration file specified by
+    KCONFIG_ALLCONFIG, if any. See Documentation/kbuild/kconfig.txt in the
+    Linux kernel.
+
+    Disables warnings for duplicated assignments within configuration files for
+    the duration of the call (kconf.warn_assign_override/warn_assign_redun = False),
+    and restores the previous warning settings at the end. The
+    KCONFIG_ALLCONFIG configuration file is expected to override symbols.
+
+    Exits with sys.exit() (which raises a SystemExit exception) and prints an
+    error to stderr if KCONFIG_ALLCONFIG is set but the configuration file
+    can't be opened.
+
+    kconf:
+      Kconfig instance to load the configuration in.
+
+    filename:
+      Command-specific configuration filename - "allyes.config",
+      "allno.config", etc.
     """
     allconfig = os.getenv("KCONFIG_ALLCONFIG")
     if allconfig is None:
@@ -6313,7 +6178,7 @@ def _visibility(sc):
     return vis
 
 
-def _depend_on(sc, expr):
+def _make_depend_on(sc, expr):
     # Adds 'sc' (symbol or choice) as a "dependee" to all symbols in 'expr'.
     # Constant symbols in 'expr' are skipped as they can never change value
     # anyway.
@@ -6321,11 +6186,11 @@ def _depend_on(sc, expr):
     if expr.__class__ is tuple:
         # AND, OR, NOT, or relation
 
-        _depend_on(sc, expr[1])
+        _make_depend_on(sc, expr[1])
 
         # NOTs only have a single operand
         if expr[0] is not NOT:
-            _depend_on(sc, expr[2])
+            _make_depend_on(sc, expr[2])
 
     elif not expr.is_constant:
         # Non-constant symbol, or choice
@@ -6421,16 +6286,20 @@ def _save_old(path):
         pass
 
 
-def _locs(sc):
-    # Symbol/Choice.name_and_loc helper. Returns the "(defined at ...)" part of
-    # the string. 'sc' is a Symbol or Choice.
+def _name_and_loc(sc):
+    # Helper for giving the symbol/choice name and location(s) in e.g. warnings
 
-    if sc.nodes:
-        return "(defined at {})".format(
-            ", ".join("{0.filename}:{0.linenr}".format(node)
-                      for node in sc.nodes))
+    # Reuse the expression format. That way choices show up as
+    # '<choice (name, if any)>'
+    name = standard_sc_expr_str(sc)
 
-    return "(undefined)"
+    if not sc.nodes:
+        return name + " (undefined)"
+
+    return "{} (defined at {})".format(
+        name,
+        ", ".join("{}:{}".format(node.filename, node.linenr)
+                  for node in sc.nodes))
 
 
 # Menu manipulation
@@ -6685,7 +6554,7 @@ def _found_dep_loop(loop, cur):
                 msg += "the choice symbol "
 
         msg += "{}, with definition...\n\n{}\n\n" \
-               .format(item.name_and_loc, item)
+               .format(_name_and_loc(item), item)
 
         # Small wart: Since we reuse the already calculated
         # Symbol/Choice._dependents sets for recursive dependency detection, we
@@ -6709,7 +6578,7 @@ def _found_dep_loop(loop, cur):
                 msg += "(imply-related dependencies: {})\n\n" \
                        .format(expr_str(item.rev_dep))
 
-    msg += "...depends again on " + loop[0].name_and_loc
+    msg += "...depends again on {}".format(_name_and_loc(loop[0]))
 
     raise KconfigError(msg)
 
@@ -6779,7 +6648,8 @@ def _error_if_fn(kconf, _, cond, msg):
 
 
 def _shell_fn(kconf, _, command):
-    import subprocess  # Only import as needed, to save some startup time
+    # Only import as needed, to save some startup time
+    import subprocess
 
     stdout, stderr = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -7145,8 +7015,8 @@ _assignment_lhs_fragment_match = _re_match("[A-Za-z0-9_-]*")
 # variable assignment
 _assignment_rhs_match = _re_match(r"\s*(=|:=|\+=)\s*(.*)")
 
-# Special characters/strings while expanding a macro ('(', ')', ',', and '$(')
-_macro_special_search = _re_search(r"\(|\)|,|\$\(")
+# Special characters/strings while expanding a macro (')', ',', and '$(')
+_macro_special_search = _re_search(r"\)|,|\$\(")
 
 # Special characters/strings while expanding a string (quotes, '\', and '$(')
 _string_special_search = _re_search(r'"|\'|\\|\$\(')

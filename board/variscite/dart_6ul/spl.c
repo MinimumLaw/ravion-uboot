@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <spl.h>
 #include <asm/arch/clock.h>
 #include <asm/io.h>
@@ -155,7 +154,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;
 }
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
 
@@ -198,6 +197,9 @@ void board_init_f(ulong dummy)
 	timer_init();
 
 	setup_iomux_uart();
+
+	/* iomux and setup of i2c */
+	board_early_init_f();
 
 	/* UART clocks enabled and gd valid - init serial console */
 	preloader_console_init();

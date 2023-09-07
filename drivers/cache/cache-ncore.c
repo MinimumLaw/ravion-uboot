@@ -8,7 +8,6 @@
 #include <wait_bit.h>
 
 #include <asm/io.h>
-#include <linux/bitops.h>
 
 /* Directory */
 #define DIRUSFER		0x80010

@@ -6,10 +6,7 @@
  */
 
 #include <common.h>
-#include <blk.h>
 #include <cpu_func.h>
-#include <dm.h>
-#include <log.h>
 #include <pci.h>
 #include <command.h>
 #include <asm/byteorder.h>
@@ -19,12 +16,16 @@
 #include <sata.h>
 #include <libata.h>
 #include <sata.h>
+
+#if CONFIG_IS_ENABLED(BLK)
+#include <dm.h>
+#include <blk.h>
 #include <dm/device-internal.h>
-#include <linux/delay.h>
+#endif
 
 #include "sata_sil.h"
 
-#define virt_to_bus(devno, v)	dm_pci_virt_to_mem(devno, (void *) (v))
+#define virt_to_bus(devno, v)	pci_virt_to_mem(devno, (void *) (v))
 
 /* just compatible ahci_ops */
 struct sil_ops {
@@ -477,12 +478,18 @@ static void sil_sata_cmd_flush_cache_ext(struct sil_sata *sata)
 /*
  * SATA interface between low level driver and command layer
  */
+#if !CONFIG_IS_ENABLED(BLK)
+ulong sata_read(int dev, ulong blknr, lbaint_t blkcnt, void *buffer)
+{
+	struct sil_sata *sata = (struct sil_sata *)sata_dev_desc[dev].priv;
+#else
 static ulong sata_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		       void *buffer)
 {
-	struct sil_sata_priv *priv = dev_get_plat(dev);
+	struct sil_sata_priv *priv = dev_get_platdata(dev);
 	int port_number = priv->port_num;
 	struct sil_sata *sata = priv->sil_sata_desc[port_number];
+#endif
 	ulong rc;
 
 	if (sata->lba48)
@@ -496,12 +503,18 @@ static ulong sata_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 /*
  * SATA interface between low level driver and command layer
  */
+#if !CONFIG_IS_ENABLED(BLK)
+ulong sata_write(int dev, ulong blknr, lbaint_t blkcnt, const void *buffer)
+{
+	struct sil_sata *sata = (struct sil_sata *)sata_dev_desc[dev].priv;
+#else
 ulong sata_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 		 const void *buffer)
 {
-	struct sil_sata_priv *priv = dev_get_plat(dev);
+	struct sil_sata_priv *priv = dev_get_platdata(dev);
 	int port_number = priv->port_num;
 	struct sil_sata *sata = priv->sil_sata_desc[port_number];
+#endif
 	ulong rc;
 
 	if (sata->lba48) {
@@ -517,9 +530,14 @@ ulong sata_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	return rc;
 }
 
+#if !CONFIG_IS_ENABLED(BLK)
+static int sil_init_sata(int dev)
+{
+#else
 static int sil_init_sata(struct udevice *uc_dev, int dev)
 {
-	struct sil_sata_priv *priv = dev_get_plat(uc_dev);
+	struct sil_sata_priv *priv = dev_get_platdata(uc_dev);
+#endif
 	struct sil_sata *sata;
 	void *port;
 	u32 tmp;
@@ -586,11 +604,15 @@ static int sil_init_sata(struct udevice *uc_dev, int dev)
 	memset((void *)sata, 0, sizeof(struct sil_sata));
 
 	/* Save the private struct to block device struct */
+#if !CONFIG_IS_ENABLED(BLK)
+	sata_dev_desc[dev].priv = (void *)sata;
+#else
 	priv->sil_sata_desc[dev] = sata;
 	priv->port_num = dev;
-	sata->devno = uc_dev->parent;
+#endif
 	sata->id = dev;
 	sata->port = port;
+	sata->devno = sata_info.devno;
 	sprintf(sata->name, "SATA#%d", dev);
 	sil_cmd_soft_reset(sata);
 	tmp = readl(port + PORT_SSTATUS);
@@ -600,11 +622,85 @@ static int sil_init_sata(struct udevice *uc_dev, int dev)
 	return 0;
 }
 
+#if !CONFIG_IS_ENABLED(BLK)
+/*
+ * SATA interface between low level driver and command layer
+ */
+int init_sata(int dev)
+{
+	static int init_done, idx;
+	pci_dev_t devno;
+	u16 word;
+
+	if (init_done == 1 && dev < sata_info.maxport)
+		goto init_start;
+
+	init_done = 1;
+
+	/* Find PCI device(s) */
+	devno = pci_find_devices(supported, idx++);
+	if (devno == -1)
+		return 1;
+
+	pci_read_config_word(devno, PCI_DEVICE_ID, &word);
+
+	/* get the port count */
+	word &= 0xf;
+
+	sata_info.portbase = 0;
+	sata_info.maxport = sata_info.portbase + word;
+	sata_info.devno = devno;
+
+	/* Read out all BARs */
+	sata_info.iobase[0] = (ulong)pci_map_bar(devno,
+			PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
+	sata_info.iobase[1] = (ulong)pci_map_bar(devno,
+			PCI_BASE_ADDRESS_2, PCI_REGION_MEM);
+
+	/* mask out the unused bits */
+	sata_info.iobase[0] &= 0xffffff80;
+	sata_info.iobase[1] &= 0xfffffc00;
+
+	/* Enable Bus Mastering and memory region */
+	pci_write_config_word(devno, PCI_COMMAND,
+			      PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
+
+	/* Check if mem accesses and Bus Mastering are enabled. */
+	pci_read_config_word(devno, PCI_COMMAND, &word);
+	if (!(word & PCI_COMMAND_MEMORY) ||
+	    (!(word & PCI_COMMAND_MASTER))) {
+		printf("Error: Can not enable MEM access or Bus Mastering.\n");
+		debug("PCI command: %04x\n", word);
+		return 1;
+	}
+
+	/* GPIO off */
+	writel(0, (void *)(sata_info.iobase[0] + HOST_FLASH_CMD));
+	/* clear global reset & mask interrupts during initialization */
+	writel(0, (void *)(sata_info.iobase[0] + HOST_CTRL));
+
+init_start:
+	return sil_init_sata(dev);
+}
+
+int reset_sata(int dev)
+{
+	return 0;
+}
+
+/*
+ * SATA interface between low level driver and command layer
+ */
+int scan_sata(int dev)
+{
+	struct sil_sata *sata = (struct sil_sata *)sata_dev_desc[dev].priv;
+#else
 static int scan_sata(struct udevice *blk_dev, int dev)
 {
-	struct blk_desc *desc = dev_get_uclass_plat(blk_dev);
-	struct sil_sata_priv *priv = dev_get_plat(blk_dev);
+	struct blk_desc *desc = dev_get_uclass_platdata(blk_dev);
+	struct sil_sata_priv *priv = dev_get_platdata(blk_dev);
 	struct sil_sata *sata = priv->sil_sata_desc[dev];
+#endif
 	unsigned char serial[ATA_ID_SERNO_LEN + 1];
 	unsigned char firmware[ATA_ID_FW_REV_LEN + 1];
 	unsigned char product[ATA_ID_PROD_LEN + 1];
@@ -628,12 +724,23 @@ static int scan_sata(struct udevice *blk_dev, int dev)
 	/* Product model */
 	ata_id_c_string(id, product, ATA_ID_PROD, sizeof(product));
 
+#if !CONFIG_IS_ENABLED(BLK)
+	memcpy(sata_dev_desc[dev].product, serial, sizeof(serial));
+	memcpy(sata_dev_desc[dev].revision, firmware, sizeof(firmware));
+	memcpy(sata_dev_desc[dev].vendor, product, sizeof(product));
+	/* Totoal sectors */
+	sata_dev_desc[dev].lba = ata_id_n_sectors(id);
+#ifdef CONFIG_LBA48
+	sata_dev_desc[dev].lba48 = sata->lba48;
+#endif
+#else
 	memcpy(desc->product, serial, sizeof(serial));
 	memcpy(desc->revision, firmware, sizeof(firmware));
 	memcpy(desc->vendor, product, sizeof(product));
 	desc->lba = ata_id_n_sectors(id);
 #ifdef CONFIG_LBA48
 	desc->lba48 = sata->lba48;
+#endif
 #endif
 
 #ifdef DEBUG
@@ -644,6 +751,7 @@ static int scan_sata(struct udevice *blk_dev, int dev)
 	return 0;
 }
 
+#if CONFIG_IS_ENABLED(BLK)
 static const struct blk_ops sata_sil_blk_ops = {
 	.read	= sata_read,
 	.write	= sata_write,
@@ -653,7 +761,7 @@ U_BOOT_DRIVER(sata_sil_driver) = {
 	.name = "sata_sil_blk",
 	.id = UCLASS_BLK,
 	.ops = &sata_sil_blk_ops,
-	.plat_auto	= sizeof(struct sil_sata_priv),
+	.platdata_auto_alloc_size = sizeof(struct sil_sata_priv),
 };
 
 static int sil_unbind_device(struct udevice *dev)
@@ -801,7 +909,8 @@ U_BOOT_DRIVER(sil_ahci_pci) = {
 	.ops = &sata_sil_ops,
 	.probe = sil_pci_probe,
 	.remove = sil_pci_remove,
-	.priv_auto	= sizeof(struct sil_sata_priv),
+	.priv_auto_alloc_size = sizeof(struct sil_sata_priv),
 };
 
 U_BOOT_PCI_DEVICE(sil_ahci_pci, supported);
+#endif

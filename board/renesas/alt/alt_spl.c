@@ -7,13 +7,11 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <init.h>
 #include <malloc.h>
 #include <dm/platform_data/serial_sh.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 #include <linux/errno.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
@@ -408,6 +406,6 @@ void board_boot_order(u32 *spl_boot_list)
 	spl_boot_list[2] = BOOT_DEVICE_NONE;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 }

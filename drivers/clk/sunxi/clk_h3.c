@@ -8,10 +8,9 @@
 #include <clk-uclass.h>
 #include <dm.h>
 #include <errno.h>
-#include <clk/sunxi.h>
+#include <asm/arch/ccu.h>
 #include <dt-bindings/clock/sun8i-h3-ccu.h>
 #include <dt-bindings/reset/sun8i-h3-ccu.h>
-#include <linux/bitops.h>
 
 static struct ccu_clk_gate h3_gates[] = {
 	[CLK_BUS_MMC0]		= GATE(0x060, BIT(8)),
@@ -30,9 +29,6 @@ static struct ccu_clk_gate h3_gates[] = {
 	[CLK_BUS_OHCI2]		= GATE(0x060, BIT(30)),
 	[CLK_BUS_OHCI3]		= GATE(0x060, BIT(31)),
 
-	[CLK_BUS_I2C0]		= GATE(0x06c, BIT(0)),
-	[CLK_BUS_I2C1]		= GATE(0x06c, BIT(1)),
-	[CLK_BUS_I2C2]		= GATE(0x06c, BIT(2)),
 	[CLK_BUS_UART0]		= GATE(0x06c, BIT(16)),
 	[CLK_BUS_UART1]		= GATE(0x06c, BIT(17)),
 	[CLK_BUS_UART2]		= GATE(0x06c, BIT(18)),
@@ -77,9 +73,6 @@ static struct ccu_reset h3_resets[] = {
 
 	[RST_BUS_EPHY]		= RESET(0x2c8, BIT(2)),
 
-	[RST_BUS_I2C0]		= RESET(0x2d8, BIT(0)),
-	[RST_BUS_I2C1]		= RESET(0x2d8, BIT(1)),
-	[RST_BUS_I2C2]		= RESET(0x2d8, BIT(2)),
 	[RST_BUS_UART0]		= RESET(0x2d8, BIT(16)),
 	[RST_BUS_UART1]		= RESET(0x2d8, BIT(17)),
 	[RST_BUS_UART2]		= RESET(0x2d8, BIT(18)),
@@ -108,7 +101,7 @@ U_BOOT_DRIVER(clk_sun8i_h3) = {
 	.name		= "sun8i_h3_ccu",
 	.id		= UCLASS_CLK,
 	.of_match	= h3_ccu_ids,
-	.priv_auto	= sizeof(struct ccu_priv),
+	.priv_auto_alloc_size	= sizeof(struct ccu_priv),
 	.ops		= &sunxi_clk_ops,
 	.probe		= sunxi_clk_probe,
 	.bind		= h3_clk_bind,

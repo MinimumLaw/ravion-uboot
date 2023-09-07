@@ -8,12 +8,8 @@
  */
 
 #include <common.h>
-#include <bootstage.h>
-#include <command.h>
 #include <env.h>
 #include <env_internal.h>
-#include <flash.h>
-#include <init.h>
 #include <net.h>
 #include <malloc.h>
 #include <netdev.h>
@@ -24,8 +20,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/mpp.h>
 #include <asm/arch/gpio.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 
 #include "lsxl.h"
 
@@ -271,7 +265,7 @@ int misc_init_r(void)
 }
 #endif
 
-#if CONFIG_IS_ENABLED(BOOTSTAGE)
+#ifdef CONFIG_SHOW_BOOT_PROGRESS
 void show_boot_progress(int progress)
 {
 	if (progress > 0)

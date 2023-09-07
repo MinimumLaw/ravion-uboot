@@ -8,7 +8,7 @@
 #ifndef _API_PRIVATE_H_
 #define _API_PRIVATE_H_
 
-int	api_init(void);
+void	api_init(void);
 void	platform_set_mr(struct sys_info *, unsigned long, unsigned long, int);
 int	platform_sys_info(struct sys_info *);
 

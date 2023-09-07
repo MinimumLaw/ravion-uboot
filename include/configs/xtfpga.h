@@ -22,6 +22,9 @@
 
 #define CONFIG_XTFPGA
 
+/* FPGA CPU freq after init */
+#define CONFIG_SYS_CLK_FREQ		(gd->cpu_clk)
+
 /*===================*/
 /* RAM Layout        */
 /*===================*/
@@ -62,10 +65,14 @@
 # define CONFIG_SYS_MONITOR_LEN		0x00040000	/* 256KB */
 #endif
 
+#define CONFIG_SYS_MALLOC_LEN		(256 << 10)	/* heap  256KB */
+
 /* Linux boot param area in RAM (used only when booting linux) */
 #define CONFIG_SYS_BOOTPARAMS_LEN	(64  << 10)
 
 /* Memory test is destructive so default must not overlap vectors or U-Boot*/
+#define CONFIG_SYS_MEMTEST_START	MEMADDR(0x01000000)
+#define CONFIG_SYS_MEMTEST_END		MEMADDR(0x02000000)
 
 /* Load address for stand-alone applications.
  * MEMADDR cannot be used here, because the definition needs to be
@@ -92,6 +99,9 @@
 
 #define XTENSA_SYS_TEXT_ADDR		\
 	(MEMADDR(CONFIG_SYS_MEMORY_SIZE) - CONFIG_SYS_MONITOR_LEN)
+
+/* Used by tftpboot; env var 'loadaddr' */
+#define CONFIG_SYS_LOAD_ADDR		MEMADDR(0x02000000)
 
 /*==============================*/
 /* U-Boot general configuration */
@@ -166,7 +176,8 @@
 #define CONFIG_SYS_NS16550_COM1		IOADDR(0x0D050020) /* Base address */
 
 /* Input clk to NS16550 (in Hz; the SYS_CLK_FREQ is in kHz) */
-#define CONFIG_SYS_NS16550_CLK		get_board_sys_clk()
+#define CONFIG_SYS_NS16550_CLK		CONFIG_SYS_CLK_FREQ
+#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /*======================*/
 /* Ethernet Driver Info */
@@ -181,6 +192,7 @@
 /*=====================*/
 
 #define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
 #ifdef CONFIG_XTFPGA_LX60
 # define CONFIG_SYS_FLASH_SIZE		0x0040000	/* 4MB */
 # define CONFIG_SYS_FLASH_SECT_SZ	0x10000		/* block size 64KB */

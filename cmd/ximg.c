@@ -24,7 +24,6 @@
 #include <bzlib.h>
 #endif
 #include <asm/byteorder.h>
-#include <asm/cache.h>
 #include <asm/io.h>
 
 #ifndef CONFIG_SYS_XIMG_LEN
@@ -33,7 +32,7 @@
 #endif
 
 static int
-do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong		addr = image_load_addr;
 	ulong		dest = 0;
@@ -59,16 +58,16 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	verify = env_get_yesno("verify");
 
 	if (argc > 1) {
-		addr = hextoul(argv[1], NULL);
+		addr = simple_strtoul(argv[1], NULL, 16);
 	}
 	if (argc > 2) {
-		part = hextoul(argv[2], NULL);
+		part = simple_strtoul(argv[2], NULL, 16);
 #if defined(CONFIG_FIT)
 		uname = argv[2];
 #endif
 	}
 	if (argc > 3) {
-		dest = hextoul(argv[3], NULL);
+		dest = simple_strtoul(argv[3], NULL, 16);
 	}
 
 	switch (genimg_get_format((void *)addr)) {
@@ -136,7 +135,7 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 			"at %08lx ...\n", uname, addr);
 
 		fit_hdr = (const void *)addr;
-		if (fit_check_format(fit_hdr, IMAGE_SIZE_INVAL)) {
+		if (!fit_check_format(fit_hdr)) {
 			puts("Bad FIT image format\n");
 			return 1;
 		}

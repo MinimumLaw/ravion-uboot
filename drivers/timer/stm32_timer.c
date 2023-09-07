@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
- * Author(s): Patrice Chotard, <patrice.chotard@foss.st.com> for STMicroelectronics.
+ * Author(s): Patrice Chotard, <patrice.chotard@st.com> for STMicroelectronics.
  */
-
-#define LOG_CATEGORY UCLASS_TIMER
 
 #include <common.h>
 #include <clk.h>
@@ -12,7 +10,6 @@
 #include <fdtdec.h>
 #include <timer.h>
 #include <dm/device_compat.h>
-#include <linux/bitops.h>
 
 #include <asm/io.h>
 
@@ -54,12 +51,14 @@ struct stm32_timer_priv {
 	struct stm32_timer_regs *base;
 };
 
-static u64 stm32_timer_get_count(struct udevice *dev)
+static int stm32_timer_get_count(struct udevice *dev, u64 *count)
 {
 	struct stm32_timer_priv *priv = dev_get_priv(dev);
 	struct stm32_timer_regs *regs = priv->base;
 
-	return readl(&regs->cnt);
+	*count = readl(&regs->cnt);
+
+	return 0;
 }
 
 static int stm32_timer_probe(struct udevice *dev)
@@ -131,7 +130,8 @@ U_BOOT_DRIVER(stm32_timer) = {
 	.name = "stm32_timer",
 	.id = UCLASS_TIMER,
 	.of_match = stm32_timer_ids,
-	.priv_auto	= sizeof(struct stm32_timer_priv),
+	.priv_auto_alloc_size = sizeof(struct stm32_timer_priv),
 	.probe = stm32_timer_probe,
 	.ops = &stm32_timer_ops,
 };
+

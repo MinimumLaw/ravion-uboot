@@ -6,6 +6,7 @@
 #ifndef _ASM_ARCH_PCC_H
 #define _ASM_ARCH_PCC_H
 
+#include <common.h>
 #include <asm/arch/scg.h>
 
 /* PCC2 */

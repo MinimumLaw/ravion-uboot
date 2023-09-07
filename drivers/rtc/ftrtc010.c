@@ -8,7 +8,6 @@
 
 #include <config.h>
 #include <common.h>
-#include <log.h>
 #include <rtc.h>
 #include <asm/io.h>
 

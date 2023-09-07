@@ -11,9 +11,6 @@
 #ifndef __TISCI_PROTOCOL_H
 #define __TISCI_PROTOCOL_H
 
-#include <linux/bitops.h>
-#include <linux/err.h>
-
 /**
  * struct ti_sci_version_info - version information structure
  * @abi_major:	Major ABI version. Change here implies risk of backward
@@ -330,6 +327,8 @@ struct ti_sci_proc_ops {
 /**
  * struct ti_sci_rm_ringacc_ops - Ring Accelerator Management operations
  * @config: configure the SoC Navigator Subsystem Ring Accelerator ring
+ * @get_config: get the SoC Navigator Subsystem Ring Accelerator ring
+ *		configuration
  */
 struct ti_sci_rm_ringacc_ops {
 	int (*config)(const struct ti_sci_handle *handle,
@@ -337,6 +336,10 @@ struct ti_sci_rm_ringacc_ops {
 		      u32 addr_lo, u32 addr_hi, u32 count, u8 mode,
 		      u8 size, u8 order_id
 	);
+	int (*get_config)(const struct ti_sci_handle *handle,
+			  u32 nav_id, u32 index, u8 *mode,
+			  u32 *addr_lo, u32 *addr_hi, u32 *count,
+			  u8 *size, u8 *order_id);
 };
 
 /**
@@ -381,13 +384,6 @@ struct ti_sci_rm_psil_ops {
 #define TI_SCI_RM_UDMAP_RX_FLOW_DESC_HOST		0
 #define TI_SCI_RM_UDMAP_RX_FLOW_DESC_MONO		2
 
-#define TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_64_BYTES	1
-#define TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_128_BYTES	2
-#define TI_SCI_RM_UDMAP_CHAN_BURST_SIZE_256_BYTES	3
-
-#define TI_SCI_RM_BCDMA_EXTENDED_CH_TYPE_TCHAN		0
-#define TI_SCI_RM_BCDMA_EXTENDED_CH_TYPE_BCHAN		1
-
 /* UDMAP TX/RX channel valid_params common declarations */
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_PAUSE_ON_ERR_VALID		BIT(0)
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_ATYPE_VALID                BIT(1)
@@ -398,7 +394,6 @@ struct ti_sci_rm_psil_ops {
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_QOS_VALID                  BIT(6)
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_ORDER_ID_VALID             BIT(7)
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_SCHED_PRIORITY_VALID       BIT(8)
-#define TI_SCI_MSG_VALUE_RM_UDMAP_CH_BURST_SIZE_VALID		BIT(14)
 
 /**
  * Configures a Navigator Subsystem UDMAP transmit channel
@@ -413,8 +408,6 @@ struct ti_sci_msg_rm_udmap_tx_ch_cfg {
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_SUPR_TDPKT_VALID        BIT(11)
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_CREDIT_COUNT_VALID      BIT(12)
 #define TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_FDEPTH_VALID            BIT(13)
-#define TI_SCI_MSG_VALUE_RM_UDMAP_CH_TX_TDTYPE_VALID            BIT(15)
-#define TI_SCI_MSG_VALUE_RM_UDMAP_CH_EXTENDED_CH_TYPE_VALID	BIT(16)
 	u16 nav_id;
 	u16 index;
 	u8 tx_pause_on_err;
@@ -431,9 +424,6 @@ struct ti_sci_msg_rm_udmap_tx_ch_cfg {
 	u8 tx_orderid;
 	u16 fdepth;
 	u8 tx_sched_priority;
-	u8 tx_burst_size;
-	u8 tx_tdtype;
-	u8 extended_ch_type;
 };
 
 /**
@@ -463,7 +453,6 @@ struct ti_sci_msg_rm_udmap_rx_ch_cfg {
 	u8 rx_chan_type;
 	u8 rx_ignore_short;
 	u8 rx_ignore_long;
-	u8 rx_burst_size;
 };
 
 /**

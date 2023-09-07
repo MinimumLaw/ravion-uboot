@@ -24,9 +24,14 @@
 #define CONFIG_TEGRA_ENABLE_UARTD
 #define CONFIG_SYS_NS16550_COM1		NV_PA_APB_UARTD_BASE
 
+#define CONFIG_MACH_TYPE		MACH_TYPE_SEABOARD
+
 /* Environment in eMMC, at the end of 2nd "boot sector" */
+#define CONFIG_SYS_MMC_ENV_DEV 0
+#define CONFIG_SYS_MMC_ENV_PART 2
 
 /* NAND support */
+#define CONFIG_TEGRA_NAND
 
 /* Max number of NAND devices */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1

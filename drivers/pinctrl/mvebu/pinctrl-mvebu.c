@@ -9,14 +9,11 @@
 #include <fdtdec.h>
 #include <errno.h>
 #include <dm.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <dm/pinctrl.h>
 #include <dm/root.h>
 #include <asm/system.h>
 #include <asm/io.h>
 #include <asm/arch-armada8k/soc-info.h>
-#include <linux/bitops.h>
 #include "pinctrl-mvebu.h"
 
 #define AP_EMMC_PHY_CTRL_REG		0x100
@@ -194,8 +191,8 @@ int mvebu_pinctl_probe(struct udevice *dev)
 		return -EINVAL;
 	}
 
-	priv->base_reg = dev_read_addr_ptr(dev);
-	if (!priv->base_reg) {
+	priv->base_reg = devfdt_get_addr_ptr(dev);
+	if (priv->base_reg == (void *)FDT_ADDR_T_NONE) {
 		debug("%s: Failed to get base address\n", __func__);
 		return -EINVAL;
 	}
@@ -230,7 +227,7 @@ U_BOOT_DRIVER(pinctrl_mvebu) = {
 	.name		= "mvebu_pinctrl",
 	.id		= UCLASS_PINCTRL,
 	.of_match	= mvebu_pinctrl_ids,
-	.priv_auto	= sizeof(struct mvebu_pinctrl_priv),
+	.priv_auto_alloc_size = sizeof(struct mvebu_pinctrl_priv),
 	.ops		= &mvebu_pinctrl_ops,
 	.probe		= mvebu_pinctl_probe
 };

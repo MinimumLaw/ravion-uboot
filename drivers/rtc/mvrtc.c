@@ -13,7 +13,6 @@
 #include <dm.h>
 #include <rtc.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 #include "mvrtc.h"
 
 /* This RTC does not support century, so we assume 20 */
@@ -133,7 +132,7 @@ void rtc_reset(void)
 #ifdef CONFIG_DM_RTC
 static int mv_rtc_get(struct udevice *dev, struct rtc_time *tm)
 {
-	struct mvrtc_pdata *pdata = dev_get_plat(dev);
+	struct mvrtc_pdata *pdata = dev_get_platdata(dev);
 	struct mvrtc_registers *regs = (struct mvrtc_registers *)pdata->iobase;
 
 	return __mv_rtc_get(regs, tm);
@@ -141,7 +140,7 @@ static int mv_rtc_get(struct udevice *dev, struct rtc_time *tm)
 
 static int mv_rtc_set(struct udevice *dev, const struct rtc_time *tm)
 {
-	struct mvrtc_pdata *pdata = dev_get_plat(dev);
+	struct mvrtc_pdata *pdata = dev_get_platdata(dev);
 	struct mvrtc_registers *regs = (struct mvrtc_registers *)pdata->iobase;
 
 	return __mv_rtc_set(regs, tm);
@@ -149,7 +148,7 @@ static int mv_rtc_set(struct udevice *dev, const struct rtc_time *tm)
 
 static int mv_rtc_reset(struct udevice *dev)
 {
-	struct mvrtc_pdata *pdata = dev_get_plat(dev);
+	struct mvrtc_pdata *pdata = dev_get_platdata(dev);
 	struct mvrtc_registers *regs = (struct mvrtc_registers *)pdata->iobase;
 
 	__mv_rtc_reset(regs);
@@ -168,18 +167,18 @@ static const struct udevice_id mv_rtc_ids[] = {
 	{ }
 };
 
-static int mv_rtc_of_to_plat(struct udevice *dev)
+static int mv_rtc_ofdata_to_platdata(struct udevice *dev)
 {
-	struct mvrtc_pdata *pdata = dev_get_plat(dev);
+	struct mvrtc_pdata *pdata = dev_get_platdata(dev);
 
-	pdata->iobase = dev_read_addr(dev);
+	pdata->iobase = devfdt_get_addr(dev);
 	return 0;
 }
 
 U_BOOT_DRIVER(rtc_mv) = {
 	.name	= "rtc-mv",
 	.id	= UCLASS_RTC,
-	.of_to_plat = mv_rtc_of_to_plat,
+	.ofdata_to_platdata = mv_rtc_ofdata_to_platdata,
 	.of_match = mv_rtc_ids,
 	.ops	= &mv_rtc_ops,
 };

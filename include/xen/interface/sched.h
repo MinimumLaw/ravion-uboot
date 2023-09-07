@@ -1,8 +1,25 @@
-/* SPDX-License-Identifier: MIT
- *
+/******************************************************************************
  * sched.h
  *
  * Scheduler state interactions
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Copyright (c) 2005, Keir Fraser <keir@xensource.com>
  */
@@ -114,37 +131,32 @@
 #define SCHEDOP_pin_override 7
 
 struct sched_shutdown {
-	unsigned int reason; /* SHUTDOWN_* => shutdown reason */
+    unsigned int reason; /* SHUTDOWN_* => shutdown reason */
 };
-
 DEFINE_GUEST_HANDLE_STRUCT(sched_shutdown);
 
 struct sched_poll {
-	GUEST_HANDLE(evtchn_port_t)ports;
-	unsigned int nr_ports;
-	u64 timeout;
+    GUEST_HANDLE(evtchn_port_t) ports;
+    unsigned int nr_ports;
+    uint64_t timeout;
 };
-
 DEFINE_GUEST_HANDLE_STRUCT(sched_poll);
 
 struct sched_remote_shutdown {
-	domid_t domain_id;         /* Remote domain ID */
-	unsigned int reason;       /* SHUTDOWN_* => shutdown reason */
+    domid_t domain_id;         /* Remote domain ID */
+    unsigned int reason;       /* SHUTDOWN_* => shutdown reason */
 };
-
 DEFINE_GUEST_HANDLE_STRUCT(sched_remote_shutdown);
 
 struct sched_watchdog {
-	u32 id;                /* watchdog ID */
-	u32 timeout;           /* timeout */
+    uint32_t id;                /* watchdog ID */
+    uint32_t timeout;           /* timeout */
 };
-
 DEFINE_GUEST_HANDLE_STRUCT(sched_watchdog);
 
 struct sched_pin_override {
-	s32 pcpu;
+    int32_t pcpu;
 };
-
 DEFINE_GUEST_HANDLE_STRUCT(sched_pin_override);
 
 /*

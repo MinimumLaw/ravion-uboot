@@ -8,9 +8,9 @@ This handles putting an FDT into the image with just the information about the
 image.
 """
 
-from binman.entry import Entry
-from patman import tools
-from patman import tout
+from entry import Entry
+import tools
+import tout
 
 FDTMAP_MAGIC   = b'_FDTMAP_'
 FDTMAP_HDR_LEN = 16
@@ -53,31 +53,27 @@ class Entry_fdtmap(Entry):
     Note that the -u option must be provided to ensure that binman updates the
     FDT with the position of each entry.
 
-    Example output for a simple image with U-Boot and an FDT map::
+    Example output for a simple image with U-Boot and an FDT map:
 
-        / {
-            image-name = "binman";
-            size = <0x00000112>;
+    / {
+        image-name = "binman";
+        size = <0x00000112>;
+        image-pos = <0x00000000>;
+        offset = <0x00000000>;
+        u-boot {
+            size = <0x00000004>;
             image-pos = <0x00000000>;
             offset = <0x00000000>;
-            u-boot {
-                size = <0x00000004>;
-                image-pos = <0x00000000>;
-                offset = <0x00000000>;
-            };
-            fdtmap {
-                size = <0x0000010e>;
-                image-pos = <0x00000004>;
-                offset = <0x00000004>;
-            };
         };
+        fdtmap {
+            size = <0x0000010e>;
+            image-pos = <0x00000004>;
+            offset = <0x00000004>;
+        };
+    };
 
     If allow-repack is used then 'orig-offset' and 'orig-size' properties are
     added as necessary. See the binman README.
-
-    When extracting files, an alternative 'fdt' format is available for fdtmaps.
-    Use `binman extract -F fdt ...` to use this. It will export a devicetree,
-    without the fdtmap header, so it can be viewed with `fdtdump`.
     """
     def __init__(self, section, etype, node):
         # Put these here to allow entry-docs and help to work without libfdt
@@ -86,14 +82,10 @@ class Entry_fdtmap(Entry):
         global Fdt
 
         import libfdt
-        from binman import state
-        from dtoc.fdt import Fdt
+        import state
+        from fdt import Fdt
 
-        super().__init__(section, etype, node)
-        self.alt_formats = ['fdt']
-
-    def CheckAltFormats(self, alt_formats):
-        alt_formats['fdt'] = self, 'Extract the devicetree blob from the fdtmap'
+        Entry.__init__(self, section, etype, node)
 
     def _GetFdtmap(self):
         """Build an FDT map from the entries in the current image
@@ -140,7 +132,7 @@ class Entry_fdtmap(Entry):
             fdt.pack()
             outfdt = Fdt.FromData(fdt.as_bytearray())
             data = outfdt.GetContents()
-        data = FDTMAP_MAGIC + tools.get_bytes(0, 8) + data
+        data = FDTMAP_MAGIC + tools.GetBytes(0, 8) + data
         return data
 
     def ObtainContents(self):
@@ -155,7 +147,3 @@ class Entry_fdtmap(Entry):
         processing, e.g. the image-pos properties.
         """
         return self.ProcessContentsUpdate(self._GetFdtmap())
-
-    def GetAltFormat(self, data, alt_format):
-        if alt_format == 'fdt':
-            return data[FDTMAP_HDR_LEN:]

@@ -6,23 +6,13 @@
 #include <common.h>
 #include <compiler.h>
 #include <image.h>
+#include <lz4.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
-#include <asm/unaligned.h>
-#include <u-boot/lz4.h>
 
-static u16 LZ4_readLE16(const void *src)
-{
-	return get_unaligned_le16(src);
-}
-static void LZ4_copy4(void *dst, const void *src)
-{
-	put_unaligned(get_unaligned((const u32 *)src), (u32 *)dst);
-}
-static void LZ4_copy8(void *dst, const void *src)
-{
-	put_unaligned(get_unaligned((const u64 *)src), (u64 *)dst);
-}
+static u16 LZ4_readLE16(const void *src) { return le16_to_cpu(*(u16 *)src); }
+static void LZ4_copy4(void *dst, const void *src) { *(u32 *)dst = *(u32 *)src; }
+static void LZ4_copy8(void *dst, const void *src) { *(u64 *)dst = *(u64 *)src; }
 
 typedef  uint8_t BYTE;
 typedef uint16_t U16;
@@ -32,10 +22,45 @@ typedef uint64_t U64;
 
 #define FORCE_INLINE static inline __attribute__((always_inline))
 
-/* lz4.c is unaltered (except removing unrelated code) from github.com/Cyan4973/lz4. */
+/* Unaltered (except removing unrelated code) from github.com/Cyan4973/lz4. */
 #include "lz4.c"	/* #include for inlining, do not link! */
 
-#define LZ4F_BLOCKUNCOMPRESSED_FLAG 0x80000000U
+struct lz4_frame_header {
+	u32 magic;
+	union {
+		u8 flags;
+		struct {
+			u8 reserved0:2;
+			u8 has_content_checksum:1;
+			u8 has_content_size:1;
+			u8 has_block_checksum:1;
+			u8 independent_blocks:1;
+			u8 version:2;
+		};
+	};
+	union {
+		u8 block_descriptor;
+		struct {
+			u8 reserved1:4;
+			u8 max_block_size:3;
+			u8 reserved2:1;
+		};
+	};
+	/* + u64 content_size iff has_content_size is set */
+	/* + u8 header_checksum */
+} __packed;
+
+struct lz4_block_header {
+	union {
+		u32 raw;
+		struct {
+			u32 size:31;
+			u32 not_compressed:1;
+		};
+	};
+	/* + size bytes of data */
+	/* + u32 block_checksum iff has_block_checksum is set */
+} __packed;
 
 int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 {
@@ -47,70 +72,53 @@ int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 	*dstn = 0;
 
 	{ /* With in-place decompression the header may become invalid later. */
-		u32 magic;
-		u8 flags, version, independent_blocks, has_content_size;
-		u8 block_desc;
+		const struct lz4_frame_header *h = in;
 
-		if (srcn < sizeof(u32) + 3*sizeof(u8))
+		if (srcn < sizeof(*h) + sizeof(u64) + sizeof(u8))
 			return -EINVAL;	/* input overrun */
 
-		magic = get_unaligned_le32(in);
-		in += sizeof(u32);
-		flags = *(u8 *)in;
-		in += sizeof(u8);
-		block_desc = *(u8 *)in;
-		in += sizeof(u8);
-
-		version = (flags >> 6) & 0x3;
-		independent_blocks = (flags >> 5) & 0x1;
-		has_block_checksum = (flags >> 4) & 0x1;
-		has_content_size = (flags >> 3) & 0x1;
-
 		/* We assume there's always only a single, standard frame. */
-		if (magic != LZ4F_MAGIC || version != 1)
+		if (le32_to_cpu(h->magic) != LZ4F_MAGIC || h->version != 1)
 			return -EPROTONOSUPPORT;	/* unknown format */
-		if ((flags & 0x03) || (block_desc & 0x8f))
-			return -EINVAL;	/* reserved bits must be zero */
-		if (!independent_blocks)
+		if (h->reserved0 || h->reserved1 || h->reserved2)
+			return -EINVAL;	/* reserved must be zero */
+		if (!h->independent_blocks)
 			return -EPROTONOSUPPORT; /* we can't support this yet */
+		has_block_checksum = h->has_block_checksum;
 
-		if (has_content_size) {
-			if (srcn < sizeof(u32) + 3*sizeof(u8) + sizeof(u64))
-				return -EINVAL;	/* input overrun */
+		in += sizeof(*h);
+		if (h->has_content_size)
 			in += sizeof(u64);
-		}
-		/* Header checksum byte */
 		in += sizeof(u8);
 	}
 
 	while (1) {
-		u32 block_header, block_size;
+		struct lz4_block_header b;
 
-		block_header = get_unaligned_le32(in);
-		in += sizeof(u32);
-		block_size = block_header & ~LZ4F_BLOCKUNCOMPRESSED_FLAG;
+		b.raw = le32_to_cpu(*(u32 *)in);
+		in += sizeof(struct lz4_block_header);
 
-		if (in - src + block_size > srcn) {
+		if (in - src + b.size > srcn) {
 			ret = -EINVAL;		/* input overrun */
 			break;
 		}
 
-		if (!block_size) {
+		if (!b.size) {
 			ret = 0;	/* decompression successful */
 			break;
 		}
 
-		if (block_header & LZ4F_BLOCKUNCOMPRESSED_FLAG) {
-			size_t size = min((ptrdiff_t)block_size, end - out);
+		if (b.not_compressed) {
+			size_t size = min((ptrdiff_t)b.size, end - out);
 			memcpy(out, in, size);
 			out += size;
-			if (size < block_size) {
+			if (size < b.size) {
 				ret = -ENOBUFS;	/* output overrun */
 				break;
 			}
 		} else {
 			/* constant folding essential, do not touch params! */
-			ret = LZ4_decompress_generic(in, out, block_size,
+			ret = LZ4_decompress_generic(in, out, b.size,
 					end - out, endOnInputSize,
 					full, 0, noDict, out, NULL, 0);
 			if (ret < 0) {
@@ -120,7 +128,7 @@ int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 			out += ret;
 		}
 
-		in += block_size;
+		in += b.size;
 		if (has_block_checksum)
 			in += sizeof(u32);
 	}

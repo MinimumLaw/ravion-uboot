@@ -13,8 +13,8 @@
 #include <asm/io.h>
 
 #ifdef CONFIG_SYS_FSL_SEC_LE
-#define sec_in32(a)       in_le32((ulong *)(ulong)a)
-#define sec_out32(a, v)   out_le32((ulong *)(ulong)a, v)
+#define sec_in32(a)       in_le32((ulong *)(ulong)(a))
+#define sec_out32(a, v)   out_le32((ulong *)(ulong)(a), v)
 #define sec_in16(a)       in_le16(a)
 #define sec_clrbits32     clrbits_le32
 #define sec_setbits32     setbits_le32
@@ -68,48 +68,13 @@ struct rng4tst {
 		u32 rtfreqcnt;	/* PRGM=0: freq. count register */
 	};
 	u32 rsvd1[40];
-#define RDSTA_IF(idx) (0x00000001 << (idx))
-#define RDSTA_PR(idx) (0x00000010 << (idx))
-#define RDSTA_MASK (RDSTA_PR(1) | RDSTA_PR(0) | RDSTA_IF(1) | RDSTA_IF(0))
-#define RDSTA_SKVN 0x40000000
+#define RNG_STATE0_HANDLE_INSTANTIATED	0x00000001
+#define RNG_STATE1_HANDLE_INSTANTIATED	0x00000002
+#define RNG_STATE_HANDLE_MASK	\
+	(RNG_STATE0_HANDLE_INSTANTIATED | RNG_STATE1_HANDLE_INSTANTIATED)
 	u32 rdsta;		/*RNG DRNG Status Register*/
 	u32 rsvd2[15];
 };
-
-/* Version registers (Era 10+) */
-struct version_regs {
-	u32 crca;	/* CRCA_VERSION */
-	u32 afha;	/* AFHA_VERSION */
-	u32 kfha;	/* KFHA_VERSION */
-	u32 pkha;	/* PKHA_VERSION */
-	u32 aesa;	/* AESA_VERSION */
-	u32 mdha;	/* MDHA_VERSION */
-	u32 desa;	/* DESA_VERSION */
-	u32 snw8a;	/* SNW8A_VERSION */
-	u32 snw9a;	/* SNW9A_VERSION */
-	u32 zuce;	/* ZUCE_VERSION */
-	u32 zuca;	/* ZUCA_VERSION */
-	u32 ccha;	/* CCHA_VERSION */
-	u32 ptha;	/* PTHA_VERSION */
-	u32 rng;	/* RNG_VERSION */
-	u32 trng;	/* TRNG_VERSION */
-	u32 aaha;	/* AAHA_VERSION */
-	u32 rsvd[10];
-	u32 sr;		/* SR_VERSION */
-	u32 dma;	/* DMA_VERSION */
-	u32 ai;		/* AI_VERSION */
-	u32 qi;		/* QI_VERSION */
-	u32 jr;		/* JR_VERSION */
-	u32 deco;	/* DECO_VERSION */
-};
-
-#define CHA_VER_NUM_MASK	0x000000ff
-#define CHA_VER_MISC_SHIFT	8
-#define CHA_VER_MISC_MASK	0x0000ff00
-#define CHA_VER_REV_SHIFT	16
-#define CHA_VER_REV_MASK	0x00ff0000
-#define CHA_VER_VID_SHIFT	24
-#define CHA_VER_VID_MASK	0xff000000
 
 typedef struct ccsr_sec {
 	u32	res0;
@@ -136,19 +101,17 @@ typedef struct ccsr_sec {
 	u32	drr;		/* DECO Reset Register */
 	u8	res5[0x4d8];
 	struct rng4tst rng;	/* RNG Registers */
-	u8	res6[0x780];
-	struct version_regs vreg; /* version registers since era 10 */
-	u8	res7[0xa0];
+	u8	res6[0x8a0];
 	u32	crnr_ms;	/* CHA Revision Number Register, MS */
 	u32	crnr_ls;	/* CHA Revision Number Register, LS */
 	u32	ctpr_ms;	/* Compile Time Parameters Register, MS */
 	u32	ctpr_ls;	/* Compile Time Parameters Register, LS */
-	u8	res8[0x10];
+	u8	res7[0x10];
 	u32	far_ms;		/* Fault Address Register, MS */
 	u32	far_ls;		/* Fault Address Register, LS */
 	u32	falr;		/* Fault Address LIODN Register */
 	u32	fadr;		/* Fault Address Detail Register */
-	u8	res9[0x4];
+	u8	res8[0x4];
 	u32	csta;		/* CAAM Status Register */
 	u32	smpart;		/* Secure Memory Partition Parameters */
 	u32	smvid;		/* Secure Memory Version ID */
@@ -161,16 +124,16 @@ typedef struct ccsr_sec {
 	u32	secvid_ms;	/* SEC Version ID Register, MS */
 	u32	secvid_ls;	/* SEC Version ID Register, LS */
 #if defined(CONFIG_FSL_LSCH2) || defined(CONFIG_FSL_LSCH3)
-	u8	res10[0x6f020];
+	u8	res9[0x6f020];
 #else
-	u8	res10[0x6020];
+	u8	res9[0x6020];
 #endif
 	u32	qilcr_ms;	/* Queue Interface LIODN CFG Register, MS */
 	u32	qilcr_ls;	/* Queue Interface LIODN CFG Register, LS */
 #if defined(CONFIG_FSL_LSCH2) || defined(CONFIG_FSL_LSCH3)
-	u8	res11[0x8ffd8];
+	u8	res10[0x8ffd8];
 #else
-	u8	res11[0x8fd8];
+	u8	res10[0x8fd8];
 #endif
 } ccsr_sec_t;
 
@@ -377,8 +340,6 @@ int sign_mppubk(const u8 *m, int data_size, u8 *dgst, u8 *c, u8 *d);
 int sec_init_idx(uint8_t);
 #endif
 int sec_init(void);
-
-u8 caam_get_era(void);
 #endif
 
 #endif /* __FSL_SEC_H */

@@ -57,7 +57,7 @@ static long evalexp(char *s, int w)
 
 	/* if the parameter starts with a * then assume is a pointer to the value we want */
 	if (s[0] == '*') {
-		addr = hextoul(&s[1], NULL);
+		addr = simple_strtoul(&s[1], NULL, 16);
 		buf = map_physmem(addr, w, MAP_WRBACK);
 		if (!buf && addr) {
 			puts("Failed to map physical memory\n");
@@ -82,7 +82,7 @@ static long evalexp(char *s, int w)
 		unmap_physmem(buf, w);
 		return l;
 	} else {
-		l = hextoul(s, NULL);
+		l = simple_strtoul(s, NULL, 16);
 	}
 
 	/* avoid overflow on mask calculus */
@@ -93,7 +93,7 @@ static char * evalstr(char *s)
 {
 	/* if the parameter starts with a * then assume a string pointer else its a literal */
 	if (s[0] == '*') {
-		return (char *)hextoul(&s[1], NULL);
+		return (char *)simple_strtoul(&s[1], NULL, 16);
 	} else if (s[0] == '$') {
 		int i = 2;
 
@@ -175,8 +175,7 @@ static int binary_test(char *op, char *arg1, char *arg2, int w)
 }
 
 /* command line interface to the shell test */
-static int do_itest(struct cmd_tbl *cmdtp, int flag, int argc,
-		    char *const argv[])
+static int do_itest(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int	value, w;
 
@@ -197,10 +196,10 @@ static int do_itest(struct cmd_tbl *cmdtp, int flag, int argc,
 #endif
 		value = binary_test (argv[2], argv[1], argv[3], w);
 		break;
-	case CMD_DATA_SIZE_STR:
+	case -2:
 		value = binary_test (argv[2], argv[1], argv[3], 0);
 		break;
-	case CMD_DATA_SIZE_ERR:
+	case -1:
 	default:
 		puts("Invalid data width specifier\n");
 		value = 0;

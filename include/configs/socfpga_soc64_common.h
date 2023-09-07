@@ -7,16 +7,20 @@
 #ifndef __CONFIG_SOCFPGA_SOC64_COMMON_H__
 #define __CONFIG_SOCFPGA_SOC64_COMMON_H__
 
-#include <asm/arch/base_addr_soc64.h>
-#include <asm/arch/handoff_soc64.h>
-#include <linux/stringify.h>
+#include <asm/arch/base_addr_s10.h>
+#include <asm/arch/handoff_s10.h>
 
 /*
  * U-Boot general configurations
  */
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_LOADADDR			0x2000000
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+#define CONFIG_REMAKE_ELF
 /* sysmgr.boot_scratch_cold4 & 5 (64bit) will be used for PSCI_CPU_ON call */
 #define CPU_RELEASE_ADDR		0xFFD12210
+#define CONFIG_SYS_CACHELINE_SIZE	64
+#define CONFIG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
 
 /*
  * U-Boot console configurations
@@ -35,19 +39,16 @@
  */
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFFE00000
 #define CONFIG_SYS_INIT_RAM_SIZE	0x40000
-#ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR  \
 					+ CONFIG_SYS_INIT_RAM_SIZE \
-					- SOC64_HANDOFF_SIZE)
-#else
-#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE \
-					+ 0x100000)
-#endif
+					- S10_HANDOFF_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_SP_ADDR)
+#define CONFIG_SYS_MALLOC_LEN		(5 * 1024 * 1024)
 
 /*
  * U-Boot environment configurations
  */
+#define CONFIG_SYS_MMC_ENV_DEV		0	/* device 0 */
 
 /*
  * QSPI support
@@ -58,7 +59,10 @@
 
 /* Flash device info */
 
+/*#define CONFIG_ENV_IS_IN_SPI_FLASH*/
+
 #ifndef CONFIG_SPL_BUILD
+#define CONFIG_MTD_PARTITIONS
 #define MTDIDS_DEFAULT			"nor0=ff705000.spi.0"
 #endif /* CONFIG_SPL_BUILD */
 
@@ -70,18 +74,17 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #endif /* CONFIG_CADENCE_QSPI */
 
 /*
- * Environment variable
+ * Boot arguments passed to the boot command. The value of
+ * CONFIG_BOOTARGS goes into the environment value "bootargs".
+ * Do note the value will override also the chosen node in FDT blob.
  */
-
-#ifdef CONFIG_FIT
-#define CONFIG_BOOTFILE "kernel.itb"
-#else
-#define CONFIG_BOOTFILE "Image"
-#endif
+#define CONFIG_BOOTARGS "earlycon"
+#define CONFIG_BOOTCOMMAND "run fatscript; run mmcload;run linux_qspi_enable;" \
+			   "run mmcboot"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
-	"bootfile=" CONFIG_BOOTFILE "\0" \
+	"bootfile=Image\0" \
 	"fdt_addr=8000000\0" \
 	"fdtimage=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
 	"mmcroot=/dev/mmcblk0p2\0" \
@@ -91,11 +94,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"mmcload=mmc rescan;" \
 		"load mmc 0:1 ${loadaddr} ${bootfile};" \
 		"load mmc 0:1 ${fdt_addr} ${fdtimage}\0" \
-	"mmcfitboot=setenv bootargs " CONFIG_BOOTARGS \
-		" root=${mmcroot} rw rootwait;" \
-		"bootm ${loadaddr}\0" \
-	"mmcfitload=mmc rescan;" \
-		"load mmc 0:1 ${loadaddr} ${bootfile}\0" \
 	"linux_qspi_enable=if sf probe; then " \
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
@@ -109,11 +107,18 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"socfpga_legacy_reset_compat=1\0"
 
 /*
+ * Generic Interrupt Controller Definitions
+ */
+#define CONFIG_GICV2
+
+/*
  * External memory configurations
  */
 #define PHYS_SDRAM_1			0x0
 #define PHYS_SDRAM_1_SIZE		(1 * 1024 * 1024 * 1024)
 #define CONFIG_SYS_SDRAM_BASE		0
+#define CONFIG_SYS_MEMTEST_START	0
+#define CONFIG_SYS_MEMTEST_END		PHYS_SDRAM_1_SIZE - 0x200000
 
 /*
  * Serial / UART configurations
@@ -135,6 +140,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /*
  * Flash configurations
  */
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
 
 /* Ethernet on SoC (EMAC) */
 #if defined(CONFIG_CMD_NET)
@@ -145,6 +151,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * L4 Watchdog
  */
 #ifndef CONFIG_SPL_BUILD
+#undef CONFIG_HW_WATCHDOG
 #undef CONFIG_DESIGNWARE_WATCHDOG
 #endif
 #define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD0_ADDRESS
@@ -178,7 +185,7 @@ unsigned int cm_get_l4_sys_free_clk_hz(void);
  * 0x8000_0000 ...... End of SDRAM_1 (assume 2GB)
  *
  */
-#define CONFIG_SPL_TARGET		"spl/u-boot-spl-dtb.hex"
+#define CONFIG_SPL_TARGET		"spl/u-boot-spl.hex"
 #define CONFIG_SPL_MAX_SIZE		CONFIG_SYS_INIT_RAM_SIZE
 #define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
 #define CONFIG_SPL_BSS_MAX_SIZE		0x100000	/* 1 MB */
@@ -189,10 +196,7 @@ unsigned int cm_get_l4_sys_free_clk_hz(void);
 					- CONFIG_SYS_SPL_MALLOC_SIZE)
 
 /* SPL SDMMC boot support */
-#ifdef CONFIG_SPL_LOAD_FIT
-#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.itb"
-#else
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
-#endif
 
 #endif	/* __CONFIG_SOCFPGA_SOC64_COMMON_H__ */

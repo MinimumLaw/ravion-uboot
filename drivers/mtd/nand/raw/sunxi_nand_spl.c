@@ -9,10 +9,7 @@
 #include <common.h>
 #include <config.h>
 #include <nand.h>
-#include <linux/bitops.h>
 #include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/mtd/rawnand.h>
 
 /* registers */
 #define NFC_CTL                    0x00000000

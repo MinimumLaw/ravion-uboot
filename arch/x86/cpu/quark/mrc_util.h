@@ -10,8 +10,6 @@
 #ifndef _MRC_UTIL_H_
 #define _MRC_UTIL_H_
 
-#include <log.h>
-
 /* Turn on this macro to enable MRC debugging output */
 #undef  MRC_DEBUG
 

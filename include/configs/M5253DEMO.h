@@ -6,11 +6,12 @@
 #ifndef _M5253DEMO_H
 #define _M5253DEMO_H
 
-#include <linux/stringify.h>
-
 #define CONFIG_MCFTMR
 
+#define CONFIG_MCFUART
 #define CONFIG_SYS_UART_PORT		(0)
+
+#undef CONFIG_WATCHDOG		/* disable watchdog */
 
 
 /* Configuration for environment
@@ -21,10 +22,27 @@
 	. = DEFINED(env_offset) ? env_offset : .; \
 	env/embedded.o(.text*);
 
+/*
+ * Command line configuration.
+ */
+
 #ifdef CONFIG_IDE
 /* ATA */
+#	define CONFIG_IDE_RESET		1
 #	define CONFIG_IDE_PREINIT	1
+#	define CONFIG_ATAPI
 #	undef CONFIG_LBA48
+
+#	define CONFIG_SYS_IDE_MAXBUS		1
+#	define CONFIG_SYS_IDE_MAXDEVICE	2
+
+#	define CONFIG_SYS_ATA_BASE_ADDR	(CONFIG_SYS_MBAR2 + 0x800)
+#	define CONFIG_SYS_ATA_IDE0_OFFSET	0
+
+#	define CONFIG_SYS_ATA_DATA_OFFSET	0xA0	/* Offset for data I/O */
+#	define CONFIG_SYS_ATA_REG_OFFSET	0xA0	/* Offset for normal register accesses */
+#	define CONFIG_SYS_ATA_ALT_OFFSET	0xC0	/* Offset for alternate registers */
+#	define CONFIG_SYS_ATA_STRIDE		4	/* Interval between registers */
 #endif
 
 #define CONFIG_DRIVER_DM9000
@@ -54,9 +72,20 @@
 #define CONFIG_HOSTNAME		"M5253DEMO"
 
 /* I2C */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_FSL
+#define CONFIG_SYS_FSL_I2C_SPEED	80000
+#define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
+#define CONFIG_SYS_FSL_I2C_OFFSET	0x00000280
+#define CONFIG_SYS_IMMR		CONFIG_SYS_MBAR
 #define CONFIG_SYS_I2C_PINMUX_REG	(*(u32 *) (CONFIG_SYS_MBAR+0x19C))
 #define CONFIG_SYS_I2C_PINMUX_CLR	(0xFFFFE7FF)
 #define CONFIG_SYS_I2C_PINMUX_SET	(0)
+
+#define CONFIG_SYS_LOAD_ADDR		0x00100000
+
+#define CONFIG_SYS_MEMTEST_START	0x400
+#define CONFIG_SYS_MEMTEST_END		0x380000
 
 #undef CONFIG_SYS_PLL_BYPASS		/* bypass PLL for test purpose */
 #define CONFIG_SYS_FAST_CLK
@@ -100,6 +129,7 @@
 #endif
 
 #define CONFIG_SYS_MONITOR_LEN		0x40000
+#define CONFIG_SYS_MALLOC_LEN		(256 << 10)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(64*1024)
 
 /*
@@ -112,6 +142,7 @@
 
 /* FLASH organization */
 #define CONFIG_SYS_FLASH_BASE		(CONFIG_SYS_CS0_BASE)
+#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max number of memory banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	2048	/* max number of sectors on one chip */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	1000
 
@@ -134,6 +165,7 @@
 #endif
 
 /* Cache Configuration */
+#define CONFIG_SYS_CACHELINE_SIZE	16
 
 #define ICACHE_STATUS			(CONFIG_SYS_INIT_RAM_ADDR + \
 					 CONFIG_SYS_INIT_RAM_SIZE - 8)

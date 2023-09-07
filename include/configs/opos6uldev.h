@@ -18,6 +18,9 @@
 #endif
 #endif
 
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(16 << 20)
+
 /* Miscellaneous configurable options */
 #define CONFIG_STANDALONE_LOAD_ADDR	CONFIG_SYS_LOAD_ADDR
 
@@ -41,18 +44,30 @@
 /* LCD */
 #ifndef CONFIG_SPL_BUILD
 #ifdef CONFIG_DM_VIDEO
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_SPLASH_SOURCE
+#define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
+#define CONFIG_BMP_16BPP
+#define CONFIG_BMP_24BPP
+#define CONFIG_BMP_32BPP
+#define CONFIG_VIDEO_MXS
 #define MXS_LCDIF_BASE MX6UL_LCDIF1_BASE_ADDR
 #endif
 #endif
 
 /* Environment is stored in the eMMC boot partition */
+#define CONFIG_SYS_MMC_ENV_DEV          0
+#define CONFIG_SYS_MMC_ENV_PART         1
 
 #define CONFIG_ENV_VERSION	100
 #define CONFIG_BOARD_NAME	opos6ul
 #define ACFG_CONSOLE_DEV        ttymxc0
 #define CONFIG_SYS_AUTOLOAD     "no"
 #define CONFIG_ROOTPATH         "/tftpboot/" __stringify(CONFIG_BOARD_NAME) "-root"
+#define CONFIG_BOOTCOMMAND	"run emmcboot"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"env_version="          __stringify(CONFIG_ENV_VERSION)         "\0"                    \
@@ -72,7 +87,7 @@
 	"mmcrootfstype=ext4 rootwait\0"                                                         \
 	"kernelimg="           __stringify(CONFIG_BOARD_NAME)          "-linux.bin\0"           \
 	"splashpos=0,0\0"									\
-	"splashimage="		__stringify(CONFIG_SYS_LOAD_ADDR)	"\0"			\
+	"splashimage="		__stringify(CONFIG_LOADADDR) 		"\0"			\
 	"videomode=video=ctfb:x:800,y:480,depth:18,pclk:33033,le:96,ri:96,up:20,lo:21,hs:64,vs:4,sync:0,vmode:0\0" \
 	"check_env=if test -n ${flash_env_version}; "                                           \
 		"then env default env_version; "                                                \

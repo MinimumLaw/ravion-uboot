@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
@@ -33,11 +32,11 @@
 #include <fsl_pmic.h>
 #include <linux/fb.h>
 #include <ipu_pixfmt.h>
-#include <version_string.h>
+#include <version.h>
 #include <watchdog.h>
 #include "ppd_gpio.h"
 #include <stdlib.h>
-#include "../../ge/common/ge_rtc.h"
+#include "../../ge/common/ge_common.h"
 #include "../../ge/common/vpd_reader.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -81,12 +80,10 @@ int dram_init_banksize(void)
 	return 0;
 }
 
-#ifdef CONFIG_REVISION_TAG
 u32 get_board_rev(void)
 {
 	return get_cpu_rev() & ~(0xF << 8);
 }
-#endif
 
 #ifdef CONFIG_USB_EHCI_MX5
 int board_ehci_hcd_init(int port)
@@ -228,7 +225,7 @@ int board_late_init(void)
 	struct vpd_cache vpd;
 
 	memset(&vpd, 0, sizeof(vpd));
-	res = read_i2c_vpd(&vpd, vpd_callback);
+	res = read_vpd(&vpd, vpd_callback);
 	if (!res)
 		process_vpd(&vpd);
 	else
@@ -253,7 +250,7 @@ int checkboard(void)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	char *rtc_status = env_get("rtc_status");
 

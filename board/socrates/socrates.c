@@ -13,25 +13,23 @@
 #include <common.h>
 #include <clock_legacy.h>
 #include <env.h>
-#include <init.h>
 #include <pci.h>
-#include <uuid.h>
-#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/immap_85xx.h>
 #include <ioports.h>
 #include <flash.h>
-#include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <asm/io.h>
 #include <i2c.h>
+#include <mb862xx.h>
 #include <video_fb.h>
 #include "upm_table.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
 extern flash_info_t flash_info[];	/* FLASH chips info */
+extern GraphicDevice mb862xx;
 
 void local_bus_init (void);
 ulong flash_get_size (ulong base, int banknum);
@@ -53,11 +51,11 @@ int checkboard (void)
 	}
 	putc('\n');
 
-#if defined(CONFIG_PCI)
+#if defined(CONFIG_PCI) || defined(CONFIG_DM_PCI)
 	/* Check the PCI_clk sel bit */
 	if (in_be32(&gur->porpllsr) & (1<<15)) {
 		src = "SYSCLK";
-		f = get_board_sys_clk();
+		f = CONFIG_SYS_CLK_FREQ;
 	} else {
 		src = "PCI_CLK";
 		f = CONFIG_PCI_CLK_FREQ;
@@ -107,30 +105,31 @@ int misc_init_r (void)
 		/*
 		 * Re-do flash protection upon new addresses
 		 */
-		flash_protect(FLAG_PROTECT_CLEAR,
-			      gd->bd->bi_flashstart, 0xffffffff,
-			      &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
+		flash_protect (FLAG_PROTECT_CLEAR,
+			       gd->bd->bi_flashstart, 0xffffffff,
+			       &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
 
 		/* Monitor protection ON by default */
-		flash_protect(FLAG_PROTECT_SET,
-			      CONFIG_SYS_MONITOR_BASE, CONFIG_SYS_MONITOR_BASE +
-			      monitor_flash_len - 1,
-			      &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
+		flash_protect (FLAG_PROTECT_SET,
+			       CONFIG_SYS_MONITOR_BASE, CONFIG_SYS_MONITOR_BASE + monitor_flash_len - 1,
+			       &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
 
 		/* Environment protection ON by default */
-		flash_protect(FLAG_PROTECT_SET,
-			      CONFIG_ENV_ADDR,
-			      CONFIG_ENV_ADDR + CONFIG_ENV_SECT_SIZE - 1,
-			      &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
+		flash_protect (FLAG_PROTECT_SET,
+			       CONFIG_ENV_ADDR,
+			       CONFIG_ENV_ADDR + CONFIG_ENV_SECT_SIZE - 1,
+			       &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
 
 		/* Redundant environment protection ON by default */
-		flash_protect(FLAG_PROTECT_SET,
-			      CONFIG_ENV_ADDR_REDUND,
-			      CONFIG_ENV_ADDR_REDUND + CONFIG_ENV_SECT_SIZE - 1,
+		flash_protect (FLAG_PROTECT_SET,
+			       CONFIG_ENV_ADDR_REDUND,
+			       CONFIG_ENV_ADDR_REDUND + CONFIG_ENV_SECT_SIZE - 1,
 			       &flash_info[CONFIG_SYS_MAX_FLASH_BANKS - 1]);
 	}
 
+#if defined(CONFIG_DM_PCI)
 	pci_init();
+#endif
 
 	return 0;
 }
@@ -190,7 +189,7 @@ int board_early_init_r (void)
 #endif /* CONFIG_BOARD_EARLY_INIT_R */
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	u32 val[12];
 	int rc, i = 0;
@@ -202,6 +201,16 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	val[i++] = 0;				/* always 0 */
 	val[i++] = gd->bd->bi_flashstart;
 	val[i++] = gd->bd->bi_flashsize;
+
+#if defined(CONFIG_VIDEO_MB862xx)
+	if (mb862xx.frameAdrs == CONFIG_SYS_LIME_BASE) {
+		/* Fixup LIME mapping */
+		val[i++] = 2;			/* chip select number */
+		val[i++] = 0;			/* always 0 */
+		val[i++] = CONFIG_SYS_LIME_BASE;
+		val[i++] = CONFIG_SYS_LIME_SIZE;
+	}
+#endif
 
 	/* Fixup FPGA mapping */
 	val[i++] = 3;				/* chip select number */
@@ -220,15 +229,13 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 #endif /* CONFIG_OF_BOARD_SETUP */
 
 #if defined(CONFIG_OF_SEPARATE)
-void *board_fdt_blob_setup(int *err)
+void *board_fdt_blob_setup(void)
 {
 	void *fw_dtb;
 
-	*err = 0;
 	fw_dtb = (void *)(CONFIG_SYS_TEXT_BASE - CONFIG_ENV_SECT_SIZE);
 	if (fdt_magic(fw_dtb) != FDT_MAGIC) {
 		printf("DTB is not passed via %x\n", (u32)fw_dtb);
-		*err = -ENXIO;
 		return NULL;
 	}
 

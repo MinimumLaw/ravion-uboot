@@ -13,10 +13,13 @@
 #define CONFIG_SYS_SDRAM_BASE			PHYS_SDRAM_1
 #define PHYS_SDRAM_1_SIZE			0x00198000
 
+#define CONFIG_SYS_MALLOC_LEN			(CONFIG_ENV_SIZE + 16 * 1024)
+
 /* user interface */
 #define CONFIG_SYS_CBSIZE			1024
 
 /* MISC */
+#define CONFIG_SYS_LOAD_ADDR			0x00000000
 #define CONFIG_SYS_INIT_RAM_SIZE		0x8000
 #define CONFIG_SYS_INIT_RAM_ADDR		0x00190000
 #define CONFIG_SYS_INIT_SP_OFFSET		\
@@ -32,7 +35,12 @@
 /* Command support defines */
 #define CONFIG_PHY_RESET_DELAY			10000		/* in usec */
 
+#define CONFIG_SYS_MEMTEST_START               0x0000
+#define CONFIG_SYS_MEMTEST_END                 1024*1024
+
 /* Misc configuration */
+
+#define CONFIG_BOOTCOMMAND                     "go 0x40040000"
 
 /*
 + * QSPI support

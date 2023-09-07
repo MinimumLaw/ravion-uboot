@@ -19,7 +19,6 @@
 #ifdef CONFIG_ARMV7_NONSEC
 #include <asm/armv7.h>
 #endif
-#include <asm/global_data.h>
 #include <asm/psci.h>
 #include <asm/spin_table.h>
 
@@ -36,7 +35,7 @@ int arch_fixup_fdt(void *blob)
 {
 	__maybe_unused int ret = 0;
 #if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_OF_LIBFDT)
-	struct bd_info *bd = gd->bd;
+	bd_t *bd = gd->bd;
 	int bank;
 	u64 start[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
@@ -64,7 +63,7 @@ int arch_fixup_fdt(void *blob)
 #endif
 
 #if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_ARMV8_PSCI) || \
-	CONFIG_IS_ENABLED(SEC_FIRMWARE_ARMV8_PSCI)
+	defined(CONFIG_SEC_FIRMWARE_ARMV8_PSCI)
 	ret = psci_update_dt(blob);
 	if (ret)
 		return ret;

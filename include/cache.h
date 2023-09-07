@@ -6,8 +6,6 @@
 #ifndef __CACHE_H
 #define __CACHE_H
 
-struct udevice;
-
 /*
  * Structure for the cache controller
  */
@@ -49,7 +47,7 @@ struct cache_ops {
  *
  * @dev:	Device to check (UCLASS_CACHE)
  * @info:	Returns cache info
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int cache_get_info(struct udevice *dev, struct cache_info *info);
 
@@ -57,7 +55,7 @@ int cache_get_info(struct udevice *dev, struct cache_info *info);
  * cache_enable() - Enable cache
  *
  * @dev:	Device to check (UCLASS_CACHE)
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int cache_enable(struct udevice *dev);
 
@@ -65,7 +63,7 @@ int cache_enable(struct udevice *dev);
  * cache_disable() - Flush and disable cache
  *
  * @dev:	Device to check (UCLASS_CACHE)
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int cache_disable(struct udevice *dev);
 #endif

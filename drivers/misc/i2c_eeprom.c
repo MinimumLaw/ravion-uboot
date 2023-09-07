@@ -3,11 +3,8 @@
  * Copyright (c) 2014 Google, Inc
  */
 
-#define LOG_CATEGORY UCLASS_I2C_EEPROM
-
 #include <common.h>
 #include <eeprom.h>
-#include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <dm.h>
@@ -17,10 +14,9 @@
 
 struct i2c_eeprom_drv_data {
 	u32 size; /* size in bytes */
-	u32 pagesize; /* page size in bytes */
+	u32 pagewidth; /* pagesize = 2^pagewidth */
 	u32 addr_offset_mask; /* bits in addr used for offset overflow */
 	u32 offset_len; /* size in bytes of offset */
-	u32 start_offset; /* valid start offset inside memory, by default 0 */
 };
 
 int i2c_eeprom_read(struct udevice *dev, int offset, uint8_t *buf, int size)
@@ -95,7 +91,7 @@ static const struct i2c_eeprom_ops i2c_eeprom_std_ops = {
 	.size	= i2c_eeprom_std_size,
 };
 
-static int i2c_eeprom_std_of_to_plat(struct udevice *dev)
+static int i2c_eeprom_std_ofdata_to_platdata(struct udevice *dev)
 {
 	struct i2c_eeprom *priv = dev_get_priv(dev);
 	struct i2c_eeprom_drv_data *data =
@@ -103,11 +99,13 @@ static int i2c_eeprom_std_of_to_plat(struct udevice *dev)
 	u32 pagesize;
 	u32 size;
 
-	if (dev_read_u32(dev, "pagesize", &pagesize) == 0)
+	if (dev_read_u32(dev, "pagesize", &pagesize) == 0) {
 		priv->pagesize = pagesize;
-	else
+	} else {
 		/* 6 bit -> page size of up to 2^63 (should be sufficient) */
-		priv->pagesize = data->pagesize;
+		priv->pagewidth = data->pagewidth;
+		priv->pagesize = (1 << priv->pagewidth);
+	}
 
 	if (dev_read_u32(dev, "size", &size) == 0)
 		priv->size = size;
@@ -133,8 +131,8 @@ static int i2c_eeprom_std_bind(struct udevice *dev)
 		if (!name)
 			continue;
 
-		device_bind(dev, DM_DRIVER_GET(i2c_eeprom_partition), name,
-			    NULL, partition, NULL);
+		device_bind_ofnode(dev, DM_GET_DRIVER(i2c_eeprom_partition),
+				   name, NULL, partition, NULL);
 	}
 
 	return 0;
@@ -151,11 +149,7 @@ static int i2c_eeprom_std_probe(struct udevice *dev)
 	i2c_set_chip_addr_offset_mask(dev, data->addr_offset_mask);
 
 	/* Verify that the chip is functional */
-	/*
-	 * Not all eeproms start from offset 0. Valid offset is available
-	 * in the platform data struct.
-	 */
-	ret = i2c_eeprom_read(dev, data->start_offset, &test_byte, 1);
+	ret = i2c_eeprom_read(dev, 0, &test_byte, 1);
 	if (ret)
 		return -ENODEV;
 
@@ -164,99 +158,98 @@ static int i2c_eeprom_std_probe(struct udevice *dev)
 
 static const struct i2c_eeprom_drv_data eeprom_data = {
 	.size = 0,
-	.pagesize = 1,
+	.pagewidth = 0,
 	.addr_offset_mask = 0,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data mc24aa02e48_data = {
 	.size = 256,
-	.pagesize = 8,
+	.pagewidth = 3,
 	.addr_offset_mask = 0,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c01a_data = {
 	.size = 128,
-	.pagesize = 8,
+	.pagewidth = 3,
 	.addr_offset_mask = 0,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c02_data = {
 	.size = 256,
-	.pagesize = 8,
+	.pagewidth = 3,
 	.addr_offset_mask = 0,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c04_data = {
 	.size = 512,
-	.pagesize = 16,
+	.pagewidth = 4,
 	.addr_offset_mask = 0x1,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c08_data = {
 	.size = 1024,
-	.pagesize = 16,
+	.pagewidth = 4,
 	.addr_offset_mask = 0x3,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c08a_data = {
 	.size = 1024,
-	.pagesize = 16,
+	.pagewidth = 4,
 	.addr_offset_mask = 0x3,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c16a_data = {
 	.size = 2048,
-	.pagesize = 16,
+	.pagewidth = 4,
 	.addr_offset_mask = 0x7,
 	.offset_len = 1,
 };
 
 static const struct i2c_eeprom_drv_data atmel24mac402_data = {
 	.size = 256,
-	.pagesize = 16,
+	.pagewidth = 4,
 	.addr_offset_mask = 0,
 	.offset_len = 1,
-	.start_offset = 0x80,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c32_data = {
 	.size = 4096,
-	.pagesize = 32,
+	.pagewidth = 5,
 	.addr_offset_mask = 0,
 	.offset_len = 2,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c64_data = {
 	.size = 8192,
-	.pagesize = 32,
+	.pagewidth = 5,
 	.addr_offset_mask = 0,
 	.offset_len = 2,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c128_data = {
 	.size = 16384,
-	.pagesize = 64,
+	.pagewidth = 6,
 	.addr_offset_mask = 0,
 	.offset_len = 2,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c256_data = {
 	.size = 32768,
-	.pagesize = 64,
+	.pagewidth = 6,
 	.addr_offset_mask = 0,
 	.offset_len = 2,
 };
 
 static const struct i2c_eeprom_drv_data atmel24c512_data = {
 	.size = 65536,
-	.pagesize = 64,
+	.pagewidth = 6,
 	.addr_offset_mask = 0,
 	.offset_len = 2,
 };
@@ -264,7 +257,6 @@ static const struct i2c_eeprom_drv_data atmel24c512_data = {
 static const struct udevice_id i2c_eeprom_std_ids[] = {
 	{ .compatible = "i2c-eeprom", (ulong)&eeprom_data },
 	{ .compatible = "microchip,24aa02e48", (ulong)&mc24aa02e48_data },
-	{ .compatible = "atmel,24c01", (ulong)&atmel24c01a_data },
 	{ .compatible = "atmel,24c01a", (ulong)&atmel24c01a_data },
 	{ .compatible = "atmel,24c02", (ulong)&atmel24c02_data },
 	{ .compatible = "atmel,24c04", (ulong)&atmel24c04_data },
@@ -286,8 +278,8 @@ U_BOOT_DRIVER(i2c_eeprom_std) = {
 	.of_match		= i2c_eeprom_std_ids,
 	.bind			= i2c_eeprom_std_bind,
 	.probe			= i2c_eeprom_std_probe,
-	.of_to_plat	= i2c_eeprom_std_of_to_plat,
-	.priv_auto	= sizeof(struct i2c_eeprom),
+	.ofdata_to_platdata	= i2c_eeprom_std_ofdata_to_platdata,
+	.priv_auto_alloc_size	= sizeof(struct i2c_eeprom),
 	.ops			= &i2c_eeprom_std_ops,
 };
 
@@ -301,23 +293,22 @@ static int i2c_eeprom_partition_probe(struct udevice *dev)
 	return 0;
 }
 
-static int i2c_eeprom_partition_of_to_plat(struct udevice *dev)
+static int i2c_eeprom_partition_ofdata_to_platdata(struct udevice *dev)
 {
 	struct i2c_eeprom_partition *priv = dev_get_priv(dev);
-	u32 reg[2];
+	u32 offset, size;
 	int ret;
 
-	ret = dev_read_u32_array(dev, "reg", reg, 2);
+	ret = dev_read_u32(dev, "offset", &offset);
 	if (ret)
 		return ret;
 
-	if (!reg[1])
-		return -EINVAL;
+	ret = dev_read_u32(dev, "size", &size);
+	if (ret)
+		return ret;
 
-	priv->offset = reg[0];
-	priv->size = reg[1];
-
-	debug("%s: base %x, size %x\n", __func__, priv->offset, priv->size);
+	priv->offset = offset;
+	priv->size = size;
 
 	return 0;
 }
@@ -368,8 +359,8 @@ U_BOOT_DRIVER(i2c_eeprom_partition) = {
 	.name			= "i2c_eeprom_partition",
 	.id			= UCLASS_I2C_EEPROM,
 	.probe			= i2c_eeprom_partition_probe,
-	.of_to_plat	= i2c_eeprom_partition_of_to_plat,
-	.priv_auto	= sizeof(struct i2c_eeprom_partition),
+	.ofdata_to_platdata	= i2c_eeprom_partition_ofdata_to_platdata,
+	.priv_auto_alloc_size	= sizeof(struct i2c_eeprom_partition),
 	.ops			= &i2c_eeprom_partition_ops,
 };
 

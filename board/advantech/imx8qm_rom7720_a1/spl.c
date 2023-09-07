@@ -4,12 +4,8 @@
  */
 #include <common.h>
 #include <dm.h>
-#include <image.h>
-#include <init.h>
-#include <log.h>
 #include <spl.h>
 #include <fsl_esdhc.h>
-#include <asm/global_data.h>
 
 #include <asm/io.h>
 #include <asm/gpio.h>
@@ -97,7 +93,7 @@ static iomux_cfg_t usdhc2_sd[] = {
 	SC_P_USDHC2_CD_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
 };
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
 
@@ -172,7 +168,7 @@ int board_mmc_getcd(struct mmc *mmc)
 
 void spl_board_init(void)
 {
-#if defined(CONFIG_SPL_SPI)
+#if defined(CONFIG_SPL_SPI_SUPPORT)
 	if (sc_rm_is_resource_owned(-1, SC_R_FSPI_0)) {
 		if (sc_pm_set_resource_power_mode(-1, SC_R_FSPI_0, SC_PM_PW_MODE_ON)) {
 			puts("Warning: failed to initialize FSPI0\n");
@@ -185,7 +181,7 @@ void spl_board_init(void)
 
 void spl_board_prepare_for_boot(void)
 {
-#if defined(CONFIG_SPL_SPI)
+#if defined(CONFIG_SPL_SPI_SUPPORT)
 	if (sc_rm_is_resource_owned(-1, SC_R_FSPI_0)) {
 		if (sc_pm_set_resource_power_mode(-1, SC_R_FSPI_0, SC_PM_PW_MODE_OFF)) {
 			puts("Warning: failed to turn off FSPI0\n");

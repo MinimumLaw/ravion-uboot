@@ -8,7 +8,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <bitfield.h>
@@ -16,7 +15,6 @@
 #include <errno.h>
 #include <generic-phy.h>
 #include <regmap.h>
-#include <linux/delay.h>
 #include <power/regulator.h>
 #include <reset.h>
 #include <clk.h>
@@ -66,10 +64,10 @@ struct phy_meson_g12a_usb2_priv {
 
 static int phy_meson_g12a_usb2_power_on(struct phy *phy)
 {
-#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *dev = phy->dev;
 	struct phy_meson_g12a_usb2_priv *priv = dev_get_priv(dev);
 
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	if (priv->phy_supply) {
 		int ret = regulator_set_enable(priv->phy_supply, true);
 		if (ret)
@@ -82,10 +80,10 @@ static int phy_meson_g12a_usb2_power_on(struct phy *phy)
 
 static int phy_meson_g12a_usb2_power_off(struct phy *phy)
 {
-#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *dev = phy->dev;
 	struct phy_meson_g12a_usb2_priv *priv = dev_get_priv(dev);
 
+#if CONFIG_IS_ENABLED(DM_REGULATOR)
 	if (priv->phy_supply) {
 		int ret = regulator_set_enable(priv->phy_supply, false);
 		if (ret) {
@@ -215,5 +213,5 @@ U_BOOT_DRIVER(meson_g12a_usb2_phy) = {
 	.of_match = meson_g12a_usb2_phy_ids,
 	.probe = meson_g12a_usb2_phy_probe,
 	.ops = &meson_g12a_usb2_phy_ops,
-	.priv_auto	= sizeof(struct phy_meson_g12a_usb2_priv),
+	.priv_auto_alloc_size = sizeof(struct phy_meson_g12a_usb2_priv),
 };

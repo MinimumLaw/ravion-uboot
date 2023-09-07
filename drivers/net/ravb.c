@@ -13,16 +13,11 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
-#include <log.h>
 #include <miiphy.h>
 #include <malloc.h>
-#include <asm/cache.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/mii.h>
 #include <wait_bit.h>
 #include <asm/io.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 
 /* Registers */
@@ -52,7 +47,6 @@
 #define CSR_OPS			0x0000000F
 #define CSR_OPS_CONFIG		BIT(1)
 
-#define APSR_RDM		BIT(13)
 #define APSR_TDM		BIT(14)
 
 #define TCCR_TSRQ0		BIT(0)
@@ -130,7 +124,7 @@ struct ravb_priv {
 	struct phy_device	*phydev;
 	struct mii_dev		*bus;
 	void __iomem		*iobase;
-	struct clk_bulk		clks;
+	struct clk		clk;
 	struct gpio_desc	reset_gpio;
 };
 
@@ -308,7 +302,7 @@ static void ravb_rx_desc_init(struct ravb_priv *eth)
 static int ravb_phy_config(struct udevice *dev)
 {
 	struct ravb_priv *eth = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct phy_device *phydev;
 	int mask = 0xffffffff, reg;
 
@@ -348,7 +342,7 @@ static int ravb_phy_config(struct udevice *dev)
 static int ravb_write_hwaddr(struct udevice *dev)
 {
 	struct ravb_priv *eth = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	unsigned char *mac = pdata->enetaddr;
 
 	writel((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3],
@@ -375,11 +369,8 @@ static int ravb_mac_init(struct ravb_priv *eth)
 static int ravb_dmac_init(struct udevice *dev)
 {
 	struct ravb_priv *eth = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	int ret = 0;
-	int mode = 0;
-	unsigned int delay;
-	bool explicit_delay = false;
 
 	/* Set CONFIG mode */
 	ret = ravb_reset(dev);
@@ -406,33 +397,9 @@ static int ravb_dmac_init(struct udevice *dev)
 	    (rmobile_get_cpu_type() == RMOBILE_CPU_TYPE_R8A77995))
 		return 0;
 
-	if (!dev_read_u32(dev, "rx-internal-delay-ps", &delay)) {
-		/* Valid values are 0 and 1800, according to DT bindings */
-		if (delay) {
-			mode |= APSR_RDM;
-			explicit_delay = true;
-		}
-	}
-
-	if (!dev_read_u32(dev, "tx-internal-delay-ps", &delay)) {
-		/* Valid values are 0 and 2000, according to DT bindings */
-		if (delay) {
-			mode |= APSR_TDM;
-			explicit_delay = true;
-		}
-	}
-
-	if (!explicit_delay) {
-		if (pdata->phy_interface == PHY_INTERFACE_MODE_RGMII_ID ||
-		    pdata->phy_interface == PHY_INTERFACE_MODE_RGMII_RXID)
-			mode |= APSR_RDM;
-
-		if (pdata->phy_interface == PHY_INTERFACE_MODE_RGMII_ID ||
-		    pdata->phy_interface == PHY_INTERFACE_MODE_RGMII_TXID)
-			mode |= APSR_TDM;
-	}
-
-	writel(mode, eth->iobase + RAVB_REG_APSR);
+	if ((pdata->phy_interface == PHY_INTERFACE_MODE_RGMII_ID) ||
+	    (pdata->phy_interface == PHY_INTERFACE_MODE_RGMII_TXID))
+		writel(APSR_TDM, eth->iobase + RAVB_REG_APSR);
 
 	return 0;
 }
@@ -466,6 +433,8 @@ static int ravb_config(struct udevice *dev)
 		mask |= ECMR_DM;
 
 	writel(mask, eth->iobase + RAVB_REG_ECMR);
+
+	phy->drv->writeext(phy, -1, 0x02, 0x08, (0x0f << 5) | 0x19);
 
 	return 0;
 }
@@ -503,7 +472,7 @@ static void ravb_stop(struct udevice *dev)
 
 static int ravb_probe(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct ofnode_phandle_args phandle_args;
 	struct mii_dev *mdiodev;
@@ -513,7 +482,7 @@ static int ravb_probe(struct udevice *dev)
 	iobase = map_physmem(pdata->iobase, 0x1000, MAP_NOCACHE);
 	eth->iobase = iobase;
 
-	ret = clk_get_bulk(dev, &eth->clks);
+	ret = clk_get_by_index(dev, 0, &eth->clk);
 	if (ret < 0)
 		goto err_mdio_alloc;
 
@@ -546,7 +515,7 @@ static int ravb_probe(struct udevice *dev)
 	eth->bus = miiphy_get_dev_by_name(dev->name);
 
 	/* Bring up PHY */
-	ret = clk_enable_bulk(&eth->clks);
+	ret = clk_enable(&eth->clk);
 	if (ret)
 		goto err_mdio_register;
 
@@ -561,7 +530,7 @@ static int ravb_probe(struct udevice *dev)
 	return 0;
 
 err_mdio_reset:
-	clk_release_bulk(&eth->clks);
+	clk_disable(&eth->clk);
 err_mdio_register:
 	mdio_free(mdiodev);
 err_mdio_alloc:
@@ -573,7 +542,7 @@ static int ravb_remove(struct udevice *dev)
 {
 	struct ravb_priv *eth = dev_get_priv(dev);
 
-	clk_release_bulk(&eth->clks);
+	clk_disable(&eth->clk);
 
 	free(eth->phydev);
 	mdio_unregister(eth->bus);
@@ -671,14 +640,14 @@ static const struct eth_ops ravb_ops = {
 	.write_hwaddr		= ravb_write_hwaddr,
 };
 
-int ravb_of_to_plat(struct udevice *dev)
+int ravb_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	const char *phy_mode;
 	const fdt32_t *cell;
 	int ret = 0;
 
-	pdata->iobase = dev_read_addr(dev);
+	pdata->iobase = devfdt_get_addr(dev);
 	pdata->phy_interface = -1;
 	phy_mode = fdt_getprop(gd->fdt_blob, dev_of_offset(dev), "phy-mode",
 			       NULL);
@@ -714,11 +683,11 @@ U_BOOT_DRIVER(eth_ravb) = {
 	.name		= "ravb",
 	.id		= UCLASS_ETH,
 	.of_match	= ravb_ids,
-	.of_to_plat = ravb_of_to_plat,
+	.ofdata_to_platdata = ravb_ofdata_to_platdata,
 	.probe		= ravb_probe,
 	.remove		= ravb_remove,
 	.ops		= &ravb_ops,
-	.priv_auto	= sizeof(struct ravb_priv),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct ravb_priv),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 	.flags		= DM_FLAG_ALLOC_PRIV_DMA,
 };

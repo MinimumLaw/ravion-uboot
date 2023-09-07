@@ -4,8 +4,6 @@
  * Copyright (c) 2015-2018 Joe Hershberger <joe.hershberger@ni.com>
  */
 
-#define _GNU_SOURCE
-
 #include <asm/eth-raw-os.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -55,7 +53,7 @@ int sandbox_eth_raw_os_is_local(const char *ifname)
 	}
 	ret = !!(ifr.ifr_flags & IFF_LOOPBACK);
 out:
-	os_close(fd);
+	close(fd);
 	return ret;
 }
 
@@ -222,7 +220,7 @@ int sandbox_eth_raw_os_send(void *packet, int length,
 		struct sockaddr_in addr;
 
 		if (priv->local_bind_sd != -1)
-			os_close(priv->local_bind_sd);
+			close(priv->local_bind_sd);
 
 		/* A normal UDP socket is required to bind */
 		priv->local_bind_sd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -286,11 +284,11 @@ void sandbox_eth_raw_os_stop(struct eth_sandbox_raw_priv *priv)
 {
 	free(priv->device);
 	priv->device = NULL;
-	os_close(priv->sd);
+	close(priv->sd);
 	priv->sd = -1;
 	if (priv->local) {
 		if (priv->local_bind_sd != -1)
-			os_close(priv->local_bind_sd);
+			close(priv->local_bind_sd);
 		priv->local_bind_sd = -1;
 		priv->local_bind_udp_port = 0;
 	}

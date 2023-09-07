@@ -10,7 +10,7 @@
 #include <i2c.h>
 #include <init.h>
 #include <nand.h>
-#include <asm/global_data.h>
+#include <version.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/atmel_pio4.h>
@@ -76,12 +76,10 @@ int board_late_init(void)
 }
 #endif
 
-#ifdef CONFIG_CMD_USB
 static void board_usb_hw_init(void)
 {
 	atmel_pio4_set_pio_output(AT91_PIO_PORTB, 12, ATMEL_PIO_PUEN_MASK);
 }
-#endif
 
 #ifdef CONFIG_DEBUG_UART_BOARD_INIT
 static void board_uart0_hw_init(void)

@@ -33,12 +33,6 @@ config TPL_SYSRESET
 
 if SYSRESET
 
-config SYSRESET_CMD_RESET
-	bool "sysreset implementation of the reset command"
-	default y
-	help
-	  Enable sysreset implementation of the reset command.
-
 if CMD_POWEROFF
 
 config SYSRESET_CMD_POWEROFF
@@ -48,13 +42,6 @@ config SYSRESET_CMD_POWEROFF
 	  the poweroff command is enabled.
 
 endif
-
-config POWEROFF_GPIO
-	bool "Enable support for GPIO poweroff driver"
-	select DM_GPIO
-	help
-	  Support for system poweroff using a GPIO pin. This can be used
-	  for systems having a single GPIO to trigger a system poweroff.
 
 config SYSRESET_GPIO
 	bool "Enable support for GPIO reset driver"
@@ -70,32 +57,13 @@ config SYSRESET_MICROBLAZE
 	help
 	  This is soft reset on Microblaze which does jump to 0x0 address.
 
-config SYSRESET_OCTEON
-	bool "Enable support for Marvell Octeon SoC family"
-	depends on ARCH_OCTEON
-	help
-	  This enables the system reset driver support for Marvell Octeon
-	  SoCs.
-
 config SYSRESET_PSCI
 	bool "Enable support for PSCI System Reset"
 	depends on ARM_PSCI_FW
-	select SPL_ARM_PSCI_FW if SPL
+	select SPL_ARM_PSCI_FW if SPL_SYSRESET
 	help
 	  Enable PSCI SYSTEM_RESET function call.  To use this, PSCI firmware
 	  must be running on your system.
-
-config SYSRESET_SBI
-	bool "Enable support for SBI System Reset"
-	depends on RISCV_SMODE && SBI_V02
-	select SYSRESET_CMD_POWEROFF if CMD_POWEROFF
-	help
-	  Enable system reset and poweroff via the SBI system reset extension.
-	  The extension was introduced in version 0.3 of the SBI specification.
-
-	  If the SBI implementation provides the extension, is board specific.
-	  The RISC-V platform specification mandates the extension for rich
-	  operating system platforms.
 
 config SYSRESET_SOCFPGA
 	bool "Enable support for Intel SOCFPGA family"
@@ -104,12 +72,12 @@ config SYSRESET_SOCFPGA
 	  This enables the system reset driver support for Intel SOCFPGA SoCs
 	  (Cyclone 5, Arria 5 and Arria 10).
 
-config SYSRESET_SOCFPGA_SOC64
-	bool "Enable support for Intel SOCFPGA SoC64 family (Stratix10/Agilex)"
-	depends on ARCH_SOCFPGA && TARGET_SOCFPGA_SOC64
+config SYSRESET_SOCFPGA_S10
+	bool "Enable support for Intel SOCFPGA Stratix 10"
+	depends on ARCH_SOCFPGA && TARGET_SOCFPGA_STRATIX10
 	help
 	  This enables the system reset driver support for Intel SOCFPGA
-	  SoC64 SoCs.
+	  Stratix SoCs.
 
 config SYSRESET_TI_SCI
 	bool "TI System Control Interface (TI SCI) system reset driver"
@@ -117,6 +85,8 @@ config SYSRESET_TI_SCI
 	help
 	  This enables the system reset driver support over TI System Control
 	  Interface available on some new TI's SoCs.
+
+endif
 
 config SYSRESET_SYSCON
 	bool "Enable support for mfd syscon reboot driver"
@@ -130,19 +100,6 @@ config SYSRESET_WATCHDOG
 	select WDT
 	help
 	  Reboot support for generic watchdog reset.
-
-config SYSRESET_WATCHDOG_AUTO
-	bool "Automatically register first watchdog with sysreset"
-	depends on SYSRESET_WATCHDOG
-	help
-	  If enabled, the first watchdog (as selected by the watchdog uclass)
-	  will automatically be registered with the watchdog reboot driver.
-
-config SYSRESET_RESETCTL
-	bool "Enable support for reset controller reboot driver"
-	select DM_RESET
-	help
-	  Reboot support using generic reset controller.
 
 config SYSRESET_X86
 	bool "Enable support for x86 processor reboot driver"
@@ -166,7 +123,5 @@ config SYSRESET_MPC83XX
 	bool "Enable support MPC83xx SoC family reboot driver"
 	help
 	  Reboot support for NXP MPC83xx SoCs.
-
-endif
 
 endmenu

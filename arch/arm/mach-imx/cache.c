@@ -6,12 +6,11 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <asm/armv7.h>
-#include <asm/cache.h>
 #include <asm/pl310.h>
 #include <asm/io.h>
 #include <asm/mach-imx/sys_proto.h>
 
-void enable_ca7_smp(void)
+static void enable_ca7_smp(void)
 {
 	u32 val;
 

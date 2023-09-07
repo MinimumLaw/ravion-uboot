@@ -92,10 +92,11 @@ static int mxs_nand_dt_probe(struct udevice *dev)
 
 	info->use_minimum_ecc = dev_read_bool(dev, "fsl,use-minimum-ecc");
 
+	info->legacy_bch_geometry = dev_read_bool(dev, "fsl,legacy-bch-geometry");
+
 	if (IS_ENABLED(CONFIG_CLK) && IS_ENABLED(CONFIG_IMX8)) {
 		/* Assigned clock already set clock */
 		struct clk gpmi_clk;
-
 		ret = clk_get_by_name(dev, "gpmi_io", &gpmi_clk);
 		if (ret < 0) {
 			debug("Can't get gpmi io clk: %d\n", ret);
@@ -166,7 +167,7 @@ U_BOOT_DRIVER(mxs_nand_dt) = {
 	.id = UCLASS_MTD,
 	.of_match = mxs_nand_dt_ids,
 	.probe = mxs_nand_dt_probe,
-	.priv_auto	= sizeof(struct mxs_nand_info),
+	.priv_auto_alloc_size = sizeof(struct mxs_nand_info),
 };
 
 void board_nand_init(void)
@@ -175,7 +176,7 @@ void board_nand_init(void)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_MTD,
-					  DM_DRIVER_GET(mxs_nand_dt),
+					  DM_GET_DRIVER(mxs_nand_dt),
 					  &dev);
 	if (ret && ret != -ENODEV)
 		pr_err("Failed to initialize MXS NAND controller. (error %d)\n",

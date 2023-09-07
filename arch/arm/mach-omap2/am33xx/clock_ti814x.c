@@ -12,7 +12,6 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/hardware.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 
 /* PRCM */
 #define PRCM_MOD_EN		0x2

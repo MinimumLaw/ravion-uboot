@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <pwm.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -53,7 +52,7 @@ static int tegra_pwm_set_enable(struct udevice *dev, uint channel, bool enable)
 	return 0;
 }
 
-static int tegra_pwm_of_to_plat(struct udevice *dev)
+static int tegra_pwm_ofdata_to_platdata(struct udevice *dev)
 {
 	struct tegra_pwm_priv *priv = dev_get_priv(dev);
 
@@ -78,6 +77,6 @@ U_BOOT_DRIVER(tegra_pwm) = {
 	.id	= UCLASS_PWM,
 	.of_match = tegra_pwm_ids,
 	.ops	= &tegra_pwm_ops,
-	.of_to_plat	= tegra_pwm_of_to_plat,
-	.priv_auto	= sizeof(struct tegra_pwm_priv),
+	.ofdata_to_platdata	= tegra_pwm_ofdata_to_platdata,
+	.priv_auto_alloc_size	= sizeof(struct tegra_pwm_priv),
 };

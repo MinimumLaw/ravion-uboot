@@ -10,7 +10,6 @@
 #include <command.h>
 #include <dm.h>
 #include <errno.h>
-#include <log.h>
 #include <rtc.h>
 #include <asm/io.h>
 #include <asm/types.h>
@@ -29,20 +28,20 @@
 
 #define RTC_CR_START	(1 << 0)
 
-struct pl031_plat {
+struct pl031_platdata {
 	phys_addr_t base;
 };
 
 static inline u32 pl031_read_reg(struct udevice *dev, int reg)
 {
-	struct pl031_plat *pdata = dev_get_plat(dev);
+	struct pl031_platdata *pdata = dev_get_platdata(dev);
 
 	return readl(pdata->base + reg);
 }
 
 static inline u32 pl031_write_reg(struct udevice *dev, int reg, u32 value)
 {
-	struct pl031_plat *pdata = dev_get_plat(dev);
+	struct pl031_platdata *pdata = dev_get_platdata(dev);
 
 	return writel(value, pdata->base + reg);
 }
@@ -122,9 +121,9 @@ static const struct udevice_id pl031_ids[] = {
 	{ }
 };
 
-static int pl031_of_to_plat(struct udevice *dev)
+static int pl031_ofdata_to_platdata(struct udevice *dev)
 {
-	struct pl031_plat *pdata = dev_get_plat(dev);
+	struct pl031_platdata *pdata = dev_get_platdata(dev);
 
 	pdata->base = dev_read_addr(dev);
 
@@ -136,7 +135,7 @@ U_BOOT_DRIVER(rtc_pl031) = {
 	.id	= UCLASS_RTC,
 	.of_match = pl031_ids,
 	.probe	= pl031_probe,
-	.of_to_plat = pl031_of_to_plat,
-	.plat_auto	= sizeof(struct pl031_plat),
+	.ofdata_to_platdata = pl031_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct pl031_platdata),
 	.ops	= &pl031_ops,
 };

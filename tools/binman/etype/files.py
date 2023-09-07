@@ -9,20 +9,19 @@
 import glob
 import os
 
-from binman.etype.section import Entry_section
-from dtoc import fdt_util
-from patman import tools
+from section import Entry_section
+import fdt_util
+import tools
 
 
 class Entry_files(Entry_section):
-    """A set of files arranged in a section
+    """Entry containing a set of files
 
     Properties / Entry arguments:
         - pattern: Filename pattern to match the files to include
-        - files-compress: Compression algorithm to use:
+        - compress: Compression algorithm to use:
             none: No compression
             lz4: Use lz4 compression (via 'lz4' command-line utility)
-        - files-align: Align each file to the given alignment
 
     This entry reads a number of files and places each in a separate sub-entry
     within this entry. To access these you need to enable device-tree updates
@@ -31,23 +30,18 @@ class Entry_files(Entry_section):
     def __init__(self, section, etype, node):
         # Put this here to allow entry-docs and help to work without libfdt
         global state
-        from binman import state
+        import state
 
-        super().__init__(section, etype, node)
-
-    def ReadNode(self):
-        super().ReadNode()
+        Entry_section.__init__(self, section, etype, node)
         self._pattern = fdt_util.GetString(self._node, 'pattern')
         if not self._pattern:
             self.Raise("Missing 'pattern' property")
-        self._files_compress = fdt_util.GetString(self._node, 'files-compress',
-                                                  'none')
-        self._files_align = fdt_util.GetInt(self._node, 'files-align');
+        self._compress = fdt_util.GetString(self._node, 'compress', 'none')
         self._require_matches = fdt_util.GetBool(self._node,
                                                 'require-matches')
 
     def ExpandEntries(self):
-        files = tools.get_input_filename_glob(self._pattern)
+        files = tools.GetInputFilenameGlob(self._pattern)
         if self._require_matches and not files:
             self.Raise("Pattern '%s' matched no files" % self._pattern)
         for fname in files:
@@ -59,9 +53,7 @@ class Entry_files(Entry_section):
                 subnode = state.AddSubnode(self._node, name)
             state.AddString(subnode, 'type', 'blob')
             state.AddString(subnode, 'filename', fname)
-            state.AddString(subnode, 'compress', self._files_compress)
-            if self._files_align:
-                state.AddInt(subnode, 'align', self._files_align)
+            state.AddString(subnode, 'compress', self._compress)
 
         # Read entries again, now that we have some
-        self.ReadEntries()
+        self._ReadEntries()

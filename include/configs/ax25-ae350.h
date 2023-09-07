@@ -12,19 +12,22 @@
 #define CONFIG_SPL_BSS_START_ADDR	0x04000000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x00100000
 
-#ifdef CONFIG_SPL_MMC
+#ifndef CONFIG_XIP
+#define CONFIG_SPL_LOAD_FIT_ADDRESS	0x00200000
+#else
+#define CONFIG_SPL_LOAD_FIT_ADDRESS	0x80010000
+#endif
+
+#ifdef CONFIG_SPL_MMC_SUPPORT
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.itb"
 #endif
 #endif
 
-#define RISCV_MMODE_TIMERBASE           0xe6000000
-#define RISCV_MMODE_TIMER_FREQ          60000000
-
-#define RISCV_SMODE_TIMER_FREQ          60000000
-
 /*
  * CPU and Board Configuration Options
  */
+#define CONFIG_BOOTP_SEND_HOSTNAME
 
 /*
  * Miscellaneous configurable options
@@ -46,6 +49,12 @@
  * Boot Argument Buffer Size
  */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
+
+/*
+ * Size of malloc() pool
+ * 512kB is suggested, (CONFIG_ENV_SIZE + 128 * 1024) was not enough
+ */
+#define CONFIG_SYS_MALLOC_LEN   (512 << 10)
 
 /* DT blob (fdt) address */
 #define CONFIG_SYS_FDT_BASE		0x800f0000
@@ -73,12 +82,31 @@
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x1000000 - \
 					GENERATED_GBL_DATA_SIZE)
 
+/*
+ * Load address and memory test area should agree with
+ * arch/riscv/config.mk. Be careful not to overwrite U-Boot itself.
+ */
+#define CONFIG_SYS_LOAD_ADDR		0x100000	/* SDRAM */
+
+/*
+ * memtest works on 512 MB in DRAM
+ */
+#define CONFIG_SYS_MEMTEST_START	PHYS_SDRAM_0
+#define CONFIG_SYS_MEMTEST_END		(PHYS_SDRAM_0 + PHYS_SDRAM_0_SIZE)
+
+/*
+ * FLASH and environment organization
+ */
+
 /* use CFI framework */
 
 #define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
 #define CONFIG_SYS_CFI_FLASH_STATUS_POLL
 
 /* support JEDEC */
+#ifdef CONFIG_CFI_FLASH
+#define CONFIG_SYS_MAX_FLASH_BANKS_DETECT	1
+#endif/* Do not use CONFIG_FLASH_CFI_LEGACY to detect on board flash */
 #define PHYS_FLASH_1			0x88000000	/* BANK 0 */
 #define CONFIG_SYS_FLASH_BASE		PHYS_FLASH_1
 #define CONFIG_SYS_FLASH_BANKS_LIST	{ PHYS_FLASH_1, }
@@ -92,6 +120,9 @@
  * There are 4 banks supported for this Controller,
  * but we have only 1 bank connected to flash on board
 */
+#ifndef CONFIG_SYS_MAX_FLASH_BANKS_DETECT
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
+#endif
 #define CONFIG_SYS_FLASH_BANKS_SIZES {0x4000000}
 
 /* max number of sectors on one chip */
@@ -99,6 +130,7 @@
 #define CONFIG_SYS_MAX_FLASH_SECT	512
 
 /* environments */
+#define CONFIG_ENV_OVERWRITE
 
 /* SPI FLASH */
 
@@ -113,23 +145,12 @@
 /* Increase max gunzip size */
 #define CONFIG_SYS_BOOTM_LEN	(64 << 20)
 
-/* Support autoboot from RAM (kernel image is loaded via debug port) */
-#define KERNEL_IMAGE_ADDR	"0x2000000 "
-#define BOOTENV_DEV_NAME_RAM(devtypeu, devtypel, instance) \
-	"ram "
-#define BOOTENV_DEV_RAM(devtypeu, devtypel, instance) \
-	"bootcmd_ram=" \
-	"booti " \
-	KERNEL_IMAGE_ADDR \
-	"- $fdtcontroladdr\0"
-
 /* When we use RAM as ENV */
 
 /* Enable distro boot */
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
-	func(DHCP, dhcp, na) \
-	func(RAM, ram, na)
+	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
 
 #define CONFIG_EXTRA_ENV_SETTINGS	\

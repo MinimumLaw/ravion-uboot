@@ -13,7 +13,6 @@
 #include <div64.h>
 #include <fdtdec.h>
 #include <i2c.h>
-#include <log.h>
 #include <sound.h>
 #include <asm/gpio.h>
 #include "i2s.h"
@@ -29,7 +28,7 @@ int rate_table[] = {0, 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000,
  * @param rate sampling rate
  * @param value address of indexvalue to be stored
  *
- * Return:	0 for success or negative error code.
+ * @return	0 for success or negative error code.
  */
 static int rate_value(int rate, u8 *value)
 {
@@ -53,7 +52,7 @@ static int rate_value(int rate, u8 *value)
  * @param rate		Sampling rate
  * @param bits_per_sample	Bits per sample
  *
- * Return:	0 for success or negative error code.
+ * @return	0 for success or negative error code.
  */
 static int max98095_hw_params(struct maxim_priv *priv,
 			      enum en_max_audio_interface aif_id,
@@ -121,7 +120,7 @@ static int max98095_hw_params(struct maxim_priv *priv,
  * @param priv		max98095 information
  * @param freq		Sampling frequency in Hz
  *
- * Return:	0 for success or negative error code.
+ * @return	0 for success or negative error code.
  */
 static int max98095_set_sysclk(struct maxim_priv *priv, unsigned int freq)
 {
@@ -163,7 +162,7 @@ static int max98095_set_sysclk(struct maxim_priv *priv, unsigned int freq)
  * @param fmt		i2S format - supports a subset of the options defined
  *			in i2s.h.
  *
- * Return:	0 for success or negative error code.
+ * @return	0 for success or negative error code.
  */
 static int max98095_set_fmt(struct maxim_priv *priv, int fmt,
 			    enum en_max_audio_interface aif_id)
@@ -255,7 +254,7 @@ static int max98095_set_fmt(struct maxim_priv *priv, int fmt,
  * resets the audio codec
  *
  * @param priv	Private data for driver
- * Return:	0 for success or negative error code.
+ * @return	0 for success or negative error code.
  */
 static int max98095_reset(struct maxim_priv *priv)
 {
@@ -296,7 +295,7 @@ static int max98095_reset(struct maxim_priv *priv)
  * Intialise max98095 codec device
  *
  * @param priv		max98095 information
- * Return:	0 for success or negative error code.
+ * @return	0 for success or negative error code.
  */
 static int max98095_device_init(struct maxim_priv *priv)
 {
@@ -462,5 +461,5 @@ U_BOOT_DRIVER(max98095) = {
 	.of_match	= max98095_ids,
 	.probe		= max98095_probe,
 	.ops		= &max98095_ops,
-	.priv_auto	= sizeof(struct maxim_priv),
+	.priv_auto_alloc_size	= sizeof(struct maxim_priv),
 };

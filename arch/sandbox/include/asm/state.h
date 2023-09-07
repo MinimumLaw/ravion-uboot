@@ -73,7 +73,7 @@ struct sandbox_state {
 	char **argv;			/* Command line arguments */
 	const char *jumped_fname;	/* Jumped from previous U_Boot */
 	uint8_t *ram_buf;		/* Emulated RAM buffer */
-	unsigned long ram_size;		/* Size of RAM buffer */
+	unsigned int ram_size;		/* Size of RAM buffer */
 	const char *ram_buf_fname;	/* Filename to use for RAM buffer */
 	bool ram_buf_rm;		/* Remove RAM buffer file after read */
 	bool write_ram_buf;		/* Write RAM buffer on exit */
@@ -90,11 +90,8 @@ struct sandbox_state {
 	bool skip_delays;		/* Ignore any time delays (for test) */
 	bool show_test_output;		/* Don't suppress stdout in tests */
 	int default_log_level;		/* Default log level for sandbox */
+	bool show_of_platdata;		/* Show of-platdata in SPL */
 	bool ram_buf_read;		/* true if we read the RAM buffer */
-	bool run_unittests;		/* Run unit tests */
-	const char *select_unittests;	/* Unit test to run */
-	bool handle_signals;		/* Handle signals within sandbox */
-	bool autoboot_keyed;		/* Use keyed-autoboot feature */
 
 	/* Pointer to information for each SPI bus/cs */
 	struct sandbox_spi_info spi[CONFIG_SANDBOX_SPI_MAX_BUS]
@@ -134,7 +131,7 @@ struct sandbox_state {
  *	data set for start-of-day.
  *	@param blob: Pointer to device tree blob, or NULL if no data to read
  *	@param node: Node offset to read from
- *	Return: 0 if OK, -ve on error
+ *	@return 0 if OK, -ve on error
  *
  * @write: Function to write state to FDT
  *	The caller will ensure that there is a node ready for the state. The
@@ -186,7 +183,7 @@ struct sandbox_state_io {
 /**
  * Gets a pointer to the current state.
  *
- * Return: pointer to state
+ * @return pointer to state
  */
 struct sandbox_state *state_get_current(void);
 
@@ -198,7 +195,7 @@ struct sandbox_state *state_get_current(void);
  *
  * @param state		Sandbox state to update
  * @param fname		Filename of device tree file to read from
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int sandbox_read_state(struct sandbox_state *state, const char *fname);
 
@@ -212,7 +209,7 @@ int sandbox_read_state(struct sandbox_state *state, const char *fname);
  *
  * @param state		Sandbox state to update
  * @param fname		Filename of device tree file to write to
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int sandbox_write_state(struct sandbox_state *state, const char *fname);
 
@@ -247,7 +244,7 @@ void state_set_skip_delays(bool skip_delays);
 /**
  * See if delays should be skipped
  *
- * Return: true if delays should be skipped, false if they should be honoured
+ * @return true if delays should be skipped, false if they should be honoured
  */
 bool state_get_skip_delays(void);
 
@@ -274,7 +271,7 @@ int state_init(void);
  * Uninitialize the test system state, writing out state if configured to
  * do so.
  *
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int state_uninit(void);
 

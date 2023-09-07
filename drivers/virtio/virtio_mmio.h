@@ -12,7 +12,6 @@
 /* Control registers */
 
 /* Magic value ("virt" string) - Read Only */
-#include <linux/bitops.h>
 #define VIRTIO_MMIO_MAGIC_VALUE		0x000
 
 /* Virtio device version - Read Only */

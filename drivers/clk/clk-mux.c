@@ -21,30 +21,24 @@
  * clock.
  */
 
-#define LOG_CATEGORY UCLASS_CLK
-
 #include <common.h>
-#include <clk.h>
-#include <clk-uclass.h>
-#include <log.h>
-#include <malloc.h>
 #include <asm/io.h>
+#include <malloc.h>
+#include <clk-uclass.h>
 #include <dm/device.h>
-#include <dm/device_compat.h>
 #include <dm/devres.h>
-#include <dm/uclass.h>
-#include <linux/bitops.h>
 #include <linux/clk-provider.h>
-#include <linux/err.h>
-
+#include <clk.h>
 #include "clk.h"
+#include <linux/err.h>
 
 #define UBOOT_DM_CLK_CCF_MUX "ccf_clk_mux"
 
 int clk_mux_val_to_index(struct clk *clk, u32 *table, unsigned int flags,
 			 unsigned int val)
 {
-	struct clk_mux *mux = to_clk_mux(clk);
+	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+			dev_get_clk_ptr(clk->dev) : clk);
 	int num_parents = mux->num_parents;
 
 	if (table) {
@@ -87,7 +81,8 @@ unsigned int clk_mux_index_to_val(u32 *table, unsigned int flags, u8 index)
 
 u8 clk_mux_get_parent(struct clk *clk)
 {
-	struct clk_mux *mux = to_clk_mux(clk);
+	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+			dev_get_clk_ptr(clk->dev) : clk);
 	u32 val;
 
 #if CONFIG_IS_ENABLED(SANDBOX_CLK_CCF)
@@ -104,7 +99,8 @@ u8 clk_mux_get_parent(struct clk *clk)
 static int clk_fetch_parent_index(struct clk *clk,
 				  struct clk *parent)
 {
-	struct clk_mux *mux = to_clk_mux(clk);
+	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+			dev_get_clk_ptr(clk->dev) : clk);
 
 	int i;
 
@@ -121,14 +117,15 @@ static int clk_fetch_parent_index(struct clk *clk,
 
 static int clk_mux_set_parent(struct clk *clk, struct clk *parent)
 {
-	struct clk_mux *mux = to_clk_mux(clk);
+	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+			dev_get_clk_ptr(clk->dev) : clk);
 	int index;
 	u32 val;
 	u32 reg;
 
 	index = clk_fetch_parent_index(clk, parent);
 	if (index < 0) {
-		log_err("Could not fetch index\n");
+		printf("Could not fetch index\n");
 		return index;
 	}
 
@@ -137,20 +134,12 @@ static int clk_mux_set_parent(struct clk *clk, struct clk *parent)
 	if (mux->flags & CLK_MUX_HIWORD_MASK) {
 		reg = mux->mask << (mux->shift + 16);
 	} else {
-#if CONFIG_IS_ENABLED(SANDBOX_CLK_CCF)
-		reg = mux->io_mux_val;
-#else
 		reg = readl(mux->reg);
-#endif
 		reg &= ~(mux->mask << mux->shift);
 	}
 	val = val << mux->shift;
 	reg |= val;
-#if CONFIG_IS_ENABLED(SANDBOX_CLK_CCF)
-	mux->io_mux_val = reg;
-#else
 	writel(reg, mux->reg);
-#endif
 
 	return 0;
 }
@@ -174,7 +163,7 @@ struct clk *clk_hw_register_mux_table(struct device *dev, const char *name,
 	if (clk_mux_flags & CLK_MUX_HIWORD_MASK) {
 		width = fls(mask) - ffs(mask) + 1;
 		if (width + shift > 16) {
-			dev_err(dev, "mux value exceeds LOWORD field\n");
+			pr_err("mux value exceeds LOWORD field\n");
 			return ERR_PTR(-EINVAL);
 		}
 	}
@@ -199,13 +188,12 @@ struct clk *clk_hw_register_mux_table(struct device *dev, const char *name,
 #endif
 
 	clk = &mux->clk;
-	clk->flags = flags;
 
 	/*
 	 * Read the current mux setup - so we assign correct parent.
 	 *
 	 * Changing parent would require changing internals of udevice struct
-	 * for the corresponding clock (to do that define .set_parent() method).
+	 * for the corresponding clock (to do that define .set_parent() method.
 	 */
 	ret = clk_register(clk, UBOOT_DM_CLK_CCF_MUX, name,
 			   parent_names[clk_mux_get_parent(clk)]);

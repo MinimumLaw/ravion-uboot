@@ -16,7 +16,6 @@
 #include <mmc.h>
 #include <fsl_esdhc_imx.h>
 #include <serial.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <linux/sizes.h>

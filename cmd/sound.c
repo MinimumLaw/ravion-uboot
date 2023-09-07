@@ -9,13 +9,11 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <sound.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Initilaise sound subsystem */
-static int do_init(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_init(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct udevice *dev;
 	int ret;
@@ -32,8 +30,7 @@ static int do_init(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 /* play sound from buffer */
-static int do_play(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_play(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct udevice *dev;
 	int ret = 0;
@@ -41,9 +38,9 @@ static int do_play(struct cmd_tbl *cmdtp, int flag, int argc,
 	int freq = 400;
 
 	if (argc > 1)
-		msec = dectoul(argv[1], NULL);
+		msec = simple_strtoul(argv[1], NULL, 10);
 	if (argc > 2)
-		freq = dectoul(argv[2], NULL);
+		freq = simple_strtoul(argv[2], NULL, 10);
 
 	ret = uclass_first_device_err(UCLASS_SOUND, &dev);
 	if (!ret)
@@ -56,16 +53,15 @@ static int do_play(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static struct cmd_tbl cmd_sound_sub[] = {
+static cmd_tbl_t cmd_sound_sub[] = {
 	U_BOOT_CMD_MKENT(init, 0, 1, do_init, "", ""),
 	U_BOOT_CMD_MKENT(play, 2, 1, do_play, "", ""),
 };
 
 /* process sound command */
-static int do_sound(struct cmd_tbl *cmdtp, int flag, int argc,
-		    char *const argv[])
+static int do_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	struct cmd_tbl *c;
+	cmd_tbl_t *c;
 
 	if (argc < 1)
 		return CMD_RET_USAGE;

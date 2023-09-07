@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <spl.h>
 #include <asm/cpu.h>
 #include <asm/cpu_common.h>
@@ -13,7 +12,6 @@
 #include <asm/io.h>
 #include <asm/pci.h>
 #include <asm/arch/systemagent.h>
-#include <linux/delay.h>
 
 /*
  * Punit Initialisation code. This all isn't documented, but
@@ -88,10 +86,9 @@ static const struct udevice_id apl_syscon_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(intel_apl_punit) = {
-	.name		= "intel_apl_punit",
+U_BOOT_DRIVER(syscon_intel_punit) = {
+	.name		= "intel_punit_syscon",
 	.id		= UCLASS_SYSCON,
 	.of_match	= apl_syscon_ids,
 	.probe		= apl_punit_probe,
-	DM_HEADER(<asm/cpu.h>)    /* for X86_SYSCON_PUNIT */
 };

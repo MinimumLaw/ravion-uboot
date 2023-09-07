@@ -7,7 +7,6 @@
 #include <common.h>
 #include <command.h>
 #include <env.h>
-#include <log.h>
 #include <stdio_dev.h>
 #include <net.h>
 
@@ -87,7 +86,7 @@ static int refresh_settings_from_env(void)
 				return -1;	/* ncip is 0.0.0.0 */
 			p = strchr(env_get("ncip"), ':');
 			if (p != NULL) {
-				nc_out_port = dectoul(p + 1, NULL);
+				nc_out_port = simple_strtoul(p + 1, NULL, 10);
 				nc_in_port = nc_out_port;
 			}
 		} else {
@@ -96,10 +95,10 @@ static int refresh_settings_from_env(void)
 
 		p = env_get("ncoutport");
 		if (p != NULL)
-			nc_out_port = dectoul(p, NULL);
+			nc_out_port = simple_strtoul(p, NULL, 10);
 		p = env_get("ncinport");
 		if (p != NULL)
-			nc_in_port = dectoul(p, NULL);
+			nc_in_port = simple_strtoul(p, NULL, 10);
 
 		if (is_broadcast(nc_ip))
 			/* broadcast MAC address */

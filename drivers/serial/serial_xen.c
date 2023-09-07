@@ -1,20 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
 /*
- * (C) 2018 NXP
- * (C) 2020 EPAM Systems Inc.
+ * Copyright 2018 NXP
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
  */
+
 #include <common.h>
-#include <cpu_func.h>
+#include <debug_uart.h>
 #include <dm.h>
+#include <errno.h>
+#include <fdtdec.h>
+#include <linux/compiler.h>
 #include <serial.h>
-#include <watchdog.h>
-#include <asm/global_data.h>
 
-#include <linux/bug.h>
-
-#include <xen/hvm.h>
 #include <xen/events.h>
-
+#include <xen/hvm.h>
 #include <xen/interface/sched.h>
 #include <xen/interface/hvm/hvm_op.h>
 #include <xen/interface/hvm/params.h>
@@ -23,16 +22,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 console_evtchn;
-
-/*
- * struct xen_uart_priv - Structure representing a Xen UART info
- * @intf:    Console I/O interface for Xen guest OSes
- * @evtchn:  Console event channel
- */
+#if CONFIG_IS_ENABLED(DM_SERIAL)
 struct xen_uart_priv {
 	struct xencons_interface *intf;
 	u32 evtchn;
+	int vtermno;
+	struct hvc_struct *hvc;
+	grant_ref_t gntref;
 };
 
 int xen_serial_setbrg(struct udevice *dev, int baudrate)
@@ -43,26 +39,25 @@ int xen_serial_setbrg(struct udevice *dev, int baudrate)
 static int xen_serial_probe(struct udevice *dev)
 {
 	struct xen_uart_priv *priv = dev_get_priv(dev);
-	u64 val = 0;
+	u64 v = 0;
 	unsigned long gfn;
-	int ret;
+	int r;
 
-	ret = hvm_get_parameter(HVM_PARAM_CONSOLE_EVTCHN, &val);
-	if (ret < 0 || val == 0)
-		return ret;
+	r = hvm_get_parameter(HVM_PARAM_CONSOLE_EVTCHN, &v);
+	if (r < 0 || v == 0)
+		return r;
 
-	priv->evtchn = val;
-	console_evtchn = val;
+	priv->evtchn = v;
 
-	ret = hvm_get_parameter(HVM_PARAM_CONSOLE_PFN, &val);
-	if (ret < 0)
-		return ret;
+	r = hvm_get_parameter(HVM_PARAM_CONSOLE_PFN, &v);
+	if (r < 0 || v == 0)
+		return -ENODEV;
 
-	if (!val)
-		return -EINVAL;
+	gfn = v;
 
-	gfn = val;
 	priv->intf = (struct xencons_interface *)(gfn << XEN_PAGE_SHIFT);
+	if (!priv->intf)
+		return -EINVAL;
 
 	return 0;
 }
@@ -85,8 +80,9 @@ static int xen_serial_getc(struct udevice *dev)
 	XENCONS_RING_IDX cons;
 	char c;
 
-	while (intf->in_cons == intf->in_prod)
+	while (intf->in_cons == intf->in_prod) {
 		mb(); /* wait */
+	}
 
 	cons = intf->in_cons;
 	mb();			/* get pointers before reading ring */
@@ -123,6 +119,9 @@ static int __write_console(struct udevice *dev, const char *data, int len)
 	if (sent)
 		notify_remote_via_evtchn(priv->evtchn);
 
+	if (data[sent - 1] == '\n')
+		serial_puts("\r");
+
 	return sent;
 }
 
@@ -147,36 +146,108 @@ static int write_console(struct udevice *dev, const char *data, int len)
 	return 0;
 }
 
+static int xen_serial_puts(struct udevice *dev, const char *str)
+{
+#ifdef CONFIG_SPL_BUILD
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(str), (char *)str);
+#else
+	write_console(dev, str, strlen(str));
+#endif
+
+	return 0;
+}
+
 static int xen_serial_putc(struct udevice *dev, const char ch)
 {
+#ifdef CONFIG_SPL_BUILD
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, (char *)&ch);
+#else
 	write_console(dev, &ch, 1);
+#endif
 
 	return 0;
 }
 
 static const struct dm_serial_ops xen_serial_ops = {
+	.puts = xen_serial_puts,
 	.putc = xen_serial_putc,
 	.getc = xen_serial_getc,
 	.pending = xen_serial_pending,
 };
 
-#if CONFIG_IS_ENABLED(OF_CONTROL)
 static const struct udevice_id xen_serial_ids[] = {
 	{ .compatible = "xen,xen" },
 	{ }
 };
-#endif
 
 U_BOOT_DRIVER(serial_xen) = {
-	.name			= "serial_xen",
-	.id			= UCLASS_SERIAL,
-#if CONFIG_IS_ENABLED(OF_CONTROL)
-	.of_match		= xen_serial_ids,
-#endif
-	.priv_auto	= sizeof(struct xen_uart_priv),
-	.probe			= xen_serial_probe,
-	.ops			= &xen_serial_ops,
-#if !CONFIG_IS_ENABLED(OF_CONTROL)
-	.flags			= DM_FLAG_PRE_RELOC,
-#endif
+	.name	= "serial_xen",
+	.id	= UCLASS_SERIAL,
+	.of_match = xen_serial_ids,
+	.priv_auto_alloc_size = sizeof(struct xen_uart_priv),
+	.probe = xen_serial_probe,
+	.ops	= &xen_serial_ops,
+	.flags = DM_FLAG_PRE_RELOC | DM_FLAG_IGNORE_DEFAULT_CLKS,
 };
+#else
+static void xen_serial_putc(const char c)
+{
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, (char *)&c);
+}
+
+static void xen_serial_puts(const char *str)
+{
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(str), (char *)str);
+}
+
+static int xen_serial_tstc(void)
+{
+	return 0;
+}
+
+static int xen_serial_init(void)
+{
+	return 0;
+}
+
+static void xen_serial_setbrg(void)
+{
+}
+
+static struct serial_device xen_serial_drv = {
+	.name	= "xen_serial",
+	.start	= xen_serial_init,
+	.stop	= NULL,
+	.setbrg	= xen_serial_setbrg,
+	.getc	= NULL,
+	.putc	= xen_serial_putc,
+	.puts	= xen_serial_puts,
+	.tstc	= xen_serial_tstc,
+};
+
+__weak struct serial_device *default_serial_console(void)
+{
+	return &xen_serial_drv;
+}
+
+#endif
+
+#ifdef CONFIG_DEBUG_UART_XEN
+void _debug_uart_init(void)
+{
+}
+
+void _debug_uart_putc(int ch)
+{
+	/* If \n, also do \r */
+	if (ch == '\n')
+		serial_putc('\r');
+
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, (char *)&ch);
+
+	return;
+}
+
+DEBUG_UART_FUNCS
+
+#endif

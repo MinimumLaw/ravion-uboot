@@ -4,19 +4,17 @@
  *
  * Eddie Cai <eddie.cai.linux@gmail.com>
  */
-#include <command.h>
 #include <config.h>
 #include <common.h>
 #include <env.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <memalign.h>
-#include <part.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/composite.h>
 #include <linux/compiler.h>
+#include <version.h>
 #include <g_dnl.h>
 #include <asm/arch-rockchip/f_rockusb.h>
 
@@ -109,7 +107,7 @@ struct f_rockusb *get_rkusb(void)
 	if (!f_rkusb) {
 		f_rkusb = memalign(CONFIG_SYS_CACHELINE_SIZE, sizeof(*f_rkusb));
 		if (!f_rkusb)
-			return NULL;
+			return 0;
 
 		rockusb_func = f_rkusb;
 		memset(f_rkusb, 0, sizeof(*f_rkusb));
@@ -119,7 +117,7 @@ struct f_rockusb *get_rkusb(void)
 		f_rkusb->buf_head = memalign(CONFIG_SYS_CACHELINE_SIZE,
 					     RKUSB_BUF_SIZE);
 		if (!f_rkusb->buf_head)
-			return NULL;
+			return 0;
 
 		f_rkusb->buf = f_rkusb->buf_head;
 		memset(f_rkusb->buf_head, 0, RKUSB_BUF_SIZE);
@@ -308,9 +306,8 @@ static int rockusb_add(struct usb_configuration *c)
 
 	status = usb_add_function(c, &f_rkusb->usb_function);
 	if (status) {
-		free(f_rkusb->buf_head);
 		free(f_rkusb);
-		rockusb_func = NULL;
+		rockusb_func = f_rkusb;
 	}
 	return status;
 }

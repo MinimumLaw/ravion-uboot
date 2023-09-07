@@ -6,14 +6,11 @@
  */
 
 #include <common.h>
-#include <clock_legacy.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm.h>
 #include <clk.h>
 #include <timer.h>
-#include <linux/bitops.h>
 
 #define OSTM_CMP	0x00
 #define OSTM_CNT	0x04
@@ -29,11 +26,13 @@ struct ostm_priv {
 	fdt_addr_t	regs;
 };
 
-static u64 ostm_get_count(struct udevice *dev)
+static int ostm_get_count(struct udevice *dev, u64 *count)
 {
 	struct ostm_priv *priv = dev_get_priv(dev);
 
-	return timer_conv_64(readl(priv->regs + OSTM_CNT));
+	*count = timer_conv_64(readl(priv->regs + OSTM_CNT));
+
+	return 0;
 }
 
 static int ostm_probe(struct udevice *dev)
@@ -52,7 +51,7 @@ static int ostm_probe(struct udevice *dev)
 
 	clk_free(&clk);
 #else
-	uc_priv->clock_rate = get_board_sys_clk() / 2;
+	uc_priv->clock_rate = CONFIG_SYS_CLK_FREQ / 2;
 #endif
 
 	readb(priv->regs + OSTM_CTL);
@@ -65,7 +64,7 @@ static int ostm_probe(struct udevice *dev)
 	return 0;
 }
 
-static int ostm_of_to_plat(struct udevice *dev)
+static int ostm_ofdata_to_platdata(struct udevice *dev)
 {
 	struct ostm_priv *priv = dev_get_priv(dev);
 
@@ -89,6 +88,6 @@ U_BOOT_DRIVER(ostm_timer) = {
 	.ops		= &ostm_ops,
 	.probe		= ostm_probe,
 	.of_match	= ostm_ids,
-	.of_to_plat = ostm_of_to_plat,
-	.priv_auto	= sizeof(struct ostm_priv),
+	.ofdata_to_platdata = ostm_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct ostm_priv),
 };

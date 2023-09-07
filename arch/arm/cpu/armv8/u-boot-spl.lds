@@ -38,7 +38,7 @@ SECTIONS
 		*(.data*)
 	} >.sram
 
-#ifdef CONFIG_SPL_RECOVER_DATA_SECTION
+#ifdef CONFIG_RECOVER_SPL_DATA_SECTION
 	.data_save : {
 		*(.__data_save_start)
 		. = SIZEOF(.data);
@@ -77,15 +77,10 @@ SECTIONS
 		KEEP(*(.__bss_end));
 	} >.sdram
 
-	/DISCARD/ : { *(.rela*) }
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
 	/DISCARD/ : { *(.plt*) }
 	/DISCARD/ : { *(.interp*) }
 	/DISCARD/ : { *(.gnu*) }
-
-#ifdef CONFIG_LINUX_KERNEL_IMAGE_HEADER
-#include "linux-kernel-image-header-vars.h"
-#endif
 }

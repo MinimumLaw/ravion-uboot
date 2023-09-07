@@ -48,8 +48,6 @@
  */
 
 #include <common.h>
-#include <log.h>
-#include <net.h>
 #include <netdev.h>
 #include <asm/fsl_serdes.h>
 #include <fm_eth.h>
@@ -317,9 +315,6 @@ void fdt_fixup_board_enet(void *fdt)
 			}
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_ID:
 			fdt_status_okay_by_alias(fdt, "hydra_rg");
 			debug("Enabled MDIO node hydra_rg\n");
 			break;
@@ -356,9 +351,6 @@ void fdt_fixup_board_enet(void *fdt)
 			}
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_ID:
 			fdt_status_okay_by_alias(fdt, "hydra_rg");
 			debug("Enabled MDIO node hydra_rg\n");
 			break;
@@ -421,7 +413,7 @@ void fdt_fixup_board_enet(void *fdt)
  * 0x36                |                 |                 |
  */
 
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_FMAN_ENET
 	struct fsl_pq_mdio_info dtsec_mdio_info;
@@ -563,9 +555,6 @@ int board_eth_init(struct bd_info *bis)
 			miiphy_get_dev_by_name("SUPER_HYDRA_FM1_SGMII_MDIO"));
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_ID:
 			/*
 			 * FM1 DTSEC5 is routed via EC1 to the first on-board
 			 * RGMII port. FM2 DTSEC5 is routed via EC2 to the
@@ -713,9 +702,6 @@ int board_eth_init(struct bd_info *bis)
 
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_ID:
 			/*
 			 * FM1 DTSEC5 is routed via EC1 to the first on-board
 			 * RGMII port. FM2 DTSEC5 is routed via EC2 to the

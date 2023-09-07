@@ -13,7 +13,6 @@
 #include <cpu_func.h>
 #include <errno.h>
 #include <init.h>
-#include <log.h>
 
 #include <asm/arch/ddr_defs.h>
 #include <asm/arch/clock.h>
@@ -96,7 +95,7 @@ static void probe_sdram_size(long size)
 		break;
 	default:
 		puts("Failed configuring DRAM, resetting...\n\n");
-		reset_cpu();
+		reset_cpu(0);
 	}
 	debug("%s: setting DRAM size to %ldM\n", __func__, size >> 20);
 	config_ddr(303, &ioregs, &ddr3_data,

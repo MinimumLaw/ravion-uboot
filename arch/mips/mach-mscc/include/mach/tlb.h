@@ -7,7 +7,6 @@
 #define __ASM_MACH_TLB_H
 
 #include <asm/mipsregs.h>
-#include <linux/bitops.h>
 #include <mach/common.h>
 #include <linux/sizes.h>
 

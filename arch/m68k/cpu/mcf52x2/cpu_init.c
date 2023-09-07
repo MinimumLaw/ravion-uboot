@@ -19,7 +19,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <init.h>
 #include <watchdog.h>
 #include <asm/immap.h>
 #include <asm/io.h>

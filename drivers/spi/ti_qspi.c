@@ -7,9 +7,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <log.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/omap.h>
 #include <malloc.h>
@@ -20,7 +17,6 @@
 #include <asm/omap_gpio.h>
 #include <asm/omap_common.h>
 #include <asm/ti-common/ti-edma3.h>
-#include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <regmap.h>
@@ -30,8 +26,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* ti qpsi register bit masks */
 #define QSPI_TIMEOUT                    2000000
-/* AM4372: QSPI gets SPI_GCLK from PRCM unit as PER_CLKOUTM2 divided by 4. */
-#define QSPI_FCLK                       (192000000 / 4)
+#define QSPI_FCLK			192000000
 #define QSPI_DRA7XX_FCLK                76800000
 #define QSPI_WLEN_MAX_BITS		128
 #define QSPI_WLEN_MAX_BYTES		(QSPI_WLEN_MAX_BITS >> 3)
@@ -156,7 +151,7 @@ static void ti_qspi_ctrl_mode_mmap(void *ctrl_mod_mmap, int cs, bool enable)
 static int ti_qspi_xfer(struct udevice *dev, unsigned int bitlen,
 			const void *dout, void *din, unsigned long flags)
 {
-	struct dm_spi_slave_plat *slave = dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave = dev_get_parent_platdata(dev);
 	struct ti_qspi_priv *priv;
 	struct udevice *bus;
 	uint words = bitlen >> 3; /* fixed 8-bit word length */
@@ -325,7 +320,7 @@ static int ti_qspi_set_mode(struct udevice *bus, uint mode)
 static int ti_qspi_exec_mem_op(struct spi_slave *slave,
 			       const struct spi_mem_op *op)
 {
-	struct dm_spi_slave_plat *slave_plat;
+	struct dm_spi_slave_platdata *slave_plat;
 	struct ti_qspi_priv *priv;
 	struct udevice *bus;
 	u32 from = 0;
@@ -333,7 +328,7 @@ static int ti_qspi_exec_mem_op(struct spi_slave *slave,
 
 	bus = slave->dev->parent;
 	priv = dev_get_priv(bus);
-	slave_plat = dev_get_parent_plat(slave->dev);
+	slave_plat = dev_get_parent_platdata(slave->dev);
 
 	/* Only optimize read path. */
 	if (!op->data.nbytes || op->data.dir != SPI_MEM_DATA_IN ||
@@ -357,7 +352,7 @@ static int ti_qspi_exec_mem_op(struct spi_slave *slave,
 
 static int ti_qspi_claim_bus(struct udevice *dev)
 {
-	struct dm_spi_slave_plat *slave_plat = dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
 	struct ti_qspi_priv *priv;
 	struct udevice *bus;
 
@@ -386,7 +381,7 @@ static int ti_qspi_claim_bus(struct udevice *dev)
 
 static int ti_qspi_release_bus(struct udevice *dev)
 {
-	struct dm_spi_slave_plat *slave_plat = dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
 	struct ti_qspi_priv *priv;
 	struct udevice *bus;
 
@@ -454,7 +449,7 @@ static void *map_syscon_chipselects(struct udevice *bus)
 #endif
 }
 
-static int ti_qspi_of_to_plat(struct udevice *bus)
+static int ti_qspi_ofdata_to_platdata(struct udevice *bus)
 {
 	struct ti_qspi_priv *priv = dev_get_priv(bus);
 	const void *blob = gd->fdt_blob;
@@ -463,14 +458,14 @@ static int ti_qspi_of_to_plat(struct udevice *bus)
 	fdt_addr_t mmap_size;
 
 	priv->ctrl_mod_mmap = map_syscon_chipselects(bus);
-	priv->base = map_physmem(dev_read_addr(bus),
+	priv->base = map_physmem(devfdt_get_addr(bus),
 				 sizeof(struct ti_qspi_regs), MAP_NOCACHE);
 	mmap_addr = devfdt_get_addr_size_index(bus, 1, &mmap_size);
 	priv->memory_map = map_physmem(mmap_addr, mmap_size, MAP_NOCACHE);
 	priv->mmap_size = mmap_size;
 
-	priv->max_hz = dev_read_u32_default(bus, "spi-max-frequency", 0);
-	if (!priv->max_hz) {
+	priv->max_hz = fdtdec_get_int(blob, node, "spi-max-frequency", -1);
+	if (priv->max_hz < 0) {
 		debug("Error: Max frequency missing\n");
 		return -ENODEV;
 	}
@@ -506,7 +501,7 @@ U_BOOT_DRIVER(ti_qspi) = {
 	.id	= UCLASS_SPI,
 	.of_match = ti_qspi_ids,
 	.ops	= &ti_qspi_ops,
-	.of_to_plat = ti_qspi_of_to_plat,
-	.priv_auto	= sizeof(struct ti_qspi_priv),
+	.ofdata_to_platdata = ti_qspi_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct ti_qspi_priv),
 	.probe	= ti_qspi_probe,
 };

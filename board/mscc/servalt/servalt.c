@@ -4,13 +4,9 @@
  */
 
 #include <common.h>
-#include <image.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <led.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 enum {
 	BOARD_TYPE_PCB116 = 0xAABBCE00,

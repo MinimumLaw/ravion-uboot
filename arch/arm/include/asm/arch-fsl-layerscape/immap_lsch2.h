@@ -7,10 +7,8 @@
 #define __ARCH_FSL_LSCH2_IMMAP_H__
 
 #include <fsl_immap.h>
-#ifndef __ASSEMBLY__
-#include <linux/bitops.h>
-#endif
 
+#define CONFIG_SYS_IMMR				0x01000000
 #define CONFIG_SYS_DCSRBAR			0x20000000
 #define CONFIG_SYS_DCSR_DCFG_ADDR	(CONFIG_SYS_DCSRBAR + 0x00140000)
 #define CONFIG_SYS_DCSR_COP_CCP_ADDR	(CONFIG_SYS_DCSRBAR + 0x02008040)

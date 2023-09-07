@@ -13,23 +13,20 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <net.h>
 #include <malloc.h>
 #include <miiphy.h>
 #include <wait_bit.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/types.h>
 #include <asm/system.h>
 #include <asm/byteorder.h>
 #include <asm/arch/cpu.h>
 
-#if defined(CONFIG_ARCH_KIRKWOOD)
+#if defined(CONFIG_KIRKWOOD)
 #include <asm/arch/soc.h>
-#elif defined(CONFIG_ARCH_ORION5X)
+#elif defined(CONFIG_ORION5X)
 #include <asm/arch/orion5x.h>
 #endif
 
@@ -555,7 +552,7 @@ static int mvgbe_halt(struct eth_device *dev)
 #ifdef CONFIG_DM_ETH
 static int mvgbe_write_hwaddr(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 
 	port_uc_addr_set(dev_get_priv(dev), pdata->enetaddr);
 
@@ -822,7 +819,7 @@ error1:
 }
 
 #ifndef CONFIG_DM_ETH
-int mvgbe_initialize(struct bd_info *bis)
+int mvgbe_initialize(bd_t *bis)
 {
 	struct mvgbe_device *dmvgbe;
 	struct eth_device *dev;
@@ -883,7 +880,7 @@ int mvgbe_initialize(struct bd_info *bis)
 		struct mii_dev *mdiodev = mdio_alloc();
 		if (!mdiodev)
 			return -ENOMEM;
-		strlcpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
+		strncpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
 		mdiodev->read = smi_reg_read;
 		mdiodev->write = smi_reg_write;
 
@@ -907,7 +904,7 @@ static int mvgbe_port_is_fixed_link(struct mvgbe_device *dmvgbe)
 
 static int mvgbe_start(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct mvgbe_device *dmvgbe = dev_get_priv(dev);
 	int ret;
 
@@ -949,7 +946,7 @@ static void mvgbe_stop(struct udevice *dev)
 
 static int mvgbe_probe(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct mvgbe_device *dmvgbe = dev_get_priv(dev);
 	struct mii_dev *bus;
 	int ret;
@@ -987,9 +984,9 @@ static const struct eth_ops mvgbe_ops = {
 	.write_hwaddr	= mvgbe_write_hwaddr,
 };
 
-static int mvgbe_of_to_plat(struct udevice *dev)
+static int mvgbe_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct mvgbe_device *dmvgbe = dev_get_priv(dev);
 	void *blob = (void *)gd->fdt_blob;
 	int node = dev_of_offset(dev);
@@ -998,7 +995,7 @@ static int mvgbe_of_to_plat(struct udevice *dev)
 	int pnode;
 	unsigned long addr;
 
-	pdata->iobase = dev_read_addr(dev);
+	pdata->iobase = devfdt_get_addr(dev);
 	pdata->phy_interface = -1;
 
 	pnode = fdt_node_offset_by_compatible(blob, node,
@@ -1039,10 +1036,10 @@ U_BOOT_DRIVER(mvgbe) = {
 	.name	= "mvgbe",
 	.id	= UCLASS_ETH,
 	.of_match = mvgbe_ids,
-	.of_to_plat = mvgbe_of_to_plat,
+	.ofdata_to_platdata = mvgbe_ofdata_to_platdata,
 	.probe	= mvgbe_probe,
 	.ops	= &mvgbe_ops,
-	.priv_auto	= sizeof(struct mvgbe_device),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct mvgbe_device),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };
 #endif /* CONFIG_DM_ETH */

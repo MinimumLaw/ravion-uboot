@@ -7,22 +7,22 @@
  */
 
 #define LOG_CATEGORY UCLASS_MISC
+#define LOG_DEBUG
 
 #include <common.h>
 #include <axi.h>
 #include <dm.h>
-#include <log.h>
 #include <pci.h>
 #include <asm/test.h>
 #include <p2sb.h>
 
 /**
- * struct p2sb_emul_plat - platform data for this device
+ * struct p2sb_emul_platdata - platform data for this device
  *
  * @command:	Current PCI command value
  * @bar:	Current base address values
  */
-struct p2sb_emul_plat {
+struct p2sb_emul_platdata {
 	u16 command;
 	u32 bar[6];
 };
@@ -52,7 +52,7 @@ static int sandbox_p2sb_emul_read_config(const struct udevice *emul,
 					 uint offset, ulong *valuep,
 					 enum pci_size_t size)
 {
-	struct p2sb_emul_plat *plat = dev_get_plat(emul);
+	struct p2sb_emul_platdata *plat = dev_get_platdata(emul);
 
 	switch (offset) {
 	case PCI_COMMAND:
@@ -105,7 +105,7 @@ static int sandbox_p2sb_emul_read_config(const struct udevice *emul,
 static int sandbox_p2sb_emul_write_config(struct udevice *emul, uint offset,
 					  ulong value, enum pci_size_t size)
 {
-	struct p2sb_emul_plat *plat = dev_get_plat(emul);
+	struct p2sb_emul_platdata *plat = dev_get_platdata(emul);
 
 	switch (offset) {
 	case PCI_COMMAND:
@@ -133,7 +133,7 @@ static int sandbox_p2sb_emul_write_config(struct udevice *emul, uint offset,
 static int sandbox_p2sb_emul_find_bar(struct udevice *emul, unsigned int addr,
 				      int *barnump, unsigned int *offsetp)
 {
-	struct p2sb_emul_plat *plat = dev_get_plat(emul);
+	struct p2sb_emul_platdata *plat = dev_get_platdata(emul);
 	int barnum;
 
 	for (barnum = 0; barnum < ARRAY_SIZE(barinfo); barnum++) {
@@ -196,8 +196,8 @@ static int find_p2sb_channel(struct udevice *emul, uint offset,
 		return log_msg_ret("No client", ret);
 
 	device_foreach_child(dev, p2sb) {
-		struct p2sb_child_plat *pplat =
-			 dev_get_parent_plat(dev);
+		struct p2sb_child_platdata *pplat =
+			 dev_get_parent_platdata(dev);
 
 		log_debug("   - child %s, pid %d, want %d\n", dev->name,
 			  pplat->pid, pid);
@@ -215,7 +215,7 @@ static int sandbox_p2sb_emul_map_physmem(struct udevice *dev,
 					 void **ptrp)
 {
 	struct p2sb_emul_priv *priv = dev_get_priv(dev);
-	struct udevice *child = NULL;  /* Silence compiler warning */
+	struct udevice *child;
 	unsigned int offset;
 	int barnum;
 	int ret;
@@ -261,8 +261,8 @@ U_BOOT_DRIVER(sandbox_p2sb_emul_emul) = {
 	.id		= UCLASS_PCI_EMUL,
 	.of_match	= sandbox_p2sb_emul_ids,
 	.ops		= &sandbox_p2sb_emul_emul_ops,
-	.priv_auto	= sizeof(struct p2sb_emul_priv),
-	.plat_auto	= sizeof(struct p2sb_emul_plat),
+	.priv_auto_alloc_size = sizeof(struct p2sb_emul_priv),
+	.platdata_auto_alloc_size = sizeof(struct p2sb_emul_platdata),
 };
 
 static struct pci_device_id sandbox_p2sb_emul_supported[] = {

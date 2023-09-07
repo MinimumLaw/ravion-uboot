@@ -6,9 +6,9 @@
 #include <common.h>
 #include <debug_uart.h>
 #include <dm.h>
-#include <init.h>
 #include <ram.h>
 #include <spl.h>
+#include <version.h>
 #include <asm/io.h>
 #include <asm/arch-rockchip/bootrom.h>
 #include <asm/arch-rockchip/sdram_px30.h>

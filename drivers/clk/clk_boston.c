@@ -9,7 +9,6 @@
 #include <dt-bindings/clock/boston-clock.h>
 #include <regmap.h>
 #include <syscon.h>
-#include <linux/bitops.h>
 
 struct clk_boston {
 	struct regmap *regmap;
@@ -28,7 +27,7 @@ static uint32_t ext_field(uint32_t val, uint32_t mask)
 
 static ulong clk_boston_get_rate(struct clk *clk)
 {
-	struct clk_boston *state = dev_get_plat(clk->dev);
+	struct clk_boston *state = dev_get_platdata(clk->dev);
 	uint32_t in_rate, mul, div;
 	uint mmcmdiv;
 	int err;
@@ -58,9 +57,9 @@ const struct clk_ops clk_boston_ops = {
 	.get_rate = clk_boston_get_rate,
 };
 
-static int clk_boston_of_to_plat(struct udevice *dev)
+static int clk_boston_ofdata_to_platdata(struct udevice *dev)
 {
-	struct clk_boston *state = dev_get_plat(dev);
+	struct clk_boston *state = dev_get_platdata(dev);
 	struct udevice *syscon;
 	int err;
 
@@ -91,7 +90,7 @@ U_BOOT_DRIVER(clk_boston) = {
 	.name = "boston_clock",
 	.id = UCLASS_CLK,
 	.of_match = clk_boston_match,
-	.of_to_plat = clk_boston_of_to_plat,
-	.plat_auto	= sizeof(struct clk_boston),
+	.ofdata_to_platdata = clk_boston_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct clk_boston),
 	.ops = &clk_boston_ops,
 };

@@ -53,13 +53,6 @@ config ALTERA_TIMER
 	  Select this to enable a timer for Altera devices. Please find
 	  details on the "Embedded Peripherals IP User Guide" of Altera.
 
-config ANDES_PLMT_TIMER
-	bool
-	depends on RISCV_MMODE || SPL_RISCV_MMODE
-	help
-	  The Andes PLMT block holds memory-mapped mtime register
-	  associated with timer tick.
-
 config ARC_TIMER
 	bool "ARC timer support"
 	depends on TIMER && ARC && CLK
@@ -124,12 +117,12 @@ config RENESAS_OSTM_TIMER
 	  Enables support for the Renesas OSTM Timer driver.
 	  This timer is present on Renesas RZ/A1 R7S72100 SoCs.
 
-config X86_TSC_TIMER_FREQ
-	int "x86 TSC timer frequency in Hz"
+config X86_TSC_TIMER_EARLY_FREQ
+	int "x86 TSC timer frequency in MHz when used as the early timer"
 	depends on X86_TSC_TIMER
-	default 1000000000
+	default 1000
 	help
-	  Sets the estimated CPU frequency in Hz when TSC is used as the
+	  Sets the estimated CPU frequency in MHz when TSC is used as the
 	  early timer and the frequency can neither be calibrated via some
 	  hardware ways, nor got from device tree at the time when device
 	  tree is not available yet.
@@ -153,8 +146,8 @@ config RISCV_TIMER
 	bool "RISC-V timer support"
 	depends on TIMER && RISCV
 	help
-	  Select this to enable support for a generic RISC-V S-Mode timer
-	  driver.
+	  Select this to enable support for the timer as defined
+	  by the RISC-V privileged architecture spec.
 
 config ROCKCHIP_TIMER
 	bool "Rockchip timer support"
@@ -219,19 +212,5 @@ config MTK_TIMER
 	help
 	  Select this to enable support for the timer found on
 	  MediaTek devices.
-
-config MCHP_PIT64B_TIMER
-	bool "Microchip 64-bit periodic interval timer support"
-	depends on TIMER
-	help
-	  Select this to enable support for Microchip 64-bit periodic
-	  interval timer.
-
-config IMX_GPT_TIMER
-	bool "NXP i.MX GPT timer support"
-	depends on TIMER
-	help
-	  Select this to enable support for the timer found on
-	  NXP i.MX devices.
 
 endmenu

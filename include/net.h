@@ -12,18 +12,11 @@
 #ifndef __NET_H__
 #define __NET_H__
 
-#include <linux/types.h>
 #include <asm/cache.h>
 #include <asm/byteorder.h>	/* for nton* / ntoh* stuff */
 #include <env.h>
-#include <log.h>
-#include <time.h>
 #include <linux/if_ether.h>
 #include <rand.h>
-
-struct bd_info;
-struct cmd_tbl;
-struct udevice;
 
 #define DEBUG_LL_STATE 0	/* Link local state machine changes */
 #define DEBUG_DEV_PKT 0		/* Packets or info directed to the device */
@@ -43,9 +36,6 @@ struct udevice;
 #endif
 
 #define PKTALIGN	ARCH_DMA_MINALIGN
-
-/* Number of packets processed together */
-#define ETH_PACKETS_BATCH_RECV	32
 
 /* ARP hardware address length */
 #define ARP_HLEN 6
@@ -67,9 +57,9 @@ struct in_addr {
  * @flag: Command flags (CMD_FLAG_...)
  * @argc: Number of arguments
  * @argv: List of arguments
- * Return: result (see enum command_ret_t)
+ * @return result (see enum command_ret_t)
  */
-int do_tftpb(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
+int do_tftpb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
 
 /**
  * An incoming packet handler.
@@ -115,7 +105,7 @@ enum eth_state_t {
  * @enetaddr: The Ethernet MAC address that is loaded from EEPROM or env
  * @phy_interface: PHY interface to use - see PHY_INTERFACE_MODE_...
  * @max_speed: Maximum speed of Ethernet connection supported by MAC
- * @priv_pdata: device specific plat
+ * @priv_pdata: device specific platdata
  */
 struct eth_pdata {
 	phys_addr_t iobase;
@@ -158,7 +148,6 @@ enum eth_recv_flags {
  *		    ROM on the board. This is how the driver should expose it
  *		    to the network stack. This function should fill in the
  *		    eth_pdata::enetaddr field - optional
- * set_promisc: Enable or Disable promiscuous mode
  */
 struct eth_ops {
 	int (*start)(struct udevice *dev);
@@ -169,7 +158,6 @@ struct eth_ops {
 	int (*mcast)(struct udevice *dev, const u8 *enetaddr, int join);
 	int (*write_hwaddr)(struct udevice *dev);
 	int (*read_rom_hwaddr)(struct udevice *dev);
-	int (*set_promisc)(struct udevice *dev, bool enable);
 };
 
 #define eth_get_ops(dev) ((struct eth_ops *)(dev)->driver->ops)
@@ -196,12 +184,12 @@ struct eth_device {
 	phys_addr_t iobase;
 	int state;
 
-	int (*init)(struct eth_device *eth, struct bd_info *bd);
+	int (*init)(struct eth_device *, bd_t *);
 	int (*send)(struct eth_device *, void *packet, int length);
 	int (*recv)(struct eth_device *);
 	void (*halt)(struct eth_device *);
 	int (*mcast)(struct eth_device *, const u8 *enetaddr, int join);
-	int (*write_hwaddr)(struct eth_device *eth);
+	int (*write_hwaddr)(struct eth_device *);
 	struct eth_device *next;
 	int index;
 	void *priv;
@@ -254,7 +242,7 @@ static __always_inline void eth_halt_state_only(void)
 int eth_write_hwaddr(struct eth_device *dev, const char *base_name,
 		     int eth_number);
 
-int usb_eth_initialize(struct bd_info *bi);
+int usb_eth_initialize(bd_t *bi);
 #endif
 
 int eth_initialize(void);		/* Initialize network subsystem */
@@ -274,7 +262,7 @@ int eth_get_dev_index(void);		/* get the device index */
  * @base_name:  Base name for variable, typically "eth"
  * @index:      Index of interface being updated (>=0)
  * @enetaddr:   Pointer to MAC address to put into the variable
- * Return: 0 if OK, other value on error
+ * @return 0 if OK, other value on error
  */
 int eth_env_set_enetaddr_by_index(const char *base_name, int index,
 				 uchar *enetaddr);
@@ -501,13 +489,7 @@ struct icmp_hdr {
  * maximum packet size and multiple of 32 bytes =  1536
  */
 #define PKTSIZE			1522
-#ifndef CONFIG_DM_DSA
 #define PKTSIZE_ALIGN		1536
-#else
-/* Maximum DSA tagging overhead (headroom and/or tailroom) */
-#define DSA_MAX_OVR		256
-#define PKTSIZE_ALIGN		(1536 + DSA_MAX_OVR)
-#endif
 
 /*
  * Maximum receive ring size; that is, the number of packets
@@ -562,7 +544,7 @@ extern int		net_restart_wrap;	/* Tried all network devices */
 
 enum proto_t {
 	BOOTP, RARP, ARP, TFTPGET, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP,
-	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL, UDP
+	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL
 };
 
 extern char	net_boot_file_name[1024];/* Boot File name */
@@ -604,7 +586,7 @@ extern int net_ntp_time_offset;			/* offset time from UTC */
 #endif
 
 /* Initialize the network adapter */
-int net_init(void);
+void net_init(void);
 int net_loop(enum proto_t);
 
 /* Load failed.	 Start again. */
@@ -628,7 +610,7 @@ void net_set_udp_header(uchar *pkt, struct in_addr dest, int dport,
  *
  * @addr:	Address to check (must be 16-bit aligned)
  * @nbytes:	Number of bytes to check (normally a multiple of 2)
- * Return: 16-bit IP checksum
+ * @return 16-bit IP checksum
  */
 unsigned compute_ip_checksum(const void *addr, unsigned nbytes);
 
@@ -638,7 +620,7 @@ unsigned compute_ip_checksum(const void *addr, unsigned nbytes);
  * @offset:	Offset of first sum (if odd we do a byte-swap)
  * @sum:	First checksum
  * @new_sum:	New checksum to add
- * Return: updated 16-bit IP checksum
+ * @return updated 16-bit IP checksum
  */
 unsigned add_ip_checksums(unsigned offset, unsigned sum, unsigned new_sum);
 
@@ -649,7 +631,7 @@ unsigned add_ip_checksums(unsigned offset, unsigned sum, unsigned new_sum);
  *
  * @addr:	Address to check (must be 16-bit aligned)
  * @nbytes:	Number of bytes to check (normally a multiple of 2)
- * Return: true if the checksum matches, false if not
+ * @return true if the checksum matches, false if not
  */
 int ip_checksum_ok(const void *addr, unsigned nbytes);
 
@@ -908,6 +890,9 @@ int is_serverip_in_cmd(void);
  */
 int net_parse_bootfile(struct in_addr *ipaddr, char *filename, int max_len);
 
+/* get a random source port */
+unsigned int random_port(void);
+
 /**
  * update_tftp - Update firmware over TFTP (via DFU)
  *
@@ -917,7 +902,7 @@ int net_parse_bootfile(struct in_addr *ipaddr, char *filename, int max_len);
  * @param interface - the DFU medium name - e.g. "mmc"
  * @param devstring - the DFU medium number - e.g. "1"
  *
- * Return: - 0 on success, other value on failure
+ * @return - 0 on success, other value on failure
  */
 int update_tftp(ulong addr, char *interface, char *devstring);
 
@@ -927,7 +912,7 @@ int update_tftp(ulong addr, char *interface, char *devstring);
  * @var: Environment variable to convert. The value of this variable must be
  *	in the format format a.b.c.d, where each value is a decimal number from
  *	0 to 255
- * Return: IP address, or 0 if invalid
+ * @return IP address, or 0 if invalid
  */
 static inline struct in_addr env_get_ip(char *var)
 {

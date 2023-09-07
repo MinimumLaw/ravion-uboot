@@ -8,13 +8,9 @@
 #include <fdt_support.h>
 #include <fdtdec.h>
 #include <hang.h>
-#include <init.h>
-#include <log.h>
 #include <malloc.h>
-#include <net.h>
 #include <stdlib.h>
 #include <string.h>
-#include <asm/global_data.h>
 
 #include <linux/ctype.h>
 #include <linux/sizes.h>
@@ -49,7 +45,7 @@ extern struct mm_region tegra_mem_map[];
  */
 
 /* The number of valid entries in ram_banks[] */
-static int ram_bank_count __section(".data");
+static int ram_bank_count __attribute__((section(".data")));
 
 /*
  * The usable top-of-RAM for U-Boot. This is both:
@@ -57,15 +53,15 @@ static int ram_bank_count __section(".data");
  * b) At the end of a region that has enough space to hold the relocated U-Boot
  *    and all other allocations made around it (stack, heap, page tables, etc.)
  */
-static u64 ram_top __section(".data");
+static u64 ram_top __attribute__((section(".data")));
 /* The base address of the region of RAM that ends at ram_top */
-static u64 region_base __section(".data");
+static u64 region_base __attribute__((section(".data")));
 
 /*
  * Explicitly put this in the .data section because it is written before the
  * .bss section is zeroed out but it needs to persist.
  */
-unsigned long cboot_boot_x0 __section(".data");
+unsigned long cboot_boot_x0 __attribute__((section(".data")));
 
 void cboot_save_boot_params(unsigned long x0, unsigned long x1,
 			    unsigned long x2, unsigned long x3)

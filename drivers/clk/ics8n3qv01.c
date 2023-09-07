@@ -13,7 +13,6 @@
 #include <dm.h>
 #include <clk-uclass.h>
 #include <i2c.h>
-#include <log.h>
 
 const long long ICS8N3QV01_FREF = 114285000;
 const long long ICS8N3QV01_FREF_LL = 114285000LL;
@@ -82,6 +81,7 @@ static int ics8n3qv01_calc_parameters(uint fout, uint *_mint, uint *_mfrac,
 	uint n, foutiic, fvcoiic, mint;
 	u64 mfrac;
 
+	n = (2215000000U + fout / 2) / fout;
 	if (fout < 417000000U)
 		n = 2 * ((2215000000U / 2 + fout / 2) / fout);
 	else
@@ -180,6 +180,11 @@ static ulong ics8n3qv01_set_rate(struct clk *clk, ulong fout)
 	return 0;
 }
 
+static int ics8n3qv01_request(struct clk *clock)
+{
+	return 0;
+}
+
 static ulong ics8n3qv01_get_rate(struct clk *clk)
 {
 	struct ics8n3qv01_priv *priv = dev_get_priv(clk->dev);
@@ -198,6 +203,7 @@ static int ics8n3qv01_disable(struct clk *clk)
 }
 
 static const struct clk_ops ics8n3qv01_ops = {
+	.request = ics8n3qv01_request,
 	.get_rate = ics8n3qv01_get_rate,
 	.set_rate = ics8n3qv01_set_rate,
 	.enable = ics8n3qv01_enable,
@@ -220,5 +226,5 @@ U_BOOT_DRIVER(ics8n3qv01) = {
 	.ops		= &ics8n3qv01_ops,
 	.of_match       = ics8n3qv01_ids,
 	.probe		= ics8n3qv01_probe,
-	.priv_auto	= sizeof(struct ics8n3qv01_priv),
+	.priv_auto_alloc_size	= sizeof(struct ics8n3qv01_priv),
 };

@@ -18,7 +18,7 @@
 #define GIC400_ARB_END_ADDR             0x31007FFF
 #define APBH_DMA_ARB_BASE_ADDR          0x33000000
 #define APBH_DMA_ARB_END_ADDR           0x33007FFF
-#define M4_BOOTROM_BASE_ADDR            0x00180000
+#define MCU_BOOTROM_BASE_ADDR            0x00180000
 
 #define MXS_APBH_BASE			APBH_DMA_ARB_BASE_ADDR
 #define MXS_GPMI_BASE			(APBH_DMA_ARB_BASE_ADDR + 0x02000)
@@ -143,7 +143,7 @@
 #define ELCDIF1_IPS_BASE_ADDR           (AIPS2_OFF_BASE_ADDR+0x130000)
 #define MIPI_CSI2_IPS_BASE_ADDR         (AIPS2_OFF_BASE_ADDR+0x150000)
 #define MIPI_DSI_IPS_BASE_ADDR          (AIPS2_OFF_BASE_ADDR+0x160000)
-#define IP2APB_TZASC1_IPS_BASE_ADDR     (AIPS2_OFF_BASE_ADDR+0x180000)
+#define IP2APB_TZASC1_BASE_ADDR     	(AIPS2_OFF_BASE_ADDR+0x180000)
 #define DDRPHY_IPS_BASE_ADDR            (AIPS2_OFF_BASE_ADDR+0x190000)
 #define DDRC_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x1A0000)
 #define IP2APB_PERFMON1_IPS_BASE_ADDR   (AIPS2_OFF_BASE_ADDR+0x1C0000)
@@ -212,6 +212,10 @@
 #define SEMAPHORE1_BASE_ADDR SEMA41_IPS_BASE_ADDR
 #define SEMAPHORE2_BASE_ADDR SEMA42_IPS_BASE_ADDR
 #define RDC_BASE_ADDR RDC_IPS_BASE_ADDR
+#define REGS_QOS_BASE     QOSC_IPS_BASE_ADDR
+#define REGS_QOS_EPDC     (QOSC_IPS_BASE_ADDR + 0x3400)
+#define REGS_QOS_PXP0     (QOSC_IPS_BASE_ADDR + 0x2C00)
+#define REGS_QOS_PXP1     (QOSC_IPS_BASE_ADDR + 0x3C00)
 
 #define FEC_QUIRK_ENET_MAC
 #define SNVS_LPGPR	0x68
@@ -225,7 +229,6 @@
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/mach-imx/regs-lcdif.h>
 #include <asm/types.h>
-#include <linux/bitops.h>
 
 extern void imx_get_mac_from_fuse(int dev_id, unsigned char *mac);
 
@@ -274,7 +277,6 @@ struct src {
 
 #define SRC_DDRC_RCR_DDRC_CORE_RST_OFFSET	1
 #define SRC_DDRC_RCR_DDRC_CORE_RST_MASK		(1 << 1)
-#define SRC_DDRC_RCR_DDRC_PRST_MASK		(1 << 0)
 
 /* GPR0 Bit Fields */
 #define IOMUXC_GPR_GPR0_DMAREQ_MUX_SEL0_MASK     0x1u
@@ -834,6 +836,7 @@ struct src {
 #define IMX7D_GPR5_CSI1_MUX_CTRL_MIPI_CSI		(0x1 << 4)
 
 struct iomuxc {
+	u32 reserved[0x4000];
 	u32 gpr[23];
 	/* mux and pad registers */
 };
@@ -842,9 +845,46 @@ struct iomuxc_gpr_base_regs {
 	u32 gpr[23];        /* 0x000 */
 };
 
+/* ECSPI registers */
+struct cspi_regs {
+	u32 rxdata;
+	u32 txdata;
+	u32 ctrl;
+	u32 cfg;
+	u32 intr;
+	u32 dma;
+	u32 stat;
+	u32 period;
+};
+
 /*
  * CSPI register definitions
  */
+#define MXC_ECSPI
+#define MXC_CSPICTRL_EN		(1 << 0)
+#define MXC_CSPICTRL_MODE	(1 << 1)
+#define MXC_CSPICTRL_XCH	(1 << 2)
+#define MXC_CSPICTRL_MODE_MASK (0xf << 4)
+#define MXC_CSPICTRL_CHIPSELECT(x)	(((x) & 0x3) << 12)
+#define MXC_CSPICTRL_BITCOUNT(x)	(((x) & 0xfff) << 20)
+#define MXC_CSPICTRL_PREDIV(x)	(((x) & 0xF) << 12)
+#define MXC_CSPICTRL_POSTDIV(x)	(((x) & 0xF) << 8)
+#define MXC_CSPICTRL_SELCHAN(x)	(((x) & 0x3) << 18)
+#define MXC_CSPICTRL_MAXBITS	0xfff
+#define MXC_CSPICTRL_TC		(1 << 7)
+#define MXC_CSPICTRL_RXOVF	(1 << 6)
+#define MXC_CSPIPERIOD_32KHZ	(1 << 15)
+#define MAX_SPI_BYTES	32
+
+/* Bit position inside CTRL register to be associated with SS */
+#define MXC_CSPICTRL_CHAN	18
+
+/* Bit position inside CON register to be associated with SS */
+#define MXC_CSPICON_PHA		0  /* SCLK phase control */
+#define MXC_CSPICON_POL		4  /* SCLK polarity */
+#define MXC_CSPICON_SSPOL	12 /* SS polarity */
+#define MXC_CSPICON_CTL		20 /* inactive state of SCLK */
+
 #define MXC_SPI_BASE_ADDRESSES \
 	ECSPI1_BASE_ADDR, \
 	ECSPI2_BASE_ADDR, \
@@ -1169,10 +1209,14 @@ extern void check_cpu_temperature(void);
 extern void pcie_power_up(void);
 extern void pcie_power_off(void);
 
+#include <stdbool.h>
+bool is_usb_boot(void);
+#define is_boot_from_usb  is_usb_boot
+
 /* If ROM fail back to USB recover mode, USBPH0_PWD will be clear to use USB
  * If boot from the other mode, USB0_PWD will keep reset value
  */
-#define	is_boot_from_usb(void) (readl(USBOTG1_IPS_BASE_ADDR + 0x158) || \
+#define	is_usbotg_boot_enabled(void) (readl(USBOTG1_IPS_BASE_ADDR + 0x158) || \
 	readl(USBOTG2_IPS_BASE_ADDR + 0x158))
 #define	disconnect_from_pc(void) writel(0x0, USBOTG1_IPS_BASE_ADDR + 0x140)
 
@@ -1188,5 +1232,5 @@ struct bootrom_sw_info {
 	u32 reserved_3[3];
 };
 
-#endif /* __ASSEMBLY__ */
+#endif /* __ASSEMBLER__*/
 #endif /* __ASM_ARCH_MX7_IMX_REGS_H__ */

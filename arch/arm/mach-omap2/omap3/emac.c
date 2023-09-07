@@ -7,7 +7,6 @@
  */
 
 #include <common.h>
-#include <net.h>
 #include <asm/io.h>
 #include <asm/arch/am35x_def.h>
 
@@ -15,7 +14,7 @@
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
  */
-int cpu_eth_init(struct bd_info *bis)
+int cpu_eth_init(bd_t *bis)
 {
 	u32 reset;
 

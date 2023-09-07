@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION.
+ * Copyright 2017 NXP
+ *
  */
 
 #ifndef _POWER_DOMAIN_H
@@ -64,6 +66,19 @@ struct power_domain {
 };
 
 /**
+ * power_domain_lookup_name - Lookup the power domain device by name and request it.
+ *
+ * This looks up and requests a provider power domain by using its device name. This
+ * skip the associated client device, but directly get the power domain device.
+ *
+ * @name:        The power domain device's name.
+ * @power_domain        A pointer to a power domain struct to initialize.
+ * @return 0 if OK, or a negative error code.
+ */
+
+int power_domain_lookup_name(const char *name, struct power_domain *power_domain);
+
+/**
  * power_domain_get - Get/request the power domain for a device.
  *
  * This looks up and requests a power domain. Each device is assumed to have
@@ -74,7 +89,7 @@ struct power_domain {
  *
  * @dev:	The client device.
  * @power_domain	A pointer to a power domain struct to initialize.
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 int power_domain_get(struct udevice *dev, struct power_domain *power_domain);
@@ -93,7 +108,7 @@ int power_domain_get(struct udevice *dev, struct power_domain *power_domain)
  * @power_domain:	A pointer to a power domain struct to initialize.
  * @index:		Power domain index to be powered on.
  *
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 int power_domain_get_by_index(struct udevice *dev,
@@ -112,7 +127,7 @@ int power_domain_get_by_index(struct udevice *dev,
  *
  * @power_domain:	A power domain struct that was previously successfully
  *		requested by power_domain_get().
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 int power_domain_free(struct power_domain *power_domain);
@@ -128,7 +143,7 @@ static inline int power_domain_free(struct power_domain *power_domain)
  *
  * @power_domain:	A power domain struct that was previously successfully
  *		requested by power_domain_get().
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 int power_domain_on(struct power_domain *power_domain);
@@ -144,7 +159,7 @@ static inline int power_domain_on(struct power_domain *power_domain)
  *
  * @power_domain:	A power domain struct that was previously successfully
  *		requested by power_domain_get().
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 int power_domain_off(struct power_domain *power_domain);
@@ -160,9 +175,10 @@ static inline int power_domain_off(struct power_domain *power_domain)
  *
  * @dev:		The client device.
  *
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
-#if CONFIG_IS_ENABLED(OF_REAL) && CONFIG_IS_ENABLED(POWER_DOMAIN)
+#if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) && \
+	CONFIG_IS_ENABLED(POWER_DOMAIN)
 int dev_power_domain_on(struct udevice *dev);
 #else
 static inline int dev_power_domain_on(struct udevice *dev)
@@ -176,9 +192,10 @@ static inline int dev_power_domain_on(struct udevice *dev)
  *
  * @dev:		The client device.
  *
- * Return: 0 if OK, or a negative error code.
+ * @return 0 if OK, or a negative error code.
  */
-#if CONFIG_IS_ENABLED(OF_REAL) && CONFIG_IS_ENABLED(POWER_DOMAIN)
+#if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) && \
+	CONFIG_IS_ENABLED(POWER_DOMAIN)
 int dev_power_domain_off(struct udevice *dev);
 #else
 static inline int dev_power_domain_off(struct udevice *dev)

@@ -7,7 +7,6 @@
  * Author: Sandeep Sheriker M <Sandeepsheriker.mallikarjun@microchip.com>
  */
 /dts-v1/;
-#include <dt-bindings/mfd/atmel-flexcom.h>
 #include "sam9x60.dtsi"
 
 / {
@@ -19,18 +18,8 @@
 		i2c0 = &flx0;
 	};
 
-	clocks {
-		slow_xtal: slow_xtal {
-			clock-frequency = <32768>;
-		};
-
-		main_xtal: main_xtal {
-			clock-frequency = <24000000>;
-		};
-	};
-
 	onewire_tm: onewire {
-		gpios = <&pioD 14 GPIO_ACTIVE_HIGH>;
+		gpios = <&pioD 14 0>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_onewire_tm_default>;
 		status = "okay";
@@ -58,7 +47,7 @@
 			};
 
 			flx0: flexcom@f801c600 {
-				atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_TWI>;
+				atmel,flexcom-mode = <3>;
 				status = "okay";
 
 				i2c@600 {
@@ -68,7 +57,7 @@
 					pinctrl-0 = <&pinctrl_flx0>;
 					#address-cells = <1>;
 					#size-cells = <0>;
-					clocks = <&pmc PMC_TYPE_PERIPHERAL 5>;
+					clocks = <&flx0_clk>;
 					status = "okay";
 
 					eeprom@53 {

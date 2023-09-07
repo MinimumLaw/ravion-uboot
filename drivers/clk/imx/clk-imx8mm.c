@@ -8,7 +8,6 @@
 #include <clk.h>
 #include <clk-uclass.h>
 #include <dm.h>
-#include <log.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
 #include <dt-bindings/clock/imx8mm-clock.h>
@@ -130,15 +129,6 @@ static const char *imx8mm_usb_core_sels[] = {"clock-osc-24m", "sys_pll1_100m", "
 
 static const char *imx8mm_usb_phy_sels[] = {"clock-osc-24m", "sys_pll1_100m", "sys_pll1_40m", "sys_pll2_100m",
 					     "sys_pll2_200m", "clk_ext2", "clk_ext3", "audio_pll2_out", };
-
-static const char *imx8mm_ecspi1_sels[] = {"clock-osc-24m", "sys_pll2_200m", "sys_pll1_40m", "sys_pll1_160m",
-					   "sys_pll1_800m", "sys_pll3_out", "sys_pll2_250m", "audio_pll2_out", };
-
-static const char *imx8mm_ecspi2_sels[] = {"clock-osc-24m", "sys_pll2_200m", "sys_pll1_40m", "sys_pll1_160m",
-					   "sys_pll1_800m", "sys_pll3_out", "sys_pll2_250m", "audio_pll2_out", };
-
-static const char *imx8mm_ecspi3_sels[] = {"clock-osc-24m", "sys_pll2_200m", "sys_pll1_40m", "sys_pll1_160m",
-					   "sys_pll1_800m", "sys_pll3_out", "sys_pll2_250m", "audio_pll2_out", };
 
 static ulong imx8mm_clk_get_rate(struct clk *clk)
 {
@@ -402,19 +392,7 @@ static int imx8mm_clk_probe(struct udevice *dev)
 		imx8m_clk_composite("usb_core_ref", imx8mm_usb_core_sels, base + 0xb100));
 	clk_dm(IMX8MM_CLK_USB_PHY_REF,
 		imx8m_clk_composite("usb_phy_ref", imx8mm_usb_phy_sels, base + 0xb180));
-	clk_dm(IMX8MM_CLK_ECSPI1,
-	       imx8m_clk_composite("ecspi1", imx8mm_ecspi1_sels, base + 0xb280));
-	clk_dm(IMX8MM_CLK_ECSPI2,
-	       imx8m_clk_composite("ecspi2", imx8mm_ecspi2_sels, base + 0xb300));
-	clk_dm(IMX8MM_CLK_ECSPI3,
-	       imx8m_clk_composite("ecspi3", imx8mm_ecspi3_sels, base + 0xc180));
 
-	clk_dm(IMX8MM_CLK_ECSPI1_ROOT,
-	       imx_clk_gate4("ecspi1_root_clk", "ecspi1", base + 0x4070, 0));
-	clk_dm(IMX8MM_CLK_ECSPI2_ROOT,
-	       imx_clk_gate4("ecspi2_root_clk", "ecspi2", base + 0x4080, 0));
-	clk_dm(IMX8MM_CLK_ECSPI3_ROOT,
-	       imx_clk_gate4("ecspi3_root_clk", "ecspi3", base + 0x4090, 0));
 	clk_dm(IMX8MM_CLK_I2C1_ROOT,
 	       imx_clk_gate4("i2c1_root_clk", "i2c1", base + 0x4170, 0));
 	clk_dm(IMX8MM_CLK_I2C2_ROOT,
@@ -456,6 +434,40 @@ static int imx8mm_clk_probe(struct udevice *dev)
 	clk_dm(IMX8MM_CLK_ENET1_ROOT,
 	       imx_clk_gate4("enet1_root_clk", "enet_axi",
 	       base + 0x40a0, 0));
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+	struct clk *clkp, *clkp1;
+
+	clk_get_by_id(IMX8MM_CLK_WDOG1_ROOT, &clkp);
+	clk_enable(clkp);
+	clk_get_by_id(IMX8MM_CLK_WDOG2_ROOT, &clkp);
+	clk_enable(clkp);
+	clk_get_by_id(IMX8MM_CLK_WDOG3_ROOT, &clkp);
+	clk_enable(clkp);
+
+	/* Configure SYS_PLL3 to 750MHz */
+	clk_get_by_id(IMX8MM_SYS_PLL3, &clkp);
+	clk_set_rate(clkp, 750000000UL);
+	clk_enable(clkp);
+
+	/* Configure ARM to sys_pll2_500m */
+	clk_get_by_id(IMX8MM_CLK_A53_SRC, &clkp);
+	clk_get_by_id(IMX8MM_SYS_PLL2_OUT, &clkp1);
+	clk_enable(clkp1);
+	clk_get_by_id(IMX8MM_SYS_PLL2_500M, &clkp1);
+	clk_set_parent(clkp, clkp1);
+
+	/* Configure ARM PLL to 1.2GHz */
+	clk_get_by_id(IMX8MM_ARM_PLL, &clkp1);
+	clk_set_rate(clkp1, 1200000000UL);
+	clk_get_by_id(IMX8MM_ARM_PLL_OUT, &clkp1);
+	clk_enable(clkp1);
+	clk_set_parent(clkp, clkp1);
+
+	/* Configure DIV to 1.2GHz */
+	clk_get_by_id(IMX8MM_CLK_A53_DIV, &clkp1);
+	clk_set_rate(clkp1, 1200000000UL);
 #endif
 
 	return 0;

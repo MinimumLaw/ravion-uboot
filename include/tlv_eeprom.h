@@ -114,19 +114,19 @@ int read_tlvinfo_tlv_eeprom(void *eeprom, struct tlvinfo_header **hdr,
 
 static inline int read_tlv_eeprom(void *eeprom, int offset, int len, int dev)
 {
-	return -ENOSYS;
+	return -ENOTSUPP;
 }
 
 static inline int write_tlv_eeprom(void *eeprom, int len)
 {
-	return -ENOSYS;
+	return -ENOTSUPP;
 }
 
 static inline int
 read_tlvinfo_tlv_eeprom(void *eeprom, struct tlvinfo_header **hdr,
 			struct tlvinfo_tlv **first_entry, int dev)
 {
-	return -ENOSYS;
+	return -ENOTSUPP;
 }
 
 #endif /* CONFIG_IS_ENABLED(CMD_TLV_EEPROM) */

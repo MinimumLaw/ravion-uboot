@@ -14,6 +14,15 @@
 
 #define PHYS_SDRAM_SIZE			SZ_512M
 
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(32 * SZ_1M)
+
+#define CONFIG_SYS_MEMTEST_START	0x80000000
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x20000000)
+
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+#define CONFIG_SYS_HZ			1000
+
 /* Physical Memory Map */
 #define PHYS_SDRAM			MMDC0_ARB_BASE_ADDR
 
@@ -27,6 +36,8 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* Environment configs */
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#define CONFIG_SYS_MMC_ENV_PART		0
 
 /* USB configs */
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET

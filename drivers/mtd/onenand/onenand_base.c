@@ -20,10 +20,8 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <watchdog.h>
 #include <dm/devres.h>
-#include <linux/bitops.h>
 #include <linux/compat.h>
 #include <linux/mtd/mtd.h>
 #include "linux/mtd/flashchip.h"
@@ -148,7 +146,7 @@ static void onenand_writew(unsigned short value, void __iomem * addr)
  * onenand_block_address - [DEFAULT] Get block address
  * @param device	the device id
  * @param block		the block
- * Return:		translated block address if DDP, otherwise same
+ * @return		translated block address if DDP, otherwise same
  *
  * Setup Start Address 1 Register (F100h)
  */
@@ -165,7 +163,7 @@ static int onenand_block_address(struct onenand_chip *this, int block)
  * onenand_bufferram_address - [DEFAULT] Get bufferram address
  * @param device	the device id
  * @param block		the block
- * Return:		set DBS value if DDP, otherwise 0
+ * @return		set DBS value if DDP, otherwise 0
  *
  * Setup Start Address 2 Register (F101h) for DDP
  */
@@ -182,7 +180,7 @@ static int onenand_bufferram_address(struct onenand_chip *this, int block)
  * onenand_page_address - [DEFAULT] Get page address
  * @param page		the page address
  * @param sector	the sector address
- * Return:		combined page and sector address
+ * @return		combined page and sector address
  *
  * Setup Start Address 8 Register (F107h)
  */
@@ -202,7 +200,7 @@ static int onenand_page_address(int page, int sector)
  * @param dataram1	DataRAM index
  * @param sectors	the sector address
  * @param count		the number of sectors
- * Return:		the start buffer value
+ * @return		the start buffer value
  *
  * Setup Start Buffer Register (F200h)
  */
@@ -511,7 +509,7 @@ static int onenand_wait(struct mtd_info *mtd, int state)
  * onenand_bufferram_offset - [DEFAULT] BufferRAM offset
  * @param mtd		MTD data structure
  * @param area		BufferRAM area
- * Return:		offset given area
+ * @return		offset given area
  *
  * Return BufferRAM offset given area
  */
@@ -612,7 +610,7 @@ static int onenand_write_bufferram(struct mtd_info *mtd, loff_t addr, int area,
  * onenand_get_2x_blockpage - [GENERIC] Get blockpage at 2x program mode
  * @param mtd		MTD data structure
  * @param addr		address to check
- * Return:		blockpage address
+ * @return		blockpage address
  *
  * Get blockpage address at 2x program mode
  */
@@ -636,7 +634,7 @@ static int onenand_get_2x_blockpage(struct mtd_info *mtd, loff_t addr)
  * onenand_check_bufferram - [GENERIC] Check BufferRAM information
  * @param mtd		MTD data structure
  * @param addr		address to check
- * Return:		1 if there are valid data, otherwise 0
+ * @return		1 if there are valid data, otherwise 0
  *
  * Check bufferram if there is data we required
  */
@@ -1836,6 +1834,9 @@ int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
 erase_exit:
 
 	ret = instr->state == MTD_ERASE_DONE ? 0 : -EIO;
+	/* Do call back function */
+	if (!ret)
+		mtd_erase_callback(instr);
 
 	/* Deselect and wake up anyone waiting on the device */
 	onenand_release_device(mtd);
@@ -2303,8 +2304,8 @@ static int flexonenand_get_boundary(struct mtd_info *mtd)
 
 /**
  * flexonenand_get_size - Fill up fields in onenand_chip and mtd_info
- *			  boundary[], diesize[], mtd->size, mtd->erasesize,
- *			  mtd->eraseregions
+ * 			  boundary[], diesize[], mtd->size, mtd->erasesize,
+ * 			  mtd->eraseregions
  * @param mtd		- MTD device structure
  */
 static void flexonenand_get_size(struct mtd_info *mtd)
@@ -2654,7 +2655,6 @@ int onenand_probe(struct mtd_info *mtd)
 	else
 		mtd->size = this->chipsize;
 
-	mtd->type = ONENAND_IS_MLC(this) ? MTD_MLCNANDFLASH : MTD_NANDFLASH;
 	mtd->flags = MTD_CAP_NANDFLASH;
 	mtd->_erase = onenand_erase;
 	mtd->_read_oob = onenand_read_oob;

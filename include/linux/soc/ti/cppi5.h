@@ -10,7 +10,6 @@
 
 #include <hexdump.h>
 #include <linux/bitops.h>
-#include <linux/bug.h>
 
 /**
  * Descriptor header, present in all types of descriptors

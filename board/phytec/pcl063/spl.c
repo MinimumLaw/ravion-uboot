@@ -7,7 +7,6 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <spl.h>
 #include <asm/arch/clock.h>
 #include <asm/io.h>
@@ -152,7 +151,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;
 }
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
 

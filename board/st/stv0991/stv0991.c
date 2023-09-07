@@ -5,17 +5,13 @@
  */
 
 #include <common.h>
-#include <bootstage.h>
 #include <dm.h>
-#include <init.h>
 #include <miiphy.h>
-#include <net.h>
 #include <asm/arch/stv0991_periph.h>
 #include <asm/arch/stv0991_defs.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/gpio.h>
 #include <netdev.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/platform_data/serial_pl01x.h>
 
@@ -25,19 +21,19 @@ struct gpio_regs *const gpioa_regs =
 		(struct gpio_regs *) GPIOA_BASE_ADDR;
 
 #ifndef CONFIG_OF_CONTROL
-static const struct pl01x_serial_plat serial_plat = {
+static const struct pl01x_serial_platdata serial_platdata = {
 	.base = 0x80406000,
 	.type = TYPE_PL011,
 	.clock = 2700 * 1000,
 };
 
-U_BOOT_DRVINFO(stv09911_serials) = {
+U_BOOT_DEVICE(stv09911_serials) = {
 	.name = "serial_pl01x",
-	.plat = &serial_plat,
+	.platdata = &serial_platdata,
 };
 #endif
 
-#if CONFIG_IS_ENABLED(BOOTSTAGE)
+#ifdef CONFIG_SHOW_BOOT_PROGRESS
 void show_boot_progress(int progress)
 {
 	printf("%i\n", progress);
@@ -105,7 +101,7 @@ int dram_init_banksize(void)
 }
 
 #ifdef CONFIG_CMD_NET
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 	int ret = 0;
 

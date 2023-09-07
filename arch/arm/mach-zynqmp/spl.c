@@ -6,36 +6,28 @@
  */
 
 #include <common.h>
-#include <image.h>
+#include <debug_uart.h>
 #include <init.h>
-#include <log.h>
 #include <spl.h>
-#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/spl.h>
 #include <asm/arch/hardware.h>
-#include <asm/arch/ecc_spl_init.h>
 #include <asm/arch/psu_init_gpl.h>
 #include <asm/arch/sys_proto.h>
 
-#if defined(CONFIG_DEBUG_UART_BOARD_INIT)
-void board_debug_uart_init(void)
-{
-	psu_uboot_init();
-}
-#endif
-
 void board_init_f(ulong dummy)
 {
-#if !defined(CONFIG_DEBUG_UART_BOARD_INIT)
-	psu_uboot_init();
-#endif
-
+	board_early_init_f();
 	board_early_init_r();
-#ifdef CONFIG_SPL_ZYNQMP_DRAM_ECC_INIT
-	zynqmp_ecc_init();
+
+#ifdef CONFIG_DEBUG_UART
+	/* Uart debug for sure */
+	debug_uart_init();
+	puts("Debug uart enabled\n"); /* or printch() */
 #endif
+	/* Delay is required for clocks to be propagated */
+	udelay(1000000);
 }
 
 static void ps_mode_reset(ulong mode)
@@ -74,8 +66,6 @@ void board_boot_order(u32 *spl_boot_list)
 		spl_boot_list[1] = BOOT_DEVICE_MMC2;
 	if (spl_boot_list[0] == BOOT_DEVICE_MMC2)
 		spl_boot_list[1] = BOOT_DEVICE_MMC1;
-
-	spl_boot_list[2] = BOOT_DEVICE_RAM;
 }
 
 u32 spl_boot_device(void)
@@ -98,7 +88,7 @@ u32 spl_boot_device(void)
 	switch (bootmode) {
 	case JTAG_MODE:
 		return BOOT_DEVICE_RAM;
-#ifdef CONFIG_SPL_MMC
+#ifdef CONFIG_SPL_MMC_SUPPORT
 	case SD_MODE1:
 	case SD1_LSHFT_MODE: /* not working on silicon v1 */
 		return BOOT_DEVICE_MMC2;
@@ -110,11 +100,11 @@ u32 spl_boot_device(void)
 	case USB_MODE:
 		return BOOT_DEVICE_DFU;
 #endif
-#ifdef CONFIG_SPL_SATA
+#ifdef CONFIG_SPL_SATA_SUPPORT
 	case SW_SATA_MODE:
 		return BOOT_DEVICE_SATA;
 #endif
-#ifdef CONFIG_SPL_SPI
+#ifdef CONFIG_SPL_SPI_SUPPORT
 	case QSPI_MODE_24BIT:
 	case QSPI_MODE_32BIT:
 		return BOOT_DEVICE_SPI;
@@ -131,5 +121,15 @@ u32 spl_boot_device(void)
 int spl_start_uboot(void)
 {
 	return 0;
+}
+#endif
+
+#ifdef CONFIG_SPL_LOAD_FIT
+int board_fit_config_name_match(const char *name)
+{
+	/* Just empty function now - can't decide what to choose */
+	debug("%s: %s\n", __func__, name);
+
+	return -1;
 }
 #endif

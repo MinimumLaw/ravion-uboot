@@ -13,7 +13,10 @@
 
 #include <linux/sizes.h>
 
+#define CONFIG_POWER
 #define CONFIG_POWER_HI6553
+
+#define CONFIG_REMAKE_ELF
 
 #define CONFIG_SYS_BOOTM_LEN		SZ_64M
 
@@ -32,6 +35,8 @@
 
 #define CONFIG_SYS_INIT_SP_ADDR         (CONFIG_SYS_SDRAM_BASE + 0x7fff0)
 
+#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x80000)
+
 /* Generic Timer Definitions */
 #define COUNTER_FREQUENCY		19000000
 
@@ -39,7 +44,18 @@
 #define GICD_BASE			0xf6801000
 #define GICC_BASE			0xf6802000
 
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + SZ_8M)
+
+#ifdef CONFIG_CMD_USB
+#define CONFIG_USB_DWC2_REG_ADDR 0xF72C0000
+/*#define CONFIG_DWC2_DFLT_SPEED_FULL*/
+#define CONFIG_DWC2_ENABLE_DYNAMIC_FIFO
+#endif
+
 #define CONFIG_HIKEY_GPIO
+
+/* Command line configuration */
 
 /* BOOTP options */
 #define CONFIG_BOOTP_BOOTFILESIZE
@@ -66,6 +82,8 @@
 				BOOTENV
 
 /* Preserve environment on eMMC */
+#define CONFIG_SYS_MMC_ENV_DEV		0	/* Use eMMC */
+#define CONFIG_SYS_MMC_ENV_PART		2	/* Use Boot1 partition */
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */

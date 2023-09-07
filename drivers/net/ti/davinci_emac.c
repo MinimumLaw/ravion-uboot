@@ -24,15 +24,12 @@
 #include <common.h>
 #include <command.h>
 #include <cpu_func.h>
-#include <log.h>
 #include <net.h>
 #include <miiphy.h>
 #include <malloc.h>
-#include <asm/cache.h>
 #include <linux/compiler.h>
 #include <asm/arch/emac_defs.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 #include "davinci_emac.h"
 
 unsigned int	emac_dbg = 0;
@@ -112,7 +109,7 @@ phy_t				phy[CONFIG_SYS_DAVINCI_EMAC_PHY_COUNT];
 
 static int davinci_emac_write_hwaddr(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	unsigned long		mac_hi;
 	unsigned long		mac_lo;
 
@@ -816,7 +813,7 @@ static int davinci_emac_probe(struct udevice *dev)
 		struct mii_dev *mdiodev = mdio_alloc();
 		if (!mdiodev)
 			return -ENOMEM;
-		strlcpy(mdiodev->name, phy[i].name, MDIO_NAME_LEN);
+		strncpy(mdiodev->name, phy[i].name, MDIO_NAME_LEN);
 		mdiodev->read = davinci_mii_phy_read;
 		mdiodev->write = davinci_mii_phy_write;
 
@@ -865,5 +862,5 @@ U_BOOT_DRIVER(davinci_emac) = {
 	.of_match	= davinci_emac_ids,
 	.probe		= davinci_emac_probe,
 	.ops		= &davinci_emac_ops,
-	.plat_auto	= sizeof(struct eth_pdata),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };

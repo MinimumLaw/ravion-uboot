@@ -4,7 +4,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
-#include <command.h>
+#include <common.h>
 #include <stdio.h>
 #include <linux/io.h>
 #include <linux/printk.h>
@@ -291,8 +291,7 @@ static void reg_dump(const struct uniphier_ddrmphy_param *param)
 	}
 }
 
-static int do_ddrm(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_ddrm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	const struct uniphier_ddrmphy_param *param;
 	char *cmd;

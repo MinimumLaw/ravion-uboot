@@ -14,7 +14,6 @@
 #include <env.h>
 #include <stdio_dev.h>
 #include <video_console.h>
-#include <linux/delay.h>
 
 #define EFI_COUT_MODE_2 2
 #define EFI_MAX_COUT_MODE 3
@@ -24,8 +23,6 @@ struct cout_mode {
 	unsigned long rows;
 	int present;
 };
-
-__maybe_unused static struct efi_object uart_obj;
 
 static struct cout_mode efi_cout_modes[] = {
 	/* EFI Mode 0 is 80x25 and always present */
@@ -79,17 +76,17 @@ static int term_get_char(s32 *c)
 		if (timer_get_us() > timeout)
 			return 1;
 
-	*c = getchar();
+	*c = getc();
 	return 0;
 }
 
-/**
+/*
  * Receive and parse a reply from the terminal.
  *
  * @n:		array of return values
  * @num:	number of return values expected
  * @end_char:	character indicating end of terminal message
- * Return:	non-zero indicates error
+ * @return:	non-zero indicates error
  */
 static int term_read_reply(int *n, int num, char end_char)
 {
@@ -130,25 +127,14 @@ static int term_read_reply(int *n, int num, char end_char)
 	return 0;
 }
 
-/**
- * efi_cout_output_string() - write Unicode string to console
- *
- * This function implements the OutputString service of the simple text output
- * protocol. See the Unified Extensible Firmware Interface (UEFI) specification
- * for details.
- *
- * @this:	simple text output protocol
- * @string:	u16 string
- * Return:	status code
- */
 static efi_status_t EFIAPI efi_cout_output_string(
 			struct efi_simple_text_output_protocol *this,
-			const u16 *string)
+			const efi_string_t string)
 {
 	struct simple_text_output_mode *con = &efi_con_mode;
 	struct cout_mode *mode = &efi_cout_modes[con->mode];
 	char *buf, *pos;
-	const u16 *p;
+	u16 *p;
 	efi_status_t ret = EFI_SUCCESS;
 
 	EFI_ENTRY("%p, %p", this, string);
@@ -216,37 +202,14 @@ out:
 	return EFI_EXIT(ret);
 }
 
-/**
- * efi_cout_test_string() - test writing Unicode string to console
- *
- * This function implements the TestString service of the simple text output
- * protocol. See the Unified Extensible Firmware Interface (UEFI) specification
- * for details.
- *
- * As in OutputString we simply convert UTF-16 to UTF-8 there are no unsupported
- * code points and we can always return EFI_SUCCESS.
- *
- * @this:	simple text output protocol
- * @string:	u16 string
- * Return:	status code
- */
 static efi_status_t EFIAPI efi_cout_test_string(
 			struct efi_simple_text_output_protocol *this,
-			const u16 *string)
+			const efi_string_t string)
 {
 	EFI_ENTRY("%p, %p", this, string);
 	return EFI_EXIT(EFI_SUCCESS);
 }
 
-/**
- * cout_mode_matches() - check if mode has given terminal size
- *
- * @mode:	text mode
- * @rows:	number of rows
- * @cols:	number of columns
- * Return:	true if number of rows and columns matches the mode and
- *		the mode is present
- */
 static bool cout_mode_matches(struct cout_mode *mode, int rows, int cols)
 {
 	if (!mode->present)
@@ -256,10 +219,7 @@ static bool cout_mode_matches(struct cout_mode *mode, int rows, int cols)
 }
 
 /**
- * query_console_serial() - query serial console size
- *
- * When using a serial console or the net console we can only devise the
- * terminal size by querying the terminal using ECMA-48 control sequences.
+ * query_console_serial() - query console size
  *
  * @rows:	pointer to return number of rows
  * @cols:	pointer to return number of columns
@@ -272,7 +232,7 @@ static int query_console_serial(int *rows, int *cols)
 
 	/* Empty input buffer */
 	while (tstc())
-		getchar();
+		getc();
 
 	/*
 	 * Not all terminals understand CSI [18t for querying the console size.
@@ -301,39 +261,8 @@ out:
 	return ret;
 }
 
-/**
- * query_vidconsole() - query video console size
- *
- *
- * @rows:	pointer to return number of rows
- * @cols:	pointer to return number of columns
- * Returns:	0 on success
- */
-static int __maybe_unused query_vidconsole(int *rows, int *cols)
-{
-	const char *stdout_name = env_get("stdout");
-	struct stdio_dev *stdout_dev;
-	struct udevice *dev;
-	struct vidconsole_priv *priv;
-
-	if (!stdout_name || strncmp(stdout_name, "vidconsole", 10))
-		return -ENODEV;
-	stdout_dev = stdio_get_by_name("vidconsole");
-	if (!stdout_dev)
-		return -ENODEV;
-	dev = stdout_dev->priv;
-	if (!dev)
-		return -ENODEV;
-	priv = dev_get_uclass_priv(dev);
-	if (!priv)
-		return -ENODEV;
-	*rows = priv->rows;
-	*cols = priv->cols;
-	return 0;
-}
-
-/**
- * query_console_size() - update the mode table.
+/*
+ * Update the mode table.
  *
  * By default the only mode available is 80x25. If the console has at least 50
  * lines, enable mode 80x50. If we can query the console size and it is neither
@@ -341,15 +270,21 @@ static int __maybe_unused query_vidconsole(int *rows, int *cols)
  */
 static void query_console_size(void)
 {
+	const char *stdout_name = env_get("stdout");
 	int rows = 25, cols = 80;
-	int ret = -ENODEV;
 
-	if (IS_ENABLED(CONFIG_DM_VIDEO))
-		ret = query_vidconsole(&rows, &cols);
-	if (ret)
-		ret = query_console_serial(&rows, &cols);
-	if (ret)
+	if (stdout_name && !strcmp(stdout_name, "vidconsole") &&
+	    IS_ENABLED(CONFIG_DM_VIDEO)) {
+		struct stdio_dev *stdout_dev =
+			stdio_get_by_name("vidconsole");
+		struct udevice *dev = stdout_dev->priv;
+		struct vidconsole_priv *priv =
+			dev_get_uclass_priv(dev);
+		rows = priv->rows;
+		cols = priv->cols;
+	} else if (query_console_serial(&rows, &cols)) {
 		return;
+	}
 
 	/* Test if we can have Mode 1 */
 	if (cols >= 80 && rows >= 50) {
@@ -371,20 +306,6 @@ static void query_console_size(void)
 	}
 }
 
-
-/**
- * efi_cout_query_mode() - get terminal size for a text mode
- *
- * This function implements the QueryMode service of the simple text output
- * protocol. See the Unified Extensible Firmware Interface (UEFI) specification
- * for details.
- *
- * @this:		simple text output protocol
- * @mode_number:	mode number to retrieve information on
- * @columns:		number of columns
- * @rows:		number of rows
- * Return:		status code
- */
 static efi_status_t EFIAPI efi_cout_query_mode(
 			struct efi_simple_text_output_protocol *this,
 			unsigned long mode_number, unsigned long *columns,
@@ -420,17 +341,7 @@ static const struct {
 	{ 37, 47 },     /* 7: light gray, map to white */
 };
 
-/**
- * efi_cout_set_attribute() - set fore- and background color
- *
- * This function implements the SetAttribute service of the simple text output
- * protocol. See the Unified Extensible Firmware Interface (UEFI) specification
- * for details.
- *
- * @this:	simple text output protocol
- * @attribute:	foreground color - bits 0-3, background color - bits 4-6
- * Return:	status code
- */
+/* See EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.SetAttribute(). */
 static efi_status_t EFIAPI efi_cout_set_attribute(
 			struct efi_simple_text_output_protocol *this,
 			unsigned long attribute)
@@ -453,9 +364,9 @@ static efi_status_t EFIAPI efi_cout_set_attribute(
 /**
  * efi_cout_clear_screen() - clear screen
  *
- * This function implements the ClearScreen service of the simple text output
- * protocol. See the Unified Extensible Firmware Interface (UEFI) specification
- * for details.
+ * This function implements the ClearScreen service of the
+ * EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL. See the Unified Extensible Firmware
+ * Interface (UEFI) specification for details.
  *
  * @this:	pointer to the protocol instance
  * Return:	status code
@@ -476,17 +387,6 @@ static efi_status_t EFIAPI efi_cout_clear_screen(
 	return EFI_EXIT(EFI_SUCCESS);
 }
 
-/**
- * efi_cout_clear_set_mode() - set text model
- *
- * This function implements the SetMode service of the simple text output
- * protocol. See the Unified Extensible Firmware  Interface (UEFI) specification
- * for details.
- *
- * @this:		pointer to the protocol instance
- * @mode_number:	number of the text mode to set
- * Return:		status code
- */
 static efi_status_t EFIAPI efi_cout_set_mode(
 			struct efi_simple_text_output_protocol *this,
 			unsigned long mode_number)
@@ -505,17 +405,6 @@ static efi_status_t EFIAPI efi_cout_set_mode(
 	return EFI_EXIT(EFI_SUCCESS);
 }
 
-/**
- * efi_cout_reset() - reset the terminal
- *
- * This function implements the Reset service of the simple text output
- * protocol. See the Unified Extensible Firmware  Interface (UEFI) specification
- * for details.
- *
- * @this:			pointer to the protocol instance
- * @extended_verification:	if set an extended verification may be executed
- * Return:			status code
- */
 static efi_status_t EFIAPI efi_cout_reset(
 			struct efi_simple_text_output_protocol *this,
 			char extended_verification)
@@ -531,18 +420,6 @@ static efi_status_t EFIAPI efi_cout_reset(
 	return EFI_EXIT(EFI_SUCCESS);
 }
 
-/**
- * efi_cout_set_cursor_position() - reset the terminal
- *
- * This function implements the SetCursorPosition service of the simple text
- * output protocol. See the Unified Extensible Firmware  Interface (UEFI)
- * specification for details.
- *
- * @this:	pointer to the protocol instance
- * @column:	column to move to
- * @row:	row to move to
- * Return:	status code
- */
 static efi_status_t EFIAPI efi_cout_set_cursor_position(
 			struct efi_simple_text_output_protocol *this,
 			unsigned long column, unsigned long row)
@@ -574,17 +451,6 @@ out:
 	return EFI_EXIT(ret);
 }
 
-/**
- * efi_cout_enable_cursor() - enable the cursor
- *
- * This function implements the EnableCursor service of the simple text  output
- * protocol. See the Unified Extensible Firmware  Interface (UEFI) specification
- * for details.
- *
- * @this:	pointer to the protocol instance
- * @enable:	if true enable, if false disable the cursor
- * Return:	status code
- */
 static efi_status_t EFIAPI efi_cout_enable_cursor(
 			struct efi_simple_text_output_protocol *this,
 			bool enable)
@@ -656,19 +522,19 @@ void set_shift_mask(int mod, struct efi_key_state *key_state)
  * This gets called when we have already parsed CSI.
  *
  * @key_state:  receives the state of the shift, alt, control, and logo keys
- * Return:	the unmodified code
+ * @return:	the unmodified code
  */
 static int analyze_modifiers(struct efi_key_state *key_state)
 {
 	int c, mod = 0, ret = 0;
 
-	c = getchar();
+	c = getc();
 
 	if (c != ';') {
 		ret = c;
 		if (c == '~')
 			goto out;
-		c = getchar();
+		c = getc();
 	}
 	for (;;) {
 		switch (c) {
@@ -677,7 +543,7 @@ static int analyze_modifiers(struct efi_key_state *key_state)
 			mod += c - '0';
 		/* fall through */
 		case ';':
-			c = getchar();
+			c = getc();
 			break;
 		default:
 			goto out;
@@ -717,39 +583,28 @@ static efi_status_t efi_cin_read_key(struct efi_key_data *key)
 	switch (ch) {
 	case 0x1b:
 		/*
-		 * If a second key is received within 10 ms, assume that we are
-		 * dealing with an escape sequence. Otherwise consider this the
-		 * escape key being hit. 10 ms is long enough to work fine at
-		 * 1200 baud and above.
-		 */
-		udelay(10000);
-		if (!tstc()) {
-			pressed_key.scan_code = 23;
-			break;
-		}
-		/*
 		 * Xterm Control Sequences
 		 * https://www.xfree86.org/4.8.0/ctlseqs.html
 		 */
-		ch = getchar();
+		ch = getc();
 		switch (ch) {
 		case cESC: /* ESC */
 			pressed_key.scan_code = 23;
 			break;
 		case 'O': /* F1 - F4, End */
-			ch = getchar();
+			ch = getc();
 			/* consider modifiers */
 			if (ch == 'F') { /* End */
 				pressed_key.scan_code = 6;
 				break;
 			} else if (ch < 'P') {
 				set_shift_mask(ch - '0', &key->key_state);
-				ch = getchar();
+				ch = getc();
 			}
 			pressed_key.scan_code = ch - 'P' + 11;
 			break;
 		case '[':
-			ch = getchar();
+			ch = getc();
 			switch (ch) {
 			case 'A'...'D': /* up, down right, left */
 				pressed_key.scan_code = ch - 'A' + 1;
@@ -907,7 +762,7 @@ static void efi_cin_check(void)
 static void efi_cin_empty_buffer(void)
 {
 	while (tstc())
-		getchar();
+		getc();
 	key_available = false;
 }
 
@@ -1260,33 +1115,37 @@ static void EFIAPI efi_key_notify(struct efi_event *event, void *context)
 efi_status_t efi_console_register(void)
 {
 	efi_status_t r;
-	struct efi_device_path *dp;
+	efi_handle_t console_output_handle;
+	efi_handle_t console_input_handle;
 
 	/* Set up mode information */
 	query_console_size();
 
-	/* Install protocols on root node */
-	r = EFI_CALL(efi_install_multiple_protocol_interfaces
-		     (&efi_root,
-		      &efi_guid_text_output_protocol, &efi_con_out,
-		      &efi_guid_text_input_protocol, &efi_con_in,
-		      &efi_guid_text_input_ex_protocol, &efi_con_in_ex,
-		      NULL));
+	/* Create handles */
+	r = efi_create_handle(&console_output_handle);
+	if (r != EFI_SUCCESS)
+		goto out_of_memory;
 
-	/* Create console node and install device path protocols */
-	if (CONFIG_IS_ENABLED(DM_SERIAL)) {
-		dp = efi_dp_from_uart();
-		if (!dp)
-			goto out_of_memory;
+	r = efi_add_protocol(console_output_handle,
+			     &efi_guid_text_output_protocol, &efi_con_out);
+	if (r != EFI_SUCCESS)
+		goto out_of_memory;
+	systab.con_out_handle = console_output_handle;
+	systab.stderr_handle = console_output_handle;
 
-		/* Hook UART up to the device list */
-		efi_add_handle(&uart_obj);
+	r = efi_create_handle(&console_input_handle);
+	if (r != EFI_SUCCESS)
+		goto out_of_memory;
 
-		/* Install device path */
-		r = efi_add_protocol(&uart_obj, &efi_guid_device_path, dp);
-		if (r != EFI_SUCCESS)
-			goto out_of_memory;
-	}
+	r = efi_add_protocol(console_input_handle,
+			     &efi_guid_text_input_protocol, &efi_con_in);
+	if (r != EFI_SUCCESS)
+		goto out_of_memory;
+	systab.con_in_handle = console_input_handle;
+	r = efi_add_protocol(console_input_handle,
+			     &efi_guid_text_input_ex_protocol, &efi_con_in_ex);
+	if (r != EFI_SUCCESS)
+		goto out_of_memory;
 
 	/* Create console events */
 	r = efi_create_event(EVT_NOTIFY_WAIT, TPL_CALLBACK, efi_key_notify,

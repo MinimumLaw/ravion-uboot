@@ -4,15 +4,11 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_CATEGORY UCLASS_VIDEO_BRIDGE
-
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
 #include <edid.h>
-#include <log.h>
 #include <video_bridge.h>
-#include <linux/delay.h>
 
 int video_bridge_set_backlight(struct udevice *dev, int percent)
 {
@@ -136,6 +132,7 @@ int video_bridge_set_active(struct udevice *dev, bool active)
 UCLASS_DRIVER(video_bridge) = {
 	.id		= UCLASS_VIDEO_BRIDGE,
 	.name		= "video_bridge",
-	.per_device_auto	= sizeof(struct video_bridge_priv),
+	.flags		= DM_UC_FLAG_SEQ_ALIAS,
+	.per_device_auto_alloc_size	= sizeof(struct video_bridge_priv),
 	.pre_probe	= video_bridge_pre_probe,
 };

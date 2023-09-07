@@ -5,18 +5,14 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include <dm/device_compat.h>
 #include <dm/lists.h>
 #include <dm/pinctrl.h>
 #include <fdt_support.h>
-#include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/io.h>
-#include <linux/libfdt.h>
 #include <linux/sizes.h>
 #include <asm/gpio.h>
 
@@ -217,13 +213,13 @@ static int meson_pinconf_bias_set(struct udevice *dev, unsigned int pin,
 	}
 
 	/* othewise, enable the bias and select level */
-	clrsetbits_le32(priv->reg_pullen + reg, BIT(bit), BIT(bit));
+	clrsetbits_le32(priv->reg_pullen + reg, BIT(bit), 1);
 	ret = meson_gpio_calc_reg_and_bit(dev, offset, REG_PULL, &reg, &bit);
 	if (ret)
 		return ret;
 
 	clrsetbits_le32(priv->reg_pull + reg, BIT(bit),
-			(param == PIN_CONFIG_BIAS_PULL_UP ? BIT(bit) : 0));
+			param == PIN_CONFIG_BIAS_PULL_UP);
 
 	return 0;
 }
@@ -348,7 +344,6 @@ int meson_pinctrl_probe(struct udevice *dev)
 	int na, ns;
 	char *name;
 
-	/* FIXME: Should use livetree */
 	na = fdt_address_cells(gd->fdt_blob, dev_of_offset(dev->parent));
 	if (na < 1) {
 		debug("bad #address-cells\n");
@@ -421,8 +416,8 @@ int meson_pinctrl_probe(struct udevice *dev)
 	sprintf(name, "meson-gpio");
 
 	/* Create child device UCLASS_GPIO and bind it */
-	device_bind(dev, priv->data->gpio_driver, name, NULL,
-		    offset_to_ofnode(gpio), &gpio_dev);
+	device_bind(dev, priv->data->gpio_driver, name, NULL, gpio, &gpio_dev);
+	dev_set_of_offset(gpio_dev, gpio);
 
 	return 0;
 }

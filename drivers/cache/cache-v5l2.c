@@ -9,10 +9,8 @@
 #include <cache.h>
 #include <dm.h>
 #include <hang.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/ofnode.h>
-#include <linux/bitops.h>
 
 struct l2cache {
 	volatile u64	configure;
@@ -68,13 +66,13 @@ struct v5l2_plat {
 	struct l2cache	*regs;
 	u32		iprefetch;
 	u32		dprefetch;
-	u32		tram_ctl[2];
-	u32		dram_ctl[2];
+	u32 		tram_ctl[2];
+	u32 		dram_ctl[2];
 };
 
 static int v5l2_enable(struct udevice *dev)
 {
-	struct v5l2_plat *plat = dev_get_plat(dev);
+	struct v5l2_plat *plat = dev_get_platdata(dev);
 	volatile struct l2cache *regs = plat->regs;
 
 	if (regs)
@@ -85,7 +83,7 @@ static int v5l2_enable(struct udevice *dev)
 
 static int v5l2_disable(struct udevice *dev)
 {
-	struct v5l2_plat *plat = dev_get_plat(dev);
+	struct v5l2_plat *plat = dev_get_platdata(dev);
 	volatile struct l2cache *regs = plat->regs;
 	u8 hart = gd->arch.boot_hart;
 	void __iomem *cctlcmd = (void __iomem *)CCTL_CMD_REG(regs, hart);
@@ -105,9 +103,9 @@ static int v5l2_disable(struct udevice *dev)
 	return 0;
 }
 
-static int v5l2_of_to_plat(struct udevice *dev)
+static int v5l2_ofdata_to_platdata(struct udevice *dev)
 {
-	struct v5l2_plat *plat = dev_get_plat(dev);
+	struct v5l2_plat *plat = dev_get_platdata(dev);
 	struct l2cache *regs;
 
 	regs = (struct l2cache *)dev_read_addr(dev);
@@ -131,7 +129,7 @@ static int v5l2_of_to_plat(struct udevice *dev)
 
 static int v5l2_probe(struct udevice *dev)
 {
-	struct v5l2_plat *plat = dev_get_plat(dev);
+	struct v5l2_plat *plat = dev_get_platdata(dev);
 	struct l2cache *regs = plat->regs;
 	u32 ctl_val;
 
@@ -181,9 +179,9 @@ U_BOOT_DRIVER(v5l2_cache) = {
 	.name   = "v5l2_cache",
 	.id     = UCLASS_CACHE,
 	.of_match = v5l2_cache_ids,
-	.of_to_plat = v5l2_of_to_plat,
+	.ofdata_to_platdata = v5l2_ofdata_to_platdata,
 	.probe	= v5l2_probe,
-	.plat_auto	= sizeof(struct v5l2_plat),
+	.platdata_auto_alloc_size = sizeof(struct v5l2_plat),
 	.ops = &v5l2_cache_ops,
 	.flags  = DM_FLAG_PRE_RELOC,
 };

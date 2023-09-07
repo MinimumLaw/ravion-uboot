@@ -31,6 +31,7 @@
 #define CONFIG_SYS_NS16550_COM3		UART3_BASE
 
 /* MMC ENV related defines */
+#define CONFIG_SYS_MMC_ENV_DEV		1	/* SLOT2: eMMC(1) */
 
 /* Enhance our eMMC support / experience. */
 #define CONFIG_HSMMC2_8BIT
@@ -43,10 +44,19 @@
 /* USB UHH support options */
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET
 
+#define CONFIG_OMAP_EHCI_PHY2_RESET_GPIO 80
+#define CONFIG_OMAP_EHCI_PHY3_RESET_GPIO 79
+
 /* Enabled commands */
 
 /* USB Networking options */
 
 #define CONSOLEDEV		"ttyS2"
+
+#define CONFIG_SCSI_AHCI_PLAT
+#define CONFIG_SYS_SCSI_MAX_SCSI_ID	1
+#define CONFIG_SYS_SCSI_MAX_LUN		1
+#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
+						CONFIG_SYS_SCSI_MAX_LUN)
 
 #endif /* __CONFIG_OMAP5_EVM_H */

@@ -4,7 +4,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/gp_padctrl.h>
@@ -13,7 +12,6 @@
 #include <asm/arch-tegra/clk_rst.h>
 #include <asm/arch-tegra/pmc.h>
 #include <asm/arch-tegra/scu.h>
-#include <linux/delay.h>
 #include "cpu.h"
 
 int get_num_cpus(void)

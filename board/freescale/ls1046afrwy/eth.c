@@ -3,8 +3,6 @@
  * Copyright 2019 NXP
  */
 #include <common.h>
-#include <fdt_support.h>
-#include <net.h>
 #include <asm/io.h>
 #include <netdev.h>
 #include <fm_eth.h>
@@ -14,7 +12,7 @@
 
 #include "../common/fman.h"
 
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_FMAN_ENET
 	struct memac_mdio_info dtsec_mdio_info;

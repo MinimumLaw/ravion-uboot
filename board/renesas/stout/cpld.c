@@ -8,7 +8,6 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <cpu_func.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
@@ -125,15 +124,14 @@ void cpld_init(void)
 #endif
 }
 
-static int do_cpld(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_cpld(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	u32 addr, val;
 
 	if (argc < 3)
 		return CMD_RET_USAGE;
 
-	addr = hextoul(argv[2], NULL);
+	addr = simple_strtoul(argv[2], NULL, 16);
 	if (!(addr == CPLD_ADDR_VERSION || addr == CPLD_ADDR_MODE ||
 	      addr == CPLD_ADDR_MUX || addr == CPLD_ADDR_HDMI ||
 	      addr == CPLD_ADDR_DIPSW || addr == CPLD_ADDR_RESET)) {
@@ -144,7 +142,7 @@ static int do_cpld(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc == 3 && strcmp(argv[1], "read") == 0) {
 		printf("0x%x\n", cpld_read(addr));
 	} else if (argc == 4 && strcmp(argv[1], "write") == 0) {
-		val = hextoul(argv[3], NULL);
+		val = simple_strtoul(argv[3], NULL, 16);
 		if (addr == CPLD_ADDR_MUX) {
 			/* never mask SCIFA0 console */
 			val &= ~MUX_MSK_SCIFA0_USB;
@@ -163,7 +161,7 @@ U_BOOT_CMD(
 	"cpld write addr val\n"
 );
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	cpld_write(CPLD_ADDR_RESET, 1);
 }

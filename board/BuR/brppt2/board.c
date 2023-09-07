@@ -9,7 +9,6 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <hang.h>
-#include <init.h>
 #include <spl.h>
 #include <dm.h>
 #include <miiphy.h>
@@ -21,7 +20,6 @@
 # include <asm/arch/mx6-ddr.h>
 #endif
 #include <asm/arch/clock.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 
@@ -540,7 +538,7 @@ void board_init_f(ulong dummy)
 	spl_dram_init();
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 }
 #endif /* CONFIG_SPL_BUILD */

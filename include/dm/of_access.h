@@ -44,7 +44,7 @@ static inline void of_node_put(const struct device_node *np) { }
  * which controls the given node.
  *
  * @np: Node pointer to check
- * Return: number of address cells this node uses
+ * @return number of address cells this node uses
  */
 int of_n_addr_cells(const struct device_node *np);
 
@@ -55,7 +55,7 @@ int of_n_addr_cells(const struct device_node *np);
  * which controls the given node.
  *
  * @np: Node pointer to check
- * Return: number of size cells this node uses
+ * @return number of size cells this node uses
  */
 int of_n_size_cells(const struct device_node *np);
 
@@ -65,7 +65,7 @@ int of_n_size_cells(const struct device_node *np);
  * This function matches fdt_address_cells().
  *
  * @np: Node pointer to check
- * Return: value of #address-cells property in this node, or 2 if none
+ * @return value of #address-cells property in this node, or 2 if none
  */
 int of_simple_addr_cells(const struct device_node *np);
 
@@ -75,7 +75,7 @@ int of_simple_addr_cells(const struct device_node *np);
  * This function matches fdt_size_cells().
  *
  * @np: Node pointer to check
- * Return: value of #size-cells property in this node, or 2 if none
+ * @return value of #size-cells property in this node, or 2 if none
  */
 int of_simple_size_cells(const struct device_node *np);
 
@@ -85,7 +85,7 @@ int of_simple_size_cells(const struct device_node *np);
  * @np: Pointer to device node holding property
  * @name: Name of property
  * @lenp: If non-NULL, returns length of property
- * Return: pointer to property, or NULL if not found
+ * @return pointer to property, or NULL if not found
  */
 struct property *of_find_property(const struct device_node *np,
 				  const char *name, int *lenp);
@@ -98,54 +98,14 @@ struct property *of_find_property(const struct device_node *np,
  * @np: Pointer to device node holding property
  * @name: Name of property
  * @lenp: If non-NULL, returns length of property
- * Return: pointer to property value, or NULL if not found
+ * @return pointer to property value, or NULL if not found
  */
 const void *of_get_property(const struct device_node *np, const char *name,
 			    int *lenp);
 
 /**
- * of_get_first_property()- get to the pointer of the first property
- *
- * Get pointer to the first property of the node, it is used to iterate
- * and read all the property with of_get_next_property_by_prop().
- *
- * @np: Pointer to device node
- * Return: pointer to property or NULL if not found
- */
-const struct property *of_get_first_property(const struct device_node *np);
-
-/**
- * of_get_next_property() - get to the pointer of the next property
- *
- * Get pointer to the next property of the node, it is used to iterate
- * and read all the property with of_get_property_by_prop().
- *
- * @np: Pointer to device node
- * @property: pointer of the current property
- * Return: pointer to next property or NULL if not found
- */
-const struct property *of_get_next_property(const struct device_node *np,
-					    const struct property *property);
-
-/**
- * of_get_property_by_prop() - get a property value of a node property
- *
- * Get value for the property identified by node and property pointer.
- *
- * @np: Pointer to device node
- * @property: pointer of the property to read
- * @name: place to property name on success
- * @lenp: place to put length on success
- * Return: pointer to property value or NULL if error
- */
-const void *of_get_property_by_prop(const struct device_node *np,
-				    const struct property *property,
-				    const char **name,
-				    int *lenp);
-
-/**
  * of_device_is_compatible() - Check if the node matches given constraints
- * @np: Pointer to device node
+ * @device: pointer to node
  * @compat: required compatible string, NULL or "" for any match
  * @type: required device_type value, NULL or "" for any match
  * @name: required node name, NULL or "" for any match
@@ -154,7 +114,7 @@ const void *of_get_property_by_prop(const struct device_node *np,
  * properties of the given @device. A constraints can be skipped by
  * passing NULL or an empty string as the constraint.
  *
- * Return: 0 for no match, and a positive integer on match. The return
+ * @return 0 for no match, and a positive integer on match. The return
  * value is a relative score with larger values indicating better
  * matches. The score is weighted for the most specific compatible value
  * to get the highest score. Matching type is next, followed by matching
@@ -179,9 +139,9 @@ int of_device_is_compatible(const struct device_node *np, const char *compat,
 /**
  * of_device_is_available() - check if a device is available for use
  *
- * @np: Pointer to device node to check for availability
+ * @device: Node to check for availability
  *
- * Return: true if the status property is absent or set to "okay", false
+ * @return true if the status property is absent or set to "okay", false
  * otherwise
  */
 bool of_device_is_available(const struct device_node *np);
@@ -189,8 +149,8 @@ bool of_device_is_available(const struct device_node *np);
 /**
  * of_get_parent() - Get a node's parent, if any
  *
- * @np: Pointer to device node  to check
- * Return: a node pointer, or NULL if none
+ * @node: Node to check
+ * @eturns a node pointer, or NULL if none
  */
 struct device_node *of_get_parent(const struct device_node *np);
 
@@ -208,7 +168,7 @@ struct device_node *of_get_parent(const struct device_node *np);
  *	foo		Valid alias
  *	foo/bar		Valid alias + relative path
  *
- * Return: a node pointer or NULL if not found
+ * @return a node pointer or NULL if not found
  */
 struct device_node *of_find_node_opts_by_path(const char *path,
 					      const char **opts);
@@ -228,7 +188,7 @@ static inline struct device_node *of_find_node_by_path(const char *path)
  * @type: The type string to match "device_type" or NULL to ignore
  * @compatible:	The string to match to one of the tokens in the device
  *	"compatible" list.
- * Return: node pointer or NULL if not found
+ * @return node pointer or NULL if not found
  */
 struct device_node *of_find_compatible_node(struct device_node *from,
 				const char *type, const char *compatible);
@@ -243,7 +203,7 @@ struct device_node *of_find_compatible_node(struct device_node *from,
  * @propname: property name to check
  * @propval: property value to search for
  * @proplen: length of the value in propval
- * Return: node pointer or NULL if not found
+ * @return node pointer or NULL if not found
  */
 struct device_node *of_find_node_by_prop_value(struct device_node *from,
 					       const char *propname,
@@ -254,7 +214,7 @@ struct device_node *of_find_node_by_prop_value(struct device_node *from,
  *
  * @handle:	phandle of the node to find
  *
- * Return: node pointer, or NULL if not found
+ * @return node pointer, or NULL if not found
  */
 struct device_node *of_find_node_by_phandle(phandle handle);
 
@@ -268,31 +228,11 @@ struct device_node *of_find_node_by_phandle(phandle handle);
  * @propname:	name of the property to be searched.
  * @outp:	pointer to return value, modified only if return value is 0.
  *
- * Return: 0 on success, -EINVAL if the property does not exist,
+ * @return 0 on success, -EINVAL if the property does not exist,
  * -ENODATA if property does not have a value, and -EOVERFLOW if the
  * property data isn't large enough.
  */
 int of_read_u32(const struct device_node *np, const char *propname, u32 *outp);
-
-/**
- * of_read_u32_index() - Find and read a 32-bit value from a multi-value
- *                       property
- *
- * Search for a property in a device node and read a 32-bit value from
- * it.
- *
- * @np:		device node from which the property value is to be read.
- * @propname:	name of the property to be searched.
- * @index:	index of the u32 in the list of values
- * @outp:	pointer to return value, modified only if return value is 0.
- *
- * Return:
- *   0 on success, -EINVAL if the property does not exist,
- *   -ENODATA if property does not have a value, and -EOVERFLOW if the
- *   property data isn't large enough.
- */
-int of_read_u32_index(const struct device_node *np, const char *propname,
-		      int index, u32 *outp);
 
 /**
  * of_read_u64() - Find and read a 64-bit integer from a property
@@ -304,10 +244,9 @@ int of_read_u32_index(const struct device_node *np, const char *propname,
  * @propname:	name of the property to be searched.
  * @outp:	pointer to return value, modified only if return value is 0.
  *
- * Return:
- *   0 on success, -EINVAL if the property does not exist,
- *   -ENODATA if property does not have a value, and -EOVERFLOW if the
- *   property data isn't large enough.
+ * @return 0 on success, -EINVAL if the property does not exist,
+ * -ENODATA if property does not have a value, and -EOVERFLOW if the
+ * property data isn't large enough.
  */
 int of_read_u64(const struct device_node *np, const char *propname, u64 *outp);
 
@@ -321,9 +260,8 @@ int of_read_u64(const struct device_node *np, const char *propname, u64 *outp);
  * @propname:	name of the property to be searched.
  * @out_values:	pointer to return value, modified only if return value is 0.
  * @sz:		number of array elements to read
- * Return:
- *   0 on success, -EINVAL if the property does not exist, -ENODATA
- *   if property does not have a value, and -EOVERFLOW is longer than sz.
+ * @return 0 on success, -EINVAL if the property does not exist, -ENODATA
+ * if property does not have a value, and -EOVERFLOW is longer than sz.
  */
 int of_read_u32_array(const struct device_node *np, const char *propname,
 		      u32 *out_values, size_t sz);
@@ -337,9 +275,8 @@ int of_read_u32_array(const struct device_node *np, const char *propname,
  * @np: pointer to node containing string list property
  * @propname: string list property name
  * @string: pointer to string to search for in string list
- * Return:
- *   0 on success, -EINVAL if the property does not exist, -ENODATA
- *   if property does not have a value, and -EOVERFLOW is longer than sz.
+ * @return 0 on success, -EINVAL if the property does not exist, -ENODATA
+ * if property does not have a value, and -EOVERFLOW is longer than sz.
  */
 int of_property_match_string(const struct device_node *np, const char *propname,
 			     const char *string);
@@ -354,17 +291,15 @@ int of_property_read_string_helper(const struct device_node *np,
  * @np:		device node from which the property value is to be read.
  * @propname:	name of the property to be searched.
  * @index:	index of the string in the list of strings
- * @output:	pointer to null terminated return string, modified only if
+ * @out_string:	pointer to null terminated return string, modified only if
  *		return value is 0.
  *
  * Search for a property in a device tree node and retrieve a null
  * terminated string value (pointer to data, not a copy) in the list of strings
  * contained in that property.
- *
- * Return:
- *   0 on success, -EINVAL if the property does not exist, -ENODATA if
- *   property does not have a value, and -EILSEQ if the string is not
- *   null-terminated within the length of the property data.
+ * Returns 0 on success, -EINVAL if the property does not exist, -ENODATA if
+ * property does not have a value, and -EILSEQ if the string is not
+ * null-terminated within the length of the property data.
  *
  * The out_string pointer is modified only if a valid string can be decoded.
  */
@@ -383,12 +318,10 @@ static inline int of_property_read_string_index(const struct device_node *np,
  * @propname:	name of the property to be searched.
  *
  * Search for a property in a device tree node and retrieve the number of null
- * terminated string contain in it.
- *
- * Return:
- *   the number of strings on success, -EINVAL if the property does not exist,
- *   -ENODATA if property does not have a value, and -EILSEQ if the string is
- *   not null-terminated within the length of the property data.
+ * terminated string contain in it. Returns the number of strings on
+ * success, -EINVAL if the property does not exist, -ENODATA if property
+ * does not have a value, and -EILSEQ if the string is not null-terminated
+ * within the length of the property data.
  */
 static inline int of_property_count_strings(const struct device_node *np,
 					    const char *propname)
@@ -403,9 +336,8 @@ static inline int of_property_count_strings(const struct device_node *np,
  * @index: For properties holding a table of phandles, this is the index into
  *         the table
  *
- * Return:
- *   the device_node pointer with refcount incremented.  Use
- *   of_node_put() on it when done.
+ * Returns the device_node pointer with refcount incremented.  Use
+ * of_node_put() on it when done.
  */
 struct device_node *of_parse_phandle(const struct device_node *np,
 				     const char *phandle_name, int index);
@@ -416,14 +348,12 @@ struct device_node *of_parse_phandle(const struct device_node *np,
  * @np:		pointer to a device tree node containing a list
  * @list_name:	property name that contains a list
  * @cells_name:	property name that specifies phandles' arguments count
- * @cells_count: Cell count to use if @cells_name is NULL
  * @index:	index of a phandle to parse out
  * @out_args:	optional pointer to output arguments structure (will be filled)
- * Return:
- *   0 on success (with @out_args filled out if not NULL), -ENOENT if
- *   @list_name does not exist, -EINVAL if a phandle was not found,
- *   @cells_name could not be found, the arguments were truncated or there
- *   were too many arguments.
+ * @return 0 on success (with @out_args filled out if not NULL), -ENOENT if
+ *	@list_name does not exist, -EINVAL if a phandle was not found,
+ *	@cells_name could not be found, the arguments were truncated or there
+ *	were too many arguments.
  *
  * This function is useful to parse lists of phandles and their arguments.
  * Returns 0 on success and fills out_args, on error returns appropriate
@@ -434,25 +364,24 @@ struct device_node *of_parse_phandle(const struct device_node *np,
  *
  * Example:
  *
- * .. code-block::
+ * phandle1: node1 {
+ *	#list-cells = <2>;
+ * }
  *
- *   phandle1: node1 {
- *       #list-cells = <2>;
- *   };
- *   phandle2: node2 {
- *       #list-cells = <1>;
- *   };
- *   node3 {
- *       list = <&phandle1 1 2 &phandle2 3>;
- *   };
+ * phandle2: node2 {
+ *	#list-cells = <1>;
+ * }
+ *
+ * node3 {
+ *	list = <&phandle1 1 2 &phandle2 3>;
+ * }
  *
  * To get a device_node of the `node2' node you may call this:
  * of_parse_phandle_with_args(node3, "list", "#list-cells", 1, &args);
  */
 int of_parse_phandle_with_args(const struct device_node *np,
 			       const char *list_name, const char *cells_name,
-			       int cells_count, int index,
-			       struct of_phandle_args *out_args);
+			       int index, struct of_phandle_args *out_args);
 
 /**
  * of_count_phandle_with_args() - Count the number of phandle in a list
@@ -460,18 +389,17 @@ int of_parse_phandle_with_args(const struct device_node *np,
  * @np:		pointer to a device tree node containing a list
  * @list_name:	property name that contains a list
  * @cells_name:	property name that specifies phandles' arguments count
- * @cells_count: Cell count to use if @cells_name is NULL
- * Return:
- *   number of phandle found, -ENOENT if @list_name does not exist,
- *   -EINVAL if a phandle was not found, @cells_name could not be found,
- *   the arguments were truncated or there were too many arguments.
+ * @return number of phandle found, -ENOENT if
+ *	@list_name does not exist, -EINVAL if a phandle was not found,
+ *	@cells_name could not be found, the arguments were truncated or there
+ *	were too many arguments.
  *
  * Returns number of phandle found on success, on error returns appropriate
  * errno value.
+ *
  */
 int of_count_phandle_with_args(const struct device_node *np,
-			       const char *list_name, const char *cells_name,
-			       int cells_count);
+			       const char *list_name, const char *cells_name);
 
 /**
  * of_alias_scan() - Scan all properties of the 'aliases' node
@@ -480,7 +408,7 @@ int of_count_phandle_with_args(const struct device_node *np,
  * the lookup table with the properties.  It returns the number of alias
  * properties found, or an error code in case of failure.
  *
- * Return: 9 if OK, -ENOMEM if not enough memory
+ * @return 9 if OK, -ENOMEM if not enough memory
  */
 int of_alias_scan(void);
 
@@ -492,7 +420,7 @@ int of_alias_scan(void);
  *
  * @np:		Pointer to the given device_node
  * @stem:	Alias stem of the given device_node
- * Return: alias ID, if found, else -ENODEV
+ * @return alias ID, if found, else -ENODEV
  */
 int of_alias_get_id(const struct device_node *np, const char *stem);
 
@@ -502,14 +430,14 @@ int of_alias_get_id(const struct device_node *np, const char *stem);
  *
  * The function travels the lookup table to get the highest alias id for the
  * given alias stem.
- * Return: alias ID, if found, else -1
+ * @return alias ID, if found, else -1
  */
 int of_alias_get_highest_id(const char *stem);
 
 /**
  * of_get_stdout() - Get node to use for stdout
  *
- * Return: node referred to by stdout-path alias, or NULL if none
+ * @return node referred to by stdout-path alias, or NULL if none
  */
 struct device_node *of_get_stdout(void);
 

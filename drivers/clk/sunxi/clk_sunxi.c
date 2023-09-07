@@ -8,11 +8,9 @@
 #include <clk-uclass.h>
 #include <dm.h>
 #include <errno.h>
-#include <log.h>
 #include <reset.h>
 #include <asm/io.h>
-#include <clk/sunxi.h>
-#include <linux/bitops.h>
+#include <asm/arch/ccu.h>
 #include <linux/log2.h>
 
 static const struct ccu_clk_gate *priv_to_gate(struct ccu_priv *priv,

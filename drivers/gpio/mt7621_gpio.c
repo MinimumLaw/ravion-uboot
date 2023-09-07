@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <malloc.h>
-#include <linux/bitops.h>
 #include <linux/io.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
@@ -38,20 +37,20 @@ enum mediatek_gpio_reg {
 
 static void __iomem *mediatek_gpio_membase;
 
-struct mediatek_gpio_plat {
+struct mediatek_gpio_platdata {
 	char bank_name[3];	/* Name of bank, e.g. "PA", "PB" etc */
 	int gpio_count;
 	int bank;
 };
 
-static u32 reg_offs(struct mediatek_gpio_plat *plat, int reg)
+static u32 reg_offs(struct mediatek_gpio_platdata *plat, int reg)
 {
 	return (reg * 0x10) + (plat->bank * 0x4);
 }
 
 static int mediatek_gpio_get_value(struct udevice *dev, unsigned int offset)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(dev);
+	struct mediatek_gpio_platdata *plat = dev_get_platdata(dev);
 
 	return !!(ioread32(mediatek_gpio_membase +
 			   reg_offs(plat, GPIO_REG_DATA)) & BIT(offset));
@@ -60,7 +59,7 @@ static int mediatek_gpio_get_value(struct udevice *dev, unsigned int offset)
 static int mediatek_gpio_set_value(struct udevice *dev, unsigned int offset,
 				   int value)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(dev);
+	struct mediatek_gpio_platdata *plat = dev_get_platdata(dev);
 
 	iowrite32(BIT(offset), mediatek_gpio_membase +
 		  reg_offs(plat, value ? GPIO_REG_DSET : GPIO_REG_DCLR));
@@ -70,7 +69,7 @@ static int mediatek_gpio_set_value(struct udevice *dev, unsigned int offset,
 
 static int mediatek_gpio_direction_input(struct udevice *dev, unsigned int offset)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(dev);
+	struct mediatek_gpio_platdata *plat = dev_get_platdata(dev);
 
 	clrbits_le32(mediatek_gpio_membase + reg_offs(plat, GPIO_REG_CTRL),
 		     BIT(offset));
@@ -81,7 +80,7 @@ static int mediatek_gpio_direction_input(struct udevice *dev, unsigned int offse
 static int mediatek_gpio_direction_output(struct udevice *dev, unsigned int offset,
 					  int value)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(dev);
+	struct mediatek_gpio_platdata *plat = dev_get_platdata(dev);
 
 	setbits_le32(mediatek_gpio_membase + reg_offs(plat, GPIO_REG_CTRL),
 		     BIT(offset));
@@ -92,7 +91,7 @@ static int mediatek_gpio_direction_output(struct udevice *dev, unsigned int offs
 
 static int mediatek_gpio_get_function(struct udevice *dev, unsigned int offset)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(dev);
+	struct mediatek_gpio_platdata *plat = dev_get_platdata(dev);
 	u32 t;
 
 	t = ioread32(mediatek_gpio_membase + reg_offs(plat, GPIO_REG_CTRL));
@@ -112,7 +111,7 @@ static const struct dm_gpio_ops gpio_mediatek_ops = {
 
 static int gpio_mediatek_probe(struct udevice *dev)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(dev);
+	struct mediatek_gpio_platdata *plat = dev_get_platdata(dev);
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
 
 	/* Tell the uclass how many GPIOs we have */
@@ -130,7 +129,7 @@ static int gpio_mediatek_probe(struct udevice *dev)
  */
 static int gpio_mediatek_bind(struct udevice *parent)
 {
-	struct mediatek_gpio_plat *plat = dev_get_plat(parent);
+	struct mediatek_gpio_platdata *plat = parent->platdata;
 	ofnode node;
 	int bank = 0;
 	int ret;
@@ -145,7 +144,7 @@ static int gpio_mediatek_bind(struct udevice *parent)
 
 	for (node = dev_read_first_subnode(parent); ofnode_valid(node);
 	     node = dev_read_next_subnode(node)) {
-		struct mediatek_gpio_plat *plat;
+		struct mediatek_gpio_platdata *plat;
 		struct udevice *dev;
 
 		plat = calloc(1, sizeof(*plat));
@@ -157,11 +156,12 @@ static int gpio_mediatek_bind(struct udevice *parent)
 		plat->gpio_count = MTK_BANK_WIDTH;
 		plat->bank = bank;
 
-		ret = device_bind(parent, parent->driver, plat->bank_name, plat,
-				  node, &dev);
+		ret = device_bind(parent, parent->driver,
+				  plat->bank_name, plat, -1, &dev);
 		if (ret)
 			return ret;
 
+		dev->node = node;
 		bank++;
 	}
 

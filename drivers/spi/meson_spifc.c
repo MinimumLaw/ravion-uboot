@@ -8,7 +8,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <spi.h>
 #include <clk.h>
 #include <dm.h>
@@ -16,7 +15,6 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <linux/bitfield.h>
-#include <linux/bitops.h>
 
 /* register map */
 #define REG_CMD			0x00
@@ -318,5 +316,5 @@ U_BOOT_DRIVER(meson_spifc) = {
 	.of_match	= meson_spifc_ids,
 	.ops		= &meson_spifc_ops,
 	.probe		= meson_spifc_probe,
-	.priv_auto	= sizeof(struct meson_spifc_priv),
+	.priv_auto_alloc_size = sizeof(struct meson_spifc_priv),
 };

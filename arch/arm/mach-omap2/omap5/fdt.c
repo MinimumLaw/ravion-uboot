@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <hang.h>
-#include <log.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <malloc.h>
@@ -29,7 +28,7 @@ static u32 hs_irq_skip[] = {
 	118	/* One interrupt for Crypto DMA by secure world */
 };
 
-static int ft_hs_fixup_crossbar(void *fdt, struct bd_info *bd)
+static int ft_hs_fixup_crossbar(void *fdt, bd_t *bd)
 {
 	const char *path;
 	int offs;
@@ -93,7 +92,7 @@ static int ft_hs_fixup_crossbar(void *fdt, struct bd_info *bd)
 
 #if ((TI_OMAP5_SECURE_BOOT_RESV_SRAM_SZ != 0) || \
     (CONFIG_SECURE_RUNTIME_RESV_SRAM_SZ != 0))
-static int ft_hs_fixup_sram(void *fdt, struct bd_info *bd)
+static int ft_hs_fixup_sram(void *fdt, bd_t *bd)
 {
 	const char *path;
 	int offs;
@@ -128,10 +127,10 @@ static int ft_hs_fixup_sram(void *fdt, struct bd_info *bd)
 	return 0;
 }
 #else
-static int ft_hs_fixup_sram(void *fdt, struct bd_info *bd) { return 0; }
+static int ft_hs_fixup_sram(void *fdt, bd_t *bd) { return 0; }
 #endif
 
-static void ft_hs_fixups(void *fdt, struct bd_info *bd)
+static void ft_hs_fixups(void *fdt, bd_t *bd)
 {
 	/* Check we are running on an HS/EMU device type */
 	if (GP_DEVICE != get_device_type()) {
@@ -148,7 +147,7 @@ static void ft_hs_fixups(void *fdt, struct bd_info *bd)
 	hang();
 }
 #else
-static void ft_hs_fixups(void *fdt, struct bd_info *bd)
+static void ft_hs_fixups(void *fdt, bd_t *bd)
 {
 }
 #endif /* #ifdef CONFIG_TI_SECURE_DEVICE */
@@ -255,7 +254,7 @@ static int ft_fixup_clocks(void *fdt, const char **names, u32 *rates, int num)
 	return 0;
 }
 
-static void ft_opp_clock_fixups(void *fdt, struct bd_info *bd)
+static void ft_opp_clock_fixups(void *fdt, bd_t *bd)
 {
 	const char **clk_names;
 	u32 *clk_rates;
@@ -299,7 +298,7 @@ static void ft_opp_clock_fixups(void *fdt, struct bd_info *bd)
 	}
 }
 #else
-static void ft_opp_clock_fixups(void *fdt, struct bd_info *bd) { }
+static void ft_opp_clock_fixups(void *fdt, bd_t *bd) { }
 #endif /* CONFIG_TARGET_DRA7XX_EVM || CONFIG_TARGET_AM57XX_EVM */
 
 /*
@@ -307,7 +306,7 @@ static void ft_opp_clock_fixups(void *fdt, struct bd_info *bd) { }
  * fixups should remain in the board files which is where
  * this function should be called from.
  */
-void ft_cpu_setup(void *fdt, struct bd_info *bd)
+void ft_cpu_setup(void *fdt, bd_t *bd)
 {
 	ft_hs_fixups(fdt, bd);
 	ft_opp_clock_fixups(fdt, bd);

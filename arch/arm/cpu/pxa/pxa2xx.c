@@ -11,10 +11,8 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <init.h>
 #include <irq_func.h>
 #include <asm/arch/pxa-regs.h>
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <asm/system.h>
 #include <command.h>
@@ -267,9 +265,9 @@ void i2c_clk_enable(void)
 	writel(readl(CKEN) | CKEN14_I2C, CKEN);
 }
 
-void __attribute__((weak)) reset_cpu(void) __attribute__((noreturn));
+void __attribute__((weak)) reset_cpu(ulong ignored) __attribute__((noreturn));
 
-void reset_cpu(void)
+void reset_cpu(ulong ignored)
 {
 	uint32_t tmp;
 

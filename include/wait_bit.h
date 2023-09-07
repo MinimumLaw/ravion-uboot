@@ -8,11 +8,9 @@
 #ifndef __WAIT_BIT_H
 #define __WAIT_BIT_H
 
+#include <common.h>
 #include <console.h>
-#include <log.h>
-#include <time.h>
 #include <watchdog.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 
@@ -31,7 +29,7 @@
  * @param set		Selects wait condition (bit set or clear)
  * @param timeout_ms	Timeout (in milliseconds)
  * @param breakable	Enables CTRL-C interruption
- * Return:		0 on success, -ETIMEDOUT or -EINTR on failure
+ * @return		0 on success, -ETIMEDOUT or -EINTR on failure
  */
 
 #define BUILD_WAIT_FOR_BIT(sfx, type, read)				\

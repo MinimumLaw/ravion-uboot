@@ -3,7 +3,6 @@
  * (C) Copyright 2015 Rockchip Electronics Co., Ltd
  */
 #include <common.h>
-#include <init.h>
 #include <asm/io.h>
 #include <asm/types.h>
 #include <asm/arch-rockchip/cru_rk3036.h>
@@ -11,7 +10,6 @@
 #include <asm/arch-rockchip/hardware.h>
 #include <asm/arch-rockchip/sdram_rk3036.h>
 #include <asm/arch-rockchip/uart.h>
-#include <linux/delay.h>
 
 /*
  * we can not fit the code to access the device tree in SPL

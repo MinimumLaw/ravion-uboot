@@ -18,6 +18,13 @@
 
 #include <asm/arch/omap.h>
 
+#define CONFIG_SYS_MALLOC_LEN		(1024 << 10)
+#define CONFIG_MACH_TYPE		MACH_TYPE_TI8148EVM
+
+#define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs  */
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG		/* for ramdisk support */
+
 /* commands to include */
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -56,6 +63,22 @@
 		"bootm ${loadaddr}\0" \
 	"fdtfile=ti814x-evm.dtb\0" \
 
+#define CONFIG_BOOTCOMMAND \
+	"mmc dev ${mmcdev}; if mmc rescan; then " \
+		"echo SD/MMC found on device ${mmcdev};" \
+		"if run loadbootenv; then " \
+			"echo Loaded environment from ${bootenv};" \
+			"run importbootenv;" \
+		"fi;" \
+		"if test -n $uenvcmd; then " \
+			"echo Running uenvcmd ...;" \
+			"run uenvcmd;" \
+		"fi;" \
+		"if run loaduimage; then " \
+			"run mmcboot;" \
+		"fi;" \
+	"fi;" \
+
 /* Clock Defines */
 #define V_OSCK			24000000	/* Clock output from T2 */
 #define V_SCLK			(V_OSCK >> 1)
@@ -63,6 +86,12 @@
 
 /* Console I/O Buffer Size */
 #define CONFIG_SYS_CBSIZE		512
+
+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START \
+					+ PHYS_DRAM_1_SIZE - (8 << 12))
+
+#define CONFIG_SYS_LOAD_ADDR		0x81000000	/* Default */
 
 /**
  * Physical Memory Map
@@ -88,6 +117,8 @@
 
 /* CPU */
 
+#define CONFIG_ENV_OVERWRITE
+
 /* Defines for SPL */
 #define CONFIG_SPL_MAX_SIZE		(SRAM_SCRATCH_SPACE_ADDR - \
 					 CONFIG_SPL_TEXT_BASE)
@@ -95,6 +126,7 @@
 #define CONFIG_SPL_BSS_START_ADDR	0x80000000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000		/* 512 KB */
 
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION     1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME        "u-boot.img"
 
 #define CONFIG_SYS_SPI_U_BOOT_SIZE	0x40000
@@ -112,9 +144,15 @@
  * Since SPL did pll and ddr initialization for us,
  * we don't need to do it twice.
  */
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_SKIP_LOWLEVEL_INIT
+#endif
 
 /* Ethernet */
+#define CONFIG_BOOTP_DNS2
+#define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT         10
+#define CONFIG_PHY_ET1011C
 #define CONFIG_PHY_ET1011C_TX_CLK_FIX
 
 #endif	/* ! __CONFIG_TI814X_EVM_H */

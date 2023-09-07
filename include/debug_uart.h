@@ -88,31 +88,31 @@ void printascii(const char *str);
  *
  * @value:	Value to output
  */
-void printhex2(unsigned int value);
+void printhex2(uint value);
 
 /**
  * printhex4() - Output a 4-digit hex value
  *
  * @value:	Value to output
  */
-void printhex4(unsigned int value);
+void printhex4(uint value);
 
 /**
  * printhex8() - Output a 8-digit hex value
  *
  * @value:	Value to output
  */
-void printhex8(unsigned int value);
+void printhex8(uint value);
 
 /**
  * printdec() - Output a decimalism value
  *
  * @value:	Value to output
  */
-void printdec(unsigned int value);
+void printdec(uint value);
 
 #ifdef CONFIG_DEBUG_UART_ANNOUNCE
-#define _DEBUG_UART_ANNOUNCE	printascii("\n<debug_uart>\n");
+#define _DEBUG_UART_ANNOUNCE	printascii("<debug_uart> ");
 #else
 #define _DEBUG_UART_ANNOUNCE
 #endif
@@ -151,34 +151,34 @@ void printdec(unsigned int value);
 			_printch(*str++); \
 	} \
 \
-	static inline void printhex1(unsigned int digit) \
+	static inline void printhex1(uint digit) \
 	{ \
 		digit &= 0xf; \
 		_debug_uart_putc(digit > 9 ? digit - 10 + 'a' : digit + '0'); \
 	} \
 \
-	static inline void printhex(unsigned int value, int digits) \
+	static inline void printhex(uint value, int digits) \
 	{ \
 		while (digits-- > 0) \
 			printhex1(value >> (4 * digits)); \
 	} \
 \
-	void printhex2(unsigned int value) \
+	void printhex2(uint value) \
 	{ \
 		printhex(value, 2); \
 	} \
 \
-	void printhex4(unsigned int value) \
+	void printhex4(uint value) \
 	{ \
 		printhex(value, 4); \
 	} \
 \
-	void printhex8(unsigned int value) \
+	void printhex8(uint value) \
 	{ \
 		printhex(value, 8); \
 	} \
 \
-	void printdec(unsigned int value) \
+	void printdec(uint value) \
 	{ \
 		if (value > 10) { \
 			printdec(value / 10); \

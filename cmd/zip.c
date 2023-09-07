@@ -7,21 +7,20 @@
 #include <common.h>
 #include <command.h>
 #include <env.h>
-#include <gzip.h>
 
-static int do_zip(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_zip(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long src, dst;
 	unsigned long src_len, dst_len = ~0UL;
 
 	switch (argc) {
 		case 5:
-			dst_len = hextoul(argv[4], NULL);
+			dst_len = simple_strtoul(argv[4], NULL, 16);
 			/* fall through */
 		case 4:
-			src = hextoul(argv[1], NULL);
-			src_len = hextoul(argv[2], NULL);
-			dst = hextoul(argv[3], NULL);
+			src = simple_strtoul(argv[1], NULL, 16);
+			src_len = simple_strtoul(argv[2], NULL, 16);
+			dst = simple_strtoul(argv[3], NULL, 16);
 			break;
 		default:
 			return cmd_usage(cmdtp);

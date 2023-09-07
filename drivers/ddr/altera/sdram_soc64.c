@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2021 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
  *
  */
 
@@ -11,8 +11,6 @@
 #include <div64.h>
 #include <fdtdec.h>
 #include <hang.h>
-#include <init.h>
-#include <log.h>
 #include <ram.h>
 #include <reset.h>
 #include "sdram_soc64.h"
@@ -20,37 +18,35 @@
 #include <asm/arch/firewall.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/reset_manager.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <linux/sizes.h>
 
 #define PGTABLE_OFF	0x4000
 
-u32 hmc_readl(struct altera_sdram_plat *plat, u32 reg)
+u32 hmc_readl(struct altera_sdram_platdata *plat, u32 reg)
 {
 	return readl(plat->iomhc + reg);
 }
 
-u32 hmc_ecc_readl(struct altera_sdram_plat *plat, u32 reg)
+u32 hmc_ecc_readl(struct altera_sdram_platdata *plat, u32 reg)
 {
 	return readl(plat->hmc + reg);
 }
 
-u32 hmc_ecc_writel(struct altera_sdram_plat *plat,
+u32 hmc_ecc_writel(struct altera_sdram_platdata *plat,
 		   u32 data, u32 reg)
 {
 	return writel(data, plat->hmc + reg);
 }
 
-u32 ddr_sch_writel(struct altera_sdram_plat *plat, u32 data,
+u32 ddr_sch_writel(struct altera_sdram_platdata *plat, u32 data,
 		   u32 reg)
 {
 	return writel(data, plat->ddr_sch + reg);
 }
 
-int emif_clear(struct altera_sdram_plat *plat)
+int emif_clear(struct altera_sdram_platdata *plat)
 {
 	hmc_ecc_writel(plat, 0, RSTHANDSHAKECTRL);
 
@@ -60,7 +56,7 @@ int emif_clear(struct altera_sdram_plat *plat)
 				 false, 1000, false);
 }
 
-int emif_reset(struct altera_sdram_plat *plat)
+int emif_reset(struct altera_sdram_platdata *plat)
 {
 	u32 c2s, s2c, ret;
 
@@ -100,14 +96,12 @@ int emif_reset(struct altera_sdram_plat *plat)
 	return 0;
 }
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 int poll_hmc_clock_status(void)
 {
 	return wait_for_bit_le32((const void *)(socfpga_get_sysmgr_addr() +
 				 SYSMGR_SOC64_HMC_CLK),
 				 SYSMGR_HMC_CLK_STATUS_MSK, true, 1000, false);
 }
-#endif
 
 void sdram_clear_mem(phys_addr_t addr, phys_size_t size)
 {
@@ -135,7 +129,7 @@ void sdram_clear_mem(phys_addr_t addr, phys_size_t size)
 	}
 }
 
-void sdram_init_ecc_bits(struct bd_info *bd)
+void sdram_init_ecc_bits(bd_t *bd)
 {
 	phys_size_t size, size_init;
 	phys_addr_t start_addr;
@@ -179,12 +173,11 @@ void sdram_init_ecc_bits(struct bd_info *bd)
 	       (unsigned int)get_timer(start));
 }
 
-void sdram_size_check(struct bd_info *bd)
+void sdram_size_check(bd_t *bd)
 {
 	phys_size_t total_ram_check = 0;
 	phys_size_t ram_check = 0;
 	phys_addr_t start = 0;
-	phys_size_t size, remaining_size;
 	int bank;
 
 	/* Sanity check ensure correct SDRAM size specified */
@@ -192,27 +185,10 @@ void sdram_size_check(struct bd_info *bd)
 
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
 		start = bd->bi_dram[bank].start;
-		remaining_size = bd->bi_dram[bank].size;
 		while (ram_check < bd->bi_dram[bank].size) {
-			size = min((phys_addr_t)SZ_1G,
-				   (phys_addr_t)remaining_size);
-
-			/*
-			 * Ensure the size is power of two, this is requirement
-			 * to run get_ram_size() / memory test
-			 */
-			if (size != 0 && ((size & (size - 1)) == 0)) {
-				ram_check += get_ram_size((void *)
-						(start + ram_check), size);
-				remaining_size = bd->bi_dram[bank].size -
-							ram_check;
-			} else {
-				puts("DDR: Memory test requires SDRAM size ");
-				puts("in power of two!\n");
-				hang();
-			}
+			ram_check += get_ram_size((void *)(start + ram_check),
+						 (phys_size_t)SZ_1G);
 		}
-
 		total_ram_check += ram_check;
 		ram_check = 0;
 	}
@@ -235,7 +211,7 @@ void sdram_size_check(struct bd_info *bd)
  * Calculate SDRAM device size based on SDRAM controller parameters.
  * Size is specified in bytes.
  */
-phys_size_t sdram_calculate_size(struct altera_sdram_plat *plat)
+phys_size_t sdram_calculate_size(struct altera_sdram_platdata *plat)
 {
 	u32 dramaddrw = hmc_readl(plat, DRAMADDRW);
 
@@ -251,77 +227,10 @@ phys_size_t sdram_calculate_size(struct altera_sdram_plat *plat)
 	return size;
 }
 
-void sdram_set_firewall(struct bd_info *bd)
+static int altera_sdram_ofdata_to_platdata(struct udevice *dev)
 {
-	u32 i;
-	phys_size_t value;
-	u32 lower, upper;
-
-	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
-		if (!bd->bi_dram[i].size)
-			continue;
-
-		value = bd->bi_dram[i].start;
-
-		/* Keep first 1MB of SDRAM memory region as secure region when
-		 * using ATF flow, where the ATF code is located.
-		 */
-		if (IS_ENABLED(CONFIG_SPL_ATF) && i == 0)
-			value += SZ_1M;
-
-		/* Setting non-secure MPU region base and base extended */
-		lower = lower_32_bits(value);
-		upper = upper_32_bits(value);
-		FW_MPU_DDR_SCR_WRITEL(lower,
-				      FW_MPU_DDR_SCR_MPUREGION0ADDR_BASE +
-				      (i * 4 * sizeof(u32)));
-		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
-				      FW_MPU_DDR_SCR_MPUREGION0ADDR_BASEEXT +
-				      (i * 4 * sizeof(u32)));
-
-		/* Setting non-secure Non-MPU region base and base extended */
-		FW_MPU_DDR_SCR_WRITEL(lower,
-				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_BASE +
-				      (i * 4 * sizeof(u32)));
-		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
-				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_BASEEXT +
-				      (i * 4 * sizeof(u32)));
-
-		/* Setting non-secure MPU limit and limit extexded */
-		value = bd->bi_dram[i].start + bd->bi_dram[i].size - 1;
-
-		lower = lower_32_bits(value);
-		upper = upper_32_bits(value);
-
-		FW_MPU_DDR_SCR_WRITEL(lower,
-				      FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMIT +
-				      (i * 4 * sizeof(u32)));
-		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
-				      FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMITEXT +
-				      (i * 4 * sizeof(u32)));
-
-		/* Setting non-secure Non-MPU limit and limit extexded */
-		FW_MPU_DDR_SCR_WRITEL(lower,
-				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMIT +
-				      (i * 4 * sizeof(u32)));
-		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
-				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT +
-				      (i * 4 * sizeof(u32)));
-
-		FW_MPU_DDR_SCR_WRITEL(BIT(i) | BIT(i + 8),
-				      FW_MPU_DDR_SCR_EN_SET);
-	}
-}
-
-static int altera_sdram_of_to_plat(struct udevice *dev)
-{
-	struct altera_sdram_plat *plat = dev_get_plat(dev);
+	struct altera_sdram_platdata *plat = dev->platdata;
 	fdt_addr_t addr;
-
-	/* These regs info are part of DDR handoff in bitstream */
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-	return 0;
-#endif
 
 	addr = dev_read_addr_index(dev, 0);
 	if (addr == FDT_ADDR_T_NONE)
@@ -383,7 +292,6 @@ static struct ram_ops altera_sdram_ops = {
 static const struct udevice_id altera_sdram_ids[] = {
 	{ .compatible = "altr,sdr-ctl-s10" },
 	{ .compatible = "intel,sdr-ctl-agilex" },
-	{ .compatible = "intel,sdr-ctl-n5x" },
 	{ /* sentinel */ }
 };
 
@@ -392,8 +300,8 @@ U_BOOT_DRIVER(altera_sdram) = {
 	.id = UCLASS_RAM,
 	.of_match = altera_sdram_ids,
 	.ops = &altera_sdram_ops,
-	.of_to_plat = altera_sdram_of_to_plat,
-	.plat_auto	= sizeof(struct altera_sdram_plat),
+	.ofdata_to_platdata = altera_sdram_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct altera_sdram_platdata),
 	.probe = altera_sdram_probe,
-	.priv_auto	= sizeof(struct altera_sdram_priv),
+	.priv_auto_alloc_size = sizeof(struct altera_sdram_priv),
 };

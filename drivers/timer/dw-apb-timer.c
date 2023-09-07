@@ -25,7 +25,7 @@ struct dw_apb_timer_priv {
 	struct reset_ctl_bulk resets;
 };
 
-static u64 dw_apb_timer_get_count(struct udevice *dev)
+static int dw_apb_timer_get_count(struct udevice *dev, u64 *count)
 {
 	struct dw_apb_timer_priv *priv = dev_get_priv(dev);
 
@@ -34,7 +34,9 @@ static u64 dw_apb_timer_get_count(struct udevice *dev)
 	 * requires the count to be incrementing. Invert the
 	 * result.
 	 */
-	return timer_conv_64(~readl(priv->regs + DW_APB_CURR_VAL));
+	*count = timer_conv_64(~readl(priv->regs + DW_APB_CURR_VAL));
+
+	return 0;
 }
 
 static int dw_apb_timer_probe(struct udevice *dev)
@@ -66,7 +68,7 @@ static int dw_apb_timer_probe(struct udevice *dev)
 	return 0;
 }
 
-static int dw_apb_timer_of_to_plat(struct udevice *dev)
+static int dw_apb_timer_ofdata_to_platdata(struct udevice *dev)
 {
 	struct dw_apb_timer_priv *priv = dev_get_priv(dev);
 
@@ -97,7 +99,7 @@ U_BOOT_DRIVER(dw_apb_timer) = {
 	.ops		= &dw_apb_timer_ops,
 	.probe		= dw_apb_timer_probe,
 	.of_match	= dw_apb_timer_ids,
-	.of_to_plat = dw_apb_timer_of_to_plat,
+	.ofdata_to_platdata = dw_apb_timer_ofdata_to_platdata,
 	.remove		= dw_apb_timer_remove,
-	.priv_auto	= sizeof(struct dw_apb_timer_priv),
+	.priv_auto_alloc_size = sizeof(struct dw_apb_timer_priv),
 };

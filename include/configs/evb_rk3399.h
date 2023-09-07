@@ -13,9 +13,10 @@
 
 #include <configs/rk3399_common.h>
 
-#define SDRAM_BANK_SIZE			(2UL << 30)
+#if defined(CONFIG_ENV_IS_IN_MMC)
+# define CONFIG_SYS_MMC_ENV_DEV		0
+#endif
 
-#define CONFIG_USB_OHCI_NEW
-#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS     2
+#define SDRAM_BANK_SIZE			(2UL << 30)
 
 #endif

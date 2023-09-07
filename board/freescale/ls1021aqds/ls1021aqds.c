@@ -9,7 +9,6 @@
 #include <fdt_support.h>
 #include <i2c.h>
 #include <init.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/immap_ls102xa.h>
 #include <asm/arch/clock.h>
@@ -25,7 +24,6 @@
 #include <fsl_devdis.h>
 #include <fsl_validate.h>
 #include <fsl_ddr.h>
-#include "../common/i2c_mux.h"
 #include "../common/sleep.h"
 #include "../common/qixis.h"
 #include "ls1021aqds_qixis.h"
@@ -102,7 +100,6 @@ int checkboard(void)
 	return 0;
 }
 
-#ifdef CONFIG_DYNAMIC_SYS_CLK_FREQ
 unsigned long get_board_sys_clk(void)
 {
 	u8 sysclk_conf = QIXIS_READ(brdcfg[1]);
@@ -127,9 +124,7 @@ unsigned long get_board_sys_clk(void)
 	}
 	return 66666666;
 }
-#endif
 
-#ifdef CONFIG_DYNAMIC_DDR_CLK_FREQ
 unsigned long get_board_ddr_clk(void)
 {
 	u8 ddrclk_conf = QIXIS_READ(brdcfg[1]);
@@ -144,7 +139,31 @@ unsigned long get_board_ddr_clk(void)
 	}
 	return 66666666;
 }
+
+int select_i2c_ch_pca9547(u8 ch, int bus_num)
+{
+	int ret;
+#ifdef CONFIG_DM_I2C
+	struct udevice *dev;
+
+	ret = i2c_get_chip_for_busnum(bus_num, I2C_MUX_PCA_ADDR_PRI,
+				      1, &dev);
+	if (ret) {
+		printf("%s: Cannot find udev for a bus %d\n", __func__,
+		       bus_num);
+		return ret;
+	}
+	ret = dm_i2c_write(dev, 0, &ch, 1);
+#else
+	ret = i2c_write(I2C_MUX_PCA_ADDR_PRI, 0, 1, &ch, 1);
 #endif
+	if (ret) {
+		puts("PCA: failed to select proper channel\n");
+		return ret;
+	}
+
+	return 0;
+}
 
 int dram_init(void)
 {
@@ -217,7 +236,7 @@ void board_init_f(ulong dummy)
 
 	preloader_console_init();
 
-#ifdef CONFIG_SPL_I2C
+#ifdef CONFIG_SPL_I2C_SUPPORT
 	i2c_init_all();
 #endif
 
@@ -429,7 +448,7 @@ void board_sleep_prepare(void)
 }
 #endif
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	ft_cpu_setup(blob, bd);
 

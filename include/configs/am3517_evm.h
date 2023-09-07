@@ -14,11 +14,41 @@
 
 #include <configs/ti_omap3_common.h>
 
+#define CONFIG_REVISION_TAG
+
+/* Hardware drivers */
+
+/* allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
+
+/*
+ * USB configuration
+ * Enable CONFIG_USB_MUSB_HOST for Host functionalities MSC, keyboard
+ * Enable CONFIG_USB_MUSB_GADGET for Device functionalities.
+ */
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_USB_EHCI_OMAP
+#else
+#define CONFIG_OMAP_EHCI_PHY1_RESET_GPIO	57
+#endif
+
+/* I2C */
+
 /* Ethernet */
+#define CONFIG_DRIVER_TI_EMAC_USE_RMII
+#define CONFIG_BOOTP_DEFAULT
+#define CONFIG_BOOTP_DNS2
+#define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT		10
 
 /* Board NAND Info. */
 #ifdef CONFIG_MTD_RAW_NAND
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_PAGE_COUNT	64
+#define CONFIG_SYS_NAND_PAGE_SIZE	2048
+#define CONFIG_SYS_NAND_OOBSIZE		64
+#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	NAND_LARGE_BADBLOCK_POS
 #define CONFIG_SYS_NAND_ECCPOS		{ 2,  3,  4,  5,  6,  7,  8,  9, 10, \
 					 11, 12, 13, 14, 16, 17, 18, 19, 20, \
 					 21, 22, 23, 24, 25, 26, 27, 28, 30, \
@@ -28,9 +58,11 @@
 
 #define CONFIG_SYS_NAND_ECCSIZE		512
 #define CONFIG_SYS_NAND_ECCBYTES	13
+#define CONFIG_NAND_OMAP_ECCSCHEME	OMAP_ECC_BCH8_CODE_HW_DETECTION_SW
 #define CONFIG_SYS_NAND_MAX_OOBFREE	2
 #define CONFIG_SYS_NAND_MAX_ECCPOS	56
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000
 #define CONFIG_SYS_NAND_SPL_KERNEL_OFFS 0x2a0000
 /* NAND block size is 128 KiB.  Synchronize these values with
  * corresponding Device Tree entries in Linux:
@@ -90,6 +122,25 @@
 		"nand read ${fdtaddr} aa0000 80000; " \
 		"bootm ${loadaddr} - ${fdtaddr}\0" \
 
+#define CONFIG_BOOTCOMMAND \
+	"mmc dev ${mmcdev}; if mmc rescan; then " \
+		"echo SD/MMC found on device $mmcdev; " \
+		"if run loadbootenv; then " \
+			"run importbootenv; " \
+		"fi; " \
+		"echo Checking if uenvcmd is set ...; " \
+		"if test -n $uenvcmd; then " \
+			"echo Running uenvcmd ...; " \
+			"run uenvcmd; " \
+		"fi; " \
+		"echo Running default loadimage ...; " \
+		"setenv bootfile zImage; " \
+		"if run loadimage; then " \
+			"run loadfdt; " \
+			"run mmcboot; " \
+		"fi; " \
+	"else run nandboot; fi"
+
 /* Miscellaneous configurable options */
 
 /* We set the max number of command args high to avoid HUSH bugs. */
@@ -102,6 +153,9 @@
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 /* memtest works on */
+#define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)
+#define CONFIG_SYS_MEMTEST_END		(OMAP34XX_SDRC_CS0 + \
+					0x01F00000) /* 31MB */
 
 /* Physical Memory Map */
 #define CONFIG_SYS_CS0_SIZE		(256 * 1024 * 1024)
@@ -111,6 +165,7 @@
 /* **** PISMO SUPPORT *** */
 #define CONFIG_SYS_MAX_FLASH_SECT	520	/* max number of sectors */
 						/* on one chip */
+#define CONFIG_SYS_MAX_FLASH_BANKS	2	/* max number of flash banks */
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 2 sectors */
 
 #if defined(CONFIG_MTD_RAW_NAND)
@@ -124,6 +179,11 @@
 
 /* Defines for SPL */
 
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
+
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SPL_NAND_ECC
 
 #endif /* __CONFIG_H */

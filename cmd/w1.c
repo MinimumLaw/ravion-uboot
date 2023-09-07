@@ -6,7 +6,6 @@
  */
 #include <common.h>
 #include <command.h>
-#include <dm.h>
 #include <w1.h>
 #include <w1-eeprom.h>
 #include <dm/device-internal.h>
@@ -21,7 +20,7 @@ static int w1_bus(void)
 		printf("one wire interface not found\n");
 		return CMD_RET_FAILURE;
 	}
-	printf("Bus %d:\t%s", dev_seq(bus), bus->name);
+	printf("Bus %d:\t%s", bus->seq, bus->name);
 	if (device_active(bus))
 		printf("  (active)");
 	printf("\n");
@@ -31,7 +30,7 @@ static int w1_bus(void)
 	     device_find_next_child(&dev)) {
 		ret = device_probe(dev);
 
-		printf("\t%s (%d) uclass %s : ", dev->name, dev_seq(dev),
+		printf("\t%s (%d) uclass %s : ", dev->name, dev->seq,
 		       dev->uclass->uc_drv->name);
 
 		if (ret)
@@ -51,16 +50,16 @@ static int w1_read(int argc, char *const argv[])
 	u8 buf[512];
 
 	if (argc > 2)
-		bus_n = dectoul(argv[2], NULL);
+		bus_n = simple_strtoul(argv[2], NULL, 10);
 
 	if (argc > 3)
-		dev_n = dectoul(argv[3], NULL);
+		dev_n = simple_strtoul(argv[3], NULL, 10);
 
 	if (argc > 4)
-		offset = dectoul(argv[4], NULL);
+		offset = simple_strtoul(argv[4], NULL, 10);
 
 	if (argc > 5)
-		len = dectoul(argv[5], NULL);
+		len = simple_strtoul(argv[5], NULL, 10);
 
 	if (len > 512) {
 		printf("len needs to be <= 512\n");
@@ -104,7 +103,7 @@ static int w1_read(int argc, char *const argv[])
 	return CMD_RET_SUCCESS;
 }
 
-int do_w1(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_w1(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	if (argc < 2)
 		return CMD_RET_USAGE;

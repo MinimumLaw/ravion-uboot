@@ -14,7 +14,7 @@
 	compatible = "mediatek,mt7629-rfb", "mediatek,mt7629";
 
 	aliases {
-		spi0 = &snor;
+		spi0 = &snfi;
 	};
 
 	chosen {
@@ -24,28 +24,16 @@
 
 &eth {
 	status = "okay";
-	mediatek,gmac-id = <0>;
-	phy-mode = "sgmii";
-	mediatek,switch = "mt7531";
-	reset-gpios = <&gpio 28 GPIO_ACTIVE_HIGH>;
+	mediatek,gmac-id = <1>;
+	phy-mode = "gmii";
+	phy-handle = <&phy0>;
 
-	fixed-link {
-		speed = <1000>;
-		full-duplex;
+	phy0: ethernet-phy@0 {
+		reg = <0>;
 	};
 };
 
 &pinctrl {
-	state_default: pinmux_conf {
-		u-boot,dm-pre-reloc;
-
-		mux {
-			function = "jtag";
-			groups = "ephy_leds_jtag";
-			u-boot,dm-pre-reloc;
-		};
-	};
-
 	snfi_pins: snfi-pins {
 		mux {
 			function = "flash";
@@ -79,25 +67,11 @@
 	pinctrl-names = "default", "snfi";
 	pinctrl-0 = <&snor_pins>;
 	pinctrl-1 = <&snfi_pins>;
-	status = "disabled";
-
-	spi-flash@0{
-		compatible = "jedec,spi-nor";
-		reg = <0>;
-		u-boot,dm-pre-reloc;
-	};
-};
-
-&snor {
-	pinctrl-names = "default";
-	pinctrl-0 = <&snor_pins>;
 	status = "okay";
 
 	spi-flash@0{
 		compatible = "jedec,spi-nor";
 		reg = <0>;
-		spi-tx-bus-width = <1>;
-		spi-rx-bus-width = <4>;
 		u-boot,dm-pre-reloc;
 	};
 };
@@ -105,14 +79,6 @@
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_pins>;
-	status = "okay";
-};
-
-&xhci {
-	status = "okay";
-};
-
-&u3phy {
 	status = "okay";
 };
 

@@ -2,27 +2,17 @@
 /*
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  */
-
-#define LOG_CATEGORY LOGC_ARCH
-
 #include <common.h>
 #include <clk.h>
 #include <cpu_func.h>
 #include <debug_uart.h>
 #include <env.h>
-#include <init.h>
-#include <log.h>
-#include <lmb.h>
 #include <misc.h>
-#include <net.h>
 #include <asm/io.h>
-#include <asm/arch/bsec.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/global_data.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
-#include <linux/bitops.h>
 
 /* RCC register */
 #define RCC_TZCR		(STM32_RCC_BASE + 0x00)
@@ -71,6 +61,12 @@
 #define BOOTROM_INSTANCE_MASK	 GENMASK(31, 16)
 #define BOOTROM_INSTANCE_SHIFT	16
 
+/* BSEC OTP index */
+#define BSEC_OTP_RPN	1
+#define BSEC_OTP_SERIAL	13
+#define BSEC_OTP_PKG	16
+#define BSEC_OTP_MAC	57
+
 /* Device Part Number (RPN) = OTP_DATA1 lower 8 bits */
 #define RPN_SHIFT	0
 #define RPN_MASK	GENMASK(7, 0)
@@ -85,14 +81,8 @@
 #define PKG_SHIFT	27
 #define PKG_MASK	GENMASK(2, 0)
 
-/*
- * early TLB into the .data section so that it not get cleared
- * with 16kB allignment (see TTBR0_BASE_ADDR_MASK)
- */
-u8 early_tlb[PGTABLE_SIZE] __section(".data") __aligned(0x4000);
-
-struct lmb lmb;
-
+#if !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD)
+#ifndef CONFIG_STM32MP1_TRUSTED
 static void security_init(void)
 {
 	/* Disable the backup domain write protection */
@@ -152,36 +142,22 @@ static void security_init(void)
 	writel(BIT(0), RCC_MP_AHB5ENSETR);
 	writel(0x0, GPIOZ_SECCFGR);
 }
+#endif /* CONFIG_STM32MP1_TRUSTED */
 
 /*
  * Debug init
  */
 static void dbgmcu_init(void)
 {
-	/*
-	 * Freeze IWDG2 if Cortex-A7 is in debug mode
-	 * done in TF-A for TRUSTED boot and
-	 * DBGMCU access is controlled by BSEC_DENABLE.DBGSWENABLE
-	*/
-	if (bsec_dbgswenable()) {
-		setbits_le32(RCC_DBGCFGR, RCC_DBGCFGR_DBGCKEN);
-		setbits_le32(DBGMCU_APB4FZ1, DBGMCU_APB4FZ1_IWDG2);
-	}
+	setbits_le32(RCC_DBGCFGR, RCC_DBGCFGR_DBGCKEN);
+
+	/* Freeze IWDG2 if Cortex-A7 is in debug mode */
+	setbits_le32(DBGMCU_APB4FZ1, DBGMCU_APB4FZ1_IWDG2);
 }
+#endif /* !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD) */
 
-void spl_board_init(void)
-{
-	struct udevice *dev;
-	int ret;
-
-	dbgmcu_init();
-
-	/* force probe of BSEC driver to shadow the upper OTP */
-	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(stm32mp_bsec), &dev);
-	if (ret)
-		log_warning("BSEC probe failed: %d\n", ret);
-}
-
+#if !defined(CONFIG_STM32MP1_TRUSTED) && \
+	(!defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD))
 /* get bootmode from ROM code boot context: saved in TAMP register */
 static void update_bootmode(void)
 {
@@ -207,6 +183,7 @@ static void update_bootmode(void)
 			TAMP_BOOT_MODE_MASK,
 			boot_mode << TAMP_BOOT_MODE_SHIFT);
 }
+#endif
 
 u32 get_bootmode(void)
 {
@@ -216,132 +193,53 @@ u32 get_bootmode(void)
 }
 
 /*
- * weak function overidde: set the DDR/SYSRAM executable before to enable the
- * MMU and configure DACR, for early early_enable_caches (SPL or pre-reloc)
- */
-void dram_bank_mmu_setup(int bank)
-{
-	struct bd_info *bd = gd->bd;
-	int	i;
-	phys_addr_t start;
-	phys_size_t size;
-	bool use_lmb = false;
-	enum dcache_option option;
-
-	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
-		start = ALIGN_DOWN(STM32_SYSRAM_BASE, MMU_SECTION_SIZE);
-		size = ALIGN(STM32_SYSRAM_SIZE, MMU_SECTION_SIZE);
-	} else if (gd->flags & GD_FLG_RELOC) {
-		/* bd->bi_dram is available only after relocation */
-		start = bd->bi_dram[bank].start;
-		size =  bd->bi_dram[bank].size;
-		use_lmb = true;
-	} else {
-		/* mark cacheable and executable the beggining of the DDR */
-		start = STM32_DDR_BASE;
-		size = CONFIG_DDR_CACHEABLE_SIZE;
-	}
-
-	for (i = start >> MMU_SECTION_SHIFT;
-	     i < (start >> MMU_SECTION_SHIFT) + (size >> MMU_SECTION_SHIFT);
-	     i++) {
-		option = DCACHE_DEFAULT_OPTION;
-		if (use_lmb && lmb_is_reserved_flags(&lmb, i << MMU_SECTION_SHIFT, LMB_NOMAP))
-			option = 0; /* INVALID ENTRY in TLB */
-		set_section_dcache(i, option);
-	}
-}
-/*
- * initialize the MMU and activate cache in SPL or in U-Boot pre-reloc stage
- * MMU/TLB is updated in enable_caches() for U-Boot after relocation
- * or is deactivated in U-Boot entry function start.S::cpu_init_cp15
- */
-static void early_enable_caches(void)
-{
-	/* I-cache is already enabled in start.S: cpu_init_cp15 */
-
-	if (CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
-		return;
-
-	if (!(CONFIG_IS_ENABLED(SYS_ICACHE_OFF) && CONFIG_IS_ENABLED(SYS_DCACHE_OFF))) {
-		gd->arch.tlb_size = PGTABLE_SIZE;
-		gd->arch.tlb_addr = (unsigned long)&early_tlb;
-	}
-
-	/* enable MMU (default configuration) */
-	dcache_enable();
-}
-
-/*
  * Early system init
  */
 int arch_cpu_init(void)
 {
 	u32 boot_mode;
 
-	early_enable_caches();
-
 	/* early armv7 timer init: needed for polling */
 	timer_init();
 
-	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
-		security_init();
-		update_bootmode();
+#if !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD)
+	dbgmcu_init();
+#ifndef CONFIG_STM32MP1_TRUSTED
+	security_init();
+	update_bootmode();
+#endif
+	/* Reset Coprocessor state unless it wakes up from Standby power mode */
+	if (!(readl(PWR_MCUCR) & PWR_MCUCR_SBF)) {
+		writel(TAMP_COPRO_STATE_OFF, TAMP_COPRO_STATE);
+		writel(0, TAMP_COPRO_RSC_TBL_ADDRESS);
 	}
-/* reset copro state in SPL, when used, or in U-Boot */
-	if (!IS_ENABLED(CONFIG_SPL) || IS_ENABLED(CONFIG_SPL_BUILD)) {
-		/* Reset Coprocessor state unless it wakes up from Standby power mode */
-		if (!(readl(PWR_MCUCR) & PWR_MCUCR_SBF)) {
-			writel(TAMP_COPRO_STATE_OFF, TAMP_COPRO_STATE);
-			writel(0, TAMP_COPRO_RSC_TBL_ADDRESS);
-		}
-	}
+#endif
 
 	boot_mode = get_bootmode();
 
-	if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) &&
-	    (boot_mode & TAMP_BOOT_DEVICE_MASK) == BOOT_SERIAL_UART)
+	if ((boot_mode & TAMP_BOOT_DEVICE_MASK) == BOOT_SERIAL_UART)
 		gd->flags |= GD_FLG_SILENT | GD_FLG_DISABLE_CONSOLE;
-	else if (IS_ENABLED(CONFIG_DEBUG_UART) && IS_ENABLED(CONFIG_SPL_BUILD))
+#if defined(CONFIG_DEBUG_UART) && \
+	!defined(CONFIG_STM32MP1_TRUSTED) && \
+	(!defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD))
+	else
 		debug_uart_init();
+#endif
 
 	return 0;
 }
 
 void enable_caches(void)
 {
-	/* parse device tree when data cache is still activated */
-	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
-
-	/* I-cache is already enabled in start.S: icache_enable() not needed */
-
-	/* deactivate the data cache, early enabled in arch_cpu_init() */
-	dcache_disable();
-	/*
-	 * update MMU after relocation and enable the data cache
-	 * warning: the TLB location udpated in board_f.c::reserve_mmu
-	 */
+	/* Enable D-cache. I-cache is already enabled in start.S */
 	dcache_enable();
 }
 
 static u32 read_idc(void)
 {
-	/* DBGMCU access is controlled by BSEC_DENABLE.DBGSWENABLE */
-	if (bsec_dbgswenable()) {
-		setbits_le32(RCC_DBGCFGR, RCC_DBGCFGR_DBGCKEN);
+	setbits_le32(RCC_DBGCFGR, RCC_DBGCFGR_DBGCKEN);
 
-		return readl(DBGMCU_IDC);
-	}
-
-	if (CONFIG_IS_ENABLED(STM32MP15x))
-		return CPU_DEV_STM32MP15; /* STM32MP15x and unknown revision */
-	else
-		return 0x0;
-}
-
-u32 get_cpu_dev(void)
-{
-	return (read_idc() & DBGMCU_IDC_DEV_ID_MASK) >> DBGMCU_IDC_DEV_ID_SHIFT;
+	return readl(DBGMCU_IDC);
 }
 
 u32 get_cpu_rev(void)
@@ -356,7 +254,7 @@ static u32 get_otp(int index, int shift, int mask)
 	u32 otp = 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 
 	if (!ret)
@@ -374,7 +272,11 @@ static u32 get_cpu_rpn(void)
 
 u32 get_cpu_type(void)
 {
-	return (get_cpu_dev() << 16) | get_cpu_rpn();
+	u32 id;
+
+	id = (read_idc() & DBGMCU_IDC_DEV_ID_MASK) >> DBGMCU_IDC_DEV_ID_SHIFT;
+
+	return (id << 16) | get_cpu_rpn();
 }
 
 /* Get Package options from OTP */
@@ -383,90 +285,76 @@ u32 get_cpu_package(void)
 	return get_otp(BSEC_OTP_PKG, PKG_SHIFT, PKG_MASK);
 }
 
-static const char * const soc_type[] = {
-	"????",
-	"151C", "151A", "151F", "151D",
-	"153C", "153A", "153F", "153D",
-	"157C", "157A", "157F", "157D"
-};
-
-static const char * const soc_pkg[] = { "??", "AD", "AC", "AB", "AA" };
-static const char * const soc_rev[] = { "?", "A", "B", "Z" };
-
-static void get_cpu_string_offsets(unsigned int *type, unsigned int *pkg,
-				   unsigned int *rev)
+#if defined(CONFIG_DISPLAY_CPUINFO)
+int print_cpuinfo(void)
 {
-	u32 cpu_type = get_cpu_type();
-	u32 ct = cpu_type & ~(BIT(7) | BIT(0));
-	u32 cm = ((cpu_type & BIT(7)) >> 6) | (cpu_type & BIT(0));
-	u32 cp = get_cpu_package();
+	char *cpu_s, *cpu_r, *pkg;
 
-	/* Bits 0 and 7 are the ACDF, 00:C 01:A 10:F 11:D */
-	switch (ct) {
-	case CPU_STM32MP151Cxx:
-		*type = cm + 1;
+	/* MPUs Part Numbers */
+	switch (get_cpu_type()) {
+	case CPU_STM32MP157Cxx:
+		cpu_s = "157C";
+		break;
+	case CPU_STM32MP157Axx:
+		cpu_s = "157A";
 		break;
 	case CPU_STM32MP153Cxx:
-		*type = cm + 5;
+		cpu_s = "153C";
 		break;
-	case CPU_STM32MP157Cxx:
-		*type = cm + 9;
+	case CPU_STM32MP153Axx:
+		cpu_s = "153A";
+		break;
+	case CPU_STM32MP151Cxx:
+		cpu_s = "151C";
+		break;
+	case CPU_STM32MP151Axx:
+		cpu_s = "151A";
 		break;
 	default:
-		*type = 0;
+		cpu_s = "????";
 		break;
 	}
 
 	/* Package */
-	switch (cp) {
+	switch (get_cpu_package()) {
 	case PKG_AA_LBGA448:
+		pkg = "AA";
+		break;
 	case PKG_AB_LBGA354:
+		pkg = "AB";
+		break;
 	case PKG_AC_TFBGA361:
+		pkg = "AC";
+		break;
 	case PKG_AD_TFBGA257:
-		*pkg = cp;
+		pkg = "AD";
 		break;
 	default:
-		*pkg = 0;
+		pkg = "??";
 		break;
 	}
 
-	/* Revision */
+	/* REVISION */
 	switch (get_cpu_rev()) {
 	case CPU_REVA:
-		*rev = 1;
+		cpu_r = "A";
 		break;
 	case CPU_REVB:
-		*rev = 2;
+		cpu_r = "B";
 		break;
 	case CPU_REVZ:
-		*rev = 3;
+		cpu_r = "Z";
 		break;
 	default:
-		*rev = 0;
+		cpu_r = "?";
 		break;
 	}
-}
 
-void get_soc_name(char name[SOC_NAME_SIZE])
-{
-	unsigned int type, pkg, rev;
-
-	get_cpu_string_offsets(&type, &pkg, &rev);
-
-	snprintf(name, SOC_NAME_SIZE, "STM32MP%s%s Rev.%s",
-		 soc_type[type], soc_pkg[pkg], soc_rev[rev]);
-}
-
-/* used when CONFIG_DISPLAY_CPUINFO is activated */
-int print_cpuinfo(void)
-{
-	char name[SOC_NAME_SIZE];
-
-	get_soc_name(name);
-	printf("CPU: %s\n", name);
+	printf("CPU: STM32MP%s%s Rev.%s\n", cpu_s, pkg, cpu_r);
 
 	return 0;
 }
+#endif /* CONFIG_DISPLAY_CPUINFO */
 
 static void setup_boot_mode(void)
 {
@@ -480,11 +368,6 @@ static void setup_boot_mode(void)
 		STM32_UART7_BASE,
 		STM32_UART8_BASE
 	};
-	const u32 sdmmc_addr[] = {
-		STM32_SDMMC1_BASE,
-		STM32_SDMMC2_BASE,
-		STM32_SDMMC3_BASE
-	};
 	char cmd[60];
 	u32 boot_ctx = readl(TAMP_BOOT_CONTEXT);
 	u32 boot_mode =
@@ -492,33 +375,30 @@ static void setup_boot_mode(void)
 	unsigned int instance = (boot_mode & TAMP_BOOT_INSTANCE_MASK) - 1;
 	u32 forced_mode = (boot_ctx & TAMP_BOOT_FORCED_MASK);
 	struct udevice *dev;
+	int alias;
 
-	log_debug("%s: boot_ctx=0x%x => boot_mode=%x, instance=%d forced=%x\n",
-		  __func__, boot_ctx, boot_mode, instance, forced_mode);
+	pr_debug("%s: boot_ctx=0x%x => boot_mode=%x, instance=%d forced=%x\n",
+		 __func__, boot_ctx, boot_mode, instance, forced_mode);
 	switch (boot_mode & TAMP_BOOT_DEVICE_MASK) {
 	case BOOT_SERIAL_UART:
 		if (instance > ARRAY_SIZE(serial_addr))
 			break;
-		/* serial : search associated node in devicetree */
+		/* serial : search associated alias in devicetree */
 		sprintf(cmd, "serial@%x", serial_addr[instance]);
-		if (uclass_get_device_by_name(UCLASS_SERIAL, cmd, &dev)) {
-			/* restore console on error */
-			if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL))
-				gd->flags &= ~(GD_FLG_SILENT |
-					       GD_FLG_DISABLE_CONSOLE);
-			log_err("uart%d = %s not found in device tree!\n",
-				instance + 1, cmd);
+		if (uclass_get_device_by_name(UCLASS_SERIAL, cmd, &dev))
 			break;
-		}
-		sprintf(cmd, "%d", dev_seq(dev));
+		if (fdtdec_get_alias_seq(gd->fdt_blob, "serial",
+					 dev_of_offset(dev), &alias))
+			break;
+		sprintf(cmd, "%d", alias);
 		env_set("boot_device", "serial");
 		env_set("boot_instance", cmd);
 
 		/* restore console on uart when not used */
-		if (IS_ENABLED(CONFIG_CMD_STM32PROG_SERIAL) && gd->cur_serial_dev != dev) {
+		if (gd->cur_serial_dev != dev) {
 			gd->flags &= ~(GD_FLG_SILENT |
 				       GD_FLG_DISABLE_CONSOLE);
-			log_info("serial boot with console enabled!\n");
+			printf("serial boot with console enabled!\n");
 		}
 		break;
 	case BOOT_SERIAL_USB:
@@ -527,16 +407,7 @@ static void setup_boot_mode(void)
 		break;
 	case BOOT_FLASH_SD:
 	case BOOT_FLASH_EMMC:
-		if (instance > ARRAY_SIZE(sdmmc_addr))
-			break;
-		/* search associated sdmmc node in devicetree */
-		sprintf(cmd, "mmc@%x", sdmmc_addr[instance]);
-		if (uclass_get_device_by_name(UCLASS_MMC, cmd, &dev)) {
-			printf("mmc%d = %s not found in device tree!\n",
-			       instance, cmd);
-			break;
-		}
-		sprintf(cmd, "%d", dev_seq(dev));
+		sprintf(cmd, "%d", instance);
 		env_set("boot_device", "mmc");
 		env_set("boot_instance", cmd);
 		break;
@@ -544,24 +415,18 @@ static void setup_boot_mode(void)
 		env_set("boot_device", "nand");
 		env_set("boot_instance", "0");
 		break;
-	case BOOT_FLASH_SPINAND:
-		env_set("boot_device", "spi-nand");
-		env_set("boot_instance", "0");
-		break;
 	case BOOT_FLASH_NOR:
 		env_set("boot_device", "nor");
 		env_set("boot_instance", "0");
 		break;
 	default:
-		env_set("boot_device", "invalid");
-		env_set("boot_instance", "");
-		log_err("unexpected boot mode = %x\n", boot_mode);
+		pr_debug("unexpected boot mode = %x\n", boot_mode);
 		break;
 	}
 
 	switch (forced_mode) {
 	case BOOT_FASTBOOT:
-		log_info("Enter fastboot!\n");
+		printf("Enter fastboot!\n");
 		env_set("preboot", "env set preboot; fastboot 0");
 		break;
 	case BOOT_STM32PROG:
@@ -571,7 +436,7 @@ static void setup_boot_mode(void)
 	case BOOT_UMS_MMC0:
 	case BOOT_UMS_MMC1:
 	case BOOT_UMS_MMC2:
-		log_info("Enter UMS!\n");
+		printf("Enter UMS!\n");
 		instance = forced_mode - BOOT_UMS_MMC0;
 		sprintf(cmd, "env set preboot; ums 0 mmc %d", instance);
 		env_set("preboot", cmd);
@@ -582,7 +447,7 @@ static void setup_boot_mode(void)
 	case BOOT_NORMAL:
 		break;
 	default:
-		log_debug("unexpected forced boot mode = %x\n", forced_mode);
+		pr_debug("unexpected forced boot mode = %x\n", forced_mode);
 		break;
 	}
 
@@ -596,21 +461,19 @@ static void setup_boot_mode(void)
  */
 __weak int setup_mac_address(void)
 {
+#if defined(CONFIG_NET)
 	int ret;
 	int i;
 	u32 otp[2];
 	uchar enetaddr[6];
 	struct udevice *dev;
 
-	if (!IS_ENABLED(CONFIG_NET))
-		return 0;
-
 	/* MAC already in environment */
 	if (eth_env_get_enetaddr("ethaddr", enetaddr))
 		return 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 	if (ret)
 		return ret;
@@ -624,13 +487,15 @@ __weak int setup_mac_address(void)
 		enetaddr[i] = ((uint8_t *)&otp)[i];
 
 	if (!is_valid_ethaddr(enetaddr)) {
-		log_err("invalid MAC address in OTP %pM\n", enetaddr);
+		pr_err("invalid MAC address in OTP %pM\n", enetaddr);
 		return -EINVAL;
 	}
-	log_debug("OTP MAC address = %pM\n", enetaddr);
-	ret = eth_env_set_enetaddr("ethaddr", enetaddr);
-	if (ret)
-		log_err("Failed to set mac address %pM from OTP: %d\n", enetaddr, ret);
+	pr_debug("OTP MAC address = %pM\n", enetaddr);
+	ret = !eth_env_set_enetaddr("ethaddr", enetaddr);
+	if (!ret)
+		pr_err("Failed to set mac address %pM from OTP: %d\n",
+		       enetaddr, ret);
+#endif
 
 	return 0;
 }
@@ -646,7 +511,7 @@ static int setup_serial_number(void)
 		return 0;
 
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(stm32mp_bsec),
+					  DM_GET_DRIVER(stm32mp_bsec),
 					  &dev);
 	if (ret)
 		return ret;
@@ -662,23 +527,11 @@ static int setup_serial_number(void)
 	return 0;
 }
 
-static void setup_soc_type_pkg_rev(void)
-{
-	unsigned int type, pkg, rev;
-
-	get_cpu_string_offsets(&type, &pkg, &rev);
-
-	env_set("soc_type", soc_type[type]);
-	env_set("soc_pkg", soc_pkg[pkg]);
-	env_set("soc_rev", soc_rev[rev]);
-}
-
 int arch_misc_init(void)
 {
 	setup_boot_mode();
 	setup_mac_address();
 	setup_serial_number();
-	setup_soc_type_pkg_rev();
 
 	return 0;
 }

@@ -2,15 +2,13 @@
 /*
  * Copyright (C) 2013, 2014, 2017 Markus Niebel <Markus.Niebel@tq-group.com>
  *
- * Configuration settings for the TQ-Systems TQMa6<Q,D,DL,S> module.
+ * Configuration settings for the TQ Systems TQMa6<Q,D,DL,S> module.
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
 #include <linux/kconfig.h>
-#include <linux/stringify.h>
-
 /* SPL */
 /* #if defined(CONFIG_SPL_BUILD) */
 /* common IMX6 SPL configuration */
@@ -30,22 +28,32 @@
 #define PHYS_SDRAM_SIZE			(SZ_1G)
 #endif
 
+#define CONFIG_MXC_UART
+
 /* SPI Flash */
 
 #define TQMA6_SPI_FLASH_SECTOR_SIZE	SZ_64K
 
 /* I2C Configs */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
+#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
+#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_I2C_MULTI_BUS
+#define CONFIG_SYS_I2C_SPEED		100000
 
 /* I2C EEPROM (M24C64) */
+#define CONFIG_SYS_I2C_EEPROM_ADDR			0x50
+#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN			2
 #define CONFIG_SYS_I2C_EEPROM_PAGE_WRITE_BITS		5 /* 32 Bytes */
 #define CONFIG_SYS_I2C_EEPROM_PAGE_WRITE_DELAY_MS	20
 
-#if !defined(CONFIG_DM_PMIC)
+#define CONFIG_POWER
+#define CONFIG_POWER_I2C
 #define CONFIG_POWER_PFUZE100
 #define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 #define TQMA6_PFUZE100_I2C_BUS		2
-#endif
 
 /* MMC Configs */
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
@@ -55,15 +63,21 @@
 #define CONFIG_USB_MAX_CONTROLLER_COUNT	2
 #define CONFIG_EHCI_HCD_INIT_AFTER_RESET	/* For OTG port */
 
+#define CONFIG_FEC_MXC
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 
 #define CONFIG_ARP_TIMEOUT		200UL
+
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * SZ_1M)
 
 #if defined(CONFIG_TQMA6X_MMC_BOOT)
 
 #define TQMA6_UBOOT_OFFSET		SZ_1K
 #define TQMA6_UBOOT_SECTOR_START	0x2
 #define TQMA6_UBOOT_SECTOR_COUNT	0x7fe
+
+#define CONFIG_SYS_MMC_ENV_DEV		0
 
 #define TQMA6_FDT_OFFSET		(2 * SZ_1M)
 #define TQMA6_FDT_SECTOR_START		0x1000
@@ -118,6 +132,9 @@
 			"fi; "                                                 \
 		"fi; fi; "                                                     \
 		"setenv filesize; setenv blkc \0"                              \
+
+#define CONFIG_BOOTCOMMAND \
+	"run mmcboot; run netboot; run panicboot"
 
 #elif defined(CONFIG_TQMA6X_SPI_BOOT)
 
@@ -202,7 +219,11 @@
 		"setexpr offset ${fdt_start} * "                               \
 			__stringify(TQMA6_SPI_FLASH_SECTOR_SIZE)"; "           \
 		"sf read ${fdt_addr} ${offset} ${size}; "                      \
-		"setenv size ; setenv offset\0"
+		"setenv size ; setenv offset\0"                                \
+
+#define CONFIG_BOOTCOMMAND                                                     \
+	"sf probe; run mmcboot; run netboot; run panicboot"                    \
+
 #else
 
 #error "need to define boot source"

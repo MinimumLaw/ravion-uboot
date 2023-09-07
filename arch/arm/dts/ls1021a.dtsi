@@ -98,46 +98,6 @@
 			bus-width = <4>;
 		};
 
-		gpio0: gpio@2300000 {
-			compatible = "fsl,ls1021a-gpio", "fsl,qoriq-gpio";
-			reg = <0x2300000 0x10000>;
-			interrupts = <GIC_SPI 98 IRQ_TYPE_LEVEL_HIGH>;
-			gpio-controller;
-			#gpio-cells = <2>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-		};
-
-		gpio1: gpio@2310000 {
-			compatible = "fsl,ls1021a-gpio", "fsl,qoriq-gpio";
-			reg = <0x2310000 0x10000>;
-			interrupts = <GIC_SPI 99 IRQ_TYPE_LEVEL_HIGH>;
-			gpio-controller;
-			#gpio-cells = <2>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-		};
-
-		gpio2: gpio@2320000 {
-			compatible = "fsl,ls1021a-gpio", "fsl,qoriq-gpio";
-			reg = <0x2320000 0x10000>;
-			interrupts = <GIC_SPI 100 IRQ_TYPE_LEVEL_HIGH>;
-			gpio-controller;
-			#gpio-cells = <2>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-		};
-
-		gpio3: gpio@2330000 {
-			compatible = "fsl,ls1021a-gpio", "fsl,qoriq-gpio";
-			reg = <0x2330000 0x10000>;
-			interrupts = <GIC_SPI 166 IRQ_TYPE_LEVEL_HIGH>;
-			gpio-controller;
-			#gpio-cells = <2>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-		};
-
 		scfg: scfg@1570000 {
 			compatible = "fsl,ls1021a-scfg", "syscon";
 			reg = <0x1570000 0x10000>;
@@ -190,7 +150,7 @@
 			interrupts = <GIC_SPI 96 IRQ_TYPE_LEVEL_HIGH>;
 			clock-names = "dspi";
 			clocks = <&platform_clk 1>;
-			spi-num-chipselects = <6>;
+			num-cs = <6>;
 			big-endian;
 			status = "disabled";
 		};
@@ -203,18 +163,20 @@
 			interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
 			clock-names = "dspi";
 			clocks = <&platform_clk 1>;
-			spi-num-chipselects = <6>;
+			num-cs = <6>;
 			big-endian;
 			status = "disabled";
 		};
 
 		qspi: quadspi@1550000 {
-			compatible = "fsl,ls1021a-qspi";
+			compatible = "fsl,vf610-qspi";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x1550000 0x10000>,
-				<0x40000000 0x1000000>;
+				<0x40000000 0x4000000>;
 			reg-names = "QuadSPI", "QuadSPI-memory";
+			num-cs = <2>;
+			big-endian;
 			status = "disabled";
 		};
 
@@ -469,7 +431,7 @@
 		sata: sata@3200000 {
 			compatible = "fsl,ls1021a-ahci";
 			reg = <0x3200000 0x10000 0x20220520 0x4>;
-			reg-names = "ahci", "sata-ecc";
+			reg-names = "sata-base", "ecc-addr";
 			interrupts = <0 101 4>;
 			status = "disabled";
 		};

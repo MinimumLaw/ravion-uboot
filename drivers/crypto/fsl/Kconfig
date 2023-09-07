@@ -1,8 +1,6 @@
 config FSL_CAAM
 	bool "Freescale Crypto Driver Support"
 	select SHA_HW_ACCEL
-	# hw_sha1() under drivers/crypto, and needed with SHA_HW_ACCEL
-	imply SPL_CRYPTO if (ARM && SPL)
 	imply CMD_HASH
 	help
 	  Enables the Freescale's Cryptographic Accelerator and Assurance
@@ -11,7 +9,7 @@ config FSL_CAAM
 
 config CAAM_64BIT
 	bool
-	default y if PHYS_64BIT && !ARCH_IMX8M
+	default y if PHYS_64BIT && !ARCH_IMX8M && !ARCH_IMX8
 	help
 	  Select Crypto driver for 64 bits CAAM version
 
@@ -53,17 +51,3 @@ config SYS_FSL_SEC_COMPAT
 
 config SYS_FSL_SEC_LE
 	bool "Little-endian access to Freescale Secure Boot"
-
-if FSL_CAAM
-
-config FSL_CAAM_RNG
-	bool "Enable Random Number Generator support"
-	depends on DM_RNG
-	default y
-	help
-	  Enable support for the hardware based random number generator
-	  module of the CAAM. The random data is fetched from the DRGB
-	  using the prediction resistance flag which means the DRGB is
-	  reseeded from the TRNG every time random data is generated.
-
-endif

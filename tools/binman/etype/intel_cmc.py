@@ -5,10 +5,11 @@
 # Entry-type module for Intel Chip Microcode binary blob
 #
 
-from binman.etype.blob_ext import Entry_blob_ext
+from entry import Entry
+from blob import Entry_blob
 
-class Entry_intel_cmc(Entry_blob_ext):
-    """Intel Chipset Micro Code (CMC) file
+class Entry_intel_cmc(Entry_blob):
+    """Entry containing an Intel Chipset Micro Code (CMC) file
 
     Properties / Entry arguments:
         - filename: Filename of file to read into entry
@@ -19,4 +20,4 @@ class Entry_intel_cmc(Entry_blob_ext):
     See README.x86 for information about x86 binary blobs.
     """
     def __init__(self, section, etype, node):
-        super().__init__(section, etype, node)
+        Entry_blob.__init__(self, section, etype, node)

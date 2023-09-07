@@ -40,7 +40,6 @@
 };
 
 &sdhci {
-	microchip,use-sdcd;
 	status = "okay";
 };
 

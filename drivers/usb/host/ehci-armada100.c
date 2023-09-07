@@ -11,7 +11,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
 #include <usb.h>
 #include "ehci.h"

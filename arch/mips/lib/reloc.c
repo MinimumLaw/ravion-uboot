@@ -31,7 +31,6 @@
 #include <init.h>
 #include <asm/relocs.h>
 #include <asm/sections.h>
-#include <linux/bitops.h>
 
 /**
  * read_uint() - Read an unsigned integer from the buffer
@@ -67,7 +66,7 @@ static unsigned long read_uint(uint8_t **buf)
  * intentionally simple, and does the bare minimum needed to fixup the
  * relocated U-Boot - in particular, it does not check for overflows.
  */
-static void apply_reloc(unsigned int type, void *addr, long off, uint8_t *buf)
+static void apply_reloc(unsigned int type, void *addr, long off)
 {
 	uint32_t u32;
 
@@ -92,8 +91,7 @@ static void apply_reloc(unsigned int type, void *addr, long off, uint8_t *buf)
 		break;
 
 	default:
-		panic("Unhandled reloc type %u (@ %p), bss used before relocation?\n",
-		      type, buf);
+		panic("Unhandled reloc type %u\n", type);
 	}
 }
 
@@ -138,7 +136,7 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 			break;
 
 		addr += read_uint(&buf) << 2;
-		apply_reloc(type, (void *)addr, off, buf);
+		apply_reloc(type, (void *)addr, off);
 	}
 
 	/* Ensure the icache is coherent */

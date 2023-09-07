@@ -26,9 +26,9 @@
 #define STM32_ADC_MAX_ADCS		3
 #define STM32_ADCX_COMN_OFFSET		0x300
 
+#include <common.h>
 #include <clk.h>
-
-struct udevice;
+#include <dm.h>
 
 /**
  * struct stm32_adc_common - stm32 ADC driver common data (for all instances)

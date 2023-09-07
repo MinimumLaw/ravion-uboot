@@ -9,8 +9,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 #include <power/pmic.h>
 #include <power/regulator.h>
 #include <power/s2mps11.h>
@@ -46,6 +44,18 @@ struct odroid_rev_info odroid_info[] = {
 	{ EXYNOS5_BOARD_ODROID_HC2_REV01, 1, 1484, "hc1" },
 	{ EXYNOS5_BOARD_ODROID_UNKNOWN, 0, 4095, "unknown" },
 };
+
+static unsigned int odroid_get_rev(void)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(odroid_info); i++) {
+		if (odroid_info[i].board_type == gd->board_type)
+			return odroid_info[i].board_rev;
+	}
+
+	return 0;
+}
 
 /*
  * Read ADC at least twice and check the resuls.  If regulator providing voltage
@@ -188,19 +198,6 @@ bool board_is_generic(void)
 	return false;
 }
 
-#ifdef CONFIG_REVISION_TAG
-static unsigned int odroid_get_rev(void)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(odroid_info); i++) {
-		if (odroid_info[i].board_type == gd->board_type)
-			return odroid_info[i].board_rev;
-	}
-
-	return 0;
-}
-
 /**
  * get_board_rev() - return detected board revision.
  *
@@ -213,7 +210,6 @@ u32 get_board_rev(void)
 
 	return odroid_get_rev();
 }
-#endif
 
 /**
  * get_board_type() - returns board type string.

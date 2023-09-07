@@ -5,35 +5,33 @@
  *  Przemyslaw Marczak <p.marczak@samsung.com>
  */
 
+#include "regulator_common.h"
 #include <common.h>
 #include <errno.h>
 #include <dm.h>
-#include <log.h>
 #include <power/pmic.h>
 #include <power/regulator.h>
 
-#include "regulator_common.h"
-
-static int fixed_regulator_of_to_plat(struct udevice *dev)
+static int fixed_regulator_ofdata_to_platdata(struct udevice *dev)
 {
-	struct dm_regulator_uclass_plat *uc_pdata;
-	struct regulator_common_plat *dev_pdata;
+	struct dm_regulator_uclass_platdata *uc_pdata;
+	struct regulator_common_platdata *dev_pdata;
 
-	dev_pdata = dev_get_plat(dev);
-	uc_pdata = dev_get_uclass_plat(dev);
+	dev_pdata = dev_get_platdata(dev);
+	uc_pdata = dev_get_uclass_platdata(dev);
 	if (!uc_pdata)
 		return -ENXIO;
 
 	uc_pdata->type = REGULATOR_TYPE_FIXED;
 
-	return regulator_common_of_to_plat(dev, dev_pdata, "gpio");
+	return regulator_common_ofdata_to_platdata(dev, dev_pdata, "gpio");
 }
 
 static int fixed_regulator_get_value(struct udevice *dev)
 {
-	struct dm_regulator_uclass_plat *uc_pdata;
+	struct dm_regulator_uclass_platdata *uc_pdata;
 
-	uc_pdata = dev_get_uclass_plat(dev);
+	uc_pdata = dev_get_uclass_platdata(dev);
 	if (!uc_pdata)
 		return -ENXIO;
 
@@ -47,9 +45,9 @@ static int fixed_regulator_get_value(struct udevice *dev)
 
 static int fixed_regulator_get_current(struct udevice *dev)
 {
-	struct dm_regulator_uclass_plat *uc_pdata;
+	struct dm_regulator_uclass_platdata *uc_pdata;
 
-	uc_pdata = dev_get_uclass_plat(dev);
+	uc_pdata = dev_get_uclass_platdata(dev);
 	if (!uc_pdata)
 		return -ENXIO;
 
@@ -63,12 +61,12 @@ static int fixed_regulator_get_current(struct udevice *dev)
 
 static int fixed_regulator_get_enable(struct udevice *dev)
 {
-	return regulator_common_get_enable(dev, dev_get_plat(dev));
+	return regulator_common_get_enable(dev, dev_get_platdata(dev));
 }
 
 static int fixed_regulator_set_enable(struct udevice *dev, bool enable)
 {
-	return regulator_common_set_enable(dev, dev_get_plat(dev), enable);
+	return regulator_common_set_enable(dev, dev_get_platdata(dev), enable);
 }
 
 static const struct dm_regulator_ops fixed_regulator_ops = {
@@ -83,11 +81,11 @@ static const struct udevice_id fixed_regulator_ids[] = {
 	{ },
 };
 
-U_BOOT_DRIVER(regulator_fixed) = {
-	.name = "regulator_fixed",
+U_BOOT_DRIVER(fixed_regulator) = {
+	.name = "fixed regulator",
 	.id = UCLASS_REGULATOR,
 	.ops = &fixed_regulator_ops,
 	.of_match = fixed_regulator_ids,
-	.of_to_plat = fixed_regulator_of_to_plat,
-	.plat_auto	= sizeof(struct regulator_common_plat),
+	.ofdata_to_platdata = fixed_regulator_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct regulator_common_platdata),
 };

@@ -16,15 +16,11 @@
  * we only support v5, as used in the Raspberry Pi 4.
  */
 
-#include <log.h>
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <clk.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <fdt_support.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/err.h>
 #include <malloc.h>
 #include <miiphy.h>
@@ -236,7 +232,7 @@ static void bcmgenet_umac_reset(struct bcmgenet_eth_priv *priv)
 static int bcmgenet_gmac_write_hwaddr(struct udevice *dev)
 {
 	struct bcmgenet_eth_priv *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	uchar *addr = pdata->enetaddr;
 	u32 reg;
 
@@ -378,6 +374,8 @@ static void rx_descs_init(struct bcmgenet_eth_priv *priv)
 	u32 len_stat, i;
 	void *desc_base = priv->rx_desc_base;
 
+	priv->c_index = 0;
+
 	len_stat = (RX_BUF_LENGTH << DMA_BUFLENGTH_SHIFT) | DMA_OWN;
 
 	for (i = 0; i < RX_DESCS; i++) {
@@ -401,11 +399,8 @@ static void rx_ring_init(struct bcmgenet_eth_priv *priv)
 	writel(RX_DESCS * DMA_DESC_SIZE / 4 - 1,
 	       priv->mac_reg + RDMA_RING_REG_BASE + DMA_END_ADDR);
 
-	/* cannot init RDMA_PROD_INDEX to 0, so align RDMA_CONS_INDEX on it instead */
-	priv->c_index = readl(priv->mac_reg + RDMA_PROD_INDEX);
-	writel(priv->c_index, priv->mac_reg + RDMA_CONS_INDEX);
-	priv->rx_index = priv->c_index;
-	priv->rx_index &= 0xFF;
+	writel(0x0, priv->mac_reg + RDMA_PROD_INDEX);
+	writel(0x0, priv->mac_reg + RDMA_CONS_INDEX);
 	writel((RX_DESCS << DMA_RING_SIZE_SHIFT) | RX_BUF_LENGTH,
 	       priv->mac_reg + RDMA_RING_REG_BASE + DMA_RING_BUF_SIZE);
 	writel(DMA_FC_THRESH_VALUE, priv->mac_reg + RDMA_XON_XOFF_THRESH);
@@ -422,10 +417,8 @@ static void tx_ring_init(struct bcmgenet_eth_priv *priv)
 	writel(0x0, priv->mac_reg + TDMA_WRITE_PTR);
 	writel(TX_DESCS * DMA_DESC_SIZE / 4 - 1,
 	       priv->mac_reg + TDMA_RING_REG_BASE + DMA_END_ADDR);
-	/* cannot init TDMA_CONS_INDEX to 0, so align TDMA_PROD_INDEX on it instead */
-	priv->tx_index = readl(priv->mac_reg + TDMA_CONS_INDEX);
-	writel(priv->tx_index, priv->mac_reg + TDMA_PROD_INDEX);
-	priv->tx_index &= 0xFF;
+	writel(0x0, priv->mac_reg + TDMA_PROD_INDEX);
+	writel(0x0, priv->mac_reg + TDMA_CONS_INDEX);
 	writel(0x1, priv->mac_reg + TDMA_RING_REG_BASE + DMA_MBUF_DONE_THRESH);
 	writel(0x0, priv->mac_reg + TDMA_FLOW_PERIOD);
 	writel((TX_DESCS << DMA_RING_SIZE_SHIFT) | RX_BUF_LENGTH,
@@ -455,11 +448,7 @@ static int bcmgenet_adjust_link(struct bcmgenet_eth_priv *priv)
 	}
 
 	clrsetbits_32(priv->mac_reg + EXT_RGMII_OOB_CTRL, OOB_DISABLE,
-			RGMII_LINK | RGMII_MODE_EN);
-
-	if (phy_dev->interface == PHY_INTERFACE_MODE_RGMII ||
-	    phy_dev->interface == PHY_INTERFACE_MODE_RGMII_RXID)
-		setbits_32(priv->mac_reg + EXT_RGMII_OOB_CTRL, ID_MODE_DIS);
+			RGMII_LINK | RGMII_MODE_EN | ID_MODE_DIS);
 
 	writel(speed << CMD_SPEED_SHIFT, (priv->mac_reg + UMAC_CMD));
 
@@ -473,6 +462,8 @@ static int bcmgenet_gmac_eth_start(struct udevice *dev)
 
 	priv->tx_desc_base = priv->mac_reg + GENET_TX_OFF;
 	priv->rx_desc_base = priv->mac_reg + GENET_RX_OFF;
+	priv->tx_index = 0x0;
+	priv->rx_index = 0x0;
 
 	bcmgenet_umac_reset(priv);
 
@@ -619,7 +610,7 @@ static int bcmgenet_interface_set(struct bcmgenet_eth_priv *priv)
 
 static int bcmgenet_eth_probe(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct bcmgenet_eth_priv *priv = dev_get_priv(dev);
 	ofnode mdio_node;
 	const char *name;
@@ -685,9 +676,9 @@ static const struct eth_ops bcmgenet_gmac_eth_ops = {
 	.stop                   = bcmgenet_gmac_eth_stop,
 };
 
-static int bcmgenet_eth_of_to_plat(struct udevice *dev)
+static int bcmgenet_eth_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct bcmgenet_eth_priv *priv = dev_get_priv(dev);
 	struct ofnode_phandle_args phy_node;
 	const char *phy_mode;
@@ -729,10 +720,10 @@ U_BOOT_DRIVER(eth_bcmgenet) = {
 	.name   = "eth_bcmgenet",
 	.id     = UCLASS_ETH,
 	.of_match = bcmgenet_eth_ids,
-	.of_to_plat = bcmgenet_eth_of_to_plat,
+	.ofdata_to_platdata = bcmgenet_eth_ofdata_to_platdata,
 	.probe  = bcmgenet_eth_probe,
 	.ops    = &bcmgenet_gmac_eth_ops,
-	.priv_auto	= sizeof(struct bcmgenet_eth_priv),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct bcmgenet_eth_priv),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 	.flags = DM_FLAG_ALLOC_PRIV_DMA,
 };

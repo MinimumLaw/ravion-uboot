@@ -10,7 +10,6 @@
 #include <clk.h>
 #include <i2c.h>
 #include <reset.h>
-#include <linux/bitops.h>
 
 struct i2c_regs {
 	u32 ic_con;		/* 0x00 */
@@ -112,7 +111,7 @@ struct i2c_regs {
 #define IC_TX_EMPTY		0x0010
 #define IC_TX_OVER		0x0008
 #define IC_RX_FULL		0x0004
-#define IC_RX_OVER		0x0002
+#define IC_RX_OVER 		0x0002
 #define IC_RX_UNDER		0x0001
 
 /* fifo threshold register definitions */
@@ -139,27 +138,22 @@ struct i2c_regs {
 #define IC_STATUS_TFNF		0x0002
 #define IC_STATUS_ACT		0x0001
 
-#define DW_IC_COMP_PARAM_1_SPEED_MODE_HIGH      (BIT(2) | BIT(3))
-#define DW_IC_COMP_PARAM_1_SPEED_MODE_MASK      (BIT(2) | BIT(3))
-
 /**
  * struct dw_scl_sda_cfg - I2C timing configuration
  *
+ * @has_high_speed: Support high speed (3.4Mbps)
  * @ss_hcnt: Standard speed high time in ns
  * @fs_hcnt: Fast speed high time in ns
- * @hs_hcnt: High speed high time in ns
  * @ss_lcnt: Standard speed low time in ns
  * @fs_lcnt: Fast speed low time in ns
- * @hs_lcnt: High speed low time in ns
  * @sda_hold: SDA hold time
  */
 struct dw_scl_sda_cfg {
+	bool has_high_speed;
 	u32 ss_hcnt;
 	u32 fs_hcnt;
-	u32 hs_hcnt;
 	u32 ss_lcnt;
 	u32 fs_lcnt;
-	u32 hs_lcnt;
 	u32 sda_hold;
 };
 
@@ -205,27 +199,12 @@ struct dw_i2c {
 #if CONFIG_IS_ENABLED(CLK)
 	struct clk clk;
 #endif
-	struct dw_i2c_speed_config config;
 };
 
 extern const struct dm_i2c_ops designware_i2c_ops;
 
 int designware_i2c_probe(struct udevice *bus);
 int designware_i2c_remove(struct udevice *dev);
-int designware_i2c_of_to_plat(struct udevice *bus);
-
-/**
- * dw_i2c_gen_speed_config() - Calculate config info from requested speed
- *
- * Calculate the speed config from the given @speed_hz and return it so that
- * it can be incorporated in ACPI tables
- *
- * @dev: I2C bus to check
- * @speed_hz: Requested speed in Hz
- * @config: Returns config to use for that speed
- * Return: 0 if OK, -ve on error
- */
-int dw_i2c_gen_speed_config(const struct udevice *dev, int speed_hz,
-			    struct dw_i2c_speed_config *config);
+int designware_i2c_ofdata_to_platdata(struct udevice *bus);
 
 #endif /* __DW_I2C_H_ */

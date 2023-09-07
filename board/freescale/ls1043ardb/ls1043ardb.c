@@ -5,8 +5,6 @@
 
 #include <common.h>
 #include <i2c.h>
-#include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
@@ -219,10 +217,6 @@ int board_init(void)
 	ppa_init();
 #endif
 
-#if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)
-	pci_init();
-#endif
-
 #ifdef CONFIG_U_QE
 	u_qe_init();
 #endif
@@ -276,7 +270,7 @@ void fdt_del_qe(void *blob)
 	}
 }
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	u64 base[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
@@ -291,9 +285,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	ft_cpu_setup(blob, bd);
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#ifndef CONFIG_DM_ETH
 	fdt_fixup_fman_ethernet(blob);
-#endif
 #endif
 
 	fdt_fixup_icid(blob);

@@ -11,7 +11,6 @@
 #include <hang.h>
 #include <wdt.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 
 #define MTK_WDT_MODE			0x00
 #define MTK_WDT_LENGTH			0x04
@@ -144,7 +143,6 @@ static const struct wdt_ops mtk_wdt_ops = {
 
 static const struct udevice_id mtk_wdt_ids[] = {
 	{ .compatible = "mediatek,wdt"},
-	{ .compatible = "mediatek,mt6589-wdt"},
 	{}
 };
 
@@ -152,7 +150,7 @@ U_BOOT_DRIVER(mtk_wdt) = {
 	.name = "mtk_wdt",
 	.id = UCLASS_WDT,
 	.of_match = mtk_wdt_ids,
-	.priv_auto	= sizeof(struct mtk_wdt_priv),
+	.priv_auto_alloc_size = sizeof(struct mtk_wdt_priv),
 	.probe = mtk_wdt_probe,
 	.ops = &mtk_wdt_ops,
 	.flags = DM_FLAG_PRE_RELOC,

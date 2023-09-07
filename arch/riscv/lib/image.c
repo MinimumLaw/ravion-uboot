@@ -7,10 +7,8 @@
  */
 
 #include <common.h>
-#include <image.h>
 #include <mapmem.h>
 #include <errno.h>
-#include <asm/global_data.h>
 #include <linux/sizes.h>
 #include <linux/stddef.h>
 
@@ -50,12 +48,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 		return -EINVAL;
 	}
 	*size = lhdr->image_size;
-	if (force_reloc ||
-	   (gd->ram_base <= image && image < gd->ram_base + gd->ram_size)) {
-		*relocated_addr = gd->ram_base + lhdr->text_offset;
-	} else {
-		*relocated_addr = image;
-	}
+	*relocated_addr = gd->ram_base + lhdr->text_offset;
 
 	unmap_sysmem(lhdr);
 

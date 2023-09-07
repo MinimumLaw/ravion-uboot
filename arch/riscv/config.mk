@@ -14,12 +14,12 @@
 64bit-emul		:= elf64lriscv
 
 ifdef CONFIG_32BIT
-KBUILD_LDFLAGS		+= -m $(32bit-emul)
+PLATFORM_LDFLAGS	+= -m $(32bit-emul)
 EFI_LDS			:= elf_riscv32_efi.lds
 endif
 
 ifdef CONFIG_64BIT
-KBUILD_LDFLAGS		+= -m $(64bit-emul)
+PLATFORM_LDFLAGS	+= -m $(64bit-emul)
 EFI_LDS			:= elf_riscv64_efi.lds
 endif
 

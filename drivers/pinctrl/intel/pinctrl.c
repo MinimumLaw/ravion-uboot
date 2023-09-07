@@ -19,7 +19,6 @@
 #include <common.h>
 #include <dm.h>
 #include <irq.h>
-#include <log.h>
 #include <malloc.h>
 #include <p2sb.h>
 #include <spl.h>
@@ -60,7 +59,7 @@
  *
  * @comm: Community to search
  * @gpio: Pad number to look up (assumed to be valid)
- * Return: offset, 0 for first GPIO in community
+ * @return offset, 0 for first GPIO in community
  */
 static size_t relative_pad_in_comm(const struct pad_community *comm,
 				   uint gpio)
@@ -75,7 +74,7 @@ static size_t relative_pad_in_comm(const struct pad_community *comm,
  *
  * @comm: Community to search
  * @relative_pad: Pad to look up
- * Return: group number if found (see community_n_groups, etc.), or
+ * @return group number if found (see community_n_groups, etc.), or
  *	-ESPIPE if no groups, or -ENOENT if not found
  */
 static int pinctrl_group_index(const struct pad_community *comm,
@@ -135,7 +134,7 @@ static u32 pinctrl_bitmask_within_group(const struct pad_community *comm,
  *
  * @pad: Pad to check
  * @devp: Returns the device for that pad
- * Return: 0 if OK, -ENOTBLK if no device was found for the given pin
+ * @return 0 if OK, -ENOTBLK if no device was found for the given pin
  */
 static int pinctrl_get_device(uint pad, struct udevice **devp)
 {
@@ -143,7 +142,7 @@ static int pinctrl_get_device(uint pad, struct udevice **devp)
 
 	/*
 	 * We have to probe each one of these since the community link is only
-	 * attached in intel_pinctrl_of_to_plat().
+	 * attached in intel_pinctrl_ofdata_to_platdata().
 	 */
 	uclass_foreach_dev_probe(UCLASS_PINCTRL, dev) {
 		struct intel_pinctrl_priv *priv = dev_get_priv(dev);
@@ -154,7 +153,7 @@ static int pinctrl_get_device(uint pad, struct udevice **devp)
 			return 0;
 		}
 	}
-	log_debug("pad %d not found\n", pad);
+	printf("pad %d not found\n", pad);
 
 	return -ENOTBLK;
 }
@@ -274,9 +273,7 @@ static int pinctrl_configure_itss(struct udevice *dev,
 	irq = pcr_read32(dev, PAD_CFG1_OFFSET(pad_cfg_offset));
 	irq &= PAD_CFG1_IRQ_MASK;
 	if (!irq) {
-		if (spl_phase() > PHASE_TPL)
-			log_err("GPIO %u doesn't support APIC routing\n",
-				cfg->pad);
+		log_err("GPIO %u doesn't support APIC routing\n", cfg->pad);
 
 		return -EPROTONOSUPPORT;
 	}
@@ -316,8 +313,7 @@ static int pinctrl_pad_reset_config_override(const struct pad_community *comm,
 			return config_value;
 		}
 	}
-	if (spl_phase() > PHASE_TPL)
-		log_err("Logical-to-Chipset mapping not found\n");
+	log_err("Logical-to-Chipset mapping not found\n");
 
 	return -ENOENT;
 }
@@ -346,7 +342,7 @@ static const int mask[4] = {
  *
  * @dev: Pinctrl device containing the pad (see pinctrl_get_device())
  * @cfg: Configuration to apply
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 static int pinctrl_configure_pad(struct udevice *dev,
 				 const struct pad_config *cfg)
@@ -397,7 +393,7 @@ static int pinctrl_configure_pad(struct udevice *dev,
 	return 0;
 }
 
-u32 intel_pinctrl_get_config_reg_offset(struct udevice *dev, uint offset)
+u32 intel_pinctrl_get_config_reg_addr(struct udevice *dev, uint offset)
 {
 	struct intel_pinctrl_priv *priv = dev_get_priv(dev);
 	const struct pad_community *comm = priv->comm;
@@ -410,16 +406,9 @@ u32 intel_pinctrl_get_config_reg_offset(struct udevice *dev, uint offset)
 	return config_offset;
 }
 
-u32 intel_pinctrl_get_config_reg_addr(struct udevice *dev, uint offset)
-{
-	uint config_offset = intel_pinctrl_get_config_reg_offset(dev, offset);
-
-	return (u32)(ulong)pcr_reg_address(dev, config_offset);
-}
-
 u32 intel_pinctrl_get_config_reg(struct udevice *dev, uint offset)
 {
-	uint config_offset = intel_pinctrl_get_config_reg_offset(dev, offset);
+	uint config_offset = intel_pinctrl_get_config_reg_addr(dev, offset);
 
 	return pcr_read32(dev, config_offset);
 }
@@ -430,8 +419,6 @@ int intel_pinctrl_get_acpi_pin(struct udevice *dev, uint offset)
 	const struct pad_community *comm = priv->comm;
 	int group;
 
-	if (IS_ENABLED(CONFIG_INTEL_PINCTRL_MULTI_ACPI_DEVICES))
-		return offset;
 	group = pinctrl_group_index(comm, offset);
 
 	/* If pad base is not set then use GPIO number as ACPI pin number */
@@ -616,18 +603,21 @@ int pinctrl_config_pads_for_node(struct udevice *dev, ofnode node)
 	return 0;
 }
 
-int intel_pinctrl_of_to_plat(struct udevice *dev,
-			     const struct pad_community *comm, int num_cfgs)
+int intel_pinctrl_ofdata_to_platdata(struct udevice *dev,
+				     const struct pad_community *comm,
+				     int num_cfgs)
 {
-	struct p2sb_child_plat *pplat = dev_get_parent_plat(dev);
+	struct p2sb_child_platdata *pplat = dev_get_parent_platdata(dev);
 	struct intel_pinctrl_priv *priv = dev_get_priv(dev);
+	int ret;
 
 	if (!comm) {
-		if (spl_phase() > PHASE_TPL)
-			log_err("Cannot find community for pid %d\n",
-				pplat->pid);
+		log_err("Cannot find community for pid %d\n", pplat->pid);
 		return -EDOM;
 	}
+	ret = irq_first_device_type(X86_IRQT_ITSS, &priv->itss);
+	if (ret)
+		return log_msg_ret("Cannot find ITSS", ret);
 	priv->comm = comm;
 	priv->num_cfgs = num_cfgs;
 
@@ -637,12 +627,8 @@ int intel_pinctrl_of_to_plat(struct udevice *dev,
 int intel_pinctrl_probe(struct udevice *dev)
 {
 	struct intel_pinctrl_priv *priv = dev_get_priv(dev);
-	int ret;
 
 	priv->itss_pol_cfg = true;
-	ret = irq_first_device_type(X86_IRQT_ITSS, &priv->itss);
-	if (ret)
-		return log_msg_ret("Cannot find ITSS", ret);
 
 	return 0;
 }

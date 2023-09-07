@@ -7,10 +7,8 @@
 #ifndef __DWMMC_HW_H
 #define __DWMMC_HW_H
 
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <mmc.h>
-#include <linux/bitops.h>
 
 #define DWMCI_CTRL		0x000
 #define	DWMCI_PWREN		0x004
@@ -174,7 +172,7 @@ struct dwmci_host {
 	struct mmc *mmc;
 	void *priv;
 
-	int (*clksel)(struct dwmci_host *host);
+	void (*clksel)(struct dwmci_host *host);
 	void (*board_init)(struct dwmci_host *host);
 
 	/**
@@ -256,10 +254,10 @@ static inline u8 dwmci_readb(struct dwmci_host *host, int reg)
  * ...
  *
  * Inside U_BOOT_DRIVER():
- *	.plat_auto	= sizeof(struct rockchip_mmc_plat),
+ *	.platdata_auto_alloc_size = sizeof(struct rockchip_mmc_plat),
  *
  * To access platform data:
- *	struct rockchip_mmc_plat *plat = dev_get_plat(dev);
+ *	struct rockchip_mmc_plat *plat = dev_get_platdata(dev);
  *
  * See rockchip_dw_mmc.c for an example.
  *
@@ -284,7 +282,7 @@ void dwmci_setup_cfg(struct mmc_config *cfg, struct dwmci_host *host,
  * @cfg:	Empty configuration structure (generally &plat->cfg). This is
  *		normally all zeroes at this point. The only purpose of passing
  *		this in is to set mmc->cfg to it.
- * Return: 0 if OK, -ve if the block device could not be created
+ * @return 0 if OK, -ve if the block device could not be created
  */
 int dwmci_bind(struct udevice *dev, struct mmc *mmc, struct mmc_config *cfg);
 
@@ -297,7 +295,7 @@ int dwmci_bind(struct udevice *dev, struct mmc *mmc, struct mmc_config *cfg);
  * @host:	DWMMC host structure
  * @max_clk:	Maximum supported clock speed in HZ (e.g. 150000000)
  * @min_clk:	Minimum supported clock speed in HZ (e.g. 400000)
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int add_dwmci(struct dwmci_host *host, u32 max_clk, u32 min_clk);
 #endif /* !CONFIG_BLK */

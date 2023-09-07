@@ -4,13 +4,11 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <dm.h>
 #include <mailbox-uclass.h>
 #include <dt-bindings/mailbox/tegra186-hsp.h>
-#include <linux/bitops.h>
 
 #define TEGRA_HSP_INT_DIMENSIONING		0x380
 #define TEGRA_HSP_INT_DIMENSIONING_NSI_SHIFT	16
@@ -77,7 +75,7 @@ static int tegra_hsp_of_xlate(struct mbox_chan *chan,
 	debug("%s(chan=%p)\n", __func__, chan);
 
 	if (args->args_count != 2) {
-		debug("Invalid args_count: %d\n", args->args_count);
+		debug("Invaild args_count: %d\n", args->args_count);
 		return -EINVAL;
 	}
 
@@ -153,7 +151,7 @@ static int tegra_hsp_probe(struct udevice *dev)
 
 	debug("%s(dev=%p)\n", __func__, dev);
 
-	thsp->regs = dev_read_addr(dev);
+	thsp->regs = devfdt_get_addr(dev);
 	if (thsp->regs == FDT_ADDR_T_NONE)
 		return -ENODEV;
 
@@ -189,6 +187,6 @@ U_BOOT_DRIVER(tegra_hsp) = {
 	.of_match = tegra_hsp_ids,
 	.bind = tegra_hsp_bind,
 	.probe = tegra_hsp_probe,
-	.priv_auto	= sizeof(struct tegra_hsp),
+	.priv_auto_alloc_size = sizeof(struct tegra_hsp),
 	.ops = &tegra_hsp_mbox_ops,
 };

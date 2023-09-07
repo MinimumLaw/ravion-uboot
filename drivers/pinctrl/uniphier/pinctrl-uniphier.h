@@ -8,7 +8,6 @@
 #define __PINCTRL_UNIPHIER_H__
 
 #include <linux/bitops.h>
-#include <linux/bug.h>
 #include <linux/build_bug.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

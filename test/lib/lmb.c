@@ -4,18 +4,10 @@
  */
 
 #include <common.h>
-#include <dm.h>
 #include <lmb.h>
-#include <log.h>
 #include <malloc.h>
 #include <dm/test.h>
-#include <test/test.h>
 #include <test/ut.h>
-
-static inline bool lmb_is_nomap(struct lmb_property *m)
-{
-	return m->flags & LMB_NOMAP;
-}
 
 static int check_lmb(struct unit_test_state *uts, struct lmb *lmb,
 		     phys_addr_t ram_base, phys_size_t ram_size,
@@ -206,7 +198,7 @@ static int lib_test_lmb_simple(struct unit_test_state *uts)
 	return test_multi_alloc_512mb(uts, 0xE0000000);
 }
 
-DM_TEST(lib_test_lmb_simple, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_simple, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Create two memory regions with one reserved region and allocate */
 static int lib_test_lmb_simple_x2(struct unit_test_state *uts)
@@ -222,7 +214,7 @@ static int lib_test_lmb_simple_x2(struct unit_test_state *uts)
 	return test_multi_alloc_512mb_x2(uts, 0xE0000000, 0x40000000);
 }
 
-DM_TEST(lib_test_lmb_simple_x2,  UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_simple_x2,  DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Simulate 512 MiB RAM, allocate some blocks that fit/don't fit */
 static int test_bigblock(struct unit_test_state *uts, const phys_addr_t ram)
@@ -289,7 +281,7 @@ static int lib_test_lmb_big(struct unit_test_state *uts)
 	return test_bigblock(uts, 0xE0000000);
 }
 
-DM_TEST(lib_test_lmb_big, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_big, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Simulate 512 MiB RAM, allocate a block without previous reservation */
 static int test_noreserved(struct unit_test_state *uts, const phys_addr_t ram,
@@ -364,7 +356,7 @@ static int lib_test_lmb_noreserved(struct unit_test_state *uts)
 	return test_noreserved(uts, 0xE0000000, 4, 1);
 }
 
-DM_TEST(lib_test_lmb_noreserved, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_noreserved, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 static int lib_test_lmb_unaligned_size(struct unit_test_state *uts)
 {
@@ -379,7 +371,7 @@ static int lib_test_lmb_unaligned_size(struct unit_test_state *uts)
 	return test_noreserved(uts, 0xE0000000, 5, 8);
 }
 
-DM_TEST(lib_test_lmb_unaligned_size, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_unaligned_size, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 /*
  * Simulate a RAM that starts at 0 and allocate down to address 0, which must
  * fail as '0' means failure for the lmb_alloc functions.
@@ -422,7 +414,7 @@ static int lib_test_lmb_at_0(struct unit_test_state *uts)
 	return 0;
 }
 
-DM_TEST(lib_test_lmb_at_0, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_at_0, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Check that calling lmb_reserve with overlapping regions fails. */
 static int lib_test_lmb_overlapping_reserve(struct unit_test_state *uts)
@@ -461,7 +453,7 @@ static int lib_test_lmb_overlapping_reserve(struct unit_test_state *uts)
 }
 
 DM_TEST(lib_test_lmb_overlapping_reserve,
-	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /*
  * Simulate 512 MiB RAM, reserve 3 blocks, allocate addresses in between.
@@ -591,7 +583,7 @@ static int lib_test_lmb_alloc_addr(struct unit_test_state *uts)
 	return test_alloc_addr(uts, 0xE0000000);
 }
 
-DM_TEST(lib_test_lmb_alloc_addr, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(lib_test_lmb_alloc_addr, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Simulate 512 MiB RAM, reserve 3 blocks, check addresses in between */
 static int test_get_unreserved_size(struct unit_test_state *uts,
@@ -663,157 +655,4 @@ static int lib_test_lmb_get_free_size(struct unit_test_state *uts)
 }
 
 DM_TEST(lib_test_lmb_get_free_size,
-	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
-
-static int lib_test_lmb_max_regions(struct unit_test_state *uts)
-{
-	const phys_addr_t ram = 0x00000000;
-	const phys_size_t ram_size = 0x8000000;
-	const phys_size_t blk_size = 0x10000;
-	phys_addr_t offset;
-	struct lmb lmb;
-	int ret, i;
-
-	lmb_init(&lmb);
-
-	ut_asserteq(lmb.memory.cnt, 0);
-	ut_asserteq(lmb.memory.max, 8);
-	ut_asserteq(lmb.reserved.cnt, 0);
-	ut_asserteq(lmb.reserved.max, 8);
-
-	/*  Add 8 memory regions */
-	for (i = 0; i < 8; i++) {
-		offset = ram + 2 * i * ram_size;
-		ret = lmb_add(&lmb, offset, ram_size);
-		ut_asserteq(ret, 0);
-	}
-	ut_asserteq(lmb.memory.cnt, 8);
-	ut_asserteq(lmb.reserved.cnt, 0);
-
-	/*  error for the 9th memory regions */
-	offset = ram + 2 * 8 * ram_size;
-	ret = lmb_add(&lmb, offset, ram_size);
-	ut_asserteq(ret, -1);
-
-	ut_asserteq(lmb.memory.cnt, 8);
-	ut_asserteq(lmb.reserved.cnt, 0);
-
-	/*  reserve 8 regions */
-	for (i = 0; i < 8; i++) {
-		offset = ram + 2 * i * blk_size;
-		ret = lmb_reserve(&lmb, offset, blk_size);
-		ut_asserteq(ret, 0);
-	}
-
-	ut_asserteq(lmb.memory.cnt, 8);
-	ut_asserteq(lmb.reserved.cnt, 8);
-
-	/*  error for the 9th reserved blocks */
-	offset = ram + 2 * 8 * blk_size;
-	ret = lmb_reserve(&lmb, offset, blk_size);
-	ut_asserteq(ret, -1);
-
-	ut_asserteq(lmb.memory.cnt, 8);
-	ut_asserteq(lmb.reserved.cnt, 8);
-
-	/*  check each regions */
-	for (i = 0; i < 8; i++)
-		ut_asserteq(lmb.memory.region[i].base, ram + 2 * i * ram_size);
-
-	for (i = 0; i < 8; i++)
-		ut_asserteq(lmb.reserved.region[i].base, ram + 2 * i * blk_size);
-
-	return 0;
-}
-
-DM_TEST(lib_test_lmb_max_regions,
-	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
-
-static int lib_test_lmb_flags(struct unit_test_state *uts)
-{
-	const phys_addr_t ram = 0x40000000;
-	const phys_size_t ram_size = 0x20000000;
-	struct lmb lmb;
-	long ret;
-
-	lmb_init(&lmb);
-
-	ret = lmb_add(&lmb, ram, ram_size);
-	ut_asserteq(ret, 0);
-
-	/* reserve, same flag */
-	ret = lmb_reserve_flags(&lmb, 0x40010000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 0);
-	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40010000, 0x10000,
-		   0, 0, 0, 0);
-
-	/* reserve again, same flag */
-	ret = lmb_reserve_flags(&lmb, 0x40010000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 0);
-	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40010000, 0x10000,
-		   0, 0, 0, 0);
-
-	/* reserve again, new flag */
-	ret = lmb_reserve_flags(&lmb, 0x40010000, 0x10000, LMB_NONE);
-	ut_asserteq(ret, -1);
-	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40010000, 0x10000,
-		   0, 0, 0, 0);
-
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-
-	/* merge after */
-	ret = lmb_reserve_flags(&lmb, 0x40020000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 1);
-	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40010000, 0x20000,
-		   0, 0, 0, 0);
-
-	/* merge before */
-	ret = lmb_reserve_flags(&lmb, 0x40000000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 1);
-	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40000000, 0x30000,
-		   0, 0, 0, 0);
-
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-
-	ret = lmb_reserve_flags(&lmb, 0x40030000, 0x10000, LMB_NONE);
-	ut_asserteq(ret, 0);
-	ASSERT_LMB(&lmb, ram, ram_size, 2, 0x40000000, 0x30000,
-		   0x40030000, 0x10000, 0, 0);
-
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[1]), 0);
-
-	/* test that old API use LMB_NONE */
-	ret = lmb_reserve(&lmb, 0x40040000, 0x10000);
-	ut_asserteq(ret, 1);
-	ASSERT_LMB(&lmb, ram, ram_size, 2, 0x40000000, 0x30000,
-		   0x40030000, 0x20000, 0, 0);
-
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[1]), 0);
-
-	ret = lmb_reserve_flags(&lmb, 0x40070000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 0);
-	ASSERT_LMB(&lmb, ram, ram_size, 3, 0x40000000, 0x30000,
-		   0x40030000, 0x20000, 0x40070000, 0x10000);
-
-	ret = lmb_reserve_flags(&lmb, 0x40050000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 0);
-	ASSERT_LMB(&lmb, ram, ram_size, 4, 0x40000000, 0x30000,
-		   0x40030000, 0x20000, 0x40050000, 0x10000);
-
-	/* merge with 2 adjacent regions */
-	ret = lmb_reserve_flags(&lmb, 0x40060000, 0x10000, LMB_NOMAP);
-	ut_asserteq(ret, 2);
-	ASSERT_LMB(&lmb, ram, ram_size, 3, 0x40000000, 0x30000,
-		   0x40030000, 0x20000, 0x40050000, 0x30000);
-
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[1]), 0);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[2]), 1);
-
-	return 0;
-}
-
-DM_TEST(lib_test_lmb_flags,
-	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);

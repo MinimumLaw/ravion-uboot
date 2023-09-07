@@ -19,8 +19,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <log.h>
-#include <linux/bug.h>
 
 static u8 clear_feature_num;
 int clear_feature_flag;
@@ -421,9 +419,6 @@ static void process_ep_out_intr(struct dwc2_udc *dev)
 {
 	u32 ep_intr, ep_intr_status;
 	u8 ep_num = 0;
-	u32 ep_tsr = 0, xfer_size = 0;
-	u32 epsiz_reg = reg->out_endp[ep_num].doeptsiz;
-	u32 req_size = sizeof(struct usb_ctrlrequest);
 
 	ep_intr = readl(&reg->daint);
 	debug_cond(DEBUG_OUT_EP != 0,
@@ -444,17 +439,10 @@ static void process_ep_out_intr(struct dwc2_udc *dev)
 
 			if (ep_num == 0) {
 				if (ep_intr_status & TRANSFER_DONE) {
-					ep_tsr = readl(&epsiz_reg);
-					xfer_size = ep_tsr &
-						   DOEPT_SIZ_XFER_SIZE_MAX_EP0;
-
-					if (xfer_size == req_size &&
-					    dev->ep0state == WAIT_FOR_SETUP) {
-						dwc2_udc_pre_setup();
-					} else if (dev->ep0state !=
-						   WAIT_FOR_OUT_COMPLETE) {
+					if (dev->ep0state !=
+					    WAIT_FOR_OUT_COMPLETE)
 						complete_rx(dev, ep_num);
-					} else {
+					else {
 						dev->ep0state = WAIT_FOR_SETUP;
 						dwc2_udc_pre_setup();
 					}

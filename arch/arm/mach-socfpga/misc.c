@@ -4,12 +4,8 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <cpu_func.h>
 #include <hang.h>
-#include <asm/cache.h>
-#include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <fdtdec.h>
@@ -180,8 +176,7 @@ int arch_cpu_init(void)
 }
 
 #ifndef CONFIG_SPL_BUILD
-static int do_bridge(struct cmd_tbl *cmdtp, int flag, int argc,
-		     char *const argv[])
+static int do_bridge(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned int mask = ~0;
 
@@ -191,7 +186,7 @@ static int do_bridge(struct cmd_tbl *cmdtp, int flag, int argc,
 	argv++;
 
 	if (argc == 3)
-		mask = hextoul(argv[1], NULL);
+		mask = simple_strtoul(argv[1], NULL, 16);
 
 	switch (*argv[0]) {
 	case 'e':	/* Enable */
@@ -253,9 +248,6 @@ void socfpga_get_managers_addr(void)
 
 #ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 	ret = socfpga_get_base_addr("intel,agilex-clkmgr",
-				    &socfpga_clkmgr_base);
-#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-	ret = socfpga_get_base_addr("intel,n5x-clkmgr",
 				    &socfpga_clkmgr_base);
 #else
 	ret = socfpga_get_base_addr("altr,clk-mgr", &socfpga_clkmgr_base);

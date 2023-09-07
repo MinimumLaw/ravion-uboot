@@ -32,8 +32,6 @@
 #include <asm/byteorder.h>
 #include <dm.h>
 #include <errno.h>
-#include <asm/cache.h>
-#include <linux/delay.h>
 
 #if defined(CONFIG_PCI_OHCI)
 # include <pci.h>
@@ -54,7 +52,7 @@
 
 #if defined(CONFIG_CPU_ARM920T) || \
 	defined(CONFIG_PCI_OHCI) || \
-	defined(CONFIG_PCI) || \
+	defined(CONFIG_DM_PCI) || \
 	defined(CONFIG_SYS_OHCI_USE_NPS)
 # define OHCI_USE_NPS		/* force NoPowerSwitching mode */
 #endif

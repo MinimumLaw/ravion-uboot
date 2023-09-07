@@ -241,13 +241,11 @@
 
 #include <config.h>
 #include <hexdump.h>
-#include <log.h>
 #include <malloc.h>
 #include <common.h>
 #include <console.h>
 #include <g_dnl.h>
 #include <dm/devres.h>
-#include <linux/bug.h>
 
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
@@ -435,7 +433,7 @@ static void set_bulk_out_req_length(struct fsg_common *common,
 static struct ums *ums;
 static int ums_count;
 static struct fsg_common *the_fsg_common;
-static unsigned int controller_index;
+static unsigned int controller_index = 0;
 
 static int fsg_set_halt(struct fsg_dev *fsg, struct usb_ep *ep)
 {

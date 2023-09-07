@@ -7,21 +7,23 @@
 
 #include <common.h>
 #include <handoff.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 void handoff_save_dram(struct spl_handoff *ho)
 {
-	struct bd_info *bd = gd->bd;
-	int i;
-
 	ho->ram_size = gd->ram_size;
+#ifdef CONFIG_NR_DRAM_BANKS
+	{
+		struct bd_info *bd = gd->bd;
+		int i;
 
-	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
-		ho->ram_bank[i].start = bd->bi_dram[i].start;
-		ho->ram_bank[i].size = bd->bi_dram[i].size;
+		for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+			ho->ram_bank[i].start = bd->bi_dram[i].start;
+			ho->ram_bank[i].size = bd->bi_dram[i].size;
+		}
 	}
+#endif
 }
 
 void handoff_load_dram_size(struct spl_handoff *ho)
@@ -31,11 +33,15 @@ void handoff_load_dram_size(struct spl_handoff *ho)
 
 void handoff_load_dram_banks(struct spl_handoff *ho)
 {
-	struct bd_info *bd = gd->bd;
-	int i;
+#ifdef CONFIG_NR_DRAM_BANKS
+	{
+		struct bd_info *bd = gd->bd;
+		int i;
 
-	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
-		bd->bi_dram[i].start = ho->ram_bank[i].start;
-		bd->bi_dram[i].size = ho->ram_bank[i].size;
+		for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+			bd->bi_dram[i].start = ho->ram_bank[i].start;
+			bd->bi_dram[i].size = ho->ram_bank[i].size;
+		}
 	}
+#endif
 }

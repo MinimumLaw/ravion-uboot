@@ -11,17 +11,21 @@
 
 static int psci_sysreset_request(struct udevice *dev, enum sysreset_t type)
 {
+	unsigned long function_id;
+
 	switch (type) {
 	case SYSRESET_WARM:
 	case SYSRESET_COLD:
-		psci_sys_reset(type);
+		function_id = PSCI_0_2_FN_SYSTEM_RESET;
 		break;
 	case SYSRESET_POWER_OFF:
-		psci_sys_poweroff();
+		function_id = PSCI_0_2_FN_SYSTEM_OFF;
 		break;
 	default:
 		return -ENOSYS;
 	}
+
+	invoke_psci_fn(function_id, 0, 0, 0);
 
 	return -EINPROGRESS;
 }

@@ -27,6 +27,8 @@
 
 #ifndef CONFIG_SPL_BUILD
 /* Network defines. */
+#define CONFIG_BOOTP_DNS2
+#define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT         10
 #endif
 
@@ -46,6 +48,9 @@
  * Since SPL did pll and ddr initialization for us,
  * we don't need to do it twice.
  */
+#if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_NOR_BOOT)
+#define CONFIG_SKIP_LOWLEVEL_INIT
+#endif
 
 /*
  * When building U-Boot such that there is no previous loader

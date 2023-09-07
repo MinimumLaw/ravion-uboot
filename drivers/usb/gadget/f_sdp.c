@@ -20,7 +20,6 @@
 #include <common.h>
 #include <console.h>
 #include <env.h>
-#include <log.h>
 #include <malloc.h>
 
 #include <linux/usb/ch9.h>
@@ -738,7 +737,7 @@ static u32 sdp_jump_imxheader(void *address)
 
 #ifdef CONFIG_SPL_BUILD
 static ulong sdp_load_read(struct spl_load_info *load, ulong sector,
-			   ulong count, void *buf)
+			  ulong count, void *buf)
 {
 	debug("%s: sector %lx, count %lx, buf %lx\n",
 	      __func__, sector, count, (ulong)buf);
@@ -746,35 +745,34 @@ static ulong sdp_load_read(struct spl_load_info *load, ulong sector,
 	return count;
 }
 
+#ifdef CONFIG_SPL_LOAD_FIT
 static ulong search_fit_header(ulong p, int size)
 {
-	int i;
-
+	int i = 0;
 	for (i = 0; i < size; i += 4) {
-		if (genimg_get_format((const void *)(p + i)) == IMAGE_FORMAT_FIT)
-			return p + i;
+                if (genimg_get_format((const void *)(p+i)) == IMAGE_FORMAT_FIT)
+                        return p + i;
 	}
 
-	return 0;
+        return 0;
 }
-
+#elif defined(CONFIG_SPL_LOAD_IMX_CONTAINER)
 static ulong search_container_header(ulong p, int size)
 {
-	int i;
-	u8 *hdr;
-
+	int i = 0;
+	uint8_t *hdr;
 	for (i = 0; i < size; i += 4) {
-		hdr = (u8 *)(p + i);
-		if (*(hdr + 3) == 0x87 && *hdr == 0)
-			if (*(hdr + 1) != 0 || *(hdr + 2) != 0)
-				return p + i;
+		hdr = (uint8_t *)(p +i);
+		if (*(hdr + 3) == 0x87 && *hdr == 0 &&
+			(*(hdr + 1) != 0 || *(hdr + 2) != 0))
+                        return p +i;
 	}
-	return 0;
+        return 0;
 }
 #endif
+#endif
 
-static int sdp_handle_in_ep(struct spl_image_info *spl_image,
-			    struct spl_boot_device *bootdev)
+static int sdp_handle_in_ep(struct spl_image_info *spl_image)
 {
 	u8 *data = sdp_func->in_req->buf;
 	u32 status;
@@ -826,12 +824,16 @@ static int sdp_handle_in_ep(struct spl_image_info *spl_image,
 		/* If imx header fails, try some U-Boot specific headers */
 		if (status) {
 #ifdef CONFIG_SPL_BUILD
-			if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER))
-				sdp_func->jmp_address = (u32)search_container_header((ulong)sdp_func->jmp_address, sdp_func->dnl_bytes);
-			else if (IS_ENABLED(CONFIG_SPL_LOAD_FIT))
-				sdp_func->jmp_address = (u32)search_fit_header((ulong)sdp_func->jmp_address, sdp_func->dnl_bytes);
-			if (sdp_func->jmp_address == 0)
+#if defined(CONFIG_SPL_LOAD_IMX_CONTAINER)
+			sdp_func->jmp_address = (u32)search_container_header((ulong)sdp_func->jmp_address,
+				sdp_func->dnl_bytes);
+#elif defined(CONFIG_SPL_LOAD_FIT)
+			sdp_func->jmp_address = (u32)search_fit_header((ulong)sdp_func->jmp_address,
+				sdp_func->dnl_bytes);
+#endif
+			if (sdp_func->jmp_address == 0) {
 				panic("Error in search header, failed to jump\n");
+			}
 
 			printf("Found header at 0x%08x\n", sdp_func->jmp_address);
 
@@ -853,7 +855,6 @@ static int sdp_handle_in_ep(struct spl_image_info *spl_image,
 #endif
 			if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER)) {
 				struct spl_load_info load;
-
 				load.dev = header;
 				load.bl_len = 1;
 				load.read = sdp_load_read;
@@ -863,8 +864,7 @@ static int sdp_handle_in_ep(struct spl_image_info *spl_image,
 
 			/* In SPL, allow jumps to U-Boot images */
 			struct spl_image_info spl_image = {};
-			struct spl_boot_device bootdev = {};
-			spl_parse_image_header(&spl_image, &bootdev, header);
+			spl_parse_image_header(&spl_image, header);
 			jump_to_image_no_args(&spl_image);
 #else
 			/* In U-Boot, allow jumps to scripts */
@@ -912,8 +912,7 @@ static void sdp_handle_out_ep(void)
 #ifndef CONFIG_SPL_BUILD
 int sdp_handle(int controller_index)
 #else
-int spl_sdp_handle(int controller_index, struct spl_image_info *spl_image,
-		   struct spl_boot_device *bootdev)
+int spl_sdp_handle(int controller_index, struct spl_image_info *spl_image)
 #endif
 {
 	int flag = 0;
@@ -931,9 +930,9 @@ int spl_sdp_handle(int controller_index, struct spl_image_info *spl_image,
 		usb_gadget_handle_interrupts(controller_index);
 
 #ifdef CONFIG_SPL_BUILD
-		flag = sdp_handle_in_ep(spl_image, bootdev);
+		flag = sdp_handle_in_ep(spl_image);
 #else
-		flag = sdp_handle_in_ep(NULL, NULL);
+		flag = sdp_handle_in_ep(NULL);
 #endif
 		if (sdp_func->ep_int_enable)
 			sdp_handle_out_ep();

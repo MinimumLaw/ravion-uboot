@@ -19,6 +19,10 @@
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
 
 /* CPU */
+#define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs	*/
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
+#define CONFIG_SKIP_LOWLEVEL_INIT_ONLY
 
 /* SDRAM */
 #define CONFIG_SYS_SDRAM_BASE		ATMEL_BASE_CS6
@@ -27,6 +31,8 @@
 					 GENERATED_GBL_DATA_SIZE)
 
 /* Mem test settings */
+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + (1024 * 1024))
 
 /* NAND Flash */
 #define CONFIG_SYS_NAND_ECC_BASE	ATMEL_BASE_ECC
@@ -39,11 +45,16 @@
 #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC8
 
 /* Ethernet */
+#define CONFIG_MACB
 #define CONFIG_RMII
 #define CONFIG_NET_RETRY_COUNT		20
 #define CONFIG_RESET_PHY_R
 #define CONFIG_AT91_WANTS_COMMON_PHY
 #define CONFIG_TFTP_PORT
+#define CONFIG_TFTP_TSIZE
+
+/* MMC */
+#define CONFIG_GENERIC_ATMEL_MCI
 
 /* LCD */
 #define CONFIG_ATMEL_LCD
@@ -51,15 +62,19 @@
 
 /* GPIOs and IO expander */
 #define CONFIG_ATMEL_LEGACY
+#define CONFIG_AT91_GPIO
 #define CONFIG_AT91_GPIO_PULLUP		1
 
 /* UARTs/Serial console */
+#define CONFIG_ATMEL_USART
 
 /* Boot options */
+#define CONFIG_SYS_LOAD_ADDR		0x23000000
 
 #define CONFIG_BOOTP_BOOTFILESIZE
 
 /* Environment settings */
+#define CONFIG_ENV_OVERWRITE
 
 #define	CONFIG_EXTRA_ENV_SETTINGS	\
 	"ethaddr=00:00:00:00:00:00\0" \
@@ -82,5 +97,13 @@
 	"altbootcmd=run boot_mmc ; run boot_usb ; run boot_safe ; run boot_working\0"
 
 /* Console settings */
+
+/* U-Boot memory settings */
+#define CONFIG_SYS_MALLOC_LEN		(1 << 20)
+
+/* Command line configuration */
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_MMC
+#define CONFIG_CMD_CACHE
 
 #endif /* __CONFIG_H */

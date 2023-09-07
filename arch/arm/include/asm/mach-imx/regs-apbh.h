@@ -7,7 +7,7 @@
  *
  * Based on code from LTIB:
  * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
- * Copyright 2020 NXP
+ * Copyright 2017 NXP
  */
 
 #ifndef __REGS_APBH_H__
@@ -96,7 +96,7 @@ struct mxs_apbh_regs {
 	mxs_reg_32(hw_apbh_version)
 };
 
-#else
+#elif (defined(CONFIG_MX28) || defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 struct mxs_apbh_regs {
 	mxs_reg_32(hw_apbh_ctrl0)
 	mxs_reg_32(hw_apbh_ctrl1)
@@ -358,6 +358,7 @@ struct mxs_apbh_regs {
 
 #if defined(CONFIG_MX28)
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_MASK		(0xffff << 16)
+#define	APBH_CHANNEL_CTRL_RESET_CHANNEL_OFFSET		16
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_SSP0		(0x0001 << 16)
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_SSP1		(0x0002 << 16)
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_SSP2		(0x0004 << 16)
@@ -390,8 +391,9 @@ struct mxs_apbh_regs {
 #define	APBH_CHANNEL_CTRL_FREEZE_CHANNEL_LCDIF		0x2000
 #endif
 
-/* Not on i.MX23 */
+#if (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_OFFSET		16
+#endif
 
 #if defined(CONFIG_MX23)
 #define	APBH_DEVSEL_CH7_MASK				(0xf << 28)

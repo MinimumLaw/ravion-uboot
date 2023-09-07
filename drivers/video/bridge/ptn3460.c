@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <video_bridge.h>
 
 static int ptn3460_attach(struct udevice *dev)

@@ -8,7 +8,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <asm/unaligned.h>
 #include <tpm-common.h>
 #include "tpm-utils.h"
@@ -166,7 +165,6 @@ u32 tpm_sendrecv_command(struct udevice *dev, const void *command,
 	u8 response_buffer[COMMAND_BUFFER_SIZE];
 	size_t response_length;
 	int i;
-	uint size;
 
 	if (response) {
 		response_length = *size_ptr;
@@ -175,18 +173,8 @@ u32 tpm_sendrecv_command(struct udevice *dev, const void *command,
 		response_length = sizeof(response_buffer);
 	}
 
-	size = tpm_command_size(command);
-
-	/* sanity check, which also helps coverity */
-	if (size > COMMAND_BUFFER_SIZE)
-		return log_msg_ret("size", -E2BIG);
-
-	log_debug("TPM request [size:%d]: ", size);
-	for (i = 0; i < size; i++)
-		log_debug("%02x ", ((u8 *)command)[i]);
-	log_debug("\n");
-
-	err = tpm_xfer(dev, command, size, response, &response_length);
+	err = tpm_xfer(dev, command, tpm_command_size(command),
+		       response, &response_length);
 
 	if (err < 0)
 		return err;

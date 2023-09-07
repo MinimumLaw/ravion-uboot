@@ -16,6 +16,7 @@
 #ifndef _MUX_H_
 #define _MUX_H_
 
+#include <common.h>
 #include <asm/io.h>
 
 #ifdef CONFIG_AM33XX

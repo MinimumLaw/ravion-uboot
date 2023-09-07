@@ -20,10 +20,7 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
-#include <linux/bug.h>
 #include <linux/libfdt.h>
 #include <dm/of_access.h>
 #include <linux/ctype.h>
@@ -172,38 +169,6 @@ const void *of_get_property(const struct device_node *np, const char *name,
 	struct property *pp = of_find_property(np, name, lenp);
 
 	return pp ? pp->value : NULL;
-}
-
-const struct property *of_get_first_property(const struct device_node *np)
-{
-	if (!np)
-		return NULL;
-
-	return  np->properties;
-}
-
-const struct property *of_get_next_property(const struct device_node *np,
-					    const struct property *property)
-{
-	if (!np)
-		return NULL;
-
-	return property->next;
-}
-
-const void *of_get_property_by_prop(const struct device_node *np,
-				    const struct property *property,
-				    const char **name,
-				    int *lenp)
-{
-	if (!np || !property)
-		return NULL;
-	if (name)
-		*name = property->name;
-	if (lenp)
-		*lenp = property->length;
-
-	return property->value;
 }
 
 static const char *of_prop_next_string(struct property *prop, const char *cur)
@@ -463,7 +428,7 @@ struct device_node *of_find_node_by_phandle(phandle handle)
  * @propname:	name of the property to be searched.
  * @len:	requested length of property value
  *
- * Return: the property value on success, -EINVAL if the property does not
+ * @return the property value on success, -EINVAL if the property does not
  * exist, -ENODATA if property does not have a value, and -EOVERFLOW if the
  * property data isn't large enough.
  */
@@ -484,7 +449,21 @@ static void *of_find_property_value_of_size(const struct device_node *np,
 
 int of_read_u32(const struct device_node *np, const char *propname, u32 *outp)
 {
-	return of_read_u32_index(np, propname, 0, outp);
+	const __be32 *val;
+
+	debug("%s: %s: ", __func__, propname);
+	if (!np)
+		return -EINVAL;
+	val = of_find_property_value_of_size(np, propname, sizeof(*outp));
+	if (IS_ERR(val)) {
+		debug("(not found)\n");
+		return PTR_ERR(val);
+	}
+
+	*outp = be32_to_cpup(val);
+	debug("%#x (%d)\n", *outp, *outp);
+
+	return 0;
 }
 
 int of_read_u32_array(const struct device_node *np, const char *propname,
@@ -502,28 +481,6 @@ int of_read_u32_array(const struct device_node *np, const char *propname,
 	debug("size %zd\n", sz);
 	while (sz--)
 		*out_values++ = be32_to_cpup(val++);
-
-	return 0;
-}
-
-int of_read_u32_index(const struct device_node *np, const char *propname,
-		      int index, u32 *outp)
-{
-	const __be32 *val;
-
-	debug("%s: %s: ", __func__, propname);
-	if (!np)
-		return -EINVAL;
-
-	val = of_find_property_value_of_size(np, propname,
-					     sizeof(*outp) * (index + 1));
-	if (IS_ERR(val)) {
-		debug("(not found)\n");
-		return PTR_ERR(val);
-	}
-
-	*outp = be32_to_cpup(val + index);
-	debug("%#x (%d)\n", *outp, *outp);
 
 	return 0;
 }
@@ -581,8 +538,7 @@ int of_property_match_string(const struct device_node *np, const char *propname,
  * @propname:	name of the property to be searched.
  * @out_strs:	output array of string pointers.
  * @sz:		number of array elements to read.
- * @skip:	Number of strings to skip over at beginning of list (cannot be
- *	negative)
+ * @skip:	Number of strings to skip over at beginning of list.
  *
  * Don't call this function directly. It is a utility helper for the
  * of_property_read_string*() family of functions.
@@ -621,7 +577,7 @@ static int __of_parse_phandle_with_args(const struct device_node *np,
 {
 	const __be32 *list, *list_end;
 	int rc = 0, cur_index = 0;
-	uint32_t count;
+	uint32_t count = 0;
 	struct device_node *node = NULL;
 	phandle phandle;
 	int size;
@@ -747,22 +703,20 @@ struct device_node *of_parse_phandle(const struct device_node *np,
 
 int of_parse_phandle_with_args(const struct device_node *np,
 			       const char *list_name, const char *cells_name,
-			       int cell_count, int index,
-			       struct of_phandle_args *out_args)
+			       int index, struct of_phandle_args *out_args)
 {
 	if (index < 0)
 		return -EINVAL;
 
-	return __of_parse_phandle_with_args(np, list_name, cells_name,
-					    cell_count, index, out_args);
+	return __of_parse_phandle_with_args(np, list_name, cells_name, 0,
+					    index, out_args);
 }
 
 int of_count_phandle_with_args(const struct device_node *np,
-			       const char *list_name, const char *cells_name,
-			       int cell_count)
+			       const char *list_name, const char *cells_name)
 {
-	return __of_parse_phandle_with_args(np, list_name, cells_name,
-					    cell_count, -1, NULL);
+	return __of_parse_phandle_with_args(np, list_name, cells_name, 0,
+					    -1, NULL);
 }
 
 static void of_alias_add(struct alias_prop *ap, struct device_node *np,

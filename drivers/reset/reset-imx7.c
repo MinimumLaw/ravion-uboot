@@ -3,7 +3,6 @@
  * Copyright (c) 2017, Impinj, Inc.
  */
 
-#include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <common.h>
@@ -11,8 +10,6 @@
 #include <dt-bindings/reset/imx7-reset.h>
 #include <dt-bindings/reset/imx8mq-reset.h>
 #include <reset-uclass.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 struct imx7_reset_priv {
 	void __iomem *base;
@@ -312,5 +309,5 @@ U_BOOT_DRIVER(imx7_reset) = {
 	.of_match = imx7_reset_ids,
 	.ops = &imx7_reset_reset_ops,
 	.probe = imx7_reset_probe,
-	.priv_auto	= sizeof(struct imx7_reset_priv),
+	.priv_auto_alloc_size = sizeof(struct imx7_reset_priv),
 };

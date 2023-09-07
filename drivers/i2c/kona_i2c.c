@@ -3,13 +3,11 @@
  * Copyright 2013 Broadcom Corporation.
  *
  * NOTE: This driver should be converted to driver model before June 2017.
- * Please see doc/driver-model/i2c-howto.rst for instructions.
+ * Please see doc/driver-model/i2c-howto.txt for instructions.
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/arch/sysmap.h>
 #include <asm/kona-common/clk.h>

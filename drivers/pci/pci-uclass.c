@@ -4,25 +4,17 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_CATEGORY UCLASS_PCI
-
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <init.h>
-#include <log.h>
 #include <malloc.h>
 #include <pci.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
-#include <dm/uclass-internal.h>
 #if defined(CONFIG_X86) && defined(CONFIG_HAVE_FSP)
 #include <asm/fsp/fsp_support.h>
 #endif
-#include <dt-bindings/pci/pci.h>
-#include <linux/delay.h>
 #include "pci_internal.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -54,7 +46,7 @@ struct udevice *pci_get_controller(struct udevice *dev)
 
 pci_dev_t dm_pci_get_bdf(const struct udevice *dev)
 {
-	struct pci_child_plat *pplat = dev_get_parent_plat(dev);
+	struct pci_child_platdata *pplat = dev_get_parent_platdata(dev);
 	struct udevice *bus = dev->parent;
 
 	/*
@@ -63,20 +55,20 @@ pci_dev_t dm_pci_get_bdf(const struct udevice *dev)
 	 * will produce a bad BDF>
 	 *
 	 * A common cause of this problem is that this function is called in the
-	 * of_to_plat() method of @dev. Accessing the PCI bus in that
+	 * ofdata_to_platdata() method of @dev. Accessing the PCI bus in that
 	 * method is not allowed, since it has not yet been probed. To fix this,
 	 * move that access to the probe() method of @dev instead.
 	 */
 	if (!device_active(bus))
 		log_err("PCI: Device '%s' on unprobed bus '%s'\n", dev->name,
 			bus->name);
-	return PCI_ADD_BUS(dev_seq(bus), pplat->devfn);
+	return PCI_ADD_BUS(bus->seq, pplat->devfn);
 }
 
 /**
  * pci_get_bus_max() - returns the bus number of the last active bus
  *
- * Return: last bus number, or -1 if no active buses
+ * @return last bus number, or -1 if no active buses
  */
 static int pci_get_bus_max(void)
 {
@@ -86,8 +78,8 @@ static int pci_get_bus_max(void)
 
 	ret = uclass_get(UCLASS_PCI, &uc);
 	uclass_foreach_dev(bus, uc) {
-		if (dev_seq(bus) > ret)
-			ret = dev_seq(bus);
+		if (bus->seq > ret)
+			ret = bus->seq;
 	}
 
 	debug("%s: ret=%d\n", __func__, ret);
@@ -141,9 +133,9 @@ int pci_bus_find_devfn(const struct udevice *bus, pci_dev_t find_devfn,
 	for (device_find_first_child(bus, &dev);
 	     dev;
 	     device_find_next_child(&dev)) {
-		struct pci_child_plat *pplat;
+		struct pci_child_platdata *pplat;
 
-		pplat = dev_get_parent_plat(dev);
+		pplat = dev_get_parent_platdata(dev);
 		if (pplat && pplat->devfn == find_devfn) {
 			*devp = dev;
 			return 0;
@@ -165,12 +157,12 @@ int dm_pci_bus_find_bdf(pci_dev_t bdf, struct udevice **devp)
 }
 
 static int pci_device_matches_ids(struct udevice *dev,
-				  const struct pci_device_id *ids)
+				  struct pci_device_id *ids)
 {
-	struct pci_child_plat *pplat;
+	struct pci_child_platdata *pplat;
 	int i;
 
-	pplat = dev_get_parent_plat(dev);
+	pplat = dev_get_parent_platdata(dev);
 	if (!pplat)
 		return -EINVAL;
 	for (i = 0; ids[i].vendor != 0; i++) {
@@ -182,7 +174,7 @@ static int pci_device_matches_ids(struct udevice *dev,
 	return -EINVAL;
 }
 
-int pci_bus_find_devices(struct udevice *bus, const struct pci_device_id *ids,
+int pci_bus_find_devices(struct udevice *bus, struct pci_device_id *ids,
 			 int *indexp, struct udevice **devp)
 {
 	struct udevice *dev;
@@ -202,7 +194,7 @@ int pci_bus_find_devices(struct udevice *bus, const struct pci_device_id *ids,
 	return -ENODEV;
 }
 
-int pci_find_device_id(const struct pci_device_id *ids, int index,
+int pci_find_device_id(struct pci_device_id *ids, int index,
 		       struct udevice **devp)
 {
 	struct udevice *bus;
@@ -223,13 +215,13 @@ static int dm_pci_bus_find_device(struct udevice *bus, unsigned int vendor,
 				  unsigned int device, int *indexp,
 				  struct udevice **devp)
 {
-	struct pci_child_plat *pplat;
+	struct pci_child_platdata *pplat;
 	struct udevice *dev;
 
 	for (device_find_first_child(bus, &dev);
 	     dev;
 	     device_find_next_child(&dev)) {
-		pplat = dev_get_parent_plat(dev);
+		pplat = dev_get_parent_platdata(dev);
 		if (pplat->vendor == vendor && pplat->device == device) {
 			if (!(*indexp)--) {
 				*devp = dev;
@@ -266,7 +258,7 @@ int dm_pci_find_class(uint find_class, int index, struct udevice **devp)
 	for (pci_find_first_device(&dev);
 	     dev;
 	     pci_find_next_device(&dev)) {
-		struct pci_child_plat *pplat = dev_get_parent_plat(dev);
+		struct pci_child_platdata *pplat = dev_get_parent_platdata(dev);
 
 		if (pplat->class == find_class && !index--) {
 			*devp = dev;
@@ -304,8 +296,8 @@ int pci_bus_clrset_config32(struct udevice *bus, pci_dev_t bdf, int offset,
 	return pci_bus_write_config(bus, bdf, offset, val, PCI_SIZE_32);
 }
 
-static int pci_write_config(pci_dev_t bdf, int offset, unsigned long value,
-			    enum pci_size_t size)
+int pci_write_config(pci_dev_t bdf, int offset, unsigned long value,
+		     enum pci_size_t size)
 {
 	struct udevice *bus;
 	int ret;
@@ -369,8 +361,8 @@ int pci_bus_read_config(const struct udevice *bus, pci_dev_t bdf, int offset,
 	return ops->read_config(bus, bdf, offset, valuep, size);
 }
 
-static int pci_read_config(pci_dev_t bdf, int offset, unsigned long *valuep,
-			   enum pci_size_t size)
+int pci_read_config(pci_dev_t bdf, int offset, unsigned long *valuep,
+		    enum pci_size_t size)
 {
 	struct udevice *bus;
 	int ret;
@@ -518,7 +510,7 @@ static void set_vga_bridge_bits(struct udevice *dev)
 	struct udevice *parent = dev->parent;
 	u16 bc;
 
-	while (dev_seq(parent) != 0) {
+	while (parent->seq != 0) {
 		dm_pci_read_config16(parent, PCI_BRIDGE_CONTROL, &bc);
 		bc |= PCI_BRIDGE_CTL_VGA;
 		dm_pci_write_config16(parent, PCI_BRIDGE_CONTROL, bc);
@@ -528,13 +520,13 @@ static void set_vga_bridge_bits(struct udevice *dev)
 
 int pci_auto_config_devices(struct udevice *bus)
 {
-	struct pci_controller *hose = dev_get_uclass_priv(bus);
-	struct pci_child_plat *pplat;
+	struct pci_controller *hose = bus->uclass_priv;
+	struct pci_child_platdata *pplat;
 	unsigned int sub_bus;
 	struct udevice *dev;
 	int ret;
 
-	sub_bus = dev_seq(bus);
+	sub_bus = bus->seq;
 	debug("%s: start\n", __func__);
 	pciauto_config_init(hose);
 	for (ret = device_find_first_child(bus, &dev);
@@ -544,27 +536,19 @@ int pci_auto_config_devices(struct udevice *bus)
 		int ret;
 
 		debug("%s: device %s\n", __func__, dev->name);
-		if (dev_has_ofnode(dev) &&
-		    dev_read_bool(dev, "pci,no-autoconfig"))
-			continue;
 		ret = dm_pciauto_config_device(dev);
 		if (ret < 0)
-			return log_msg_ret("auto", ret);
+			return ret;
 		max_bus = ret;
 		sub_bus = max(sub_bus, max_bus);
 
-		if (dev_get_parent(dev) == bus)
-			continue;
-
-		pplat = dev_get_parent_plat(dev);
+		pplat = dev_get_parent_platdata(dev);
 		if (pplat->class == (PCI_CLASS_DISPLAY_VGA << 8))
 			set_vga_bridge_bits(dev);
 	}
-	if (hose->last_busno < sub_bus)
-		hose->last_busno = sub_bus;
 	debug("%s: done\n", __func__);
 
-	return log_msg_ret("sub", sub_bus);
+	return sub_bus;
 }
 
 int pci_generic_mmap_write_config(
@@ -629,30 +613,12 @@ int pci_generic_mmap_read_config(
 
 int dm_pci_hose_probe_bus(struct udevice *bus)
 {
-	u8 header_type;
 	int sub_bus;
 	int ret;
-	int ea_pos;
-	u8 reg;
 
 	debug("%s\n", __func__);
 
-	dm_pci_read_config8(bus, PCI_HEADER_TYPE, &header_type);
-	header_type &= 0x7f;
-	if (header_type != PCI_HEADER_TYPE_BRIDGE) {
-		debug("%s: Skipping PCI device %d with Non-Bridge Header Type 0x%x\n",
-		      __func__, PCI_DEV(dm_pci_get_bdf(bus)), header_type);
-		return log_msg_ret("probe", -EINVAL);
-	}
-
-	ea_pos = dm_pci_find_capability(bus, PCI_CAP_ID_EA);
-	if (ea_pos) {
-		dm_pci_read_config8(bus, ea_pos + sizeof(u32) + sizeof(u8),
-				    &reg);
-		sub_bus = reg;
-	} else {
-		sub_bus = pci_get_bus_max() + 1;
-	}
+	sub_bus = pci_get_bus_max() + 1;
 	debug("%s: bus = %d/%s\n", __func__, sub_bus, bus->name);
 	dm_pciauto_prescan_setup_bridge(bus, sub_bus);
 
@@ -660,12 +626,14 @@ int dm_pci_hose_probe_bus(struct udevice *bus)
 	if (ret) {
 		debug("%s: Cannot probe bus %s: %d\n", __func__, bus->name,
 		      ret);
-		return log_msg_ret("probe", ret);
+		return ret;
 	}
-
-	if (!ea_pos)
-		sub_bus = pci_get_bus_max();
-
+	if (sub_bus != bus->seq) {
+		printf("%s: Internal error, bus '%s' got seq %d, expected %d\n",
+		       __func__, bus->name, bus->seq, sub_bus);
+		return -EPIPE;
+	}
+	sub_bus = pci_get_bus_max();
 	dm_pciauto_postscan_setup_bridge(bus, sub_bus);
 
 	return sub_bus;
@@ -694,34 +662,6 @@ static bool pci_match_one_id(const struct pci_device_id *id,
 }
 
 /**
- * pci_need_device_pre_reloc() - Check if a device should be bound
- *
- * This checks a list of vendor/device-ID values indicating devices that should
- * be bound before relocation.
- *
- * @bus: Bus to check
- * @vendor: Vendor ID to check
- * @device: Device ID to check
- * Return: true if the vendor/device is in the list, false if not
- */
-static bool pci_need_device_pre_reloc(struct udevice *bus, uint vendor,
-				      uint device)
-{
-	u32 vendev;
-	int index;
-
-	for (index = 0;
-	     !dev_read_u32_index(bus, "u-boot,pci-pre-reloc", index,
-				 &vendev);
-	     index++) {
-		if (vendev == PCI_VENDEV(vendor, device))
-			return true;
-	}
-
-	return false;
-}
-
-/**
  * pci_find_and_bind_driver() - Find and bind the right PCI driver
  *
  * This only looks at certain fields in the descriptor.
@@ -730,7 +670,7 @@ static bool pci_need_device_pre_reloc(struct udevice *bus, uint vendor,
  * @find_id:	Specification of the driver to find
  * @bdf:	Bus/device/function addreess - see PCI_BDF()
  * @devp:	Returns a pointer to the device created
- * Return: 0 if OK, -EPERM if the device is not needed before relocation and
+ * @return 0 if OK, -EPERM if the device is not needed before relocation and
  *	   therefore was not created, other -ve value on error
  */
 static int pci_find_and_bind_driver(struct udevice *parent,
@@ -751,12 +691,11 @@ static int pci_find_and_bind_driver(struct udevice *parent,
 	      find_id->vendor, find_id->device);
 
 	/* Determine optional OF node */
-	if (ofnode_valid(dev_ofnode(parent)))
-		pci_dev_find_ofnode(parent, bdf, &node);
+	pci_dev_find_ofnode(parent, bdf, &node);
 
 	if (ofnode_valid(node) && !ofnode_is_available(node)) {
 		debug("%s: Ignoring disabled device\n", __func__);
-		return log_msg_ret("dis", -EPERM);
+		return -EPERM;
 	}
 
 	start = ll_entry_start(struct pci_driver_entry, pci_driver_entry);
@@ -782,18 +721,18 @@ static int pci_find_and_bind_driver(struct udevice *parent,
 			 */
 			if (!(gd->flags & GD_FLG_RELOC) &&
 			    !(drv->flags & DM_FLAG_PRE_RELOC))
-				return log_msg_ret("pre", -EPERM);
+				return -EPERM;
 
 			/*
 			 * We could pass the descriptor to the driver as
-			 * plat (instead of NULL) and allow its bind()
+			 * platdata (instead of NULL) and allow its bind()
 			 * method to return -ENOENT if it doesn't support this
 			 * device. That way we could continue the search to
 			 * find another driver. For now this doesn't seem
 			 * necesssary, so just bind the first match.
 			 */
-			ret = device_bind(parent, drv, drv->name, NULL, node,
-					  &dev);
+			ret = device_bind_ofnode(parent, drv, drv->name, NULL,
+						 node, &dev);
 			if (ret)
 				goto error;
 			debug("%s: Match found: %s\n", __func__, drv->name);
@@ -809,13 +748,11 @@ static int pci_find_and_bind_driver(struct udevice *parent,
 	 * precious memory space as on some platforms as that space is pretty
 	 * limited (ie: using Cache As RAM).
 	 */
-	if (!(gd->flags & GD_FLG_RELOC) && !bridge &&
-	    !pci_need_device_pre_reloc(parent, find_id->vendor,
-				       find_id->device))
-		return log_msg_ret("notbr", -EPERM);
+	if (!(gd->flags & GD_FLG_RELOC) && !bridge)
+		return -EPERM;
 
 	/* Bind a generic driver so that the device can be used */
-	sprintf(name, "pci_%x:%x.%x", dev_seq(parent), PCI_DEV(bdf),
+	sprintf(name, "pci_%x:%x.%x", parent->seq, PCI_DEV(bdf),
 		PCI_FUNC(bdf));
 	str = strdup(name);
 	if (!str)
@@ -837,25 +774,20 @@ error:
 	return ret;
 }
 
-__weak extern void board_pci_fixup_dev(struct udevice *bus, struct udevice *dev)
-{
-}
-
 int pci_bind_bus_devices(struct udevice *bus)
 {
 	ulong vendor, device;
 	ulong header_type;
 	pci_dev_t bdf, end;
 	bool found_multi;
-	int ari_off;
 	int ret;
 
 	found_multi = false;
-	end = PCI_BDF(dev_seq(bus), PCI_MAX_PCI_DEVICES - 1,
+	end = PCI_BDF(bus->seq, PCI_MAX_PCI_DEVICES - 1,
 		      PCI_MAX_PCI_FUNCTIONS - 1);
-	for (bdf = PCI_BDF(dev_seq(bus), 0, 0); bdf <= end;
+	for (bdf = PCI_BDF(bus->seq, 0, 0); bdf <= end;
 	     bdf += PCI_BDF(0, 0, 1)) {
-		struct pci_child_plat *pplat;
+		struct pci_child_platdata *pplat;
 		struct udevice *dev;
 		ulong class;
 
@@ -867,7 +799,10 @@ int pci_bind_bus_devices(struct udevice *bus)
 		/* Check only the first access, we don't expect problems */
 		ret = pci_bus_read_config(bus, bdf, PCI_VENDOR_ID, &vendor,
 					  PCI_SIZE_16);
-		if (ret || vendor == 0xffff || vendor == 0x0000)
+		if (ret)
+			goto error;
+
+		if (vendor == 0xffff || vendor == 0x0000)
 			continue;
 
 		pci_bus_read_config(bus, bdf, PCI_HEADER_TYPE,
@@ -877,7 +812,7 @@ int pci_bind_bus_devices(struct udevice *bus)
 			found_multi = header_type & 0x80;
 
 		debug("%s: bus %d/%s: found device %x, function %d", __func__,
-		      dev_seq(bus), bus->name, PCI_DEV(bdf), PCI_FUNC(bdf));
+		      bus->seq, bus->name, PCI_DEV(bdf), PCI_FUNC(bdf));
 		pci_bus_read_config(bus, bdf, PCI_DEVICE_ID, &device,
 				    PCI_SIZE_16);
 		pci_bus_read_config(bus, bdf, PCI_CLASS_REVISION, &class,
@@ -913,41 +848,18 @@ int pci_bind_bus_devices(struct udevice *bus)
 			return ret;
 
 		/* Update the platform data */
-		pplat = dev_get_parent_plat(dev);
+		pplat = dev_get_parent_platdata(dev);
 		pplat->devfn = PCI_MASK_BUS(bdf);
 		pplat->vendor = vendor;
 		pplat->device = device;
 		pplat->class = class;
-
-		if (IS_ENABLED(CONFIG_PCI_ARID)) {
-			ari_off = dm_pci_find_ext_capability(dev,
-							     PCI_EXT_CAP_ID_ARI);
-			if (ari_off) {
-				u16 ari_cap;
-
-				/*
-				 * Read Next Function number in ARI Cap
-				 * Register
-				 */
-				dm_pci_read_config16(dev, ari_off + 4,
-						     &ari_cap);
-				/*
-				 * Update next scan on this function number,
-				 * subtract 1 in BDF to satisfy loop increment.
-				 */
-				if (ari_cap & 0xff00) {
-					bdf = PCI_BDF(PCI_BUS(bdf),
-						      PCI_DEV(ari_cap),
-						      PCI_FUNC(ari_cap));
-					bdf = bdf - 0x100;
-				}
-			}
-		}
-
-		board_pci_fixup_dev(bus, dev);
 	}
 
 	return 0;
+error:
+	printf("Cannot read bus configuration: %d\n", ret);
+
+	return ret;
 }
 
 static void decode_regions(struct pci_controller *hose, ofnode parent_node,
@@ -955,9 +867,7 @@ static void decode_regions(struct pci_controller *hose, ofnode parent_node,
 {
 	int pci_addr_cells, addr_cells, size_cells;
 	int cells_per_record;
-	struct bd_info *bd;
 	const u32 *prop;
-	int max_regions;
 	int len;
 	int i;
 
@@ -977,13 +887,7 @@ static void decode_regions(struct pci_controller *hose, ofnode parent_node,
 	hose->region_count = 0;
 	debug("%s: len=%d, cells_per_record=%d\n", __func__, len,
 	      cells_per_record);
-
-	/* Dynamically allocate the regions array */
-	max_regions = len / cells_per_record + CONFIG_NR_DRAM_BANKS;
-	hose->regions = (struct pci_region *)
-		calloc(1, max_regions * sizeof(struct pci_region));
-
-	for (i = 0; i < max_regions; i++, len -= cells_per_record) {
+	for (i = 0; i < MAX_PCI_REGIONS; i++, len -= cells_per_record) {
 		u64 pci_addr, addr, size;
 		int space_code;
 		u32 flags;
@@ -1018,13 +922,10 @@ static void decode_regions(struct pci_controller *hose, ofnode parent_node,
 		}
 
 		pos = -1;
-		if (!IS_ENABLED(CONFIG_PCI_REGION_MULTI_ENTRY)) {
-			for (i = 0; i < hose->region_count; i++) {
-				if (hose->regions[i].flags == type)
-					pos = i;
-			}
+		for (i = 0; i < hose->region_count; i++) {
+			if (hose->regions[i].flags == type)
+				pos = i;
 		}
-
 		if (pos == -1)
 			pos = hose->region_count++;
 		debug(" - type=%d, pos=%d\n", type, pos);
@@ -1032,22 +933,39 @@ static void decode_regions(struct pci_controller *hose, ofnode parent_node,
 	}
 
 	/* Add a region for our local memory */
-	bd = gd->bd;
+#ifdef CONFIG_NR_DRAM_BANKS
+	bd_t *bd = gd->bd;
+
 	if (!bd)
 		return;
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
+		if (hose->region_count == MAX_PCI_REGIONS) {
+			pr_err("maximum number of regions parsed, aborting\n");
+			break;
+		}
+
 		if (bd->bi_dram[i].size) {
-			phys_addr_t start = bd->bi_dram[i].start;
-
-			if (IS_ENABLED(CONFIG_PCI_MAP_SYSTEM_MEMORY))
-				start = virt_to_phys((void *)(uintptr_t)bd->bi_dram[i].start);
-
 			pci_set_region(hose->regions + hose->region_count++,
-				       start, start, bd->bi_dram[i].size,
+				       bd->bi_dram[i].start,
+				       bd->bi_dram[i].start,
+				       bd->bi_dram[i].size,
 				       PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
 		}
 	}
+#else
+	phys_addr_t base = 0, size;
+
+	size = gd->ram_size;
+#ifdef CONFIG_SYS_SDRAM_BASE
+	base = CONFIG_SYS_SDRAM_BASE;
+#endif
+	if (gd->pci_ram_top && gd->pci_ram_top < base + size)
+		size = gd->pci_ram_top - base;
+	if (size)
+		pci_set_region(hose->regions + hose->region_count++, base,
+			base, size, PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
+#endif
 
 	return;
 }
@@ -1055,25 +973,10 @@ static void decode_regions(struct pci_controller *hose, ofnode parent_node,
 static int pci_uclass_pre_probe(struct udevice *bus)
 {
 	struct pci_controller *hose;
-	struct uclass *uc;
-	int ret;
 
-	debug("%s, bus=%d/%s, parent=%s\n", __func__, dev_seq(bus), bus->name,
+	debug("%s, bus=%d/%s, parent=%s\n", __func__, bus->seq, bus->name,
 	      bus->parent->name);
-	hose = dev_get_uclass_priv(bus);
-
-	/*
-	 * Set the sequence number, if device_bind() doesn't. We want control
-	 * of this so that numbers are allocated as devices are probed. That
-	 * ensures that sub-bus numbered is correct (sub-buses must get numbers
-	 * higher than their parents)
-	 */
-	if (dev_seq(bus) == -1) {
-		ret = uclass_get(UCLASS_PCI, &uc);
-		if (ret)
-			return ret;
-		bus->seq_ = uclass_find_next_free_seq(uc);
-	}
+	hose = bus->uclass_priv;
 
 	/* For bridges, use the top-level PCI controller */
 	if (!device_is_on_pci_bus(bus)) {
@@ -1085,15 +988,11 @@ static int pci_uclass_pre_probe(struct udevice *bus)
 		parent_hose = dev_get_uclass_priv(bus->parent);
 		hose->ctlr = parent_hose->bus;
 	}
-
 	hose->bus = bus;
-	hose->first_busno = dev_seq(bus);
-	hose->last_busno = dev_seq(bus);
-	if (dev_has_ofnode(bus)) {
-		hose->skip_auto_config_until_reloc =
-			dev_read_bool(bus,
-				      "u-boot,skip-auto-config-until-reloc");
-	}
+	hose->first_busno = bus->seq;
+	hose->last_busno = bus->seq;
+	hose->skip_auto_config_until_reloc =
+		dev_read_bool(bus, "u-boot,skip-auto-config-until-reloc");
 
 	return 0;
 }
@@ -1103,17 +1002,17 @@ static int pci_uclass_post_probe(struct udevice *bus)
 	struct pci_controller *hose = dev_get_uclass_priv(bus);
 	int ret;
 
-	debug("%s: probing bus %d\n", __func__, dev_seq(bus));
+	debug("%s: probing bus %d\n", __func__, bus->seq);
 	ret = pci_bind_bus_devices(bus);
 	if (ret)
-		return log_msg_ret("bind", ret);
+		return ret;
 
-	if (CONFIG_IS_ENABLED(PCI_PNP) && ll_boot_init() &&
+	if (CONFIG_IS_ENABLED(PCI_PNP) &&
 	    (!hose->skip_auto_config_until_reloc ||
 	     (gd->flags & GD_FLG_RELOC))) {
 		ret = pci_auto_config_devices(bus);
 		if (ret < 0)
-			return log_msg_ret("cfg", ret);
+			return log_msg_ret("pci auto-config", ret);
 	}
 
 #if defined(CONFIG_X86) && defined(CONFIG_HAVE_FSP)
@@ -1130,10 +1029,10 @@ static int pci_uclass_post_probe(struct udevice *bus)
 	 * Note we only call this 1) after U-Boot is relocated, and 2)
 	 * root bus has finished probing.
 	 */
-	if ((gd->flags & GD_FLG_RELOC) && dev_seq(bus) == 0 && ll_boot_init()) {
+	if ((gd->flags & GD_FLG_RELOC) && (bus->seq == 0)) {
 		ret = fsp_init_phase_pci();
 		if (ret)
-			return log_msg_ret("fsp", ret);
+			return ret;
 	}
 #endif
 
@@ -1142,12 +1041,12 @@ static int pci_uclass_post_probe(struct udevice *bus)
 
 static int pci_uclass_child_post_bind(struct udevice *dev)
 {
-	struct pci_child_plat *pplat;
+	struct pci_child_platdata *pplat;
 
-	if (!dev_has_ofnode(dev))
+	if (!dev_of_valid(dev))
 		return 0;
 
-	pplat = dev_get_parent_plat(dev);
+	pplat = dev_get_parent_platdata(dev);
 
 	/* Extract vendor id and device id if available */
 	ofnode_read_pci_vendev(dev_ofnode(dev), &pplat->vendor, &pplat->device);
@@ -1162,7 +1061,7 @@ static int pci_bridge_read_config(const struct udevice *bus, pci_dev_t bdf,
 				  uint offset, ulong *valuep,
 				  enum pci_size_t size)
 {
-	struct pci_controller *hose = dev_get_uclass_priv(bus);
+	struct pci_controller *hose = bus->uclass_priv;
 
 	return pci_bus_read_config(hose->ctlr, bdf, offset, valuep, size);
 }
@@ -1171,7 +1070,7 @@ static int pci_bridge_write_config(struct udevice *bus, pci_dev_t bdf,
 				   uint offset, ulong value,
 				   enum pci_size_t size)
 {
-	struct pci_controller *hose = dev_get_uclass_priv(bus);
+	struct pci_controller *hose = bus->uclass_priv;
 
 	return pci_bus_write_config(hose->ctlr, bdf, offset, value, size);
 }
@@ -1275,48 +1174,6 @@ ulong pci_conv_size_to_32(ulong old, ulong value, uint offset,
 	return value;
 }
 
-int pci_get_dma_regions(struct udevice *dev, struct pci_region *memp, int index)
-{
-	int pci_addr_cells, addr_cells, size_cells;
-	int cells_per_record;
-	const u32 *prop;
-	int len;
-	int i = 0;
-
-	prop = ofnode_get_property(dev_ofnode(dev), "dma-ranges", &len);
-	if (!prop) {
-		log_err("PCI: Device '%s': Cannot decode dma-ranges\n",
-			dev->name);
-		return -EINVAL;
-	}
-
-	pci_addr_cells = ofnode_read_simple_addr_cells(dev_ofnode(dev));
-	addr_cells = ofnode_read_simple_addr_cells(dev_ofnode(dev->parent));
-	size_cells = ofnode_read_simple_size_cells(dev_ofnode(dev));
-
-	/* PCI addresses are always 3-cells */
-	len /= sizeof(u32);
-	cells_per_record = pci_addr_cells + addr_cells + size_cells;
-	debug("%s: len=%d, cells_per_record=%d\n", __func__, len,
-	      cells_per_record);
-
-	while (len) {
-		memp->bus_start = fdtdec_get_number(prop + 1, 2);
-		prop += pci_addr_cells;
-		memp->phys_start = fdtdec_get_number(prop, addr_cells);
-		prop += addr_cells;
-		memp->size = fdtdec_get_number(prop, size_cells);
-		prop += size_cells;
-
-		if (i == index)
-			return 0;
-		i++;
-		len -= cells_per_record;
-	}
-
-	return -EINVAL;
-}
-
 int pci_get_regions(struct udevice *dev, struct pci_region **iop,
 		    struct pci_region **memp, struct pci_region **prefp)
 {
@@ -1354,14 +1211,7 @@ u32 dm_pci_read_bar32(const struct udevice *dev, int barnum)
 
 	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
 	dm_pci_read_config32(dev, bar, &addr);
-
-	/*
-	 * If we get an invalid address, return this so that comparisons with
-	 * FDT_ADDR_T_NONE work correctly
-	 */
-	if (addr == 0xffffffff)
-		return addr;
-	else if (addr & PCI_BASE_ADDRESS_SPACE_IO)
+	if (addr & PCI_BASE_ADDRESS_SPACE_IO)
 		return addr & PCI_BASE_ADDRESS_IO_MASK;
 	else
 		return addr & PCI_BASE_ADDRESS_MEM_MASK;
@@ -1437,9 +1287,9 @@ phys_addr_t dm_pci_bus_to_phys(struct udevice *dev, pci_addr_t bus_addr,
 	return phys_addr;
 }
 
-static int _dm_pci_phys_to_bus(struct udevice *dev, phys_addr_t phys_addr,
-			       unsigned long flags, unsigned long skip_mask,
-			       pci_addr_t *ba)
+int _dm_pci_phys_to_bus(struct udevice *dev, phys_addr_t phys_addr,
+			unsigned long flags, unsigned long skip_mask,
+			pci_addr_t *ba)
 {
 	struct pci_region *res;
 	struct udevice *ctlr;
@@ -1502,54 +1352,13 @@ pci_addr_t dm_pci_phys_to_bus(struct udevice *dev, phys_addr_t phys_addr,
 	return bus_addr;
 }
 
-static phys_addr_t dm_pci_map_ea_virt(struct udevice *dev, int ea_off,
-				      struct pci_child_plat *pdata)
-{
-	phys_addr_t addr = 0;
-
-	/*
-	 * In the case of a Virtual Function device using BAR
-	 * base and size, add offset for VFn BAR(1, 2, 3...n)
-	 */
-	if (pdata->is_virtfn) {
-		size_t sz;
-		u32 ea_entry;
-
-		/* MaxOffset, 1st DW */
-		dm_pci_read_config32(dev, ea_off + 8, &ea_entry);
-		sz = ea_entry & PCI_EA_FIELD_MASK;
-		/* Fill up lower 2 bits */
-		sz |= (~PCI_EA_FIELD_MASK);
-
-		if (ea_entry & PCI_EA_IS_64) {
-			/* MaxOffset 2nd DW */
-			dm_pci_read_config32(dev, ea_off + 16, &ea_entry);
-			sz |= ((u64)ea_entry) << 32;
-		}
-
-		addr = (pdata->virtid - 1) * (sz + 1);
-	}
-
-	return addr;
-}
-
 static void *dm_pci_map_ea_bar(struct udevice *dev, int bar, int flags,
-			       int ea_off, struct pci_child_plat *pdata)
+			       int ea_off)
 {
 	int ea_cnt, i, entry_size;
 	int bar_id = (bar - PCI_BASE_ADDRESS_0) >> 2;
 	u32 ea_entry;
 	phys_addr_t addr;
-
-	if (IS_ENABLED(CONFIG_PCI_SRIOV)) {
-		/*
-		 * In the case of a Virtual Function device, device is
-		 * Physical function, so pdata will point to required VF
-		 * specific data.
-		 */
-		if (pdata->is_virtfn)
-			bar_id += PCI_EA_BEI_VF_BAR0;
-	}
 
 	/* EA capability structure header */
 	dm_pci_read_config32(dev, ea_off, &ea_entry);
@@ -1573,11 +1382,8 @@ static void *dm_pci_map_ea_bar(struct udevice *dev, int bar, int flags,
 			addr |= ((u64)ea_entry) << 32;
 		}
 
-		if (IS_ENABLED(CONFIG_PCI_SRIOV))
-			addr += dm_pci_map_ea_virt(dev, ea_off, pdata);
-
 		/* size ignored for now */
-		return map_physmem(addr, 0, flags);
+		return map_physmem(addr, flags, 0);
 	}
 
 	return 0;
@@ -1585,42 +1391,29 @@ static void *dm_pci_map_ea_bar(struct udevice *dev, int bar, int flags,
 
 void *dm_pci_map_bar(struct udevice *dev, int bar, int flags)
 {
-	struct pci_child_plat *pdata = dev_get_parent_plat(dev);
-	struct udevice *udev = dev;
 	pci_addr_t pci_bus_addr;
 	u32 bar_response;
 	int ea_off;
 
-	if (IS_ENABLED(CONFIG_PCI_SRIOV)) {
-		/*
-		 * In case of Virtual Function devices, use PF udevice
-		 * as EA capability is defined in Physical Function
-		 */
-		if (pdata->is_virtfn)
-			udev = pdata->pfdev;
-	}
-
 	/*
 	 * if the function supports Enhanced Allocation use that instead of
 	 * BARs
-	 * Incase of virtual functions, pdata will help read VF BEI
-	 * and EA entry size.
 	 */
-	ea_off = dm_pci_find_capability(udev, PCI_CAP_ID_EA);
+	ea_off = dm_pci_find_capability(dev, PCI_CAP_ID_EA);
 	if (ea_off)
-		return dm_pci_map_ea_bar(udev, bar, flags, ea_off, pdata);
+		return dm_pci_map_ea_bar(dev, bar, flags, ea_off);
 
 	/* read BAR address */
-	dm_pci_read_config32(udev, bar, &bar_response);
+	dm_pci_read_config32(dev, bar, &bar_response);
 	pci_bus_addr = (pci_addr_t)(bar_response & ~0xf);
 
 	/*
 	 * Pass "0" as the length argument to pci_bus_to_virt.  The arg
-	 * isn't actually used on any platform because U-Boot assumes a static
+	 * isn't actualy used on any platform because u-boot assumes a static
 	 * linear mapping.  In the future, this could read the BAR size
 	 * and pass that as the size if needed.
 	 */
-	return dm_pci_bus_to_virt(udev, pci_bus_addr, flags, 0, MAP_NOCACHE);
+	return dm_pci_bus_to_virt(dev, pci_bus_addr, flags, 0, MAP_NOCACHE);
 }
 
 static int _dm_pci_find_next_capability(struct udevice *dev, u8 pos, int cap)
@@ -1736,130 +1529,17 @@ int dm_pci_flr(struct udevice *dev)
 	return 0;
 }
 
-#if defined(CONFIG_PCI_SRIOV)
-int pci_sriov_init(struct udevice *pdev, int vf_en)
-{
-	u16 vendor, device;
-	struct udevice *bus;
-	struct udevice *dev;
-	pci_dev_t bdf;
-	u16 ctrl;
-	u16 num_vfs;
-	u16 total_vf;
-	u16 vf_offset;
-	u16 vf_stride;
-	int vf, ret;
-	int pos;
-
-	pos = dm_pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_SRIOV);
-	if (!pos) {
-		debug("Error: SRIOV capability not found\n");
-		return -ENOENT;
-	}
-
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_CTRL, &ctrl);
-
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_TOTAL_VF, &total_vf);
-	if (vf_en > total_vf)
-		vf_en = total_vf;
-	dm_pci_write_config16(pdev, pos + PCI_SRIOV_NUM_VF, vf_en);
-
-	ctrl |= PCI_SRIOV_CTRL_VFE | PCI_SRIOV_CTRL_MSE;
-	dm_pci_write_config16(pdev, pos + PCI_SRIOV_CTRL, ctrl);
-
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_NUM_VF, &num_vfs);
-	if (num_vfs > vf_en)
-		num_vfs = vf_en;
-
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_VF_OFFSET, &vf_offset);
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_VF_STRIDE, &vf_stride);
-
-	dm_pci_read_config16(pdev, PCI_VENDOR_ID, &vendor);
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_VF_DID, &device);
-
-	bdf = dm_pci_get_bdf(pdev);
-
-	pci_get_bus(PCI_BUS(bdf), &bus);
-
-	if (!bus)
-		return -ENODEV;
-
-	bdf += PCI_BDF(0, 0, vf_offset);
-
-	for (vf = 0; vf < num_vfs; vf++) {
-		struct pci_child_plat *pplat;
-		ulong class;
-
-		pci_bus_read_config(bus, bdf, PCI_CLASS_DEVICE,
-				    &class, PCI_SIZE_16);
-
-		debug("%s: bus %d/%s: found VF %x:%x\n", __func__,
-		      dev_seq(bus), bus->name, PCI_DEV(bdf), PCI_FUNC(bdf));
-
-		/* Find this device in the device tree */
-		ret = pci_bus_find_devfn(bus, PCI_MASK_BUS(bdf), &dev);
-
-		if (ret == -ENODEV) {
-			struct pci_device_id find_id;
-
-			memset(&find_id, '\0', sizeof(find_id));
-			find_id.vendor = vendor;
-			find_id.device = device;
-			find_id.class = class;
-
-			ret = pci_find_and_bind_driver(bus, &find_id,
-						       bdf, &dev);
-
-			if (ret)
-				return ret;
-		}
-
-		/* Update the platform data */
-		pplat = dev_get_parent_plat(dev);
-		pplat->devfn = PCI_MASK_BUS(bdf);
-		pplat->vendor = vendor;
-		pplat->device = device;
-		pplat->class = class;
-		pplat->is_virtfn = true;
-		pplat->pfdev = pdev;
-		pplat->virtid = vf * vf_stride + vf_offset;
-
-		debug("%s: bus %d/%s: found VF %x:%x %x:%x class %lx id %x\n",
-		      __func__, dev_seq(dev), dev->name, PCI_DEV(bdf),
-		      PCI_FUNC(bdf), vendor, device, class, pplat->virtid);
-		bdf += PCI_BDF(0, 0, vf_stride);
-	}
-
-	return 0;
-}
-
-int pci_sriov_get_totalvfs(struct udevice *pdev)
-{
-	u16 total_vf;
-	int pos;
-
-	pos = dm_pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_SRIOV);
-	if (!pos) {
-		debug("Error: SRIOV capability not found\n");
-		return -ENOENT;
-	}
-
-	dm_pci_read_config16(pdev, pos + PCI_SRIOV_TOTAL_VF, &total_vf);
-
-	return total_vf;
-}
-#endif /* SRIOV */
-
 UCLASS_DRIVER(pci) = {
 	.id		= UCLASS_PCI,
 	.name		= "pci",
-	.flags		= DM_UC_FLAG_SEQ_ALIAS | DM_UC_FLAG_NO_AUTO_SEQ,
+	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.post_bind	= dm_scan_fdt_dev,
 	.pre_probe	= pci_uclass_pre_probe,
 	.post_probe	= pci_uclass_post_probe,
 	.child_post_bind = pci_uclass_child_post_bind,
-	.per_device_auto	= sizeof(struct pci_controller),
-	.per_child_plat_auto	= sizeof(struct pci_child_plat),
+	.per_device_auto_alloc_size = sizeof(struct pci_controller),
+	.per_child_platdata_auto_alloc_size =
+			sizeof(struct pci_child_platdata),
 };
 
 static const struct dm_pci_ops pci_bridge_ops = {
@@ -1895,7 +1575,7 @@ U_BOOT_DRIVER(pci_generic_drv) = {
 	.of_match	= pci_generic_ids,
 };
 
-int pci_init(void)
+void pci_init(void)
 {
 	struct udevice *bus;
 
@@ -1908,6 +1588,4 @@ int pci_init(void)
 	     uclass_next_device_check(&bus)) {
 		;
 	}
-
-	return 0;
 }

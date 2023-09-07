@@ -9,11 +9,8 @@
 
 #include <common.h>
 #include <dm.h>
-#include <init.h>
-#include <asm/global_data.h>
 #include <dm/uclass-internal.h>
 #include <asm/arch/rmobile.h>
-#include <linux/libfdt.h>
 
 #ifdef CONFIG_RCAR_GEN3
 
@@ -22,102 +19,77 @@ DECLARE_GLOBAL_DATA_PTR;
 /* If the firmware passed a device tree use it for U-Boot DRAM setup. */
 extern u64 rcar_atf_boot_args[];
 
-int fdtdec_board_setup(const void *fdt_blob)
-{
-	void *atf_fdt_blob = (void *)(rcar_atf_boot_args[1]);
-
-	if (fdt_magic(atf_fdt_blob) == FDT_MAGIC)
-		fdt_overlay_apply_node((void *)fdt_blob, 0, atf_fdt_blob, 0);
-
-	return 0;
-}
-
 int dram_init(void)
 {
-	return fdtdec_setup_mem_size_base();
+	const void *atf_fdt_blob = (const void *)(rcar_atf_boot_args[1]);
+	const void *blob;
+
+	/* Check if ATF passed us DTB. If not, fall back to builtin DTB. */
+	if (fdt_magic(atf_fdt_blob) == FDT_MAGIC)
+		blob = atf_fdt_blob;
+	else
+		blob = gd->fdt_blob;
+
+	return fdtdec_setup_mem_size_base_fdt(blob);
 }
 
 int dram_init_banksize(void)
 {
-	fdtdec_setup_memory_banksize();
+	const void *atf_fdt_blob = (const void *)(rcar_atf_boot_args[1]);
+	const void *blob;
+
+	/* Check if ATF passed us DTB. If not, fall back to builtin DTB. */
+	if (fdt_magic(atf_fdt_blob) == FDT_MAGIC)
+		blob = atf_fdt_blob;
+	else
+		blob = gd->fdt_blob;
+
+	fdtdec_setup_memory_banksize_fdt(blob);
 
 	return 0;
 }
 
-#if defined(CONFIG_OF_BOARD_SETUP)
-static int is_mem_overlap(void *blob, int first_mem_node, int curr_mem_node)
+#if CONFIG_IS_ENABLED(OF_BOARD_SETUP) && CONFIG_IS_ENABLED(PCI)
+int ft_board_setup(void *blob, bd_t *bd)
 {
-	struct fdt_resource first_mem_res, curr_mem_res;
-	int curr_mem_reg, first_mem_reg = 0;
-	int ret;
+	struct udevice *dev;
+	struct uclass *uc;
+	fdt_addr_t regs_addr;
+	int i, off, ret;
 
-	for (;;) {
-		ret = fdt_get_resource(blob, first_mem_node, "reg",
-				       first_mem_reg++, &first_mem_res);
-		if (ret) /* No more entries, no overlap found */
-			return 0;
+	ret = uclass_get(UCLASS_PCI, &uc);
+	if (ret)
+		return ret;
 
-		curr_mem_reg = 0;
-		for (;;) {
-			ret = fdt_get_resource(blob, curr_mem_node, "reg",
-					       curr_mem_reg++, &curr_mem_res);
-			if (ret) /* No more entries, check next tuple */
+	uclass_foreach_dev(dev, uc) {
+		struct pci_controller hose = { 0 };
+
+		for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+			if (hose.region_count == MAX_PCI_REGIONS) {
+				printf("maximum number of regions parsed, aborting\n");
 				break;
+			}
 
-			if (curr_mem_res.end < first_mem_res.start)
-				continue;
-
-			if (curr_mem_res.start >= first_mem_res.end)
-				continue;
-
-			printf("Overlap found: 0x%llx..0x%llx / 0x%llx..0x%llx\n",
-				first_mem_res.start, first_mem_res.end,
-				curr_mem_res.start, curr_mem_res.end);
-
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-int ft_board_setup(void *blob, struct bd_info *bd)
-{
-	/*
-	 * Scrub duplicate /memory@* node entries here. Some R-Car DTs might
-	 * contain multiple /memory@* nodes, however fdt_fixup_memory_banks()
-	 * either generates single /memory node or updates the first /memory
-	 * node. Any remaining memory nodes are thus potential duplicates.
-	 *
-	 * However, it is not possible to delete all the memory nodes right
-	 * away, since some of those might not be DRAM memory nodes, but some
-	 * sort of other memory. Thus, delete only the memory nodes which are
-	 * in the R-Car3 DBSC ranges.
-	 */
-	int mem = 0, first_mem_node = 0;
-
-	for (;;) {
-		mem = fdt_node_offset_by_prop_value(blob, mem,
-						    "device_type", "memory", 7);
-		if (mem < 0)
-			break;
-		if (!fdtdec_get_is_enabled(blob, mem))
-			continue;
-
-		/* First memory node, patched by U-Boot */
-		if (!first_mem_node) {
-			first_mem_node = mem;
-			continue;
+			if (bd->bi_dram[i].size) {
+				pci_set_region(&hose.regions[hose.region_count++],
+					       bd->bi_dram[i].start,
+					       bd->bi_dram[i].start,
+					       bd->bi_dram[i].size,
+					       PCI_REGION_MEM |
+					       PCI_REGION_PREFETCH |
+					       PCI_REGION_SYS_MEMORY);
+			}
 		}
 
-		/* Check the remaining nodes and delete duplicates */
-		if (!is_mem_overlap(blob, first_mem_node, mem))
-			continue;
+		regs_addr = devfdt_get_addr_index(dev, 0);
+		off = fdt_node_offset_by_compat_reg(blob,
+				"renesas,pcie-rcar-gen3", regs_addr);
+		if (off < 0) {
+			printf("Failed to find PCIe node@%llx\n", regs_addr);
+			return off;
+		}
 
-		/* Delete duplicate node, start again */
-		fdt_del_node(blob, mem);
-		first_mem_node = 0;
-		mem = 0;
+		fdt_pci_dma_ranges(blob, off, &hose);
 	}
 
 	return 0;

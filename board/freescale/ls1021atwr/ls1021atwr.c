@@ -6,12 +6,9 @@
 
 #include <common.h>
 #include <clock_legacy.h>
-#include <command.h>
 #include <fdt_support.h>
 #include <i2c.h>
 #include <init.h>
-#include <net.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/immap_ls102xa.h>
 #include <asm/arch/clock.h>
@@ -29,7 +26,6 @@
 #include <fsl_sec.h>
 #include <fsl_devdis.h>
 #include <spl.h>
-#include <linux/delay.h>
 #include "../common/sleep.h"
 #ifdef CONFIG_U_QE
 #include <fsl_qe.h>
@@ -41,7 +37,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define VERSION_MASK		0x00FF
 #define BANK_MASK		0x0001
-#define CFG_RESET		0x1
+#define CONFIG_RESET		0x1
 #define INIT_RESET		0x1
 
 #define CPLD_SET_MUX_SERDES	0x20
@@ -240,7 +236,7 @@ int dram_init(void)
 	return 0;
 }
 
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 	return pci_eth_init(bis);
 }
@@ -283,7 +279,7 @@ static void convert_serdes_mux(int type, int need_reset)
 
 	if (need_reset == 1) {
 		printf("Reset board to enable configuration\n");
-		cpld_data->system_rst = CFG_RESET;
+		cpld_data->system_rst = CONFIG_RESET;
 	}
 }
 
@@ -458,7 +454,7 @@ void ls1twr_program_regulator(void)
 #define MC34VR500_ADDR			0x8
 #define MC34VR500_DEVICEID		0x4
 #define MC34VR500_DEVICEID_MASK		0x0f
-#if CONFIG_IS_ENABLED(DM_I2C)
+#ifdef CONFIG_DM_I2C
 	struct udevice *dev;
 	int ret;
 
@@ -571,7 +567,7 @@ void board_sleep_prepare(void)
 }
 #endif
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	ft_cpu_setup(blob, bd);
 
@@ -612,11 +608,11 @@ static void convert_flash_bank(char bank)
 	cpld_data->vbank = bank;
 
 	printf("Reset board to enable configuration.\n");
-	cpld_data->system_rst = CFG_RESET;
+	cpld_data->system_rst = CONFIG_RESET;
 }
 
-static int flash_bank_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
+static int flash_bank_cmd(cmd_tbl_t *cmdtp, int flag, int argc,
+			  char * const argv[])
 {
 	if (argc != 2)
 		return CMD_RET_USAGE;
@@ -636,15 +632,15 @@ U_BOOT_CMD(
 	"bank[0-upper bank/1-lower bank] (e.g. boot_bank 0)"
 );
 
-static int cpld_reset_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
+static int cpld_reset_cmd(cmd_tbl_t *cmdtp, int flag, int argc,
+			  char * const argv[])
 {
 	struct cpld_data *cpld_data = (void *)(CONFIG_SYS_CPLD_BASE);
 
 	if (argc > 2)
 		return CMD_RET_USAGE;
 	if ((argc == 1) || (strcmp(argv[1], "conf") == 0))
-		cpld_data->system_rst = CFG_RESET;
+		cpld_data->system_rst = CONFIG_RESET;
 	else if (strcmp(argv[1], "init") == 0)
 		cpld_data->global_rst = INIT_RESET;
 	else
@@ -695,8 +691,8 @@ static void print_serdes_mux(void)
 		printf("B.\n");
 }
 
-static int serdes_mux_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
+static int serdes_mux_cmd(cmd_tbl_t *cmdtp, int flag, int argc,
+			  char * const argv[])
 {
 	if (argc != 2)
 		return CMD_RET_USAGE;

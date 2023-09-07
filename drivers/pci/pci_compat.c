@@ -7,7 +7,6 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <pci.h>
 #include <dm/device-internal.h>

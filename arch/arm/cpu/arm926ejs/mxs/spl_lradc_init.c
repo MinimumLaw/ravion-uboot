@@ -8,7 +8,6 @@
 
 #include <common.h>
 #include <config.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 

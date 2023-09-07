@@ -5,7 +5,6 @@
  * Aneesh V <aneesh@ti.com>
  */
 #include <cpu_func.h>
-#include <asm/cache.h>
 #include <linux/types.h>
 #include <common.h>
 #include <asm/armv7.h>
@@ -176,6 +175,9 @@ void mmu_page_table_flush(unsigned long start, unsigned long stop)
 {
 }
 
+void arm_init_domains(void)
+{
+}
 #endif /* #if !CONFIG_IS_ENABLED(SYS_DCACHE_OFF) */
 
 #if !CONFIG_IS_ENABLED(SYS_ICACHE_OFF)

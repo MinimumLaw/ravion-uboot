@@ -1,13 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * ENETC ethernet controller driver
- * Copyright 2017-2021 NXP
+ * Copyright 2017-2019 NXP
  */
 
 #ifndef _ENETC_H
 #define _ENETC_H
 
-#include <linux/bitops.h>
 #define enetc_dbg(dev, fmt, args...)	debug("%s:" fmt, dev->name, ##args)
 
 /* PCI function IDs */
@@ -77,11 +76,6 @@ enum enetc_bdr_type {TX, RX};
 #define ENETC_PM_IF_MODE		0x8300
 #define  ENETC_PM_IF_MODE_RG		BIT(2)
 #define  ENETC_PM_IF_MODE_AN_ENA	BIT(15)
-#define  ENETC_PM_IFM_SSP_MASK		GENMASK(14, 13)
-#define  ENETC_PM_IFM_SSP_1000		(2 << 13)
-#define  ENETC_PM_IFM_SSP_100		(0 << 13)
-#define  ENETC_PM_IFM_SSP_10		(1 << 13)
-#define  ENETC_PM_IFM_FULL_DPX		BIT(12)
 #define  ENETC_PM_IF_IFMODE_MASK	GENMASK(1, 0)
 
 /* buffer descriptors count must be multiple of 8 and aligned to 128 bytes */
@@ -205,11 +199,6 @@ struct enetc_priv {
 
 /* PCS replicator block for USXGMII */
 #define ENETC_PCS_DEVAD_REPL		0x1f
-
-#define ENETC_PCS_REPL_LINK_TIMER_1	0x12
-#define  ENETC_PCS_REPL_LINK_TIMER_1_DEF	0x0003
-#define ENETC_PCS_REPL_LINK_TIMER_2	0x13
-#define  ENETC_PCS_REPL_LINK_TIMER_2_DEF	0x06a0
 
 /* ENETC external MDIO registers */
 #define ENETC_MDIO_BASE		0x1c00

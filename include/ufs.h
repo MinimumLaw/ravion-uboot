@@ -1,13 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 #ifndef _UFS_H
 #define _UFS_H
-
-struct udevice;
-
 /**
  * ufs_probe() - initialize all devices in the UFS uclass
  *
- * Return: 0 if Ok, -ve on error
+ * @return 0 if Ok, -ve on error
  */
 int ufs_probe(void);
 
@@ -16,7 +13,7 @@ int ufs_probe(void);
  *
  * @index: index in the uclass sequence
  *
- * Return: 0 if successfully probed, -ve on error
+ * @return 0 if successfully probed, -ve on error
  */
 int ufs_probe_dev(int index);
 
@@ -26,7 +23,7 @@ int ufs_probe_dev(int index);
  * @ufs_dev: UFS device
  * @scsi_devp: Pointer to scsi device
  *
- * Return: 0 if Ok, -ve on error
+ * @return 0 if Ok, -ve on error
  */
 int ufs_scsi_bind(struct udevice *ufs_dev, struct udevice **scsi_devp);
 #endif

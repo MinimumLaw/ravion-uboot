@@ -7,7 +7,6 @@
 #ifndef __TEST_SUITES_H__
 #define __TEST_SUITES_H__
 
-struct cmd_tbl;
 struct unit_test;
 
 /**
@@ -20,34 +19,20 @@ struct unit_test;
  * @argc:	Argument count provided. Must be >= 1. If this is 1 then all
  *		tests are run, otherwise only the one named @argv[1] is run.
  * @argv:	Arguments: argv[1] is the test to run (if @argc >= 2)
- * Return: 0 if OK, CMD_RET_FAILURE on failure
+ * @return 0 if OK, CMD_RET_FAILURE on failure
  */
 int cmd_ut_category(const char *name, const char *prefix,
 		    struct unit_test *tests, int n_ents,
-		    int argc, char *const argv[]);
+		    int argc, char * const argv[]);
 
-int do_ut_addrmap(struct cmd_tbl *cmdtp, int flag, int argc,
-		  char *const argv[]);
-int do_ut_bootm(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_bloblist(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[]);
-int do_ut_common(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_compression(struct cmd_tbl *cmdtp, int flag, int argc,
-		      char *const argv[]);
-int do_ut_dm(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_env(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_lib(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_log(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]);
-int do_ut_mem(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_optee(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_overlay(struct cmd_tbl *cmdtp, int flag, int argc,
-		  char *const argv[]);
-int do_ut_print(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_setexpr(struct cmd_tbl *cmdtp, int flag, int argc,
-		  char *const argv[]);
-int do_ut_str(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_time(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ut_unicode(struct cmd_tbl *cmdtp, int flag, int argc,
-		  char *const argv[]);
+int do_ut_bloblist(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
+int do_ut_compression(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
+int do_ut_dm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ut_env(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ut_lib(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ut_optee(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ut_overlay(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ut_time(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ut_unicode(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 #endif /* __TEST_SUITES_H__ */

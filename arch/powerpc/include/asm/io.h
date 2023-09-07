@@ -10,10 +10,7 @@
 #include <asm/byteorder.h>
 
 #ifdef CONFIG_ADDR_MAP
-#include <asm/global_data.h>
 #include <addr_map.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 #endif
 
 #define SIO_CONFIG_RA   0x398
@@ -306,20 +303,20 @@ static inline void out_be32(volatile unsigned __iomem *addr, u32 val)
 static inline void *phys_to_virt(phys_addr_t paddr)
 {
 #ifdef CONFIG_ADDR_MAP
-	if (gd->flags & GD_FLG_RELOC)
-		return addrmap_phys_to_virt(paddr);
-#endif
+	return addrmap_phys_to_virt(paddr);
+#else
 	return (void *)((unsigned long)paddr);
+#endif
 }
 #define phys_to_virt phys_to_virt
 
 static inline phys_addr_t virt_to_phys(void * vaddr)
 {
 #ifdef CONFIG_ADDR_MAP
-	if (gd->flags & GD_FLG_RELOC)
-		return addrmap_virt_to_phys(vaddr);
-#endif
+	return addrmap_virt_to_phys(vaddr);
+#else
 	return (phys_addr_t)((unsigned long)vaddr);
+#endif
 }
 #define virt_to_phys virt_to_phys
 

@@ -12,7 +12,6 @@
 #include <phy.h>
 #include <asm/io.h>
 #include <wait_bit.h>
-#include <linux/bitops.h>
 
 #define MVMDIO_SMI_DATA_SHIFT		0
 #define MVMDIO_SMI_PHY_ADDR_SHIFT	16
@@ -197,8 +196,8 @@ static int mvmdio_write(struct udevice *dev, int addr, int devad, int reg,
  */
 static int mvmdio_bind(struct udevice *dev)
 {
-	if (ofnode_valid(dev_ofnode(dev)))
-		device_set_name(dev, ofnode_get_name(dev_ofnode(dev)));
+	if (ofnode_valid(dev->node))
+		device_set_name(dev, ofnode_get_name(dev->node));
 
 	return 0;
 }
@@ -232,5 +231,6 @@ U_BOOT_DRIVER(mvmdio) = {
 	.bind			= mvmdio_bind,
 	.probe			= mvmdio_probe,
 	.ops			= &mvmdio_ops,
-	.priv_auto	= sizeof(struct mvmdio_priv),
+	.priv_auto_alloc_size	= sizeof(struct mvmdio_priv),
 };
+

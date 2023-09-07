@@ -28,7 +28,6 @@
 #include <common.h>
 #include <command.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <memalign.h>
 #include <asm/processor.h>
@@ -38,7 +37,6 @@
 #include <asm/unaligned.h>
 #include <errno.h>
 #include <usb.h>
-#include <linux/delay.h>
 
 #define USB_BUFSIZ	512
 

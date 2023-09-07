@@ -6,8 +6,6 @@
 #include <common.h>
 #include <i2c.h>
 #include <fdt_support.h>
-#include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
@@ -22,7 +20,6 @@
 #include <fsl_esdhc.h>
 #include <fsl_sec.h>
 #include <fsl_dspi.h>
-#include "../common/i2c_mux.h"
 
 #define LS1046A_PORSR1_REG 0x1EE0000
 #define BOOT_SRC_SD        0x20000000
@@ -38,6 +35,32 @@
 #define SPI_MCR_REG	0x2100000
 
 DECLARE_GLOBAL_DATA_PTR;
+
+int select_i2c_ch_pca9547(u8 ch, int bus_num)
+{
+	int ret;
+
+#ifdef CONFIG_DM_I2C
+	struct udevice *dev;
+
+	ret = i2c_get_chip_for_busnum(bus_num, I2C_MUX_PCA_ADDR_PRI,
+				      1, &dev);
+	if (ret) {
+		printf("%s: Cannot find udev for a bus %d\n", __func__,
+		       bus_num);
+		return ret;
+	}
+	ret = dm_i2c_write(dev, 0, &ch, 1);
+#else
+	ret = i2c_write(I2C_MUX_PCA_ADDR_PRI, 0, 1, &ch, 1);
+#endif
+	if (ret) {
+		puts("PCA: failed to select proper channel\n");
+		return ret;
+	}
+
+	return 0;
+}
 
 static inline void demux_select_usb2(void)
 {
@@ -194,7 +217,7 @@ int misc_init_r(void)
 }
 #endif
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	u64 base[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
@@ -209,9 +232,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	ft_cpu_setup(blob, bd);
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#ifndef CONFIG_DM_ETH
 	fdt_fixup_fman_ethernet(blob);
-#endif
 #endif
 
 	fdt_fixup_icid(blob);

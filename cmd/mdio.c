@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <command.h>
-#include <dm.h>
 #include <miiphy.h>
 #include <phy.h>
 
@@ -191,8 +190,7 @@ static int extract_phy_range(char *const argv[], int argc, struct mii_dev **bus,
 }
 
 /* ---------------------------------------------------------------- */
-static int do_mdio(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_mdio(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char op[2];
 	int addrlo, addrhi, reglo, reghi, devadlo, devadhi;
@@ -254,7 +252,7 @@ static int do_mdio(struct cmd_tbl *cmdtp, int flag, int argc,
 	switch (op[0]) {
 	case 'w':
 		if (pos > 1)
-			data = hextoul(argv[pos--], NULL);
+			data = simple_strtoul(argv[pos--], NULL, 16);
 		/* Intentional fall-through - Get reg for read and write */
 	case 'r':
 		if (pos > 1)

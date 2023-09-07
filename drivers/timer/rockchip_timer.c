@@ -4,11 +4,7 @@
  */
 
 #include <common.h>
-#include <bootstage.h>
 #include <dm.h>
-#include <init.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <dm/ofnode.h>
 #include <mapmem.h>
 #include <asm/arch-rockchip/timer.h>
@@ -55,7 +51,8 @@ ulong timer_get_boot_us(void)
 		/* The timer is available */
 		rate = timer_get_rate(gd->timer);
 		timer_get_count(gd->timer, &ticks);
-	} else if (CONFIG_IS_ENABLED(OF_REAL) && ret == -EAGAIN) {
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	} else if (ret == -EAGAIN) {
 		/* We have been called so early that the DM is not ready,... */
 		ofnode node = offset_to_ofnode(-1);
 		struct rk_timer *timer = NULL;
@@ -78,6 +75,7 @@ ulong timer_get_boot_us(void)
 			debug("%s: could not read clock-frequency\n", __func__);
 			return 0;
 		}
+#endif
 	} else {
 		return 0;
 	}
@@ -87,24 +85,25 @@ ulong timer_get_boot_us(void)
 }
 #endif
 
-static u64 rockchip_timer_get_count(struct udevice *dev)
+static int rockchip_timer_get_count(struct udevice *dev, u64 *count)
 {
 	struct rockchip_timer_priv *priv = dev_get_priv(dev);
 	uint64_t cntr = rockchip_timer_get_curr_value(priv->timer);
 
 	/* timers are down-counting */
-	return ~0ull - cntr;
+	*count = ~0ull - cntr;
+	return 0;
 }
 
-static int rockchip_clk_of_to_plat(struct udevice *dev)
+static int rockchip_clk_ofdata_to_platdata(struct udevice *dev)
 {
-	if (CONFIG_IS_ENABLED(OF_REAL)) {
-		struct rockchip_timer_priv *priv = dev_get_priv(dev);
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	struct rockchip_timer_priv *priv = dev_get_priv(dev);
 
-		priv->timer = dev_read_addr_ptr(dev);
-		if (!priv->timer)
-			return -ENOENT;
-	}
+	priv->timer = dev_read_addr_ptr(dev);
+	if (!priv->timer)
+		return -ENOENT;
+#endif
 
 	return 0;
 }
@@ -138,7 +137,7 @@ static int rockchip_timer_probe(struct udevice *dev)
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct timer_dev_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct rockchip_timer_priv *priv = dev_get_priv(dev);
-	struct rockchip_timer_plat *plat = dev_get_plat(dev);
+	struct rockchip_timer_plat *plat = dev_get_platdata(dev);
 
 	priv->timer = map_sysmem(plat->dtd.reg[0], plat->dtd.reg[1]);
 	uc_priv->clock_rate = plat->dtd.clock_frequency;
@@ -164,9 +163,9 @@ U_BOOT_DRIVER(rockchip_rk3368_timer) = {
 	.of_match = rockchip_timer_ids,
 	.probe = rockchip_timer_probe,
 	.ops	= &rockchip_timer_ops,
-	.priv_auto	= sizeof(struct rockchip_timer_priv),
+	.priv_auto_alloc_size = sizeof(struct rockchip_timer_priv),
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	.plat_auto	= sizeof(struct rockchip_timer_plat),
+	.platdata_auto_alloc_size = sizeof(struct rockchip_timer_plat),
 #endif
-	.of_to_plat = rockchip_clk_of_to_plat,
+	.ofdata_to_platdata = rockchip_clk_ofdata_to_platdata,
 };

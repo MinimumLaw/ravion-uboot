@@ -3,27 +3,22 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  */
 
-#define _GNU_SOURCE
-
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <setjmp.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <time.h>
-#include <ucontext.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <linux/compiler_attributes.h>
 #include <linux/types.h>
 
 #include <asm/getopt.h>
@@ -31,9 +26,6 @@
 #include <asm/state.h>
 #include <os.h>
 #include <rtc_def.h>
-
-/* Environment variable for time offset */
-#define ENV_TIME_OFFSET "UBOOT_SB_TIME_OFFSET"
 
 /* Operating System Interface */
 
@@ -87,21 +79,13 @@ int os_open(const char *pathname, int os_flags)
 		flags |= O_CREAT;
 	if (os_flags & OS_O_TRUNC)
 		flags |= O_TRUNC;
-	/*
-	 * During a cold reset execv() is used to relaunch the U-Boot binary.
-	 * We must ensure that all files are closed in this case.
-	 */
-	flags |= O_CLOEXEC;
 
 	return open(pathname, flags, 0777);
 }
 
 int os_close(int fd)
 {
-	/* Do not close the console input */
-	if (fd)
-		return close(fd);
-	return -1;
+	return close(fd);
 }
 
 int os_unlink(const char *pathname)
@@ -133,19 +117,6 @@ int os_write_file(const char *fname, const void *buf, int size)
 	return 0;
 }
 
-int os_filesize(int fd)
-{
-	off_t size;
-
-	size = os_lseek(fd, 0, OS_SEEK_END);
-	if (size < 0)
-		return -errno;
-	if (os_lseek(fd, 0, OS_SEEK_SET) < 0)
-		return -errno;
-
-	return size;
-}
-
 int os_read_file(const char *fname, void **bufp, int *sizep)
 {
 	off_t size;
@@ -157,13 +128,16 @@ int os_read_file(const char *fname, void **bufp, int *sizep)
 		printf("Cannot open file '%s'\n", fname);
 		goto err;
 	}
-	size = os_filesize(fd);
+	size = os_lseek(fd, 0, OS_SEEK_END);
 	if (size < 0) {
-		printf("Cannot get file size of '%s'\n", fname);
+		printf("Cannot seek to end of file '%s'\n", fname);
 		goto err;
 	}
-
-	*bufp = os_malloc(size);
+	if (os_lseek(fd, 0, OS_SEEK_SET) < 0) {
+		printf("Cannot seek to start of file '%s'\n", fname);
+		goto err;
+	}
+	*bufp = malloc(size);
 	if (!*bufp) {
 		printf("Not enough memory to read file '%s'\n", fname);
 		ret = -ENOMEM;
@@ -180,45 +154,6 @@ int os_read_file(const char *fname, void **bufp, int *sizep)
 err:
 	os_close(fd);
 	return ret;
-}
-
-int os_map_file(const char *pathname, int os_flags, void **bufp, int *sizep)
-{
-	void *ptr;
-	int size;
-	int ifd;
-
-	ifd = os_open(pathname, os_flags);
-	if (ifd < 0) {
-		printf("Cannot open file '%s'\n", pathname);
-		return -EIO;
-	}
-	size = os_filesize(ifd);
-	if (size < 0) {
-		printf("Cannot get file size of '%s'\n", pathname);
-		return -EIO;
-	}
-
-	ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, ifd, 0);
-	if (ptr == MAP_FAILED) {
-		printf("Can't map file '%s': %s\n", pathname, strerror(errno));
-		return -EPERM;
-	}
-
-	*bufp = ptr;
-	*sizep = size;
-
-	return 0;
-}
-
-int os_unmap(void *buf, int size)
-{
-	if (munmap(buf, size)) {
-		printf("Can't unmap %p %x\n", buf, size);
-		return -EIO;
-	}
-
-	return 0;
 }
 
 /* Restore tty state when we exit */
@@ -238,49 +173,6 @@ void os_fd_restore(void)
 		}
 		term_setup = false;
 	}
-}
-
-static void os_sigint_handler(int sig)
-{
-	os_fd_restore();
-	signal(SIGINT, SIG_DFL);
-	raise(SIGINT);
-}
-
-static void os_signal_handler(int sig, siginfo_t *info, void *con)
-{
-	ucontext_t __maybe_unused *context = con;
-	unsigned long pc;
-
-#if defined(__x86_64__)
-	pc = context->uc_mcontext.gregs[REG_RIP];
-#elif defined(__aarch64__)
-	pc = context->uc_mcontext.pc;
-#elif defined(__riscv)
-	pc = context->uc_mcontext.__gregs[REG_PC];
-#else
-	const char msg[] =
-		"\nUnsupported architecture, cannot read program counter\n";
-
-	os_write(1, msg, sizeof(msg));
-	pc = 0;
-#endif
-
-	os_signal_action(sig, pc);
-}
-
-int os_setup_signal_handlers(void)
-{
-	struct sigaction act;
-
-	act.sa_sigaction = os_signal_handler;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = SA_SIGINFO;
-	if (sigaction(SIGILL, &act, NULL) ||
-	    sigaction(SIGBUS, &act, NULL) ||
-	    sigaction(SIGSEGV, &act, NULL))
-		return -1;
-	return 0;
 }
 
 /* Put tty into raw mode so <tab> and <ctrl+c> work */
@@ -313,21 +205,13 @@ void os_tty_raw(int fd, bool allow_sigs)
 
 	term_setup = true;
 	atexit(os_fd_restore);
-	signal(SIGINT, os_sigint_handler);
 }
 
-/*
- * Provide our own malloc so we don't use space in the sandbox ram_buf for
- * allocations that are internal to sandbox, or need to be done before U-Boot's
- * malloc() is ready.
- */
 void *os_malloc(size_t length)
 {
 	int page_size = getpagesize();
 	struct os_mem_hdr *hdr;
 
-	if (!length)
-		return NULL;
 	/*
 	 * Use an address that is hopefully available to us so that pointers
 	 * to this memory are fairly obvious. If we end up with a different
@@ -352,47 +236,6 @@ void os_free(void *ptr)
 		hdr = ptr - page_size;
 		munmap(hdr, hdr->length + page_size);
 	}
-}
-
-/* These macros are from kernel.h but not accessible in this file */
-#define ALIGN(x, a)		__ALIGN_MASK((x), (typeof(x))(a) - 1)
-#define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
-
-/*
- * Provide our own malloc so we don't use space in the sandbox ram_buf for
- * allocations that are internal to sandbox, or need to be done before U-Boot's
- * malloc() is ready.
- */
-void *os_realloc(void *ptr, size_t length)
-{
-	int page_size = getpagesize();
-	struct os_mem_hdr *hdr;
-	void *new_ptr;
-
-	/* Reallocating a NULL pointer is just an alloc */
-	if (!ptr)
-		return os_malloc(length);
-
-	/* Changing a length to 0 is just a free */
-	if (length) {
-		os_free(ptr);
-		return NULL;
-	}
-
-	/*
-	 * If the new size is the same number of pages as the old, nothing to
-	 * do. There isn't much point in shrinking things
-	 */
-	hdr = ptr - page_size;
-	if (ALIGN(length, page_size) <= ALIGN(hdr->length, page_size))
-		return ptr;
-
-	/* We have to grow it, so allocate something new */
-	new_ptr = os_malloc(length);
-	memcpy(new_ptr, ptr, hdr->length);
-	os_free(ptr);
-
-	return new_ptr;
 }
 
 void os_usleep(unsigned long usec)
@@ -424,8 +267,7 @@ static struct option *long_opts;
 
 int os_parse_args(struct sandbox_state *state, int argc, char *argv[])
 {
-	struct sandbox_cmdline_option **sb_opt =
-		__u_boot_sandbox_option_start();
+	struct sandbox_cmdline_option **sb_opt = __u_boot_sandbox_option_start;
 	size_t num_options = __u_boot_sandbox_option_count();
 	size_t i;
 
@@ -441,8 +283,8 @@ int os_parse_args(struct sandbox_state *state, int argc, char *argv[])
 	state->argv = argv;
 
 	/* dynamically construct the arguments to the system getopt_long */
-	short_opts = os_malloc(sizeof(*short_opts) * num_options * 2 + 1);
-	long_opts = os_malloc(sizeof(*long_opts) * (num_options + 1));
+	short_opts = malloc(sizeof(*short_opts) * num_options * 2 + 1);
+	long_opts = malloc(sizeof(*long_opts) * (num_options + 1));
 	if (!short_opts || !long_opts)
 		return 1;
 
@@ -521,7 +363,7 @@ void os_dirent_free(struct os_dirent_node *node)
 
 	while (node) {
 		next = node->next;
-		os_free(node);
+		free(node);
 		node = next;
 	}
 }
@@ -546,7 +388,7 @@ int os_dirent_ls(const char *dirname, struct os_dirent_node **headp)
 	/* Create a buffer upfront, with typically sufficient size */
 	dirlen = strlen(dirname) + 2;
 	len = dirlen + 256;
-	fname = os_malloc(len);
+	fname = malloc(len);
 	if (!fname) {
 		ret = -ENOMEM;
 		goto done;
@@ -559,7 +401,7 @@ int os_dirent_ls(const char *dirname, struct os_dirent_node **headp)
 			ret = errno;
 			break;
 		}
-		next = os_malloc(sizeof(*node) + strlen(entry->d_name) + 1);
+		next = malloc(sizeof(*node) + strlen(entry->d_name) + 1);
 		if (!next) {
 			os_dirent_free(head);
 			ret = -ENOMEM;
@@ -568,10 +410,10 @@ int os_dirent_ls(const char *dirname, struct os_dirent_node **headp)
 		if (dirlen + strlen(entry->d_name) > len) {
 			len = dirlen + strlen(entry->d_name);
 			old_fname = fname;
-			fname = os_realloc(fname, len);
+			fname = realloc(fname, len);
 			if (!fname) {
-				os_free(old_fname);
-				os_free(next);
+				free(old_fname);
+				free(next);
 				os_dirent_free(head);
 				ret = -ENOMEM;
 				goto done;
@@ -605,7 +447,7 @@ int os_dirent_ls(const char *dirname, struct os_dirent_node **headp)
 
 done:
 	closedir(dir);
-	os_free(fname);
+	free(fname);
 	return ret;
 }
 
@@ -624,13 +466,7 @@ const char *os_dirent_get_typename(enum os_dirent_t type)
 	return os_dirent_typename[OS_FILET_UNKNOWN];
 }
 
-/*
- * For compatibility reasons avoid loff_t here.
- * U-Boot defines loff_t as long long.
- * But /usr/include/linux/types.h may not define it at all.
- * Alpine Linux being one example.
- */
-int os_get_filesize(const char *fname, long long *size)
+int os_get_filesize(const char *fname, loff_t *size)
 {
 	struct stat buf;
 	int ret;
@@ -644,7 +480,7 @@ int os_get_filesize(const char *fname, long long *size)
 
 void os_putc(int ch)
 {
-	fputc(ch, stdout);
+	putchar(ch);
 }
 
 void os_puts(const char *str)
@@ -673,7 +509,7 @@ int os_read_ram_buf(const char *fname)
 {
 	struct sandbox_state *state = state_get_current();
 	int fd, ret;
-	long long size;
+	loff_t size;
 
 	ret = os_get_filesize(fname, &size);
 	if (ret < 0)
@@ -718,7 +554,7 @@ static int make_exec(char *fname, const void *data, int size)
  * @argvp:  Returns newly allocated args list
  * @add_args: Arguments to add, each a string
  * @count: Number of arguments in @add_args
- * Return: 0 if OK, -ENOMEM if out of memory
+ * @return 0 if OK, -ENOMEM if out of memory
  */
 static int add_args(char ***argvp, char *add_args[], int count)
 {
@@ -728,7 +564,7 @@ static int add_args(char ***argvp, char *add_args[], int count)
 	for (argc = 0; (*argvp)[argc]; argc++)
 		;
 
-	argv = os_malloc((argc + count + 1) * sizeof(char *));
+	argv = malloc((argc + count + 1) * sizeof(char *));
 	if (!argv) {
 		printf("Out of memory for %d argv\n", count);
 		return -ENOMEM;
@@ -745,6 +581,7 @@ static int add_args(char ***argvp, char *add_args[], int count)
 				continue;
 			}
 		} else if (!strcmp(arg, "--rm_memory")) {
+			ap++;
 			continue;
 		}
 		argv[argc++] = arg;
@@ -764,9 +601,9 @@ static int add_args(char ***argvp, char *add_args[], int count)
  * execs it.
  *
  * @fname: Filename to exec
- * Return: does not return on success, any return value is an error
+ * @return does not return on success, any return value is an error
  */
-static int os_jump_to_file(const char *fname, bool delete_it)
+static int os_jump_to_file(const char *fname)
 {
 	struct sandbox_state *state = state_get_current();
 	char mem_fname[30];
@@ -789,13 +626,11 @@ static int os_jump_to_file(const char *fname, bool delete_it)
 
 	os_fd_restore();
 
-	argc = 0;
-	if (delete_it) {
-		extra_args[argc++] = "-j";
-		extra_args[argc++] = (char *)fname;
-	}
-	extra_args[argc++] = "-m";
-	extra_args[argc++] = mem_fname;
+	extra_args[0] = "-j";
+	extra_args[1] = (char *)fname;
+	extra_args[2] = "-m";
+	extra_args[3] = mem_fname;
+	argc = 4;
 	if (state->ram_buf_rm)
 		extra_args[argc++] = "--rm_memory";
 	err = add_args(&argv, extra_args, argc);
@@ -812,17 +647,14 @@ static int os_jump_to_file(const char *fname, bool delete_it)
 		os_exit(2);
 
 	err = execv(fname, argv);
-	os_free(argv);
+	free(argv);
 	if (err) {
 		perror("Unable to run image");
 		printf("Image filename '%s'\n", fname);
 		return err;
 	}
 
-	if (delete_it)
-		return unlink(fname);
-
-	return -EFAULT;
+	return unlink(fname);
 }
 
 int os_jump_to_image(const void *dest, int size)
@@ -834,17 +666,15 @@ int os_jump_to_image(const void *dest, int size)
 	if (err)
 		return err;
 
-	return os_jump_to_file(fname, true);
+	return os_jump_to_file(fname);
 }
 
-int os_find_u_boot(char *fname, int maxlen, bool use_img,
-		   const char *cur_prefix, const char *next_prefix)
+int os_find_u_boot(char *fname, int maxlen)
 {
 	struct sandbox_state *state = state_get_current();
 	const char *progname = state->argv[0];
 	int len = strlen(progname);
-	char subdir[10];
-	char *suffix;
+	const char *suffix;
 	char *p;
 	int fd;
 
@@ -854,36 +684,43 @@ int os_find_u_boot(char *fname, int maxlen, bool use_img,
 	strcpy(fname, progname);
 	suffix = fname + len - 4;
 
-	/* Change the existing suffix to the new one */
-	if (*suffix != '-')
-		return -EINVAL;
+	/* If we are TPL, boot to SPL */
+	if (!strcmp(suffix, "-tpl")) {
+		fname[len - 3] = 's';
+		fd = os_open(fname, O_RDONLY);
+		if (fd >= 0) {
+			close(fd);
+			return 0;
+		}
 
-	if (*next_prefix)
-		strcpy(suffix + 1, next_prefix);  /* e.g. "-tpl" to "-spl" */
-	else
-		*suffix = '\0';  /* e.g. "-spl" to "" */
-	fd = os_open(fname, O_RDONLY);
-	if (fd >= 0) {
-		close(fd);
-		return 0;
+		/* Look for 'u-boot-tpl' in the tpl/ directory */
+		p = strstr(fname, "/tpl/");
+		if (p) {
+			p[1] = 's';
+			fd = os_open(fname, O_RDONLY);
+			if (fd >= 0) {
+				close(fd);
+				return 0;
+			}
+		}
+		return -ENOENT;
 	}
 
-	/*
-	 * We didn't find it, so try looking for 'u-boot-xxx' in the xxx/
-	 * directory. Replace the old dirname with the new one.
-	 */
-	snprintf(subdir, sizeof(subdir), "/%s/", cur_prefix);
-	p = strstr(fname, subdir);
-	if (p) {
-		if (*next_prefix)
-			/* e.g. ".../tpl/u-boot-spl"  to "../spl/u-boot-spl" */
-			memcpy(p + 1, next_prefix, strlen(next_prefix));
-		else
-			/* e.g. ".../spl/u-boot" to ".../u-boot" */
-			strcpy(p, p + 1 + strlen(cur_prefix));
-		if (use_img)
-			strcat(p, ".img");
+	/* Look for 'u-boot' in the same directory as 'u-boot-spl' */
+	if (!strcmp(suffix, "-spl")) {
+		fname[len - 4] = '\0';
+		fd = os_open(fname, O_RDONLY);
+		if (fd >= 0) {
+			close(fd);
+			return 0;
+		}
+	}
 
+	/* Look for 'u-boot' in the parent directory of spl/ */
+	p = strstr(fname, "spl/");
+	if (p) {
+		/* Remove the "spl" characters */
+		memmove(p, p + 4, strlen(p + 4) + 1);
 		fd = os_open(fname, O_RDONLY);
 		if (fd >= 0) {
 			close(fd);
@@ -896,34 +733,7 @@ int os_find_u_boot(char *fname, int maxlen, bool use_img,
 
 int os_spl_to_uboot(const char *fname)
 {
-	struct sandbox_state *state = state_get_current();
-
-	/* U-Boot will delete ram buffer after read: "--rm_memory"*/
-	state->ram_buf_rm = true;
-
-	return os_jump_to_file(fname, false);
-}
-
-long os_get_time_offset(void)
-{
-	const char *offset;
-
-	offset = getenv(ENV_TIME_OFFSET);
-	if (offset)
-		return strtol(offset, NULL, 0);
-	return 0;
-}
-
-void os_set_time_offset(long offset)
-{
-	char buf[21];
-	int ret;
-
-	snprintf(buf, sizeof(buf), "%ld", offset);
-	ret = setenv(ENV_TIME_OFFSET, buf, true);
-	if (ret)
-		printf("Could not set environment variable %s\n",
-		       ENV_TIME_OFFSET);
+	return os_jump_to_file(fname);
 }
 
 void os_localtime(struct rtc_time *rt)
@@ -994,10 +804,4 @@ void *os_find_text_base(void)
 	close(fd);
 
 	return base;
-}
-
-void os_relaunch(char *argv[])
-{
-	execv(argv[0], argv);
-	os_exit(1);
 }

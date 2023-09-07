@@ -5,7 +5,6 @@
  */
 #include <common.h>
 #include <env.h>
-#include <part.h>
 #include <asm/setup.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/omap_common.h>
@@ -91,7 +90,7 @@ static u32 omap_mmc_get_part_size(const char *part)
 {
 	int res;
 	struct blk_desc *dev_desc;
-	struct disk_partition info;
+	disk_partition_t info;
 	u64 sz = 0;
 
 	dev_desc = blk_get_dev("mmc", CONFIG_FASTBOOT_FLASH_MMC_DEV);

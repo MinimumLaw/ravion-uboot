@@ -11,9 +11,6 @@
 
 #include <asm/io.h>
 #include <phy.h>
-#ifndef __ASSEMBLY__
-#include <linux/bitops.h>
-#endif
 
 /* EMAC */
 #ifdef CONFIG_KSNET_NETCP_V1_0

@@ -5,7 +5,10 @@
 # Handle various things related to ELF images
 #
 
+from __future__ import print_function
+
 from collections import namedtuple, OrderedDict
+import command
 import io
 import os
 import re
@@ -13,26 +16,17 @@ import shutil
 import struct
 import tempfile
 
-from patman import command
-from patman import tools
-from patman import tout
+import tools
+import tout
 
 ELF_TOOLS = True
 try:
     from elftools.elf.elffile import ELFFile
-    from elftools.elf.elffile import ELFError
     from elftools.elf.sections import SymbolTableSection
 except:  # pragma: no cover
     ELF_TOOLS = False
 
-# Information about an EFL symbol:
-# section (str): Name of the section containing this symbol
-# address (int): Address of the symbol (its value)
-# size (int): Size of the symbol in bytes
-# weak (bool): True if the symbol is weak
-# offset (int or None): Offset of the symbol's data in the ELF file, or None if
-#   not known
-Symbol = namedtuple('Symbol', ['section', 'address', 'size', 'weak', 'offset'])
+Symbol = namedtuple('Symbol', ['section', 'address', 'size', 'weak'])
 
 # Information about an ELF file:
 #    data: Extracted program contents of ELF file (this would be loaded by an
@@ -55,7 +49,7 @@ def GetSymbols(fname, patterns):
           key: Name of symbol
           value: Hex value of symbol
     """
-    stdout = tools.run('objdump', '-t', fname)
+    stdout = tools.Run('objdump', '-t', fname)
     lines = stdout.splitlines()
     if patterns:
         re_syms = re.compile('|'.join(patterns))
@@ -79,48 +73,8 @@ def GetSymbols(fname, patterns):
         section, size =  parts[:2]
         if len(parts) > 2:
             name = parts[2] if parts[2] != '.hidden' else parts[3]
-            syms[name] = Symbol(section, int(value, 16), int(size, 16),
-                                flags[1] == 'w', None)
-
-    # Sort dict by address
-    return OrderedDict(sorted(syms.items(), key=lambda x: x[1].address))
-
-def GetSymbolFileOffset(fname, patterns):
-    """Get the symbols from an ELF file
-
-    Args:
-        fname: Filename of the ELF file to read
-        patterns: List of regex patterns to search for, each a string
-
-    Returns:
-        None, if the file does not exist, or Dict:
-          key: Name of symbol
-          value: Hex value of symbol
-    """
-    def _GetFileOffset(elf, addr):
-        for seg in elf.iter_segments():
-            seg_end = seg['p_vaddr'] + seg['p_filesz']
-            if seg.header['p_type'] == 'PT_LOAD':
-                if addr >= seg['p_vaddr'] and addr < seg_end:
-                    return addr - seg['p_vaddr'] + seg['p_offset']
-
-    if not ELF_TOOLS:
-        raise ValueError('Python elftools package is not available')
-
-    syms = {}
-    with open(fname, 'rb') as fd:
-        elf = ELFFile(fd)
-
-        re_syms = re.compile('|'.join(patterns))
-        for section in elf.iter_sections():
-            if isinstance(section, SymbolTableSection):
-                for symbol in section.iter_symbols():
-                    if not re_syms or re_syms.search(symbol.name):
-                        addr = symbol.entry['st_value']
-                        syms[symbol.name] = Symbol(
-                            section.name, addr, symbol.entry['st_size'],
-                            symbol.entry['st_info']['bind'] == 'STB_WEAK',
-                            _GetFileOffset(elf, addr))
+            syms[name] = Symbol(section, int(value, 16), int(size,16),
+                                flags[1] == 'w')
 
     # Sort dict by address
     return OrderedDict(sorted(syms.items(), key=lambda x: x[1].address))
@@ -155,7 +109,7 @@ def LookupAndWriteSymbols(elf_fname, entry, section):
         entry: Entry to process
         section: Section which can be used to lookup symbol values
     """
-    fname = tools.get_input_filename(elf_fname)
+    fname = tools.GetInputFilename(elf_fname)
     syms = GetSymbols(fname, ['image', 'binman'])
     if not syms:
         return
@@ -180,13 +134,12 @@ def LookupAndWriteSymbols(elf_fname, entry, section):
                                  (msg, sym.size))
 
             # Look up the symbol in our entry tables.
-            value = section.GetImage().LookupImageSymbol(name, sym.weak, msg,
-                                                         base.address)
+            value = section.LookupSymbol(name, sym.weak, msg, base.address)
             if value is None:
                 value = -1
                 pack_string = pack_string.lower()
             value_bytes = struct.pack(pack_string, value)
-            tout.debug('%s:\n   insert %s, offset %x, value %x, length %d' %
+            tout.Debug('%s:\n   insert %s, offset %x, value %x, length %d' %
                        (msg, name, offset, value, len(value_bytes)))
             entry.data = (entry.data[:offset] + value_bytes +
                         entry.data[offset + sym.size:])
@@ -207,9 +160,9 @@ def MakeElf(elf_fname, text, data):
 
     # Spilt the text into two parts so that we can make the entry point two
     # bytes after the start of the text section
-    text_bytes1 = ['\t.byte\t%#x' % byte for byte in text[:2]]
-    text_bytes2 = ['\t.byte\t%#x' % byte for byte in text[2:]]
-    data_bytes = ['\t.byte\t%#x' % byte for byte in data]
+    text_bytes1 = ['\t.byte\t%#x' % tools.ToByte(byte) for byte in text[:2]]
+    text_bytes2 = ['\t.byte\t%#x' % tools.ToByte(byte) for byte in text[2:]]
+    data_bytes = ['\t.byte\t%#x' % tools.ToByte(byte) for byte in data]
     with open(s_file, 'w') as fd:
         print('''/* Auto-generated C program to produce an ELF file for testing */
 
@@ -283,10 +236,8 @@ SECTIONS
     #   text section at the start
     # -m32: Build for 32-bit x86
     # -T...: Specifies the link script, which sets the start address
-    cc, args = tools.get_target_compile_tool('cc')
-    args += ['-static', '-nostdlib', '-Wl,--build-id=none', '-m32', '-T',
-            lds_file, '-o', elf_fname, s_file]
-    stdout = command.output(cc, *args)
+    stdout = command.Output('cc', '-static', '-nostdlib', '-Wl,--build-id=none',
+                            '-m32','-T', lds_file, '-o', elf_fname, s_file)
     shutil.rmtree(outdir)
 
 def DecodeElf(data, location):
@@ -349,60 +300,3 @@ def DecodeElf(data, location):
                 segment.data()[offset:])
     return ElfInfo(output, data_start, elf.header['e_entry'] + virt_to_phys,
                    mem_end - data_start)
-
-def UpdateFile(infile, outfile, start_sym, end_sym, insert):
-    tout.notice("Creating file '%s' with data length %#x (%d) between symbols '%s' and '%s'" %
-                (outfile, len(insert), len(insert), start_sym, end_sym))
-    syms = GetSymbolFileOffset(infile, [start_sym, end_sym])
-    if len(syms) != 2:
-        raise ValueError("Expected two symbols '%s' and '%s': got %d: %s" %
-                         (start_sym, end_sym, len(syms),
-                          ','.join(syms.keys())))
-
-    size = syms[end_sym].offset - syms[start_sym].offset
-    if len(insert) > size:
-        raise ValueError("Not enough space in '%s' for data length %#x (%d); size is %#x (%d)" %
-                         (infile, len(insert), len(insert), size, size))
-
-    data = tools.read_file(infile)
-    newdata = data[:syms[start_sym].offset]
-    newdata += insert + tools.get_bytes(0, size - len(insert))
-    newdata += data[syms[end_sym].offset:]
-    tools.write_file(outfile, newdata)
-    tout.info('Written to offset %#x' % syms[start_sym].offset)
-
-def read_segments(data):
-    """Read segments from an ELF file
-
-    Args:
-        data (bytes): Contents of file
-
-    Returns:
-        tuple:
-            list of segments, each:
-                int: Segment number (0 = first)
-                int: Start address of segment in memory
-                bytes: Contents of segment
-            int: entry address for image
-
-    Raises:
-        ValueError: elftools is not available
-    """
-    if not ELF_TOOLS:
-        raise ValueError('Python elftools package is not available')
-    with io.BytesIO(data) as inf:
-        try:
-            elf = ELFFile(inf)
-        except ELFError as err:
-            raise ValueError(err)
-        entry = elf.header['e_entry']
-        segments = []
-        for i in range(elf.num_segments()):
-            segment = elf.get_segment(i)
-            if segment['p_type'] != 'PT_LOAD' or not segment['p_memsz']:
-                skipped = 1  # To make code-coverage see this line
-                continue
-            start = segment['p_offset']
-            rend = start + segment['p_filesz']
-            segments.append((i, segment['p_paddr'], data[start:rend]))
-    return segments, entry

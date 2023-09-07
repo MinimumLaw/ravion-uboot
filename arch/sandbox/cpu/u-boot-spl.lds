@@ -13,19 +13,11 @@ SECTIONS
 		KEEP(*(SORT(.u_boot_list*)));
 	}
 
-	/* Private data for devices with OF_PLATDATA_RT */
-	. = ALIGN(4);
-	.priv_data : {
-		__priv_data_start = .;
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.priv_data*)))
-		__priv_data_end = .;
-	}
+	__u_boot_sandbox_option_start = .;
+	_u_boot_sandbox_getopt : { KEEP(*(.u_boot_sandbox_getopt)) }
+	__u_boot_sandbox_option_end = .;
 
-	_u_boot_sandbox_getopt : {
-		*(.u_boot_sandbox_getopt_start)
-		KEEP(*(.u_boot_sandbox_getopt))
-		*(.u_boot_sandbox_getopt_end)
-	}
+	__bss_start = .;
 }
 
-INSERT AFTER .data;
+INSERT BEFORE .data;

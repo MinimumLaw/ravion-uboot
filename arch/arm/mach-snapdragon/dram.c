@@ -8,8 +8,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
-#include <part.h>
 #include <smem.h>
 #include <fdt_support.h>
 #include <asm/arch/dram.h>
@@ -97,3 +95,4 @@ int msm_fixup_memory(void *blob)
 
 	return 0;
 }
+

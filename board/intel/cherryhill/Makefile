@@ -2,4 +2,4 @@
 #
 # Copyright (C) 2017, Bin Meng <bmeng.cn@gmail.com>
 
-obj-y	+= cherryhill.o
+obj-y	+= cherryhill.o start.o

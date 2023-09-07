@@ -14,7 +14,7 @@ int __weak clk_sdio_enable(void *base, u32 rate, u32 *actual_ratep)
 	return 0;
 }
 
-int __weak clk_bsc_enable(void *base)
+int __weak clk_bsc_enable(void *base, u32 rate, u32 *actual_ratep)
 {
 	return 0;
 }

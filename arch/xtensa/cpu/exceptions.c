@@ -13,7 +13,6 @@
 #include <common.h>
 #include <command.h>
 #include <irq_func.h>
-#include <asm/ptrace.h>
 #include <asm/string.h>
 #include <asm/regs.h>
 

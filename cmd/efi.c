@@ -8,12 +8,8 @@
 #include <command.h>
 #include <efi.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <sort.h>
-#include <asm/global_data.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 static const char *const type_name[] = {
 	"reserved",
@@ -47,7 +43,6 @@ static struct attr_info {
 	{ EFI_MEMORY_NV, "non-volatile" },
 	{ EFI_MEMORY_MORE_RELIABLE, "higher reliability" },
 	{ EFI_MEMORY_RO, "read-only" },
-	{ EFI_MEMORY_SP, "specific purpose" },
 	{ EFI_MEMORY_RUNTIME, "needs runtime mapping" }
 };
 
@@ -74,20 +69,7 @@ static int h_cmp_entry(const void *v1, const void *v2)
 	return diff < 0 ? -1 : diff > 0 ? 1 : 0;
 }
 
-/**
- * efi_build_mem_table() - make a sorted copy of the memory table
- *
- * @desc_base:	Pointer to EFI memory map table
- * @size:	Size of table in bytes
- * @desc_size:	Size of each @desc_base record
- * @skip_bs:	True to skip boot-time memory and merge it with conventional
- *		memory. This will significantly reduce the number of table
- *		entries.
- * Return:	pointer to the new table. It should be freed with free() by the
- *		caller.
- */
-static void *efi_build_mem_table(struct efi_mem_desc *desc_base, int size,
-				 int desc_size, bool skip_bs)
+void *efi_build_mem_table(struct efi_entry_memmap *map, int size, bool skip_bs)
 {
 	struct efi_mem_desc *desc, *end, *base, *dest, *prev;
 	int count;
@@ -98,29 +80,22 @@ static void *efi_build_mem_table(struct efi_mem_desc *desc_base, int size,
 		debug("%s: Cannot allocate %#x bytes\n", __func__, size);
 		return NULL;
 	}
-	end = (void *)desc_base + size;
-	count = ((ulong)end - (ulong)desc_base) / desc_size;
-	memcpy(base, desc_base, (ulong)end - (ulong)desc_base);
-	qsort(base, count, desc_size, h_cmp_entry);
+	end = (struct efi_mem_desc *)((ulong)map + size);
+	count = ((ulong)end - (ulong)map->desc) / map->desc_size;
+	memcpy(base, map->desc, (ulong)end - (ulong)map->desc);
+	qsort(base, count, map->desc_size, h_cmp_entry);
 	prev = NULL;
 	addr = 0;
 	dest = base;
-	end = (struct efi_mem_desc *)((ulong)base + count * desc_size);
-	for (desc = base; desc < end;
-	     desc = efi_get_next_mem_desc(desc, desc_size)) {
+	end = (struct efi_mem_desc *)((ulong)base + count * map->desc_size);
+	for (desc = base; desc < end; desc = efi_get_next_mem_desc(map, desc)) {
 		bool merge = true;
-		u32 type = desc->type;
-
-		if (type >= EFI_MAX_MEMORY_TYPE) {
-			printf("Memory map contains invalid entry type %u\n",
-			       type);
-			continue;
-		}
+		int type = desc->type;
 
 		if (skip_bs && is_boot_services(desc->type))
 			type = EFI_CONVENTIONAL_MEMORY;
 
-		memcpy(dest, desc, desc_size);
+		memcpy(dest, desc, map->desc_size);
 		dest->type = type;
 		if (!skip_bs || !prev)
 			merge = false;
@@ -135,20 +110,20 @@ static void *efi_build_mem_table(struct efi_mem_desc *desc_base, int size,
 			prev->num_pages += desc->num_pages;
 		} else {
 			prev = dest;
-			dest = efi_get_next_mem_desc(dest, desc_size);
+			dest = efi_get_next_mem_desc(map, dest);
 		}
 		addr = desc->physical_start + (desc->num_pages <<
 				EFI_PAGE_SHIFT);
 	}
 
 	/* Mark the end */
-	dest->type = EFI_MAX_MEMORY_TYPE;
+	dest->type = EFI_TABLE_END;
 
 	return base;
 }
 
-static void efi_print_mem_table(struct efi_mem_desc *desc, int desc_size,
-				bool skip_bs)
+static void efi_print_mem_table(struct efi_entry_memmap *map,
+				struct efi_mem_desc *desc, bool skip_bs)
 {
 	u64 attr_seen[ATTR_SEEN_MAX];
 	int attr_seen_count;
@@ -161,8 +136,8 @@ static void efi_print_mem_table(struct efi_mem_desc *desc, int desc_size,
 	/* Keep track of all the different attributes we have seen */
 	attr_seen_count = 0;
 	addr = 0;
-	for (upto = 0; desc->type != EFI_MAX_MEMORY_TYPE;
-	     upto++, desc = efi_get_next_mem_desc(desc, desc_size)) {
+	for (upto = 0; desc->type != EFI_TABLE_END;
+	     upto++, desc = efi_get_next_mem_desc(map, desc)) {
 		const char *name;
 		u64 size;
 
@@ -216,56 +191,39 @@ static void efi_print_mem_table(struct efi_mem_desc *desc, int desc_size,
 		printf("*Some areas are merged (use 'all' to see)\n");
 }
 
-static int do_efi_mem(struct cmd_tbl *cmdtp, int flag, int argc,
-		      char *const argv[])
+static int do_efi_mem(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	struct efi_mem_desc *orig, *desc;
-	uint version, key;
-	int desc_size;
+	struct efi_mem_desc *desc;
+	struct efi_entry_memmap *map;
 	int size, ret;
 	bool skip_bs;
 
 	skip_bs = !argc || *argv[0] != 'a';
-	if (IS_ENABLED(CONFIG_EFI_APP)) {
-		ret = efi_get_mmap(&orig, &size, &key, &desc_size, &version);
-		if (ret) {
-			printf("Cannot read memory map (err=%d)\n", ret);
-			return CMD_RET_FAILURE;
-		}
-	} else {
-		struct efi_entry_memmap *map;
-
-		ret = efi_info_get(EFIET_MEMORY_MAP, (void **)&map, &size);
-		switch (ret) {
-		case -ENOENT:
-			printf("No EFI table available\n");
-			goto done;
-		case -EPROTONOSUPPORT:
-			printf("Incorrect EFI table version\n");
-			goto done;
-		}
-		orig = map->desc;
-		desc_size = map->desc_size;
-		version = map->version;
+	ret = efi_info_get(EFIET_MEMORY_MAP, (void **)&map, &size);
+	switch (ret) {
+	case -ENOENT:
+		printf("No EFI table available\n");
+		goto done;
+	case -EPROTONOSUPPORT:
+		printf("Incorrect EFI table version\n");
+		goto done;
 	}
-	printf("EFI table at %lx, memory map %p, size %x, key %x, version %x, descr. size %#x\n",
-	       gd->arch.table, orig, size, key, version, desc_size);
-	if (version != EFI_MEM_DESC_VERSION) {
+	printf("EFI table at %lx, memory map %p, size %x, version %x, descr. size %#x\n",
+	       gd->arch.table, map, size, map->version, map->desc_size);
+	if (map->version != EFI_MEM_DESC_VERSION) {
 		printf("Incorrect memory map version\n");
 		ret = -EPROTONOSUPPORT;
 		goto done;
 	}
 
-	desc = efi_build_mem_table(orig, size, desc_size, skip_bs);
+	desc = efi_build_mem_table(map, size, skip_bs);
 	if (!desc) {
 		ret = -ENOMEM;
 		goto done;
 	}
 
-	efi_print_mem_table(desc, desc_size, skip_bs);
+	efi_print_mem_table(map, desc, skip_bs);
 	free(desc);
-	if (IS_ENABLED(CONFIG_EFI_APP))
-		free(orig);
 done:
 	if (ret)
 		printf("Error: %d\n", ret);
@@ -273,13 +231,13 @@ done:
 	return ret ? CMD_RET_FAILURE : 0;
 }
 
-static struct cmd_tbl efi_commands[] = {
+static cmd_tbl_t efi_commands[] = {
 	U_BOOT_CMD_MKENT(mem, 1, 1, do_efi_mem, "", ""),
 };
 
-static int do_efi(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	struct cmd_tbl *efi_cmd;
+	cmd_tbl_t *efi_cmd;
 	int ret;
 
 	if (argc < 2)

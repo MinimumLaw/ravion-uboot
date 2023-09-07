@@ -24,12 +24,10 @@
 #include <net.h>
 #include <net/tftp.h>
 #include <malloc.h>
-#include <mapmem.h>
 #include <dfu.h>
 #include <errno.h>
 #include <mtd/cfi_flash.h>
 
-#if defined(CONFIG_DFU_TFTP) || defined(CONFIG_UPDATE_TFTP)
 /* env variable holding the location of the update file */
 #define UPDATE_FILE_ENV		"updatefile"
 
@@ -112,12 +110,12 @@ static int update_flash_protect(int prot, ulong addr_first, ulong addr_last)
 
 	if (prot == 0) {
 		saved_prot_info =
-			calloc(CFI_FLASH_BANKS * CONFIG_SYS_MAX_FLASH_SECT, 1);
+			calloc(CONFIG_SYS_MAX_FLASH_BANKS * CONFIG_SYS_MAX_FLASH_SECT, 1);
 		if (!saved_prot_info)
 			return 1;
 	}
 
-	for (bank = 0; bank < CFI_FLASH_BANKS; ++bank) {
+	for (bank = 0; bank < CONFIG_SYS_MAX_FLASH_BANKS; ++bank) {
 		cnt = 0;
 		info = &flash_info[bank];
 
@@ -215,7 +213,6 @@ static int update_flash(ulong addr_source, ulong addr_first, ulong size)
 #endif
 	return 0;
 }
-#endif /* CONFIG_DFU_TFTP || CONFIG_UPDATE_TFTP */
 
 static int update_fit_getparams(const void *fit, int noffset, ulong *addr,
 						ulong *fladdr, ulong *size)
@@ -233,7 +230,6 @@ static int update_fit_getparams(const void *fit, int noffset, ulong *addr,
 	return 0;
 }
 
-#if defined(CONFIG_DFU_TFTP) || defined(CONFIG_UPDATE_TFTP)
 int update_tftp(ulong addr, char *interface, char *devstring)
 {
 	char *filename, *env_addr, *fit_image_name;
@@ -272,7 +268,7 @@ int update_tftp(ulong addr, char *interface, char *devstring)
 	/* get load address of downloaded update file */
 	env_addr = env_get("loadaddr");
 	if (env_addr)
-		addr = hextoul(env_addr, NULL);
+		addr = simple_strtoul(env_addr, NULL, 16);
 	else
 		addr = CONFIG_UPDATE_LOAD_ADDR;
 
@@ -284,9 +280,9 @@ int update_tftp(ulong addr, char *interface, char *devstring)
 	}
 
 got_update_file:
-	fit = map_sysmem(addr, 0);
+	fit = (void *)addr;
 
-	if (fit_check_format((void *)fit, IMAGE_SIZE_INVAL)) {
+	if (!fit_check_format((void *)fit)) {
 		printf("Bad FIT format of the update file, aborting "
 							"auto-update\n");
 		return 1;
@@ -313,7 +309,8 @@ got_update_file:
 		printf("\n");
 		if (update_fit_getparams(fit, noffset, &update_addr,
 					&update_fladdr, &update_size)) {
-			printf("Error: can't get update parameters, aborting\n");
+			printf("Error: can't get update parameteres, "
+								"aborting\n");
 			ret = 1;
 			goto next_node;
 		}
@@ -327,10 +324,8 @@ got_update_file:
 			}
 		} else if (fit_image_check_type(fit, noffset,
 						IH_TYPE_FIRMWARE)) {
-			ret = dfu_write_by_name(fit_image_name,
-						(void *)update_addr,
-						update_size, interface,
-						devstring);
+			ret = dfu_tftp_write(fit_image_name, update_addr,
+					     update_size, interface, devstring);
 			if (ret)
 				return ret;
 		}
@@ -340,71 +335,3 @@ next_node:
 
 	return ret;
 }
-#endif /* CONFIG_DFU_UPDATE || CONFIG_UPDATE_TFTP */
-
-#ifdef CONFIG_UPDATE_FIT
-/**
- * fit_update - update storage with FIT image
- * @fit:	Pointer to FIT image
- *
- * Update firmware on storage using FIT image as input.
- * The storage area to be update will be identified by the name
- * in FIT and matching it to "dfu_alt_info" variable.
- *
- * Return:      0 - on success, non-zero - otherwise
- */
-int fit_update(const void *fit)
-{
-	char *fit_image_name;
-	ulong update_addr, update_fladdr, update_size;
-	int images_noffset, ndepth, noffset;
-	int ret = 0;
-
-	if (!fit)
-		return -EINVAL;
-
-	if (fit_check_format((void *)fit, IMAGE_SIZE_INVAL)) {
-		printf("Bad FIT format of the update file, aborting auto-update\n");
-		return -EINVAL;
-	}
-
-	/* process updates */
-	images_noffset = fdt_path_offset(fit, FIT_IMAGES_PATH);
-
-	ndepth = 0;
-	noffset = fdt_next_node(fit, images_noffset, &ndepth);
-	while (noffset >= 0 && ndepth > 0) {
-		if (ndepth != 1)
-			goto next_node;
-
-		fit_image_name = (char *)fit_get_name(fit, noffset, NULL);
-		printf("Processing update '%s' :", fit_image_name);
-
-		if (!fit_image_verify(fit, noffset)) {
-			printf("Error: invalid update hash, aborting\n");
-			ret = 1;
-			goto next_node;
-		}
-
-		printf("\n");
-		if (update_fit_getparams(fit, noffset, &update_addr,
-					 &update_fladdr, &update_size)) {
-			printf("Error: can't get update parameters, aborting\n");
-			ret = 1;
-			goto next_node;
-		}
-
-		if (fit_image_check_type(fit, noffset, IH_TYPE_FIRMWARE)) {
-			ret = dfu_write_by_name(fit_image_name,
-						(void *)update_addr,
-						update_size, NULL, NULL);
-			if (ret)
-				return ret;
-		}
-next_node:
-		noffset = fdt_next_node(fit, noffset, &ndepth);
-	}
-
-	return ret;
-}
-#endif /* CONFIG_UPDATE_FIT */

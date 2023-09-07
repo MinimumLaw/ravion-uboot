@@ -4,16 +4,13 @@
  */
 
 #include <common.h>
+#include <acpi_s3.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
-#include <init.h>
-#include <log.h>
 #include <rtc.h>
-#include <acpi/acpi_s3.h>
 #include <asm/cmos_layout.h>
 #include <asm/early_cmos.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/mrccache.h>
 #include <asm/post.h>
@@ -48,7 +45,7 @@ int fsp_init_phase_pci(void)
 	return status ? -EPERM : 0;
 }
 
-void board_final_init(void)
+void board_final_cleanup(void)
 {
 	u32 status;
 
@@ -61,6 +58,7 @@ void board_final_init(void)
 		debug("OK\n");
 }
 
+#ifdef CONFIG_HAVE_ACPI_RESUME
 int fsp_save_s3_stack(void)
 {
 	struct udevice *dev;
@@ -84,3 +82,4 @@ int fsp_save_s3_stack(void)
 
 	return 0;
 }
+#endif

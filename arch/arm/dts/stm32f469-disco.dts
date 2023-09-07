@@ -19,7 +19,7 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	memory@00000000 {
+	memory {
 		device_type = "memory";
 		reg = <0x00000000 0x1000000>;
 	};
@@ -35,30 +35,23 @@
 		regulator-max-microvolt = <3300000>;
 	};
 
-	vdd_dsi: vdd-dsi {
-		compatible = "regulator-fixed";
-		regulator-name = "vdd_dsi";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-	};
-
 	soc {
 		dma-ranges = <0xc0000000 0x0 0x10000000>;
 	};
 
 	leds {
 		compatible = "gpio-leds";
-		led-green {
+		green {
 			gpios = <&gpiog 6 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 		};
-		led-orange {
+		orange {
 			gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
 		};
-		led-red {
+		red {
 			gpios = <&gpiod 5 GPIO_ACTIVE_LOW>;
 		};
-		led-blue {
+		blue {
 			gpios = <&gpiok 3 GPIO_ACTIVE_LOW>;
 		};
 	};
@@ -121,7 +114,6 @@
 		compatible = "orisetech,otm8009a";
 		reg = <0>; /* dsi virtual channel (0..3) */
 		reset-gpios = <&gpioh 7 GPIO_ACTIVE_LOW>;
-		power-supply = <&vdd_dsi>;
 		status = "okay";
 
 		port {
@@ -133,6 +125,7 @@
 };
 
 &ltdc {
+	dma-ranges;
 	status = "okay";
 
 	port {

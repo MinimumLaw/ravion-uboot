@@ -19,25 +19,31 @@
 
 #undef __HAVE_ARCH_STRRCHR
 #undef __HAVE_ARCH_STRCHR
+#undef __HAVE_ARCH_MEMCPY
+#undef __HAVE_ARCH_MEMMOVE
 #undef __HAVE_ARCH_MEMCHR
 #undef __HAVE_ARCH_MEMZERO
+#undef __HAVE_ARCH_MEMSET
 
-#undef __HAVE_ARCH_MEMCPY
-#if CONFIG_IS_ENABLED(USE_ARCH_MEMCPY)
-#define __HAVE_ARCH_MEMCPY
-#endif
-extern void *memcpy(void *, const void *, __kernel_size_t);
+#ifdef CONFIG_MARCO_MEMSET
+#define memset(_p, _v, _n)	\
+	(typeof(_p) (p) = (_p); \
+	 typeof(_v) (v) = (_v); \
+	 typeof(_n) (n) = (_n); \
+	 {								\
+		if ((n) != 0) {						\
+			if (__builtin_constant_p((v)) && (v) == 0)	\
+				__memzero((p), (n));			\
+			else						\
+				memset((p), (v), (n));			\
+		}							\
+		(p);							\
+	})
 
-#undef __HAVE_ARCH_MEMMOVE
-#if CONFIG_IS_ENABLED(USE_ARCH_MEMMOVE)
-#define __HAVE_ARCH_MEMMOVE
+#define memzero(_p, _n) \
+	(typeof(_p) (p) = (_p); \
+	 typeof(_n) (n) = (_n); \
+	 { if ((n) != 0) __memzero((p), (n)); (p); })
 #endif
-extern void *memmove(void *, const void *, __kernel_size_t);
-
-#undef __HAVE_ARCH_MEMZERO
-#if CONFIG_IS_ENABLED(USE_ARCH_MEMSET)
-#define __HAVE_ARCH_MEMSET
-#endif
-extern void *memset(void *, int, __kernel_size_t);
 
 #endif /* __ASM_RISCV_STRING_H */

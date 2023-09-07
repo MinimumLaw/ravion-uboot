@@ -11,7 +11,6 @@
 #include <env.h>
 #include <malloc.h>
 #include <env_internal.h>
-#include <linux/delay.h>
 #include <linux/types.h>
 #include <api_public.h>
 #include <u-boot/crc.h>
@@ -57,7 +56,7 @@ static int API_getc(va_list ap)
 	if ((c = (int *)va_arg(ap, uintptr_t)) == NULL)
 		return API_EINVAL;
 
-	*c = getchar();
+	*c = getc();
 	return 0;
 }
 
@@ -642,7 +641,7 @@ int syscall(int call, int *retval, ...)
 	return 1;
 }
 
-int api_init(void)
+void api_init(void)
 {
 	struct api_signature *sig;
 
@@ -679,7 +678,7 @@ int api_init(void)
 	sig = malloc(sizeof(struct api_signature));
 	if (sig == NULL) {
 		printf("API: could not allocate memory for the signature!\n");
-		return -ENOMEM;
+		return;
 	}
 
 	env_set_hex("api_address", (unsigned long)sig);
@@ -691,8 +690,6 @@ int api_init(void)
 	sig->checksum = crc32(0, (unsigned char *)sig,
 			      sizeof(struct api_signature));
 	debugf("syscall entry: 0x%lX\n", (unsigned long)sig->syscall);
-
-	return 0;
 }
 
 void platform_set_mr(struct sys_info *si, unsigned long start, unsigned long size,

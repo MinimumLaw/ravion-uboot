@@ -8,7 +8,6 @@
 
 #include <common.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/cpu.h>
@@ -17,7 +16,6 @@
 #include <asm/arch/wdt.h>
 #include <asm/gpio.h>
 #include <spl.h>
-#include <linux/delay.h>
 #include "work_92105_display.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -37,7 +35,7 @@ void reset_periph(void)
 int board_early_init_f(void)
 {
 	/* initialize serial port for console */
-	lpc32xx_uart_init(CONFIG_CONS_INDEX);
+	lpc32xx_uart_init(CONFIG_SYS_LPC32XX_UART);
 	/* enable I2C, SSP, MAC, NAND */
 	lpc32xx_i2c_init(1); /* only I2C1 has devices, I2C2 has none */
 	lpc32xx_ssp_init();

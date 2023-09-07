@@ -7,10 +7,9 @@
  */
 #include <common.h>
 #include <command.h>
-#include <linux/delay.h>
 
-static int do_conitrace(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_conitrace(cmd_tbl_t *cmdtp, int flag, int argc,
+			char * const argv[])
 {
 	bool first = true;
 
@@ -19,10 +18,10 @@ static int do_conitrace(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	/* Empty input buffer */
 	while (tstc())
-		getchar();
+		getc();
 
 	for (;;) {
-		int c = getchar();
+		int c = getc();
 
 		if (first && (c == 'x' || c == 'X'))
 			break;
@@ -30,8 +29,8 @@ static int do_conitrace(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("%02x ", c);
 		first = false;
 
-		/* 10 ms delay - serves to detect separate keystrokes */
-		udelay(10000);
+		/* 1 ms delay - serves to detect separate keystrokes */
+		udelay(1000);
 		if (!tstc()) {
 			printf("\n");
 			first = true;

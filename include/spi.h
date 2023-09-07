@@ -10,11 +10,10 @@
 #define _SPI_H_
 
 #include <common.h>
-#include <linux/bitops.h>
 
 /* SPI mode flags */
-#define SPI_CPHA	BIT(0)	/* clock phase (1 = SPI_CLOCK_PHASE_SECOND) */
-#define SPI_CPOL	BIT(1)	/* clock polarity (1 = SPI_POLARITY_HIGH) */
+#define SPI_CPHA	BIT(0)			/* clock phase */
+#define SPI_CPOL	BIT(1)			/* clock polarity */
 #define SPI_MODE_0	(0|0)			/* (original MicroWire) */
 #define SPI_MODE_1	(0|SPI_CPHA)
 #define SPI_MODE_2	(SPI_CPOL|0)
@@ -39,83 +38,40 @@
 
 #define SPI_DEFAULT_WORDLEN	8
 
-/**
- * struct dm_spi_bus - SPI bus info
- *
- * This contains information about a SPI bus. To obtain this structure, use
- * dev_get_uclass_priv(bus) where bus is the SPI bus udevice.
- *
- * @max_hz:	Maximum speed that the bus can tolerate.
- * @speed:	Current bus speed. This is 0 until the bus is first claimed.
- * @mode:	Current bus mode. This is 0 until the bus is first claimed.
- *
- * TODO(sjg@chromium.org): Remove this and use max_hz from struct spi_slave.
- */
+#ifdef CONFIG_DM_SPI
+/* TODO(sjg@chromium.org): Remove this and use max_hz from struct spi_slave */
 struct dm_spi_bus {
 	uint max_hz;
-	uint speed;
-	uint mode;
 };
 
 /**
- * struct dm_spi_plat - platform data for all SPI slaves
+ * struct dm_spi_platdata - platform data for all SPI slaves
  *
  * This describes a SPI slave, a child device of the SPI bus. To obtain this
- * struct from a spi_slave, use dev_get_parent_plat(dev) or
- * dev_get_parent_plat(slave->dev).
+ * struct from a spi_slave, use dev_get_parent_platdata(dev) or
+ * dev_get_parent_platdata(slave->dev).
  *
- * This data is immutable. Each time the device is probed, @max_hz and @mode
+ * This data is immuatable. Each time the device is probed, @max_hz and @mode
  * will be copied to struct spi_slave.
  *
  * @cs:		Chip select number (0..n-1)
  * @max_hz:	Maximum bus speed that this slave can tolerate
  * @mode:	SPI mode to use for this device (see SPI mode flags)
  */
-struct dm_spi_slave_plat {
+struct dm_spi_slave_platdata {
 	unsigned int cs;
 	uint max_hz;
 	uint mode;
 };
 
-/**
- * enum spi_clock_phase - indicates  the clock phase to use for SPI (CPHA)
- *
- * @SPI_CLOCK_PHASE_FIRST: Data sampled on the first phase
- * @SPI_CLOCK_PHASE_SECOND: Data sampled on the second phase
- */
-enum spi_clock_phase {
-	SPI_CLOCK_PHASE_FIRST,
-	SPI_CLOCK_PHASE_SECOND,
-};
-
-/**
- * enum spi_wire_mode - indicates the number of wires used for SPI
- *
- * @SPI_4_WIRE_MODE: Normal bidirectional mode with MOSI and MISO
- * @SPI_3_WIRE_MODE: Unidirectional version with a single data line SISO
- */
-enum spi_wire_mode {
-	SPI_4_WIRE_MODE,
-	SPI_3_WIRE_MODE,
-};
-
-/**
- * enum spi_polarity - indicates the polarity of the SPI bus (CPOL)
- *
- * @SPI_POLARITY_LOW: Clock is low in idle state
- * @SPI_POLARITY_HIGH: Clock is high in idle state
- */
-enum spi_polarity {
-	SPI_POLARITY_LOW,
-	SPI_POLARITY_HIGH,
-};
+#endif /* CONFIG_DM_SPI */
 
 /**
  * struct spi_slave - Representation of a SPI slave
  *
  * For driver model this is the per-child data used by the SPI bus. It can
  * be accessed using dev_get_parent_priv() on the slave device. The SPI uclass
- * sets up per_child_auto to sizeof(struct spi_slave), and the
+ * sets uip per_child_auto_alloc_size to sizeof(struct spi_slave), and the
  * driver should not override it. Two platform data fields (max_hz and mode)
  * are copied into this structure to provide an initial value. This allows
  * them to be changed, since we should never change platform data in drivers.
@@ -125,9 +81,11 @@ enum spi_polarity {
  *
  * @dev:		SPI slave device
  * @max_hz:		Maximum speed for this slave
+ * @speed:		Current bus speed. This is 0 until the bus is first
+ *			claimed.
  * @bus:		ID of the bus that the slave is attached to. For
  *			driver model this is the sequence number of the SPI
- *			bus (dev_seq(bus)) so does not need to be stored
+ *			bus (bus->seq) so does not need to be stored
  * @cs:			ID of the chip select connected to the slave.
  * @mode:		SPI mode to use for this slave (see SPI mode flags)
  * @wordlen:		Size of SPI word in number of bits
@@ -139,9 +97,10 @@ enum spi_polarity {
  * @flags:		Indication of SPI flags.
  */
 struct spi_slave {
-#if CONFIG_IS_ENABLED(DM_SPI)
+#ifdef CONFIG_DM_SPI
 	struct udevice *dev;	/* struct spi_slave is dev->parentdata */
 	uint max_hz;
+	uint speed;
 #else
 	unsigned int bus;
 	unsigned int cs;
@@ -156,6 +115,8 @@ struct spi_slave {
 #define SPI_XFER_BEGIN		BIT(0)	/* Assert CS before transfer */
 #define SPI_XFER_END		BIT(1)	/* Deassert CS after transfer */
 #define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
+#define SPI_XFER_MMAP		BIT(2)	/* Memory Mapped start */
+#define SPI_XFER_MMAP_END	BIT(3)	/* Memory Mapped End */
 };
 
 /**
@@ -322,12 +283,7 @@ void spi_flash_copy_mmap(void *data, void *offset, size_t len);
  */
 int spi_cs_is_valid(unsigned int bus, unsigned int cs);
 
-/*
- * These names are used in several drivers and these declarations will be
- * removed soon as part of the SPI DM migration. Drop them if driver model is
- * enabled for SPI.
- */
-#if !CONFIG_IS_ENABLED(DM_SPI)
+#ifndef CONFIG_DM_SPI
 /**
  * Activate a SPI chipselect.
  * This function is provided by the board code when using a driver
@@ -345,7 +301,6 @@ void spi_cs_activate(struct spi_slave *slave);
  * select to the device identified by "slave".
  */
 void spi_cs_deactivate(struct spi_slave *slave);
-#endif
 
 /**
  * Set transfer speed.
@@ -354,6 +309,7 @@ void spi_cs_deactivate(struct spi_slave *slave);
  * @hz:		The transfer speed
  */
 void spi_set_speed(struct spi_slave *slave, uint hz);
+#endif
 
 /**
  * Write 8 bits, then read 8 bits.
@@ -376,6 +332,8 @@ static inline int spi_w8r8(struct spi_slave *slave, unsigned char byte)
 	ret = spi_xfer(slave, 16, dout, din, SPI_XFER_BEGIN | SPI_XFER_END);
 	return ret < 0 ? ret : din[1];
 }
+
+#ifdef CONFIG_DM_SPI
 
 /**
  * struct spi_cs_info - Information about a bus chip select
@@ -561,7 +519,7 @@ struct dm_spi_emul_ops {
  * @cs:		Chip select to look for
  * @busp:	Returns bus device
  * @devp:	Return slave device
- * Return: 0 if found, -ENODEV on error
+ * @return 0 if found, -ENODEV on error
  */
 int spi_find_bus_and_cs(int busnum, int cs, struct udevice **busp,
 			struct udevice **devp);
@@ -576,17 +534,17 @@ int spi_find_bus_and_cs(int busnum, int cs, struct udevice **busp,
  * is automatically bound on this chip select with requested speed and mode.
  *
  * Ths new slave device is probed ready for use with the speed and mode
- * from plat when available or the requested values.
+ * from platdata when available or the requested values.
  *
  * @busnum:	SPI bus number
  * @cs:		Chip select to look for
- * @speed:	SPI speed to use for this slave when not available in plat
- * @mode:	SPI mode to use for this slave when not available in plat
+ * @speed:	SPI speed to use for this slave when not available in platdata
+ * @mode:	SPI mode to use for this slave when not available in platdata
  * @drv_name:	Name of driver to attach to this chip select
  * @dev_name:	Name of the new device thus created
  * @busp:	Returns bus device
  * @devp:	Return slave device
- * Return: 0 if found, -ve on error
+ * @return 0 if found, -ve on error
  */
 int spi_get_bus_and_cs(int busnum, int cs, int speed, int mode,
 			const char *drv_name, const char *dev_name,
@@ -595,7 +553,7 @@ int spi_get_bus_and_cs(int busnum, int cs, int speed, int mode,
 /**
  * spi_chip_select() - Get the chip select for a slave
  *
- * Return: the chip select this slave is attached to
+ * @return the chip select this slave is attached to
  */
 int spi_chip_select(struct udevice *slave);
 
@@ -605,13 +563,13 @@ int spi_chip_select(struct udevice *slave);
  * @bus:	SPI bus to search
  * @cs:		Chip select to look for
  * @devp:	Returns the slave device if found
- * Return: 0 if found, -EINVAL if cs is invalid, -ENODEV if no device attached,
+ * @return 0 if found, -EINVAL if cs is invalid, -ENODEV if no device attached,
  *	   other -ve value on error
  */
 int spi_find_chip_select(struct udevice *bus, int cs, struct udevice **devp);
 
 /**
- * spi_slave_of_to_plat() - decode standard SPI platform data
+ * spi_slave_ofdata_to_platdata() - decode standard SPI platform data
  *
  * This decodes the speed and mode for a slave from a device tree node
  *
@@ -619,7 +577,8 @@ int spi_find_chip_select(struct udevice *bus, int cs, struct udevice **devp);
  * @node:	Node offset to read from
  * @plat:	Place to put the decoded information
  */
-int spi_slave_of_to_plat(struct udevice *dev, struct dm_spi_slave_plat *plat);
+int spi_slave_ofdata_to_platdata(struct udevice *dev,
+				 struct dm_spi_slave_platdata *plat);
 
 /**
  * spi_cs_info() - Check information on a chip select
@@ -630,7 +589,7 @@ int spi_slave_of_to_plat(struct udevice *dev, struct dm_spi_slave_plat *plat);
  * @bus:	The SPI bus
  * @cs:		The chip select (0..n-1)
  * @info:	Returns information about the chip select, if valid
- * Return: 0 if OK (and @info is set up), -ENODEV if the chip select
+ * @return 0 if OK (and @info is set up), -ENODEV if the chip select
  *	   is invalid, other -ve value on error
  */
 int spi_cs_info(struct udevice *bus, uint cs, struct spi_cs_info *info);
@@ -649,7 +608,7 @@ struct sandbox_state;
  * @bus:	SPI bus requesting the emulator
  * @slave:	SPI slave device requesting the emulator
  * @emuip:	Returns pointer to emulator
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int sandbox_spi_get_emul(struct sandbox_state *state,
 			 struct udevice *bus, struct udevice *slave,
@@ -715,7 +674,7 @@ int dm_spi_xfer(struct udevice *dev, unsigned int bitlen,
  * @map_sizep:	Returns size of mapped SPI
  * @offsetp:	Returns start offset of SPI flash where the map works
  *	correctly (offsets before this are not visible)
- * Return: 0 if OK, -ENOSYS if no operation, -EFAULT if memory mapping is not
+ * @return 0 if OK, -ENOSYS if no operation, -EFAULT if memory mapping is not
  *	available
  */
 int dm_spi_get_mmap(struct udevice *dev, ulong *map_basep, uint *map_sizep,
@@ -724,5 +683,6 @@ int dm_spi_get_mmap(struct udevice *dev, ulong *map_basep, uint *map_sizep,
 /* Access the operations for a SPI device */
 #define spi_get_ops(dev)	((struct dm_spi_ops *)(dev)->driver->ops)
 #define spi_emul_get_ops(dev)	((struct dm_spi_emul_ops *)(dev)->driver->ops)
+#endif /* CONFIG_DM_SPI */
 
 #endif	/* _SPI_H_ */

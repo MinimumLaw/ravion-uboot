@@ -14,6 +14,10 @@
 #define CONFIG_SYS_AT91_MAIN_CLOCK	16000000	/* main clock xtal */
 
 /* Misc CPU related */
+#define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs */
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
+#define CONFIG_SKIP_LOWLEVEL_INIT
 
 /* LCD */
 #define LCD_BPP				LCD_COLOR16
@@ -21,6 +25,7 @@
 #define CONFIG_LCD_LOGO
 #define CONFIG_LCD_INFO
 #define CONFIG_LCD_INFO_BELOW_LOGO
+#define CONFIG_ATMEL_HLCD
 #define CONFIG_ATMEL_LCD_RGB565
 
 /*
@@ -57,6 +62,15 @@
 	"bootargs_nand=rootfstype=ubifs ubi.mtd=7 root=ubi0:rootfs rw\0"\
 	"bootargs_mmc=root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait\0"
 
+/* Ethernet */
+#define CONFIG_KS8851_MLL
+#define CONFIG_KS8851_MLL_BASEADDR	0x30000000 /* use NCS2 */
+
+#define CONFIG_SYS_LOAD_ADDR		0x22000000 /* load address */
+
+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_MEMTEST_END		0x26e00000
+
 /* USB host */
 #ifdef CONFIG_CMD_USB
 #define CONFIG_USB_ATMEL
@@ -71,11 +85,43 @@
 #ifdef CONFIG_SPI_BOOT
 
 /* bootstrap + u-boot + env + linux in dataflash on CS0 */
+#define CONFIG_BOOTCOMMAND						\
+	"setenv bootargs ${console} ${mtdparts} ${bootargs_nand};"	\
+	"sf probe 0; sf read 0x22000000 0x100000 0x300000; "		\
+	"bootm 0x22000000"
 
 #elif defined(CONFIG_NAND_BOOT)
 
 /* bootstrap + u-boot + env + linux in nandflash */
+#define CONFIG_BOOTCOMMAND						\
+	"setenv bootargs ${console} ${mtdparts} ${bootargs_nand};"	\
+	"nand read 0x21000000 0x180000 0x080000;"			\
+	"nand read 0x22000000 0x200000 0x400000;"			\
+	"bootm 0x22000000 - 0x21000000"
+
+#else /* CONFIG_SD_BOOT */
+
+/* bootstrap + u-boot + env + linux in mmc */
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+/* Use raw reserved sectors to save environment */
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#else
+/* Use file in FAT file to save environment */
 #endif
+
+#define CONFIG_BOOTCOMMAND						\
+	"setenv bootargs ${console} ${mtdparts} ${bootargs_mmc};"	\
+	"fatload mmc 0:1 0x21000000 dtb;"				\
+	"fatload mmc 0:1 0x22000000 uImage;"				\
+	"bootm 0x22000000 - 0x21000000"
+
+#endif
+
+/*
+ * Size of malloc() pool
+ */
+#define CONFIG_SYS_MALLOC_LEN	(4 * 1024 * 1024)
 
 /* SPL */
 #define CONFIG_SPL_MAX_SIZE		0x6000
@@ -94,7 +140,18 @@
 #define CONFIG_SYS_MCKR_CSS		0x1302
 
 #ifdef CONFIG_SD_BOOT
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
+#elif CONFIG_NAND_BOOT
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SPL_NAND_BASE
 #endif
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x40000
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
+#define CONFIG_SYS_NAND_PAGE_SIZE	0x800
+#define CONFIG_SYS_NAND_PAGE_COUNT	64
+#define CONFIG_SYS_NAND_OOBSIZE		64
+#define CONFIG_SYS_NAND_BLOCK_SIZE	0x20000
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0x0
 
 #endif

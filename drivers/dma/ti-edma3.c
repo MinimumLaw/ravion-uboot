@@ -8,7 +8,6 @@
  * Author: Ivan Khoronzhuk <ivan.khoronzhuk@ti.com>
  */
 
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <common.h>
 #include <dm.h>
@@ -542,11 +541,11 @@ static int ti_edma3_transfer(struct udevice *dev, int direction, void *dst,
 	return 0;
 }
 
-static int ti_edma3_of_to_plat(struct udevice *dev)
+static int ti_edma3_ofdata_to_platdata(struct udevice *dev)
 {
 	struct ti_edma3_priv *priv = dev_get_priv(dev);
 
-	priv->base = dev_read_addr(dev);
+	priv->base = devfdt_get_addr(dev);
 
 	return 0;
 }
@@ -574,8 +573,8 @@ U_BOOT_DRIVER(ti_edma3) = {
 	.id	= UCLASS_DMA,
 	.of_match = ti_edma3_ids,
 	.ops	= &ti_edma3_ops,
-	.of_to_plat = ti_edma3_of_to_plat,
+	.ofdata_to_platdata = ti_edma3_ofdata_to_platdata,
 	.probe	= ti_edma3_probe,
-	.priv_auto	= sizeof(struct ti_edma3_priv),
+	.priv_auto_alloc_size = sizeof(struct ti_edma3_priv),
 };
 #endif /* CONFIG_DMA */

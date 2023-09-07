@@ -12,7 +12,6 @@
 #include <watchdog.h>
 #include <asm/processor.h>
 #include <asm/immap.h>
-#include <asm/ptrace.h>
 
 #define	NR_IRQS		(CONFIG_SYS_NUM_IRQS)
 

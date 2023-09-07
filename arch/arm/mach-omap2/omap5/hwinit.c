@@ -18,7 +18,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/clock.h>
-#include <linux/delay.h>
 #include <linux/sizes.h>
 #include <asm/utils.h>
 #include <asm/arch/gpio.h>
@@ -417,7 +416,7 @@ void omap_die_id(unsigned int *die_id)
 	die_id[3] = readl((*ctrl)->control_std_fuse_die_id_3);
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong ignored)
 {
 	u32 omap_rev = omap_revision();
 

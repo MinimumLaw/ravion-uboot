@@ -7,8 +7,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm-generic/gpio.h>
@@ -812,7 +810,7 @@ static const struct ehci_ops tegra_ehci_ops = {
 	.powerup_fixup		= tegra_ehci_powerup_fixup,
 };
 
-static int ehci_usb_of_to_plat(struct udevice *dev)
+static int ehci_usb_ofdata_to_platdata(struct udevice *dev)
 {
 	struct fdt_usb *priv = dev_get_priv(dev);
 	int ret;
@@ -828,7 +826,7 @@ static int ehci_usb_of_to_plat(struct udevice *dev)
 
 static int ehci_usb_probe(struct udevice *dev)
 {
-	struct usb_plat *plat = dev_get_plat(dev);
+	struct usb_platdata *plat = dev_get_platdata(dev);
 	struct fdt_usb *priv = dev_get_priv(dev);
 	struct ehci_hccr *hccr;
 	struct ehci_hcor *hcor;
@@ -861,11 +859,11 @@ U_BOOT_DRIVER(usb_ehci) = {
 	.name	= "ehci_tegra",
 	.id	= UCLASS_USB,
 	.of_match = ehci_usb_ids,
-	.of_to_plat = ehci_usb_of_to_plat,
+	.ofdata_to_platdata = ehci_usb_ofdata_to_platdata,
 	.probe = ehci_usb_probe,
 	.remove = ehci_deregister,
 	.ops	= &ehci_usb_ops,
-	.plat_auto	= sizeof(struct usb_plat),
-	.priv_auto	= sizeof(struct fdt_usb),
+	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
+	.priv_auto_alloc_size = sizeof(struct fdt_usb),
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };

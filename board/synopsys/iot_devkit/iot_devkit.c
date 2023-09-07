@@ -5,11 +5,8 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <init.h>
 #include <malloc.h>
 #include <dwmmc.h>
-#include <asm/global_data.h>
-#include <linux/bitops.h>
 #include <linux/libfdt.h>
 #include <fdtdec.h>
 
@@ -151,7 +148,7 @@ int mach_cpu_init(void)
 
 #define IOTDK_RESET_SEQ		0x55AA6699
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	writel(IOTDK_RESET_SEQ, RESET_REG);
 }

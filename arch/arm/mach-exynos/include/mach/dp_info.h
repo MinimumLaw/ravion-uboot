@@ -197,5 +197,4 @@ unsigned int exynos_init_dp(void)
 }
 #endif
 
-#include <linux/delay.h>
 #endif /* _DP_INFO_H */

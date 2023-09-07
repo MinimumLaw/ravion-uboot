@@ -12,8 +12,6 @@
 
 #include <linux/usb/composite.h>
 
-#define THOR_DFU_REINIT_NEEDED	0xFFFFFFFE
-
 int thor_handle(void);
 int thor_init(void);
 int thor_add(struct usb_configuration *c);

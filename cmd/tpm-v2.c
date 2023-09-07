@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <dm.h>
 #include <log.h>
 #include <mapmem.h>
@@ -13,8 +12,8 @@
 #include <tpm-v2.h>
 #include "tpm-user-utils.h"
 
-static int do_tpm2_startup(struct cmd_tbl *cmdtp, int flag, int argc,
-			   char *const argv[])
+static int do_tpm2_startup(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	enum tpm2_startup_types mode;
 	struct udevice *dev;
@@ -38,8 +37,8 @@ static int do_tpm2_startup(struct cmd_tbl *cmdtp, int flag, int argc,
 	return report_return_code(tpm2_startup(dev, mode));
 }
 
-static int do_tpm2_self_test(struct cmd_tbl *cmdtp, int flag, int argc,
-			     char *const argv[])
+static int do_tpm2_self_test(cmd_tbl_t *cmdtp, int flag, int argc,
+			     char * const argv[])
 {
 	enum tpm2_yes_no full_test;
 	struct udevice *dev;
@@ -63,8 +62,8 @@ static int do_tpm2_self_test(struct cmd_tbl *cmdtp, int flag, int argc,
 	return report_return_code(tpm2_self_test(dev, full_test));
 }
 
-static int do_tpm2_clear(struct cmd_tbl *cmdtp, int flag, int argc,
-			 char *const argv[])
+static int do_tpm2_clear(cmd_tbl_t *cmdtp, int flag, int argc,
+			 char * const argv[])
 {
 	u32 handle = 0;
 	const char *pw = (argc < 3) ? NULL : argv[2];
@@ -92,8 +91,8 @@ static int do_tpm2_clear(struct cmd_tbl *cmdtp, int flag, int argc,
 	return report_return_code(tpm2_clear(dev, handle, pw, pw_sz));
 }
 
-static int do_tpm2_pcr_extend(struct cmd_tbl *cmdtp, int flag, int argc,
-			      char *const argv[])
+static int do_tpm2_pcr_extend(cmd_tbl_t *cmdtp, int flag, int argc,
+			      char * const argv[])
 {
 	struct udevice *dev;
 	struct tpm_chip_priv *priv;
@@ -116,16 +115,15 @@ static int do_tpm2_pcr_extend(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (index >= priv->pcr_count)
 		return -EINVAL;
 
-	rc = tpm2_pcr_extend(dev, index, TPM2_ALG_SHA256, digest,
-			     TPM2_DIGEST_LEN);
+	rc = tpm2_pcr_extend(dev, index, digest);
 
 	unmap_sysmem(digest);
 
 	return report_return_code(rc);
 }
 
-static int do_tpm_pcr_read(struct cmd_tbl *cmdtp, int flag, int argc,
-			   char *const argv[])
+static int do_tpm_pcr_read(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	struct udevice *dev;
 	struct tpm_chip_priv *priv;
@@ -151,8 +149,7 @@ static int do_tpm_pcr_read(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	data = map_sysmem(simple_strtoul(argv[2], NULL, 0), 0);
 
-	rc = tpm2_pcr_read(dev, index, priv->pcr_select_min, TPM2_ALG_SHA256,
-			   data, TPM2_DIGEST_LEN, &updates);
+	rc = tpm2_pcr_read(dev, index, priv->pcr_select_min, data, &updates);
 	if (!rc) {
 		printf("PCR #%u content (%u known updates):\n", index, updates);
 		print_byte_string(data, TPM2_DIGEST_LEN);
@@ -163,8 +160,8 @@ static int do_tpm_pcr_read(struct cmd_tbl *cmdtp, int flag, int argc,
 	return report_return_code(rc);
 }
 
-static int do_tpm_get_capability(struct cmd_tbl *cmdtp, int flag, int argc,
-				 char *const argv[])
+static int do_tpm_get_capability(cmd_tbl_t *cmdtp, int flag, int argc,
+				 char * const argv[])
 {
 	u32 capability, property, rc;
 	u8 *data;
@@ -193,10 +190,10 @@ static int do_tpm_get_capability(struct cmd_tbl *cmdtp, int flag, int argc,
 	for (i = 0; i < count; i++) {
 		printf("Property 0x");
 		for (j = 0; j < 4; j++)
-			printf("%02x", data[(i * 8) + j + sizeof(u32)]);
+			printf("%02x", data[(i * 8) + j]);
 		printf(": 0x");
 		for (j = 4; j < 8; j++)
-			printf("%02x", data[(i * 8) + j + sizeof(u32)]);
+			printf("%02x", data[(i * 8) + j]);
 		printf("\n");
 	}
 
@@ -206,7 +203,7 @@ unmap_data:
 	return report_return_code(rc);
 }
 
-static int do_tpm_dam_reset(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_tpm_dam_reset(cmd_tbl_t *cmdtp, int flag, int argc,
 			    char *const argv[])
 {
 	const char *pw = (argc < 2) ? NULL : argv[1];
@@ -227,7 +224,7 @@ static int do_tpm_dam_reset(struct cmd_tbl *cmdtp, int flag, int argc,
 	return report_return_code(tpm2_dam_reset(dev, pw, pw_sz));
 }
 
-static int do_tpm_dam_parameters(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_tpm_dam_parameters(cmd_tbl_t *cmdtp, int flag, int argc,
 				 char *const argv[])
 {
 	const char *pw = (argc < 5) ? NULL : argv[4];
@@ -271,7 +268,7 @@ static int do_tpm_dam_parameters(struct cmd_tbl *cmdtp, int flag, int argc,
 						      lockout_recovery));
 }
 
-static int do_tpm_change_auth(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_tpm_change_auth(cmd_tbl_t *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
 	u32 handle;
@@ -307,8 +304,8 @@ static int do_tpm_change_auth(struct cmd_tbl *cmdtp, int flag, int argc,
 						   oldpw, oldpw_sz));
 }
 
-static int do_tpm_pcr_setauthpolicy(struct cmd_tbl *cmdtp, int flag, int argc,
-				    char *const argv[])
+static int do_tpm_pcr_setauthpolicy(cmd_tbl_t *cmdtp, int flag, int argc,
+				    char * const argv[])
 {
 	u32 index = simple_strtoul(argv[1], NULL, 0);
 	char *key = argv[2];
@@ -331,8 +328,8 @@ static int do_tpm_pcr_setauthpolicy(struct cmd_tbl *cmdtp, int flag, int argc,
 							 key));
 }
 
-static int do_tpm_pcr_setauthvalue(struct cmd_tbl *cmdtp, int flag,
-				   int argc, char *const argv[])
+static int do_tpm_pcr_setauthvalue(cmd_tbl_t *cmdtp, int flag,
+				   int argc, char * const argv[])
 {
 	u32 index = simple_strtoul(argv[1], NULL, 0);
 	char *key = argv[2];
@@ -356,7 +353,7 @@ static int do_tpm_pcr_setauthvalue(struct cmd_tbl *cmdtp, int flag,
 							key, key_sz));
 }
 
-static struct cmd_tbl tpm2_commands[] = {
+static cmd_tbl_t tpm2_commands[] = {
 	U_BOOT_CMD_MKENT(device, 0, 1, do_tpm_device, "", ""),
 	U_BOOT_CMD_MKENT(info, 0, 1, do_tpm_info, "", ""),
 	U_BOOT_CMD_MKENT(init, 0, 1, do_tpm_init, "", ""),
@@ -375,7 +372,7 @@ static struct cmd_tbl tpm2_commands[] = {
 			 do_tpm_pcr_setauthvalue, "", ""),
 };
 
-struct cmd_tbl *get_tpm2_commands(unsigned int *size)
+cmd_tbl_t *get_tpm2_commands(unsigned int *size)
 {
 	*size = ARRAY_SIZE(tpm2_commands);
 

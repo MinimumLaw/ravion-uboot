@@ -7,7 +7,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <malloc.h>
 
 #include <mmc.h>
@@ -89,14 +88,6 @@ static struct usb_gadget_strings *g_dnl_composite_strings[] = {
 	&g_dnl_string_tab,
 	NULL,
 };
-
-void g_dnl_set_product(const char *s)
-{
-	if (s)
-		g_dnl_string_defs[1].s = s;
-	else
-		g_dnl_string_defs[1].s = product;
-}
 
 static int g_dnl_unbind(struct usb_composite_dev *cdev)
 {
@@ -315,4 +306,9 @@ int g_dnl_register(const char *name)
 void g_dnl_unregister(void)
 {
 	usb_composite_unregister(&g_dnl_driver);
+}
+
+int __weak board_usb_gadget_port_auto(void)
+{
+	return -1;
 }

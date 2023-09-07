@@ -26,10 +26,8 @@ obj-y += cpu.o
 obj-y += cpu_init.o
 obj-y += speed.o
 obj-y += interrupts.o
-obj-$(CONFIG_DDR_ECC_CMD) += ecc.o
-ifndef CONFIG_PINCTRL
+obj-y += ecc.o
 obj-$(CONFIG_QE) += qe_io.o
-endif
 obj-$(CONFIG_FSL_SERDES) += serdes.o
 ifndef CONFIG_ARCH_MPC8308
 obj-$(CONFIG_PCI) += pci.o

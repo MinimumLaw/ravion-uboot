@@ -9,7 +9,6 @@
 #include <fsl_dtsec.h>
 #include <fsl_mdio.h>
 #include <phy.h>
-#include <linux/delay.h>
 
 #include "fm.h"
 

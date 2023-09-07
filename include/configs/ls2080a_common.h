@@ -7,6 +7,9 @@
 #ifndef __LS2_COMMON_H
 #define __LS2_COMMON_H
 
+#define CONFIG_REMAKE_ELF
+#define CONFIG_GICV3
+
 #include <asm/arch/stream_id_lsch3.h>
 #include <asm/arch/config.h>
 
@@ -20,6 +23,8 @@
 /* We need architecture specific misc initializations */
 
 /* Link Definitions */
+
+#define CONFIG_SKIP_LOWLEVEL_INIT
 
 #ifndef CONFIG_SYS_FSL_DDR4
 #define CONFIG_SYS_DDR_RAW_TIMING
@@ -37,7 +42,7 @@
 /*
  * SMP Definitinos
  */
-#define CPU_RELEASE_ADDR		secondary_boot_addr
+#define CPU_RELEASE_ADDR		secondary_boot_func
 
 #define CONFIG_SYS_FSL_OTHER_DDR_NUM_CTRLS
 #ifdef CONFIG_SYS_FSL_HAS_DP_DDR
@@ -58,14 +63,23 @@
  */
 #define COUNTER_FREQUENCY		25000000	/* 25MHz */
 
-/* GPIO */
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2048 * 1024)
 
 /* I2C */
+#ifndef CONFIG_DM_I2C
+#define CONFIG_SYS_I2C
+#endif
 
 /* Serial Port */
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE     1
 #define CONFIG_SYS_NS16550_CLK          (get_serial_clock())
+
+#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+
+/* IFC */
+#define CONFIG_FSL_IFC
 
 /*
  * During booting, IFC is mapped at the region of 0x30000000.
@@ -135,7 +149,10 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SYS_LS_MC_DRAM_BLOCK_MIN_SIZE		(128UL * 1024 * 1024)
 #endif
 
+/* Command line configuration */
+
 /* Miscellaneous configurable options */
+#define CONFIG_SYS_LOAD_ADDR	(CONFIG_SYS_DDR_SDRAM_BASE + 0x10000000)
 
 /* Physical Memory Map */
 /* fixme: these need to be checked against the board */
@@ -143,6 +160,9 @@ unsigned long long get_qixis_addr(void);
 
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		128
+
+/* Allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
 
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
@@ -159,6 +179,19 @@ unsigned long long get_qixis_addr(void);
 	"console=ttyAMA0,38400n8\0"		\
 	"mcinitcmd=fsl_mc start mc 0x580a00000"	\
 	" 0x580e00000 \0"
+
+#ifndef CONFIG_TFABOOT
+#ifdef CONFIG_SD_BOOT
+#define CONFIG_BOOTCOMMAND	"mmc read 0x80200000 0x6800 0x800;"\
+				" fsl_mc apply dpl 0x80200000 &&" \
+				" mmc read $kernel_load $kernel_start" \
+				" $kernel_size && bootm $kernel_load"
+#else
+#define CONFIG_BOOTCOMMAND	"fsl_mc apply dpl 0x580d00000 &&" \
+				" cp.b $kernel_start $kernel_load" \
+				" $kernel_size && bootm $kernel_load"
+#endif
+#endif
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */

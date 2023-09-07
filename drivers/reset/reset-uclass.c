@@ -3,17 +3,13 @@
  * Copyright (c) 2016, NVIDIA CORPORATION.
  */
 
-#define LOG_CATEGORY UCLASS_RESET
-
 #include <common.h>
 #include <dm.h>
 #include <fdtdec.h>
-#include <log.h>
 #include <malloc.h>
 #include <reset.h>
 #include <reset-uclass.h>
 #include <dm/devres.h>
-#include <dm/lists.h>
 
 static inline struct reset_ops *reset_dev_ops(struct udevice *dev)
 {
@@ -26,7 +22,7 @@ static int reset_of_xlate_default(struct reset_ctl *reset_ctl,
 	debug("%s(reset_ctl=%p)\n", __func__, reset_ctl);
 
 	if (args->args_count != 1) {
-		debug("Invalid args_count: %d\n", args->args_count);
+		debug("Invaild args_count: %d\n", args->args_count);
 		return -EINVAL;
 	}
 
@@ -97,21 +93,19 @@ int reset_get_by_index_nodev(ofnode node, int index,
 	int ret;
 
 	ret = ofnode_parse_phandle_with_args(node, "resets", "#reset-cells", 0,
-					     index, &args);
+					     index > 0, &args);
 
 	return reset_get_by_index_tail(ret, node, &args, "resets",
 				       index > 0, reset_ctl);
 }
 
-static int __reset_get_bulk(struct udevice *dev, ofnode node,
-			    struct reset_ctl_bulk *bulk)
+int reset_get_bulk(struct udevice *dev, struct reset_ctl_bulk *bulk)
 {
 	int i, ret, err, count;
 
 	bulk->count = 0;
 
-	count = ofnode_count_phandle_with_args(node, "resets", "#reset-cells",
-					       0);
+	count = dev_count_phandle_with_args(dev, "resets", "#reset-cells");
 	if (count < 1)
 		return count;
 
@@ -121,7 +115,7 @@ static int __reset_get_bulk(struct udevice *dev, ofnode node,
 		return -ENOMEM;
 
 	for (i = 0; i < count; i++) {
-		ret = reset_get_by_index_nodev(node, i, &bulk->resets[i]);
+		ret = reset_get_by_index(dev, i, &bulk->resets[i]);
 		if (ret < 0)
 			goto bulk_get_err;
 
@@ -139,10 +133,40 @@ bulk_get_err:
 	return ret;
 }
 
-int reset_get_bulk(struct udevice *dev, struct reset_ctl_bulk *bulk)
+int reset_get_bulk_nodev(ofnode node, struct reset_ctl_bulk *bulk)
 {
-	return __reset_get_bulk(dev, dev_ofnode(dev), bulk);
+	int i, ret, err, count;
+
+	bulk->count = 0;
+
+	count = ofnode_count_phandle_with_args(node, "resets", "#reset-cells");
+	if (count < 1)
+		return count;
+
+	bulk->resets = kzalloc(count * sizeof(struct reset_ctl),
+				    GFP_KERNEL);
+	if (!bulk->resets)
+		return -ENOMEM;
+
+	for (i = 0; i < count; i++) {
+		ret = reset_get_by_index_nodev(node, i, &bulk->resets[i]);
+		if (ret < 0)
+			goto bulk_get_err;
+
+		++bulk->count;
+	}
+
+	return 0;
+
+bulk_get_err:
+	err = reset_release_all(bulk->resets, bulk->count);
+	if (err)
+		debug("%s: could release all resets\n",
+		      __func__);
+
+	return ret;
 }
+
 
 int reset_get_by_name(struct udevice *dev, const char *name,
 		     struct reset_ctl *reset_ctl)
@@ -254,111 +278,6 @@ int reset_release_all(struct reset_ctl *reset_ctl, int count)
 	}
 
 	return 0;
-}
-
-static void devm_reset_release(struct udevice *dev, void *res)
-{
-	reset_free(res);
-}
-
-struct reset_ctl *devm_reset_control_get_by_index(struct udevice *dev,
-						  int index)
-{
-	int rc;
-	struct reset_ctl *reset_ctl;
-
-	reset_ctl = devres_alloc(devm_reset_release, sizeof(struct reset_ctl),
-				 __GFP_ZERO);
-	if (unlikely(!reset_ctl))
-		return ERR_PTR(-ENOMEM);
-
-	rc = reset_get_by_index(dev, index, reset_ctl);
-	if (rc)
-		return ERR_PTR(rc);
-
-	devres_add(dev, reset_ctl);
-	return reset_ctl;
-}
-
-struct reset_ctl *devm_reset_control_get(struct udevice *dev, const char *id)
-{
-	int rc;
-	struct reset_ctl *reset_ctl;
-
-	reset_ctl = devres_alloc(devm_reset_release, sizeof(struct reset_ctl),
-				 __GFP_ZERO);
-	if (unlikely(!reset_ctl))
-		return ERR_PTR(-ENOMEM);
-
-	rc = reset_get_by_name(dev, id, reset_ctl);
-	if (rc)
-		return ERR_PTR(rc);
-
-	devres_add(dev, reset_ctl);
-	return reset_ctl;
-}
-
-struct reset_ctl *devm_reset_control_get_optional(struct udevice *dev,
-						  const char *id)
-{
-	struct reset_ctl *r = devm_reset_control_get(dev, id);
-
-	if (IS_ERR(r))
-		return NULL;
-
-	return r;
-}
-
-static void devm_reset_bulk_release(struct udevice *dev, void *res)
-{
-	struct reset_ctl_bulk *bulk = res;
-
-	reset_release_all(bulk->resets, bulk->count);
-}
-
-struct reset_ctl_bulk *devm_reset_bulk_get_by_node(struct udevice *dev,
-						   ofnode node)
-{
-	int rc;
-	struct reset_ctl_bulk *bulk;
-
-	bulk = devres_alloc(devm_reset_bulk_release,
-			    sizeof(struct reset_ctl_bulk),
-			    __GFP_ZERO);
-
-	/* this looks like a leak, but devres takes care of it */
-	if (unlikely(!bulk))
-		return ERR_PTR(-ENOMEM);
-
-	rc = __reset_get_bulk(dev, node, bulk);
-	if (rc)
-		return ERR_PTR(rc);
-
-	devres_add(dev, bulk);
-	return bulk;
-}
-
-struct reset_ctl_bulk *devm_reset_bulk_get_optional_by_node(struct udevice *dev,
-							    ofnode node)
-{
-	struct reset_ctl_bulk *bulk;
-
-	bulk = devm_reset_bulk_get_by_node(dev, node);
-
-	if (IS_ERR(bulk))
-		return NULL;
-
-	return bulk;
-}
-
-struct reset_ctl_bulk *devm_reset_bulk_get(struct udevice *dev)
-{
-	return devm_reset_bulk_get_by_node(dev, dev_ofnode(dev));
-}
-
-struct reset_ctl_bulk *devm_reset_bulk_get_optional(struct udevice *dev)
-{
-	return devm_reset_bulk_get_optional_by_node(dev, dev_ofnode(dev));
 }
 
 UCLASS_DRIVER(reset) = {

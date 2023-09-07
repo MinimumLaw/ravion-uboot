@@ -4,13 +4,11 @@ config ARCH_LS1012A
 	select ARM_ERRATA_855873 if !TFABOOT
 	select FSL_LAYERSCAPE
 	select FSL_LSCH2
-	select GICV2
-	select SKIP_LOWLEVEL_INIT
 	select SYS_FSL_SRDS_1
 	select SYS_HAS_SERDES
 	select SYS_FSL_DDR_BE
 	select SYS_FSL_MMDC
-	select SYS_FSL_ERRATUM_A010315 if PCIE_LAYERSCAPE
+	select SYS_FSL_ERRATUM_A010315
 	select SYS_FSL_ERRATUM_A009798
 	select SYS_FSL_ERRATUM_A008997
 	select SYS_FSL_ERRATUM_A009007
@@ -21,14 +19,11 @@ config ARCH_LS1012A
 	select SYS_I2C_MXC_I2C1 if !DM_I2C
 	select SYS_I2C_MXC_I2C2 if !DM_I2C
 	imply PANIC_HANG
-	imply TIMESTAMP
 
 config ARCH_LS1028A
 	bool
 	select ARMV8_SET_SMPEN
-	select FSL_LAYERSCAPE
 	select FSL_LSCH3
-	select GICV3
 	select NXP_LSCH3_2
 	select SYS_FSL_HAS_CCI400
 	select SYS_FSL_SRDS_1
@@ -42,7 +37,6 @@ config ARCH_LS1028A
 	select SYS_FSL_SEC_COMPAT_5
 	select SYS_FSL_SEC_LE
 	select FSL_TZASC_1
-	select FSL_TZPC_BP147
 	select ARCH_EARLY_INIT_R
 	select BOARD_EARLY_INIT_F
 	select SYS_I2C_MXC
@@ -52,21 +46,14 @@ config ARCH_LS1028A
 	select SYS_FSL_ERRATUM_A009663 if !TFABOOT
 	select SYS_FSL_ERRATUM_A009942 if !TFABOOT
 	select SYS_FSL_ERRATUM_A050382
-	select SYS_FSL_ERRATUM_A011334
-	select SYS_FSL_ESDHC_UNRELIABLE_PULSE_DETECTION_WORKAROUND
-	select RESV_RAM if GIC_V3_ITS
 	imply PANIC_HANG
 
 config ARCH_LS1043A
 	bool
 	select ARMV8_SET_SMPEN
 	select ARM_ERRATA_855873 if !TFABOOT
-	select FSL_IFC if TFABOOT || (!QSPI_BOOT && !SD_BOOT_QSPI)
 	select FSL_LAYERSCAPE
 	select FSL_LSCH2
-	select GICV2
-	select HAS_FSL_XHCI_USB if USB_HOST
-	select SKIP_LOWLEVEL_INIT
 	select SYS_FSL_SRDS_1
 	select SYS_HAS_SERDES
 	select SYS_FSL_DDR
@@ -79,30 +66,26 @@ config ARCH_LS1043A
 	select SYS_FSL_ERRATUM_A009660 if !TFABOOT
 	select SYS_FSL_ERRATUM_A009663 if !TFABOOT
 	select SYS_FSL_ERRATUM_A009798
+	select SYS_FSL_ERRATUM_A009929
 	select SYS_FSL_ERRATUM_A009942 if !TFABOOT
-	select SYS_FSL_ERRATUM_A010315 if PCIE_LAYERSCAPE
+	select SYS_FSL_ERRATUM_A010315
 	select SYS_FSL_ERRATUM_A010539
 	select SYS_FSL_HAS_DDR3
 	select SYS_FSL_HAS_DDR4
 	select ARCH_EARLY_INIT_R
 	select BOARD_EARLY_INIT_F
-	select SYS_I2C_MXC
+	select SYS_I2C_MXC if !DM_I2C
 	select SYS_I2C_MXC_I2C1 if !DM_I2C
 	select SYS_I2C_MXC_I2C2 if !DM_I2C
 	select SYS_I2C_MXC_I2C3 if !DM_I2C
 	select SYS_I2C_MXC_I2C4 if !DM_I2C
 	imply CMD_PCI
-	imply ID_EEPROM
 
 config ARCH_LS1046A
 	bool
 	select ARMV8_SET_SMPEN
-	select FSL_IFC if TFABOOT || (!QSPI_BOOT && !SD_BOOT_QSPI)
 	select FSL_LAYERSCAPE
 	select FSL_LSCH2
-	select GICV2
-	select HAS_FSL_XHCI_USB if USB_HOST
-	select SKIP_LOWLEVEL_INIT
 	select SYS_FSL_SRDS_1
 	select SYS_HAS_SERDES
 	select SYS_FSL_DDR
@@ -124,25 +107,20 @@ config ARCH_LS1046A
 	select SYS_FSL_SRDS_2
 	select ARCH_EARLY_INIT_R
 	select BOARD_EARLY_INIT_F
-	select SYS_I2C_MXC
+	select SYS_I2C_MXC if !DM_I2C
 	select SYS_I2C_MXC_I2C1 if !DM_I2C
 	select SYS_I2C_MXC_I2C2 if !DM_I2C
 	select SYS_I2C_MXC_I2C3 if !DM_I2C
 	select SYS_I2C_MXC_I2C4 if !DM_I2C
-	imply ID_EEPROM
 	imply SCSI
 	imply SCSI_AHCI
-	imply SPL_SYS_I2C_LEGACY
 
 config ARCH_LS1088A
 	bool
 	select ARMV8_SET_SMPEN
 	select ARM_ERRATA_855873 if !TFABOOT
-	select FSL_IFC
 	select FSL_LAYERSCAPE
 	select FSL_LSCH3
-	select GICV3
-	select SKIP_LOWLEVEL_INIT
 	select SYS_FSL_SRDS_1
 	select SYS_HAS_SERDES
 	select SYS_FSL_DDR
@@ -174,10 +152,7 @@ config ARCH_LS1088A
 	select SYS_I2C_MXC_I2C2 if !TFABOOT
 	select SYS_I2C_MXC_I2C3 if !TFABOOT
 	select SYS_I2C_MXC_I2C4 if !TFABOOT
-	select RESV_RAM if GIC_V3_ITS
-	imply ID_EEPROM
 	imply SCSI
-	imply SPL_SYS_I2C_LEGACY
 	imply PANIC_HANG
 
 config ARCH_LS2080A
@@ -187,11 +162,8 @@ config ARCH_LS2080A
 	select ARM_ERRATA_828024
 	select ARM_ERRATA_829520
 	select ARM_ERRATA_833471
-	select FSL_IFC
 	select FSL_LAYERSCAPE
 	select FSL_LSCH3
-	select GICV3
-	select SKIP_LOWLEVEL_INIT
 	select SYS_FSL_SRDS_1
 	select SYS_HAS_SERDES
 	select SYS_FSL_DDR
@@ -230,60 +202,13 @@ config ARCH_LS2080A
 	select SYS_I2C_MXC_I2C2 if !TFABOOT
 	select SYS_I2C_MXC_I2C3 if !TFABOOT
 	select SYS_I2C_MXC_I2C4 if !TFABOOT
-	select RESV_RAM if GIC_V3_ITS
-	imply DISTRO_DEFAULTS
-	imply ID_EEPROM
-	imply PANIC_HANG
-	imply SPL_SYS_I2C_LEGACY
-
-config ARCH_LX2162A
-	bool
-	select ARMV8_SET_SMPEN
-	select FSL_DDR_BIST
-	select FSL_DDR_INTERACTIVE
-	select FSL_LAYERSCAPE
-	select FSL_LSCH3
-	select FSL_TZPC_BP147
-	select GICV3
-	select NXP_LSCH3_2
-	select SYS_HAS_SERDES
-	select SYS_FSL_SRDS_1
-	select SYS_FSL_SRDS_2
-	select SYS_FSL_DDR
-	select SYS_FSL_DDR_LE
-	select SYS_FSL_DDR_VER_50
-	select SYS_FSL_EC1
-	select SYS_FSL_EC2
-	select SYS_FSL_ERRATUM_A050204
-	select SYS_FSL_ERRATUM_A011334
-	select SYS_FSL_ESDHC_UNRELIABLE_PULSE_DETECTION_WORKAROUND
-	select SYS_FSL_HAS_RGMII
-	select SYS_FSL_HAS_SEC
-	select SYS_FSL_HAS_CCN508
-	select SYS_FSL_HAS_DDR4
-	select SYS_FSL_SEC_COMPAT_5
-	select SYS_FSL_SEC_LE
-	select SYS_PCI_64BIT if PCI
-	select ARCH_EARLY_INIT_R
-	select BOARD_EARLY_INIT_F
-	select SYS_I2C_MXC
-	select RESV_RAM if GIC_V3_ITS
 	imply DISTRO_DEFAULTS
 	imply PANIC_HANG
-	imply SCSI
-	imply SCSI_AHCI
-	imply SPL_SYS_I2C_LEGACY
 
 config ARCH_LX2160A
 	bool
 	select ARMV8_SET_SMPEN
-	select FSL_DDR_BIST
-	select FSL_DDR_INTERACTIVE
-	select FSL_LAYERSCAPE
 	select FSL_LSCH3
-	select FSL_TZPC_BP147
-	select GICV3
-	select HAS_FSL_XHCI_USB if USB_HOST
 	select NXP_LSCH3_2
 	select SYS_HAS_SERDES
 	select SYS_FSL_SRDS_1
@@ -294,30 +219,23 @@ config ARCH_LX2160A
 	select SYS_FSL_DDR_VER_50
 	select SYS_FSL_EC1
 	select SYS_FSL_EC2
-	select SYS_FSL_ERRATUM_A050204
-	select SYS_FSL_ERRATUM_A011334
-	select SYS_FSL_ESDHC_UNRELIABLE_PULSE_DETECTION_WORKAROUND
+	select SYS_FSL_ERRATUM_A050106
 	select SYS_FSL_HAS_RGMII
 	select SYS_FSL_HAS_SEC
 	select SYS_FSL_HAS_CCN508
 	select SYS_FSL_HAS_DDR4
 	select SYS_FSL_SEC_COMPAT_5
 	select SYS_FSL_SEC_LE
-	select SYS_PCI_64BIT if PCI
 	select ARCH_EARLY_INIT_R
 	select BOARD_EARLY_INIT_F
 	select SYS_I2C_MXC
-	select RESV_RAM if GIC_V3_ITS
 	imply DISTRO_DEFAULTS
-	imply ID_EEPROM
 	imply PANIC_HANG
 	imply SCSI
 	imply SCSI_AHCI
-	imply SPL_SYS_I2C_LEGACY
 
 config FSL_LSCH2
 	bool
-	select SKIP_LOWLEVEL_INIT
 	select SYS_FSL_HAS_CCI400
 	select SYS_FSL_HAS_SEC
 	select SYS_FSL_SEC_COMPAT_5
@@ -418,12 +336,12 @@ config SYS_FSL_ERRATUM_A009008
 config SYS_FSL_ERRATUM_A009798
 	bool "Workaround for USB PHY erratum A009798"
 
-config SYS_FSL_ERRATUM_A050204
-	bool "Workaround for USB PHY erratum A050204"
+config SYS_FSL_ERRATUM_A050106
+	bool "Workaround for USB PHY erratum A050106"
 	help
 	  USB3.0 Receiver needs to enable fixed equalization
 	  for each of PHY instances in an SOC. This is similar
-	  to erratum A-009007, but this one is for LX2160A and LX2162A,
+	  to erratum A-009007, but this one is for LX2160A,
 	  and the register value is different.
 
 config SYS_FSL_ERRATUM_A010315
@@ -440,7 +358,6 @@ config MAX_CPUS
 	default 16 if ARCH_LS2080A
 	default 8 if ARCH_LS1088A
 	default 16 if ARCH_LX2160A
-	default 16 if ARCH_LX2162A
 	default 1
 	help
 	  Set this number to the maximum number of possible CPUs in the SoC.
@@ -469,6 +386,7 @@ config QSPI_AHB_INIT
 
 config FSPI_AHB_EN_4BYTE
 	bool "Enable 4-byte Fast Read command for AHB mode"
+	default n
 	help
 	  The default setting for FlexSPI AHB bus just supports 3-byte addressing.
 	  But some FlexSPI flash sizes are up to 64MBytes.
@@ -531,6 +449,10 @@ endmenu
 menu "Layerscape clock tree configuration"
 	depends on FSL_LSCH2 || FSL_LSCH3
 
+config SYS_FSL_CLK
+	bool "Enable clock tree initialization"
+	default y
+
 config CLUSTER_CLK_FREQ
 	int "Reference clock of core cluster"
 	depends on ARCH_LS1012A
@@ -565,7 +487,6 @@ config SYS_FSL_DUART_CLK_DIV
 	int "DUART clock divider"
 	default 1 if ARCH_LS1043A
 	default 4 if ARCH_LX2160A
-	default 4 if ARCH_LX2162A
 	default 2
 	help
 	  This is the divider that is used to derive DUART clock from Platform
@@ -577,7 +498,6 @@ config SYS_FSL_I2C_CLK_DIV
 	default 4 if ARCH_LS1012A
 	default 4 if ARCH_LS1028A
 	default 8 if ARCH_LX2160A
-	default 8 if ARCH_LX2162A
 	default 8 if ARCH_LS1088A
 	default 2
 	help
@@ -590,7 +510,6 @@ config SYS_FSL_IFC_CLK_DIV
 	default 4 if ARCH_LS1012A
 	default 4 if ARCH_LS1028A
 	default 8 if ARCH_LX2160A
-	default 8 if ARCH_LX2162A
 	default 8 if ARCH_LS1088A
 	default 2
 	help
@@ -637,14 +556,14 @@ config SYS_FSL_EC1
 	bool
 	help
 	  Ethernet controller 1, this is connected to
-	  MAC17 for LX2160A and LX2162A or to MAC3 for other SoCs
+	  MAC17 for LX2160A or to MAC3 for other SoCs
 	  Provides DPAA2 capabilities
 
 config SYS_FSL_EC2
 	bool
 	help
 	  Ethernet controller 2, this is connected to
-	  MAC18 for LX2160A and LX2162A or to MAC4 for other SoCs
+	  MAC18 for LX2160A or to MAC4 for other SoCs
 	  Provides DPAA2 capabilities
 
 config SYS_FSL_ERRATUM_A008336
@@ -668,6 +587,9 @@ config SYS_FSL_ERRATUM_A009635
 config SYS_FSL_ERRATUM_A009660
 	bool
 
+config SYS_FSL_ERRATUM_A009929
+	bool
+
 config SYS_FSL_ERRATUM_A050382
 	bool
 
@@ -680,16 +602,7 @@ config SPL_LDSCRIPT
 
 config HAS_FSL_XHCI_USB
 	bool
+	default y if ARCH_LS1043A || ARCH_LS1046A
 	help
-	  For some SoC (such as LS1043A and LS1046A), USB and QE-HDLC multiplex use
+	  For some SoC(such as LS1043A and LS1046A), USB and QE-HDLC multiplex use
 	  pins, select it when the pins are assigned to USB.
-
-config SYS_FSL_BOOTROM_BASE
-	hex
-	depends on FSL_LSCH2
-	default 0
-
-config SYS_FSL_BOOTROM_SIZE
-	hex
-	depends on FSL_LSCH2
-	default 0x1000000

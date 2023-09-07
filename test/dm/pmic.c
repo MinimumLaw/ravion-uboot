@@ -10,17 +10,16 @@
 #include <errno.h>
 #include <dm.h>
 #include <fdtdec.h>
-#include <fsl_pmic.h>
 #include <malloc.h>
 #include <dm/device-internal.h>
 #include <dm/root.h>
+#include <dm/util.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
-#include <dm/util.h>
 #include <power/pmic.h>
 #include <power/sandbox_pmic.h>
-#include <test/test.h>
 #include <test/ut.h>
+#include <fsl_pmic.h>
 
 /* Test PMIC get method */
 
@@ -44,7 +43,7 @@ static int dm_test_power_pmic_get(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_power_pmic_get, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_power_pmic_get, DM_TESTF_SCAN_FDT);
 
 /* PMIC get method - MC34708 - for 3 bytes transmission */
 static int dm_test_power_pmic_mc34708_get(struct unit_test_state *uts)
@@ -54,7 +53,7 @@ static int dm_test_power_pmic_mc34708_get(struct unit_test_state *uts)
 	return 0;
 }
 
-DM_TEST(dm_test_power_pmic_mc34708_get, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_power_pmic_mc34708_get, DM_TESTF_SCAN_FDT);
 
 /* Test PMIC I/O */
 static int dm_test_power_pmic_io(struct unit_test_state *uts)
@@ -83,7 +82,7 @@ static int dm_test_power_pmic_io(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_power_pmic_io, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_power_pmic_io, DM_TESTF_SCAN_FDT);
 
 #define MC34708_PMIC_REG_COUNT 64
 #define MC34708_PMIC_TEST_VAL 0x125534
@@ -101,7 +100,7 @@ static int dm_test_power_pmic_mc34708_regs_check(struct unit_test_state *uts)
 	return 0;
 }
 
-DM_TEST(dm_test_power_pmic_mc34708_regs_check, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_power_pmic_mc34708_regs_check, DM_TESTF_SCAN_FDT);
 
 static int dm_test_power_pmic_mc34708_rw_val(struct unit_test_state *uts)
 {
@@ -128,4 +127,4 @@ static int dm_test_power_pmic_mc34708_rw_val(struct unit_test_state *uts)
 	return 0;
 }
 
-DM_TEST(dm_test_power_pmic_mc34708_rw_val, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_power_pmic_mc34708_rw_val, DM_TESTF_SCAN_FDT);

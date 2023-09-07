@@ -6,7 +6,6 @@
  */
 
 #include "imx8image.h"
-#include <image.h>
 
 static int p_idx;
 static int sector_size;
@@ -365,7 +364,7 @@ static void copy_file (int ifd, const char *datafile, int pad, int offset)
 	struct stat sbuf;
 	unsigned char *ptr;
 	int tail;
-	uint64_t zero = 0;
+	int zero = 0;
 	uint8_t zeros[4096];
 	int size, ret;
 

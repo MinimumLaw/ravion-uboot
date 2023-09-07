@@ -5,15 +5,12 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <power-domain-uclass.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/power-domain.h>
 #include <dm/device-internal.h>
 #include <dm/device.h>
-#include <dm/uclass-internal.h>
 #include <asm/arch/sci/sci.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -21,68 +18,6 @@ DECLARE_GLOBAL_DATA_PTR;
 struct imx8_power_domain_priv {
 	bool state_on;
 };
-
-static bool check_device_power_off(struct udevice *dev,
-				   const char *permanent_on_devices[],
-				   int size)
-{
-	int i;
-
-	for (i = 0; i < size; i++) {
-		if (!strcmp(dev->name, permanent_on_devices[i]))
-			return false;
-	}
-
-	return true;
-}
-
-void imx8_power_off_pd_devices(const char *permanent_on_devices[], int size)
-{
-	struct udevice *dev;
-	struct power_domain pd;
-
-	for (uclass_find_first_device(UCLASS_POWER_DOMAIN, &dev); dev;
-	     uclass_find_next_device(&dev)) {
-		if (!device_active(dev))
-			continue;
-		/*
-		 * Power off active pd devices except the permanent
-		 * power on devices
-		 */
-		if (check_device_power_off(dev, permanent_on_devices, size)) {
-			pd.dev = dev;
-			power_domain_off(&pd);
-		}
-	}
-}
-
-int imx8_power_domain_lookup_name(const char *name,
-				  struct power_domain *power_domain)
-{
-	struct udevice *dev;
-	struct power_domain_ops *ops;
-	int ret;
-
-	debug("%s(power_domain=%p name=%s)\n", __func__, power_domain, name);
-
-	ret = uclass_get_device_by_name(UCLASS_POWER_DOMAIN, name, &dev);
-	if (ret) {
-		printf("%s fail: %s, ret = %d\n", __func__, name, ret);
-		return ret;
-	}
-
-	ops = (struct power_domain_ops *)dev->driver->ops;
-	power_domain->dev = dev;
-	ret = ops->request(power_domain);
-	if (ret) {
-		debug("ops->request() failed: %d\n", ret);
-		return ret;
-	}
-
-	debug("%s ok: %s\n", __func__, dev->name);
-
-	return 0;
-}
 
 static int imx8_power_domain_request(struct power_domain *power_domain)
 {
@@ -101,7 +36,7 @@ static int imx8_power_domain_free(struct power_domain *power_domain)
 static int imx8_power_domain_on(struct power_domain *power_domain)
 {
 	struct udevice *dev = power_domain->dev;
-	struct imx8_power_domain_plat *pdata;
+	struct imx8_power_domain_platdata *pdata;
 	struct imx8_power_domain_priv *ppriv;
 	sc_err_t ret;
 	int err;
@@ -117,7 +52,7 @@ static int imx8_power_domain_on(struct power_domain *power_domain)
 			return err;
 	}
 
-	pdata = (struct imx8_power_domain_plat *)dev_get_plat(dev);
+	pdata = (struct imx8_power_domain_platdata *)dev_get_platdata(dev);
 	ppriv = (struct imx8_power_domain_priv *)dev_get_priv(dev);
 
 	debug("%s(power_domain=%s) resource_id %d\n", __func__, dev->name,
@@ -152,11 +87,11 @@ static int imx8_power_domain_off_node(struct power_domain *power_domain)
 	struct udevice *child;
 	struct imx8_power_domain_priv *ppriv;
 	struct imx8_power_domain_priv *child_ppriv;
-	struct imx8_power_domain_plat *pdata;
+	struct imx8_power_domain_platdata *pdata;
 	sc_err_t ret;
 
 	ppriv = dev_get_priv(dev);
-	pdata = dev_get_plat(dev);
+	pdata = dev_get_platdata(dev);
 
 	debug("%s, %s, state_on %d\n", __func__, dev->name, ppriv->state_on);
 
@@ -203,13 +138,13 @@ static int imx8_power_domain_off_parentnodes(struct power_domain *power_domain)
 	struct udevice *child;
 	struct imx8_power_domain_priv *ppriv;
 	struct imx8_power_domain_priv *child_ppriv;
-	struct imx8_power_domain_plat *pdata;
+	struct imx8_power_domain_platdata *pdata;
 	sc_err_t ret;
 	struct power_domain parent_pd;
 
 	if (device_get_uclass_id(parent) == UCLASS_POWER_DOMAIN) {
 		pdata =
-		(struct imx8_power_domain_plat *)dev_get_plat(parent);
+		(struct imx8_power_domain_platdata *)dev_get_platdata(parent);
 		ppriv = (struct imx8_power_domain_priv *)dev_get_priv(parent);
 
 		debug("%s, %s, state_on %d\n", __func__, parent->name,
@@ -341,10 +276,10 @@ static int imx8_power_domain_probe(struct udevice *dev)
 	return 0;
 }
 
-static int imx8_power_domain_of_to_plat(struct udevice *dev)
+static int imx8_power_domain_ofdata_to_platdata(struct udevice *dev)
 {
 	int reg;
-	struct imx8_power_domain_plat *pdata = dev_get_plat(dev);
+	struct imx8_power_domain_platdata *pdata = dev_get_platdata(dev);
 
 	reg = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev), "reg", -1);
 	if (reg == -1) {
@@ -377,9 +312,9 @@ U_BOOT_DRIVER(imx8_power_domain) = {
 	.of_match = imx8_power_domain_ids,
 	.bind = imx8_power_domain_bind,
 	.probe = imx8_power_domain_probe,
-	.of_to_plat = imx8_power_domain_of_to_plat,
-	.plat_auto	= sizeof(struct imx8_power_domain_plat),
-	.priv_auto	= sizeof(struct imx8_power_domain_priv),
+	.ofdata_to_platdata = imx8_power_domain_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct imx8_power_domain_platdata),
+	.priv_auto_alloc_size = sizeof(struct imx8_power_domain_priv),
 	.ops = &imx8_power_domain_ops,
 	.flags	= DM_FLAG_DEFAULT_PD_CTRL_OFF,
 };

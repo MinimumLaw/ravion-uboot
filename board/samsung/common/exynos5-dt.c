@@ -8,8 +8,6 @@
 #include <dwc3-uboot.h>
 #include <env.h>
 #include <fdtdec.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <i2c.h>
@@ -126,7 +124,7 @@ static struct dwc3_device dwc3_device_data = {
 	.index = 0,
 };
 
-int usb_gadget_handle_interrupts(int index)
+int usb_gadget_handle_interrupts(void)
 {
 	dwc3_uboot_handle_interrupt(0);
 	return 0;
@@ -169,7 +167,7 @@ char *get_dfu_alt_boot(char *interface, char *devstr)
 	if (board_is_odroidxu4() || board_is_odroidhc1() || board_is_odroidhc2())
 		return info;
 
-	dev_num = dectoul(devstr, NULL);
+	dev_num = simple_strtoul(devstr, NULL, 10);
 
 	mmc = find_mmc_device(dev_num);
 	if (!mmc)

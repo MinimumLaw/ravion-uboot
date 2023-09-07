@@ -10,7 +10,6 @@
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <spi.h>
 #include <reset.h>
@@ -236,8 +235,8 @@ static int bcm63xx_spi_xfer(struct udevice *dev, unsigned int bitlen,
 	}
 
 	if (flags & SPI_XFER_END) {
-		struct dm_spi_slave_plat *plat =
-			dev_get_parent_plat(dev);
+		struct dm_spi_slave_platdata *plat =
+			dev_get_parent_platdata(dev);
 		uint16_t val, cmd;
 		int ret;
 
@@ -351,7 +350,7 @@ static int bcm63xx_spi_child_pre_probe(struct udevice *dev)
 	struct bcm63xx_spi_priv *priv = dev_get_priv(dev->parent);
 	const unsigned long *regs = priv->regs;
 	struct spi_slave *slave = dev_get_parent_priv(dev);
-	struct dm_spi_slave_plat *plat = dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *plat = dev_get_parent_platdata(dev);
 
 	/* check cs */
 	if (plat->cs >= priv->num_cs) {
@@ -422,7 +421,7 @@ U_BOOT_DRIVER(bcm63xx_spi) = {
 	.id = UCLASS_SPI,
 	.of_match = bcm63xx_spi_ids,
 	.ops = &bcm63xx_spi_ops,
-	.priv_auto	= sizeof(struct bcm63xx_spi_priv),
+	.priv_auto_alloc_size = sizeof(struct bcm63xx_spi_priv),
 	.child_pre_probe = bcm63xx_spi_child_pre_probe,
 	.probe = bcm63xx_spi_probe,
 };

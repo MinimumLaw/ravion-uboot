@@ -52,11 +52,11 @@ struct bcm2835_gpio_regs {
 };
 
 /**
- * struct bcm2835_gpio_plat - GPIO platform description
+ * struct bcm2835_gpio_platdata - GPIO platform description
  *
  * @base: Base address of GPIO controller
  */
-struct bcm2835_gpio_plat {
+struct bcm2835_gpio_platdata {
 	unsigned long base;
 };
 

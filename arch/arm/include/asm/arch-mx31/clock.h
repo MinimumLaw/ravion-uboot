@@ -7,6 +7,8 @@
 #ifndef __ASM_ARCH_CLOCK_H
 #define __ASM_ARCH_CLOCK_H
 
+#include <common.h>
+
 #define MXC_HCLK	CONFIG_MX31_HCLK_FREQ
 
 #define MXC_CLK32	CONFIG_MX31_CLK32

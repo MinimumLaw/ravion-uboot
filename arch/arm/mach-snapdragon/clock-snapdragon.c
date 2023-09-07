@@ -56,15 +56,15 @@ void clk_enable_vote_clk(phys_addr_t base, const struct vote_clk *vclk)
 	} while ((val != BRANCH_ON_VAL) && (val != BRANCH_NOC_FSM_ON_VAL));
 }
 
-#define APPS_CMD_RCGR_UPDATE BIT(0)
+#define APPS_CMD_RGCR_UPDATE BIT(0)
 
-/* Update clock command via CMD_RCGR */
-void clk_bcr_update(phys_addr_t apps_cmd_rcgr)
+/* Update clock command via CMD_RGCR */
+void clk_bcr_update(phys_addr_t apps_cmd_rgcr)
 {
-	setbits_le32(apps_cmd_rcgr, APPS_CMD_RCGR_UPDATE);
+	setbits_le32(apps_cmd_rgcr, APPS_CMD_RGCR_UPDATE);
 
 	/* Wait for frequency to be updated. */
-	while (readl(apps_cmd_rcgr) & APPS_CMD_RCGR_UPDATE)
+	while (readl(apps_cmd_rgcr) & APPS_CMD_RGCR_UPDATE)
 		;
 }
 
@@ -114,7 +114,7 @@ static int msm_clk_probe(struct udevice *dev)
 {
 	struct msm_clk_priv *priv = dev_get_priv(dev);
 
-	priv->base = dev_read_addr(dev);
+	priv->base = devfdt_get_addr(dev);
 	if (priv->base == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -135,7 +135,6 @@ static const struct udevice_id msm_clk_ids[] = {
 	{ .compatible = "qcom,gcc-apq8016" },
 	{ .compatible = "qcom,gcc-msm8996" },
 	{ .compatible = "qcom,gcc-apq8096" },
-	{ .compatible = "qcom,gcc-sdm845" },
 	{ }
 };
 
@@ -144,6 +143,6 @@ U_BOOT_DRIVER(clk_msm) = {
 	.id		= UCLASS_CLK,
 	.of_match	= msm_clk_ids,
 	.ops		= &msm_clk_ops,
-	.priv_auto	= sizeof(struct msm_clk_priv),
+	.priv_auto_alloc_size = sizeof(struct msm_clk_priv),
 	.probe		= msm_clk_probe,
 };

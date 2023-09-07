@@ -152,7 +152,7 @@ int fdt_next_node(const void *fdt, int offset, int *depth);
  *
  * @fdt:	FDT blob
  * @offset:	Offset of node to check
- * Return: offset of first subnode, or -FDT_ERR_NOTFOUND if there is none
+ * @return offset of first subnode, or -FDT_ERR_NOTFOUND if there is none
  */
 int fdt_first_subnode(const void *fdt, int offset);
 
@@ -164,7 +164,7 @@ int fdt_first_subnode(const void *fdt, int offset);
  *
  * @fdt:	FDT blob
  * @offset:	Offset of previous subnode
- * Return: offset of next subnode, or -FDT_ERR_NOTFOUND if there are no more
+ * @return offset of next subnode, or -FDT_ERR_NOTFOUND if there are no more
  * subnodes
  */
 int fdt_next_subnode(const void *fdt, int offset);
@@ -2031,13 +2031,6 @@ int fdt_del_node(void *fdt, int nodeoffset);
  *	-FDT_ERR_TRUNCATED, standard meanings
  */
 int fdt_overlay_apply(void *fdt, void *fdto);
-
-/**
- * fdt_overlay_apply_node - Merges a node into the base device tree
- *
- * See overlay_apply_node() for details.
- */
-int fdt_overlay_apply_node(void *fdt, int target, void *fdto, int node);
 
 /**********************************************************************/
 /* Debugging / informational functions                                */

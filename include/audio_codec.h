@@ -7,8 +7,6 @@
 #ifndef __AUDIO_CODEC_H__
 #define __AUDIO_CODEC_H__
 
-struct udevice;
-
 /*
  * An audio codec turns digital data into sound with various parameters to
  * control its operation.
@@ -42,7 +40,7 @@ struct audio_codec_ops {
  * @mclk_freq: Codec clock frequency in Hz
  * @bits_per_sample: Must be 16 or 24
  * @channels: Number of channels to use (1=mono, 2=stereo)
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int audio_codec_set_params(struct udevice *dev, int interface, int rate,
 			   int mclk_freq, int bits_per_sample, uint channels);

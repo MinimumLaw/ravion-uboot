@@ -70,8 +70,6 @@ def pytest_addoption(parser):
         help='U-Boot board identity/instance')
     parser.addoption('--build', default=False, action='store_true',
         help='Compile U-Boot before running tests')
-    parser.addoption('--buildman', default=False, action='store_true',
-        help='Use buildman to build U-Boot (assuming --build is given)')
     parser.addoption('--gdbserver', default=None,
         help='Run sandbox under gdbserver. The argument is the channel '+
         'over which gdbserver should communicate, e.g. localhost:1234')
@@ -142,26 +140,16 @@ def pytest_configure(config):
     log = multiplexed_log.Logfile(result_dir + '/test-log.html')
 
     if config.getoption('build'):
-        if config.getoption('buildman'):
-            if build_dir != source_dir:
-                dest_args = ['-o', build_dir, '-w']
-            else:
-                dest_args = ['-i']
-            cmds = (['buildman', '--board', board_type] + dest_args,)
-            name = 'buildman'
+        if build_dir != source_dir:
+            o_opt = 'O=%s' % build_dir
         else:
-            if build_dir != source_dir:
-                o_opt = 'O=%s' % build_dir
-            else:
-                o_opt = ''
-            cmds = (
-                ['make', o_opt, '-s', board_type + '_defconfig'],
-                ['make', o_opt, '-s', '-j{}'.format(os.cpu_count())],
-            )
-            name = 'make'
-
-        with log.section(name):
-            runner = log.get_runner(name, sys.stdout)
+            o_opt = ''
+        cmds = (
+            ['make', o_opt, '-s', board_type + '_defconfig'],
+            ['make', o_opt, '-s', '-j8'],
+        )
+        with log.section('make'):
+            runner = log.get_runner('make', sys.stdout)
             for cmd in cmds:
                 runner.run(cmd, cwd=source_dir)
             runner.close()
@@ -226,8 +214,8 @@ def pytest_configure(config):
         import u_boot_console_exec_attach
         console = u_boot_console_exec_attach.ConsoleExecAttach(log, ubconfig)
 
-re_ut_test_list = re.compile(r'[^a-zA-Z0-9_]_u_boot_list_2_ut_(.*)_test_2_(.*)\s*$')
-def generate_ut_subtest(metafunc, fixture_name, sym_path):
+re_ut_test_list = re.compile(r'_u_boot_list_2_(.*)_test_2_\1_test_(.*)\s*$')
+def generate_ut_subtest(metafunc, fixture_name):
     """Provide parametrization for a ut_subtest fixture.
 
     Determines the set of unit tests built into a U-Boot binary by parsing the
@@ -237,13 +225,12 @@ def generate_ut_subtest(metafunc, fixture_name, sym_path):
     Args:
         metafunc: The pytest test function.
         fixture_name: The fixture name to test.
-        sym_path: Relative path to the symbol file with preceding '/'
-            (e.g. '/u-boot.sym')
 
     Returns:
         Nothing.
     """
-    fn = console.config.build_dir + sym_path
+
+    fn = console.config.build_dir + '/u-boot.sym'
     try:
         with open(fn, 'rt') as f:
             lines = f.readlines()
@@ -318,12 +305,10 @@ def pytest_generate_tests(metafunc):
     Returns:
         Nothing.
     """
+
     for fn in metafunc.fixturenames:
         if fn == 'ut_subtest':
-            generate_ut_subtest(metafunc, fn, '/u-boot.sym')
-            continue
-        if fn == 'ut_spl_subtest':
-            generate_ut_subtest(metafunc, fn, '/spl/u-boot-spl.sym')
+            generate_ut_subtest(metafunc, fn)
             continue
         generate_config(metafunc, fn)
 
@@ -554,10 +539,7 @@ def pytest_runtest_protocol(item, nextitem):
     """
 
     log.get_and_reset_warning()
-    ihook = item.ihook
-    ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
     reports = runtestprotocol(item, nextitem=nextitem)
-    ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     was_warning = log.get_and_reset_warning()
 
     # In pytest 3, runtestprotocol() may not call pytest_runtest_setup() if
@@ -626,4 +608,4 @@ def pytest_runtest_protocol(item, nextitem):
     if failure_cleanup:
         console.cleanup_spawn()
 
-    return True
+    return reports

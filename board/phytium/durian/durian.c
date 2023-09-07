@@ -6,13 +6,8 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <cpu_func.h>
-#include <init.h>
-#include <log.h>
 #include <asm/armv8/mmu.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/system.h>
 #include <asm/io.h>
 #include <linux/arm-smccc.h>
@@ -42,7 +37,7 @@ int board_init(void)
 	return 0;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	struct arm_smccc_res res;
 
@@ -113,3 +108,4 @@ int last_stage_init(void)
 	}
 	return ret;
 }
+

@@ -3,8 +3,8 @@
 #ifndef __BRCMNAND_COMPAT_H
 #define __BRCMNAND_COMPAT_H
 
-struct clk;
-struct udevice;
+#include <clk.h>
+#include <dm.h>
 
 char *devm_kasprintf(struct udevice *dev, gfp_t gfp, const char *fmt, ...);
 

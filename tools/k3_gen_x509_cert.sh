@@ -12,7 +12,6 @@ RAND_KEY=eckey.pem
 LOADADDR=0x41c00000
 BOOTCORE_OPTS=0
 BOOTCORE=16
-DEBUG_TYPE=0
 
 gen_degen_template() {
 cat << 'EOF' > degen-template.txt
@@ -80,7 +79,7 @@ cat << 'EOF' > x509-template.txt
 
  [ debug ]
  debugUID = FORMAT:HEX,OCT:0000000000000000000000000000000000000000000000000000000000000000
- debugType = INTEGER:TEST_DEBUG_TYPE
+ debugType = INTEGER:4
  coreDbgEn = INTEGER:0
  coreDbgSecEn = INTEGER:0
 EOF
@@ -152,9 +151,8 @@ options_help[k]="key_file:file with key inside it. If not provided script genera
 options_help[o]="output_file:Name of the final output file. default to $OUTPUT"
 options_help[c]="core_id:target core id on which the image would be running. Default to $BOOTCORE"
 options_help[l]="loadaddr: Target load address of the binary in hex. Default to $LOADADDR"
-options_help[d]="debug_type: Debug type, set to 4 to enable early JTAG. Default to $DEBUG_TYPE"
 
-while getopts "b:k:o:c:l:d:h" opt
+while getopts "b:k:o:c:l:h" opt
 do
 	case $opt in
 	b)
@@ -171,9 +169,6 @@ do
 	;;
 	c)
 		BOOTCORE=$OPTARG
-	;;
-	d)
-		DEBUG_TYPE=$OPTARG
 	;;
 	h)
 		usage
@@ -229,15 +224,12 @@ gen_cert() {
 	#echo "	LOADADDR = 0x$ADDR"
 	#echo "	IMAGE_SIZE = $BIN_SIZE"
 	#echo "	CERT_TYPE = $CERTTYPE"
-	#echo "	DEBUG_TYPE = $DEBUG_TYPE"
 	sed -e "s/TEST_IMAGE_LENGTH/$BIN_SIZE/"	\
 		-e "s/TEST_IMAGE_SHA_VAL/$SHA_VAL/" \
 		-e "s/TEST_CERT_TYPE/$CERTTYPE/" \
 		-e "s/TEST_BOOT_CORE_OPTS/$BOOTCORE_OPTS/" \
 		-e "s/TEST_BOOT_CORE/$BOOTCORE/" \
-		-e "s/TEST_BOOT_ADDR/$ADDR/" \
-		-e "s/TEST_DEBUG_TYPE/$DEBUG_TYPE/" \
-		x509-template.txt > $TEMP_X509
+		-e "s/TEST_BOOT_ADDR/$ADDR/" x509-template.txt > $TEMP_X509
 	openssl req -new -x509 -key $KEY -nodes -outform DER -out $CERT -config $TEMP_X509 -sha512
 }
 

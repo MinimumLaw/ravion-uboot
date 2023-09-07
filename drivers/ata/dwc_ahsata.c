@@ -6,25 +6,20 @@
 
 #include <common.h>
 #include <ahci.h>
-#include <blk.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <dwc_ahsata.h>
 #include <fis.h>
 #include <libata.h>
-#include <log.h>
 #include <malloc.h>
 #include <memalign.h>
-#include <part.h>
 #include <sata.h>
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/sata.h>
 #include <linux/bitops.h>
 #include <linux/ctype.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include "dwc_ahsata_priv.h"
 
@@ -1019,7 +1014,7 @@ int dwc_ahsata_scan(struct udevice *dev)
 		}
 	}
 
-	desc = dev_get_uclass_plat(blk);
+	desc = dev_get_uclass_platdata(blk);
 	ret = dwc_ahsata_scan_common(uc_priv, desc);
 	if (ret) {
 		debug("%s: Failed to scan bus\n", __func__);
@@ -1054,7 +1049,7 @@ int dwc_ahsata_probe(struct udevice *dev)
 static ulong dwc_ahsata_read(struct udevice *blk, lbaint_t blknr,
 			     lbaint_t blkcnt, void *buffer)
 {
-	struct blk_desc *desc = dev_get_uclass_plat(blk);
+	struct blk_desc *desc = dev_get_uclass_platdata(blk);
 	struct udevice *dev = dev_get_parent(blk);
 	struct ahci_uc_priv *uc_priv;
 
@@ -1065,7 +1060,7 @@ static ulong dwc_ahsata_read(struct udevice *blk, lbaint_t blknr,
 static ulong dwc_ahsata_write(struct udevice *blk, lbaint_t blknr,
 			      lbaint_t blkcnt, const void *buffer)
 {
-	struct blk_desc *desc = dev_get_uclass_plat(blk);
+	struct blk_desc *desc = dev_get_uclass_platdata(blk);
 	struct udevice *dev = dev_get_parent(blk);
 	struct ahci_uc_priv *uc_priv;
 

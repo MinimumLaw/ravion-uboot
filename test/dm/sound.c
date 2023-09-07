@@ -9,7 +9,6 @@
 #include <sound.h>
 #include <dm/test.h>
 #include <test/ut.h>
-#include <test/test.h>
 #include <asm/test.h>
 
 /* Basic test of the sound codec uclass */
@@ -33,7 +32,7 @@ static int dm_test_sound(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_sound, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_sound, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Test of the 'start beep' operations */
 static int dm_test_sound_beep(struct unit_test_state *uts)
@@ -54,4 +53,4 @@ static int dm_test_sound_beep(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_sound_beep, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_sound_beep, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);

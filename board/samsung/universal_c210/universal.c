@@ -7,17 +7,14 @@
 
 #include <common.h>
 #include <env.h>
-#include <log.h>
 #include <spi.h>
 #include <lcd.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <asm/arch/adc.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/watchdog.h>
 #include <ld9040.h>
-#include <linux/delay.h>
 #include <power/pmic.h>
 #include <usb.h>
 #include <usb/dwc2_udc.h>
@@ -33,12 +30,10 @@ DECLARE_GLOBAL_DATA_PTR;
 unsigned int board_rev;
 static int init_pmic_lcd(void);
 
-#ifdef CONFIG_REVISION_TAG
 u32 get_board_rev(void)
 {
 	return board_rev;
 }
-#endif
 
 int exynos_power_init(void)
 {

@@ -6,7 +6,7 @@ obj-y += boards.o
 obj-y += spl_board_init.o
 obj-y += memconf.o
 obj-y += bcu/
-obj-$(CONFIG_SPL_MMC) += mmc-boot-mode.o
+obj-$(CONFIG_SPL_MMC_SUPPORT) += mmc-boot-mode.o
 
 else
 
@@ -20,11 +20,14 @@ obj-y += reset.o
 endif
 
 obj-$(CONFIG_MICRO_SUPPORT_CARD) += micro-support-card.o
+obj-y += pinctrl-glue.o
 obj-$(CONFIG_MMC) += mmc-first-dev.o
+obj-$(CONFIG_NAND_DENALI) += nand-reset.o
 obj-y += fdt-fixup.o
 
 endif
 
+obj-y += sbc/
 obj-y += soc-info.o
 obj-y += boot-device/
 obj-y += clk/

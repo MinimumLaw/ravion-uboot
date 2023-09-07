@@ -5,8 +5,6 @@
  */
 
 #include <common.h>
-#include <blk.h>
-#include <part.h>
 #include <linux/err.h>
 
 struct blk_driver *blk_driver_lookup_type(int if_type)
@@ -52,7 +50,7 @@ const char *blk_get_if_type_name(enum if_type if_type)
  * @drv:	Legacy block driver
  * @devnum:	Device number (0 = first)
  * @descp:	Returns block device descriptor on success
- * Return: 0 on success, -ENODEV if there is no such device, -ENOSYS if the
+ * @return 0 on success, -ENODEV if there is no such device, -ENOSYS if the
  * driver does not provide a way to find a device, or other -ve on other
  * error.
  */

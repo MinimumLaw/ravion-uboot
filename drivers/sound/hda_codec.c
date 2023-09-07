@@ -10,13 +10,10 @@
 #include <common.h>
 #include <dm.h>
 #include <hda_codec.h>
-#include <log.h>
 #include <pci.h>
 #include <sound.h>
 #include <asm/io.h>
 #include <dt-bindings/sound/azalia.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 /**
  * struct hda_regs - HDA registers
@@ -302,7 +299,7 @@ int hda_codecs_init(struct udevice *dev, struct hda_regs *regs, u32 codec_mask)
  * @regs: HDA registers
  * @val: Command to write
  * @response: Set to response from codec
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 static int exec_verb(struct hda_regs *regs, uint val, uint *response)
 {
@@ -324,7 +321,7 @@ static int exec_verb(struct hda_regs *regs, uint val, uint *response)
  * @nid: Parent node ID to check
  * @num_sub_nodesp: Returns number of subnodes
  * @start_sub_node_nidp: Returns start subnode number
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 static int get_subnode_info(struct hda_regs *regs, uint nid,
 			    uint *num_sub_nodesp, uint *start_sub_node_nidp)
@@ -354,7 +351,7 @@ static int get_subnode_info(struct hda_regs *regs, uint nid,
  *
  * @regs: HDA registers
  * @group_nid: Group node ID to check
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 static uint find_beep_node_in_group(struct hda_regs *regs, uint group_nid)
 {
@@ -395,7 +392,7 @@ static uint find_beep_node_in_group(struct hda_regs *regs, uint group_nid)
  * Checks if the given audio group contains a beep generator
  * @regs: HDA registers
  * @nid: Node ID to check
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 static int audio_group_has_beep_node(struct hda_regs *regs, uint nid)
 {
@@ -424,7 +421,7 @@ static int audio_group_has_beep_node(struct hda_regs *regs, uint nid)
  * instead.
  *
  * @dev: Sound device
- * Return: Node ID >0 if found, -ve error code otherwise
+ * @return Node ID >0 if found, -ve error code otherwise
  */
 static int get_hda_beep_nid(struct udevice *dev)
 {
@@ -461,7 +458,7 @@ static int get_hda_beep_nid(struct udevice *dev)
  *
  * @priv: Device's private data
  * @divider: Divider value (0 to disable the beep)
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 static int set_beep_divisor(struct hda_codec_priv *priv, uint divider)
 {
@@ -539,7 +536,7 @@ U_BOOT_DRIVER(hda_codec) = {
 	.name		= "hda_codec",
 	.id		= UCLASS_SOUND,
 	.ops		= &hda_codec_ops,
-	.priv_auto	= sizeof(struct hda_codec_priv),
+	.priv_auto_alloc_size	= sizeof(struct hda_codec_priv),
 	.probe		= hda_codec_init,
 };
 

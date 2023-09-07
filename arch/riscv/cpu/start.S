@@ -43,40 +43,24 @@ _start:
 	csrr	a0, CSR_MHARTID
 #endif
 
-	/*
-	 * Save hart id and dtb pointer. The thread pointer register is not
-	 * modified by C code. It is used by secondary_hart_loop.
-	 */
+	/* save hart id and dtb pointer */
 	mv	tp, a0
 	mv	s1, a1
 
-	/*
-	 * Set the global data pointer to a known value in case we get a very
-	 * early trap. The global data pointer will be set its actual value only
-	 * after it has been initialized.
-	 */
-	mv	gp, zero
-
-	/*
-	 * Set the trap handler. This must happen after initializing gp because
-	 * the handler may use it.
-	 */
 	la	t0, trap_entry
 	csrw	MODE_PREFIX(tvec), t0
 
-	/*
-	 * Mask all interrupts. Interrupts are disabled globally (in m/sstatus)
-	 * for U-Boot, but we will need to read m/sip to determine if we get an
-	 * IPI
-	 */
+	/* mask all interrupts */
 	csrw	MODE_PREFIX(ie), zero
 
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 	/* check if hart is within range */
 	/* tp: hart id */
 	li	t0, CONFIG_NR_CPUS
 	bge	tp, t0, hart_out_of_bounds_loop
+#endif
 
+#ifdef CONFIG_SMP
 	/* set xSIE bit to receive IPIs */
 #if CONFIG_IS_ENABLED(RISCV_MMODE)
 	li	t0, MIE_MSIE
@@ -103,13 +87,13 @@ call_board_init_f_0:
 	jal	board_init_f_alloc_reserve
 
 	/*
-	 * Save global data pointer for later. We don't set it here because it
-	 * is not initialized yet.
+	 * Set global data pointer here for all harts, uninitialized at this
+	 * point.
 	 */
-	mv	s0, a0
+	mv	gp, a0
 
 	/* setup stack */
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 	/* tp: hart id */
 	slli	t0, tp, CONFIG_STACK_SIZE_SHIFT
 	sub	sp, a0, t0
@@ -117,53 +101,40 @@ call_board_init_f_0:
 	mv	sp, a0
 #endif
 
-	/* Configure proprietary settings and customized CSRs of harts */
-call_harts_early_init:
-	jal	harts_early_init
-
 #ifndef CONFIG_XIP
 	/*
 	 * Pick hart to initialize global data and run U-Boot. The other harts
 	 * wait for initialization to complete.
 	 */
 	la	t0, hart_lottery
-	li	t1, 1
+	li	s2, 1
 	amoswap.w s2, t1, 0(t0)
 	bnez	s2, wait_for_gd_init
 #else
-	/*
-	 * FIXME: gp is set before it is initialized. If an XIP U-Boot ever
-	 * encounters a pending IPI on boot it is liable to jump to whatever
-	 * memory happens to be in ipi_data.addr on boot. It may also run into
-	 * problems if it encounters an exception too early (because printf/puts
-	 * accesses gd).
-	 */
-	mv	gp, s0
 	bnez	tp, secondary_hart_loop
+#endif
+
+#ifdef CONFIG_OF_PRIOR_STAGE
+	la	t0, prior_stage_fdt_address
+	SREG	s1, 0(t0)
 #endif
 
 	jal	board_init_f_init_reserve
 
-	SREG	s1, GD_FIRMWARE_FDT_ADDR(gp)
 	/* save the boot hart id to global_data */
 	SREG	tp, GD_BOOT_HART(gp)
 
 #ifndef CONFIG_XIP
 	la	t0, available_harts_lock
-	amoswap.w.rl zero, zero, 0(t0)
+	fence	rw, w
+	amoswap.w zero, zero, 0(t0)
 
 wait_for_gd_init:
 	la	t0, available_harts_lock
 	li	t1, 1
-1:	amoswap.w.aq t1, t1, 0(t0)
+1:	amoswap.w t1, t1, 0(t0)
+	fence	r, rw
 	bnez	t1, 1b
-
-	/*
-	 * Set the global data pointer only when gd_t has been initialized.
-	 * This was already set by arch_setup_gd on the boot hart, but all other
-	 * harts' global data pointers gets set here.
-	 */
-	mv	gp, s0
 
 	/* register available harts in the available_harts mask */
 	li	t1, 1
@@ -172,7 +143,8 @@ wait_for_gd_init:
 	or	t2, t2, t1
 	SREG	t2, GD_AVAILABLE_HARTS(gp)
 
-	amoswap.w.rl zero, zero, 0(t0)
+	fence	rw, w
+	amoswap.w zero, zero, 0(t0)
 
 	/*
 	 * Continue on hart lottery winner, others branch to
@@ -212,7 +184,7 @@ spl_stack_gd_setup:
 	mv	s0, a0
 
 	/* setup stack on main hart */
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 	/* tp: hart id */
 	slli	t0, tp, CONFIG_STACK_SIZE_SHIFT
 	sub	sp, s0, t0
@@ -220,7 +192,6 @@ spl_stack_gd_setup:
 	mv	sp, s0
 #endif
 
-#if CONFIG_IS_ENABLED(SMP)
 	/* set new stack and global data pointer on secondary harts */
 spl_secondary_hart_stack_gd_setup:
 	la	a0, secondary_hart_relocate
@@ -235,7 +206,6 @@ spl_secondary_hart_stack_gd_setup:
 	la	a0, secondary_harts_relocation_error
 	jal	printf
 	jal	hang
-#endif
 
 	/* set new global data pointer on main hart */
 1:	mv	gp, s0
@@ -263,7 +233,7 @@ relocate_code:
  *Set up the stack
  */
 stack_setup:
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 	/* tp: hart id */
 	slli	t0, tp, CONFIG_STACK_SIZE_SHIFT
 	sub	sp, s2, t0
@@ -358,7 +328,7 @@ clbss_l:
 	blt	t0, t1, clbss_l
 
 relocate_secondary_harts:
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 	/* send relocation IPI */
 	la	t0, secondary_hart_relocate
 	add	a0, t0, t6
@@ -402,12 +372,14 @@ call_board_init_r:
  */
 	jr	t4			/* jump to board_init_r() */
 
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 hart_out_of_bounds_loop:
 	/* Harts in this loop are out of bounds, increase CONFIG_NR_CPUS. */
 	wfi
 	j	hart_out_of_bounds_loop
+#endif
 
+#ifdef CONFIG_SMP
 /* SMP relocation entry */
 secondary_hart_relocate:
 	/* a1: new sp */
@@ -422,14 +394,10 @@ secondary_hart_relocate:
 	mv	gp, a2
 #endif
 
-/*
- * Interrupts are disabled globally, but they can still be read from m/sip. The
- * wfi function will wake us up if we get an IPI, even if we do not trap.
- */
 secondary_hart_loop:
 	wfi
 
-#if CONFIG_IS_ENABLED(SMP)
+#ifdef CONFIG_SMP
 	csrr	t0, MODE_PREFIX(ip)
 #if CONFIG_IS_ENABLED(RISCV_MMODE)
 	andi	t0, t0, MIE_MSIE

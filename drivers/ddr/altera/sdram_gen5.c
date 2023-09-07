@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <div64.h>
 #include <init.h>
-#include <log.h>
 #include <ram.h>
 #include <reset.h>
 #include <watchdog.h>
@@ -15,7 +14,6 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/sdram.h>
 #include <asm/arch/system_manager.h>
-#include <asm/bitops.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 
@@ -27,7 +25,7 @@ struct altera_gen5_sdram_priv {
 	struct ram_info info;
 };
 
-struct altera_gen5_sdram_plat {
+struct altera_gen5_sdram_platdata {
 	struct socfpga_sdr *sdr;
 };
 
@@ -563,9 +561,9 @@ static unsigned long sdram_calculate_size(struct socfpga_sdr_ctrl *sdr_ctrl)
 	return temp;
 }
 
-static int altera_gen5_sdram_of_to_plat(struct udevice *dev)
+static int altera_gen5_sdram_ofdata_to_platdata(struct udevice *dev)
 {
-	struct altera_gen5_sdram_plat *plat = dev_get_plat(dev);
+	struct altera_gen5_sdram_platdata *plat = dev->platdata;
 
 	plat->sdr = (struct socfpga_sdr *)devfdt_get_addr_index(dev, 0);
 	if (!plat->sdr)
@@ -578,7 +576,7 @@ static int altera_gen5_sdram_probe(struct udevice *dev)
 {
 	int ret;
 	unsigned long sdram_size;
-	struct altera_gen5_sdram_plat *plat = dev_get_plat(dev);
+	struct altera_gen5_sdram_platdata *plat = dev->platdata;
 	struct altera_gen5_sdram_priv *priv = dev_get_priv(dev);
 	struct socfpga_sdr_ctrl *sdr_ctrl = &plat->sdr->sdr_ctrl;
 	struct reset_ctl_bulk resets;
@@ -646,10 +644,10 @@ U_BOOT_DRIVER(altera_gen5_sdram) = {
 	.id = UCLASS_RAM,
 	.of_match = altera_gen5_sdram_ids,
 	.ops = &altera_gen5_sdram_ops,
-	.of_to_plat = altera_gen5_sdram_of_to_plat,
-	.plat_auto	= sizeof(struct altera_gen5_sdram_plat),
+	.ofdata_to_platdata = altera_gen5_sdram_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct altera_gen5_sdram_platdata),
 	.probe = altera_gen5_sdram_probe,
-	.priv_auto	= sizeof(struct altera_gen5_sdram_priv),
+	.priv_auto_alloc_size = sizeof(struct altera_gen5_sdram_priv),
 };
 
 #endif /* CONFIG_SPL_BUILD */

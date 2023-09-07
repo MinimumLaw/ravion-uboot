@@ -9,7 +9,6 @@
 
 #include <common.h>
 #include <command.h>
-#include <asm/global_data.h>
 #include "asm/m5282.h"
 #include <bmp_layout.h>
 #include <env.h>
@@ -21,9 +20,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if IS_ENABLED(CONFIG_VIDEO_VCXK)
-extern unsigned long display_width;
-extern unsigned long display_height;
+#ifdef CONFIG_VIDEO
+unsigned long display_width;
+unsigned long display_height;
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -184,7 +183,8 @@ void __led_set(led_id_t mask, int state)
 		MCFGPTA_GPTPORT &= ~(1 << 3);
 }
 
-#if IS_ENABLED(CONFIG_VIDEO_VCXK)
+#if defined(CONFIG_VIDEO)
+
 int drv_video_init(void)
 {
 	char *s;
@@ -194,13 +194,13 @@ int drv_video_init(void)
 	printf("Init Video as ");
 	s = env_get("displaywidth");
 	if (s != NULL)
-		display_width = dectoul(s, NULL);
+		display_width = simple_strtoul(s, NULL, 10);
 	else
 		display_width = 256;
 
 	s = env_get("displayheight");
 	if (s != NULL)
-		display_height = dectoul(s, NULL);
+		display_height = simple_strtoul(s, NULL, 10);
 	else
 		display_height = 256;
 
@@ -214,7 +214,7 @@ int drv_video_init(void)
 #ifdef CONFIG_SPLASH_SCREEN
 	s = env_get("splashimage");
 	if (s != NULL) {
-		splash = hextoul(s, NULL);
+		splash = simple_strtoul(s, NULL, 16);
 		vcxk_acknowledge_wait();
 		video_display_bitmap(splash, 0, 0);
 	}
@@ -225,8 +225,8 @@ int drv_video_init(void)
 
 /*---------------------------------------------------------------------------*/
 
-#if IS_ENABLED(CONFIG_VIDEO_VCXK)
-int do_brightness(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+#ifdef CONFIG_VIDEO
+int do_brightness(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int rcode = 0;
 	ulong side;
@@ -234,8 +234,8 @@ int do_brightness(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 	switch (argc) {
 	case 3:
-		side = dectoul(argv[1], NULL);
-		bright = dectoul(argv[2], NULL);
+		side = simple_strtoul(argv[1], NULL, 10);
+		bright = simple_strtoul(argv[2], NULL, 10);
 		if ((side >= 0) && (side <= 3) &&
 			(bright >= 0) && (bright <= 1000)) {
 			vcxk_setbrightness(side, bright);

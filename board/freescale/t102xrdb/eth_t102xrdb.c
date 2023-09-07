@@ -7,8 +7,6 @@
 
 #include <common.h>
 #include <command.h>
-#include <fdt_support.h>
-#include <net.h>
 #include <netdev.h>
 #include <asm/mmu.h>
 #include <asm/processor.h>
@@ -26,7 +24,7 @@
 #include <asm/fsl_serdes.h>
 #include "../common/fman.h"
 
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 #if defined(CONFIG_FMAN_ENET)
 	int i, interface;
@@ -64,7 +62,7 @@ int board_eth_init(struct bd_info *bis)
 		/* set the on-board RGMII2  PHY */
 		fm_info_set_phy_address(FM1_DTSEC3, RGMII_PHY2_ADDR);
 
-		/* set 10GBase-R with Aquantia AQR105 PHY */
+		/* set 10G XFI with Aquantia AQR105 PHY */
 		fm_info_set_phy_address(FM1_10GEC1, FM1_10GEC1_PHY_ADDR);
 		break;
 #endif
@@ -89,9 +87,6 @@ int board_eth_init(struct bd_info *bis)
 		interface = fm_info_get_enet_if(i);
 		switch (interface) {
 		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_ID:
 			dev = miiphy_get_dev_by_name(DEFAULT_FM_MDIO_NAME);
 			fm_info_set_mdio(i, dev);
 			break;
@@ -103,7 +98,7 @@ int board_eth_init(struct bd_info *bis)
 #endif
 			fm_info_set_mdio(i, dev);
 			break;
-		case PHY_INTERFACE_MODE_2500BASEX:
+		case PHY_INTERFACE_MODE_SGMII_2500:
 			dev = miiphy_get_dev_by_name(DEFAULT_FM_TGEC_MDIO_NAME);
 			fm_info_set_mdio(i, dev);
 			break;
@@ -133,12 +128,12 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 			      enum fm_port port, int offset)
 {
 #if defined(CONFIG_TARGET_T1024RDB)
-	if (((fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_2500BASEX) ||
+	if (((fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_SGMII_2500) ||
 	     (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_SGMII)) &&
 			(port == FM1_DTSEC3)) {
 		fdt_set_phy_handle(fdt, compat, addr, "sg_2500_aqr105_phy4");
 		fdt_setprop_string(fdt, offset, "phy-connection-type",
-				   "2500base-x");
+				   "sgmii-2500");
 		fdt_status_disabled_by_alias(fdt, "xg_aqr105_phy3");
 	}
 #endif

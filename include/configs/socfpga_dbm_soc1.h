@@ -12,8 +12,12 @@
 
 /* Booting Linux */
 #define CONFIG_BOOTFILE		"fitImage"
+#define CONFIG_BOOTCOMMAND	"run mmc_mmc"
+#define CONFIG_LOADADDR		0x01000000
+#define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
 
 /* Environment is in MMC */
+#define CONFIG_ENV_OVERWRITE
 
 /* Extra Environment */
 #define CONFIG_EXTRA_ENV_SETTINGS					\

@@ -29,14 +29,13 @@
 #include <ext4fs.h>
 #include <ext_common.h>
 #include "ext4_common.h"
-#include <log.h>
 
 lbaint_t part_offset;
 
 static struct blk_desc *ext4fs_blk_desc;
-static struct disk_partition *part_info;
+static disk_partition_t *part_info;
 
-void ext4fs_set_blk_dev(struct blk_desc *rbdd, struct disk_partition *info)
+void ext4fs_set_blk_dev(struct blk_desc *rbdd, disk_partition_t *info)
 {
 	assert(rbdd->blksz == (1 << rbdd->log2blksz));
 	ext4fs_blk_desc = rbdd;

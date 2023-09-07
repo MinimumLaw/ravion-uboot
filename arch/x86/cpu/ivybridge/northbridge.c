@@ -8,8 +8,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/msr.h>
 #include <asm/cpu.h>
 #include <asm/intel_regs.h>
@@ -19,7 +17,6 @@
 #include <asm/arch/pch.h>
 #include <asm/arch/model_206ax.h>
 #include <asm/arch/sandybridge.h>
-#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

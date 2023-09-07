@@ -15,9 +15,7 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <relocate.h>
-#include <asm/global_data.h>
 #include <asm/u-boot-x86.h>
 #include <asm/sections.h>
 #include <elf.h>
@@ -35,7 +33,6 @@ int copy_uboot_to_ram(void)
 	return 0;
 }
 
-#ifndef CONFIG_EFI_APP
 int clear_bss(void)
 {
 	ulong dst_addr = (ulong)&__bss_start + gd->reloc_off;
@@ -47,7 +44,6 @@ int clear_bss(void)
 
 	return 0;
 }
-#endif
 
 #if CONFIG_IS_ENABLED(X86_64)
 static void do_elf_reloc_fixups64(unsigned int text_base, uintptr_t size,

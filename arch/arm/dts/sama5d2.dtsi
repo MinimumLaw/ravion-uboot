@@ -32,7 +32,7 @@
 		#size-cells = <1>;
 		u-boot,dm-pre-reloc;
 
-		usb1: ohci@400000 {
+		usb1: ohci@00400000 {
 			compatible = "atmel,at91rm9200-ohci", "usb-ohci";
 			reg = <0x00400000 0x100000>;
 			clocks = <&uhphs_clk>, <&uhphs_clk>, <&uhpck>;
@@ -40,7 +40,7 @@
 			status = "disabled";
 		};
 
-		usb2: ehci@500000 {
+		usb2: ehci@00500000 {
 			compatible = "atmel,at91sam9g45-ehci", "usb-ehci";
 			reg = <0x00500000 0x100000>;
 			clocks = <&utmi>, <&uhphs_clk>;
@@ -671,14 +671,6 @@
 				status = "disabled";
 			};
 
-			pwm0: pwm@f802c000 {
-				compatible = "atmel,sama5d2-pwm";
-				reg = <0xf802c000 0x4000>;
-				clocks = <&pwm_clk>;
-				#pwm-cells = <3>;
-				status = "disabled";
-			};
-
 			rstc@f8048000 {
 				compatible = "atmel,sama5d3-rstc";
 				reg = <0xf8048000 0x10>;
@@ -750,14 +742,6 @@
 				compatible = "atmel,at91sam9260-usart";
 				reg = <0xfc008000 0x100>;
 				clocks = <&uart3_clk>;
-				clock-names = "usart";
-				status = "disabled";
-			};
-
-			uart4: serial@fc00c000 {
-				compatible = "atmel,at91sam9260-usart";
-				reg = <0xfc00c000 0x100>;
-				clocks = <&uart4_clk>;
 				clock-names = "usart";
 				status = "disabled";
 			};

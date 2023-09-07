@@ -8,7 +8,6 @@
 #include <asm/io.h>
 #include <asm/arch-rockchip/sdram.h>
 #include <asm/arch-rockchip/sdram_pctl_px30.h>
-#include <linux/delay.h>
 
 /*
  * rank = 1: cs0

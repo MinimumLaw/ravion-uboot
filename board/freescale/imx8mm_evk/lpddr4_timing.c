@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2018-2019 NXP
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
  *
  * Generated code from MX8M_DDR_tool
  */
@@ -1059,6 +1060,7 @@ struct dram_cfg_param ddr_fsp0_cfg[] = {
 	{ 0x54008, 0x131f },
 	{ 0x54009, 0xc8 },
 	{ 0x5400b, 0x2 },
+	{ 0x5400d, 0x100 },
 	{ 0x54012, 0x110 },
 	{ 0x54019, 0x2dd4 },
 	{ 0x5401a, 0x31 },
@@ -1087,6 +1089,7 @@ struct dram_cfg_param ddr_fsp0_cfg[] = {
 	{ 0xd0000, 0x1 },
 };
 
+
 /* P1 message block paremeter for training firmware */
 struct dram_cfg_param ddr_fsp1_cfg[] = {
 	{ 0xd0000, 0x0 },
@@ -1098,6 +1101,7 @@ struct dram_cfg_param ddr_fsp1_cfg[] = {
 	{ 0x54008, 0x121f },
 	{ 0x54009, 0xc8 },
 	{ 0x5400b, 0x2 },
+	{ 0x5400d, 0x100 },
 	{ 0x54012, 0x110 },
 	{ 0x54019, 0x84 },
 	{ 0x5401a, 0x31 },
@@ -1126,6 +1130,7 @@ struct dram_cfg_param ddr_fsp1_cfg[] = {
 	{ 0xd0000, 0x1 },
 };
 
+
 /* P2 message block paremeter for training firmware */
 struct dram_cfg_param ddr_fsp2_cfg[] = {
 	{ 0xd0000, 0x0 },
@@ -1137,6 +1142,7 @@ struct dram_cfg_param ddr_fsp2_cfg[] = {
 	{ 0x54008, 0x121f },
 	{ 0x54009, 0xc8 },
 	{ 0x5400b, 0x2 },
+	{ 0x5400d, 0x100 },
 	{ 0x54012, 0x110 },
 	{ 0x54019, 0x84 },
 	{ 0x5401a, 0x31 },
@@ -1164,6 +1170,7 @@ struct dram_cfg_param ddr_fsp2_cfg[] = {
 	{ 0x5403d, 0x1600 },
 	{ 0xd0000, 0x1 },
 };
+
 
 /* P0 2D message block paremeter for training firmware */
 struct dram_cfg_param ddr_fsp0_2d_cfg[] = {

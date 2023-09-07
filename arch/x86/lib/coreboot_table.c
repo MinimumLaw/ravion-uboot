@@ -4,13 +4,11 @@
  */
 
 #include <common.h>
+#include <acpi_s3.h>
 #include <malloc.h>
-#include <net.h>
 #include <vbe.h>
-#include <acpi/acpi_s3.h>
 #include <asm/coreboot_tables.h>
 #include <asm/e820.h>
-#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -22,11 +20,11 @@ int high_table_reserve(void)
 	gd->arch.high_table_ptr = gd->start_addr_sp;
 
 	/* clear the memory */
-	if (IS_ENABLED(CONFIG_HAVE_ACPI_RESUME) &&
-	    gd->arch.prev_sleep_state != ACPI_S3) {
+#ifdef CONFIG_HAVE_ACPI_RESUME
+	if (gd->arch.prev_sleep_state != ACPI_S3)
+#endif
 		memset((void *)gd->arch.high_table_ptr, 0,
 		       CONFIG_HIGH_TABLE_SIZE);
-	}
 
 	gd->start_addr_sp &= ~0xf;
 

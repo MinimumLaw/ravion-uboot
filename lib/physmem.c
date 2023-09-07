@@ -9,7 +9,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <mapmem.h>
 #include <physmem.h>
 #include <linux/compiler.h>

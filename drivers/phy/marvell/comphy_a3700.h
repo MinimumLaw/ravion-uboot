@@ -7,6 +7,7 @@
 #define _COMPHY_A3700_H_
 
 #include "comphy_core.h"
+#include "comphy_hpipe.h"
 
 #define MVEBU_REG(offs)			\
 	((void __iomem *)(ulong)MVEBU_REGISTER(offs))
@@ -120,7 +121,6 @@ static inline void __iomem *phy_addr(enum phy_unit unit, u32 addr)
 
 #define MISC_REG0			0x4f
 #define rb_clk100m_125m_en		BIT(4)
-#define rb_txdclk_2x_sel		BIT(6)
 #define rb_clk500m_en			BIT(7)
 #define rb_ref_clk_sel			BIT(10)
 

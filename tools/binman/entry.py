@@ -4,20 +4,21 @@
 # Base class for all entries
 #
 
+from __future__ import print_function
+
 from collections import namedtuple
 import importlib
 import os
-import pathlib
 import sys
 
-from binman import bintool
-from binman import comp_util
-from dtoc import fdt_util
-from patman import tools
-from patman.tools import to_hex, to_hex_size
-from patman import tout
+import fdt_util
+import tools
+from tools import ToHex, ToHexSize
+import tout
 
 modules = {}
+
+our_path = os.path.dirname(os.path.realpath(__file__))
 
 
 # An argument which can be passed to entries on the command line, in lieu of
@@ -51,40 +52,20 @@ class Entry(object):
         uncomp_size: Size of uncompressed data in bytes, if the entry is
             compressed, else None
         contents_size: Size of contents in bytes, 0 by default
-        align: Entry start offset alignment relative to the start of the
-            containing section, or None
+        align: Entry start offset alignment, or None
         align_size: Entry size alignment, or None
-        align_end: Entry end offset alignment relative to the start of the
-            containing section, or None
-        pad_before: Number of pad bytes before the contents when it is placed
-            in the containing section, 0 if none. The pad bytes become part of
-            the entry.
-        pad_after: Number of pad bytes after the contents when it is placed in
-            the containing section, 0 if none. The pad bytes become part of
-            the entry.
-        data: Contents of entry (string of bytes). This does not include
-            padding created by pad_before or pad_after. If the entry is
-            compressed, this contains the compressed data.
-        uncomp_data: Original uncompressed data, if this entry is compressed,
-            else None
+        align_end: Entry end offset alignment, or None
+        pad_before: Number of pad bytes before the contents, 0 if none
+        pad_after: Number of pad bytes after the contents, 0 if none
+        data: Contents of entry (string of bytes)
         compress: Compression algoithm used (e.g. 'lz4'), 'none' if none
         orig_offset: Original offset value read from node
         orig_size: Original size value read from node
-        missing: True if this entry is missing its contents
-        allow_missing: Allow children of this entry to be missing (used by
-            subclasses such as Entry_section)
-        allow_fake: Allow creating a dummy fake file if the blob file is not
-            available. This is mainly used for testing.
-        external: True if this entry contains an external binary blob
-        bintools: Bintools used by this entry (only populated for Image)
-        missing_bintools: List of missing bintools for this entry
-        update_hash: True if this entry's "hash" subnode should be
-            updated with a hash of the entry contents
     """
     def __init__(self, section, etype, node, name_prefix=''):
         # Put this here to allow entry-docs and help to work without libfdt
         global state
-        from binman import state
+        import state
 
         self.section = section
         self.etype = etype
@@ -95,7 +76,6 @@ class Entry(object):
         self.pre_reset_size = None
         self.uncomp_size = None
         self.data = None
-        self.uncomp_data = None
         self.contents_size = 0
         self.align = None
         self.align_size = None
@@ -104,122 +84,62 @@ class Entry(object):
         self.pad_after = 0
         self.offset_unset = False
         self.image_pos = None
-        self.expand_size = False
+        self._expand_size = False
         self.compress = 'none'
-        self.missing = False
-        self.faked = False
-        self.external = False
-        self.allow_missing = False
-        self.allow_fake = False
-        self.bintools = {}
-        self.missing_bintools = []
-        self.update_hash = True
 
     @staticmethod
-    def FindEntryClass(etype, expanded):
+    def Lookup(node_path, etype):
         """Look up the entry class for a node.
 
         Args:
             node_node: Path name of Node object containing information about
                        the entry to create (used for errors)
             etype:   Entry type to use
-            expanded: Use the expanded version of etype
 
         Returns:
-            The entry class object if found, else None if not found and expanded
-                is True, else a tuple:
-                    module name that could not be found
-                    exception received
+            The entry class object if found, else None
         """
         # Convert something like 'u-boot@0' to 'u_boot' since we are only
         # interested in the type.
         module_name = etype.replace('-', '_')
-
         if '@' in module_name:
             module_name = module_name.split('@')[0]
-        if expanded:
-            module_name += '_expanded'
         module = modules.get(module_name)
 
         # Also allow entry-type modules to be brought in from the etype directory.
 
         # Import the module if we have not already done so.
         if not module:
+            old_path = sys.path
+            sys.path.insert(0, os.path.join(our_path, 'etype'))
             try:
-                module = importlib.import_module('binman.etype.' + module_name)
+                module = importlib.import_module(module_name)
             except ImportError as e:
-                if expanded:
-                    return None
-                return module_name, e
+                raise ValueError("Unknown entry type '%s' in node '%s' (expected etype/%s.py, error '%s'" %
+                                 (etype, node_path, module_name, e))
+            finally:
+                sys.path = old_path
             modules[module_name] = module
 
         # Look up the expected class name
         return getattr(module, 'Entry_%s' % module_name)
 
     @staticmethod
-    def Lookup(node_path, etype, expanded, missing_etype=False):
-        """Look up the entry class for a node.
-
-        Args:
-            node_node (str): Path name of Node object containing information
-                about the entry to create (used for errors)
-            etype (str):   Entry type to use
-            expanded (bool): Use the expanded version of etype
-            missing_etype (bool): True to default to a blob etype if the
-                requested etype is not found
-
-        Returns:
-            The entry class object if found, else None if not found and expanded
-                is True
-
-        Raise:
-            ValueError if expanded is False and the class is not found
-        """
-        # Convert something like 'u-boot@0' to 'u_boot' since we are only
-        # interested in the type.
-        cls = Entry.FindEntryClass(etype, expanded)
-        if cls is None:
-            return None
-        elif isinstance(cls, tuple):
-            if missing_etype:
-                cls = Entry.FindEntryClass('blob', False)
-            if isinstance(cls, tuple): # This should not fail
-                module_name, e = cls
-                raise ValueError(
-                    "Unknown entry type '%s' in node '%s' (expected etype/%s.py, error '%s'" %
-                    (etype, node_path, module_name, e))
-        return cls
-
-    @staticmethod
-    def Create(section, node, etype=None, expanded=False, missing_etype=False):
+    def Create(section, node, etype=None):
         """Create a new entry for a node.
 
         Args:
-            section (entry_Section):  Section object containing this node
-            node (Node): Node object containing information about the entry to
-                create
-            etype (str): Entry type to use, or None to work it out (used for
-                tests)
-            expanded (bool): Use the expanded version of etype
-            missing_etype (bool): True to default to a blob etype if the
-                requested etype is not found
+            section: Section object containing this node
+            node:    Node object containing information about the entry to
+                     create
+            etype:   Entry type to use, or None to work it out (used for tests)
 
         Returns:
             A new Entry object of the correct type (a subclass of Entry)
         """
         if not etype:
             etype = fdt_util.GetString(node, 'type', node.name)
-        obj = Entry.Lookup(node.path, etype, expanded, missing_etype)
-        if obj and expanded:
-            # Check whether to use the expanded entry
-            new_etype = etype + '-expanded'
-            can_expand = not fdt_util.GetBool(node, 'no-expanded')
-            if can_expand and obj.UseExpanded(node, etype, new_etype):
-                etype = new_etype
-            else:
-                obj = None
-        if not obj:
-            obj = Entry.Lookup(node.path, etype, False, missing_etype)
+        obj = Entry.Lookup(node.path, etype)
 
         # Call its constructor to get the object we want.
         return obj(section, etype, node)
@@ -247,24 +167,18 @@ class Entry(object):
         self.uncomp_size = fdt_util.GetInt(self._node, 'uncomp-size')
 
         self.align = fdt_util.GetInt(self._node, 'align')
-        if tools.not_power_of_two(self.align):
+        if tools.NotPowerOfTwo(self.align):
             raise ValueError("Node '%s': Alignment %s must be a power of two" %
                              (self._node.path, self.align))
-        if self.section and self.align is None:
-            self.align = self.section.align_default
         self.pad_before = fdt_util.GetInt(self._node, 'pad-before', 0)
         self.pad_after = fdt_util.GetInt(self._node, 'pad-after', 0)
         self.align_size = fdt_util.GetInt(self._node, 'align-size')
-        if tools.not_power_of_two(self.align_size):
+        if tools.NotPowerOfTwo(self.align_size):
             self.Raise("Alignment size %s must be a power of two" %
                        self.align_size)
         self.align_end = fdt_util.GetInt(self._node, 'align-end')
         self.offset_unset = fdt_util.GetBool(self._node, 'offset-unset')
         self.expand_size = fdt_util.GetBool(self._node, 'expand-size')
-        self.missing_msg = fdt_util.GetString(self._node, 'missing-msg')
-
-        # This is only supported by blobs and sections at present
-        self.compress = fdt_util.GetString(self._node, 'compress', 'none')
 
     def GetDefaultFilename(self):
         return None
@@ -277,39 +191,19 @@ class Entry(object):
             Dict:
                 key: Filename from this entry (without the path)
                 value: Tuple:
-                    Entry object for this dtb
+                    Fdt object for this dtb, or None if not available
                     Filename of file containing this dtb
         """
         return {}
 
     def ExpandEntries(self):
-        """Expand out entries which produce other entries
-
-        Some entries generate subnodes automatically, from which sub-entries
-        are then created. This method allows those to be added to the binman
-        definition for the current image. An entry which implements this method
-        should call state.AddSubnode() to add a subnode and can add properties
-        with state.AddString(), etc.
-
-        An example is 'files', which produces a section containing a list of
-        files.
-        """
         pass
 
-    def AddMissingProperties(self, have_image_pos):
-        """Add new properties to the device tree as needed for this entry
-
-        Args:
-            have_image_pos: True if this entry has an image position. This can
-                be False if its parent section is compressed, since compression
-                groups all entries together into a compressed block of data,
-                obscuring the start of each individual child entry
-        """
-        for prop in ['offset', 'size']:
+    def AddMissingProperties(self):
+        """Add new properties to the device tree as needed for this entry"""
+        for prop in ['offset', 'size', 'image-pos']:
             if not prop in self._node.props:
                 state.AddZeroProp(self._node, prop)
-        if have_image_pos and 'image-pos' not in self._node.props:
-            state.AddZeroProp(self._node, 'image-pos')
         if self.GetImage().allow_repack:
             if self.orig_offset is not None:
                 state.AddZeroProp(self._node, 'orig-offset', True)
@@ -318,19 +212,16 @@ class Entry(object):
 
         if self.compress != 'none':
             state.AddZeroProp(self._node, 'uncomp-size')
-
-        if self.update_hash:
-            err = state.CheckAddHashProp(self._node)
-            if err:
-                self.Raise(err)
+        err = state.CheckAddHashProp(self._node)
+        if err:
+            self.Raise(err)
 
     def SetCalculatedProperties(self):
         """Set the value of device-tree properties calculated by binman"""
         state.SetInt(self._node, 'offset', self.offset)
         state.SetInt(self._node, 'size', self.size)
         base = self.section.GetRootSkipAtStart() if self.section else 0
-        if self.image_pos is not None:
-            state.SetInt(self._node, 'image-pos', self.image_pos - base)
+        state.SetInt(self._node, 'image-pos', self.image_pos - base)
         if self.GetImage().allow_repack:
             if self.orig_offset is not None:
                 state.SetInt(self._node, 'orig-offset', self.orig_offset, True)
@@ -338,9 +229,7 @@ class Entry(object):
                 state.SetInt(self._node, 'orig-size', self.orig_size, True)
         if self.uncomp_size is not None:
             state.SetInt(self._node, 'uncomp-size', self.uncomp_size)
-
-        if self.update_hash:
-            state.CheckSetHashValue(self._node, self.GetData)
+        state.CheckSetHashValue(self._node, self.GetData)
 
     def ProcessFdt(self, fdt):
         """Allow entries to adjust the device tree
@@ -404,12 +293,12 @@ class Entry(object):
 
             # Don't let the data shrink. Pad it if necessary
             if size_ok and new_size < self.contents_size:
-                data += tools.get_bytes(0, self.contents_size - new_size)
+                data += tools.GetBytes(0, self.contents_size - new_size)
 
         if not size_ok:
-            tout.debug("Entry '%s' size change from %s to %s" % (
-                self._node.path, to_hex(self.contents_size),
-                to_hex(new_size)))
+            tout.Debug("Entry '%s' size change from %s to %s" % (
+                self._node.path, ToHex(self.contents_size),
+                ToHex(new_size)))
         self.SetContents(data)
         return size_ok
 
@@ -426,8 +315,8 @@ class Entry(object):
     def ResetForPack(self):
         """Reset offset/size fields so that packing can be done again"""
         self.Detail('ResetForPack: offset %s->%s, size %s->%s' %
-                    (to_hex(self.offset), to_hex(self.orig_offset),
-                     to_hex(self.size), to_hex(self.orig_size)))
+                    (ToHex(self.offset), ToHex(self.orig_offset),
+                     ToHex(self.size), ToHex(self.orig_size)))
         self.pre_reset_size = self.size
         self.offset = self.orig_offset
         self.size = self.orig_size
@@ -451,20 +340,20 @@ class Entry(object):
             New section offset pointer (after this entry)
         """
         self.Detail('Packing: offset=%s, size=%s, content_size=%x' %
-                    (to_hex(self.offset), to_hex(self.size),
+                    (ToHex(self.offset), ToHex(self.size),
                      self.contents_size))
         if self.offset is None:
             if self.offset_unset:
                 self.Raise('No offset set with offset-unset: should another '
                            'entry provide this correct offset?')
-            self.offset = tools.align(offset, self.align)
+            self.offset = tools.Align(offset, self.align)
         needed = self.pad_before + self.contents_size + self.pad_after
-        needed = tools.align(needed, self.align_size)
+        needed = tools.Align(needed, self.align_size)
         size = self.size
         if not size:
             size = needed
         new_offset = self.offset + size
-        aligned_offset = tools.align(new_offset, self.align_end)
+        aligned_offset = tools.Align(new_offset, self.align_end)
         if aligned_offset != new_offset:
             size = aligned_offset - self.offset
             new_offset = aligned_offset
@@ -478,10 +367,10 @@ class Entry(object):
         # Check that the alignment is correct. It could be wrong if the
         # and offset or size values were provided (i.e. not calculated), but
         # conflict with the provided alignment values
-        if self.size != tools.align(self.size, self.align_size):
+        if self.size != tools.Align(self.size, self.align_size):
             self.Raise("Size %#x (%d) does not match align-size %#x (%d)" %
                   (self.size, self.size, self.align_size, self.align_size))
-        if self.offset != tools.align(self.offset, self.align):
+        if self.offset != tools.Align(self.offset, self.align):
             self.Raise("Offset %#x (%d) does not match align %#x (%d)" %
                   (self.offset, self.offset, self.align, self.align))
         self.Detail('   - packed: offset=%#x, size=%#x, content_size=%#x, next_offset=%x' %
@@ -493,15 +382,10 @@ class Entry(object):
         """Convenience function to raise an error referencing a node"""
         raise ValueError("Node '%s': %s" % (self._node.path, msg))
 
-    def Info(self, msg):
-        """Convenience function to log info referencing a node"""
-        tag = "Info '%s'" % self._node.path
-        tout.detail('%30s: %s' % (tag, msg))
-
     def Detail(self, msg):
         """Convenience function to log detail referencing a node"""
         tag = "Node '%s'" % self._node.path
-        tout.detail('%30s: %s' % (tag, msg))
+        tout.Detail('%30s: %s' % (tag, msg))
 
     def GetEntryArgsOrProps(self, props, required=False):
         """Return the values of a set of properties
@@ -526,7 +410,8 @@ class Entry(object):
                 missing.append(prop.name)
             values.append(value)
         if missing:
-            self.GetImage().MissingArgs(self, missing)
+            self.Raise('Missing required properties/entry args: %s' %
+                       (', '.join(missing)))
         return values
 
     def GetPath(self):
@@ -537,35 +422,9 @@ class Entry(object):
         """
         return self._node.path
 
-    def GetData(self, required=True):
-        """Get the contents of an entry
-
-        Args:
-            required: True if the data must be present, False if it is OK to
-                return None
-
-        Returns:
-            bytes content of the entry, excluding any padding. If the entry is
-                compressed, the compressed data is returned
-        """
-        self.Detail('GetData: size %s' % to_hex_size(self.data))
+    def GetData(self):
+        self.Detail('GetData: size %s' % ToHexSize(self.data))
         return self.data
-
-    def GetPaddedData(self, data=None):
-        """Get the data for an entry including any padding
-
-        Gets the entry data and uses its section's pad-byte value to add padding
-        before and after as defined by the pad-before and pad-after properties.
-
-        This does not consider alignment.
-
-        Returns:
-            Contents of the entry along with any pad bytes before and
-            after it (bytes)
-        """
-        if data is None:
-            data = self.GetData()
-        return self.section.GetPaddedDataForEntry(self, data)
 
     def GetOffsets(self):
         """Get the offsets for siblings
@@ -631,7 +490,7 @@ class Entry(object):
         """
         pass
 
-    def CheckEntries(self):
+    def CheckOffset(self):
         """Check that the entry offsets are correct
 
         This is used for entries which have extra offset requirements (other
@@ -733,7 +592,9 @@ features to produce new behaviours.
             modules.remove('_testing')
         missing = []
         for name in modules:
-            module = Entry.Lookup('WriteDocs', name, False)
+            if name.startswith('__'):
+                continue
+            module = Entry.Lookup(name, name)
             docs = getattr(module, '__doc__')
             if test_missing == name:
                 docs = None
@@ -833,7 +694,7 @@ features to produce new behaviours.
         self.AddEntryInfo(entries, indent, self.name, self.etype, self.size,
                           self.image_pos, self.uncomp_size, self.offset, self)
 
-    def ReadData(self, decomp=True, alt_format=None):
+    def ReadData(self, decomp=True):
         """Read the data for an entry from the image
 
         This is used when the image has been read in and we want to extract the
@@ -848,22 +709,21 @@ features to produce new behaviours.
         """
         # Use True here so that we get an uncompressed section to work from,
         # although compressed sections are currently not supported
-        tout.debug("ReadChildData section '%s', entry '%s'" %
+        tout.Debug("ReadChildData section '%s', entry '%s'" %
                    (self.section.GetPath(), self.GetPath()))
-        data = self.section.ReadChildData(self, decomp, alt_format)
+        data = self.section.ReadChildData(self, decomp)
         return data
 
-    def ReadChildData(self, child, decomp=True, alt_format=None):
+    def ReadChildData(self, child, decomp=True):
         """Read the data for a particular child entry
 
         This reads data from the parent and extracts the piece that relates to
         the given child.
 
         Args:
-            child (Entry): Child entry to read data for (must be valid)
-            decomp (bool): True to decompress any compressed data before
-                returning it; False to return the raw, uncompressed data
-            alt_format (str): Alternative format to read in, or None
+            child: Child entry to read data for (must be valid)
+            decomp: True to decompress any compressed data before returning it;
+                False to return the raw, uncompressed data
 
         Returns:
             Data for the child (bytes)
@@ -875,20 +735,6 @@ features to produce new behaviours.
         self.contents_size = len(data)
         self.ProcessContentsUpdate(data)
         self.Detail('Loaded data size %x' % len(data))
-
-    def GetAltFormat(self, data, alt_format):
-        """Read the data for an extry in an alternative format
-
-        Supported formats are list in the documentation for each entry. An
-        example is fdtmap which provides .
-
-        Args:
-            data (bytes): Data to convert (this should have been produced by the
-                entry)
-            alt_format (str): Format to use
-
-        """
-        pass
 
     def GetImage(self):
         """Get the image containing this entry
@@ -928,8 +774,7 @@ features to produce new behaviours.
         """Handle writing the data in a child entry
 
         This should be called on the child's parent section after the child's
-        data has been updated. It should update any data structures needed to
-        validate that the update is successful.
+        data has been updated. It
 
         This base-class implementation does nothing, since the base Entry object
         does not have any children.
@@ -939,7 +784,7 @@ features to produce new behaviours.
 
         Returns:
             True if the section could be updated successfully, False if the
-                data is such that the section could not update
+                data is such that the section could not updat
         """
         return True
 
@@ -957,197 +802,3 @@ features to produce new behaviours.
             elif self == entries[-1]:
                 return 'end'
         return 'middle'
-
-    def SetAllowMissing(self, allow_missing):
-        """Set whether a section allows missing external blobs
-
-        Args:
-            allow_missing: True if allowed, False if not allowed
-        """
-        # This is meaningless for anything other than sections
-        pass
-
-    def SetAllowFakeBlob(self, allow_fake):
-        """Set whether a section allows to create a fake blob
-
-        Args:
-            allow_fake: True if allowed, False if not allowed
-        """
-        self.allow_fake = allow_fake
-
-    def CheckMissing(self, missing_list):
-        """Check if any entries in this section have missing external blobs
-
-        If there are missing blobs, the entries are added to the list
-
-        Args:
-            missing_list: List of Entry objects to be added to
-        """
-        if self.missing:
-            missing_list.append(self)
-
-    def check_fake_fname(self, fname):
-        """If the file is missing and the entry allows fake blobs, fake it
-
-        Sets self.faked to True if faked
-
-        Args:
-            fname (str): Filename to check
-
-        Returns:
-            fname (str): Filename of faked file
-        """
-        if self.allow_fake and not pathlib.Path(fname).is_file():
-            outfname = tools.get_output_filename(os.path.basename(fname))
-            with open(outfname, "wb") as out:
-                out.truncate(1024)
-            self.faked = True
-            return outfname
-        return fname
-
-    def CheckFakedBlobs(self, faked_blobs_list):
-        """Check if any entries in this section have faked external blobs
-
-        If there are faked blobs, the entries are added to the list
-
-        Args:
-            fake_blobs_list: List of Entry objects to be added to
-        """
-        # This is meaningless for anything other than blobs
-        pass
-
-    def GetAllowMissing(self):
-        """Get whether a section allows missing external blobs
-
-        Returns:
-            True if allowed, False if not allowed
-        """
-        return self.allow_missing
-
-    def record_missing_bintool(self, bintool):
-        """Record a missing bintool that was needed to produce this entry
-
-        Args:
-            bintool (Bintool): Bintool that was missing
-        """
-        self.missing_bintools.append(bintool)
-
-    def check_missing_bintools(self, missing_list):
-        """Check if any entries in this section have missing bintools
-
-        If there are missing bintools, these are added to the list
-
-        Args:
-            missing_list: List of Bintool objects to be added to
-        """
-        missing_list += self.missing_bintools
-
-    def GetHelpTags(self):
-        """Get the tags use for missing-blob help
-
-        Returns:
-            list of possible tags, most desirable first
-        """
-        return list(filter(None, [self.missing_msg, self.name, self.etype]))
-
-    def CompressData(self, indata):
-        """Compress data according to the entry's compression method
-
-        Args:
-            indata: Data to compress
-
-        Returns:
-            Compressed data (first word is the compressed size)
-        """
-        self.uncomp_data = indata
-        if self.compress != 'none':
-            self.uncomp_size = len(indata)
-        data = comp_util.compress(indata, self.compress)
-        return data
-
-    @classmethod
-    def UseExpanded(cls, node, etype, new_etype):
-        """Check whether to use an expanded entry type
-
-        This is called by Entry.Create() when it finds an expanded version of
-        an entry type (e.g. 'u-boot-expanded'). If this method returns True then
-        it will be used (e.g. in place of 'u-boot'). If it returns False, it is
-        ignored.
-
-        Args:
-            node:     Node object containing information about the entry to
-                      create
-            etype:    Original entry type being used
-            new_etype: New entry type proposed
-
-        Returns:
-            True to use this entry type, False to use the original one
-        """
-        tout.info("Node '%s': etype '%s': %s selected" %
-                  (node.path, etype, new_etype))
-        return True
-
-    def CheckAltFormats(self, alt_formats):
-        """Add any alternative formats supported by this entry type
-
-        Args:
-            alt_formats (dict): Dict to add alt_formats to:
-                key: Name of alt format
-                value: Help text
-        """
-        pass
-
-    def AddBintools(self, tools):
-        """Add the bintools used by this entry type
-
-        Args:
-            tools (dict of Bintool):
-        """
-        pass
-
-    @classmethod
-    def AddBintool(self, tools, name):
-        """Add a new bintool to the tools used by this etype
-
-        Args:
-            name: Name of the tool
-        """
-        btool = bintool.Bintool.create(name)
-        tools[name] = btool
-        return btool
-
-    def SetUpdateHash(self, update_hash):
-        """Set whether this entry's "hash" subnode should be updated
-
-        Args:
-            update_hash: True if hash should be updated, False if not
-        """
-        self.update_hash = update_hash
-
-    def collect_contents_to_file(self, entries, prefix):
-        """Put the contents of a list of entries into a file
-
-        Args:
-            entries (list of Entry): Entries to collect
-            prefix (str): Filename prefix of file to write to
-
-        If any entry does not have contents yet, this function returns False
-        for the data.
-
-        Returns:
-            Tuple:
-                bytes: Concatenated data from all the entries (or False)
-                str: Filename of file written (or False if no data)
-                str: Unique portion of filename (or False if no data)
-        """
-        data = b''
-        for entry in entries:
-            # First get the input data and put it in a file. If not available,
-            # try later.
-            if not entry.ObtainContents():
-                return False, False, False
-            data += entry.GetData()
-        uniq = self.GetUniqueName()
-        fname = tools.get_output_filename(f'{prefix}.{uniq}')
-        tools.write_file(fname, data)
-        return data, fname, uniq

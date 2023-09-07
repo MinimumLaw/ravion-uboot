@@ -3,8 +3,6 @@
  * Copyright 2014 Google Inc.
  */
 
-#define LOG_CATEGORY UCLASS_DISPLAY
-
 #include <common.h>
 #include <dm.h>
 #include <display.h>
@@ -33,7 +31,7 @@ int display_enable(struct udevice *dev, int panel_bpp,
 	if (ret)
 		return ret;
 
-	disp_uc_plat = dev_get_uclass_plat(dev);
+	disp_uc_plat = dev_get_uclass_platdata(dev);
 	disp_uc_plat->in_use = true;
 
 	return 0;
@@ -73,7 +71,7 @@ int display_read_timing(struct udevice *dev, struct display_timing *timing)
 
 bool display_in_use(struct udevice *dev)
 {
-	struct display_plat *disp_uc_plat = dev_get_uclass_plat(dev);
+	struct display_plat *disp_uc_plat = dev_get_uclass_platdata(dev);
 
 	return disp_uc_plat->in_use;
 }
@@ -81,5 +79,6 @@ bool display_in_use(struct udevice *dev)
 UCLASS_DRIVER(display) = {
 	.id		= UCLASS_DISPLAY,
 	.name		= "display",
-	.per_device_plat_auto	= sizeof(struct display_plat),
+	.flags          = DM_UC_FLAG_SEQ_ALIAS,
+	.per_device_platdata_auto_alloc_size	= sizeof(struct display_plat),
 };

@@ -1,25 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (C) 2017-2020 STMicroelectronics - All Rights Reserved
- */
-
-#define LOG_CATEGORY UCLASS_PINCTRL
-
 #include <common.h>
 #include <dm.h>
 #include <hwspinlock.h>
-#include <log.h>
 #include <malloc.h>
+#include <asm/arch/gpio.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <dm/lists.h>
 #include <dm/pinctrl.h>
-#include <linux/bitops.h>
 #include <linux/err.h>
-#include <linux/libfdt.h>
 
-#include "../gpio/stm32_gpio_priv.h"
+DECLARE_GLOBAL_DATA_PTR;
 
 #define MAX_PINS_ONE_IP			70
 #define MODE_BITS_MASK			3
@@ -49,17 +40,6 @@ static const char * const pinmux_mode[PINMUX_MODE_COUNT] = {
 	"analog",
 	"unknown",
 	"alt function",
-};
-
-static const char * const pinmux_bias[] = {
-	[STM32_GPIO_PUPD_NO] = "",
-	[STM32_GPIO_PUPD_UP] = "pull-up",
-	[STM32_GPIO_PUPD_DOWN] = "pull-down",
-};
-
-static const char * const pinmux_otype[] = {
-	[STM32_GPIO_OTYPE_PP] = "push-pull",
-	[STM32_GPIO_OTYPE_OD] = "open-drain",
 };
 
 static int stm32_pinctrl_get_af(struct udevice *dev, unsigned int offset)
@@ -199,12 +179,10 @@ static int stm32_pinctrl_get_pin_muxing(struct udevice *dev,
 					int size)
 {
 	struct udevice *gpio_dev;
-	struct stm32_gpio_priv *priv;
 	const char *label;
 	int mode;
 	int af_num;
 	unsigned int gpio_idx;
-	u32 pupd, otype;
 
 	/* look up for the bank which owns the requested pin */
 	gpio_dev = stm32_pinctrl_get_gpio_dev(dev, selector, &gpio_idx);
@@ -213,11 +191,10 @@ static int stm32_pinctrl_get_pin_muxing(struct udevice *dev,
 		return -ENODEV;
 
 	mode = gpio_get_raw_function(gpio_dev, gpio_idx, &label);
+
 	dev_dbg(dev, "selector = %d gpio_idx = %d mode = %d\n",
 		selector, gpio_idx, mode);
-	priv = dev_get_priv(gpio_dev);
-	pupd = (readl(&priv->regs->pupdr) >> (gpio_idx * 2)) & PUPD_MASK;
-	otype = (readl(&priv->regs->otyper) >> gpio_idx) & OTYPE_MSK;
+
 
 	switch (mode) {
 	case GPIOF_UNKNOWN:
@@ -228,17 +205,12 @@ static int stm32_pinctrl_get_pin_muxing(struct udevice *dev,
 		break;
 	case GPIOF_FUNC:
 		af_num = stm32_pinctrl_get_af(gpio_dev, gpio_idx);
-		snprintf(buf, size, "%s %d %s %s", pinmux_mode[mode], af_num,
-			 pinmux_otype[otype], pinmux_bias[pupd]);
+		snprintf(buf, size, "%s %d", pinmux_mode[mode], af_num);
 		break;
 	case GPIOF_OUTPUT:
-		snprintf(buf, size, "%s %s %s %s",
-			 pinmux_mode[mode], pinmux_otype[otype],
-			 pinmux_bias[pupd], label ? label : "");
-		break;
 	case GPIOF_INPUT:
-		snprintf(buf, size, "%s %s %s", pinmux_mode[mode],
-			 pinmux_bias[pupd], label ? label : "");
+		snprintf(buf, size, "%s %s",
+			 pinmux_mode[mode], label ? label : "");
 		break;
 	}
 
@@ -257,8 +229,8 @@ static int stm32_pinctrl_probe(struct udevice *dev)
 	/* hwspinlock property is optional, just log the error */
 	ret = hwspinlock_get_by_index(dev, 0, &priv->hws);
 	if (ret)
-		dev_dbg(dev, "hwspinlock_get_by_index may have failed (%d)\n",
-			ret);
+		debug("%s: hwspinlock_get_by_index may have failed (%d)\n",
+		      __func__, ret);
 
 	return 0;
 }
@@ -306,13 +278,13 @@ static int prep_gpio_dsc(struct stm32_gpio_dsc *gpio_dsc, u32 port_pin)
 {
 	gpio_dsc->port = (port_pin & 0x1F000) >> 12;
 	gpio_dsc->pin = (port_pin & 0x0F00) >> 8;
-	log_debug("GPIO:port= %d, pin= %d\n", gpio_dsc->port, gpio_dsc->pin);
+	debug("%s: GPIO:port= %d, pin= %d\n", __func__, gpio_dsc->port,
+	      gpio_dsc->pin);
 
 	return 0;
 }
 
-static int prep_gpio_ctl(struct stm32_gpio_ctl *gpio_ctl, u32 gpio_fn,
-			 ofnode node)
+static int prep_gpio_ctl(struct stm32_gpio_ctl *gpio_ctl, u32 gpio_fn, int node)
 {
 	gpio_fn &= 0x00FF;
 	gpio_ctl->af = 0;
@@ -333,58 +305,53 @@ static int prep_gpio_ctl(struct stm32_gpio_ctl *gpio_ctl, u32 gpio_fn,
 		break;
 	}
 
-	gpio_ctl->speed = ofnode_read_u32_default(node, "slew-rate", 0);
+	gpio_ctl->speed = fdtdec_get_int(gd->fdt_blob, node, "slew-rate", 0);
 
-	if (ofnode_read_bool(node, "drive-open-drain"))
+	if (fdtdec_get_bool(gd->fdt_blob, node, "drive-open-drain"))
 		gpio_ctl->otype = STM32_GPIO_OTYPE_OD;
 	else
 		gpio_ctl->otype = STM32_GPIO_OTYPE_PP;
 
-	if (ofnode_read_bool(node, "bias-pull-up"))
+	if (fdtdec_get_bool(gd->fdt_blob, node, "bias-pull-up"))
 		gpio_ctl->pupd = STM32_GPIO_PUPD_UP;
-	else if (ofnode_read_bool(node, "bias-pull-down"))
+	else if (fdtdec_get_bool(gd->fdt_blob, node, "bias-pull-down"))
 		gpio_ctl->pupd = STM32_GPIO_PUPD_DOWN;
 	else
 		gpio_ctl->pupd = STM32_GPIO_PUPD_NO;
 
-	log_debug("gpio fn= %d, slew-rate= %x, op type= %x, pull-upd is = %x\n",
-		  gpio_fn, gpio_ctl->speed, gpio_ctl->otype,
-		  gpio_ctl->pupd);
+	debug("%s: gpio fn= %d, slew-rate= %x, op type= %x, pull-upd is = %x\n",
+	      __func__,  gpio_fn, gpio_ctl->speed, gpio_ctl->otype,
+	     gpio_ctl->pupd);
 
 	return 0;
 }
 
-static int stm32_pinctrl_config(ofnode node)
+static int stm32_pinctrl_config(int offset)
 {
 	u32 pin_mux[MAX_PINS_ONE_IP];
 	int rv, len;
-	ofnode subnode;
 
 	/*
 	 * check for "pinmux" property in each subnode (e.g. pins1 and pins2 for
 	 * usart1) of pin controller phandle "pinctrl-0"
 	 * */
-	ofnode_for_each_subnode(subnode, node) {
+	fdt_for_each_subnode(offset, gd->fdt_blob, offset) {
 		struct stm32_gpio_dsc gpio_dsc;
 		struct stm32_gpio_ctl gpio_ctl;
 		int i;
 
-		rv = ofnode_read_size(subnode, "pinmux");
-		if (rv < 0)
-			return rv;
-		len = rv / sizeof(pin_mux[0]);
-		log_debug("No of pinmux entries= %d\n", len);
-		if (len > MAX_PINS_ONE_IP)
+		len = fdtdec_get_int_array_count(gd->fdt_blob, offset,
+						 "pinmux", pin_mux,
+						 ARRAY_SIZE(pin_mux));
+		debug("%s: no of pinmux entries= %d\n", __func__, len);
+		if (len < 0)
 			return -EINVAL;
-		rv = ofnode_read_u32_array(subnode, "pinmux", pin_mux, len);
-		if (rv < 0)
-			return rv;
 		for (i = 0; i < len; i++) {
 			struct gpio_desc desc;
 
-			log_debug("pinmux = %x\n", *(pin_mux + i));
+			debug("%s: pinmux = %x\n", __func__, *(pin_mux + i));
 			prep_gpio_dsc(&gpio_dsc, *(pin_mux + i));
-			prep_gpio_ctl(&gpio_ctl, *(pin_mux + i), subnode);
+			prep_gpio_ctl(&gpio_ctl, *(pin_mux + i), offset);
 			rv = uclass_get_device_by_seq(UCLASS_GPIO,
 						      gpio_dsc.port,
 						      &desc.dev);
@@ -392,7 +359,7 @@ static int stm32_pinctrl_config(ofnode node)
 				return rv;
 			desc.offset = gpio_dsc.pin;
 			rv = stm32_gpio_config(&desc, &gpio_ctl);
-			log_debug("rv = %d\n\n", rv);
+			debug("%s: rv = %d\n\n", __func__, rv);
 			if (rv)
 				return rv;
 		}
@@ -408,10 +375,7 @@ static int stm32_pinctrl_bind(struct udevice *dev)
 	int ret;
 
 	dev_for_each_subnode(node, dev) {
-		dev_dbg(dev, "bind %s\n", ofnode_get_name(node));
-
-		if (!ofnode_is_enabled(node))
-			continue;
+		debug("%s: bind %s\n", __func__, ofnode_get_name(node));
 
 		ofnode_get_property(node, "gpio-controller", &ret);
 		if (ret < 0)
@@ -427,7 +391,7 @@ static int stm32_pinctrl_bind(struct udevice *dev)
 		if (ret)
 			return ret;
 
-		dev_dbg(dev, "bind %s\n", name);
+		debug("%s: bind %s\n", __func__, name);
 	}
 
 	return 0;
@@ -436,31 +400,31 @@ static int stm32_pinctrl_bind(struct udevice *dev)
 #if CONFIG_IS_ENABLED(PINCTRL_FULL)
 static int stm32_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 {
-	return stm32_pinctrl_config(dev_ofnode(config));
+	return stm32_pinctrl_config(dev_of_offset(config));
 }
 #else /* PINCTRL_FULL */
 static int stm32_pinctrl_set_state_simple(struct udevice *dev,
 					  struct udevice *periph)
 {
+	const void *fdt = gd->fdt_blob;
 	const fdt32_t *list;
 	uint32_t phandle;
-	ofnode config_node;
+	int config_node;
 	int size, i, ret;
 
-	list = ofnode_get_property(dev_ofnode(periph), "pinctrl-0", &size);
+	list = fdt_getprop(fdt, dev_of_offset(periph), "pinctrl-0", &size);
 	if (!list)
 		return -EINVAL;
 
-	dev_dbg(dev, "periph->name = %s\n", periph->name);
+	debug("%s: periph->name = %s\n", __func__, periph->name);
 
 	size /= sizeof(*list);
 	for (i = 0; i < size; i++) {
 		phandle = fdt32_to_cpu(*list++);
 
-		config_node = ofnode_get_by_phandle(phandle);
-		if (!ofnode_valid(config_node)) {
-			dev_err(periph,
-				"prop pinctrl-0 index %d invalid phandle\n", i);
+		config_node = fdt_node_offset_by_phandle(fdt, phandle);
+		if (config_node < 0) {
+			pr_err("prop pinctrl-0 index %d invalid phandle\n", i);
 			return -EINVAL;
 		}
 
@@ -504,5 +468,5 @@ U_BOOT_DRIVER(pinctrl_stm32) = {
 	.ops			= &stm32_pinctrl_ops,
 	.bind			= stm32_pinctrl_bind,
 	.probe			= stm32_pinctrl_probe,
-	.priv_auto	= sizeof(struct stm32_pinctrl_priv),
+	.priv_auto_alloc_size	= sizeof(struct stm32_pinctrl_priv),
 };

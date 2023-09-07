@@ -6,11 +6,9 @@
  * Author: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
  */
 
-#include <log.h>
 #include <asm/io.h>
 #include <common.h>
 #include <dm.h>
-#include <linux/bitops.h>
 #include <linux/iopoll.h>
 #include <reset-uclass.h>
 
@@ -114,5 +112,5 @@ U_BOOT_DRIVER(hsdk_reset) = {
 	.of_match = hsdk_reset_dt_match,
 	.ops = &hsdk_reset_ops,
 	.probe = hsdk_reset_probe,
-	.priv_auto	= sizeof(struct hsdk_rst),
+	.priv_auto_alloc_size = sizeof(struct hsdk_rst),
 };

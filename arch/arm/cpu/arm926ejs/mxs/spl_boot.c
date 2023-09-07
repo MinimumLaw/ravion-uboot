@@ -8,23 +8,19 @@
 
 #include <common.h>
 #include <config.h>
-#include <init.h>
-#include <log.h>
 #include <serial.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
-#include <asm/sections.h>
 #include <linux/compiler.h>
 
 #include "mxs_init.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 static gd_t gdata __section(".data");
-#ifdef CONFIG_SPL_SERIAL
-static struct bd_info bdata __section(".data");
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
+static bd_t bdata __section(".data");
 #endif
 
 /*
@@ -101,6 +97,7 @@ static void mxs_spl_fixup_vectors(void)
 	 * thus this fixup. Our vectoring table is PIC, so copying is
 	 * fine.
 	 */
+	extern uint32_t _start;
 
 	/* cppcheck-suppress nullPointer */
 	memcpy(0x0, &_start, 0x60);
@@ -108,7 +105,7 @@ static void mxs_spl_fixup_vectors(void)
 
 static void mxs_spl_console_init(void)
 {
-#ifdef CONFIG_SPL_SERIAL
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	gd->bd = &bdata;
 	gd->baudrate = CONFIG_BAUDRATE;
 	serial_init();
@@ -122,7 +119,7 @@ void mxs_common_spl_init(const uint32_t arg, const uint32_t *resptr,
 {
 	struct mxs_spl_data *data = MXS_SPL_DATA;
 	uint8_t bootmode = mxs_get_bootmode_index();
-	set_gd(&gdata);
+	gd = &gdata;
 
 	mxs_spl_fixup_vectors();
 

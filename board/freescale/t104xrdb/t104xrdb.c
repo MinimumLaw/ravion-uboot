@@ -8,11 +8,8 @@
 #include <env.h>
 #include <fdt_support.h>
 #include <hwconfig.h>
-#include <image.h>
 #include <init.h>
-#include <log.h>
 #include <netdev.h>
-#include <asm/global_data.h>
 #include <linux/compiler.h>
 #include <asm/mmu.h>
 #include <asm/processor.h>
@@ -130,7 +127,7 @@ int misc_init_r(void)
 	return 0;
 }
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
 	phys_size_t size;
@@ -153,9 +150,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 #endif
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#ifndef CONFIG_DM_ETH
 	fdt_fixup_fman_ethernet(blob);
-#endif
 #endif
 
 	if (hwconfig("qe-tdm"))

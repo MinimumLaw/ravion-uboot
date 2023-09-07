@@ -8,156 +8,44 @@ Sections are entries which can contain other entries. This allows hierarchical
 images to be created.
 """
 
+from __future__ import print_function
+
 from collections import OrderedDict
-import concurrent.futures
 import re
 import sys
 
-from binman import comp_util
-from binman.entry import Entry
-from binman import state
-from dtoc import fdt_util
-from patman import tools
-from patman import tout
-from patman.tools import to_hex_size
+from entry import Entry
+import fdt_util
+import tools
+import tout
 
 
 class Entry_section(Entry):
     """Entry that contains other entries
 
-    A section is an entry which can contain other entries, thus allowing
-    hierarchical images to be created. See 'Sections and hierarchical images'
-    in the binman README for more information.
-
-    The base implementation simply joins the various entries together, using
-    various rules about alignment, etc.
-
-    Subclassing
-    ~~~~~~~~~~~
-
-    This class can be subclassed to support other file formats which hold
-    multiple entries, such as CBFS. To do this, override the following
-    functions. The documentation here describes what your function should do.
-    For example code, see etypes which subclass `Entry_section`, or `cbfs.py`
-    for a more involved example::
-
-       $ grep -l \(Entry_section tools/binman/etype/*.py
-
-    ReadNode()
-        Call `super().ReadNode()`, then read any special properties for the
-        section. Then call `self.ReadEntries()` to read the entries.
-
-        Binman calls this at the start when reading the image description.
-
-    ReadEntries()
-        Read in the subnodes of the section. This may involve creating entries
-        of a particular etype automatically, as well as reading any special
-        properties in the entries. For each entry, entry.ReadNode() should be
-        called, to read the basic entry properties. The properties should be
-        added to `self._entries[]`, in the correct order, with a suitable name.
-
-        Binman calls this at the start when reading the image description.
-
-    BuildSectionData(required)
-        Create the custom file format that you want and return it as bytes.
-        This likely sets up a file header, then loops through the entries,
-        adding them to the file. For each entry, call `entry.GetData()` to
-        obtain the data. If that returns None, and `required` is False, then
-        this method must give up and return None. But if `required` is True then
-        it should assume that all data is valid.
-
-        Binman calls this when packing the image, to find out the size of
-        everything. It is called again at the end when building the final image.
-
-    SetImagePos(image_pos):
-        Call `super().SetImagePos(image_pos)`, then set the `image_pos` values
-        for each of the entries. This should use the custom file format to find
-        the `start offset` (and `image_pos`) of each entry. If the file format
-        uses compression in such a way that there is no offset available (other
-        than reading the whole file and decompressing it), then the offsets for
-        affected entries can remain unset (`None`). The size should also be set
-        if possible.
-
-        Binman calls this after the image has been packed, to update the
-        location that all the entries ended up at.
-
-    ReadChildData(child, decomp, alt_format):
-        The default version of this may be good enough, if you are able to
-        implement SetImagePos() correctly. But that is a bit of a bypass, so
-        you can override this method to read from your custom file format. It
-        should read the entire entry containing the custom file using
-        `super().ReadData(True)`, then parse the file to get the data for the
-        given child, then return that data.
-
-        If your file format supports compression, the `decomp` argument tells
-        you whether to return the compressed data (`decomp` is False) or to
-        uncompress it first, then return the uncompressed data (`decomp` is
-        True). This is used by the `binman extract -U` option.
-
-        If your entry supports alternative formats, the alt_format provides the
-        alternative format that the user has selected. Your function should
-        return data in that format. This is used by the 'binman extract -l'
-        option.
-
-        Binman calls this when reading in an image, in order to populate all the
-        entries with the data from that image (`binman ls`).
-
-    WriteChildData(child):
-        Binman calls this after `child.data` is updated, to inform the custom
-        file format about this, in case it needs to do updates.
-
-        The default version of this does nothing and probably needs to be
-        overridden for the 'binman replace' command to work. Your version should
-        use `child.data` to update the data for that child in the custom file
-        format.
-
-        Binman calls this when updating an image that has been read in and in
-        particular to update the data for a particular entry (`binman replace`)
-
-    Properties / Entry arguments
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    See :ref:`develop/package/binman:Image description format` for more
-    information.
-
-    align-default
-        Default alignment for this section, if no alignment is given in the
-        entry
-
-    pad-byte
-        Pad byte to use when padding
-
-    sort-by-offset
-        True if entries should be sorted by offset, False if they must be
-        in-order in the device tree description
-
-    end-at-4gb
-        Used to build an x86 ROM which ends at 4GB (2^32)
-
-    name-prefix
-        Adds a prefix to the name of every entry in the section when writing out
-        the map
-
-    skip-at-start
-        Number of bytes before the first entry starts. These effectively adjust
-        the starting offset of entries. For example, if this is 16, then the
-        first entry would start at 16. An entry with offset = 20 would in fact
-        be written at offset 4 in the image file, since the first 16 bytes are
-        skipped when writing.
+    Properties / Entry arguments: (see binman README for more information)
+        pad-byte: Pad byte to use when padding
+        sort-by-offset: True if entries should be sorted by offset, False if
+            they must be in-order in the device tree description
+        end-at-4gb: Used to build an x86 ROM which ends at 4GB (2^32)
+        skip-at-start: Number of bytes before the first entry starts. These
+            effectively adjust the starting offset of entries. For example,
+            if this is 16, then the first entry would start at 16. An entry
+            with offset = 20 would in fact be written at offset 4 in the image
+            file, since the first 16 bytes are skipped when writing.
+        name-prefix: Adds a prefix to the name of every entry in the section
+            when writing out the map
 
     Since a section is also an entry, it inherits all the properies of entries
     too.
 
-    Note that the `allow_missing` member controls whether this section permits
-    external blobs to be missing their contents. The option will produce an
-    image but of course it will not work. It is useful to make sure that
-    Continuous Integration systems can build without the binaries being
-    available. This is set by the `SetAllowMissing()` method, if
-    `--allow-missing` is passed to binman.
+    A section is an entry which can contain other entries, thus allowing
+    hierarchical images to be created. See 'Sections and hierarchical images'
+    in the binman README for more information.
     """
     def __init__(self, section, etype, node, test=False):
         if not test:
-            super().__init__(section, etype, node)
+            Entry.__init__(self, section, etype, node)
         self._entries = OrderedDict()
         self._pad_byte = 0
         self._sort = False
@@ -165,8 +53,8 @@ class Entry_section(Entry):
         self._end_4gb = False
 
     def ReadNode(self):
-        """Read properties from the section node"""
-        super().ReadNode()
+        """Read properties from the image node"""
+        Entry.ReadNode(self)
         self._pad_byte = fdt_util.GetInt(self._node, 'pad-byte', 0)
         self._sort = fdt_util.GetBool(self._node, 'sort-by-offset')
         self._end_4gb = fdt_util.GetBool(self._node, 'end-at-4gb')
@@ -182,17 +70,17 @@ class Entry_section(Entry):
             if self._skip_at_start is None:
                 self._skip_at_start = 0
         self._name_prefix = fdt_util.GetString(self._node, 'name-prefix')
-        self.align_default = fdt_util.GetInt(self._node, 'align-default', 0)
+        filename = fdt_util.GetString(self._node, 'filename')
+        if filename:
+            self._filename = filename
 
-        self.ReadEntries()
+        self._ReadEntries()
 
-    def ReadEntries(self):
+    def _ReadEntries(self):
         for node in self._node.subnodes:
-            if node.name.startswith('hash') or node.name.startswith('signature'):
+            if node.name == 'hash':
                 continue
-            entry = Entry.Create(self, node,
-                                 expanded=self.GetImage().use_expanded,
-                                 missing_etype=self.GetImage().missing_etype)
+            entry = Entry.Create(self, node)
             entry.ReadNode()
             entry.SetPrefix(self._name_prefix)
             self._entries[node.name] = entry
@@ -201,9 +89,9 @@ class Entry_section(Entry):
         """Raises an error for this section
 
         Args:
-            msg (str): Error message to use in the raise string
+            msg: Error message to use in the raise string
         Raises:
-            ValueError: always
+            ValueError()
         """
         raise ValueError("Section '%s': %s" % (self._node.path, msg))
 
@@ -234,136 +122,42 @@ class Entry_section(Entry):
         return True
 
     def ExpandEntries(self):
-        super().ExpandEntries()
+        """Expand out any entries which have calculated sub-entries
+
+        Some entries are expanded out at runtime, e.g. 'files', which produces
+        a section containing a list of files. Process these entries so that
+        this information is added to the device tree.
+        """
+        Entry.ExpandEntries(self)
         for entry in self._entries.values():
             entry.ExpandEntries()
 
-    def AddMissingProperties(self, have_image_pos):
+    def AddMissingProperties(self):
         """Add new properties to the device tree as needed for this entry"""
-        super().AddMissingProperties(have_image_pos)
-        if self.compress != 'none':
-            have_image_pos = False
+        Entry.AddMissingProperties(self)
         for entry in self._entries.values():
-            entry.AddMissingProperties(have_image_pos)
+            entry.AddMissingProperties()
 
-    def ObtainContents(self, skip_entry=None):
-        return self.GetEntryContents(skip_entry=skip_entry)
+    def ObtainContents(self):
+        return self.GetEntryContents()
 
-    def GetPaddedDataForEntry(self, entry, entry_data):
-        """Get the data for an entry including any padding
-
-        Gets the entry data and uses the section pad-byte value to add padding
-        before and after as defined by the pad-before and pad-after properties.
-        This does not consider alignment.
-
-        Args:
-            entry: Entry to check
-
-        Returns:
-            Contents of the entry along with any pad bytes before and
-            after it (bytes)
-        """
-        pad_byte = (entry._pad_byte if isinstance(entry, Entry_section)
-                    else self._pad_byte)
-
-        data = bytearray()
-        # Handle padding before the entry
-        if entry.pad_before:
-            data += tools.get_bytes(self._pad_byte, entry.pad_before)
-
-        # Add in the actual entry data
-        data += entry_data
-
-        # Handle padding after the entry
-        if entry.pad_after:
-            data += tools.get_bytes(self._pad_byte, entry.pad_after)
-
-        if entry.size:
-            data += tools.get_bytes(pad_byte, entry.size - len(data))
-
-        self.Detail('GetPaddedDataForEntry: size %s' % to_hex_size(self.data))
-
-        return data
-
-    def BuildSectionData(self, required):
-        """Build the contents of a section
-
-        This places all entries at the right place, dealing with padding before
-        and after entries. It does not do padding for the section itself (the
-        pad-before and pad-after properties in the section items) since that is
-        handled by the parent section.
-
-        This should be overridden by subclasses which want to build their own
-        data structure for the section.
-
-        Args:
-            required: True if the data must be present, False if it is OK to
-                return None
-
-        Returns:
-            Contents of the section (bytes)
-        """
-        section_data = bytearray()
+    def GetData(self):
+        section_data = b''
 
         for entry in self._entries.values():
-            entry_data = entry.GetData(required)
-
-            # This can happen when this section is referenced from a collection
-            # earlier in the image description. See testCollectionSection().
-            if not required and entry_data is None:
-                return None
-            data = self.GetPaddedDataForEntry(entry, entry_data)
-            # Handle empty space before the entry
-            pad = (entry.offset or 0) - self._skip_at_start - len(section_data)
+            data = entry.GetData()
+            base = self.pad_before + (entry.offset or 0) - self._skip_at_start
+            pad = base - len(section_data)
             if pad > 0:
-                section_data += tools.get_bytes(self._pad_byte, pad)
-
-            # Add in the actual entry data
+                section_data += tools.GetBytes(self._pad_byte, pad)
             section_data += data
-
+        if self.size:
+            pad = self.size - len(section_data)
+            if pad > 0:
+                section_data += tools.GetBytes(self._pad_byte, pad)
         self.Detail('GetData: %d entries, total size %#x' %
                     (len(self._entries), len(section_data)))
-        return self.CompressData(section_data)
-
-    def GetPaddedData(self, data=None):
-        """Get the data for a section including any padding
-
-        Gets the section data and uses the parent section's pad-byte value to
-        add padding before and after as defined by the pad-before and pad-after
-        properties. If this is a top-level section (i.e. an image), this is the
-        same as GetData(), since padding is not supported.
-
-        This does not consider alignment.
-
-        Returns:
-            Contents of the section along with any pad bytes before and
-            after it (bytes)
-        """
-        section = self.section or self
-        if data is None:
-            data = self.GetData()
-        return section.GetPaddedDataForEntry(self, data)
-
-    def GetData(self, required=True):
-        """Get the contents of an entry
-
-        This builds the contents of the section, stores this as the contents of
-        the section and returns it
-
-        Args:
-            required: True if the data must be present, False if it is OK to
-                return None
-
-        Returns:
-            bytes content of the section, made up for all all of its subentries.
-            This excludes any padding. If the section is compressed, the
-            compressed data is returned
-        """
-        data = self.BuildSectionData(required)
-        if data is None:
-            return None
-        self.SetContents(data)
-        return data
+        return section_data
 
     def GetOffsets(self):
         """Handle entries that want to set the offset/size of other entries
@@ -376,32 +170,21 @@ class Entry_section(Entry):
 
     def ResetForPack(self):
         """Reset offset/size fields so that packing can be done again"""
-        super().ResetForPack()
+        Entry.ResetForPack(self)
         for entry in self._entries.values():
             entry.ResetForPack()
 
     def Pack(self, offset):
         """Pack all entries into the section"""
         self._PackEntries()
-        if self._sort:
-            self._SortEntries()
-        self._ExpandEntries()
-
-        data = self.BuildSectionData(True)
-        self.SetContents(data)
-
-        self.CheckSize()
-
-        offset = super().Pack(offset)
-        self.CheckEntries()
-        return offset
+        return Entry.Pack(self, offset)
 
     def _PackEntries(self):
-        """Pack all entries into the section"""
+        """Pack all entries into the image"""
         offset = self._skip_at_start
         for entry in self._entries.values():
             offset = entry.Pack(offset)
-        return offset
+        self.size = self.CheckSize()
 
     def _ExpandEntries(self):
         """Expand any entries that are permitted to"""
@@ -423,23 +206,22 @@ class Entry_section(Entry):
             self._entries[entry._node.name] = entry
 
     def CheckEntries(self):
-        """Check that entries do not overlap or extend outside the section"""
-        max_size = self.size if self.uncomp_size is None else self.uncomp_size
-
+        """Check that entries do not overlap or extend outside the image"""
+        if self._sort:
+            self._SortEntries()
+        self._ExpandEntries()
         offset = 0
         prev_name = 'None'
         for entry in self._entries.values():
-            entry.CheckEntries()
+            entry.CheckOffset()
             if (entry.offset < self._skip_at_start or
                     entry.offset + entry.size > self._skip_at_start +
-                    max_size):
-                entry.Raise('Offset %#x (%d) size %#x (%d) is outside the '
-                            "section '%s' starting at %#x (%d) "
-                            'of size %#x (%d)' %
-                            (entry.offset, entry.offset, entry.size, entry.size,
-                             self._node.path, self._skip_at_start,
-                             self._skip_at_start, max_size, max_size))
-            if entry.offset < offset and entry.size:
+                    self.size):
+                entry.Raise("Offset %#x (%d) is outside the section starting "
+                            "at %#x (%d)" %
+                            (entry.offset, entry.offset, self._skip_at_start,
+                             self._skip_at_start))
+            if entry.offset < offset:
                 entry.Raise("Offset %#x (%d) overlaps with previous entry '%s' "
                             "ending at %#x (%d)" %
                             (entry.offset, entry.offset, prev_name, offset, offset))
@@ -452,15 +234,14 @@ class Entry_section(Entry):
             entry.WriteSymbols(self)
 
     def SetCalculatedProperties(self):
-        super().SetCalculatedProperties()
+        Entry.SetCalculatedProperties(self)
         for entry in self._entries.values():
             entry.SetCalculatedProperties()
 
     def SetImagePos(self, image_pos):
-        super().SetImagePos(image_pos)
-        if self.compress == 'none':
-            for entry in self._entries.values():
-                entry.SetImagePos(image_pos + self.offset)
+        Entry.SetImagePos(self, image_pos)
+        for entry in self._entries.values():
+            entry.SetImagePos(image_pos + self.offset)
 
     def ProcessContents(self):
         sizes_ok_base = super(Entry_section, self).ProcessContents()
@@ -469,6 +250,9 @@ class Entry_section(Entry):
             if not entry.ProcessContents():
                 sizes_ok = False
         return sizes_ok and sizes_ok_base
+
+    def CheckOffset(self):
+        self.CheckEntries()
 
     def WriteMap(self, fd, indent):
         """Write a map of the section to a .map file
@@ -484,20 +268,16 @@ class Entry_section(Entry):
     def GetEntries(self):
         return self._entries
 
-    def GetContentsByPhandle(self, phandle, source_entry, required):
+    def GetContentsByPhandle(self, phandle, source_entry):
         """Get the data contents of an entry specified by a phandle
 
         This uses a phandle to look up a node and and find the entry
-        associated with it. Then it returns the contents of that entry.
-
-        The node must be a direct subnode of this section.
+        associated with it. Then it returnst he contents of that entry.
 
         Args:
             phandle: Phandle to look up (integer)
             source_entry: Entry containing that phandle (used for error
                 reporting)
-            required: True if the data must be present, False if it is OK to
-                return None
 
         Returns:
             data from associated entry (as a string), or None if not found
@@ -507,10 +287,10 @@ class Entry_section(Entry):
             source_entry.Raise("Cannot find node for phandle %d" % phandle)
         for entry in self._entries.values():
             if entry._node == node:
-                return entry.GetData(required)
+                return entry.GetData()
         source_entry.Raise("Cannot find entry for node '%s'" % node.name)
 
-    def LookupSymbol(self, sym_name, optional, msg, base_addr, entries=None):
+    def LookupSymbol(self, sym_name, optional, msg, base_addr):
         """Look up a symbol in an ELF file
 
         Looks up a symbol in an ELF file. Only entry types which come from an
@@ -553,20 +333,18 @@ class Entry_section(Entry):
                              (msg, sym_name))
         entry_name, prop_name = m.groups()
         entry_name = entry_name.replace('_', '-')
-        if not entries:
-            entries = self._entries
-        entry = entries.get(entry_name)
+        entry = self._entries.get(entry_name)
         if not entry:
             if entry_name.endswith('-any'):
                 root = entry_name[:-4]
-                for name in entries:
+                for name in self._entries:
                     if name.startswith(root):
                         rest = name[len(root):]
                         if rest in ['', '-img', '-nodtb']:
-                            entry = entries[name]
+                            entry = self._entries[name]
         if not entry:
             err = ("%s: Entry '%s' not found in list (%s)" %
-                   (msg, entry_name, ','.join(entries.keys())))
+                   (msg, entry_name, ','.join(self._entries.keys())))
             if optional:
                 print('Warning: %s' % err, file=sys.stderr)
                 return None
@@ -630,47 +408,18 @@ class Entry_section(Entry):
                 return entry
         return None
 
-    def GetEntryContents(self, skip_entry=None):
-        """Call ObtainContents() for each entry in the section
+    def GetEntryContents(self):
+        """Call ObtainContents() for the section
         """
-        def _CheckDone(entry):
-            if entry != skip_entry:
-                if not entry.ObtainContents():
-                    next_todo.append(entry)
-            return entry
-
         todo = self._entries.values()
         for passnum in range(3):
-            threads = state.GetThreads()
             next_todo = []
-
-            if threads == 0:
-                for entry in todo:
-                    _CheckDone(entry)
-            else:
-                with concurrent.futures.ThreadPoolExecutor(
-                        max_workers=threads) as executor:
-                    future_to_data = {
-                        entry: executor.submit(_CheckDone, entry)
-                        for entry in todo}
-                    timeout = 60
-                    if self.GetImage().test_section_timeout:
-                        timeout = 0
-                    done, not_done = concurrent.futures.wait(
-                        future_to_data.values(), timeout=timeout)
-                    # Make sure we check the result, so any exceptions are
-                    # generated. Check the results in entry order, since tests
-                    # may expect earlier entries to fail first.
-                    for entry in todo:
-                        job = future_to_data[entry]
-                        job.result()
-                    if not_done:
-                        self.Raise('Timed out obtaining contents')
-
+            for entry in todo:
+                if not entry.ObtainContents():
+                    next_todo.append(entry)
             todo = next_todo
             if not todo:
                 break
-
         if todo:
             self.Raise('Internal error: Could not complete processing of contents: remaining %s' %
                        todo)
@@ -688,8 +437,8 @@ class Entry_section(Entry):
         if not entry:
             self._Raise("Unable to set offset/size for unknown entry '%s'" %
                         name)
-        entry.SetOffsetSize(self._skip_at_start + offset if offset is not None
-                            else None, size)
+        entry.SetOffsetSize(self._skip_at_start + offset if offset else None,
+                            size)
 
     def GetEntryOffsets(self):
         """Handle entries that want to set the offset/size of other entries
@@ -702,21 +451,26 @@ class Entry_section(Entry):
             for name, info in offset_dict.items():
                 self._SetEntryOffsetSize(name, *info)
 
+
     def CheckSize(self):
-        contents_size = len(self.data)
+        """Check that the image contents does not exceed its size, etc."""
+        contents_size = 0
+        for entry in self._entries.values():
+            contents_size = max(contents_size, entry.offset + entry.size)
+
+        contents_size -= self._skip_at_start
 
         size = self.size
         if not size:
-            data = self.GetPaddedData(self.data)
-            size = len(data)
-            size = tools.align(size, self.align_size)
+            size = self.pad_before + contents_size + self.pad_after
+            size = tools.Align(size, self.align_size)
 
         if self.size and contents_size > self.size:
             self._Raise("contents size %#x (%d) exceeds section size %#x (%d)" %
                         (contents_size, contents_size, self.size, self.size))
         if not self.size:
             self.size = size
-        if self.size != tools.align(self.size, self.align_size):
+        if self.size != tools.Align(self.size, self.align_size):
             self._Raise("Size %#x (%d) does not match align-size %#x (%d)" %
                         (self.size, self.size, self.align_size,
                          self.align_size))
@@ -724,7 +478,7 @@ class Entry_section(Entry):
 
     def ListEntries(self, entries, indent):
         """List the files in the section"""
-        Entry.AddEntryInfo(entries, indent, self.name, self.etype, self.size,
+        Entry.AddEntryInfo(entries, indent, self.name, 'section', self.size,
                            self.image_pos, None, self.offset, self)
         for entry in self._entries.values():
             entry.ListEntries(entries, indent + 1)
@@ -756,144 +510,30 @@ class Entry_section(Entry):
         """
         return self._sort
 
-    def ReadData(self, decomp=True, alt_format=None):
-        tout.info("ReadData path='%s'" % self.GetPath())
-        parent_data = self.section.ReadData(True, alt_format)
-        offset = self.offset - self.section._skip_at_start
-        data = parent_data[offset:offset + self.size]
-        tout.info(
-            '%s: Reading data from offset %#x-%#x (real %#x), size %#x, got %#x' %
-                  (self.GetPath(), self.offset, self.offset + self.size, offset,
-                   self.size, len(data)))
+    def ReadData(self, decomp=True):
+        tout.Info("ReadData path='%s'" % self.GetPath())
+        parent_data = self.section.ReadData(True)
+        tout.Info('%s: Reading data from offset %#x-%#x, size %#x' %
+                  (self.GetPath(), self.offset, self.offset + self.size,
+                   self.size))
+        data = parent_data[self.offset:self.offset + self.size]
         return data
 
-    def ReadChildData(self, child, decomp=True, alt_format=None):
-        tout.debug(f"ReadChildData for child '{child.GetPath()}'")
-        parent_data = self.ReadData(True, alt_format)
+    def ReadChildData(self, child, decomp=True):
+        tout.Debug("ReadChildData for child '%s'" % child.GetPath())
+        parent_data = self.ReadData(True)
         offset = child.offset - self._skip_at_start
-        tout.debug("Extract for child '%s': offset %#x, skip_at_start %#x, result %#x" %
+        tout.Debug("Extract for child '%s': offset %#x, skip_at_start %#x, result %#x" %
                    (child.GetPath(), child.offset, self._skip_at_start, offset))
         data = parent_data[offset:offset + child.size]
         if decomp:
             indata = data
-            data = comp_util.decompress(indata, child.compress)
+            data = tools.Decompress(indata, child.compress)
             if child.uncomp_size:
-                tout.info("%s: Decompressing data size %#x with algo '%s' to data size %#x" %
+                tout.Info("%s: Decompressing data size %#x with algo '%s' to data size %#x" %
                             (child.GetPath(), len(indata), child.compress,
                             len(data)))
-        if alt_format:
-            new_data = child.GetAltFormat(data, alt_format)
-            if new_data is not None:
-                data = new_data
         return data
 
     def WriteChildData(self, child):
         return True
-
-    def SetAllowMissing(self, allow_missing):
-        """Set whether a section allows missing external blobs
-
-        Args:
-            allow_missing: True if allowed, False if not allowed
-        """
-        self.allow_missing = allow_missing
-        for entry in self._entries.values():
-            entry.SetAllowMissing(allow_missing)
-
-    def SetAllowFakeBlob(self, allow_fake):
-        """Set whether a section allows to create a fake blob
-
-        Args:
-            allow_fake_blob: True if allowed, False if not allowed
-        """
-        super().SetAllowFakeBlob(allow_fake)
-        for entry in self._entries.values():
-            entry.SetAllowFakeBlob(allow_fake)
-
-    def CheckMissing(self, missing_list):
-        """Check if any entries in this section have missing external blobs
-
-        If there are missing blobs, the entries are added to the list
-
-        Args:
-            missing_list: List of Entry objects to be added to
-        """
-        for entry in self._entries.values():
-            entry.CheckMissing(missing_list)
-
-    def CheckFakedBlobs(self, faked_blobs_list):
-        """Check if any entries in this section have faked external blobs
-
-        If there are faked blobs, the entries are added to the list
-
-        Args:
-            fake_blobs_list: List of Entry objects to be added to
-        """
-        for entry in self._entries.values():
-            entry.CheckFakedBlobs(faked_blobs_list)
-
-    def check_missing_bintools(self, missing_list):
-        """Check if any entries in this section have missing bintools
-
-        If there are missing bintools, these are added to the list
-
-        Args:
-            missing_list: List of Bintool objects to be added to
-        """
-        super().check_missing_bintools(missing_list)
-        for entry in self._entries.values():
-            entry.check_missing_bintools(missing_list)
-
-    def _CollectEntries(self, entries, entries_by_name, add_entry):
-        """Collect all the entries in an section
-
-        This builds up a dict of entries in this section and all subsections.
-        Entries are indexed by path and by name.
-
-        Since all paths are unique, entries will not have any conflicts. However
-        entries_by_name make have conflicts if two entries have the same name
-        (e.g. with different parent sections). In this case, an entry at a
-        higher level in the hierarchy will win over a lower-level entry.
-
-        Args:
-            entries: dict to put entries:
-                key: entry path
-                value: Entry object
-            entries_by_name: dict to put entries
-                key: entry name
-                value: Entry object
-            add_entry: Entry to add
-        """
-        entries[add_entry.GetPath()] = add_entry
-        to_add = add_entry.GetEntries()
-        if to_add:
-            for entry in to_add.values():
-                entries[entry.GetPath()] = entry
-            for entry in to_add.values():
-                self._CollectEntries(entries, entries_by_name, entry)
-        entries_by_name[add_entry.name] = add_entry
-
-    def MissingArgs(self, entry, missing):
-        """Report a missing argument, if enabled
-
-        For entries which require arguments, this reports an error if some are
-        missing. If missing entries are being ignored (e.g. because we read the
-        entry from an image rather than creating it), this function does
-        nothing.
-
-        Args:
-            entry (Entry): Entry to raise the error on
-            missing (list of str): List of missing properties / entry args, each
-            a string
-        """
-        if not self._ignore_missing:
-            missing = ', '.join(missing)
-            entry.Raise(f'Missing required properties/entry args: {missing}')
-
-    def CheckAltFormats(self, alt_formats):
-        for entry in self._entries.values():
-            entry.CheckAltFormats(alt_formats)
-
-    def AddBintools(self, tools):
-        for entry in self._entries.values():
-            entry.AddBintools(tools)

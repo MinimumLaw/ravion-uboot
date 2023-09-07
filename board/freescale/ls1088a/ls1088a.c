@@ -1,23 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017-2022 NXP
+ * Copyright 2017-2018 NXP
  */
 #include <common.h>
-#include <clock_legacy.h>
 #include <env.h>
 #include <i2c.h>
-#include <init.h>
-#include <log.h>
 #include <malloc.h>
 #include <errno.h>
 #include <netdev.h>
 #include <fsl_ifc.h>
 #include <fsl_ddr.h>
 #include <fsl_sec.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <fdt_support.h>
-#include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <fsl-mc/fsl_mc.h>
 #include <env_internal.h>
@@ -27,7 +22,6 @@
 #include <asm/arch/fsl_serdes.h>
 #include <asm/arch/soc.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
-#include "../common/i2c_mux.h"
 
 #include "../common/qixis.h"
 #include "ls1088a_qixis.h"
@@ -188,46 +182,6 @@ int init_func_vid(void)
 
 	return 0;
 }
-
-u16 soc_get_fuse_vid(int vid_index)
-{
-	static const u16 vdd[32] = {
-		10250,
-		9875,
-		9750,
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		9000,
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		10000,  /* 1.0000V */
-		10125,
-		10250,
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-		0,      /* reserved */
-	};
-
-	return vdd[vid_index];
-};
 #endif
 
 int is_pb_board(void)
@@ -375,7 +329,6 @@ bool if_board_diff_clk(void)
 #endif
 }
 
-#ifdef CONFIG_DYNAMIC_SYS_CLK_FREQ
 unsigned long get_board_sys_clk(void)
 {
 	u8 sysclk_conf = QIXIS_READ(brdcfg[1]);
@@ -399,9 +352,7 @@ unsigned long get_board_sys_clk(void)
 
 	return 66666666;
 }
-#endif
 
-#ifdef CONFIG_DYNAMIC_DDR_CLK_FREQ
 unsigned long get_board_ddr_clk(void)
 {
 	u8 ddrclk_conf = QIXIS_READ(brdcfg[1]);
@@ -419,7 +370,27 @@ unsigned long get_board_ddr_clk(void)
 
 	return 66666666;
 }
+
+int select_i2c_ch_pca9547(u8 ch)
+{
+	int ret;
+
+#ifndef CONFIG_DM_I2C
+	ret = i2c_write(I2C_MUX_PCA_ADDR_PRI, 0, 1, &ch, 1);
+#else
+	struct udevice *dev;
+
+	ret = i2c_get_chip_for_busnum(0, I2C_MUX_PCA_ADDR_PRI, 1, &dev);
+	if (!ret)
+		ret = dm_i2c_write(dev, 0, &ch, 1);
 #endif
+	if (ret) {
+		puts("PCA: failed to select proper channel\n");
+		return ret;
+	}
+
+	return 0;
+}
 
 #if !defined(CONFIG_SPL_BUILD)
 void board_retimer_init(void)
@@ -427,11 +398,11 @@ void board_retimer_init(void)
 	u8 reg;
 
 	/* Retimer is connected to I2C1_CH5 */
-	select_i2c_ch_pca9547(I2C_MUX_CH5, 0);
+	select_i2c_ch_pca9547(I2C_MUX_CH5);
 
 	/* Access to Control/Shared register */
 	reg = 0x0;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0xff, 1, &reg, 1);
 #else
 	struct udevice *dev;
@@ -441,7 +412,7 @@ void board_retimer_init(void)
 #endif
 
 	/* Read device revision and ID */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_read(I2C_RETIMER_ADDR, 1, 1, &reg, 1);
 #else
 	dm_i2c_read(dev, 1, &reg, 1);
@@ -450,20 +421,20 @@ void board_retimer_init(void)
 
 	/* Enable Broadcast. All writes target all channel register sets */
 	reg = 0x0c;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0xff, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0xff, &reg, 1);
 #endif
 
 	/* Reset Channel Registers */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_read(I2C_RETIMER_ADDR, 0, 1, &reg, 1);
 #else
 	dm_i2c_read(dev, 0, &reg, 1);
 #endif
 	reg |= 0x4;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0, &reg, 1);
@@ -471,45 +442,45 @@ void board_retimer_init(void)
 
 	/* Set data rate as 10.3125 Gbps */
 	reg = 0x90;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0x60, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x60, &reg, 1);
 #endif
 	reg = 0xb3;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0x61, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x61, &reg, 1);
 #endif
 	reg = 0x90;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0x62, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x62, &reg, 1);
 #endif
 	reg = 0xb3;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0x63, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x63, &reg, 1);
 #endif
 	reg = 0xcd;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0x64, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x64, &reg, 1);
 #endif
 
 	/* Select VCO Divider to full rate (000) */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_read(I2C_RETIMER_ADDR, 0x2F, 1, &reg, 1);
 #else
 	dm_i2c_read(dev, 0x2F, &reg, 1);
 #endif
 	reg &= 0x0f;
 	reg |= 0x70;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR, 0x2F, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x2F, &reg, 1);
@@ -517,11 +488,11 @@ void board_retimer_init(void)
 
 #ifdef	CONFIG_TARGET_LS1088AQDS
 	/* Retimer is connected to I2C1_CH5 */
-	select_i2c_ch_pca9547(I2C_MUX_CH5, 0);
+	select_i2c_ch_pca9547(I2C_MUX_CH5);
 
 	/* Access to Control/Shared register */
 	reg = 0x0;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0xff, 1, &reg, 1);
 #else
 	i2c_get_chip_for_busnum(0, I2C_RETIMER_ADDR2, 1, &dev);
@@ -529,7 +500,7 @@ void board_retimer_init(void)
 #endif
 
 	/* Read device revision and ID */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_read(I2C_RETIMER_ADDR2, 1, 1, &reg, 1);
 #else
 	dm_i2c_read(dev, 1, &reg, 1);
@@ -538,20 +509,20 @@ void board_retimer_init(void)
 
 	/* Enable Broadcast. All writes target all channel register sets */
 	reg = 0x0c;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0xff, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0xff, &reg, 1);
 #endif
 
 	/* Reset Channel Registers */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_read(I2C_RETIMER_ADDR2, 0, 1, &reg, 1);
 #else
 	dm_i2c_read(dev, 0, &reg, 1);
 #endif
 	reg |= 0x4;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0, &reg, 1);
@@ -559,45 +530,45 @@ void board_retimer_init(void)
 
 	/* Set data rate as 10.3125 Gbps */
 	reg = 0x90;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0x60, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x60, &reg, 1);
 #endif
 	reg = 0xb3;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0x61, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x61, &reg, 1);
 #endif
 	reg = 0x90;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0x62, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x62, &reg, 1);
 #endif
 	reg = 0xb3;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0x63, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x63, &reg, 1);
 #endif
 	reg = 0xcd;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0x64, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x64, &reg, 1);
 #endif
 
 	/* Select VCO Divider to full rate (000) */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_read(I2C_RETIMER_ADDR2, 0x2F, 1, &reg, 1);
 #else
 	dm_i2c_read(dev, 0x2F, &reg, 1);
 #endif
 	reg &= 0x0f;
 	reg |= 0x70;
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_write(I2C_RETIMER_ADDR2, 0x2F, 1, &reg, 1);
 #else
 	dm_i2c_write(dev, 0x2F, &reg, 1);
@@ -605,7 +576,7 @@ void board_retimer_init(void)
 
 #endif
 	/*return the default channel*/
-	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT, 0);
+	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT);
 }
 
 #ifdef CONFIG_MISC_INIT_R
@@ -654,7 +625,7 @@ int misc_init_r(void)
 
 int i2c_multiplexer_select_vid_channel(u8 channel)
 {
-	return select_i2c_ch_pca9547(channel, 0);
+	return select_i2c_ch_pca9547(channel);
 }
 
 #ifdef CONFIG_TARGET_LS1088AQDS
@@ -665,7 +636,7 @@ int get_serdes_volt(void)
 	u8 chan = PWM_CHANNEL0;
 
 	/* Select the PAGE 0 using PMBus commands PAGE for VDD */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	ret = i2c_write(I2C_SVDD_MONITOR_ADDR,
 			PMBUS_CMD_PAGE, 1, &chan, 1);
 #else
@@ -683,7 +654,7 @@ int get_serdes_volt(void)
 	}
 
 	/* Read the output voltage using PMBus command READ_VOUT */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	ret = i2c_read(I2C_SVDD_MONITOR_ADDR,
 		       PMBUS_CMD_READ_VOUT, 1, (void *)&vcode, 2);
 #else
@@ -704,7 +675,7 @@ int set_serdes_volt(int svdd)
 			svdd & 0xFF, (svdd & 0xFF00) >> 8};
 
 	/* Write the desired voltage code to the SVDD regulator */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	ret = i2c_write(I2C_SVDD_MONITOR_ADDR,
 			PMBUS_CMD_PAGE_PLUS_WRITE, 1, (void *)&buff, 5);
 #else
@@ -745,7 +716,7 @@ int set_serdes_volt(int svdd)
 	printf("SVDD changing of RDB\n");
 
 	/* Read the BRDCFG54 via CLPD */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	ret = i2c_read(CONFIG_SYS_I2C_FPGA_ADDR,
 		       QIXIS_BRDCFG4_OFFSET, 1, (void *)&brdcfg4, 1);
 #else
@@ -765,7 +736,7 @@ int set_serdes_volt(int svdd)
 	brdcfg4 = brdcfg4 | 0x08;
 
 	/* Write to the BRDCFG4 */
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	ret = i2c_write(CONFIG_SYS_I2C_FPGA_ADDR,
 			QIXIS_BRDCFG4_OFFSET, 1, (void *)&brdcfg4, 1);
 #else
@@ -812,8 +783,12 @@ int board_init(void)
 	u32 __iomem *irq_ccsr = (u32 __iomem *)ISC_BASE;
 #endif
 
-	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT, 0);
+	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT);
 	board_retimer_init();
+
+#ifdef CONFIG_ENV_IS_NOWHERE
+	gd->env_addr = (ulong)&default_environment[0];
+#endif
 
 #if defined(CONFIG_TARGET_LS1088ARDB) && defined(CONFIG_FSL_MC_ENET)
 	/* invert AQR105 IRQ pins polarity */
@@ -826,11 +801,6 @@ int board_init(void)
 #ifdef CONFIG_FSL_LS_PPA
 	ppa_init();
 #endif
-
-#if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)
-	pci_init();
-#endif
-
 	return 0;
 }
 
@@ -904,10 +874,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 	}
 
 	if (disable_ifc) {
-		offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
+		offset = fdt_path_offset(fdt, "/soc/ifc/nor");
 
 		if (offset < 0)
-			offset = fdt_path_offset(fdt, "/memory-controller/nor");
+			offset = fdt_path_offset(fdt, "/ifc/nor");
 	} else {
 		offset = fdt_path_offset(fdt, "/soc/quadspi");
 
@@ -917,10 +887,10 @@ void fsl_fdt_fixup_flash(void *fdt)
 
 #else
 #ifdef CONFIG_FSL_QSPI
-	offset = fdt_path_offset(fdt, "/soc/memory-controller/nor");
+	offset = fdt_path_offset(fdt, "/soc/ifc/nor");
 
 	if (offset < 0)
-		offset = fdt_path_offset(fdt, "/memory-controller/nor");
+		offset = fdt_path_offset(fdt, "/ifc/nor");
 #else
 	offset = fdt_path_offset(fdt, "/soc/quadspi");
 
@@ -934,7 +904,7 @@ void fsl_fdt_fixup_flash(void *fdt)
 	fdt_status_disabled(fdt, offset);
 }
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	int i;
 	u16 mc_memory_bank = 0;

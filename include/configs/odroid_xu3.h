@@ -14,6 +14,8 @@
 
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 
+/* select serial console configuration */
+
 #define TZPC_BASE_OFFSET		0x10000
 
 #define SDRAM_BANK_SIZE			(256UL << 20UL)	/* 256 MB */
@@ -23,10 +25,13 @@
 
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_LOAD_ADDR - 0x1000000)
 
+#define CONFIG_DEFAULT_CONSOLE		"console=ttySAC2,115200n8\0"
+
 /* USB */
 #define CONFIG_USB_EHCI_EXYNOS
 
 /* DFU */
+#define CONFIG_SYS_DFU_DATA_BUF_SIZE	SZ_32M
 #define DFU_DEFAULT_POLL_TIMEOUT	300
 #define DFU_MANIFEST_POLL_TIMEOUT	25000
 
@@ -71,15 +76,19 @@
 
 /* Enable: board/samsung/common/misc.c to use set_dfu_alt_info() */
 #define CONFIG_MISC_COMMON
+#define CONFIG_SET_DFU_ALT_INFO
 #define CONFIG_SET_DFU_ALT_BUF_LEN	(SZ_1K)
 
 /* Set soc_rev, soc_id, board_rev, board_name, fdtfile */
 #define CONFIG_ODROID_REV_AIN		9
+#define CONFIG_REVISION_TAG
 
 /*
  * Need to override existing one (smdk5420) with odroid so set_board_info will
  * use proper prefix when creating full board_name (SYS_BOARD + type)
  */
+#undef CONFIG_SYS_BOARD
+#define CONFIG_SYS_BOARD		"odroid"
 
 /* Define new extra env settings, including DFU settings */
 #undef CONFIG_EXTRA_ENV_SETTINGS
@@ -89,7 +98,7 @@
 	MEM_LAYOUT_ENV_SETTINGS \
 	BOOTENV \
 	"rootfstype=ext4\0" \
-	"console=console=ttySAC2,115200n8\0" \
+	"console=" CONFIG_DEFAULT_CONSOLE \
 	"fdtfile=exynos5422-odroidxu3.dtb\0" \
 	"board_name=odroidxu3\0" \
 	"mmcbootdev=0\0" \

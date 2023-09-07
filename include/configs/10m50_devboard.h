@@ -20,6 +20,7 @@
 /*
  * Flash
  */
+#define CONFIG_SYS_MAX_FLASH_BANKS	1
 #define CONFIG_SYS_MAX_FLASH_SECT	1024
 
 /*
@@ -34,6 +35,11 @@
 #define CONFIG_BOOTP_BOOTFILESIZE
 
 /*
+ * FDT options
+ */
+#define CONFIG_LMB
+
+/*
  * MEMORY ORGANIZATION
  * -Monitor at top of sdram.
  * -The heap is placed below the monitor
@@ -46,5 +52,27 @@
 #define CONFIG_SYS_MONITOR_BASE	(CONFIG_SYS_SDRAM_BASE + \
 					 CONFIG_SYS_SDRAM_SIZE - \
 					 CONFIG_SYS_MONITOR_LEN)
+#define CONFIG_SYS_MALLOC_LEN		0x20000
+
+/*
+ * ENVIRONMENT -- Put environment in sector CONFIG_SYS_MONITOR_LEN above
+ * CONFIG_SYS_RESET_ADDR, since we assume the monitor is stored at the
+ * reset address, no? This will keep the environment in user region
+ * of flash. NOTE: the monitor length must be multiple of sector size
+ * (which is common practice).
+ */
+
+#define CONFIG_ENV_OVERWRITE		/* Serial change Ok	*/
+
+/*
+ * MISC
+ */
+#define CONFIG_SYS_LOAD_ADDR		0xcc000000	/* Half of RAM */
+#define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR
+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MONITOR_BASE - \
+					 CONFIG_ENV_SIZE - \
+					 CONFIG_SYS_MALLOC_LEN -	\
+					 0x10000)
 
 #endif /* __CONFIG_H */

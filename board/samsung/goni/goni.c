@@ -6,13 +6,9 @@
  */
 
 #include <common.h>
-#include <init.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/arch/mmc.h>
 #include <dm.h>
-#include <linux/delay.h>
 #include <power/pmic.h>
 #include <usb/dwc2_udc.h>
 #include <asm/arch/cpu.h>
@@ -23,6 +19,11 @@
 #include <asm/mach-types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+u32 get_board_rev(void)
+{
+	return 0;
+}
 
 int board_init(void)
 {
@@ -72,7 +73,7 @@ int checkboard(void)
 #endif
 
 #ifdef CONFIG_MMC
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int i, ret, ret_sd = 0;
 

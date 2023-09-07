@@ -7,7 +7,6 @@
 #ifndef __pch_h
 #define __pch_h
 
-#include <linux/bitops.h>
 #define PCH_RCBA		0xf0
 
 #define BIOS_CTRL_BIOSWE	BIT(0)
@@ -110,7 +109,7 @@ struct pch_ops {
  *
  * @dev:	PCH device to check
  * @sbasep:	Returns address of SPI base if available, else 0
- * Return: 0 if OK, -ve on error (e.g. there is no SPI base)
+ * @return 0 if OK, -ve on error (e.g. there is no SPI base)
  */
 int pch_get_spi_base(struct udevice *dev, ulong *sbasep);
 
@@ -120,7 +119,7 @@ int pch_get_spi_base(struct udevice *dev, ulong *sbasep);
  * @dev:	PCH device to adjust
  * @protect:	true to protect, false to unprotect
  *
- * Return: 0 on success, -ENOSYS if not implemented
+ * @return 0 on success, -ENOSYS if not implemented
  */
 int pch_set_spi_protect(struct udevice *dev, bool protect);
 
@@ -129,7 +128,7 @@ int pch_set_spi_protect(struct udevice *dev, bool protect);
  *
  * @dev:	PCH device to check
  * @gbasep:	Returns address of GPIO base if available, else 0
- * Return: 0 if OK, -ve on error (e.g. there is no GPIO base)
+ * @return 0 if OK, -ve on error (e.g. there is no GPIO base)
  */
 int pch_get_gpio_base(struct udevice *dev, u32 *gbasep);
 
@@ -138,7 +137,7 @@ int pch_get_gpio_base(struct udevice *dev, u32 *gbasep);
  *
  * @dev:	PCH device to check
  * @iobasep:	Returns address of IO base if available, else 0
- * Return: 0 if OK, -ve on error (e.g. there is no IO base)
+ * @return 0 if OK, -ve on error (e.g. there is no IO base)
  */
 int pch_get_io_base(struct udevice *dev, u32 *iobasep);
 
@@ -154,7 +153,7 @@ int pch_get_io_base(struct udevice *dev, u32 *iobasep);
  * @req:	PCH request ID
  * @data:	Input/output data
  * @size:	Size of input data (and maximum size of output data)
- * Return: size of output data on sucesss, -ve on error
+ * @return size of output data on sucesss, -ve on error
  */
 int pch_ioctl(struct udevice *dev, ulong req, void *data, int size);
 

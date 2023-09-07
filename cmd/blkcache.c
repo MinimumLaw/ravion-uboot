@@ -4,14 +4,13 @@
  * Author: Eric Nelson<eric@nelint.com>
  *
  */
-#include <command.h>
 #include <config.h>
 #include <common.h>
 #include <malloc.h>
 #include <part.h>
 
-static int blkc_show(struct cmd_tbl *cmdtp, int flag,
-		     int argc, char *const argv[])
+static int blkc_show(cmd_tbl_t *cmdtp, int flag,
+		     int argc, char * const argv[])
 {
 	struct block_cache_stats stats;
 	blkcache_stats(&stats);
@@ -26,8 +25,8 @@ static int blkc_show(struct cmd_tbl *cmdtp, int flag,
 	return 0;
 }
 
-static int blkc_configure(struct cmd_tbl *cmdtp, int flag,
-			  int argc, char *const argv[])
+static int blkc_configure(cmd_tbl_t *cmdtp, int flag,
+			  int argc, char * const argv[])
 {
 	unsigned blocks_per_entry, max_entries;
 	if (argc != 3)
@@ -41,7 +40,7 @@ static int blkc_configure(struct cmd_tbl *cmdtp, int flag,
 	return 0;
 }
 
-static struct cmd_tbl cmd_blkc_sub[] = {
+static cmd_tbl_t cmd_blkc_sub[] = {
 	U_BOOT_CMD_MKENT(show, 0, 0, blkc_show, "", ""),
 	U_BOOT_CMD_MKENT(configure, 3, 0, blkc_configure, "", ""),
 };
@@ -56,10 +55,10 @@ static __maybe_unused void blkc_reloc(void)
 	};
 }
 
-static int do_blkcache(struct cmd_tbl *cmdtp, int flag,
-		       int argc, char *const argv[])
+static int do_blkcache(cmd_tbl_t *cmdtp, int flag,
+		       int argc, char * const argv[])
 {
-	struct cmd_tbl *c;
+	cmd_tbl_t *c;
 
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	blkc_reloc();
@@ -83,6 +82,5 @@ U_BOOT_CMD(
 	blkcache, 4, 0, do_blkcache,
 	"block cache diagnostics and control",
 	"show - show and reset statistics\n"
-	"blkcache configure <blocks> <entries> "
-	"- set max blocks per entry and max cache entries\n"
+	"blkcache configure blocks entries\n"
 );

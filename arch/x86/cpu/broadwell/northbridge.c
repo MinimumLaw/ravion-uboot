@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/mrc_common.h>
 #include <asm/arch/iomap.h>

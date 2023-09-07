@@ -5,53 +5,13 @@
  */
 
 #include <common.h>
-#include <asm/io.h>
-#include <linux/bitops.h>
 
 #include "common.h"
 #include "qrio.h"
 
-/* QRIO ID register offset */
-#define ID_REV_OFF		0x00
-
 /* QRIO GPIO register offsets */
 #define DIRECT_OFF		0x18
 #define GPRT_OFF		0x1c
-
-void show_qrio(void)
-{
-	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
-	u16 id_rev = in_be16(qrio_base + ID_REV_OFF);
-
-	printf("QRIO: id = %u, revision = %u\n",
-	       (id_rev >> 8) & 0xff, id_rev & 0xff);
-}
-
-#define SLFTEST_OFF		0x06
-
-bool qrio_get_selftest_pin(void)
-{
-	u8 slftest;
-
-	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
-
-	slftest = in_8(qrio_base + SLFTEST_OFF);
-
-	return (slftest & 1) > 0;
-}
-
-#define BPRTH_OFF		0x04
-
-bool qrio_get_pgy_pres_pin(void)
-{
-	u8 pgy_pres;
-
-	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
-
-	pgy_pres = in_8(qrio_base + BPRTH_OFF);
-
-	return (pgy_pres & 0x80) > 0;
-}
 
 int qrio_get_gpio(u8 port_off, u8 gpio_nr)
 {
@@ -168,7 +128,7 @@ void qrio_prst(u8 bit, bool en, bool wden)
 
 void qrio_prstcfg(u8 bit, u8 mode)
 {
-	unsigned long prstcfg;
+	u32 prstcfg;
 	u8 i;
 	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
 
@@ -176,9 +136,9 @@ void qrio_prstcfg(u8 bit, u8 mode)
 
 	for (i = 0; i < 2; i++) {
 		if (mode & (1 << i))
-			__set_bit(2 * bit + i, &prstcfg);
+			set_bit(2 * bit + i, &prstcfg);
 		else
-			__clear_bit(2 * bit + i, &prstcfg);
+			clear_bit(2 * bit + i, &prstcfg);
 	}
 
 	out_be32(qrio_base + PRSTCFG_OFF, prstcfg);
@@ -270,44 +230,6 @@ void qrio_uprstreq(u8 mode)
 	out_8(qrio_base + RSTCFG_OFF, rstcfg);
 }
 
-/* Early bootcount memory area is avilable starting from QRIO3 Rev.2 */
-#define QRIO3_ID		0x71
-#define QRIO3_REV		0x02
-#define EBOOTCNT_OFF		0x28
-
-ulong early_bootcount_load(void)
-{
-	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
-	u16 id_rev = in_be16(qrio_base + ID_REV_OFF);
-	u8 id = (id_rev >> 8) & 0xff;
-	u8 rev = id_rev & 0xff;
-	u32 ebootcount = 0;
-
-	if (id == QRIO3_ID && rev >= QRIO3_REV) {
-		ebootcount = in_be32(qrio_base + EBOOTCNT_OFF);
-	} else {
-		printf("QRIO: warning: early bootcount not supported, ");
-		printf("id = %u, rev = %u\n", id, rev);
-	}
-
-	return ebootcount;
-}
-
-void early_bootcount_store(ulong ebootcount)
-{
-	void __iomem *qrio_base = (void *)CONFIG_SYS_QRIO_BASE;
-	u16 id_rev = in_be16(qrio_base + ID_REV_OFF);
-	u8 id = (id_rev >> 8) & 0xff;
-	u8 rev = id_rev & 0xff;
-
-	if (id == QRIO3_ID && rev >= QRIO3_REV) {
-		out_be32(qrio_base + EBOOTCNT_OFF, ebootcount);
-	} else {
-		printf("QRIO: warning: early bootcount not supported, ");
-		printf("id = %u, rev = %u\n", id, rev);
-	}
-}
-
 /* I2C deblocking uses the algorithm defined in board/keymile/common/common.c
  * 2 dedicated QRIO GPIOs externally pull the SCL and SDA lines
  * For I2C only the low state is activly driven and high state is pulled-up
@@ -354,3 +276,4 @@ int get_scl(void)
 	return qrio_get_gpio(KM_I2C_DEBLOCK_PORT,
 			     KM_I2C_DEBLOCK_SCL);
 }
+

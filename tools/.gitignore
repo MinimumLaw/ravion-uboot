@@ -20,7 +20,6 @@
 /kwboot
 /lib/
 /mips-relocs
-/mkeficapsule
 /mkenvimage
 /mkexynosspl
 /mkimage
@@ -33,6 +32,5 @@
 /spl_size_limit
 /sunxi-spl-image-builder
 /ubsha1
-/update_octeon_header
 /version.h
 /xway-swap-bytes

@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <env.h>
-#include <log.h>
 #include <spl.h>
 #include <asm/u-boot.h>
 #include <fat.h>
@@ -55,7 +54,6 @@ static ulong spl_fit_read(struct spl_load_info *load, ulong file_offset,
 }
 
 int spl_load_image_fat(struct spl_image_info *spl_image,
-		       struct spl_boot_device *bootdev,
 		       struct blk_desc *block_dev, int partition,
 		       const char *filename)
 {
@@ -77,7 +75,7 @@ int spl_load_image_fat(struct spl_image_info *spl_image,
 		err = file_fat_read(filename, (void *)CONFIG_SYS_LOAD_ADDR, 0);
 		if (err <= 0)
 			goto end;
-		err = spl_parse_image_header(spl_image, bootdev,
+		err = spl_parse_image_header(spl_image,
 				(struct image_header *)CONFIG_SYS_LOAD_ADDR);
 		if (err == -EAGAIN)
 			return err;
@@ -95,7 +93,7 @@ int spl_load_image_fat(struct spl_image_info *spl_image,
 
 		return spl_load_simple_fit(spl_image, &load, 0, header);
 	} else {
-		err = spl_parse_image_header(spl_image, bootdev, header);
+		err = spl_parse_image_header(spl_image, header);
 		if (err)
 			goto end;
 
@@ -113,9 +111,8 @@ end:
 	return (err <= 0);
 }
 
-#if CONFIG_IS_ENABLED(OS_BOOT)
+#ifdef CONFIG_SPL_OS_BOOT
 int spl_load_image_fat_os(struct spl_image_info *spl_image,
-			  struct spl_boot_device *bootdev,
 			  struct blk_desc *block_dev, int partition)
 {
 	int err;
@@ -136,7 +133,7 @@ int spl_load_image_fat_os(struct spl_image_info *spl_image,
 		}
 		file = env_get("falcon_image_file");
 		if (file) {
-			err = spl_load_image_fat(spl_image, bootdev, block_dev,
+			err = spl_load_image_fat(spl_image, block_dev,
 						 partition, file);
 			if (err != 0) {
 				puts("spl: falling back to default\n");
@@ -162,12 +159,11 @@ defaults:
 		return -1;
 	}
 
-	return spl_load_image_fat(spl_image, bootdev, block_dev, partition,
+	return spl_load_image_fat(spl_image, block_dev, partition,
 			CONFIG_SPL_FS_LOAD_KERNEL_NAME);
 }
 #else
 int spl_load_image_fat_os(struct spl_image_info *spl_image,
-			  struct spl_boot_device *bootdev,
 			  struct blk_desc *block_dev, int partition)
 {
 	return -ENOSYS;

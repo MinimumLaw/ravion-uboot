@@ -5,12 +5,10 @@
  * Copyright (C) 2006-2008 David Brownell
  * U-Boot porting: Lukasz Majewski <l.majewski@samsung.com>
  */
-#undef DEBUG
+//#undef DEBUG
 
-#include <log.h>
 #include <dm/devres.h>
 #include <linux/bitops.h>
-#include <linux/bug.h>
 #include <linux/usb/composite.h>
 #include "u_os_desc.h"
 
@@ -1158,8 +1156,8 @@ unknown:
 		/*
 		 * OS descriptors handling
 		 */
-		if (CONFIG_IS_ENABLED(USB_GADGET_OS_DESCRIPTORS) && cdev->use_os_string &&
-		    cdev->os_desc_config && (ctrl->bRequestType & USB_TYPE_VENDOR) &&
+		if (cdev->use_os_string && cdev->os_desc_config &&
+		    (ctrl->bRequestType & USB_TYPE_VENDOR) &&
 		    ctrl->bRequest == cdev->b_vendor_code) {
 			struct usb_configuration	*os_desc_cfg;
 			u8				*buf;

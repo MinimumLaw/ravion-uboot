@@ -5,8 +5,6 @@
 
 #include <common.h>
 #include <clock_legacy.h>
-#include <net.h>
-#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <asm/io.h>
@@ -53,11 +51,7 @@ void ft_fixup_enet_phy_connect_type(void *fdt)
 			continue;
 		}
 
-#ifdef CONFIG_DM_ETH
-		priv = dev_get_priv(dev);
-#else
 		priv = dev->priv;
-#endif
 		if (priv->flags & TSEC_SGMII)
 			continue;
 
@@ -87,7 +81,7 @@ void ft_fixup_enet_phy_connect_type(void *fdt)
 	}
 }
 
-void ft_cpu_setup(void *blob, struct bd_info *bd)
+void ft_cpu_setup(void *blob, bd_t *bd)
 {
 	int off;
 	int val;
@@ -131,9 +125,9 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 	sysclk_path = fdt_get_alias(blob, "sysclk");
 	if (sysclk_path)
 		do_fixup_by_path_u32(blob, sysclk_path, "clock-frequency",
-				     get_board_sys_clk(), 1);
+				     CONFIG_SYS_CLK_FREQ, 1);
 	do_fixup_by_compat_u32(blob, "fsl,qoriq-sysclk-2.0",
-			       "clock-frequency", get_board_sys_clk(), 1);
+			       "clock-frequency", CONFIG_SYS_CLK_FREQ, 1);
 
 #if defined(CONFIG_DEEP_SLEEP) && defined(CONFIG_SD_BOOT)
 #define UBOOT_HEAD_LEN	0x1000
@@ -184,13 +178,13 @@ void ft_cpu_setup(void *blob, struct bd_info *bd)
 #if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
 	off = fdt_node_offset_by_compat_reg(blob, FSL_IFC_COMPAT,
 					    CONFIG_SYS_IFC_ADDR);
-	fdt_set_node_status(blob, off, FDT_STATUS_DISABLED);
+	fdt_set_node_status(blob, off, FDT_STATUS_DISABLED, 0);
 #else
 	off = fdt_node_offset_by_compat_reg(blob, FSL_QSPI_COMPAT,
 					    QSPI0_BASE_ADDR);
-	fdt_set_node_status(blob, off, FDT_STATUS_DISABLED);
+	fdt_set_node_status(blob, off, FDT_STATUS_DISABLED, 0);
 	off = fdt_node_offset_by_compat_reg(blob, FSL_DSPI_COMPAT,
 					    DSPI1_BASE_ADDR);
-	fdt_set_node_status(blob, off, FDT_STATUS_DISABLED);
+	fdt_set_node_status(blob, off, FDT_STATUS_DISABLED, 0);
 #endif
 }

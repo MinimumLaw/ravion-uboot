@@ -10,7 +10,6 @@
  * Rob Herring <robh@kernel.org>
  */
 
-#include <bcb.h>
 #include <common.h>
 #include <command.h>
 #include <env.h>
@@ -89,22 +88,9 @@ void fastboot_okay(const char *reason, char *response)
  * which sets whatever flag your board specific Android bootloader flow
  * requires in order to re-enter the bootloader.
  */
-int __weak fastboot_set_reboot_flag(enum fastboot_reboot_reason reason)
+int __weak fastboot_set_reboot_flag(void)
 {
-#ifdef CONFIG_FASTBOOT_FLASH_MMC_DEV
-	static const char * const boot_cmds[] = {
-		[FASTBOOT_REBOOT_REASON_BOOTLOADER] = "bootonce-bootloader",
-		[FASTBOOT_REBOOT_REASON_FASTBOOTD] = "boot-fastboot",
-		[FASTBOOT_REBOOT_REASON_RECOVERY] = "boot-recovery"
-	};
-
-	if (reason >= FASTBOOT_REBOOT_REASONS_COUNT)
-		return -EINVAL;
-
-	return bcb_write_reboot_reason(CONFIG_FASTBOOT_FLASH_MMC_DEV, "misc", boot_cmds[reason]);
-#else
-    return -EINVAL;
-#endif
+	return -ENOSYS;
 }
 
 /**
@@ -136,12 +122,22 @@ void fastboot_boot(void)
 		run_command(s, CMD_FLAG_ENV);
 	} else {
 		static char boot_addr_start[20];
+#ifdef CONFIG_FSL_FASTBOOT
+		static char *const bootm_args[] = {
+			"boota", boot_addr_start, NULL
+		};
+
+		snprintf(boot_addr_start, sizeof(boot_addr_start) - 1,
+			 "0x%p", (void *)image_load_addr);
+#else
 		static char *const bootm_args[] = {
 			"bootm", boot_addr_start, NULL
 		};
 
 		snprintf(boot_addr_start, sizeof(boot_addr_start) - 1,
 			 "0x%p", fastboot_buf_addr);
+#endif
+
 		printf("Booting kernel at %s...\n\n\n", boot_addr_start);
 
 		do_bootm(NULL, 0, 2, bootm_args);
@@ -178,8 +174,13 @@ void fastboot_set_progress_callback(void (*progress)(const char *msg))
  */
 void fastboot_init(void *buf_addr, u32 buf_size)
 {
+#ifdef CONFIG_FSL_FASTBOOT
+	fastboot_buf_addr = buf_addr ? buf_addr :
+				       (void *)env_get_ulong("fastboot_buffer", 16, CONFIG_FASTBOOT_BUF_ADDR);
+#else
 	fastboot_buf_addr = buf_addr ? buf_addr :
 				       (void *)CONFIG_FASTBOOT_BUF_ADDR;
+#endif
 	fastboot_buf_size = buf_size ? buf_size : CONFIG_FASTBOOT_BUF_SIZE;
 	fastboot_set_progress_callback(NULL);
 }

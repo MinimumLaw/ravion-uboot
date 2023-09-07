@@ -6,11 +6,8 @@
 
 #include <common.h>
 #include <dm.h>
-#include <init.h>
-#include <log.h>
 #include <ram.h>
 #include <spl.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/armv7m.h>
 
@@ -60,8 +57,8 @@ int spl_dram_init(void)
 
 void spl_board_init(void)
 {
-	preloader_console_init();
 	spl_dram_init();
+	preloader_console_init();
 	arch_cpu_init(); /* to configure mpu for sdram rw permissions */
 }
 
@@ -70,6 +67,11 @@ u32 spl_boot_device(void)
 	return BOOT_DEVICE_MMC1;
 }
 #endif
+
+u32 get_board_rev(void)
+{
+	return 0;
+}
 
 int board_init(void)
 {

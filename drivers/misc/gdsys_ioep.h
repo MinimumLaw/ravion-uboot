@@ -15,7 +15,6 @@
  * @bc:                 Block counter (filled in by FPGA).
  * @packet_length:      Length of the packet's payload bytes.
  */
-#include <linux/bitops.h>
 struct io_generic_packet {
 	u16 target_address;
 	u16 source_address;

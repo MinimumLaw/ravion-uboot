@@ -7,10 +7,8 @@
 #include <dm.h>
 #include <errno.h>
 #include <led.h>
-#include <log.h>
 #include <asm/io.h>
 #include <dm/lists.h>
-#include <linux/delay.h>
 
 #define LEDS_MAX		32
 #define LEDS_WAIT		100
@@ -113,7 +111,7 @@ static const struct led_ops bcm6358_led_ops = {
 
 static int bcm6358_led_probe(struct udevice *dev)
 {
-	struct led_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct led_uc_plat *uc_plat = dev_get_uclass_platdata(dev);
 
 	/* Top-level LED node */
 	if (!uc_plat->label) {
@@ -192,7 +190,7 @@ static int bcm6358_led_bind(struct udevice *parent)
 		if (ret)
 			return ret;
 
-		uc_plat = dev_get_uclass_plat(dev);
+		uc_plat = dev_get_uclass_platdata(dev);
 		uc_plat->label = label;
 	}
 
@@ -210,6 +208,6 @@ U_BOOT_DRIVER(bcm6358_led) = {
 	.of_match = bcm6358_led_ids,
 	.bind = bcm6358_led_bind,
 	.probe = bcm6358_led_probe,
-	.priv_auto	= sizeof(struct bcm6358_led_priv),
+	.priv_auto_alloc_size = sizeof(struct bcm6358_led_priv),
 	.ops = &bcm6358_led_ops,
 };

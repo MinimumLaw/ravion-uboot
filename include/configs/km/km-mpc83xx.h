@@ -1,7 +1,6 @@
 /*
  * Internal Definitions
  */
-#include <linux/stringify.h>
 #define BOOTFLASH_START	0xF0000000
 
 /*
@@ -18,6 +17,7 @@
 /*
  * Manually set up DDR parameters
  */
+#define CONFIG_DDR_II
 #define CONFIG_SYS_DDR_SIZE		2048 /* MB */
 
 /*
@@ -56,12 +56,32 @@
  */
 #define CONFIG_SYS_FLASH_SIZE		256 /* max FLASH size is 256M */
 
+#define CONFIG_SYS_MAX_FLASH_BANKS	1   /* max num of flash banks	*/
 #define CONFIG_SYS_MAX_FLASH_SECT	512 /* max num of sects on one chip */
 #define CONFIG_SYS_FLASH_BANKS_LIST { CONFIG_SYS_FLASH_BASE }
 
+/*
+ * Serial Port
+ */
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
+
+#define CONFIG_SYS_NS16550_COM1	(CONFIG_SYS_IMMR + 0x4500)
+#define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_IMMR + 0x4600)
+
 /* I2C */
+#define CONFIG_SYS_I2C
 #define CONFIG_SYS_NUM_I2C_BUSES	4
 #define CONFIG_SYS_I2C_MAX_HOPS		1
+#define CONFIG_SYS_I2C_FSL
+#define CONFIG_SYS_FSL_I2C_SPEED	200000
+#define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
+#define CONFIG_SYS_FSL_I2C_OFFSET	0x3000
+#define CONFIG_SYS_I2C_OFFSET		0x3000
+#define CONFIG_SYS_FSL_I2C2_SPEED	200000
+#define CONFIG_SYS_FSL_I2C2_SLAVE	0x7F
+#define CONFIG_SYS_FSL_I2C2_OFFSET	0x3100
 #define CONFIG_SYS_I2C_BUSES	{{0, {I2C_NULL_HOP} }, \
 		{0, {{I2C_MUX_PCA9547, 0x70, 2} } }, \
 		{0, {{I2C_MUX_PCA9547, 0x70, 1} } }, \
@@ -91,6 +111,7 @@
 /*
  * Environment Configuration
  */
+#define CONFIG_ENV_OVERWRITE
 #ifndef CONFIG_KM_DEF_ENV		/* if not set by keymile-common.h */
 #define CONFIG_KM_DEF_ENV "km-common=empty\0"
 #endif

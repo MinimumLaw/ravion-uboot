@@ -3,9 +3,6 @@
  * Copyright (C) 2018-2019 Intel Corporation <www.intel.com>
  *
  */
-
-#define LOG_CATEGORY UCLASS_FS_FIRMWARE_LOADER
-
 #include <common.h>
 #include <dm.h>
 #include <env.h>
@@ -13,8 +10,6 @@
 #include <blk.h>
 #include <fs.h>
 #include <fs_loader.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <linux/string.h>
 #include <mapmem.h>
 #include <malloc.h>
@@ -65,7 +60,7 @@ static int mount_ubifs(char *mtdpart, char *ubivol)
 }
 #endif
 
-static int select_fs_dev(struct device_plat *plat)
+static int select_fs_dev(struct device_platdata *plat)
 {
 	int ret;
 
@@ -165,7 +160,7 @@ static int fw_get_filesystem_firmware(struct udevice *dev)
 		else
 			ret = -ENODEV;
 	} else {
-		ret = select_fs_dev(dev_get_plat(dev));
+		ret = select_fs_dev(dev->platdata);
 	}
 
 	if (ret)
@@ -223,16 +218,16 @@ int request_firmware_into_buf(struct udevice *dev,
 	return ret;
 }
 
-static int fs_loader_of_to_plat(struct udevice *dev)
+static int fs_loader_ofdata_to_platdata(struct udevice *dev)
 {
 	u32 phandlepart[2];
 
 	ofnode fs_loader_node = dev_ofnode(dev);
 
 	if (ofnode_valid(fs_loader_node)) {
-		struct device_plat *plat;
+		struct device_platdata *plat;
 
-		plat = dev_get_plat(dev);
+		plat = dev->platdata;
 		if (!ofnode_read_u32_array(fs_loader_node,
 					  "phandlepart",
 					  phandlepart, 2)) {
@@ -254,7 +249,7 @@ static int fs_loader_probe(struct udevice *dev)
 {
 #if CONFIG_IS_ENABLED(DM) && CONFIG_IS_ENABLED(BLK)
 	int ret;
-	struct device_plat *plat = dev_get_plat(dev);
+	struct device_platdata *plat = dev->platdata;
 
 	if (plat->phandlepart.phandle) {
 		ofnode node = ofnode_get_by_phandle(plat->phandlepart.phandle);
@@ -288,9 +283,9 @@ U_BOOT_DRIVER(fs_loader) = {
 	.id			= UCLASS_FS_FIRMWARE_LOADER,
 	.of_match		= fs_loader_ids,
 	.probe			= fs_loader_probe,
-	.of_to_plat	= fs_loader_of_to_plat,
-	.plat_auto	= sizeof(struct device_plat),
-	.priv_auto	= sizeof(struct firmware),
+	.ofdata_to_platdata	= fs_loader_ofdata_to_platdata,
+	.platdata_auto_alloc_size	= sizeof(struct device_platdata),
+	.priv_auto_alloc_size	= sizeof(struct firmware),
 };
 
 UCLASS_DRIVER(fs_loader) = {

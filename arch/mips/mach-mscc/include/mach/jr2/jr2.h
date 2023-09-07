@@ -8,6 +8,9 @@
 #ifndef _MSCC_JR2_H_
 #define _MSCC_JR2_H_
 
+#include <linux/bitops.h>
+#include <dm.h>
+
 /*
  * Target offset base(s)
  */

@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/flow.h>
@@ -13,7 +12,6 @@
 #include <asm/arch/tegra.h>
 #include <asm/arch-tegra/clk_rst.h>
 #include <asm/arch-tegra/pmc.h>
-#include <linux/delay.h>
 #include "../cpu.h"
 
 /* Tegra114-specific CPU init code */

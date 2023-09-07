@@ -9,9 +9,6 @@
 #ifndef _EDMA3_H_
 #define _EDMA3_H_
 
-#ifndef __ASSEMBLY__
-#include <linux/bitops.h>
-#endif
 #include <linux/stddef.h>
 
 #define EDMA3_PARSET_NULL_LINK			0xffff

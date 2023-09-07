@@ -11,7 +11,7 @@
 #include <env.h>
 #include <cbfs.h>
 
-static int do_cbfs_init(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_cbfs_init(cmd_tbl_t *cmdtp, int flag, int argc,
 			char *const argv[])
 {
 	uintptr_t end_of_rom = 0xffffffff;
@@ -22,13 +22,14 @@ static int do_cbfs_init(struct cmd_tbl *cmdtp, int flag, int argc,
 		return 0;
 	}
 	if (argc == 2) {
-		end_of_rom = hextoul(argv[1], &ep);
+		end_of_rom = simple_strtoul(argv[1], &ep, 16);
 		if (*ep) {
 			puts("\n** Invalid end of ROM **\n");
 			return 1;
 		}
 	}
-	if (file_cbfs_init(end_of_rom)) {
+	file_cbfs_init(end_of_rom);
+	if (cbfs_get_result() != CBFS_SUCCESS) {
 		printf("%s.\n", file_cbfs_error());
 		return 1;
 	}
@@ -44,7 +45,7 @@ U_BOOT_CMD(
 	"      CBFS is in. It defaults to 0xFFFFFFFF\n"
 );
 
-static int do_cbfs_fsload(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_cbfs_fsload(cmd_tbl_t *cmdtp, int flag, int argc,
 			  char *const argv[])
 {
 	const struct cbfs_cachenode *file;
@@ -58,9 +59,9 @@ static int do_cbfs_fsload(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 
 	/* parse offset and count */
-	offset = hextoul(argv[1], NULL);
+	offset = simple_strtoul(argv[1], NULL, 16);
 	if (argc == 4)
-		count = hextoul(argv[3], NULL);
+		count = simple_strtoul(argv[3], NULL, 16);
 	else
 		count = 0;
 
@@ -91,7 +92,7 @@ U_BOOT_CMD(
 	"    - load binary file 'filename' from the cbfs to address 'addr'\n"
 );
 
-static int do_cbfs_ls(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_cbfs_ls(cmd_tbl_t *cmdtp, int flag, int argc,
 		      char *const argv[])
 {
 	const struct cbfs_cachenode *file = file_cbfs_get_first();
@@ -200,7 +201,7 @@ U_BOOT_CMD(
 	"    - list the files in the cbfs\n"
 );
 
-static int do_cbfs_fsinfo(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_cbfs_fsinfo(cmd_tbl_t *cmdtp, int flag, int argc,
 			  char *const argv[])
 {
 	const struct cbfs_header *header = file_cbfs_get_header();

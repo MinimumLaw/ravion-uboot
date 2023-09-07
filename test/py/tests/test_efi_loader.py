@@ -6,6 +6,9 @@
 
 # Test efi loader implementation
 
+import pytest
+import u_boot_utils
+
 """
 Note: This test relies on boardenv_* containing configuration values to define
 which network environment is available for testing. Without this, the parts
@@ -47,9 +50,6 @@ env__efi_loader_helloworld_file = {
 }
 """
 
-import pytest
-import u_boot_utils
-
 net_set_up = False
 
 def test_efi_pre_commands(u_boot_console):
@@ -68,8 +68,8 @@ def test_efi_pre_commands(u_boot_console):
         u_boot_console.run_command('pci enum')
 
 @pytest.mark.buildconfigspec('cmd_dhcp')
-def test_efi_setup_dhcp(u_boot_console):
-    """Set up the network using DHCP.
+def test_efi_dhcp(u_boot_console):
+    """Test the dhcp command.
 
     The boardenv_* file may be used to enable/disable this test; see the
     comment at the beginning of this file.
@@ -77,10 +77,7 @@ def test_efi_setup_dhcp(u_boot_console):
 
     test_dhcp = u_boot_console.config.env.get('env__net_dhcp_server', False)
     if not test_dhcp:
-        env_vars = u_boot_console.config.env.get('env__net_static_env_vars', None)
-        if not env_vars:
-            pytest.skip('No DHCP server available')
-        return
+        pytest.skip('No DHCP server available')
 
     u_boot_console.run_command('setenv autoload no')
     output = u_boot_console.run_command('dhcp')
@@ -91,7 +88,7 @@ def test_efi_setup_dhcp(u_boot_console):
 
 @pytest.mark.buildconfigspec('net')
 def test_efi_setup_static(u_boot_console):
-    """Set up the network using a static IP configuration.
+    """Set up a static IP configuration.
 
     The configuration is provided by the boardenv_* file; see the comment at
     the beginning of this file.
@@ -99,10 +96,7 @@ def test_efi_setup_static(u_boot_console):
 
     env_vars = u_boot_console.config.env.get('env__net_static_env_vars', None)
     if not env_vars:
-        test_dhcp = u_boot_console.config.env.get('env__net_dhcp_server', False)
-        if not test_dhcp:
-            pytest.skip('No static network configuration is defined')
-        return None
+        pytest.skip('No static network configuration is defined')
 
     for (var, val) in env_vars:
         u_boot_console.run_command('setenv %s %s' % (var, val))
@@ -161,8 +155,8 @@ def test_efi_helloworld_net(u_boot_console):
     output = u_boot_console.run_command('bootefi %x' % addr)
     expected_text = 'Hello, world'
     assert expected_text in output
-    expected_text = '## Application failed'
-    assert expected_text not in output
+    expected_text = '## Application terminated, r = 0'
+    assert expected_text in output
 
 @pytest.mark.buildconfigspec('cmd_bootefi_hello')
 def test_efi_helloworld_builtin(u_boot_console):
@@ -193,12 +187,13 @@ def test_efi_grub_net(u_boot_console):
     check_smbios = u_boot_console.config.env.get('env__efi_loader_check_smbios', False)
     if check_smbios:
         u_boot_console.wait_for('grub>')
-        u_boot_console.run_command('lsefisystab', wait_for_prompt=False, wait_for_echo=False)
+        output = u_boot_console.run_command('lsefisystab', wait_for_prompt=False, wait_for_echo=False)
         u_boot_console.wait_for('SMBIOS')
 
     # Then exit cleanly
     u_boot_console.wait_for('grub>')
-    u_boot_console.run_command('exit', wait_for_prompt=False, wait_for_echo=False)
-    u_boot_console.wait_for(u_boot_console.prompt)
+    output = u_boot_console.run_command('exit', wait_for_prompt=False, wait_for_echo=False)
+    u_boot_console.wait_for('r = 0')
+
     # And give us our U-Boot prompt back
     u_boot_console.run_command('')

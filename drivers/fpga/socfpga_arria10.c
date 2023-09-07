@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2017-2019 Intel Corporation <www.intel.com>
  */
-#include <image.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/reset_manager.h>
@@ -14,14 +11,11 @@
 #include <altera.h>
 #include <asm/arch/pinmux.h>
 #include <common.h>
-#include <dm.h>
 #include <dm/ofnode.h>
 #include <errno.h>
 #include <fs_loader.h>
 #include <wait_bit.h>
 #include <watchdog.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 #define CFGWDTH_32	1
 #define MIN_BITSTREAM_SIZECHECK	230
@@ -566,10 +560,10 @@ static int first_loading_rbf_to_buffer(struct udevice *dev,
 	if (ret < 0)
 		return ret;
 
-	ret = fit_check_format(buffer_p, IMAGE_SIZE_INVAL);
-	if (ret) {
+	ret = fit_check_format(buffer_p);
+	if (!ret) {
 		debug("FPGA: No valid FIT image was found.\n");
-		return ret;
+		return -EBADF;
 	}
 
 	confs_noffset = fdt_path_offset(buffer_p, FIT_CONFS_PATH);
@@ -604,8 +598,7 @@ static int first_loading_rbf_to_buffer(struct udevice *dev,
 
 			if (strstr(uname, "fpga-periph") &&
 				(!is_fpgamgr_early_user_mode() ||
-				is_fpgamgr_user_mode() ||
-				is_periph_program_force())) {
+				is_fpgamgr_user_mode())) {
 				fpga_node_name = uname;
 				printf("FPGA: Start to program ");
 				printf("peripheral/full bitstream ...\n");

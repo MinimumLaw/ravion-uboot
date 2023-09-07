@@ -11,13 +11,11 @@
 #include <dm.h>
 #include <errno.h>
 #include <i2c.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/i2c.h>
 #include <asm/arch-rockchip/periph.h>
 #include <dm/pinctrl.h>
-#include <linux/delay.h>
 #include <linux/sizes.h>
 
 /* i2c timerout */
@@ -375,7 +373,7 @@ int rockchip_i2c_set_bus_speed(struct udevice *bus, unsigned int speed)
 	return 0;
 }
 
-static int rockchip_i2c_of_to_plat(struct udevice *bus)
+static int rockchip_i2c_ofdata_to_platdata(struct udevice *bus)
 {
 	struct rk_i2c *priv = dev_get_priv(bus);
 	int ret;
@@ -485,14 +483,12 @@ static const struct udevice_id rockchip_i2c_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(rockchip_rk3066_i2c) = {
-	.name	= "rockchip_rk3066_i2c",
+U_BOOT_DRIVER(i2c_rockchip) = {
+	.name	= "i2c_rockchip",
 	.id	= UCLASS_I2C,
 	.of_match = rockchip_i2c_ids,
-	.of_to_plat = rockchip_i2c_of_to_plat,
+	.ofdata_to_platdata = rockchip_i2c_ofdata_to_platdata,
 	.probe	= rockchip_i2c_probe,
-	.priv_auto	= sizeof(struct rk_i2c),
+	.priv_auto_alloc_size = sizeof(struct rk_i2c),
 	.ops	= &rockchip_i2c_ops,
 };
-
-DM_DRIVER_ALIAS(rockchip_rk3066_i2c, rockchip_rk3288_i2c)

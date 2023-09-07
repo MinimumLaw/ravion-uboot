@@ -14,11 +14,9 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <mapmem.h>
 #include <tpm-v1.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 
 #define PREFIX "lpc_tpm: "
 
@@ -443,7 +441,7 @@ static int tpm_tis_lpc_open(struct udevice *dev)
 	return 0;
 }
 
-static int tpm_tis_lpc_get_desc(struct udevice *dev, char *buf, int size)
+static int tpm_tis_get_desc(struct udevice *dev, char *buf, int size)
 {
 	ulong chip_type = dev_get_driver_data(dev);
 
@@ -458,7 +456,7 @@ static int tpm_tis_lpc_get_desc(struct udevice *dev, char *buf, int size)
 static const struct tpm_ops tpm_tis_lpc_ops = {
 	.open		= tpm_tis_lpc_open,
 	.close		= tpm_tis_lpc_close,
-	.get_desc	= tpm_tis_lpc_get_desc,
+	.get_desc	= tpm_tis_get_desc,
 	.send		= tis_senddata,
 	.recv		= tis_readresponse,
 };
@@ -475,5 +473,5 @@ U_BOOT_DRIVER(tpm_tis_lpc) = {
 	.of_match = tpm_tis_lpc_ids,
 	.ops    = &tpm_tis_lpc_ops,
 	.probe	= tpm_tis_lpc_probe,
-	.priv_auto	= sizeof(struct tpm_tis_lpc_priv),
+	.priv_auto_alloc_size = sizeof(struct tpm_tis_lpc_priv),
 };

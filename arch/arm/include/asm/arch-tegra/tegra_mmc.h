@@ -8,6 +8,7 @@
 #ifndef __TEGRA_MMC_H_
 #define __TEGRA_MMC_H_
 
+#include <common.h>
 #include <clk.h>
 #include <reset.h>
 #include <fdtdec.h>

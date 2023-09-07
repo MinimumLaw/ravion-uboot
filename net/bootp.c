@@ -9,15 +9,10 @@
  */
 
 #include <common.h>
-#include <bootstage.h>
 #include <command.h>
 #include <env.h>
 #include <efi_loader.h>
-#include <log.h>
 #include <net.h>
-#include <rand.h>
-#include <uuid.h>
-#include <linux/delay.h>
 #include <net/tftp.h>
 #include "bootp.h"
 #ifdef CONFIG_LED_STATUS
@@ -146,13 +141,14 @@ static int check_reply_packet(uchar *pkt, unsigned dest, unsigned src,
 	return retval;
 }
 
-static void store_bootp_params(struct bootp_hdr *bp)
+/*
+ * Copy parameters of interest from BOOTP_REPLY/DHCP_OFFER packet
+ */
+static void store_net_params(struct bootp_hdr *bp)
 {
+#if !defined(CONFIG_BOOTP_SERVERIP)
 	struct in_addr tmp_ip;
 	bool overwrite_serverip = true;
-
-	if (IS_ENABLED(CONFIG_BOOTP_SERVERIP))
-		return;
 
 #if defined(CONFIG_BOOTP_PREFER_SERVERIP)
 	overwrite_serverip = false;
@@ -181,15 +177,6 @@ static void store_bootp_params(struct bootp_hdr *bp)
 	 */
 	if (*net_boot_file_name)
 		env_set("bootfile", net_boot_file_name);
-}
-
-/*
- * Copy parameters of interest from BOOTP_REPLY/DHCP_OFFER packet
- */
-static void store_net_params(struct bootp_hdr *bp)
-{
-#if !defined(CONFIG_SERVERIP_FROM_PROXYDHCP)
-	store_bootp_params(bp);
 #endif
 	net_copy_ip(&net_ip, &bp->bp_yiaddr);
 }
@@ -648,7 +635,7 @@ static int bootp_extended(u8 *e)
 	*e++ = (576 - 312 + OPT_FIELD_SIZE) & 0xff;
 #endif
 
-	e = add_vci(e);
+	add_vci(e);
 
 #if defined(CONFIG_BOOTP_SUBNETMASK)
 	*e++ = 1;		/* Subnet mask request */
@@ -741,7 +728,7 @@ void bootp_request(void)
 
 	ep = env_get("bootpretryperiod");
 	if (ep != NULL)
-		time_taken_max = dectoul(ep, NULL);
+		time_taken_max = simple_strtoul(ep, NULL, 10);
 	else
 		time_taken_max = TIMEOUT_MS;
 
@@ -1063,12 +1050,8 @@ static void dhcp_handler(uchar *pkt, unsigned dest, struct in_addr sip,
 	debug("DHCPHandler: got DHCP packet: (src=%d, dst=%d, len=%d) state: "
 	      "%d\n", src, dest, len, dhcp_state);
 
-	if (net_read_ip(&bp->bp_yiaddr).s_addr == 0) {
-#if defined(CONFIG_SERVERIP_FROM_PROXYDHCP)
-		store_bootp_params(bp);
-#endif
+	if (net_read_ip(&bp->bp_yiaddr).s_addr == 0)
 		return;
-	}
 
 	switch (dhcp_state) {
 	case SELECTING:
@@ -1086,12 +1069,6 @@ static void dhcp_handler(uchar *pkt, unsigned dest, struct in_addr sip,
 #endif	/* CONFIG_SYS_BOOTFILE_PREFIX */
 			dhcp_packet_process_options(bp);
 			efi_net_set_dhcp_ack(pkt, len);
-
-#if defined(CONFIG_SERVERIP_FROM_PROXYDHCP)
-			if (!net_server_ip.s_addr)
-				udelay(CONFIG_SERVERIP_FROM_PROXYDHCP_DELAY_MS *
-					1000);
-#endif	/* CONFIG_SERVERIP_FROM_PROXYDHCP */
 
 			debug("TRANSITIONING TO REQUESTING STATE\n");
 			dhcp_state = REQUESTING;

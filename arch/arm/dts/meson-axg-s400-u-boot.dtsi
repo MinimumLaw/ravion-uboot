@@ -12,7 +12,3 @@
 &sd_emmc_c {
 	status = "okay";
 };
-
-&usb2_phy1 {
-	phy-supply = <&vcc_5v>;
-};

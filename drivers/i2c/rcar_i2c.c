@@ -18,8 +18,6 @@
 #include <asm/io.h>
 #include <wait_bit.h>
 #include <dm/device_compat.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 #define RCAR_I2C_ICSCR			0x00 /* slave ctrl */
 #define RCAR_I2C_ICMCR			0x04 /* master ctrl */
@@ -64,8 +62,6 @@ enum rcar_i2c_type {
 struct rcar_i2c_priv {
 	void __iomem		*base;
 	struct clk		clk;
-	u32			fall_ns;
-	u32			rise_ns;
 	u32			intdelay;
 	u32			icccr;
 	enum rcar_i2c_type	type;
@@ -213,7 +209,7 @@ static int rcar_i2c_xfer(struct udevice *dev, struct i2c_msg *msg, int nmsgs)
 	int ret;
 
 	for (; nmsgs > 0; nmsgs--, msg++) {
-		ret = rcar_i2c_set_addr(dev, msg->addr, !!(msg->flags & I2C_M_RD));
+		ret = rcar_i2c_set_addr(dev, msg->addr, 1);
 		if (ret)
 			return ret;
 
@@ -280,7 +276,7 @@ static int rcar_i2c_set_speed(struct udevice *dev, uint bus_freq_hz)
 	 *  = F[sum * ick / 1000000000]
 	 *  = F[(ick / 1000000) * sum / 1000]
 	 */
-	sum = priv->fall_ns + priv->rise_ns + priv->intdelay;
+	sum = 35 + 200 + priv->intdelay;
 	round = (ick + 500000) / 1000000 * sum;
 	round = (round + 500) / 1000;
 
@@ -325,10 +321,6 @@ static int rcar_i2c_probe(struct udevice *dev)
 	int ret;
 
 	priv->base = dev_read_addr_ptr(dev);
-	priv->rise_ns = dev_read_u32_default(dev,
-					     "i2c-scl-rising-time-ns", 200);
-	priv->fall_ns = dev_read_u32_default(dev,
-					     "i2c-scl-falling-time-ns", 35);
 	priv->intdelay = dev_read_u32_default(dev,
 					      "i2c-scl-internal-delay-ns", 5);
 	priv->type = dev_get_driver_data(dev);
@@ -377,6 +369,6 @@ U_BOOT_DRIVER(i2c_rcar) = {
 	.id		= UCLASS_I2C,
 	.of_match	= rcar_i2c_ids,
 	.probe		= rcar_i2c_probe,
-	.priv_auto	= sizeof(struct rcar_i2c_priv),
+	.priv_auto_alloc_size = sizeof(struct rcar_i2c_priv),
 	.ops		= &rcar_i2c_ops,
 };

@@ -6,21 +6,13 @@
 #ifndef _MACH_STM32_H_
 #define _MACH_STM32_H_
 
-#ifndef __ASSEMBLY__
-#include <linux/bitops.h>
-#endif
-
 /*
  * Peripheral memory map
  * only address used before device tree parsing
  */
 #define STM32_RCC_BASE			0x50000000
 #define STM32_PWR_BASE			0x50001000
-#define STM32_SYSCFG_BASE		0x50020000
 #define STM32_DBGMCU_BASE		0x50081000
-#define STM32_FMC2_BASE			0x58002000
-#define STM32_DDRCTRL_BASE		0x5A003000
-#define STM32_DDRPHYC_BASE		0x5A004000
 #define STM32_TZC_BASE			0x5C006000
 #define STM32_ETZPC_BASE		0x5C007000
 #define STM32_STGEN_BASE		0x5C008000
@@ -34,10 +26,6 @@
 #define STM32_USART6_BASE		0x44003000
 #define STM32_UART7_BASE		0x40018000
 #define STM32_UART8_BASE		0x40019000
-
-#define STM32_SDMMC1_BASE		0x58005000
-#define STM32_SDMMC2_BASE		0x58007000
-#define STM32_SDMMC3_BASE		0x48004000
 
 #define STM32_SYSRAM_BASE		0x2FFC0000
 #define STM32_SYSRAM_SIZE		SZ_256K
@@ -91,9 +79,6 @@ enum boot_device {
 
 	BOOT_SERIAL_USB = 0x60,
 	BOOT_SERIAL_USB_OTG = 0x62,
-
-	BOOT_FLASH_SPINAND = 0x70,
-	BOOT_FLASH_SPINAND_1 = 0x71,
 };
 
 /* TAMP registers */
@@ -134,15 +119,8 @@ enum forced_boot_mode {
 #define STM32_BSEC_SHADOW(id)		(STM32_BSEC_SHADOW_OFFSET + (id) * 4)
 #define STM32_BSEC_OTP_OFFSET		0x80000000
 #define STM32_BSEC_OTP(id)		(STM32_BSEC_OTP_OFFSET + (id) * 4)
-#define STM32_BSEC_LOCK_OFFSET		0xC0000000
-#define STM32_BSEC_LOCK(id)		(STM32_BSEC_LOCK_OFFSET + (id) * 4)
 
-/* BSEC OTP index */
-#define BSEC_OTP_RPN	1
-#define BSEC_OTP_SERIAL	13
-#define BSEC_OTP_PKG	16
-#define BSEC_OTP_MAC	57
 #define BSEC_OTP_BOARD	59
 
-#endif /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__*/
 #endif /* _MACH_STM32_H_ */

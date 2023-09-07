@@ -9,7 +9,7 @@
 #include <reset.h>
 #include <wdt.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
+#include <asm/utils.h>
 
 #define DW_WDT_CR	0x00
 #define DW_WDT_TORR	0x04
@@ -22,7 +22,6 @@
 struct designware_wdt_priv {
 	void __iomem	*base;
 	unsigned int	clk_khz;
-	struct reset_ctl_bulk resets;
 };
 
 /*
@@ -35,7 +34,7 @@ static int designware_wdt_settimeout(void __iomem *base, unsigned int clk_khz,
 	signed int i;
 
 	/* calculate the timeout range value */
-	i = fls(timeout * clk_khz - 1) - 16;
+	i = log_2_n_round_up(timeout * clk_khz) - 16;
 	i = clamp(i, 0, 15);
 
 	writel(i | (i << 4), base + DW_WDT_TORR);
@@ -96,18 +95,6 @@ static int designware_wdt_stop(struct udevice *dev)
 	designware_wdt_reset(dev);
 	writel(0, priv->base + DW_WDT_CR);
 
-        if (CONFIG_IS_ENABLED(DM_RESET)) {
-		int ret;
-
-		ret = reset_assert_bulk(&priv->resets);
-		if (ret)
-			return ret;
-
-		ret = reset_deassert_bulk(&priv->resets);
-		if (ret)
-			return ret;
-	}
-
 	return 0;
 }
 
@@ -142,37 +129,27 @@ static int designware_wdt_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-	ret = clk_enable(&clk);
-	if (ret)
-		goto err;
-
-	priv->clk_khz = clk_get_rate(&clk) / 1000;
-	if (!priv->clk_khz) {
-		ret = -EINVAL;
-		goto err;
-	}
+	priv->clk_khz = clk_get_rate(&clk);
+	if (!priv->clk_khz)
+		return -EINVAL;
 #else
 	priv->clk_khz = CONFIG_DW_WDT_CLOCK_KHZ;
 #endif
 
-	if (CONFIG_IS_ENABLED(DM_RESET)) {
-		ret = reset_get_bulk(dev, &priv->resets);
-		if (ret)
-			goto err;
+#if CONFIG_IS_ENABLED(DM_RESET)
+	struct reset_ctl_bulk resets;
 
-		ret = reset_deassert_bulk(&priv->resets);
-		if (ret)
-			goto err;
-	}
+	ret = reset_get_bulk(dev, &resets);
+	if (ret)
+		return ret;
+
+	ret = reset_deassert_bulk(&resets);
+	if (ret)
+		return ret;
+#endif
 
 	/* reset to disable the watchdog */
 	return designware_wdt_stop(dev);
-
-err:
-#if CONFIG_IS_ENABLED(CLK)
-	clk_free(&clk);
-#endif
-	return ret;
 }
 
 static const struct wdt_ops designware_wdt_ops = {
@@ -190,7 +167,7 @@ U_BOOT_DRIVER(designware_wdt) = {
 	.name = "designware_wdt",
 	.id = UCLASS_WDT,
 	.of_match = designware_wdt_ids,
-	.priv_auto	= sizeof(struct designware_wdt_priv),
+	.priv_auto_alloc_size = sizeof(struct designware_wdt_priv),
 	.probe = designware_wdt_probe,
 	.ops = &designware_wdt_ops,
 	.flags = DM_FLAG_PRE_RELOC,

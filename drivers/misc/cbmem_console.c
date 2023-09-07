@@ -9,7 +9,7 @@
 #error This driver requires coreboot
 #endif
 
-#include <asm/cb_sysinfo.h>
+#include <asm/arch/sysinfo.h>
 
 struct cbmem_console {
 	u32 buffer_size;

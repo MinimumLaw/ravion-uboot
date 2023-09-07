@@ -11,10 +11,8 @@
 #include <dm.h>
 #include <errno.h>
 #include <led.h>
-#include <log.h>
 #include <asm/io.h>
 #include <dm/lists.h>
-#include <linux/bitops.h>
 
 #define LEDS_MAX		32
 #define LEDS_WAIT		100
@@ -40,8 +38,8 @@
 #define LED_FLASH_RATE_CONTROL_REG0	0x10
 /* Soft LED input register */
 #define LED_SW_LED_IP_REG		0xb8
-/* Parallel LED Output Polarity Register */
-#define LED_PLED_OP_PPOL_REG		0xc0
+/* Soft LED input polarity register */
+#define LED_SW_LED_IP_PPOL_REG		0xbc
 
 struct bcm6858_led_priv {
 	void __iomem *regs;
@@ -154,7 +152,7 @@ static const struct led_ops bcm6858_led_ops = {
 
 static int bcm6858_led_probe(struct udevice *dev)
 {
-	struct led_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct led_uc_plat *uc_plat = dev_get_uclass_platdata(dev);
 
 	/* Top-level LED node */
 	if (!uc_plat->label) {
@@ -198,9 +196,9 @@ static int bcm6858_led_probe(struct udevice *dev)
 
 		/* configure the polarity */
 		if (dev_read_bool(dev, "active-low"))
-			clrbits_32(regs + LED_PLED_OP_PPOL_REG, 1 << pin);
+			clrbits_32(regs + LED_SW_LED_IP_PPOL_REG, 1 << pin);
 		else
-			setbits_32(regs + LED_PLED_OP_PPOL_REG, 1 << pin);
+			setbits_32(regs + LED_SW_LED_IP_PPOL_REG, 1 << pin);
 	}
 
 	return 0;
@@ -229,7 +227,7 @@ static int bcm6858_led_bind(struct udevice *parent)
 		if (ret)
 			return ret;
 
-		uc_plat = dev_get_uclass_plat(dev);
+		uc_plat = dev_get_uclass_platdata(dev);
 		uc_plat->label = label;
 	}
 
@@ -247,6 +245,6 @@ U_BOOT_DRIVER(bcm6858_led) = {
 	.of_match = bcm6858_led_ids,
 	.bind = bcm6858_led_bind,
 	.probe = bcm6858_led_probe,
-	.priv_auto	= sizeof(struct bcm6858_led_priv),
+	.priv_auto_alloc_size = sizeof(struct bcm6858_led_priv),
 	.ops = &bcm6858_led_ops,
 };

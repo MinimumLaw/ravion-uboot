@@ -302,7 +302,6 @@
 
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
-#include <linux/bitops.h>
 
 /* System Reset Controller (SRC) */
 struct src {
@@ -475,6 +474,6 @@ struct mscm {
 	u32 cpxcfg3;
 };
 
-#endif	/* __ASSEMBLY__ */
+#endif	/* __ASSEMBLER__*/
 
 #endif	/* __ASM_ARCH_IMX_REGS_H__ */

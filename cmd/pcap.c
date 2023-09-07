@@ -9,8 +9,8 @@
 #include <net.h>
 #include <net/pcap.h>
 
-static int do_pcap_init(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_pcap_init(cmd_tbl_t *cmdtp, int flag, int argc,
+			char * const argv[])
 {
 	phys_addr_t addr;
 	unsigned int size;
@@ -18,32 +18,32 @@ static int do_pcap_init(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc != 3)
 		return CMD_RET_USAGE;
 
-	addr = hextoul(argv[1], NULL);
-	size = dectoul(argv[2], NULL);
+	addr = simple_strtoul(argv[1], NULL, 16);
+	size = simple_strtoul(argv[2], NULL, 10);
 
 	return pcap_init(addr, size) ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
 }
 
-static int do_pcap_start(struct cmd_tbl *cmdtp, int flag, int argc,
-			 char *const argv[])
+static int do_pcap_start(cmd_tbl_t *cmdtp, int flag, int argc,
+			 char * const argv[])
 {
 	return pcap_start_stop(true) ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
 }
 
-static int do_pcap_stop(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_pcap_stop(cmd_tbl_t *cmdtp, int flag, int argc,
+			char * const argv[])
 {
 	return pcap_start_stop(false) ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
 }
 
-static int do_pcap_status(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
+static int do_pcap_status(cmd_tbl_t *cmdtp, int flag, int argc,
+			  char * const argv[])
 {
 	return pcap_print_status() ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
 }
 
-static int do_pcap_clear(struct cmd_tbl *cmdtp, int flag, int argc,
-			 char *const argv[])
+static int do_pcap_clear(cmd_tbl_t *cmdtp, int flag, int argc,
+			 char * const argv[])
 {
 	return pcap_clear() ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
 }

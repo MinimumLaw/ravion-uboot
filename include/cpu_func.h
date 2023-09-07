@@ -18,7 +18,7 @@
 int cpu_status(u32 nr);
 int cpu_reset(u32 nr);
 int cpu_disable(u32 nr);
-int cpu_release(u32 nr, int argc, char *const argv[]);
+int cpu_release(u32 nr, int argc, char * const argv[]);
 
 static inline int cpumask_next(int cpu, unsigned int mask)
 {
@@ -45,7 +45,7 @@ int is_core_valid(unsigned int core);
  * This is used on PowerPC, SH and X86 machines as a CPU init mechanism. It is
  * called during the pre-relocation init sequence in board_init_f().
  *
- * Return: 0 if oK, -ve on error
+ * @return 0 if oK, -ve on error
  */
 int checkcpu(void);
 
@@ -59,7 +59,6 @@ int dcache_status(void);
 void dcache_enable(void);
 void dcache_disable(void);
 void mmu_disable(void);
-int mmu_status(void);
 
 /* arch/$(ARCH)/lib/cache.c */
 void enable_caches(void);
@@ -85,6 +84,6 @@ enum {
  */
 int cleanup_before_linux_select(int flags);
 
-void reset_cpu(void);
-
+void reset_cpu(ulong addr);
+;
 #endif

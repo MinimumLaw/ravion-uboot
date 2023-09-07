@@ -15,7 +15,6 @@
 #include <i2c.h>
 #include <fsl_esdhc.h>
 #include <spi_flash.h>
-#include <asm/global_data.h>
 #include "../common/spl.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -43,9 +42,9 @@ void board_init_f(ulong bootflag)
 	/* initialize selected port with appropriate baud rate */
 	plat_ratio = in_be32(&gur->porpllsr) & MPC85xx_PORPLLSR_PLAT_RATIO;
 	plat_ratio >>= 1;
-	gd->bus_clk = get_board_sys_clk() * plat_ratio;
+	gd->bus_clk = CONFIG_SYS_CLK_FREQ * plat_ratio;
 
-	ns16550_init((struct ns16550 *)CONFIG_SYS_NS16550_COM1,
+	NS16550_init((NS16550_t)CONFIG_SYS_NS16550_COM1,
 		     gd->bus_clk / 16 / CONFIG_BAUDRATE);
 
 #ifdef CONFIG_SPL_MMC_BOOT
@@ -64,12 +63,14 @@ void board_init_r(gd_t *gd, ulong dest_addr)
 {
 	/* Pointer is writable since we allocated a register for it */
 	gd = (gd_t *)CONFIG_SPL_GD_ADDR;
-	struct bd_info *bd;
+	bd_t *bd;
 
 	memset(gd, 0, sizeof(gd_t));
-	bd = (struct bd_info *)(CONFIG_SPL_GD_ADDR + sizeof(gd_t));
-	memset(bd, 0, sizeof(struct bd_info));
+	bd = (bd_t *)(CONFIG_SPL_GD_ADDR + sizeof(gd_t));
+	memset(bd, 0, sizeof(bd_t));
 	gd->bd = bd;
+	bd->bi_memstart = CONFIG_SYS_INIT_L2_ADDR;
+	bd->bi_memsize = CONFIG_SYS_L2_SIZE;
 
 	arch_cpu_init();
 	get_clocks();

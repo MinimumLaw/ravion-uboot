@@ -5,6 +5,8 @@
 #ifndef _ASM_ARCH_GRF_RV1108_H
 #define _ASM_ARCH_GRF_RV1108_H
 
+#include <common.h>
+
 struct rv1108_grf {
 	u32 reserved[4];
 	u32 gpio1a_iomux;

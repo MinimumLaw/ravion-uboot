@@ -15,8 +15,6 @@
 #include <syscon.h>
 #include <asm/cpu.h>
 #include <asm/scu.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
@@ -227,5 +225,5 @@ U_BOOT_DRIVER(scu_ipc) = {
 	.id		= UCLASS_SYSCON,
 	.of_match	= scu_ipc_match,
 	.probe		= scu_ipc_probe,
-	.priv_auto	= sizeof(struct scu),
+	.priv_auto_alloc_size = sizeof(struct scu),
 };

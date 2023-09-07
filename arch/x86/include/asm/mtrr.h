@@ -36,8 +36,8 @@
 
 #define MTRR_BASE_TYPE_MASK	0x7
 
-/* Maximum number of MTRRs supported - see also mtrr_get_var_count() */
-#define MTRR_MAX_COUNT		10
+/* Number of MTRRs supported */
+#define MTRR_COUNT		8
 
 #define NUM_FIXED_MTRRS		11
 #define RANGES_PER_FIXED_MTRR	8
@@ -57,7 +57,7 @@
 
 #define MTRR_FIX_TYPE(t)	((t << 24) | (t << 16) | (t << 8) | t)
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 /**
  * Information about the previous MTRR state, set up by mtrr_open()
@@ -68,26 +68,6 @@
 struct mtrr_state {
 	uint64_t deftype;
 	bool enable_cache;
-};
-
-/**
- * struct mtrr - Information about a single MTRR
- *
- * @base: Base address and MTRR_BASE_TYPE_MASK
- * @mask: Mask and MTRR_PHYS_MASK_VALID
- */
-struct mtrr {
-	u64 base;
-	u64 mask;
-};
-
-/**
- * struct mtrr_info - Information about all MTRRs
- *
- * @mtrr: Information about each mtrr
- */
-struct mtrr_info {
-	struct mtrr mtrr[MTRR_MAX_COUNT];
 };
 
 /**
@@ -103,7 +83,7 @@ struct mtrr_info {
 void mtrr_open(struct mtrr_state *state, bool do_caches);
 
 /**
- * mtrr_close() - Clean up after adjusting MTRRs, and enable them
+ * mtrr_open() - Clean up after adjusting MTRRs, and enable them
  *
  * This uses the structure containing information returned from mtrr_open().
  *
@@ -119,7 +99,7 @@ void mtrr_close(struct mtrr_state *state, bool do_caches);
  *
  * @type:	Requested type (MTRR_TYPE_)
  * @start:	Start address
- * @size:	Size, must be power of 2
+ * @size:	Size
  *
  * @return:	0 on success, non-zero on failure
  */
@@ -144,51 +124,10 @@ int mtrr_commit(bool do_caches);
  *
  * @type:	Requested type (MTRR_TYPE_)
  * @start:	Start address
- * @size:	Size, must be power of 2
- * Return: 0 on success, -EINVAL if size is not power of 2,
- * -ENOSPC if there are no more MTRRs
+ * @size:	Size
+ * @return 0 on success, -ENOSPC if there are no more MTRRs
  */
 int mtrr_set_next_var(uint type, uint64_t base, uint64_t size);
-
-/**
- * mtrr_read_all() - Save all the MTRRs
- *
- * This reads all MTRRs from the boot CPU into a struct so they can be loaded
- * onto other CPUs
- *
- * @info: Place to put the MTRR info
- */
-void mtrr_read_all(struct mtrr_info *info);
-
-/**
- * mtrr_set_valid() - Set the valid flag for a selected MTRR and CPU(s)
- *
- * @cpu_select: Selected CPUs (either a CPU number or MP_SELECT_...)
- * @reg: MTRR register to write (0-7)
- * @valid: Valid flag to write
- * Return: 0 on success, -ve on error
- */
-int mtrr_set_valid(int cpu_select, int reg, bool valid);
-
-/**
- * mtrr_set() - Set the base address and mask for a selected MTRR and CPU(s)
- *
- * @cpu_select: Selected CPUs (either a CPU number or MP_SELECT_...)
- * @reg: MTRR register to write (0-7)
- * @base: Base address and MTRR_BASE_TYPE_MASK
- * @mask: Mask and MTRR_PHYS_MASK_VALID
- * Return: 0 on success, -ve on error
- */
-int mtrr_set(int cpu_select, int reg, u64 base, u64 mask);
-
-/**
- * mtrr_get_var_count() - Get the number of variable MTRRs
- *
- * Some CPUs have more than 8 MTRRs. This function returns the actual number
- *
- * Return: number of variable MTRRs
- */
-int mtrr_get_var_count(void);
 
 #endif
 

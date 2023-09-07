@@ -10,13 +10,8 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <cpu_func.h>
 #include <hang.h>
-#include <init.h>
-#include <net.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -25,7 +20,6 @@
 #include <asm/arch/iomux.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/sections.h>
 #include <linux/compiler.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -33,9 +27,9 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Lowlevel init isn't used on i.MX28, so just have a dummy here */
 __weak void lowlevel_init(void) {}
 
-void reset_cpu(void) __attribute__((noreturn));
+void reset_cpu(ulong ignored) __attribute__((noreturn));
 
-void reset_cpu(void)
+void reset_cpu(ulong ignored)
 {
 	struct mxs_rtc_regs *rtc_regs =
 		(struct mxs_rtc_regs *)MXS_RTC_BASE;
@@ -99,6 +93,7 @@ int arch_cpu_init(void)
 {
 	struct mxs_clkctrl_regs *clkctrl_regs =
 		(struct mxs_clkctrl_regs *)MXS_CLKCTRL_BASE;
+	extern uint32_t _start;
 
 	mx28_fixup_vt((uint32_t)&_start);
 
@@ -190,8 +185,7 @@ int print_cpuinfo(void)
 }
 #endif
 
-int do_mx28_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
-		       char *const argv[])
+int do_mx28_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	printf("CPU:   %3d MHz\n", mxc_get_clock(MXC_ARM_CLK) / 1000000);
 	printf("BUS:   %3d MHz\n", mxc_get_clock(MXC_AHB_CLK) / 1000000);
@@ -204,7 +198,7 @@ int do_mx28_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
  * Initializes on-chip ethernet controllers.
  */
 #if defined(CONFIG_MX28) && defined(CONFIG_CMD_NET)
-int cpu_eth_init(struct bd_info *bis)
+int cpu_eth_init(bd_t *bis)
 {
 	struct mxs_clkctrl_regs *clkctrl_regs =
 		(struct mxs_clkctrl_regs *)MXS_CLKCTRL_BASE;

@@ -12,13 +12,13 @@
 #include <command.h>
 #include <part.h>
 
-int do_read(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_raw_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *ep;
 	struct blk_desc *dev_desc = NULL;
 	int dev;
 	int part = 0;
-	struct disk_partition part_info;
+	disk_partition_t part_info;
 	ulong offset = 0u;
 	ulong limit = 0u;
 	void *addr;
@@ -30,13 +30,13 @@ int do_read(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 	}
 
-	dev = (int)hextoul(argv[2], &ep);
+	dev = (int)simple_strtoul(argv[2], &ep, 16);
 	if (*ep) {
 		if (*ep != ':') {
 			printf("Invalid block device %s\n", argv[2]);
 			return 1;
 		}
-		part = (int)hextoul(++ep, NULL);
+		part = (int)simple_strtoul(++ep, NULL, 16);
 	}
 
 	dev_desc = blk_get_dev(argv[1], dev);
@@ -45,9 +45,9 @@ int do_read(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 	}
 
-	addr = (void *)hextoul(argv[3], NULL);
-	blk = hextoul(argv[4], NULL);
-	cnt = hextoul(argv[5], NULL);
+	addr = (void *)simple_strtoul(argv[3], NULL, 16);
+	blk = simple_strtoul(argv[4], NULL, 16);
+	cnt = simple_strtoul(argv[5], NULL, 16);
 
 	if (part != 0) {
 		if (part_get_info(dev_desc, part, &part_info)) {
@@ -75,7 +75,7 @@ int do_read(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 }
 
 U_BOOT_CMD(
-	read,	6,	0,	do_read,
+	read,	6,	0,	do_raw_read,
 	"Load binary data from a partition",
 	"<interface> <dev[:part]> addr blk# cnt"
 );

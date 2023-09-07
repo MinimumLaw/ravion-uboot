@@ -11,10 +11,8 @@
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
-#include <log.h>
 #include <spi.h>
 #include <wait_bit.h>
-#include <linux/bitops.h>
 #include <linux/io.h>
 
 #define MT7621_RX_FIFO_LEN	32
@@ -304,6 +302,6 @@ U_BOOT_DRIVER(mt7621_spi) = {
 	.id = UCLASS_SPI,
 	.of_match = mt7621_spi_ids,
 	.ops = &mt7621_spi_ops,
-	.priv_auto	= sizeof(struct mt7621_spi),
+	.priv_auto_alloc_size = sizeof(struct mt7621_spi),
 	.probe = mt7621_spi_probe,
 };

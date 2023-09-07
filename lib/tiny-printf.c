@@ -9,9 +9,8 @@
  */
 
 #include <common.h>
-#include <log.h>
-#include <serial.h>
 #include <stdarg.h>
+#include <serial.h>
 #include <linux/ctype.h>
 
 struct printf_info {
@@ -48,7 +47,7 @@ static void div_out(struct printf_info *info, unsigned long *num,
 		out_dgt(info, dgt);
 }
 
-#ifdef CONFIG_SPL_NET
+#ifdef CONFIG_SPL_NET_SUPPORT
 static void string(struct printf_info *info, char *s)
 {
 	char ch;
@@ -178,7 +177,7 @@ static void __maybe_unused pointer(struct printf_info *info, const char *fmt,
 		}
 		break;
 #endif
-#ifdef CONFIG_SPL_NET
+#ifdef CONFIG_SPL_NET_SUPPORT
 	case 'm':
 		return mac_address_string(info, ptr, false);
 	case 'M':
@@ -243,7 +242,6 @@ static int _vprintf(struct printf_info *info, const char *fmt, va_list va)
 				goto abort;
 			case 'u':
 			case 'd':
-			case 'i':
 				div = 1000000000;
 				if (islong) {
 					num = va_arg(va, unsigned long);
@@ -253,7 +251,7 @@ static int _vprintf(struct printf_info *info, const char *fmt, va_list va)
 					num = va_arg(va, unsigned int);
 				}
 
-				if (ch != 'u') {
+				if (ch == 'd') {
 					if (islong && (long)num < 0) {
 						num = -(long)num;
 						out(info, '-');
@@ -270,19 +268,20 @@ static int _vprintf(struct printf_info *info, const char *fmt, va_list va)
 				}
 				break;
 			case 'p':
-				if (CONFIG_IS_ENABLED(NET) || _DEBUG) {
-					pointer(info, fmt, va_arg(va, void *));
-					/*
-					 * Skip this because it pulls in _ctype which is
-					 * 256 bytes, and we don't generally implement
-					 * pointer anyway
-					 */
-					while (isalnum(fmt[0]))
-						fmt++;
-					break;
-				}
+#ifdef DEBUG
+				pointer(info, fmt, va_arg(va, void *));
+				/*
+				 * Skip this because it pulls in _ctype which is
+				 * 256 bytes, and we don't generally implement
+				 * pointer anyway
+				 */
+				while (isalnum(fmt[0]))
+					fmt++;
+				break;
+#else
 				islong = true;
 				/* no break */
+#endif
 			case 'x':
 				if (islong) {
 					num = va_arg(va, unsigned long);

@@ -6,9 +6,6 @@
 
 #include <eeprom.h>
 #include <init.h>
-#include <log.h>
-#include <net.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <common.h>
 #include <dm.h>
@@ -17,7 +14,6 @@
 #include <i2c.h>
 #include <i2c_eeprom.h>
 #include <netdev.h>
-#include <linux/bitops.h>
 #include "som.h"
 #include <power/regulator.h>
 #include <power/rk8xx_pmic.h>
@@ -89,7 +85,7 @@ static int phycore_init(void)
 	if (ret)
 		return ret;
 
-#if defined(CONFIG_SPL_POWER)
+#if defined(CONFIG_SPL_POWER_SUPPORT)
 	/* Increase USB input current to 2A */
 	ret = rk818_spl_configure_usb_input_current(pmic, 2000);
 	if (ret)

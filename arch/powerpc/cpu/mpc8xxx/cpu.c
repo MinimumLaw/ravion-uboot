@@ -11,13 +11,10 @@
 #include <common.h>
 #include <command.h>
 #include <cpu_func.h>
-#include <init.h>
-#include <net.h>
 #include <tsec.h>
 #include <fm_eth.h>
 #include <netdev.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <vsc9953.h>
 
@@ -344,13 +341,16 @@ int fixup_cpu(void)
 	return 0;
 }
 
-#ifndef CONFIG_DM_ETH
 /*
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
  */
-int cpu_eth_init(struct bd_info *bis)
+int cpu_eth_init(bd_t *bis)
 {
+#if defined(CONFIG_ETHER_ON_FCC)
+	fec_initialize(bis);
+#endif
+
 #if defined(CONFIG_UEC_ETH)
 	uec_standard_init(bis);
 #endif
@@ -368,4 +368,3 @@ int cpu_eth_init(struct bd_info *bis)
 #endif
 	return 0;
 }
-#endif

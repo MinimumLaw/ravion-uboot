@@ -38,6 +38,7 @@
 
 &usb0_phy {
 	status = "okay";
+	compatible = "nop-phy";
 };
 
 &usb0 {
@@ -50,6 +51,7 @@
 };
 
 &usb1_phy {
+	compatible = "nop-phy";
 	status = "okay";
 };
 

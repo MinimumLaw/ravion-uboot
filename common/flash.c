@@ -8,8 +8,6 @@
 
 #include <common.h>
 #include <flash.h>
-#include <log.h>
-#include <uuid.h>
 
 #include <mtd/cfi_flash.h>
 
@@ -26,7 +24,7 @@ extern flash_info_t  flash_info[]; /* info for FLASH chips */
  * If necessary you have to map the second bank at lower addresses.
  */
 void
-flash_protect(int flag, ulong from, ulong to, flash_info_t *info)
+flash_protect (int flag, ulong from, ulong to, flash_info_t *info)
 {
 	ulong b_end;
 	short s_end;
@@ -40,10 +38,10 @@ flash_protect(int flag, ulong from, ulong to, flash_info_t *info)
 	s_end = info->sector_count - 1;	/* index of last sector */
 	b_end = info->start[0] + info->size - 1;	/* bank end address */
 
-	debug("%s %s: from 0x%08lX to 0x%08lX\n", __func__,
-	      (flag & FLAG_PROTECT_SET) ? "ON" :
-	      (flag & FLAG_PROTECT_CLEAR) ? "OFF" : "???",
-	      from, to);
+	debug ("flash_protect %s: from 0x%08lX to 0x%08lX\n",
+		(flag & FLAG_PROTECT_SET) ? "ON" :
+			(flag & FLAG_PROTECT_CLEAR) ? "OFF" : "???",
+		from, to);
 
 	/* There is nothing to do if we have no data about the flash
 	 * or the protect range and flash range don't overlap.
@@ -68,7 +66,7 @@ flash_protect(int flag, ulong from, ulong to, flash_info_t *info)
 #else
 				info->protect[i] = 0;
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
-				debug("protect off %d\n", i);
+				debug ("protect off %d\n", i);
 			}
 			else if (flag & FLAG_PROTECT_SET) {
 #if defined(CONFIG_SYS_FLASH_PROTECTION)
@@ -76,7 +74,7 @@ flash_protect(int flag, ulong from, ulong to, flash_info_t *info)
 #else
 				info->protect[i] = 1;
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
-				debug("protect on %d\n", i);
+				debug ("protect on %d\n", i);
 			}
 		}
 	}
@@ -86,12 +84,12 @@ flash_protect(int flag, ulong from, ulong to, flash_info_t *info)
  */
 
 flash_info_t *
-addr2info(ulong addr)
+addr2info (ulong addr)
 {
 	flash_info_t *info;
 	int i;
 
-	for (i = 0, info = &flash_info[0]; i < CFI_FLASH_BANKS; ++i, ++info) {
+	for (i=0, info = &flash_info[0]; i<CONFIG_SYS_MAX_FLASH_BANKS; ++i, ++info) {
 		if (info->flash_id != FLASH_UNKNOWN &&
 		    addr >= info->start[0] &&
 		    /* WARNING - The '- 1' is needed if the flash
@@ -121,12 +119,12 @@ addr2info(ulong addr)
  *			(only some targets require alignment)
  */
 int
-flash_write(char *src, ulong addr, ulong cnt)
+flash_write (char *src, ulong addr, ulong cnt)
 {
 	int i;
 	ulong         end        = addr + cnt - 1;
-	flash_info_t *info_first = addr2info(addr);
-	flash_info_t *info_last  = addr2info(end);
+	flash_info_t *info_first = addr2info (addr);
+	flash_info_t *info_last  = addr2info (end );
 	flash_info_t *info;
 	__maybe_unused char *src_orig = src;
 	__maybe_unused char *addr_orig = (char *)addr;

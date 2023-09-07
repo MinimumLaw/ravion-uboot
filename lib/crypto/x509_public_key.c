@@ -8,7 +8,6 @@
 #define pr_fmt(fmt) "X.509: "fmt
 #ifdef __UBOOT__
 #include <common.h>
-#include <image.h>
 #include <dm/devres.h>
 #include <linux/compat.h>
 #include <linux/err.h>
@@ -17,18 +16,15 @@
 #include <linux/module.h>
 #endif
 #include <linux/kernel.h>
-#ifdef __UBOOT__
-#include <crypto/x509_parser.h>
-#include <u-boot/hash-checksum.h>
-#else
+#ifndef __UBOOT__
 #include <linux/slab.h>
 #include <keys/asymmetric-subtype.h>
 #include <keys/asymmetric-parser.h>
 #include <keys/system_keyring.h>
 #include <crypto/hash.h>
 #include "asymmetric_keys.h"
-#include "x509_parser.h"
 #endif
+#include "x509_parser.h"
 
 /*
  * Set up the signature parameters in an X.509 certificate.  This involves
@@ -37,9 +33,7 @@
 int x509_get_sig_params(struct x509_certificate *cert)
 {
 	struct public_key_signature *sig = cert->sig;
-#ifdef __UBOOT__
-	struct image_region region;
-#else
+#ifndef __UBOOT__
 	struct crypto_shash *tfm;
 	struct shash_desc *desc;
 	size_t desc_size;
@@ -67,25 +61,12 @@ int x509_get_sig_params(struct x509_certificate *cert)
 	sig->s_size = cert->raw_sig_size;
 
 #ifdef __UBOOT__
-	if (!sig->hash_algo)
-		return -ENOPKG;
-	if (!strcmp(sig->hash_algo, "sha256"))
-		sig->digest_size = SHA256_SUM_LEN;
-	else if (!strcmp(sig->hash_algo, "sha1"))
-		sig->digest_size = SHA1_SUM_LEN;
-	else
-		return -ENOPKG;
-
-	sig->digest = calloc(1, sig->digest_size);
-	if (!sig->digest)
-		return -ENOMEM;
-
-	region.data = cert->tbs;
-	region.size = cert->tbs_size;
-	hash_calculate(sig->hash_algo, &region, 1, sig->digest);
-
-	/* TODO: is_hash_blacklisted()? */
-
+	/*
+	 * Note:
+	 * This part (filling sig->digest) should be implemented if
+	 * x509_check_for_self_signed() is enabled x509_cert_parse().
+	 * Currently, this check won't affect UEFI secure boot.
+	 */
 	ret = 0;
 #else
 	/* Allocate the hashing algorithm we're going to need and find out how
@@ -135,6 +116,7 @@ error:
 	return ret;
 }
 
+#ifndef __UBOOT__
 /*
  * Check for self-signedness in an X.509 cert and if found, check the signature
  * immediately if we can.
@@ -191,7 +173,6 @@ not_self_signed:
 	return 0;
 }
 
-#ifndef __UBOOT__
 /*
  * Attempt to parse a data blob for a key as an X509 certificate.
  */

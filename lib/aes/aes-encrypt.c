@@ -2,9 +2,6 @@
 /*
  * Copyright (c) 2019,Softathome
  */
-
-#define OPENSSL_API_COMPAT 0x10101000L
-
 #include "mkimage.h"
 #include <stdio.h>
 #include <string.h>
@@ -77,8 +74,7 @@ int image_aes_encrypt(struct image_cipher_info *info,
 	return ret;
 }
 
-int image_aes_add_cipher_data(struct image_cipher_info *info, void *keydest,
-			      void *fit, int node_noffset)
+int image_aes_add_cipher_data(struct image_cipher_info *info, void *keydest)
 {
 	int parent, node;
 	char name[128];
@@ -101,13 +97,8 @@ int image_aes_add_cipher_data(struct image_cipher_info *info, void *keydest,
 		goto done;
 
 	/* Either create or overwrite the named key node */
-	if (info->ivname)
-		snprintf(name, sizeof(name), "key-%s-%s-%s",
-			 info->name, info->keyname, info->ivname);
-	else
-		snprintf(name, sizeof(name), "key-%s-%s",
-			 info->name, info->keyname);
-
+	snprintf(name, sizeof(name), "key-%s-%s-%s",
+		 info->name, info->keyname, info->ivname);
 	node = fdt_subnode_offset(keydest, parent, name);
 	if (node == -FDT_ERR_NOTFOUND) {
 		node = fdt_add_subnode(keydest, parent, name);
@@ -125,16 +116,8 @@ int image_aes_add_cipher_data(struct image_cipher_info *info, void *keydest,
 		ret = node;
 	}
 
-	if (ret)
-		goto done;
-
-	if (info->ivname)
-		/* Store the IV in the u-boot device tree */
+	if (!ret)
 		ret = fdt_setprop(keydest, node, "iv",
-				  info->iv, info->cipher->iv_len);
-	else
-		/* Store the IV in the FIT image */
-		ret = fdt_setprop(fit, node_noffset, "iv",
 				  info->iv, info->cipher->iv_len);
 
 	if (!ret)

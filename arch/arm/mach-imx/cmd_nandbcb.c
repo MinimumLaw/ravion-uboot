@@ -12,18 +12,14 @@
  */
 
 #include <common.h>
-#include <command.h>
-#include <log.h>
 #include <malloc.h>
 #include <nand.h>
 #include <dm/devres.h>
-#include <linux/bug.h>
 
 #include <asm/io.h>
 #include <jffs2/jffs2.h>
 #include <linux/bch.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
 
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/imx-nandbcb.h>
@@ -37,30 +33,30 @@
 
 /* FCB related flags */
 /* FCB layout with leading 12B reserved */
-#define FCB_LAYOUT_RESV_12B		BIT(0)
+#define FCB_LAYOUT_RESV_12B		(1 << 0)
 /* FCB layout with leading 32B meta data */
-#define FCB_LAYOUT_META_32B		BIT(1)
+#define FCB_LAYOUT_META_32B		(1 << 1)
 /* FCB encrypted by Hamming code */
-#define FCB_ENCODE_HAMMING		BIT(2)
+#define FCB_ENCODE_HAMMING		(1 << 2)
 /* FCB encrypted by 40bit BCH */
-#define FCB_ENCODE_BCH_40b		BIT(3)
+#define FCB_ENCODE_BCH_40b		(1 << 3)
 /* FCB encrypted by 62bit BCH */
-#define FCB_ENCODE_BCH_62b		BIT(4)
+#define FCB_ENCODE_BCH_62b		(1 << 4)
 /* FCB encrypted by BCH */
 #define FCB_ENCODE_BCH			(FCB_ENCODE_BCH_40b | FCB_ENCODE_BCH_62b)
 /* FCB data was randomized */
-#define FCB_RANDON_ENABLED		BIT(5)
+#define FCB_RANDON_ENABLED		(1 << 5)
 
 /* Firmware related flags */
 /* No 1K padding */
-#define FIRMWARE_NEED_PADDING		BIT(8)
+#define FIRMWARE_NEED_PADDING		(1 << 8)
 /* Extra firmware*/
-#define FIRMWARE_EXTRA_ONE		BIT(9)
+#define FIRMWARE_EXTRA_ONE		(1 << 9)
 /* Secondary firmware on fixed address */
-#define FIRMWARE_SECONDARY_FIXED_ADDR	BIT(10)
+#define FIRMWARE_SECONDARY_FIXED_ADDR	(1 << 10)
 
 /* Boot search related flags */
-#define BT_SEARCH_CNT_FROM_FUSE		BIT(16)
+#define BT_SEARCH_CNT_FROM_FUSE		(1 << 16)
 
 struct platform_config {
 	int misc_flags;
@@ -132,7 +128,6 @@ static struct platform_config imx8q_plat_config = {
 
 /* boot search related variables and definitions */
 static int g_boot_search_count = 4;
-static int g_boot_secondary_offset;
 static int g_boot_search_stride;
 static int g_pages_per_stride;
 
@@ -178,8 +173,7 @@ struct boot_stream_config {
 #define IMX8MQ_SPL_SZ 0x3e000
 #define IMX8MQ_HDMI_FW_SZ 0x19c00
 
-static int nandbcb_get_info(int argc, char * const argv[],
-			    struct boot_config *boot_cfg)
+static int nandbcb_get_info(int argc, char * const argv[], struct boot_config *boot_cfg)
 {
 	int dev;
 	struct mtd_info *mtd;
@@ -202,8 +196,7 @@ static int nandbcb_get_info(int argc, char * const argv[],
 	return CMD_RET_SUCCESS;
 }
 
-static int nandbcb_get_size(int argc, char * const argv[], int num,
-			    struct boot_config *boot_cfg)
+static int nandbcb_get_size(int argc, char * const argv[], int num, struct boot_config *boot_cfg)
 {
 	int dev;
 	loff_t offset, size, maxsize;
@@ -228,9 +221,9 @@ static int nandbcb_get_size(int argc, char * const argv[], int num,
 	return CMD_RET_SUCCESS;
 }
 
-static int nandbcb_set_boot_config(int argc, char * const argv[],
-				   struct boot_config *boot_cfg)
+static int nandbcb_set_boot_config(int argc, char * const argv[], struct boot_config *boot_cfg)
 {
+
 	struct mtd_info *mtd;
 	loff_t maxsize;
 	loff_t boot_stream1_address, boot_stream2_address, max_boot_stream_size;
@@ -257,10 +250,8 @@ static int nandbcb_set_boot_config(int argc, char * const argv[],
 	g_boot_search_stride = mtd->writesize * g_pages_per_stride;
 
 	boot_cfg->stride_size_in_byte = g_boot_search_stride * mtd->writesize;
-	boot_cfg->search_area_size_in_bytes =
-		g_boot_search_count * g_boot_search_stride;
-	boot_cfg->search_area_size_in_pages =
-		boot_cfg->search_area_size_in_bytes / mtd->writesize;
+	boot_cfg->search_area_size_in_bytes = g_boot_search_count * g_boot_search_stride;
+	boot_cfg->search_area_size_in_pages = boot_cfg->search_area_size_in_bytes / mtd->writesize;
 
 	/* after FCB/DBBT, split the rest of area for two Firmwares */
 	if (!boot_cfg->maxsize) {
@@ -270,23 +261,23 @@ static int nandbcb_set_boot_config(int argc, char * const argv[],
 	maxsize = boot_cfg->maxsize;
 	/* align to page boundary */
 	maxsize = ((u32)(maxsize + mtd->writesize - 1)) / (u32)mtd->writesize
-			* mtd->writesize;
+	          * mtd->writesize;
 
 	boot_stream1_address = 2 * boot_cfg->search_area_size_in_bytes;
 	boot_stream2_address = ((maxsize - boot_stream1_address) / 2 +
 			       boot_stream1_address);
 
-	if (g_boot_secondary_offset)
-		boot_stream2_address =
-			(loff_t)g_boot_secondary_offset * 1024 * 1024;
+	if (boot_cfg->secondary_boot_stream_off_in_MB) {
+		boot_stream2_address = (loff_t)boot_cfg->secondary_boot_stream_off_in_MB * 1024 * 1024;
+	}
 
 	max_boot_stream_size = boot_stream2_address - boot_stream1_address;
 
 	/* sanity check */
 	if (max_boot_stream_size <= 0) {
 		debug("st1_addr: %llx, st2_addr: %llx, max: %llx\n",
-		      boot_stream1_address, boot_stream2_address,
-		      max_boot_stream_size);
+		       boot_stream1_address, boot_stream2_address,
+		       max_boot_stream_size);
 		printf("something wrong with firmware address settings\n");
 		return CMD_RET_FAILURE;
 	}
@@ -521,13 +512,13 @@ static int read_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb,
 	/*
 	 * User BCH hardware to decode ECC for FCB
 	 */
-	if (plat_config.misc_flags & FCB_ENCODE_BCH) {
+	if ((plat_config.misc_flags) & FCB_ENCODE_BCH) {
 		size = sizeof(struct fcb_block);
 
 		/* switch nand BCH to FCB compatible settings */
-		if (plat_config.misc_flags & FCB_ENCODE_BCH_62b)
+		if ((plat_config.misc_flags) & FCB_ENCODE_BCH_62b)
 			mxs_nand_mode_fcb_62bit(mtd);
-		else if (plat_config.misc_flags & FCB_ENCODE_BCH_40b)
+		else if ((plat_config.misc_flags) & FCB_ENCODE_BCH_40b)
 			mxs_nand_mode_fcb_40bit(mtd);
 
 		ret = nand_read(mtd, off, &size, (u_char *)fcb);
@@ -537,7 +528,7 @@ static int read_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb,
 		printf("NAND FCB read from 0x%llx offset 0x%zx read: %s\n",
 		       off, size, ret ? "ERROR" : "OK");
 
-	} else if (plat_config.misc_flags & FCB_ENCODE_HAMMING) {
+	} else if ((plat_config.misc_flags) & FCB_ENCODE_HAMMING) {
 		/* raw read*/
 		mtd_oob_ops_t ops = {
 			.datbuf = (u8 *)fcb_raw_page,
@@ -549,20 +540,21 @@ static int read_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb,
 
 		ret = mtd_read_oob(mtd, off, &ops);
 		printf("NAND FCB read from 0x%llx offset 0x%zx read: %s\n",
-		       off, ops.len, ret ? "ERROR" : "OK");
+		      off, ops.len, ret ? "ERROR" : "OK");
 	}
 
 	if (ret)
 		goto fcb_raw_page_err;
 
-	if ((plat_config.misc_flags & FCB_ENCODE_HAMMING) &&
-	    (plat_config.misc_flags & FCB_LAYOUT_RESV_12B))
+	if (((plat_config.misc_flags) & FCB_ENCODE_HAMMING) &&
+	   ((plat_config.misc_flags) & FCB_LAYOUT_RESV_12B))
 		memcpy(fcb, fcb_raw_page + 12, sizeof(struct fcb_block));
 
 /* TODO: check if it can pass Hamming check */
 
 fcb_raw_page_err:
-	kfree(fcb_raw_page);
+	if (fcb_raw_page)
+		kfree(fcb_raw_page);
 
 	return ret;
 }
@@ -581,8 +573,9 @@ static int write_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb)
 	 * We prepare raw page only for i.MX6, for i.MX7 we
 	 * leverage BCH hw module instead
 	 */
-	if ((plat_config.misc_flags & FCB_ENCODE_HAMMING) &&
-	    (plat_config.misc_flags & FCB_LAYOUT_RESV_12B)) {
+	if (((plat_config.misc_flags) & FCB_ENCODE_HAMMING) &&
+	   ((plat_config.misc_flags) & FCB_LAYOUT_RESV_12B)) {
+
 		fcb_raw_page = kzalloc(mtd->writesize + mtd->oobsize,
 				       GFP_KERNEL);
 		if (!fcb_raw_page) {
@@ -623,13 +616,13 @@ static int write_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb)
 		/*
 		 * User BCH hardware module to generate ECC for FCB
 		 */
-		if (plat_config.misc_flags & FCB_ENCODE_BCH) {
+		if ((plat_config.misc_flags) & FCB_ENCODE_BCH) {
 			size = sizeof(struct fcb_block);
 
 			/* switch nand BCH to FCB compatible settings */
-			if (plat_config.misc_flags & FCB_ENCODE_BCH_62b)
+			if ((plat_config.misc_flags) & FCB_ENCODE_BCH_62b)
 				mxs_nand_mode_fcb_62bit(mtd);
-			else if (plat_config.misc_flags & FCB_ENCODE_BCH_40b)
+			else if ((plat_config.misc_flags) & FCB_ENCODE_BCH_40b)
 				mxs_nand_mode_fcb_40bit(mtd);
 
 			ret = nand_write(mtd, off, &size, (u_char *)fcb);
@@ -639,7 +632,7 @@ static int write_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb)
 			printf("NAND FCB write to 0x%zx offset 0x%llx written: %s\n",
 			       size, off, ret ? "ERROR" : "OK");
 
-		} else if (plat_config.misc_flags & FCB_ENCODE_HAMMING) {
+		} else if ((plat_config.misc_flags) & FCB_ENCODE_HAMMING) {
 			/* raw write */
 			mtd_oob_ops_t ops = {
 				.datbuf = (u8 *)fcb_raw_page,
@@ -651,7 +644,9 @@ static int write_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb)
 			};
 
 			ret = mtd_write_oob(mtd, off, &ops);
-			printf("NAND FCB write to 0x%llx offset 0x%zx written: %s\n", off, ops.len, ret ? "ERROR" : "OK");
+			printf("NAND FCB write to 0x%llxx offset 0x%zx written: %s\n",
+			      off, ops.len, ret ? "ERROR" : "OK");
+
 		}
 
 		if (ret)
@@ -662,7 +657,8 @@ static int write_fcb(struct boot_config *boot_cfg, struct fcb_block *fcb)
 	}
 
 fcb_raw_page_err:
-	kfree(fcb_raw_page);
+	if (fcb_raw_page)
+		kfree(fcb_raw_page);
 
 	return ret;
 }
@@ -757,8 +753,8 @@ static int write_dbbt(struct boot_config *boot_cfg, struct dbbt_block *dbbt,
 }
 
 /* reuse the check_skip_len from nand_util.c with minor change*/
-static int check_skip_length(struct boot_config *boot_cfg, loff_t offset,
-			     size_t length, size_t *used)
+static int check_skip_length(struct boot_config *boot_cfg, loff_t offset, size_t length,
+			  size_t *used)
 {
 	struct mtd_info *mtd = boot_cfg->mtd;
 	size_t maxsize = boot_cfg->maxsize;
@@ -793,7 +789,7 @@ static int check_skip_length(struct boot_config *boot_cfg, loff_t offset,
 }
 
 static int nandbcb_get_next_good_blk_addr(struct boot_config *boot_cfg,
-					  struct boot_stream_config *bs_cfg)
+				     struct boot_stream_config *bs_cfg)
 {
 	struct mtd_info *mtd = boot_cfg->mtd;
 	loff_t offset = bs_cfg->bs_addr;
@@ -803,14 +799,16 @@ static int nandbcb_get_next_good_blk_addr(struct boot_config *boot_cfg,
 
 	ret = check_skip_length(boot_cfg, offset, length, &used);
 
-	if (ret < 0)
+	if (ret < 0) {
 		return ret;
-
-	/* get next image address */
-	bs_cfg->next_bs_addr = (u32)(offset + used + mtd->erasesize - 1)
-				 / (u32)mtd->erasesize * mtd->erasesize;
+	} else {
+		/* get next image address */
+		bs_cfg->next_bs_addr = (u32)(offset + used + mtd->erasesize - 1)
+					 / (u32)mtd->erasesize * mtd->erasesize;
+	}
 
 	return ret;
+
 }
 
 static int nandbcb_write_bs_skip_bad(struct boot_config *boot_cfg,
@@ -831,7 +829,7 @@ static int nandbcb_write_bs_skip_bad(struct boot_config *boot_cfg,
 
 	/* some boot images may need leading offset */
 	if (bs_cfg->need_padding &&
-	    (plat_config.misc_flags & FIRMWARE_NEED_PADDING))
+	    ((plat_config.misc_flags) & FIRMWARE_NEED_PADDING))
 		padding_flag = 1;
 
 	if (padding_flag)
@@ -888,6 +886,7 @@ static int nandbcb_write_fw(struct boot_config *boot_cfg, u_char *buf,
 	int ret;
 
 	for (i = 0; i < 2; ++i) {
+
 		if (!(FW_INX(i) & index))
 			continue;
 
@@ -900,7 +899,8 @@ static int nandbcb_write_fw(struct boot_config *boot_cfg, u_char *buf,
 		}
 
 		/* write Firmware*/
-		if (!(plat_config.misc_flags & FIRMWARE_EXTRA_ONE)) {
+		if (!(((plat_config.misc_flags) & FIRMWARE_EXTRA_ONE))) {
+
 			memset(&bs_cfg, 0, sizeof(struct boot_stream_config));
 			sprintf(bs_cfg.bs_label, "firmware%d", i);
 			bs_cfg.bs_addr = offset;
@@ -1057,7 +1057,7 @@ err:
 	return ret;
 }
 
-static int do_nandbcb_bcbonly(int argc, char *const argv[])
+static int do_nandbcb_bcbonly(int argc, char * const argv[])
 {
 	struct fcb_block *fcb;
 	struct dbbt_block *dbbt;
@@ -1073,25 +1073,25 @@ static int do_nandbcb_bcbonly(int argc, char *const argv[])
 		return CMD_RET_USAGE;
 
 	memset(&cfg, 0, sizeof(struct boot_config));
-	if (nandbcb_get_info(argc, argv, &cfg))
+	if(nandbcb_get_info(argc, argv, &cfg))
 		return CMD_RET_FAILURE;
 
 	/* only get the partition info */
-	if (nandbcb_get_size(2, argv, 1, &cfg))
+	if(nandbcb_get_size(2, argv, 1, &cfg))
 		return CMD_RET_FAILURE;
 
-	if (nandbcb_set_boot_config(argc, argv, &cfg))
+	if(nandbcb_set_boot_config(argc, argv, &cfg))
 		return CMD_RET_FAILURE;
 
 	mtd = cfg.mtd;
 
-	cfg.boot_stream1_address = hextoul(argv[2], NULL);
-	cfg.boot_stream1_size = hextoul(argv[3], NULL);
+	cfg.boot_stream1_address = simple_strtoul(argv[2], NULL, 16);
+	cfg.boot_stream1_size = simple_strtoul(argv[3], NULL, 16);
 	cfg.boot_stream1_size = ALIGN(cfg.boot_stream1_size, mtd->writesize);
 
 	if (argc > 5) {
-		cfg.boot_stream2_address = hextoul(argv[4], NULL);
-		cfg.boot_stream2_size = hextoul(argv[5], NULL);
+		cfg.boot_stream2_address = simple_strtoul(argv[4], NULL, 16);
+		cfg.boot_stream2_size = simple_strtoul(argv[5], NULL, 16);
 		cfg.boot_stream2_size = ALIGN(cfg.boot_stream2_size,
 					      mtd->writesize);
 	}
@@ -1170,13 +1170,13 @@ fcb_err:
 
 /* dump data which is read from NAND chip */
 void dump_structure(struct boot_config *boot_cfg, struct fcb_block *fcb,
-		    struct dbbt_block *dbbt, void *dbbt_data_page)
+		struct dbbt_block *dbbt, void *dbbt_data_page)
 {
 	int i;
 	struct mtd_info *mtd = boot_cfg->mtd;
 
 	#define P1(x) printf("  %s = 0x%08x\n", #x, fcb->x)
-		printf("FCB\n");
+		printf("FCB \n");
 		P1(checksum);
 		P1(fingerprint);
 		P1(version);
@@ -1226,8 +1226,8 @@ void dump_structure(struct boot_config *boot_cfg, struct fcb_block *fcb,
 		P1(busytimeout);
 		P1(disbbm);
 		P1(spare_offset);
-#if !defined(CONFIG_MX6) || defined(CONFIG_MX6SX) || \
-	defined(CONFIG_MX6UL) || defined(CONFIG_MX6ULL)
+#if !defined(CONFIG_MX6) || defined(CONFIG_MX6SX) || defined(CONFIG_MX6UL)\
+|| defined(CONFIG_MX6ULL)
 		P1(onfi_sync_enable);
 		P1(onfi_sync_speed);
 		P1(onfi_sync_nand_data);
@@ -1246,10 +1246,11 @@ void dump_structure(struct boot_config *boot_cfg, struct fcb_block *fcb,
 		P1(dbbtpages);
 	#undef P1
 
-	for (i = 0; i < dbbt->dbbtpages; ++i)
+	for (i = 0; i < dbbt->dbbtpages; ++i) {
 		printf("%d ", *((u32 *)(dbbt_data_page + i)));
+	}
 
-	if (!(plat_config.misc_flags & FIRMWARE_EXTRA_ONE)) {
+	if (!((plat_config.misc_flags) & FIRMWARE_EXTRA_ONE)) {
 		printf("Firmware: image #0 @ 0x%x size 0x%x\n",
 		       fcb->fw1_start, fcb->fw1_pages * mtd->writesize);
 		printf("Firmware: image #1 @ 0x%x size 0x%x\n",
@@ -1269,36 +1270,6 @@ static bool check_fingerprint(void *data, int fingerprint)
 
 	return (*(int *)(data + off) == fingerprint);
 }
-
-static int fuse_secondary_boot(u32 bank, u32 word, u32 mask, u32 off)
-{
-	int err;
-	u32 val;
-	int ret;
-
-	err = fuse_read(bank, word, &val);
-	if (err)
-		return 0;
-
-	val = (val & mask) >> off;
-
-	if (val > 10)
-		return 0;
-
-	switch (val) {
-	case 0:
-		ret = 4;
-		break;
-	case 1:
-		ret = 1;
-		break;
-	default:
-		ret = 2 << val;
-		break;
-	}
-
-	return ret;
-};
 
 static int fuse_to_search_count(u32 bank, u32 word, u32 mask, u32 off)
 {
@@ -1374,7 +1345,7 @@ static int nandbcb_dump(struct boot_config *boot_cfg)
 			if (ret < 0)
 				goto dbbt_page_copy_err;
 			if (memcmp(&fcb, &fcb_copy,
-				   sizeof(struct fcb_block))) {
+				    sizeof(struct fcb_block))) {
 				printf("FCB copies are not identical\n");
 				ret = -EINVAL;
 				goto dbbt_page_copy_err;
@@ -1406,14 +1377,14 @@ static int nandbcb_dump(struct boot_config *boot_cfg)
 			if (ret < 0)
 				goto dbbt_page_copy_err;
 			if (memcmp(&dbbt, &dbbt_copy,
-				   sizeof(struct dbbt_block))) {
+				    sizeof(struct dbbt_block))) {
 				printf("DBBT copies are not identical\n");
 				ret = -EINVAL;
 				goto dbbt_page_copy_err;
 			}
 			if (dbbt.dbbtpages > 0 &&
 			    memcmp(dbbt_data_page, dbbt_data_page_copy,
-				   mtd->writesize)) {
+				    mtd->writesize)) {
 				printf("DBBT data copies are not identical\n");
 				ret = -EINVAL;
 				goto dbbt_page_copy_err;
@@ -1436,6 +1407,7 @@ dbbt_page_err:
 
 static int do_nandbcb_dump(int argc, char * const argv[])
 {
+
 	struct boot_config cfg;
 	int ret;
 
@@ -1443,13 +1415,13 @@ static int do_nandbcb_dump(int argc, char * const argv[])
 		return CMD_RET_USAGE;
 
 	memset(&cfg, 0, sizeof(struct boot_config));
-	if (nandbcb_get_info(argc, argv, &cfg))
+	if(nandbcb_get_info(argc, argv, &cfg))
 		return CMD_RET_FAILURE;
 
-	if (nandbcb_get_size(argc, argv, 1, &cfg))
+	if(nandbcb_get_size(argc, argv, 1, &cfg))
 		return CMD_RET_FAILURE;
 
-	if (nandbcb_set_boot_config(argc, argv, &cfg))
+	if(nandbcb_set_boot_config(argc, argv, &cfg))
 		return CMD_RET_FAILURE;
 
 	ret = nandbcb_dump(&cfg);
@@ -1472,17 +1444,17 @@ static int do_nandbcb_init(int argc, char * const argv[])
 		return CMD_RET_USAGE;
 
 	memset(&cfg, 0, sizeof(struct boot_config));
-	if (nandbcb_get_info(argc, argv, &cfg))
+	if(nandbcb_get_info(argc, argv, &cfg))
 		return CMD_RET_FAILURE;
 
-	if (nandbcb_get_size(argc, argv, 2, &cfg))
+	if(nandbcb_get_size(argc, argv, 2, &cfg))
 		return CMD_RET_FAILURE;
 	size = cfg.boot_stream1_size;
 
-	if (nandbcb_set_boot_config(argc, argv, &cfg))
+	if(nandbcb_set_boot_config(argc, argv, &cfg))
 		return CMD_RET_FAILURE;
 
-	addr = hextoul(argv[1], &endp);
+	addr = simple_strtoul(argv[1], &endp, 16);
 	if (*argv[1] == 0 || *endp != 0)
 		return CMD_RET_FAILURE;
 
@@ -1497,8 +1469,8 @@ static int do_nandbcb_init(int argc, char * const argv[])
 	return ret == 0 ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
 }
 
-static int do_nandbcb(struct cmd_tbl *cmdtp, int flag, int argc,
-		      char *const argv[])
+static int do_nandbcb(cmd_tbl_t *cmdtp, int flag, int argc,
+		      char * const argv[])
 {
 	const char *cmd;
 	int ret = 0;
@@ -1507,39 +1479,34 @@ static int do_nandbcb(struct cmd_tbl *cmdtp, int flag, int argc,
 		goto usage;
 
 	/* check the platform config first */
-	if (is_mx6sx()) {
+	if (is_mx6sx())
 		plat_config = imx6sx_plat_config;
-	} else if (is_mx7()) {
+	else if (is_mx7())
 		plat_config = imx7d_plat_config;
-	} else if (is_mx6ul() || is_mx6ull()) {
+	else if (is_mx6ul() || is_mx6ull())
 		plat_config = imx6ul_plat_config;
-	} else if (is_mx6() && !is_mx6sx() && !is_mx6ul() && !is_mx6ull()) {
+	else if (is_mx6() && !is_mx6sx() && !is_mx6ul() && !is_mx6ull())
 		plat_config = imx6qdl_plat_config;
-	} else if (is_imx8mq()) {
+	else if (is_imx8mq())
 		plat_config = imx8mq_plat_config;
-	} else if (is_imx8mm()) {
+	else if (is_imx8mm())
 		plat_config = imx8mm_plat_config;
-	} else if (is_imx8mn() || is_imx8mp()) {
+	else if (is_imx8mn())
 		plat_config = imx8mn_plat_config;
-	} else if (is_imx8qm() || is_imx8qxp()) {
+	else if (is_imx8qm() || is_imx8qxp() || is_imx8dxl())
 		plat_config = imx8q_plat_config;
-	} else {
+	else {
 		printf("ERROR: Unknown platform\n");
 		return CMD_RET_FAILURE;
 	}
 
 	if ((plat_config.misc_flags) & BT_SEARCH_CNT_FROM_FUSE) {
-		if (is_imx8qxp())
-			g_boot_search_count = fuse_to_search_count(0, 720, 0xc0, 6);
-		if (is_imx8mn() || is_imx8mp())
-			g_boot_search_count = fuse_to_search_count(2, 2, 0x6000, 13);
-		printf("search count set to %d from fuse\n",
-		       g_boot_search_count);
-	}
-
-	if (plat_config.misc_flags & FIRMWARE_SECONDARY_FIXED_ADDR) {
-		if (is_imx8mn())
-			g_boot_secondary_offset = fuse_secondary_boot(2, 1, 0xff0000, 16);
+		if (is_imx8qxp() || is_imx8dxl()) {
+			g_boot_search_count = fuse_to_search_count(0, 720,
+								   0xc0, 6);
+			printf("search count set to %d from fuse\n",
+			       g_boot_search_count);
+		}
 	}
 
 	cmd = argv[1];

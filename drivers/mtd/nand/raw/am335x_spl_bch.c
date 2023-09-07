@@ -12,9 +12,7 @@
 #include <common.h>
 #include <nand.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 #include <linux/mtd/nand_ecc.h>
-#include <linux/mtd/rawnand.h>
 
 static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 static struct mtd_info *mtd;

@@ -6,14 +6,13 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <asm/cache.h>
 #include <asm/cacheops.h>
+#ifdef CONFIG_MIPS_L2_CACHE
 #include <asm/cm.h>
-#include <asm/global_data.h>
+#endif
 #include <asm/io.h>
 #include <asm/mipsregs.h>
 #include <asm/system.h>
-#include <linux/bug.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,7 +37,7 @@ static void probe_l2(void)
 			l2c = read_c0_config5() & MIPS_CONF5_L2C;
 	}
 
-	if (l2c && IS_ENABLED(CONFIG_MIPS_CM)) {
+	if (l2c && config_enabled(CONFIG_MIPS_CM)) {
 		gd->arch.l2_line_size = mips_cm_l2_line_size();
 	} else if (l2c) {
 		/* We don't know how to retrieve L2 config on this system */
@@ -108,7 +107,7 @@ static inline unsigned long scache_line_size(void)
 	}								\
 } while (0)
 
-void __weak flush_cache(ulong start_addr, ulong size)
+void flush_cache(ulong start_addr, ulong size)
 {
 	unsigned long ilsize = icache_line_size();
 	unsigned long dlsize = dcache_line_size();
@@ -160,7 +159,7 @@ void __weak flush_dcache_range(ulong start_addr, ulong stop)
 	sync();
 }
 
-void __weak invalidate_dcache_range(ulong start_addr, ulong stop)
+void invalidate_dcache_range(ulong start_addr, ulong stop)
 {
 	unsigned long lsize = dcache_line_size();
 	unsigned long slsize = scache_line_size();

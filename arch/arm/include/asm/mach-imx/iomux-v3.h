@@ -10,7 +10,7 @@
 #ifndef __MACH_IOMUX_V3_H__
 #define __MACH_IOMUX_V3_H__
 
-#include <linux/types.h>
+#include <common.h>
 
 /*
  *	build IOMUX_PAD structure
@@ -87,6 +87,15 @@ typedef u64 iomux_v3_cfg_t;
 #define MUX_MODE_LPSR           ((iomux_v3_cfg_t)IOMUX_CONFIG_LPSR << \
 				MUX_MODE_SHIFT)
 #ifdef CONFIG_IMX8M
+#define PAD_CTL_DSE0		(0x0 << 0)
+#define PAD_CTL_DSE1		(0x1 << 0)
+#define PAD_CTL_DSE2		(0x2 << 0)
+#define PAD_CTL_DSE3		(0x3 << 0)
+#define PAD_CTL_DSE4		(0x4 << 0)
+#define PAD_CTL_DSE5		(0x5 << 0)
+#define PAD_CTL_DSE6		(0x6 << 0)
+#define PAD_CTL_DSE7		(0x7 << 0)
+
 #define PAD_CTL_FSEL0		(0x0 << 3)
 #define PAD_CTL_FSEL1		(0x1 << 3)
 #define PAD_CTL_FSEL2		(0x2 << 3)
@@ -96,20 +105,8 @@ typedef u64 iomux_v3_cfg_t;
 #define PAD_CTL_PUE		(0x1 << 6)
 #define PAD_CTL_HYS		(0x1 << 7)
 #if defined(CONFIG_IMX8MM) || defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
-#define PAD_CTL_DSE1		(0x0 << 1)
-#define PAD_CTL_DSE2		(0x2 << 1)
-#define PAD_CTL_DSE4		(0x1 << 1)
-#define PAD_CTL_DSE6		(0x3 << 1)
 #define PAD_CTL_PE		(0x1 << 8)
 #else
-#define PAD_CTL_DSE0		(0x0 << 0)
-#define PAD_CTL_DSE1		(0x1 << 0)
-#define PAD_CTL_DSE2		(0x2 << 0)
-#define PAD_CTL_DSE3		(0x3 << 0)
-#define PAD_CTL_DSE4		(0x4 << 0)
-#define PAD_CTL_DSE5		(0x5 << 0)
-#define PAD_CTL_DSE6		(0x6 << 0)
-#define PAD_CTL_DSE7		(0x7 << 0)
 #define PAD_CTL_LVTTL		(0x1 << 8)
 #endif
 
@@ -243,7 +240,6 @@ typedef u64 iomux_v3_cfg_t;
 
 #endif
 
-#define IMX_PAD_SION		0x40000000
 #define IOMUX_CONFIG_SION	0x10
 
 #define GPIO_PIN_MASK		0x1f
@@ -282,10 +278,10 @@ if (is_mx6dq() || is_mx6dqp()) {				\
 }
 #define SETUP_IOMUX_PADS(x)					\
 	imx_iomux_v3_setup_multiple_pads(x, ARRAY_SIZE(x)/2)
-#elif defined(CONFIG_MX6Q) || defined(CONFIG_MX6D)
-#define IOMUX_PADS(x) MX6Q_##x
+#elif defined(CONFIG_MX6Q)
+#define IOMUX_PADS(x) MX6_##x
 #define SETUP_IOMUX_PAD(def)					\
-	imx_iomux_v3_setup_pad(MX6Q_##def);
+	imx_iomux_v3_setup_pad(MX6_##def);
 #define SETUP_IOMUX_PADS(x)					\
 	imx_iomux_v3_setup_multiple_pads(x, ARRAY_SIZE(x))
 #elif defined(CONFIG_MX6UL) || defined(CONFIG_MX6ULL)
@@ -295,9 +291,9 @@ if (is_mx6dq() || is_mx6dqp()) {				\
 #define SETUP_IOMUX_PADS(x)					\
 	imx_iomux_v3_setup_multiple_pads(x, ARRAY_SIZE(x))
 #else
-#define IOMUX_PADS(x) MX6DL_##x
+#define IOMUX_PADS(x) MX6_##x
 #define SETUP_IOMUX_PAD(def)					\
-	imx_iomux_v3_setup_pad(MX6DL_##def);
+	imx_iomux_v3_setup_pad(MX6_##def);
 #define SETUP_IOMUX_PADS(x)					\
 	imx_iomux_v3_setup_multiple_pads(x, ARRAY_SIZE(x))
 #endif

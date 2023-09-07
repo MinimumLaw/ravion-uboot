@@ -6,11 +6,8 @@
  */
 
 #include <cpu_func.h>
-#include <init.h>
 #include <asm/arch/sysmap-apq8096.h>
 #include <env.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
 #include <linux/arm-smccc.h>
 #include <linux/psci.h>
 #include <common.h>
@@ -73,7 +70,7 @@ static void sdhci_power_init(void)
 
 	/* drive strength configs for sdhc pins */
 	const struct tlmm_cfg hdrv[] = {
-
+	
 		{ SDC1_CLK_HDRV,  TLMM_CUR_VAL_16MA, TLMM_HDRV_MASK, },
 		{ SDC1_CMD_HDRV,  TLMM_CUR_VAL_10MA, TLMM_HDRV_MASK, },
 		{ SDC1_DATA_HDRV, TLMM_CUR_VAL_10MA, TLMM_HDRV_MASK, },
@@ -81,14 +78,14 @@ static void sdhci_power_init(void)
 
 	/* pull configs for sdhc pins */
 	const struct tlmm_cfg pull[] = {
-
+	
 		{ SDC1_CLK_PULL,  TLMM_NO_PULL, TLMM_PULL_MASK, },
 		{ SDC1_CMD_PULL,  TLMM_PULL_UP, TLMM_PULL_MASK, },
 		{ SDC1_DATA_PULL, TLMM_PULL_UP, TLMM_PULL_MASK, },
 	};
 
 	const struct tlmm_cfg rclk[] = {
-
+	
 		{ SDC1_RCLK_PULL, TLMM_PULL_DOWN, TLMM_PULL_MASK,},
 	};
 
@@ -127,7 +124,7 @@ int board_init(void)
 	return 0;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	psci_system_reset();
 }

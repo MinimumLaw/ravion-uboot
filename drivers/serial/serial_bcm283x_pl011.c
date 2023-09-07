@@ -17,7 +17,7 @@
  * The serial device will only work properly if it has been muxed to the serial
  * pins by firmware. Check whether that happened here.
  *
- * Return: true if serial device is muxed, false if not
+ * @return true if serial device is muxed, false if not
  */
 static bool bcm283x_is_serial_muxed(void)
 {
@@ -33,21 +33,16 @@ static bool bcm283x_is_serial_muxed(void)
 	return true;
 }
 
-static int bcm283x_pl011_serial_probe(struct udevice *dev)
+static int bcm283x_pl011_serial_ofdata_to_platdata(struct udevice *dev)
 {
-	struct pl01x_serial_plat *plat = dev_get_plat(dev);
+	struct pl01x_serial_platdata *plat = dev_get_platdata(dev);
 	int ret;
 
 	/* Don't spawn the device if it's not muxed */
 	if (!bcm283x_is_serial_muxed())
 		return -ENODEV;
 
-	/*
-	 * Read the ofdata here rather than in an of_to_plat() method
-	 * since we need the soc simple-bus to be probed so that the 'ranges'
-	 * property is used.
-	 */
-	ret = pl01x_serial_of_to_plat(dev);
+	ret = pl01x_serial_ofdata_to_platdata(dev);
 	if (ret)
 		return ret;
 
@@ -57,7 +52,7 @@ static int bcm283x_pl011_serial_probe(struct udevice *dev)
 	 */
 	plat->skip_init = true;
 
-	return pl01x_serial_probe(dev);
+	return 0;
 }
 
 static int bcm283x_pl011_serial_setbrg(struct udevice *dev, int baudrate)
@@ -91,11 +86,12 @@ U_BOOT_DRIVER(bcm283x_pl011_uart) = {
 	.name	= "bcm283x_pl011",
 	.id	= UCLASS_SERIAL,
 	.of_match = of_match_ptr(bcm283x_pl011_serial_id),
-	.probe	= bcm283x_pl011_serial_probe,
-	.plat_auto	= sizeof(struct pl01x_serial_plat),
+	.ofdata_to_platdata = of_match_ptr(bcm283x_pl011_serial_ofdata_to_platdata),
+	.platdata_auto_alloc_size = sizeof(struct pl01x_serial_platdata),
+	.probe	= pl01x_serial_probe,
 	.ops	= &bcm283x_pl011_serial_ops,
 #if !CONFIG_IS_ENABLED(OF_CONTROL) || CONFIG_IS_ENABLED(OF_BOARD)
 	.flags	= DM_FLAG_PRE_RELOC,
 #endif
-	.priv_auto	= sizeof(struct pl01x_priv),
+	.priv_auto_alloc_size = sizeof(struct pl01x_priv),
 };

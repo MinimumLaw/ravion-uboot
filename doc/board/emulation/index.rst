@@ -8,6 +8,5 @@ Emulation
 
    qemu-arm
    qemu-mips
-   qemu-ppce500
    qemu-riscv
    qemu-x86

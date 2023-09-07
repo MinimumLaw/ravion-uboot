@@ -7,7 +7,6 @@
 #include <common.h>
 #include <env.h>
 #include <env_internal.h>
-#include <asm/global_data.h>
 
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
 DECLARE_GLOBAL_DATA_PTR;
@@ -55,8 +54,6 @@ void env_callback_init(struct env_entry *var_entry)
 		callback_list = env_get(ENV_CALLBACK_VAR);
 		first_call = 0;
 	}
-
-	var_entry->callback = NULL;
 
 	/* look in the ".callbacks" var for a reference to this variable */
 	if (callback_list != NULL)

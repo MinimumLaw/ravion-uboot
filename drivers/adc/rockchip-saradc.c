@@ -11,7 +11,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 #include <linux/err.h>
 
 #define SARADC_CTRL_CHN_MASK		GENMASK(2, 0)
@@ -44,7 +43,7 @@ int rockchip_saradc_channel_data(struct udevice *dev, int channel,
 				 unsigned int *data)
 {
 	struct rockchip_saradc_priv *priv = dev_get_priv(dev);
-	struct adc_uclass_plat *uc_pdata = dev_get_uclass_plat(dev);
+	struct adc_uclass_platdata *uc_pdata = dev_get_uclass_platdata(dev);
 
 	if (channel != priv->active_channel) {
 		pr_err("Requested channel is not active!");
@@ -117,9 +116,9 @@ int rockchip_saradc_probe(struct udevice *dev)
 	return 0;
 }
 
-int rockchip_saradc_of_to_plat(struct udevice *dev)
+int rockchip_saradc_ofdata_to_platdata(struct udevice *dev)
 {
-	struct adc_uclass_plat *uc_pdata = dev_get_uclass_plat(dev);
+	struct adc_uclass_platdata *uc_pdata = dev_get_uclass_platdata(dev);
 	struct rockchip_saradc_priv *priv = dev_get_priv(dev);
 	struct rockchip_saradc_data *data;
 
@@ -131,7 +130,7 @@ int rockchip_saradc_of_to_plat(struct udevice *dev)
 	}
 
 	priv->data = data;
-	uc_pdata->data_mask = (1 << priv->data->num_bits) - 1;
+	uc_pdata->data_mask = (1 << priv->data->num_bits) - 1;;
 	uc_pdata->data_format = ADC_DATA_FORMAT_BIN;
 	uc_pdata->data_timeout_us = SARADC_TIMEOUT / 5;
 	uc_pdata->channel_mask = (1 << priv->data->num_channels) - 1;
@@ -179,6 +178,6 @@ U_BOOT_DRIVER(rockchip_saradc) = {
 	.of_match	= rockchip_saradc_ids,
 	.ops		= &rockchip_saradc_ops,
 	.probe		= rockchip_saradc_probe,
-	.of_to_plat = rockchip_saradc_of_to_plat,
-	.priv_auto	= sizeof(struct rockchip_saradc_priv),
+	.ofdata_to_platdata = rockchip_saradc_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct rockchip_saradc_priv),
 };

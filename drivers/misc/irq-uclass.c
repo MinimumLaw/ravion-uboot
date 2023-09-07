@@ -10,7 +10,6 @@
 #include <dm.h>
 #include <dt-structs.h>
 #include <irq.h>
-#include <log.h>
 #include <dm/device-internal.h>
 
 int irq_route_pmc_gpio_gpe(struct udevice *dev, uint pmc_gpe_num)
@@ -64,21 +63,17 @@ int irq_read_and_clear(struct irq *irq)
 }
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-int irq_get_by_phandle(struct udevice *dev, const struct phandle_2_arg *cells,
-		       struct irq *irq)
+int irq_get_by_index_platdata(struct udevice *dev, int index,
+			      struct phandle_1_arg *cells, struct irq *irq)
 {
 	int ret;
 
-	ret = device_get_by_ofplat_idx(cells->idx, &irq->dev);
+	if (index != 0)
+		return -ENOSYS;
+	ret = uclass_get_device(UCLASS_IRQ, 0, &irq->dev);
 	if (ret)
 		return ret;
-	irq->id = cells->arg[0];
-
-	/*
-	 * Note: we could call irq_of_xlate_default() here to do this properly.
-	 * For now, this is good enough for existing cases.
-	 */
-	irq->flags = cells->arg[1];
+	irq->id = cells[0].arg[0];
 
 	return 0;
 }
@@ -89,7 +84,7 @@ static int irq_of_xlate_default(struct irq *irq,
 	log_debug("(irq=%p)\n", irq);
 
 	if (args->args_count > 1) {
-		log_debug("Invalid args_count: %d\n", args->args_count);
+		log_debug("Invaild args_count: %d\n", args->args_count);
 		return -EINVAL;
 	}
 
@@ -158,6 +153,8 @@ int irq_request(struct udevice *dev, struct irq *irq)
 	const struct irq_ops *ops;
 
 	log_debug("(dev=%p, irq=%p)\n", dev, irq);
+	if (!irq)
+		return 0;
 	ops = irq_get_ops(dev);
 
 	irq->dev = dev;
@@ -174,26 +171,10 @@ int irq_first_device_type(enum irq_dev_t type, struct udevice **devp)
 
 	ret = uclass_first_device_drvdata(UCLASS_IRQ, type, devp);
 	if (ret)
-		return ret;
+		return log_msg_ret("find", ret);
 
 	return 0;
 }
-
-#if CONFIG_IS_ENABLED(ACPIGEN)
-int irq_get_acpi(const struct irq *irq, struct acpi_irq *acpi_irq)
-{
-	struct irq_ops *ops;
-
-	if (!irq_is_valid(irq))
-		return -EINVAL;
-
-	ops = irq_get_ops(irq->dev);
-	if (!ops->get_acpi)
-		return -ENOSYS;
-
-	return ops->get_acpi(irq, acpi_irq);
-}
-#endif
 
 UCLASS_DRIVER(irq) = {
 	.id		= UCLASS_IRQ,

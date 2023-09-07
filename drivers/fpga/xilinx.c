@@ -13,7 +13,6 @@
 
 #include <common.h>
 #include <fpga.h>
-#include <log.h>
 #include <virtex2.h>
 #include <spartan2.h>
 #include <spartan3.h>

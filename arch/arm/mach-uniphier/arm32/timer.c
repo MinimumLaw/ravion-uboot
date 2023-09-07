@@ -3,8 +3,7 @@
  * Copyright (C) 2012-2015 Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
-#include <config.h>
-#include <init.h>
+#include <common.h>
 #include <linux/io.h>
 
 #include "arm-mpcore.h"

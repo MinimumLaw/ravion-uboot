@@ -21,14 +21,9 @@
 #include <unistd.h>
 #include <u-boot/sha1.h>
 
-#include <image.h>
-
 #include "fdt_host.h"
 
 #define ARRAY_SIZE(x)		(sizeof(x) / sizeof((x)[0]))
-
-#define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
-#define ALIGN(x, a)		__ALIGN_MASK((x), (typeof(x))(a) - 1)
 
 #define IH_ARCH_DEFAULT		IH_ARCH_INVALID
 
@@ -69,11 +64,7 @@ struct image_tool_params {
 	const char *outfile;	/* Output filename */
 	const char *keydir;	/* Directory holding private keys */
 	const char *keydest;	/* Destination .dtb for public key */
-	const char *keyfile;	/* Filename of private or public key */
 	const char *comment;	/* Comment to add to signature node */
-	/* Algorithm name to use for hashing/signing or NULL to use the one
-	 * specified in the its */
-	const char *algo_name;
 	int require_keys;	/* 1 to mark signing keys as 'required' */
 	int file_size;		/* Total size of output file */
 	int orig_file_size;	/* Original size for file before padding */
@@ -85,10 +76,7 @@ struct image_tool_params {
 	bool external_data;	/* Store data outside the FIT */
 	bool quiet;		/* Don't output text in normal operation */
 	unsigned int external_offset;	/* Add padding to external data */
-	int bl_len;		/* Block length in byte for external data */
 	const char *engine_id;	/* Engine to use for signing */
-	bool reset_timestamp;	/* Reset the timestamp on an existing image */
-	struct image_summary summary;	/* results of signing process */
 };
 
 /*
@@ -133,9 +121,9 @@ struct image_type_params {
 					struct image_tool_params *);
 	/*
 	 * This function is used by the command to retrieve a component
-	 * (sub-image) from the image (i.e. dumpimage -p <position>
-	 * -o <component-outfile> <image>). Thus the code to extract a file
-	 * from an image must be put here.
+	 * (sub-image) from the image (i.e. dumpimage -i <image> -p <position>
+	 * <sub-image-name>).
+	 * Thus the code to extract a file from an image must be put here.
 	 *
 	 * Returns 0 if the file was successfully retrieved from the image,
 	 * or a negative value on error.
@@ -178,19 +166,33 @@ struct image_type_params *imagetool_get_type(int type);
 /*
  * imagetool_verify_print_header() - verifies the image header
  *
+ * Scan registered image types and verify the image_header for each
+ * supported image type. If verification is successful, this prints
+ * the respective header.
+ *
+ * @return 0 on success, negative if input image format does not match with
+ * any of supported image types
+ */
+int imagetool_verify_print_header(
+	void *ptr,
+	struct stat *sbuf,
+	struct image_type_params *tparams,
+	struct image_tool_params *params);
+
+/*
+ * imagetool_verify_print_header_by_type() - verifies the image header
+ *
  * Verify the image_header for the image type given by tparams.
- * If tparams is NULL then scan registered image types and verify the
- * image_header for each supported image type.
  * If verification is successful, this prints the respective header.
  * @ptr: pointer the the image header
  * @sbuf: stat information about the file pointed to by ptr
- * @tparams: image type parameters or NULL
+ * @tparams: image type parameters
  * @params: mkimage parameters
  *
- * Return: 0 on success, negative if input image format does not match with
+ * @return 0 on success, negative if input image format does not match with
  * the given image type
  */
-int imagetool_verify_print_header(
+int imagetool_verify_print_header_by_type(
 	void *ptr,
 	struct stat *sbuf,
 	struct image_type_params *tparams,
@@ -221,7 +223,7 @@ int imagetool_save_subimage(
  *
  * @params:	mkimage parameters
  * @fname:	filename to check
- * Return: size of file, or -ve value on error
+ * @return size of file, or -ve value on error
  */
 int imagetool_get_filesize(struct image_tool_params *params, const char *fname);
 
@@ -235,7 +237,7 @@ int imagetool_get_filesize(struct image_tool_params *params, const char *fname);
  *
  * @cmdname:	command name
  * @fallback:	timestamp to use if SOURCE_DATE_EPOCH isn't set
- * Return: timestamp based on SOURCE_DATE_EPOCH
+ * @return timestamp based on SOURCE_DATE_EPOCH
  */
 time_t imagetool_get_source_date(
 	const char *cmdname,
@@ -263,19 +265,17 @@ int rockchip_copy_image(int fd, struct image_tool_params *mparams);
  *  b) we need a API call to get the respective section symbols */
 #if defined(__MACH__)
 #include <mach-o/getsect.h>
-#include <mach-o/dyld.h>
 
 #define INIT_SECTION(name)  do {					\
 		unsigned long name ## _len;				\
-		char *__cat(pstart_, name) = getsectdata("__DATA",	\
+		char *__cat(pstart_, name) = getsectdata("__TEXT",	\
 			#name, &__cat(name, _len));			\
-		__cat(pstart_, name) += _dyld_get_image_vmaddr_slide(0);\
 		char *__cat(pstop_, name) = __cat(pstart_, name) +	\
 			__cat(name, _len);				\
 		__cat(__start_, name) = (void *)__cat(pstart_, name);	\
 		__cat(__stop_, name) = (void *)__cat(pstop_, name);	\
 	} while (0)
-#define SECTION(name)   __attribute__((section("__DATA, " #name)))
+#define SECTION(name)   __attribute__((section("__TEXT, " #name)))
 
 struct image_type_params **__start_image_type, **__stop_image_type;
 #else

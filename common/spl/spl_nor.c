@@ -4,8 +4,6 @@
  */
 
 #include <common.h>
-#include <image.h>
-#include <log.h>
 #include <spl.h>
 
 static ulong spl_nor_load_read(struct spl_load_info *load, ulong sector,
@@ -26,6 +24,7 @@ unsigned long __weak spl_nor_get_uboot_base(void)
 static int spl_nor_load_image(struct spl_image_info *spl_image,
 			      struct spl_boot_device *bootdev)
 {
+	int ret;
 	__maybe_unused const struct image_header *header;
 	__maybe_unused struct spl_load_info load;
 
@@ -35,7 +34,7 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 	 */
 	spl_image->flags |= SPL_COPY_PAYLOAD_ONLY;
 
-#if CONFIG_IS_ENABLED(OS_BOOT)
+#ifdef CONFIG_SPL_OS_BOOT
 	if (!spl_start_uboot()) {
 		/*
 		 * Load Linux from its location in NOR flash to its defined
@@ -44,8 +43,6 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 		header = (const struct image_header *)CONFIG_SYS_OS_BASE;
 #ifdef CONFIG_SPL_LOAD_FIT
 		if (image_get_magic(header) == FDT_MAGIC) {
-			int ret;
-
 			debug("Found FIT\n");
 			load.bl_len = 1;
 			load.read = spl_nor_load_read;
@@ -64,9 +61,8 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 #endif
 		if (image_get_os(header) == IH_OS_LINUX) {
 			/* happy - was a Linux */
-			int ret;
 
-			ret = spl_parse_image_header(spl_image, bootdev, header);
+			ret = spl_parse_image_header(spl_image, header);
 			if (ret)
 				return ret;
 
@@ -97,9 +93,11 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 		debug("Found FIT format U-Boot\n");
 		load.bl_len = 1;
 		load.read = spl_nor_load_read;
-		return spl_load_simple_fit(spl_image, &load,
-					   spl_nor_get_uboot_base(),
-					   (void *)header);
+		ret = spl_load_simple_fit(spl_image, &load,
+					  spl_nor_get_uboot_base(),
+					  (void *)header);
+
+		return ret;
 	}
 #endif
 	if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER)) {
@@ -109,13 +107,14 @@ static int spl_nor_load_image(struct spl_image_info *spl_image,
 					      spl_nor_get_uboot_base());
 	}
 
-	/* Legacy image handling */
-	if (IS_ENABLED(CONFIG_SPL_LEGACY_IMAGE_SUPPORT)) {
-		load.bl_len = 1;
-		load.read = spl_nor_load_read;
-		return spl_load_legacy_img(spl_image, bootdev, &load,
-					   spl_nor_get_uboot_base());
-	}
+	ret = spl_parse_image_header(spl_image,
+			(const struct image_header *)spl_nor_get_uboot_base());
+	if (ret)
+		return ret;
+
+	memcpy((void *)(unsigned long)spl_image->load_addr,
+	       (void *)(spl_nor_get_uboot_base() + sizeof(struct image_header)),
+	       spl_image->size);
 
 	return 0;
 }

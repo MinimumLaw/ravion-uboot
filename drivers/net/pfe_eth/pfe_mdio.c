@@ -5,11 +5,9 @@
  */
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <dm/platform_data/pfe_dm_eth.h>
 #include <net.h>
-#include <linux/delay.h>
 #include <net/pfe_eth/pfe_eth.h>
 
 extern struct gemac_s gem_info[];
@@ -161,7 +159,7 @@ static void pfe_configure_serdes(struct pfe_eth_dev *priv)
 	int value, sgmii_2500 = 0;
 	struct gemac_s *gem = priv->gem;
 
-	if (gem->phy_mode == PHY_INTERFACE_MODE_2500BASEX)
+	if (gem->phy_mode == PHY_INTERFACE_MODE_SGMII_2500)
 		sgmii_2500 = 1;
 
 
@@ -220,7 +218,7 @@ int pfe_phy_configure(struct pfe_eth_dev *priv, int dev_id, int phy_id)
 
 	/* Configure SGMII  PCS */
 	if (gem->phy_mode == PHY_INTERFACE_MODE_SGMII ||
-	    gem->phy_mode == PHY_INTERFACE_MODE_2500BASEX) {
+	    gem->phy_mode == PHY_INTERFACE_MODE_SGMII_2500) {
 		out_be32(&scfg->mdioselcr, 0x00000000);
 		pfe_configure_serdes(priv);
 	}

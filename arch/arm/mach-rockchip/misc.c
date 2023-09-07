@@ -12,8 +12,6 @@
 #include <common.h>
 #include <env.h>
 #include <dm.h>
-#include <hash.h>
-#include <log.h>
 #include <dm/uclass-internal.h>
 #include <misc.h>
 #include <u-boot/crc.h>
@@ -67,10 +65,10 @@ int rockchip_cpuid_from_efuse(const u32 cpuid_offset,
 	/* retrieve the device */
 #if CONFIG_IS_ENABLED(ROCKCHIP_EFUSE)
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(rockchip_efuse), &dev);
+					  DM_GET_DRIVER(rockchip_efuse), &dev);
 #elif CONFIG_IS_ENABLED(ROCKCHIP_OTP)
 	ret = uclass_get_device_by_driver(UCLASS_MISC,
-					  DM_DRIVER_GET(rockchip_otp), &dev);
+					  DM_GET_DRIVER(rockchip_otp), &dev);
 #endif
 	if (ret) {
 		debug("%s: could not find efuse device\n", __func__);

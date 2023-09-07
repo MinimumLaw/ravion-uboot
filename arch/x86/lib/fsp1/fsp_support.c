@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/fsp1/fsp_support.h>
 #include <asm/post.h>
 

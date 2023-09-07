@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/sama5d3_smc.h>
 #include <asm/arch/at91_common.h>
@@ -131,13 +130,6 @@ void spl_board_init(void)
 	sama5d3_xplained_nand_hw_init();
 #endif
 }
-
-#ifdef CONFIG_SPL_OS_BOOT
-int spl_start_uboot(void)
-{
-	return 0;
-}
-#endif
 
 static void ddr2_conf(struct atmel_mpddrc_config *ddr2)
 {

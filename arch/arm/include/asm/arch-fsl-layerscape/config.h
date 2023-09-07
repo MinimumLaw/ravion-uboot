@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2016-2018, 2020 NXP
+ * Copyright 2016-2018 NXP
  * Copyright 2015, Freescale Semiconductor
  */
 
@@ -9,10 +9,6 @@
 
 #include <linux/kconfig.h>
 #include <fsl_ddrc_version.h>
-
-#ifndef __ASSEMBLY__
-#include <linux/bitops.h>
-#endif
 
 #define CONFIG_STANDALONE_LOAD_ADDR	0x80300000
 
@@ -123,6 +119,7 @@
 #elif defined(CONFIG_ARCH_LS1088A)
 #define CONFIG_SYS_FSL_NUM_CC_PLLS		3
 #define CONFIG_SYS_FSL_CLUSTER_CLOCKS		{ 1, 1 }
+#define CONFIG_GICV3
 #define CONFIG_SYS_PAGE_SIZE		0x10000
 
 #define	SRDS_MAX_LANES	4
@@ -178,10 +175,14 @@
 #define SYS_FSL_OCRAM_SPACE_SIZE	0x00200000 /* 2M space */
 #define CONFIG_SYS_FSL_OCRAM_SIZE	0x00020000 /* Real size 128K */
 
-/* LX2160A/LX2162A Soc Support */
-#elif defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LX2162A)
+/* LX2160A Soc Support */
+#elif defined(CONFIG_ARCH_LX2160A)
 #define TZPC_BASE				0x02200000
 #define TZPCDECPROT_0_SET_BASE			(TZPC_BASE + 0x804)
+#if !defined(CONFIG_DM_I2C)
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_EARLY_INIT
+#endif
 #define SRDS_MAX_LANES  8
 #ifndef L1_CACHE_BYTES
 #define L1_CACHE_SHIFT		6
@@ -234,6 +235,8 @@
 #elif defined(CONFIG_ARCH_LS1028A)
 #define CONFIG_SYS_FSL_NUM_CC_PLLS		3
 #define CONFIG_SYS_FSL_CLUSTER_CLOCKS		{ 1, 1 }
+#define CONFIG_GICV3
+#define CONFIG_FSL_TZPC_BP147
 #define CONFIG_FSL_TZASC_400
 
 /* TZ Protection Controller Definitions */
@@ -303,6 +306,7 @@
 #define CONFIG_SYS_FSL_ESDHC_BE
 #define CONFIG_SYS_FSL_WDOG_BE
 #define CONFIG_SYS_FSL_DSPI_BE
+#define CONFIG_SYS_FSL_QSPI_BE
 #define CONFIG_SYS_FSL_CCSR_GUR_BE
 #define CONFIG_SYS_FSL_PEX_LUT_BE
 

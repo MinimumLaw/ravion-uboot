@@ -8,9 +8,7 @@
 #include <common.h>
 #include <charset.h>
 #include <command.h>
-#include <efi_loader.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <test/test.h>
 #include <test/suites.h>
@@ -47,15 +45,11 @@ static const char d3[] = {0xe6, 0xbd, 0x9c, 0xe6, 0xb0, 0xb4, 0xe8, 0x89,
 /* Three letters translating to two utf-16 word each */
 static const char d4[] = {0xf0, 0x90, 0x92, 0x8d, 0xf0, 0x90, 0x92, 0x96,
 			  0xf0, 0x90, 0x92, 0x87, 0x00};
-/* Letter not in code page 437 */
-static const char d5[] = {0xCE, 0x92, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F,
-			  0x74, 0x20, 0x42, 0x00};
 
 /* Illegal utf-8 strings */
 static const char j1[] = {0x6a, 0x31, 0xa1, 0x6c, 0x00};
 static const char j2[] = {0x6a, 0x32, 0xc3, 0xc3, 0x6c, 0x00};
 static const char j3[] = {0x6a, 0x33, 0xf0, 0x90, 0xf0, 0x00};
-static const char j4[] = {0xa1, 0x00};
 
 static int unicode_test_u16_strlen(struct unit_test_state *uts)
 {
@@ -72,9 +66,8 @@ static int unicode_test_u16_strdup(struct unit_test_state *uts)
 	u16 *copy = u16_strdup(c4);
 
 	ut_assert(copy != c4);
-	ut_asserteq_mem(copy, c4, sizeof(c4));
+	ut_assert(!memcmp(copy, c4, sizeof(c4)));
 	free(copy);
-
 	return 0;
 }
 UNICODE_TEST(unicode_test_u16_strdup);
@@ -86,8 +79,7 @@ static int unicode_test_u16_strcpy(struct unit_test_state *uts)
 
 	r = u16_strcpy(copy, c1);
 	ut_assert(r == copy);
-	ut_asserteq_mem(copy, c1, sizeof(c1));
-
+	ut_assert(!memcmp(copy, c1, sizeof(c1)));
 	return 0;
 }
 UNICODE_TEST(unicode_test_u16_strcpy);
@@ -97,7 +89,6 @@ UNICODE_TEST(unicode_test_u16_strcpy);
 static int unicode_test_string16(struct unit_test_state *uts)
 {
 	char buf[20];
-	int ret;
 
 	/* Test length and precision */
 	memset(buf, 0xff, sizeof(buf));
@@ -130,36 +121,6 @@ static int unicode_test_string16(struct unit_test_state *uts)
 	memset(buf, 0xff, sizeof(buf));
 	sprintf(buf, "%ls", i3);
 	ut_asserteq_str("i3?", buf);
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = snprintf(buf, 4, "%ls", c1);
-	ut_asserteq(6, ret);
-	ut_asserteq_str("U-B", buf);
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = snprintf(buf, 6, "%ls", c2);
-	ut_asserteq_str("kafb", buf);
-	ut_asserteq(9, ret);
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = snprintf(buf, 7, "%ls", c2);
-	ut_asserteq_str("kafb\xC3\xA1", buf);
-	ut_asserteq(9, ret);
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = snprintf(buf, 8, "%ls", c3);
-	ut_asserteq_str("\xE6\xBD\x9C\xE6\xB0\xB4", buf);
-	ut_asserteq(9, ret);
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = snprintf(buf, 11, "%ls", c4);
-	ut_asserteq_str("\xF0\x90\x92\x8D\xF0\x90\x92\x96", buf);
-	ut_asserteq(12, ret);
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = snprintf(buf, 4, "%ls", c4);
-	ut_asserteq_str("", buf);
-	ut_asserteq(12, ret);
 
 	return 0;
 }
@@ -199,12 +160,6 @@ static int unicode_test_utf8_get(struct unit_test_state *uts)
 	code = utf8_get((const char **)&s);
 	ut_asserteq(0x0001048d, code);
 	ut_asserteq_ptr(s, d4 + 4);
-
-	/* Check illegal character */
-	s = j4;
-	code = utf8_get((const char **)&s);
-	ut_asserteq(-1, code);
-	ut_asserteq_ptr(j4 + 1, s);
 
 	return 0;
 }
@@ -330,17 +285,17 @@ static int unicode_test_utf8_utf16_strcpy(struct unit_test_state *uts)
 	pos = buf;
 	utf8_utf16_strcpy(&pos, j1);
 	ut_asserteq(4, pos - buf);
-	ut_assert(!unicode_test_u16_strcmp(buf, u"j1?l", SIZE_MAX));
+	ut_assert(!unicode_test_u16_strcmp(buf, L"j1?l", SIZE_MAX));
 
 	pos = buf;
 	utf8_utf16_strcpy(&pos, j2);
 	ut_asserteq(4, pos - buf);
-	ut_assert(!unicode_test_u16_strcmp(buf, u"j2?l", SIZE_MAX));
+	ut_assert(!unicode_test_u16_strcmp(buf, L"j2?l", SIZE_MAX));
 
 	pos = buf;
 	utf8_utf16_strcpy(&pos, j3);
 	ut_asserteq(3, pos - buf);
-	ut_assert(!unicode_test_u16_strcmp(buf, u"j3?", SIZE_MAX));
+	ut_assert(!unicode_test_u16_strcmp(buf, L"j3?", SIZE_MAX));
 
 	return 0;
 }
@@ -615,153 +570,21 @@ UNICODE_TEST(unicode_test_utf_to_upper);
 
 static int unicode_test_u16_strncmp(struct unit_test_state *uts)
 {
-	ut_assert(u16_strncmp(u"abc", u"abc", 3) == 0);
-	ut_assert(u16_strncmp(u"abcdef", u"abcghi", 3) == 0);
-	ut_assert(u16_strncmp(u"abcdef", u"abcghi", 6) < 0);
-	ut_assert(u16_strncmp(u"abcghi", u"abcdef", 6) > 0);
-	ut_assert(u16_strcmp(u"abc", u"abc") == 0);
-	ut_assert(u16_strcmp(u"abcdef", u"deghi") < 0);
-	ut_assert(u16_strcmp(u"deghi", u"abcdef") > 0);
+	ut_assert(u16_strncmp(L"abc", L"abc", 3) == 0);
+	ut_assert(u16_strncmp(L"abcdef", L"abcghi", 3) == 0);
+	ut_assert(u16_strncmp(L"abcdef", L"abcghi", 6) < 0);
+	ut_assert(u16_strncmp(L"abcghi", L"abcdef", 6) > 0);
+	ut_assert(u16_strcmp(L"abc", L"abc") == 0);
+	ut_assert(u16_strcmp(L"abcdef", L"deghi") < 0);
+	ut_assert(u16_strcmp(L"deghi", L"abcdef") > 0);
 	return 0;
 }
 UNICODE_TEST(unicode_test_u16_strncmp);
 
-static int unicode_test_u16_strsize(struct unit_test_state *uts)
+int do_ut_unicode(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	ut_asserteq_64(u16_strsize(c1), 14);
-	ut_asserteq_64(u16_strsize(c2), 18);
-	ut_asserteq_64(u16_strsize(c3), 8);
-	ut_asserteq_64(u16_strsize(c4), 14);
-	return 0;
-}
-UNICODE_TEST(unicode_test_u16_strsize);
-
-static int unicode_test_utf_to_cp(struct unit_test_state *uts)
-{
-	int ret;
-	s32 c;
-
-	c = '\n';
-	ret = utf_to_cp(&c, codepage_437);
-	ut_asserteq(0, ret);
-	ut_asserteq('\n', c);
-
-	c = 'a';
-	ret = utf_to_cp(&c, codepage_437);
-	ut_asserteq(0, ret);
-	ut_asserteq('a', c);
-
-	c = 0x03c4; /* Greek small letter tau */
-	ret = utf_to_cp(&c, codepage_437);
-	ut_asserteq(0, ret);
-	ut_asserteq(0xe7, c);
-
-	c = 0x03a4; /* Greek capital letter tau */
-	ret = utf_to_cp(&c, codepage_437);
-	ut_asserteq(-ENOENT, ret);
-	ut_asserteq('?', c);
-
-	return 0;
-}
-UNICODE_TEST(unicode_test_utf_to_cp);
-
-static void utf8_to_cp437_stream_helper(const char *in, char *out)
-{
-	char buffer[5];
-	int ret;
-
-	*buffer = 0;
-	for (; *in; ++in) {
-		ret = utf8_to_cp437_stream(*in, buffer);
-		if (ret)
-			*out++ = ret;
-	}
-	*out = 0;
-}
-
-static int unicode_test_utf8_to_cp437_stream(struct unit_test_state *uts)
-{
-	char buf[16];
-
-	utf8_to_cp437_stream_helper(d1, buf);
-	ut_asserteq_str("U-Boot", buf);
-	utf8_to_cp437_stream_helper(d2, buf);
-	ut_asserteq_str("kafb\xa0tur", buf);
-	utf8_to_cp437_stream_helper(d5, buf);
-	ut_asserteq_str("? is not B", buf);
-	utf8_to_cp437_stream_helper(j2, buf);
-	ut_asserteq_str("j2l", buf);
-
-	return 0;
-}
-UNICODE_TEST(unicode_test_utf8_to_cp437_stream);
-
-static void utf8_to_utf32_stream_helper(const char *in, s32 *out)
-{
-	char buffer[5];
-	int ret;
-
-	*buffer = 0;
-	for (; *in; ++in) {
-		ret = utf8_to_utf32_stream(*in, buffer);
-		if (ret)
-			*out++ = ret;
-	}
-	*out = 0;
-}
-
-static int unicode_test_utf8_to_utf32_stream(struct unit_test_state *uts)
-{
-	s32 buf[16];
-
-	const u32 u1[] = {0x55, 0x2D, 0x42, 0x6F, 0x6F, 0x74, 0x0000};
-	const u32 u2[] = {0x6B, 0x61, 0x66, 0x62, 0xE1, 0x74, 0x75, 0x72, 0x00};
-	const u32 u3[] = {0x0392, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F, 0x74,
-			  0x20, 0x42, 0x00};
-	const u32 u4[] = {0x6A, 0x32, 0x6C, 0x00};
-
-	memset(buf, 0, sizeof(buf));
-	utf8_to_utf32_stream_helper(d1, buf);
-	ut_asserteq_mem(u1, buf, sizeof(u1));
-
-	memset(buf, 0, sizeof(buf));
-	utf8_to_utf32_stream_helper(d2, buf);
-	ut_asserteq_mem(u2, buf, sizeof(u2));
-
-	memset(buf, 0, sizeof(buf));
-	utf8_to_utf32_stream_helper(d5, buf);
-	ut_asserteq_mem(u3, buf, sizeof(u3));
-
-	memset(buf, 0, sizeof(buf));
-	utf8_to_utf32_stream_helper(j2, buf);
-	ut_asserteq_mem(u4, buf, sizeof(u4));
-
-	return 0;
-}
-UNICODE_TEST(unicode_test_utf8_to_utf32_stream);
-
-#ifdef CONFIG_EFI_LOADER
-static int unicode_test_efi_create_indexed_name(struct unit_test_state *uts)
-{
-	u16 buf[16];
-	u16 const expected[] = u"Capsule0AF9";
-	u16 *pos;
-
-	memset(buf, 0xeb, sizeof(buf));
-	pos = efi_create_indexed_name(buf, sizeof(buf), "Capsule", 0x0af9);
-
-	ut_asserteq_mem(expected, buf, sizeof(expected));
-	ut_asserteq(pos - buf, u16_strnlen(buf, SIZE_MAX));
-
-	return 0;
-}
-UNICODE_TEST(unicode_test_efi_create_indexed_name);
-#endif
-
-int do_ut_unicode(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
-{
-	struct unit_test *tests = UNIT_TEST_SUITE_START(unicode_test);
-	const int n_ents = UNIT_TEST_SUITE_COUNT(unicode_test);
+	struct unit_test *tests = ll_entry_start(struct unit_test, unicode_test);
+	const int n_ents = ll_entry_count(struct unit_test, unicode_test);
 
 	return cmd_ut_category("Unicode", "unicode_test_",
 			       tests, n_ents, argc, argv);

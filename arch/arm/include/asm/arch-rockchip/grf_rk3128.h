@@ -5,6 +5,8 @@
 #ifndef _ASM_ARCH_GRF_RK3128_H
 #define _ASM_ARCH_GRF_RK3128_H
 
+#include <common.h>
+
 struct rk3128_grf {
 	unsigned int reserved[0x2a];
 	unsigned int gpio0a_iomux;

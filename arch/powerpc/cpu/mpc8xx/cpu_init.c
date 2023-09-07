@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <watchdog.h>
 
 #include <mpc8xx.h>

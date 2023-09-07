@@ -13,9 +13,7 @@
 /include/ "pcspkr.dtsi"
 /include/ "reset.dtsi"
 /include/ "rtc.dtsi"
-
-#include "tsc_timer.dtsi"
-#include "smbios.dtsi"
+/include/ "tsc_timer.dtsi"
 
 / {
 	model = "Intel Crown Bay";

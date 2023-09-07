@@ -8,7 +8,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <usb.h>
 #include <linux/errno.h>
 #include <linux/compat.h>
@@ -120,7 +119,7 @@ static int xhci_fsl_probe(struct udevice *dev)
 	/*
 	 * Get the base address for XHCI controller from the device node
 	 */
-	priv->hcd_base = dev_read_addr(dev);
+	priv->hcd_base = devfdt_get_addr(dev);
 	if (priv->hcd_base == FDT_ADDR_T_NONE) {
 		debug("Can't get the XHCI register base address\n");
 		return -ENXIO;
@@ -159,7 +158,6 @@ static int xhci_fsl_remove(struct udevice *dev)
 
 static const struct udevice_id xhci_usb_ids[] = {
 	{ .compatible = "fsl,layerscape-dwc3", },
-	{ .compatible = "fsl,ls1028a-dwc3", },
 	{ }
 };
 
@@ -170,8 +168,8 @@ U_BOOT_DRIVER(xhci_fsl) = {
 	.probe = xhci_fsl_probe,
 	.remove = xhci_fsl_remove,
 	.ops	= &xhci_usb_ops,
-	.plat_auto	= sizeof(struct usb_plat),
-	.priv_auto	= sizeof(struct xhci_fsl_priv),
+	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
+	.priv_auto_alloc_size = sizeof(struct xhci_fsl_priv),
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };
 #else

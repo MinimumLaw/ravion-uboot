@@ -14,15 +14,18 @@
 
 #include <configs/bur_cfg_common.h>
 #include <configs/bur_am335x_common.h>
-#include <linux/stringify.h>
 /* ------------------------------------------------------------------------- */
+#define CONFIG_BOARD_TYPES
 
 /* memory */
+#define CONFIG_SYS_MALLOC_LEN		(5 * 1024 * 1024)
 #define CONFIG_SYS_BOOTM_LEN		(32 * 1024 * 1024)
 
 /* Clock Defines */
 #define V_OSCK				26000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
+
+#define CONFIG_MACH_TYPE		3589
 
 #ifndef CONFIG_SPL_BUILD
 
@@ -58,7 +61,14 @@ BUR_COMMON_ENV \
 " bootm ${loadaddr} - ${dtbaddr}\0"
 #endif /* !CONFIG_SPL_BUILD*/
 
+/* Support both device trees and ATAGs. */
+#define CONFIG_CMDLINE_TAG
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
+
 /* SPI Flash */
 
 /* Environment */
+
+#define CONFIG_CONS_INDEX			1
 #endif	/* __CONFIG_BRSMARC1_H__ */

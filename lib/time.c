@@ -5,19 +5,13 @@
  */
 
 #include <common.h>
-#include <clock_legacy.h>
-#include <bootstage.h>
 #include <dm.h>
 #include <errno.h>
-#include <init.h>
-#include <spl.h>
 #include <time.h>
 #include <timer.h>
 #include <watchdog.h>
 #include <div64.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 
 #ifndef CONFIG_WD_PERIOD
 # define CONFIG_WD_PERIOD	(10 * 1000 * 1000)	/* 10 seconds default */
@@ -94,18 +88,13 @@ uint64_t notrace get_ticks(void)
 
 		ret = dm_timer_init();
 		if (ret)
-			panic("Could not initialize timer (err %d)\n", ret);
+			return ret;
 #endif
 	}
 
 	ret = timer_get_count(gd->timer, &count);
-	if (ret) {
-		if (spl_phase() > PHASE_TPL)
-			panic("Could not read count from timer (err %d)\n",
-			      ret);
-		else
-			panic("no timer (err %d)\n", ret);
-	}
+	if (ret)
+		return ret;
 
 	return count;
 }
@@ -160,11 +149,6 @@ uint64_t __weak get_timer_us(uint64_t base)
 	return tick_to_time_us(get_ticks()) - base;
 }
 
-unsigned long __weak get_timer_us_long(unsigned long base)
-{
-	return timer_get_us() - base;
-}
-
 unsigned long __weak notrace timer_get_us(void)
 {
 	return tick_to_time(get_ticks() * 1000);
@@ -197,7 +181,7 @@ void udelay(unsigned long usec)
 	do {
 		WATCHDOG_RESET();
 		kv = usec > CONFIG_WD_PERIOD ? CONFIG_WD_PERIOD : usec;
-		__udelay(kv);
+		__udelay (kv);
 		usec -= kv;
 	} while(usec);
 }

@@ -39,9 +39,7 @@
 #ifndef __ASSEMBLY__
 
 #include <asm/io.h>
-#include <linux/bitops.h>
 
-#if CONFIG_IS_ENABLED(MIPS_CM)
 static inline void *mips_cm_base(void)
 {
 	return (void *)CKSEG1ADDR(CONFIG_MIPS_CM_BASE);
@@ -57,17 +55,6 @@ static inline unsigned long mips_cm_l2_line_size(void)
 	line_sz &= GENMASK(GCR_L2_CONFIG_LINESZ_BITS - 1, 0);
 	return line_sz ? (2 << line_sz) : 0;
 }
-#else
-static inline void *mips_cm_base(void)
-{
-	return NULL;
-}
-
-static inline unsigned long mips_cm_l2_line_size(void)
-{
-	return 0;
-}
-#endif
 
 #endif /* !__ASSEMBLY__ */
 

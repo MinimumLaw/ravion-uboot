@@ -8,7 +8,6 @@
 #include <common.h>
 #include <command.h>
 #include <cpu_func.h>
-#include <log.h>
 #include <net.h>
 #include <miiphy.h>
 #include <malloc.h>
@@ -16,8 +15,6 @@
 #include <netdev.h>
 #include <cpsw.h>
 #include <dm/device_compat.h>
-#include <linux/bitops.h>
-#include <linux/compiler.h>
 #include <linux/errno.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
@@ -248,11 +245,11 @@ static inline void cpsw_ale_set_field(u32 *ale_entry, u32 start, u32 bits,
 }
 
 #define DEFINE_ALE_FIELD(name, start, bits)				\
-static inline int __maybe_unused cpsw_ale_get_##name(u32 *ale_entry)	\
+static inline int cpsw_ale_get_##name(u32 *ale_entry)			\
 {									\
 	return cpsw_ale_get_field(ale_entry, start, bits);		\
 }									\
-static inline void __maybe_unused cpsw_ale_set_##name(u32 *ale_entry, u32 value)	\
+static inline void cpsw_ale_set_##name(u32 *ale_entry, u32 value)	\
 {									\
 	cpsw_ale_set_field(ale_entry, start, bits, value);		\
 }
@@ -456,7 +453,7 @@ static void cpsw_set_slave_mac(struct cpsw_slave *slave,
 			       struct cpsw_priv *priv)
 {
 #ifdef CONFIG_DM_ETH
-	struct eth_pdata *pdata = dev_get_plat(priv->dev);
+	struct eth_pdata *pdata = dev_get_platdata(priv->dev);
 
 	writel(mac_hi(pdata->enetaddr), &slave->regs->sa_hi);
 	writel(mac_lo(pdata->enetaddr), &slave->regs->sa_lo);
@@ -856,14 +853,8 @@ static int cpsw_phy_init(struct cpsw_priv *priv, struct cpsw_slave *slave)
 		ret = phy_set_supported(phydev, slave->data->max_speed);
 		if (ret)
 			return ret;
-#if CONFIG_IS_ENABLED(DM_ETH)
 		dev_dbg(priv->dev, "Port %u speed forced to %uMbit\n",
 			slave->slave_num + 1, slave->data->max_speed);
-#else
-		log_debug("%s: Port %u speed forced to %uMbit\n",
-			  priv->dev->name, slave->slave_num + 1,
-			  slave->data->max_speed);
-#endif
 	}
 	phydev->advertising = phydev->supported;
 
@@ -935,7 +926,7 @@ int _cpsw_register(struct cpsw_priv *priv)
 }
 
 #ifndef CONFIG_DM_ETH
-static int cpsw_init(struct eth_device *dev, struct bd_info *bis)
+static int cpsw_init(struct eth_device *dev, bd_t *bis)
 {
 	struct cpsw_priv	*priv = dev->priv;
 
@@ -1014,7 +1005,7 @@ int cpsw_register(struct cpsw_platform_data *data)
 #else
 static int cpsw_eth_start(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct cpsw_priv *priv = dev_get_priv(dev);
 
 	return _cpsw_init(priv, pdata->enetaddr);
@@ -1176,7 +1167,7 @@ static void cpsw_phy_sel(struct cpsw_priv *priv, const char *compat,
 static int cpsw_eth_probe(struct udevice *dev)
 {
 	struct cpsw_priv *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 
 	priv->dev = dev;
 	priv->data = pdata->priv_pdata;
@@ -1223,9 +1214,9 @@ static void cpsw_eth_of_parse_slave(struct cpsw_platform_data *data,
 							"max-speed", 0);
 }
 
-static int cpsw_eth_of_to_plat(struct udevice *dev)
+static int cpsw_eth_ofdata_to_platdata(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	struct cpsw_platform_data *data;
 	struct gpio_desc *mode_gpios;
 	int slave_index = 0;
@@ -1377,12 +1368,12 @@ U_BOOT_DRIVER(eth_cpsw) = {
 	.id	= UCLASS_ETH,
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 	.of_match = cpsw_eth_ids,
-	.of_to_plat = cpsw_eth_of_to_plat,
-	.plat_auto	= sizeof(struct eth_pdata),
+	.ofdata_to_platdata = cpsw_eth_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 #endif
 	.probe	= cpsw_eth_probe,
 	.ops	= &cpsw_eth_ops,
-	.priv_auto	= sizeof(struct cpsw_priv),
+	.priv_auto_alloc_size = sizeof(struct cpsw_priv),
 	.flags = DM_FLAG_ALLOC_PRIV_DMA | DM_FLAG_PRE_RELOC,
 };
 #endif /* CONFIG_DM_ETH */

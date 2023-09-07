@@ -17,17 +17,6 @@ unsigned long get_timer(unsigned long base);
 unsigned long timer_get_us(void);
 uint64_t get_timer_us(uint64_t base);
 
-/**
- * get_timer_us_long() - Get the number of elapsed microseconds
- *
- * This uses 32-bit arithmetic on 32-bit machines, which is enough to handle
- * delays of over an hour. For 64-bit machines it uses a 64-bit value.
- *
- *@base: Base time to consider
- *Return: elapsed time since @base
- */
-unsigned long get_timer_us_long(unsigned long base);
-
 /*
  * timer_test_add_offset()
  *
@@ -87,7 +76,7 @@ uint64_t usec_to_tick(unsigned long usec);
  * usec2ticks() - Convert microseconds to internal ticks
  *
  * @usec: Value of microseconds to convert
- * Return: Corresponding internal ticks value, calculated using get_tbclk()
+ * @return Corresponding internal ticks value, calculated using get_tbclk()
  */
 ulong usec2ticks(unsigned long usec);
 
@@ -95,7 +84,7 @@ ulong usec2ticks(unsigned long usec);
  * ticks2usec() - Convert internal ticks to microseconds
  *
  * @ticks: Value of ticks to convert
- * Return: Corresponding microseconds value, calculated using get_tbclk()
+ * @return Corresponding microseconds value, calculated using get_tbclk()
  */
 ulong ticks2usec(unsigned long ticks);
 
@@ -112,7 +101,7 @@ void wait_ticks(unsigned long ticks);
 /**
  * timer_get_us() - Get monotonic microsecond timer
  *
- * Return: value of monotonic microsecond timer
+ * @return value of monotonic microsecond timer
  */
 unsigned long timer_get_us(void);
 
@@ -122,7 +111,7 @@ unsigned long timer_get_us(void);
  * This is an internal value used by the timer on the system. Ticks increase
  * monotonically at the rate given by get_tbclk().
  *
- * Return: current tick value
+ * @return current tick value
  */
 uint64_t get_ticks(void);
 

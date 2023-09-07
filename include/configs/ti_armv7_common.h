@@ -16,6 +16,19 @@
 #ifndef __CONFIG_TI_ARMV7_COMMON_H__
 #define __CONFIG_TI_ARMV7_COMMON_H__
 
+/* Support both device trees and ATAGs. */
+#define CONFIG_CMDLINE_TAG
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
+
+/*
+ * Our DDR memory always starts at 0x80000000 and U-Boot shall have
+ * relocated itself to higher in memory by the time this value is used.
+ * However, set this to a 32MB offset to allow for easier Linux kernel
+ * booting as the default is often used as the kernel load address.
+ */
+#define CONFIG_SYS_LOAD_ADDR		0x82000000
+
 /*
  * We setup defaults based on constraints from the Linux kernel, which should
  * also be safe elsewhere.  We have the default load at 32MB into DDR (for
@@ -37,7 +50,6 @@
 	"fdtaddr=0x88000000\0" \
 	"dtboaddr=0x89000000\0" \
 	"fdt_addr_r=0x88000000\0" \
-	"fdtoverlay_addr_r=0x89000000\0" \
 	"rdaddr=0x88080000\0" \
 	"ramdisk_addr_r=0x88080000\0" \
 	"scriptaddr=0x80000000\0" \
@@ -51,11 +63,11 @@
 	"name_fit=fitImage\0" \
 	"update_to_fit=setenv loadaddr ${addr_fit}; setenv bootfile ${name_fit}\0" \
 	"get_overlaystring=" \
-		"for overlay in $name_overlays;" \
+		"for overlay in $overlay_files;" \
 		"do;" \
 		"setenv overlaystring ${overlaystring}'#'${overlay};" \
 		"done;\0" \
-	"run_fit=bootm ${addr_fit}#conf-${fdtfile}${overlaystring}\0" \
+	"run_fit=bootm ${addr_fit}#${fdtfile}${overlaystring}\0" \
 
 /*
  * DDR information.  If the CONFIG_NR_DRAM_BANKS is not defined,
@@ -75,6 +87,10 @@
 #define CONFIG_SYS_PTV			2	/* Divisor: 2^(PTV+1) => 8 */
 
 /* If DM_I2C, enable non-DM I2C support */
+#if !defined(CONFIG_DM_I2C)
+#define CONFIG_I2C
+#define CONFIG_SYS_I2C
+#endif
 
 /*
  * The following are general good-enough settings for U-Boot.  We set a
@@ -85,6 +101,8 @@
  * we are on so we do not need to rely on the command prompt.  We set a
  * console baudrate of 115200 and use the default baud rate table.
  */
+#define CONFIG_SYS_MALLOC_LEN		SZ_32M
+#define CONFIG_ENV_OVERWRITE		/* Overwrite ethaddr / serial# */
 
 /* As stated above, the following choices are optional. */
 
@@ -144,6 +162,7 @@
 
 
 /* FAT sd card locations. */
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #ifndef CONFIG_SPL_FS_LOAD_PAYLOAD_NAME
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"
 #endif
@@ -154,6 +173,7 @@
 #define CONFIG_SPL_FS_LOAD_ARGS_NAME		"args"
 
 /* RAW SD card / eMMC */
+#define CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR	0x1700  /* address 0x2E0000 */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR	0x1500  /* address 0x2A0000 */
 #define CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTORS	0x200   /* 256KiB */
 #endif
@@ -161,6 +181,9 @@
 /* General parts of the framework, required. */
 
 #ifdef CONFIG_MTD_RAW_NAND
+#define CONFIG_SPL_NAND_BASE
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SPL_NAND_ECC
 #define CONFIG_SYS_NAND_U_BOOT_START	CONFIG_SYS_TEXT_BASE
 #endif
 #endif /* !CONFIG_NOR_BOOT */

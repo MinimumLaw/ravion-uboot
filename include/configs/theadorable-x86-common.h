@@ -19,9 +19,12 @@
 
 #define VIDEO_IO_OFFSET				0
 #define CONFIG_X86EMU_RAW_IO
+#define CONFIG_CMD_BMP
+#define CONFIG_BMP_16BPP
 
 /* Environment settings */
 
+#undef CONFIG_BOOTCOMMAND
 #undef CONFIG_EXTRA_ENV_SETTINGS
 
 #define CONFIG_EXTRA_ENV_SETTINGS				\

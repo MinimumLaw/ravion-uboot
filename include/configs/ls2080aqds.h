@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright 2017, 2019-2021 NXP
+ * Copyright 2017, 2019-2020 NXP
  * Copyright 2015 Freescale Semiconductor
  */
 
@@ -9,14 +9,27 @@
 
 #include "ls2080a_common.h"
 
+#ifndef __ASSEMBLY__
+unsigned long get_board_sys_clk(void);
+unsigned long get_board_ddr_clk(void);
+#endif
+
 #ifdef CONFIG_FSL_QSPI
 #define CONFIG_QIXIS_I2C_ACCESS
+#ifndef CONFIG_DM_I2C
+#define CONFIG_SYS_I2C_EARLY_INIT
+#endif
 #define CONFIG_SYS_I2C_IFDR_DIV		0x7e
 #endif
 
 #define CONFIG_SYS_I2C_FPGA_ADDR	0x66
-#define COUNTER_FREQUENCY_REAL		(get_board_sys_clk()/4)
+#define CONFIG_SYS_CLK_FREQ		get_board_sys_clk()
+#define CONFIG_DDR_CLK_FREQ		get_board_ddr_clk()
+#define COUNTER_FREQUENCY_REAL		(CONFIG_SYS_CLK_FREQ/4)
 
+#define CONFIG_DDR_SPD
+#define CONFIG_DDR_ECC
+#define CONFIG_ECC_INIT_VIA_DDRCONTROLLER
 #define CONFIG_MEM_INIT_VALUE		0xdeadbeef
 #define SPD_EEPROM_ADDRESS1	0x51
 #define SPD_EEPROM_ADDRESS2	0x52
@@ -33,9 +46,19 @@
 #endif
 
 /* SATA */
+#define CONFIG_SCSI_AHCI_PLAT
 
 #define CONFIG_SYS_SATA1			AHCI_BASE_ADDR1
 #define CONFIG_SYS_SATA2			AHCI_BASE_ADDR2
+
+#define CONFIG_SYS_SCSI_MAX_SCSI_ID		1
+#define CONFIG_SYS_SCSI_MAX_LUN			1
+#define CONFIG_SYS_SCSI_MAX_DEVICE		(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
+						CONFIG_SYS_SCSI_MAX_LUN)
+
+#ifdef CONFIG_TFABOOT
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#endif
 
 #define CONFIG_SYS_NOR0_CSPR_EXT	(0x0)
 #define CONFIG_SYS_NOR_AMASK		IFC_AMASK(128*1024*1024)
@@ -79,6 +102,7 @@
 #define CONFIG_SYS_FLASH_QUIET_TEST
 #define CONFIG_FLASH_SHOW_PROGRESS	45 /* count down from 45/5: 9..1 */
 
+#define CONFIG_SYS_MAX_FLASH_BANKS	2	/* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	1024	/* sectors per device */
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
@@ -88,6 +112,7 @@
 					 CONFIG_SYS_FLASH_BASE + 0x40000000}
 #endif
 
+#define CONFIG_NAND_FSL_IFC
 #define CONFIG_SYS_NAND_MAX_ECCPOS	256
 #define CONFIG_SYS_NAND_MAX_OOBFREE	2
 
@@ -106,6 +131,8 @@
 				| CSOR_NAND_SPRZ_64/* Spare size = 64 */ \
 				| CSOR_NAND_PB(64))	/*Pages Per Block = 64*/
 
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+
 /* ONFI NAND Flash mode0 Timing Params */
 #define CONFIG_SYS_NAND_FTIM0		(FTIM0_NAND_TCCST(0x07) | \
 					FTIM0_NAND_TWP(0x18)   | \
@@ -123,6 +150,8 @@
 #define CONFIG_SYS_NAND_BASE_LIST	{ CONFIG_SYS_NAND_BASE }
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_MTD_NAND_VERIFY_WRITE
+
+#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
 
 #define CONFIG_FSL_QIXIS	/* use common QIXIS code */
 #define QIXIS_LBMAP_SWITCH		0x06
@@ -196,7 +225,10 @@
 #define CONFIG_SYS_CS0_FTIM3		CONFIG_SYS_NAND_FTIM3
 
 #define CONFIG_SPL_PAD_TO		0x20000
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	(256 * 1024)
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	(640 * 1024)
+#elif defined(CONFIG_SD_BOOT)
+#define CONFIG_SYS_MMC_ENV_DEV		0
 #endif
 #else
 #define CONFIG_SYS_CSPR0_EXT		CONFIG_SYS_NOR0_CSPR_EXT
@@ -244,13 +276,26 @@
 #define I2C_MUX_CH_DEFAULT      0x8
 
 /* SPI */
+#if defined(CONFIG_FSL_QSPI) || defined(CONFIG_FSL_DSPI)
+#ifdef CONFIG_FSL_DSPI
+#define CONFIG_SPI_FLASH_STMICRO
+#define CONFIG_SPI_FLASH_SST
+#define CONFIG_SPI_FLASH_EON
+#endif
 
+#ifdef CONFIG_FSL_QSPI
+#define CONFIG_SPI_FLASH_SPANSION
+#define FSL_QSPI_FLASH_SIZE		(1 << 26) /* 64MB */
+#define FSL_QSPI_FLASH_NUM		4
+#endif
 /*
  * Verify QSPI when boot from NAND, QIXIS brdcfg9 need configure.
  * If boot from on-board NAND, ISO1 = 1, ISO2 = 0, IBOOT = 0
  * If boot from IFCCard NAND, ISO1 = 0, ISO2 = 0, IBOOT = 1
  */
 #define FSL_QIXIS_BRDCFG9_QSPI		0x1
+
+#endif
 
 /*
  * MMC
@@ -265,16 +310,28 @@
  */
 #define RTC
 #define CONFIG_RTC_DS3231               1
+#define CONFIG_RTC_ENABLE_32KHZ_OUTPUT
 #define CONFIG_SYS_I2C_RTC_ADDR         0x68
+#define CONFIG_RTC_ENABLE_32KHZ_OUTPUT
 
 /* EEPROM */
+#define CONFIG_ID_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_NXID
 #define CONFIG_SYS_EEPROM_BUS_NUM	0
+#define CONFIG_SYS_I2C_EEPROM_ADDR	0x57
+#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
+#define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS 3
+#define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS 5
 
 #define CONFIG_FSL_MEMAC
 
 #ifdef CONFIG_PCI
 #define CONFIG_PCI_SCAN_SHOW
+#endif
+
+/*  MMC  */
+#ifdef CONFIG_MMC
+#define CONFIG_SYS_FSL_MMC_HAS_CAPBLT_VS33
 #endif
 
 /* Initial environment variables */
@@ -299,7 +356,7 @@
 #else
 #ifdef CONFIG_TFABOOT
 #define SD_MC_INIT_CMD				\
-	"mmcinfo;mmc read 0x80a00000 0x5000 0x1000;"  \
+	"mmcinfo;mmc read 0x80a00000 0x5000 0x1200;"  \
 	"mmc read 0x80e00000 0x7000 0x800;" \
 	"fsl_mc start mc 0x80a00000 0x80e00000\0"
 #define IFC_MC_INIT_CMD				\
@@ -372,9 +429,9 @@
 	"kernel_start=0x8000\0"              \
 	"kernel_load=0xa0000000\0"              \
 	"kernel_size=0x14000\0"               \
-	"mcinitcmd=mmcinfo;mmc read 0x80a00000 0x5000 0x1000;"  \
-	"mmc read 0x80e00000 0x7000 0x800;" \
-	"fsl_mc start mc 0x80a00000 0x80e00000\0"       \
+	"mcinitcmd=mmcinfo;mmc read 0x80000000 0x5000 0x800;"  \
+	"mmc read 0x80100000 0x7000 0x800;" \
+	"fsl_mc start mc 0x80000000 0x80100000\0"       \
 	"mcmemsize=0x70000000 \0"
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS		\
@@ -422,6 +479,10 @@
 
 #if defined(CONFIG_FSL_MC_ENET) && !defined(CONFIG_SPL_BUILD)
 #define CONFIG_FSL_MEMAC
+#define CONFIG_PHYLIB_10G
+#define CONFIG_PHY_VITESSE
+#define CONFIG_PHY_REALTEK
+#define CONFIG_PHY_TERANETICS
 #define SGMII_CARD_PORT1_PHY_ADDR 0x1C
 #define SGMII_CARD_PORT2_PHY_ADDR 0x1d
 #define SGMII_CARD_PORT3_PHY_ADDR 0x1E

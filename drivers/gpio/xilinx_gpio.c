@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <linux/list.h>
 #include <asm/io.h>
@@ -21,7 +20,7 @@ struct gpio_regs {
 	u32 gpiodir;
 };
 
-struct xilinx_gpio_plat {
+struct xilinx_gpio_platdata {
 	struct gpio_regs *regs;
 	int bank_max[XILINX_GPIO_MAX_BANK];
 	int bank_input[XILINX_GPIO_MAX_BANK];
@@ -36,13 +35,13 @@ struct xilinx_gpio_privdata {
 static int xilinx_gpio_get_bank_pin(unsigned offset, u32 *bank_num,
 				    u32 *bank_pin_num, struct udevice *dev)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	u32 bank, max_pins;
 	/* the first gpio is 0 not 1 */
 	u32 pin_num = offset;
 
 	for (bank = 0; bank < XILINX_GPIO_MAX_BANK; bank++) {
-		max_pins = plat->bank_max[bank];
+		max_pins = platdata->bank_max[bank];
 		if (pin_num < max_pins) {
 			debug("%s: found at bank 0x%x pin 0x%x\n", __func__,
 			      bank, pin_num);
@@ -59,7 +58,7 @@ static int xilinx_gpio_get_bank_pin(unsigned offset, u32 *bank_num,
 static int xilinx_gpio_set_value(struct udevice *dev, unsigned offset,
 				 int value)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	struct xilinx_gpio_privdata *priv = dev_get_priv(dev);
 	int val, ret;
 	u32 bank, pin;
@@ -71,14 +70,14 @@ static int xilinx_gpio_set_value(struct udevice *dev, unsigned offset,
 	val = priv->output_val[bank];
 
 	debug("%s: regs: %lx, value: %x, gpio: %x, bank %x, pin %x, out %x\n",
-	      __func__, (ulong)plat->regs, value, offset, bank, pin, val);
+	      __func__, (ulong)platdata->regs, value, offset, bank, pin, val);
 
 	if (value)
 		val = val | (1 << pin);
 	else
 		val = val & ~(1 << pin);
 
-	writel(val, &plat->regs->gpiodata + bank * 2);
+	writel(val, &platdata->regs->gpiodata + bank * 2);
 
 	priv->output_val[bank] = val;
 
@@ -87,7 +86,7 @@ static int xilinx_gpio_set_value(struct udevice *dev, unsigned offset,
 
 static int xilinx_gpio_get_value(struct udevice *dev, unsigned offset)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	struct xilinx_gpio_privdata *priv = dev_get_priv(dev);
 	int val, ret;
 	u32 bank, pin;
@@ -97,14 +96,14 @@ static int xilinx_gpio_get_value(struct udevice *dev, unsigned offset)
 		return ret;
 
 	debug("%s: regs: %lx, gpio: %x, bank %x, pin %x\n", __func__,
-	      (ulong)plat->regs, offset, bank, pin);
+	      (ulong)platdata->regs, offset, bank, pin);
 
-	if (plat->bank_output[bank]) {
+	if (platdata->bank_output[bank]) {
 		debug("%s: Read saved output value\n", __func__);
 		val = priv->output_val[bank];
 	} else {
 		debug("%s: Read input value from reg\n", __func__);
-		val = readl(&plat->regs->gpiodata + bank * 2);
+		val = readl(&platdata->regs->gpiodata + bank * 2);
 	}
 
 	val = !!(val & (1 << pin));
@@ -114,7 +113,7 @@ static int xilinx_gpio_get_value(struct udevice *dev, unsigned offset)
 
 static int xilinx_gpio_get_function(struct udevice *dev, unsigned offset)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	int val, ret;
 	u32 bank, pin;
 
@@ -123,15 +122,15 @@ static int xilinx_gpio_get_function(struct udevice *dev, unsigned offset)
 		return ret;
 
 	/* Check if all pins are inputs */
-	if (plat->bank_input[bank])
+	if (platdata->bank_input[bank])
 		return GPIOF_INPUT;
 
 	/* Check if all pins are outputs */
-	if (plat->bank_output[bank])
+	if (platdata->bank_output[bank])
 		return GPIOF_OUTPUT;
 
 	/* FIXME test on dual */
-	val = readl(&plat->regs->gpiodir + bank * 2);
+	val = readl(&platdata->regs->gpiodir + bank * 2);
 	val = !(val & (1 << pin));
 
 	/* input is 1 in reg but GPIOF_INPUT is 0 */
@@ -143,7 +142,7 @@ static int xilinx_gpio_get_function(struct udevice *dev, unsigned offset)
 static int xilinx_gpio_direction_output(struct udevice *dev, unsigned offset,
 					int value)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	int val, ret;
 	u32 bank, pin;
 
@@ -152,15 +151,15 @@ static int xilinx_gpio_direction_output(struct udevice *dev, unsigned offset,
 		return ret;
 
 	/* can't change it if all is input by default */
-	if (plat->bank_input[bank])
+	if (platdata->bank_input[bank])
 		return -EINVAL;
 
 	xilinx_gpio_set_value(dev, offset, value);
 
-	if (!plat->bank_output[bank]) {
-		val = readl(&plat->regs->gpiodir + bank * 2);
+	if (!platdata->bank_output[bank]) {
+		val = readl(&platdata->regs->gpiodir + bank * 2);
 		val = val & ~(1 << pin);
-		writel(val, &plat->regs->gpiodir + bank * 2);
+		writel(val, &platdata->regs->gpiodir + bank * 2);
 	}
 
 	return 0;
@@ -168,7 +167,7 @@ static int xilinx_gpio_direction_output(struct udevice *dev, unsigned offset,
 
 static int xilinx_gpio_direction_input(struct udevice *dev, unsigned offset)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	int val, ret;
 	u32 bank, pin;
 
@@ -177,16 +176,16 @@ static int xilinx_gpio_direction_input(struct udevice *dev, unsigned offset)
 		return ret;
 
 	/* Already input */
-	if (plat->bank_input[bank])
+	if (platdata->bank_input[bank])
 		return 0;
 
 	/* can't change it if all is output by default */
-	if (plat->bank_output[bank])
+	if (platdata->bank_output[bank])
 		return -EINVAL;
 
-	val = readl(&plat->regs->gpiodir + bank * 2);
+	val = readl(&platdata->regs->gpiodir + bank * 2);
 	val = val | (1 << pin);
-	writel(val, &plat->regs->gpiodir + bank * 2);
+	writel(val, &platdata->regs->gpiodir + bank * 2);
 
 	return 0;
 }
@@ -194,7 +193,7 @@ static int xilinx_gpio_direction_input(struct udevice *dev, unsigned offset)
 static int xilinx_gpio_xlate(struct udevice *dev, struct gpio_desc *desc,
 			     struct ofnode_phandle_args *args)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 
 	desc->offset = args->args[0];
 
@@ -209,13 +208,13 @@ static int xilinx_gpio_xlate(struct udevice *dev, struct gpio_desc *desc,
 	 * add amount of pins in second channel if present.
 	 */
 	if (args->args[1]) {
-		if (!plat->bank_max[1]) {
+		if (!platdata->bank_max[1]) {
 			printf("%s: %s has no second channel\n",
 			       __func__, dev->name);
 			return -EINVAL;
 		}
 
-		desc->offset += plat->bank_max[0];
+		desc->offset += platdata->bank_max[0];
 	}
 
 	/* The third cell is optional */
@@ -239,7 +238,7 @@ static const struct dm_gpio_ops xilinx_gpio_ops = {
 
 static int xilinx_gpio_probe(struct udevice *dev)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	struct xilinx_gpio_privdata *priv = dev_get_priv(dev);
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
 	const void *label_ptr;
@@ -253,38 +252,42 @@ static int xilinx_gpio_probe(struct udevice *dev)
 		uc_priv->bank_name = dev->name;
 	}
 
-	uc_priv->gpio_count = plat->bank_max[0] + plat->bank_max[1];
+	uc_priv->gpio_count = platdata->bank_max[0] + platdata->bank_max[1];
 
-	priv->output_val[0] = plat->dout_default[0];
+	priv->output_val[0] = platdata->dout_default[0];
 
-	if (plat->bank_max[1])
-		priv->output_val[1] = plat->dout_default[1];
+	if (platdata->bank_max[1])
+		priv->output_val[1] = platdata->dout_default[1];
 
 	return 0;
 }
 
-static int xilinx_gpio_of_to_plat(struct udevice *dev)
+static int xilinx_gpio_ofdata_to_platdata(struct udevice *dev)
 {
-	struct xilinx_gpio_plat *plat = dev_get_plat(dev);
+	struct xilinx_gpio_platdata *platdata = dev_get_platdata(dev);
 	int is_dual;
 
-	plat->regs = (struct gpio_regs *)dev_read_addr(dev);
+	platdata->regs = (struct gpio_regs *)dev_read_addr(dev);
 
-	plat->bank_max[0] = dev_read_u32_default(dev, "xlnx,gpio-width", 0);
-	plat->bank_input[0] = dev_read_u32_default(dev, "xlnx,all-inputs", 0);
-	plat->bank_output[0] = dev_read_u32_default(dev, "xlnx,all-outputs", 0);
-	plat->dout_default[0] = dev_read_u32_default(dev, "xlnx,dout-default",
-						     0);
+	platdata->bank_max[0] = dev_read_u32_default(dev,
+						     "xlnx,gpio-width", 0);
+	platdata->bank_input[0] = dev_read_u32_default(dev,
+						       "xlnx,all-inputs", 0);
+	platdata->bank_output[0] = dev_read_u32_default(dev,
+							"xlnx,all-outputs", 0);
+	platdata->dout_default[0] = dev_read_u32_default(dev,
+							 "xlnx,dout-default",
+							 0);
 
 	is_dual = dev_read_u32_default(dev, "xlnx,is-dual", 0);
 	if (is_dual) {
-		plat->bank_max[1] = dev_read_u32_default(dev,
-							 "xlnx,gpio2-width", 0);
-		plat->bank_input[1] = dev_read_u32_default(dev,
+		platdata->bank_max[1] = dev_read_u32_default(dev,
+						"xlnx,gpio2-width", 0);
+		platdata->bank_input[1] = dev_read_u32_default(dev,
 						"xlnx,all-inputs-2", 0);
-		plat->bank_output[1] = dev_read_u32_default(dev,
+		platdata->bank_output[1] = dev_read_u32_default(dev,
 						"xlnx,all-outputs-2", 0);
-		plat->dout_default[1] = dev_read_u32_default(dev,
+		platdata->dout_default[1] = dev_read_u32_default(dev,
 						"xlnx,dout-default-2", 0);
 	}
 
@@ -301,8 +304,8 @@ U_BOOT_DRIVER(xilinx_gpio) = {
 	.id = UCLASS_GPIO,
 	.ops = &xilinx_gpio_ops,
 	.of_match = xilinx_gpio_ids,
-	.of_to_plat = xilinx_gpio_of_to_plat,
+	.ofdata_to_platdata = xilinx_gpio_ofdata_to_platdata,
 	.probe = xilinx_gpio_probe,
-	.plat_auto	= sizeof(struct xilinx_gpio_plat),
-	.priv_auto	= sizeof(struct xilinx_gpio_privdata),
+	.platdata_auto_alloc_size = sizeof(struct xilinx_gpio_platdata),
+	.priv_auto_alloc_size = sizeof(struct xilinx_gpio_privdata),
 };

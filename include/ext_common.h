@@ -19,11 +19,7 @@
 
 #ifndef __EXT_COMMON__
 #define __EXT_COMMON__
-
-#include <compiler.h>
-
-struct cmd_tbl;
-
+#include <command.h>
 #define SECTOR_SIZE		0x200
 #define LOG2_SECTOR_SIZE	9
 
@@ -214,11 +210,11 @@ struct ext2_data {
 
 extern lbaint_t part_offset;
 
-int do_ext2ls(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ext2load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ext4_load(struct cmd_tbl *cmdtp, int flag, int argc,
-		 char *const argv[]);
-int do_ext4_ls(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
-int do_ext4_write(struct cmd_tbl *cmdtp, int flag, int argc,
-		  char *const argv[]);
+int do_ext2ls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ext2load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_ext4_load(cmd_tbl_t *cmdtp, int flag, int argc,
+					char *const argv[]);
+int do_ext4_ls(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
+int do_ext4_write(cmd_tbl_t *cmdtp, int flag, int argc,
+				char *const argv[]);
 #endif

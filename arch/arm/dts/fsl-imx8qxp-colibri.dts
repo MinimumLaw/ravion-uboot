@@ -9,8 +9,8 @@
 #include "fsl-imx8qxp-colibri-u-boot.dtsi"
 
 / {
-	model = "Toradex Colibri iMX8X";
-	compatible = "toradex,colibri-imx8x", "fsl,imx8qxp";
+	model = "Toradex Colibri iMX8QXP";
+	compatible = "toradex,colibri-imx8qxp", "fsl,imx8qxp";
 
 	chosen {
 		bootargs = "console=ttyLP3,115200 earlycon=lpuart32,0x5a090000,115200";
@@ -32,7 +32,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog0>, <&pinctrl_hog1>, <&pinctrl_hog2>;
 
-	colibri-imx8x {
+	colibri-imx8qxp {
 		pinctrl_lpuart0: lpuart0grp {
 			fsl,pins = <
 				SC_P_UART0_RX_ADMA_UART0_RX	0x06000020
@@ -126,14 +126,6 @@
 				SC_P_QSPI0A_SS0_B_LSIO_GPIO3_IO14	0x00000020 /*  77 */
 				SC_P_QSPI0A_SS1_B_LSIO_GPIO3_IO15	0x00000020 /*  89 */
 				SC_P_QSPI0A_SCLK_LSIO_GPIO3_IO16	0x00000020 /*  93 */
-			>;
-		};
-
-		/* On Module I2C */
-		pinctrl_i2c0: i2c0grp {
-			fsl,pins = <
-				SC_P_MIPI_CSI0_GPIO0_00_ADMA_I2C0_SCL	0x06000021
-				SC_P_MIPI_CSI0_GPIO0_01_ADMA_I2C0_SDA	0x06000021
 			>;
 		};
 
@@ -303,25 +295,6 @@
 			max-speed = <100>;
 			reg = <2>;
 		};
-	};
-};
-
-&i2c0 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	clock-frequency = <100000>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_i2c0>;
-	status = "okay";
-
-	/* GPIO expander */
-	gpio_expander_43: gpio-expander@43 {
-		compatible = "fcs,fxl6408";
-		gpio-controller;
-		#gpio-cells = <2>;
-		reg = <0x43>;
-		initial_io_dir = <0xff>;
-		initial_output = <0x05>;
 	};
 };
 

@@ -6,12 +6,8 @@
  *
  */
 #include <common.h>
-#include <command.h>
 #include <dm.h>
-#include <env.h>
 #include <errno.h>
-#include <init.h>
-#include <log.h>
 #include <netdev.h>
 #include <env_internal.h>
 #include <fsl_esdhc_imx.h>
@@ -27,7 +23,6 @@
 #ifndef CONFIG_SPL
 #include <asm/arch-imx8/clock.h>
 #endif
-#include <linux/delay.h>
 #include "../common/factoryset.h"
 
 #define GPIO_PAD_CTRL \
@@ -232,7 +227,7 @@ static int setup_fec(void)
 	return 0;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 }
 
@@ -293,7 +288,7 @@ int board_init(void)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	return 0;
 }
@@ -415,7 +410,7 @@ unsigned char get_button_state(char * const envname, unsigned char def)
  *		0 if button is not held down
  */
 static int
-do_userbutton(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+do_userbutton(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int button = 0;
 
@@ -436,7 +431,7 @@ U_BOOT_CMD(
 #define ERST	IMX_GPIO_NR(0, 3)
 
 static int
-do_eth_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+do_eth_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	gpio_request(ERST, "ERST");
 	gpio_direction_output(ERST, 0);

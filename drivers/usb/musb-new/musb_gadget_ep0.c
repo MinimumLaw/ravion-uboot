@@ -9,7 +9,6 @@
  */
 
 #ifndef __UBOOT__
-#include <log.h>
 #include <dm/device_compat.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
@@ -19,10 +18,8 @@
 #include <linux/interrupt.h>
 #else
 #include <common.h>
-#include <dm.h>
-#include <dm/device_compat.h>
-#include <asm/processor.h>
 #include "linux-compat.h"
+#include <asm/processor.h>
 #endif
 
 #include "musb_core.h"
@@ -147,7 +144,7 @@ static int service_tx_status_request(
  * that is supposed to be a standard control request. Assumes the fifo to
  * be at least 2 bytes long.
  *
- * Return: 0 if the request was NOT HANDLED,
+ * @return 0 if the request was NOT HANDLED,
  * < 0 when error
  * > 0 when the request is processed
  *

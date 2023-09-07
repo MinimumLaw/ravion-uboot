@@ -9,7 +9,6 @@
 #include <div64.h>
 #include <i2c.h>
 #include <i2s.h>
-#include <log.h>
 #include <sound.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
@@ -22,7 +21,7 @@
  * @param reg	reg number to be write
  * @param data	data to be writen to the above registor
  *
- * Return:	int value 1 for change, 0 for no change or negative error code.
+ * @return	int value 1 for change, 0 for no change or negative error code.
  */
 int maxim_i2c_write(struct maxim_priv *priv, unsigned int reg,
 		    unsigned char data)
@@ -39,7 +38,7 @@ int maxim_i2c_write(struct maxim_priv *priv, unsigned int reg,
  * @param reg	reg number to be read
  * @param data	address of read data to be stored
  *
- * Return:	int value 0 for success, -1 in case of error.
+ * @return	int value 0 for success, -1 in case of error.
  */
 unsigned int maxim_i2c_read(struct maxim_priv *priv, unsigned int reg,
 			    unsigned char *data)
@@ -64,7 +63,7 @@ unsigned int maxim_i2c_read(struct maxim_priv *priv, unsigned int reg,
  * @param mask	register mask
  * @param value	new value
  *
- * Return: int value 0 for success, non-zero error code.
+ * @return int value 0 for success, non-zero error code.
  */
 int maxim_bic_or(struct maxim_priv *priv, unsigned int reg, unsigned char mask,
 		 unsigned char value)

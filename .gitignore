@@ -92,13 +92,3 @@ GTAGS
 *.orig
 *~
 \#*#
-
-# Python cache
-__pycache__
-
-# Python code coverage output (python3-coverage html)
-/htmlcov/
-
-# pylint files
-/pylint.cur
-/pylint.out/

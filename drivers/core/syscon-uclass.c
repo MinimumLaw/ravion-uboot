@@ -4,10 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_CATEGORY UCLASS_SYSCON
-
 #include <common.h>
-#include <log.h>
 #include <syscon.h>
 #include <dm.h>
 #include <errno.h>
@@ -20,16 +17,12 @@
 
 /*
  * Caution:
- * This API requires the given device has already been bound to the syscon
- * driver. For example,
- *
+ * This API requires the given device has alerady been bound to syscon driver.
+ * For example,
  *    compatible = "syscon", "simple-mfd";
- *
  * works, but
- *
  *    compatible = "simple-mfd", "syscon";
- *
- * does not. The behavior is different from Linux.
+ * does not.  The behavior is different from Linux.
  */
 struct regmap *syscon_get_regmap(struct udevice *dev)
 {
@@ -56,9 +49,9 @@ static int syscon_pre_probe(struct udevice *dev)
 	 * using OF_PLATDATA will need to ensure that this is true.
 	 */
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct syscon_base_plat *plat = dev_get_plat(dev);
+	struct syscon_base_platdata *plat = dev_get_platdata(dev);
 
-	return regmap_init_mem_plat(dev, plat->reg, ARRAY_SIZE(plat->reg),
+	return regmap_init_mem_platdata(dev, plat->reg, ARRAY_SIZE(plat->reg),
 					&priv->regmap);
 #else
 	return regmap_init_mem(dev_ofnode(dev), &priv->regmap);
@@ -72,7 +65,7 @@ static int syscon_probe_by_ofnode(ofnode node, struct udevice **devp)
 
 	/* found node with "syscon" compatible, not bounded to SYSCON UCLASS */
 	if (!ofnode_device_is_compatible(node, "syscon")) {
-		log_debug("invalid compatible for syscon device\n");
+		dev_dbg(dev, "invalid compatible for syscon device\n");
 		return -EINVAL;
 	}
 
@@ -142,7 +135,7 @@ int syscon_get_by_driver_data(ulong driver_data, struct udevice **devp)
 
 	ret = uclass_first_device_drvdata(UCLASS_SYSCON, driver_data, devp);
 	if (ret)
-		return ret;
+		return log_msg_ret("find", ret);
 
 	return 0;
 }
@@ -174,7 +167,7 @@ void *syscon_get_first_range(ulong driver_data)
 UCLASS_DRIVER(syscon) = {
 	.id		= UCLASS_SYSCON,
 	.name		= "syscon",
-	.per_device_auto	= sizeof(struct syscon_uc_info),
+	.per_device_auto_alloc_size = sizeof(struct syscon_uc_info),
 	.pre_probe = syscon_pre_probe,
 };
 
@@ -186,7 +179,7 @@ static const struct udevice_id generic_syscon_ids[] = {
 U_BOOT_DRIVER(generic_syscon) = {
 	.name	= "syscon",
 	.id	= UCLASS_SYSCON,
-#if CONFIG_IS_ENABLED(OF_REAL)
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.bind           = dm_scan_fdt_dev,
 #endif
 	.of_match = generic_syscon_ids,

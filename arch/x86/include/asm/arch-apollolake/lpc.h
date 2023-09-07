@@ -7,7 +7,6 @@
 #ifndef _ASM_ARCH_LPC_H
 #define _ASM_ARCH_LPC_H
 
-#include <linux/bitops.h>
 #define LPC_SERIRQ_CTL			0x64
 #define  LPC_SCNT_EN			BIT(7)
 #define  LPC_SCNT_MODE			BIT(6)
@@ -67,7 +66,7 @@ void lpc_enable_fixed_io_ranges(uint io_enables);
  *
  * @base: Base I/O address (e.g. 0x800)
  * @size: Size of window (e.g. 0x100)
- * Return: 0 if OK, -ENOSPC if there are no more windows available, -EALREADY
+ * @return 0 if OK, -ENOSPC if there are no more windows available, -EALREADY
  *	if already set up
  */
 int lpc_open_pmio_window(uint base, uint size);

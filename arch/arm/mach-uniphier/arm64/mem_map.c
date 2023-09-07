@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <common.h>
 #include <linux/types.h>
 #include <asm/armv8/mmu.h>
 

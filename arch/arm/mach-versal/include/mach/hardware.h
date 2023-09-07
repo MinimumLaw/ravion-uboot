@@ -3,10 +3,6 @@
  * Copyright 2016 - 2018 Xilinx, Inc.
  */
 
-#ifndef __ASSEMBLY__
-#include <linux/bitops.h>
-#endif
-
 #define VERSAL_CRL_APB_BASEADDR	0xFF5E0000
 
 #define CRL_APB_TIMESTAMP_REF_CTRL_CLKACT_BIT	BIT(25)
@@ -64,10 +60,6 @@ struct crp_regs {
 };
 
 #define crp_base ((struct crp_regs *)VERSAL_CRP_BASEADDR)
-
-#define VERSAL_PS_PMC_VERSION	0xF11A0004
-#define VERSAL_PS_VER_MASK	GENMASK(7, 0)
-#define VERSAL_PS_VER_SHIFT	12
 
 /* Bootmode setting values */
 #define BOOT_MODES_MASK	0x0000000F

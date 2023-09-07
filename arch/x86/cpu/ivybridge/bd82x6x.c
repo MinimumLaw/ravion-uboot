@@ -6,11 +6,9 @@
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <log.h>
 #include <malloc.h>
 #include <pch.h>
 #include <asm/cpu.h>
-#include <asm/global_data.h>
 #include <asm/intel_regs.h>
 #include <asm/io.h>
 #include <asm/lapic.h>
@@ -19,8 +17,6 @@
 #include <asm/arch/model_206ax.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/sandybridge.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -39,7 +35,7 @@ static int pch_type = -1;
  * pch_silicon_revision() - Read silicon revision ID from the PCH
  *
  * @dev:	PCH device
- * Return: silicon revision ID
+ * @return silicon revision ID
  */
 static int pch_silicon_revision(struct udevice *dev)
 {
@@ -71,7 +67,7 @@ int pch_silicon_type(struct udevice *dev)
  * @dev:	PCH device
  * @type:	PCH type
  * @rev:	Minimum required resion
- * Return: 0 if not supported, 1 if supported
+ * @return 0 if not supported, 1 if supported
  */
 static int pch_silicon_supported(struct udevice *dev, int type, int rev)
 {

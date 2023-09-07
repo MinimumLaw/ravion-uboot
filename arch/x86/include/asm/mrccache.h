@@ -7,8 +7,6 @@
 #ifndef _ASM_MRCCACHE_H
 #define _ASM_MRCCACHE_H
 
-#include <compiler.h>
-
 #define MRC_DATA_ALIGN		0x100
 #define MRC_DATA_SIGNATURE	(('M' << 0) | ('R' << 8) | \
 				 ('C' << 16) | ('D'<<24))
@@ -46,7 +44,7 @@ struct udevice;
  * for setting up SDRAM
  *
  * @entry:	Position and size of MRC cache in SPI flash
- * Return: pointer to latest record, or NULL if none
+ * @return pointer to latest record, or NULL if none
  */
 struct mrc_data_container *mrccache_find_current(struct mrc_region *entry);
 
@@ -60,7 +58,7 @@ struct mrc_data_container *mrccache_find_current(struct mrc_region *entry);
  * This routine should be called by reserve_arch() before U-Boot is relocated
  * when MRC cache is enabled.
  *
- * Return: 0 always
+ * @return 0 always
  */
 int mrccache_reserve(void);
 
@@ -68,14 +66,21 @@ int mrccache_reserve(void);
  * mrccache_get_region() - get MRC region on the SPI flash
  *
  * This gets MRC region whose offset and size are described in the device tree
- * as a subnode to the SPI flash. This tries to find the SPI flash device
- * (without probing it), falling back to looking for the devicetree node if
- * driver model is not inited or the SPI flash is not found.
+ * as a subnode to the SPI flash. If a non-NULL device pointer is supplied,
+ * this also probes the SPI flash device and returns its device pointer for
+ * the caller to use later.
+ *
+ * Be careful when calling this routine with a non-NULL device pointer:
+ * - driver model initialization must be complete
+ * - calling in the pre-relocation phase may bring some side effects during
+ *   the SPI flash device probe (eg: for SPI controllers on a PCI bus, it
+ *   triggers PCI bus enumeration during which insufficient memory issue
+ *   might be exposed and it causes subsequent SPI flash probe fails).
  *
  * @type:	Type of MRC data to use
- * @devp:	Returns pointer to the SPI flash device, if found
+ * @devp:	Returns pointer to the SPI flash device
  * @entry:	Position and size of MRC cache in SPI flash
- * Return: 0 if success, -ENOENT if SPI flash node does not exist in the
+ * @return 0 if success, -ENOENT if SPI flash node does not exist in the
  * device tree, -EPERM if MRC region subnode does not exist in the device
  * tree, -EINVAL if MRC region properties format is incorrect, other error
  * if SPI flash probe failed.
@@ -89,7 +94,7 @@ int mrccache_get_region(enum mrc_type_t type, struct udevice **devp,
  * This saves MRC data stored previously by gd->arch.mrc_output to a proper
  * place within the MRC region on the SPI flash.
  *
- * Return: 0 if saved to SPI flash successfully, other error if failed
+ * @return 0 if saved to SPI flash successfully, other error if failed
  */
 int mrccache_save(void);
 
@@ -100,7 +105,7 @@ int mrccache_save(void);
  * data in SPL to avoid needing to pass it up to U-Boot proper to save. This
  * function handles that.
  *
- * Return: 0 if saved to SPI flash successfully, other error if failed
+ * @return 0 if saved to SPI flash successfully, other error if failed
  */
 int mrccache_spl_save(void);
 

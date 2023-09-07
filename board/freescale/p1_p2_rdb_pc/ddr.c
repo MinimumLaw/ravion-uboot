@@ -14,7 +14,9 @@
 #include <asm/fsl_law.h>
 
 #ifdef CONFIG_SYS_DDR_RAW_TIMING
-#if	defined(CONFIG_P1020RDB_PROTO)
+#if	defined(CONFIG_P1020RDB_PROTO) || \
+	defined(CONFIG_TARGET_P1021RDB) || \
+	defined(CONFIG_TARGET_P1020UTM)
 /* Micron MT41J256M8_187E */
 dimm_params_t ddr_raw_timing = {
 	.n_ranks = 1,
@@ -144,7 +146,8 @@ dimm_params_t ddr_raw_timing = {
 	.refresh_rate_ps = 7800000,
 	.tfaw_ps = 37500,
 };
-#elif	defined(CONFIG_TARGET_P1024RDB)
+#elif	defined(CONFIG_TARGET_P1024RDB) || \
+	defined(CONFIG_TARGET_P1025RDB)
 /*
  * Samsung K4B2G0846C-HCH9
  * The following timing are for "downshift"

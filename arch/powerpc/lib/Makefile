@@ -15,8 +15,6 @@ MINIMAL=y
 endif
 endif
 
-obj-y	+= bdinfo.o
-
 ifdef MINIMAL
 obj-y += cache.o time.o
 ifndef CONFIG_TIMER
@@ -40,7 +38,6 @@ obj-y	+= interrupts.o
 obj-$(CONFIG_CMD_KGDB) += kgdb.o
 obj-y	+= stack.o
 obj-y	+= time.o
-obj-y	+= traps.o
 endif # not minimal
 
 ifdef CONFIG_SPL_BUILD

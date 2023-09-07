@@ -9,7 +9,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <asm/io.h>
 #include <power/acpi_pmc.h>
 
@@ -74,7 +73,7 @@ static int sandbox_pmc_probe(struct udevice *dev)
 	upriv->pmc_bar0 = map_sysmem(base, 0x2000);
 	upriv->gpe_cfg = (u32 *)(upriv->pmc_bar0 + GPIO_GPE_CFG);
 
-	return pmc_ofdata_to_uc_plat(dev);
+	return pmc_ofdata_to_uc_platdata(dev);
 }
 
 static struct acpi_pmc_ops sandbox_pmc_ops = {
@@ -94,5 +93,5 @@ U_BOOT_DRIVER(pmc_sandbox) = {
 	.of_match = sandbox_pmc_ids,
 	.probe = sandbox_pmc_probe,
 	.ops = &sandbox_pmc_ops,
-	.priv_auto	= sizeof(struct sandbox_pmc_priv),
+	.priv_auto_alloc_size = sizeof(struct sandbox_pmc_priv),
 };

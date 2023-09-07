@@ -8,7 +8,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <malloc.h>
 #include "desc.h"
 #include "jr.h"

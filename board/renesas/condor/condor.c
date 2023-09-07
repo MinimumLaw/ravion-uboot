@@ -9,8 +9,6 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <hang.h>
-#include <init.h>
-#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
@@ -19,8 +17,20 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+void s_init(void)
+{
+}
+
+int board_early_init_f(void)
+{
+	return 0;
+}
+
 int board_init(void)
 {
+	/* adress of boot parameters */
+	gd->bd->bi_boot_params = CONFIG_SYS_TEXT_BASE + 0x50000;
+
 	return 0;
 }
 
@@ -31,7 +41,7 @@ int board_init(void)
 #define RST_CA57_CODE	0xA5A5000F
 #define RST_CA53_CODE	0x5A5A000F
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	unsigned long midr, cputype;
 

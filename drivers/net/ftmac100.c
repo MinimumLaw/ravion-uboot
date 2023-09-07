@@ -12,8 +12,6 @@
 #include <env.h>
 #include <malloc.h>
 #include <net.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 #include <linux/io.h>
 
 #include "ftmac100.h"
@@ -36,7 +34,7 @@ struct ftmac100_data {
  */
 static void ftmac100_reset(struct ftmac100_data *priv)
 {
-	struct ftmac100 *ftmac100 = (struct ftmac100 *)(uintptr_t)priv->iobase;
+	struct ftmac100 *ftmac100 = (struct ftmac100 *)priv->iobase;
 
 	debug ("%s()\n", __func__);
 
@@ -57,7 +55,7 @@ static void ftmac100_reset(struct ftmac100_data *priv)
 static void ftmac100_set_mac(struct ftmac100_data *priv ,
 	const unsigned char *mac)
 {
-	struct ftmac100 *ftmac100 = (struct ftmac100 *)(uintptr_t)priv->iobase;
+	struct ftmac100 *ftmac100 = (struct ftmac100 *)priv->iobase;
 	unsigned int maddr = mac[0] << 8 | mac[1];
 	unsigned int laddr = mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5];
 
@@ -72,7 +70,7 @@ static void ftmac100_set_mac(struct ftmac100_data *priv ,
  */
 static void _ftmac100_halt(struct ftmac100_data *priv)
 {
-	struct ftmac100 *ftmac100 = (struct ftmac100 *)(uintptr_t)priv->iobase;
+	struct ftmac100 *ftmac100 = (struct ftmac100 *)priv->iobase;
 	debug ("%s()\n", __func__);
 	writel (0, &ftmac100->maccr);
 }
@@ -82,7 +80,7 @@ static void _ftmac100_halt(struct ftmac100_data *priv)
  */
 static int _ftmac100_init(struct ftmac100_data *priv, unsigned char enetaddr[6])
 {
-	struct ftmac100 *ftmac100 = (struct ftmac100 *)(uintptr_t)priv->iobase;
+	struct ftmac100 *ftmac100 = (struct ftmac100 *)priv->iobase;
 	struct ftmac100_txdes *txdes = priv->txdes;
 	struct ftmac100_rxdes *rxdes = priv->rxdes;
 	unsigned int maccr;
@@ -187,7 +185,7 @@ static int __ftmac100_recv(struct ftmac100_data *priv)
  */
 static int _ftmac100_send(struct ftmac100_data *priv, void *packet, int length)
 {
-	struct ftmac100 *ftmac100 = (struct ftmac100 *)(uintptr_t)priv->iobase;
+	struct ftmac100 *ftmac100 = (struct ftmac100 *)priv->iobase;
 	struct ftmac100_txdes *curr_des = priv->txdes;
 	ulong start;
 
@@ -241,7 +239,7 @@ static void ftmac100_halt(struct eth_device *dev)
 	return _ftmac100_halt(priv);
 }
 
-static int ftmac100_init(struct eth_device *dev, struct bd_info *bd)
+static int ftmac100_init(struct eth_device *dev, bd_t *bd)
 {
 	struct ftmac100_data *priv = dev->priv;
 	return _ftmac100_init(priv , dev->enetaddr);
@@ -279,7 +277,7 @@ static int ftmac100_send(struct eth_device *dev, void *packet, int length)
 	return _ftmac100_send(priv , packet , length);
 }
 
-int ftmac100_initialize (struct bd_info *bd)
+int ftmac100_initialize (bd_t *bd)
 {
 	struct eth_device *dev;
 	struct ftmac100_data *priv;
@@ -319,7 +317,7 @@ out:
 #ifdef CONFIG_DM_ETH
 static int ftmac100_start(struct udevice *dev)
 {
-	struct eth_pdata *plat = dev_get_plat(dev);
+	struct eth_pdata *plat = dev_get_platdata(dev);
 	struct ftmac100_data *priv = dev_get_priv(dev);
 
 	return _ftmac100_init(priv, plat->enetaddr);
@@ -361,7 +359,7 @@ static int ftmac100_free_pkt(struct udevice *dev, uchar *packet, int length)
 
 int ftmac100_read_rom_hwaddr(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	eth_env_get_enetaddr("ethaddr", pdata->enetaddr);
 	return 0;
 }
@@ -394,12 +392,12 @@ static const char *dtbmacaddr(u32 ifno)
 	return NULL;
 }
 
-static int ftmac100_of_to_plat(struct udevice *dev)
+static int ftmac100_ofdata_to_platdata(struct udevice *dev)
 {
 	struct ftmac100_data *priv = dev_get_priv(dev);
-	struct eth_pdata *pdata = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_platdata(dev);
 	const char *mac;
-	pdata->iobase = dev_read_addr(dev);
+	pdata->iobase = devfdt_get_addr(dev);
 	priv->iobase = pdata->iobase;
 	mac = dtbmacaddr(0);
 	if (mac)
@@ -438,11 +436,11 @@ U_BOOT_DRIVER(ftmac100) = {
 	.id	= UCLASS_ETH,
 	.of_match = ftmac100_ids,
 	.bind	= ftmac100_bind,
-	.of_to_plat = ftmac100_of_to_plat,
+	.ofdata_to_platdata = ftmac100_ofdata_to_platdata,
 	.probe	= ftmac100_probe,
 	.ops	= &ftmac100_ops,
-	.priv_auto	= sizeof(struct ftmac100_data),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct ftmac100_data),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
 };
 #endif

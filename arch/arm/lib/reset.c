@@ -21,25 +21,23 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
-#include <linux/delay.h>
 
 __weak void reset_misc(void)
 {
 }
 
-int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	puts ("resetting ...\n");
 
-	mdelay(50);				/* wait 50 ms */
+	udelay (50000);				/* wait 50 ms */
 
 	disable_interrupts();
 
 	reset_misc();
-	reset_cpu();
+	reset_cpu(0);
 
 	/*NOTREACHED*/
 	return 0;

@@ -15,8 +15,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <dm/platform_data/spi_coldfire.h>
 #include <spi.h>
 #include <malloc.h>
@@ -115,8 +113,8 @@ static int coldfire_spi_claim_bus(struct udevice *dev)
 	struct udevice *bus = dev->parent;
 	struct coldfire_spi_priv *cfspi = dev_get_priv(bus);
 	struct dspi *dspi = cfspi->regs;
-	struct dm_spi_slave_plat *slave_plat =
-		dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave_plat =
+		dev_get_parent_platdata(dev);
 
 	if ((in_be32(&dspi->sr) & DSPI_SR_TXRXS) != DSPI_SR_TXRXS)
 		return -1;
@@ -134,8 +132,8 @@ static int coldfire_spi_release_bus(struct udevice *dev)
 	struct udevice *bus = dev->parent;
 	struct coldfire_spi_priv *cfspi = dev_get_priv(bus);
 	struct dspi *dspi = cfspi->regs;
-	struct dm_spi_slave_plat *slave_plat =
-		dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave_plat =
+		dev_get_parent_platdata(dev);
 
 	/* Clear FIFO */
 	clrbits_be32(&dspi->mcr, DSPI_MCR_CTXF | DSPI_MCR_CRXF);
@@ -151,7 +149,7 @@ static int coldfire_spi_xfer(struct udevice *dev, unsigned int bitlen,
 {
 	struct udevice *bus = dev_get_parent(dev);
 	struct coldfire_spi_priv *cfspi = dev_get_priv(bus);
-	struct dm_spi_slave_plat *slave_plat = dev_get_parent_plat(dev);
+	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
 	u16 *spi_rd16 = NULL, *spi_wr16 = NULL;
 	u8 *spi_rd = NULL, *spi_wr = NULL;
 	static u32 ctrl;
@@ -241,7 +239,7 @@ static int coldfire_spi_set_speed(struct udevice *bus, uint max_hz)
 	cfspi->baudrate = max_hz;
 
 	/* Read current setup */
-	bus_setup = readl(&dspi->ctar[dev_seq(bus)]);
+	bus_setup = readl(&dspi->ctar[bus->seq]);
 
 	tmp = (prescaler[3] * scaler[15]);
 	/* Maximum and minimum baudrate it can handle */
@@ -295,7 +293,7 @@ static int coldfire_spi_set_speed(struct udevice *bus, uint max_hz)
 
 	bus_setup &= ~(DSPI_CTAR_PBR(0x03) | DSPI_CTAR_BR(0x0f));
 	bus_setup |= (DSPI_CTAR_PBR(best_i) | DSPI_CTAR_BR(best_j));
-	writel(bus_setup, &dspi->ctar[dev_seq(bus)]);
+	writel(bus_setup, &dspi->ctar[bus->seq]);
 
 	return 0;
 }
@@ -319,7 +317,7 @@ static int coldfire_spi_set_mode(struct udevice *bus, uint mode)
 	if (cfspi->mode & SPI_MODE_MOD) {
 		if ((cfspi->mode & SPI_MODE_XFER_SZ_MASK) == 0)
 			bus_setup |=
-			    readl(&dspi->ctar[dev_seq(bus)]) & MCF_FRM_SZ_16BIT;
+			    readl(&dspi->ctar[bus->seq]) & MCF_FRM_SZ_16BIT;
 		else
 			bus_setup |=
 			    ((cfspi->mode & SPI_MODE_XFER_SZ_MASK) >> 1);
@@ -330,21 +328,21 @@ static int coldfire_spi_set_mode(struct udevice *bus, uint mode)
 		bus_setup |= (cfspi->mode & SPI_MODE_DLY_SCA_MASK) >> 4;
 	} else {
 		bus_setup |=
-			(readl(&dspi->ctar[dev_seq(bus)]) & MCF_CTAR_MODE_MASK);
+			(readl(&dspi->ctar[bus->seq]) & MCF_CTAR_MODE_MASK);
 	}
 
 	cfspi->charbit =
-		((readl(&dspi->ctar[dev_seq(bus)]) & MCF_FRM_SZ_16BIT) ==
+		((readl(&dspi->ctar[bus->seq]) & MCF_FRM_SZ_16BIT) ==
 			MCF_FRM_SZ_16BIT) ? 16 : 8;
 
-	setbits_be32(&dspi->ctar[dev_seq(bus)], bus_setup);
+	setbits_be32(&dspi->ctar[bus->seq], bus_setup);
 
 	return 0;
 }
 
 static int coldfire_spi_probe(struct udevice *bus)
 {
-	struct coldfire_spi_plat *plat = dev_get_plat(bus);
+	struct coldfire_spi_platdata *plat = dev_get_platdata(bus);
 	struct coldfire_spi_priv *cfspi = dev_get_priv(bus);
 	struct dspi *dspi = cfspi->regs;
 	int i;
@@ -384,16 +382,20 @@ static int coldfire_spi_probe(struct udevice *bus)
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(OF_REAL)
-static int coldfire_dspi_of_to_plat(struct udevice *bus)
+void spi_init(void)
+{
+}
+
+#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
+static int coldfire_dspi_ofdata_to_platdata(struct udevice *bus)
 {
 	fdt_addr_t addr;
-	struct coldfire_spi_plat *plat = dev_get_plat(bus);
+	struct coldfire_spi_platdata *plat = bus->platdata;
 	const void *blob = gd->fdt_blob;
 	int node = dev_of_offset(bus);
 	int *ctar, len;
 
-	addr = dev_read_addr(bus);
+	addr = devfdt_get_addr(bus);
 	if (addr == FDT_ADDR_T_NONE)
 		return -ENOMEM;
 
@@ -450,12 +452,12 @@ static const struct dm_spi_ops coldfire_spi_ops = {
 U_BOOT_DRIVER(coldfire_spi) = {
 	.name = "spi_coldfire",
 	.id = UCLASS_SPI,
-#if CONFIG_IS_ENABLED(OF_REAL)
+#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.of_match = coldfire_spi_ids,
-	.of_to_plat = coldfire_dspi_of_to_plat,
-	.plat_auto	= sizeof(struct coldfire_spi_plat),
+	.ofdata_to_platdata = coldfire_dspi_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct coldfire_spi_platdata),
 #endif
 	.probe = coldfire_spi_probe,
 	.ops = &coldfire_spi_ops,
-	.priv_auto	= sizeof(struct coldfire_spi_priv),
+	.priv_auto_alloc_size = sizeof(struct coldfire_spi_priv),
 };

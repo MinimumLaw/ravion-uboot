@@ -20,7 +20,7 @@
 #include <asm/arch/sys_proto.h>
 
 #define	MUX_CONFIG_LCD	(MXS_PAD_3V3 | MXS_PAD_4MA | MXS_PAD_NOPULL)
-#define	MUX_CONFIG_BOOT	(MXS_PAD_3V3)
+#define	MUX_CONFIG_BOOT	(MXS_PAD_3V3 | MXS_PAD_PULLUP)
 #define	MUX_CONFIG_TSC	(MXS_PAD_3V3 | MXS_PAD_8MA | MXS_PAD_PULLUP)
 #define	MUX_CONFIG_SSP0	(MXS_PAD_3V3 | MXS_PAD_12MA | MXS_PAD_PULLUP)
 #define	MUX_CONFIG_SSP2	(MXS_PAD_3V3 | MXS_PAD_4MA | MXS_PAD_PULLUP)
@@ -290,12 +290,6 @@ u32 mxs_dram_vals[] = {
 	0x00000000, 0xffffffff
 };
 
-#ifndef CONFIG_SPL_FRAMEWORK
-void board_init_ll(const u32 arg, const uint32_t *resptr)
-{
-	mxs_common_spl_init(arg, resptr, iomux_setup, ARRAY_SIZE(iomux_setup));
-}
-#else
 void lowlevel_init(void)
 {
 	struct mxs_pinctrl_regs *pinctrl_regs =
@@ -307,4 +301,3 @@ void lowlevel_init(void)
 
 	mxs_common_spl_init(0, NULL, iomux_setup, ARRAY_SIZE(iomux_setup));
 }
-#endif

@@ -8,13 +8,10 @@
 
 #include <common.h>
 #include <div64.h>
-#include <init.h>
 #include <time.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/pwm.h>
 #include <asm/arch/clk.h>
-#include <linux/delay.h>
 
 /* Use the old PWM interface for now */
 #undef CONFIG_DM_PWM
@@ -37,7 +34,7 @@ static inline struct s5p_timer *s5p_get_base_timer(void)
  * This operates at 1MHz and counts downwards. It will wrap about every
  * hour (2^32 microseconds).
  *
- * Return: current value of timer
+ * @return current value of timer
  */
 static unsigned long timer_get_us_down(void)
 {

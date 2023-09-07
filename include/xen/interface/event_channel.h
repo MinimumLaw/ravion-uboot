@@ -1,5 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0
- *
+/* SPDX-License-Identifier: GPL-2.0 */
+/******************************************************************************
  * event_channel.h
  *
  * Event channels between domains.
@@ -12,7 +12,7 @@
 
 #include <xen/interface/xen.h>
 
-typedef u32 evtchn_port_t;
+typedef uint32_t evtchn_port_t;
 DEFINE_GUEST_HANDLE(evtchn_port_t);
 
 /*
@@ -60,8 +60,8 @@ struct evtchn_bind_interdomain {
 #define EVTCHNOP_bind_virq	  1
 struct evtchn_bind_virq {
 	/* IN parameters. */
-	u32 virq;
-	u32 vcpu;
+	uint32_t virq;
+	uint32_t vcpu;
 	/* OUT parameters. */
 	evtchn_port_t port;
 };
@@ -75,9 +75,9 @@ struct evtchn_bind_virq {
 #define EVTCHNOP_bind_pirq	  2
 struct evtchn_bind_pirq {
 	/* IN parameters. */
-	u32 pirq;
+	uint32_t pirq;
 #define BIND_PIRQ__WILL_SHARE 1
-	u32 flags; /* BIND_PIRQ__* */
+	uint32_t flags; /* BIND_PIRQ__* */
 	/* OUT parameters. */
 	evtchn_port_t port;
 };
@@ -90,7 +90,7 @@ struct evtchn_bind_pirq {
  */
 #define EVTCHNOP_bind_ipi	  7
 struct evtchn_bind_ipi {
-	u32 vcpu;
+	uint32_t vcpu;
 	/* OUT parameters. */
 	evtchn_port_t port;
 };
@@ -136,8 +136,8 @@ struct evtchn_status {
 #define EVTCHNSTAT_pirq		3  /* Channel is bound to a phys IRQ line.   */
 #define EVTCHNSTAT_virq		4  /* Channel is bound to a virtual IRQ line */
 #define EVTCHNSTAT_ipi		5  /* Channel is bound to a virtual IPI line */
-	u32 status;
-	u32 vcpu;		   /* VCPU to which this channel is bound.   */
+	uint32_t status;
+	uint32_t vcpu;		   /* VCPU to which this channel is bound.   */
 	union {
 		struct {
 			domid_t dom;
@@ -146,8 +146,8 @@ struct evtchn_status {
 			domid_t dom;
 			evtchn_port_t port;
 		} interdomain; /* EVTCHNSTAT_interdomain */
-		u32 pirq;	    /* EVTCHNSTAT_pirq	      */
-		u32 virq;	    /* EVTCHNSTAT_virq	      */
+		uint32_t pirq;	    /* EVTCHNSTAT_pirq	      */
+		uint32_t virq;	    /* EVTCHNSTAT_virq	      */
 	} u;
 };
 
@@ -165,7 +165,7 @@ struct evtchn_status {
 struct evtchn_bind_vcpu {
 	/* IN parameters. */
 	evtchn_port_t port;
-	u32 vcpu;
+	uint32_t vcpu;
 };
 
 /*
@@ -189,6 +189,7 @@ struct evtchn_reset {
 	/* IN parameters. */
 	domid_t dom;
 };
+typedef struct evtchn_reset evtchn_reset_t;
 
 /*
  * EVTCHNOP_init_control: initialize the control block for the FIFO ABI.
@@ -196,12 +197,12 @@ struct evtchn_reset {
 #define EVTCHNOP_init_control    11
 struct evtchn_init_control {
 	/* IN parameters. */
-	u64 control_gfn;
-	u32 offset;
-	u32 vcpu;
+	uint64_t control_gfn;
+	uint32_t offset;
+	uint32_t vcpu;
 	/* OUT parameters. */
-	u8 link_bits;
-	u8 _pad[7];
+	uint8_t link_bits;
+	uint8_t _pad[7];
 };
 
 /*
@@ -210,7 +211,7 @@ struct evtchn_init_control {
 #define EVTCHNOP_expand_array    12
 struct evtchn_expand_array {
 	/* IN parameters. */
-	u64 array_gfn;
+	uint64_t array_gfn;
 };
 
 /*
@@ -219,12 +220,12 @@ struct evtchn_expand_array {
 #define EVTCHNOP_set_priority    13
 struct evtchn_set_priority {
 	/* IN parameters. */
-	evtchn_port_t port;
-	u32 priority;
+	uint32_t port;
+	uint32_t priority;
 };
 
 struct evtchn_op {
-	u32 cmd; /* EVTCHNOP_* */
+	uint32_t cmd; /* EVTCHNOP_* */
 	union {
 		struct evtchn_alloc_unbound    alloc_unbound;
 		struct evtchn_bind_interdomain bind_interdomain;
@@ -238,7 +239,6 @@ struct evtchn_op {
 		struct evtchn_unmask	       unmask;
 	} u;
 };
-
 DEFINE_GUEST_HANDLE_STRUCT(evtchn_op);
 
 /*
@@ -258,7 +258,7 @@ DEFINE_GUEST_HANDLE_STRUCT(evtchn_op);
 
 #define EVTCHN_FIFO_MAX_QUEUES (EVTCHN_FIFO_PRIORITY_MIN + 1)
 
-typedef u32 event_word_t;
+typedef uint32_t event_word_t;
 
 #define EVTCHN_FIFO_PENDING 31
 #define EVTCHN_FIFO_MASKED  30
@@ -271,8 +271,8 @@ typedef u32 event_word_t;
 #define EVTCHN_FIFO_NR_CHANNELS (1 << EVTCHN_FIFO_LINK_BITS)
 
 struct evtchn_fifo_control_block {
-	u32     ready;
-	u32     _rsvd;
+	uint32_t     ready;
+	uint32_t     _rsvd;
 	event_word_t head[EVTCHN_FIFO_MAX_QUEUES];
 };
 

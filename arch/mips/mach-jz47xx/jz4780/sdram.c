@@ -11,10 +11,7 @@
 
 #include <common.h>
 #include <hang.h>
-#include <init.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <mach/jz4780.h>
 #include <mach/jz4780_dram.h>
 

@@ -6,15 +6,12 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <time.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <div64.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/syscounter.h>
-#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -59,7 +56,7 @@ static inline unsigned long long us_to_tick(unsigned long long usec)
 	return usec;
 }
 
-#if !CONFIG_IS_ENABLED(SKIP_LOWLEVEL_INIT)
+#ifndef CONFIG_SKIP_LOWLEVEL_INIT
 int timer_init(void)
 {
 	struct sctr_regs *sctr = (struct sctr_regs *)SCTR_BASE_ADDR;

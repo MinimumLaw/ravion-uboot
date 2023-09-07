@@ -7,7 +7,6 @@
  */
 
 #ifndef __UBOOT__
-#include <log.h>
 #include <dm/devres.h>
 #include <linux/crc32.h>
 #include <linux/err.h>
@@ -16,7 +15,6 @@
 #include <div64.h>
 #include <malloc.h>
 #include <ubi_uboot.h>
-#include <linux/bug.h>
 #endif
 
 #include <linux/compat.h>

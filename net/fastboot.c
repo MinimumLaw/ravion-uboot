@@ -4,10 +4,12 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <fastboot.h>
 #include <net.h>
 #include <net/fastboot.h>
+
+/* Fastboot port # defined in spec */
+#define WELL_KNOWN_PORT 5554
 
 enum {
 	FASTBOOT_ERROR = 0,
@@ -224,8 +226,9 @@ static void fastboot_send(struct fastboot_header header, char *fastboot_data,
 
 		case FASTBOOT_COMMAND_REBOOT:
 		case FASTBOOT_COMMAND_REBOOT_BOOTLOADER:
-		case FASTBOOT_COMMAND_REBOOT_FASTBOOTD:
-		case FASTBOOT_COMMAND_REBOOT_RECOVERY:
+#ifdef CONFIG_ANDROID_RECOVERY
+		case FASTBOOT_COMMAND_RECOVERY_FASTBOOT:
+#endif
 			do_reset(NULL, 0, 0, NULL);
 			break;
 		}
@@ -307,7 +310,7 @@ void fastboot_start_server(void)
 	printf("Using %s device\n", eth_get_name());
 	printf("Listening for fastboot command on %pI4\n", &net_ip);
 
-	fastboot_our_port = CONFIG_UDP_FUNCTION_FASTBOOT_PORT;
+	fastboot_our_port = WELL_KNOWN_PORT;
 
 #if CONFIG_IS_ENABLED(FASTBOOT_FLASH)
 	fastboot_set_progress_callback(fastboot_timed_send_info);

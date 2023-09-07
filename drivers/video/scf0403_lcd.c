@@ -17,7 +17,6 @@
 #include <malloc.h>
 #include <asm/gpio.h>
 #include <spi.h>
-#include <linux/delay.h>
 
 struct scf0403_cmd {
 	u16 cmd;

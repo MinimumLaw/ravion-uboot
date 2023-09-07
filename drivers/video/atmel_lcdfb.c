@@ -9,17 +9,13 @@
 #include <atmel_lcd.h>
 #include <dm.h>
 #include <fdtdec.h>
-#include <log.h>
-#include <part.h>
 #include <video.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/clk.h>
 #include <lcd.h>
 #include <bmp_layout.h>
 #include <atmel_lcdc.h>
-#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -246,7 +242,7 @@ ulong calc_fbsize(void)
 #ifdef CONFIG_DM_VIDEO
 static int atmel_fb_lcd_probe(struct udevice *dev)
 {
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct atmel_fb_priv *priv = dev_get_priv(dev);
 	struct display_timing *timing = &priv->timing;
@@ -268,9 +264,9 @@ static int atmel_fb_lcd_probe(struct udevice *dev)
 	return 0;
 }
 
-static int atmel_fb_of_to_plat(struct udevice *dev)
+static int atmel_fb_ofdata_to_platdata(struct udevice *dev)
 {
-	struct atmel_lcd_plat *plat = dev_get_plat(dev);
+	struct atmel_lcd_platdata *plat = dev_get_platdata(dev);
 	struct atmel_fb_priv *priv = dev_get_priv(dev);
 	struct display_timing *timing = &priv->timing;
 	const void *blob = gd->fdt_blob;
@@ -286,7 +282,7 @@ static int atmel_fb_of_to_plat(struct udevice *dev)
 
 static int atmel_fb_lcd_bind(struct udevice *dev)
 {
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
 
 	uc_plat->size = LCD_MAX_WIDTH * LCD_MAX_HEIGHT *
 			(1 << VIDEO_BPP16) / 8;
@@ -305,9 +301,9 @@ U_BOOT_DRIVER(atmel_fb) = {
 	.id	= UCLASS_VIDEO,
 	.of_match = atmel_fb_lcd_ids,
 	.bind	= atmel_fb_lcd_bind,
-	.of_to_plat	= atmel_fb_of_to_plat,
+	.ofdata_to_platdata	= atmel_fb_ofdata_to_platdata,
 	.probe	= atmel_fb_lcd_probe,
-	.plat_auto	= sizeof(struct atmel_lcd_plat),
-	.priv_auto	= sizeof(struct atmel_fb_priv),
+	.platdata_auto_alloc_size = sizeof(struct atmel_lcd_platdata),
+	.priv_auto_alloc_size	= sizeof(struct atmel_fb_priv),
 };
 #endif

@@ -6,9 +6,7 @@
 
 #include <common.h>
 #include <fdtdec.h>
-#include <init.h>
 #include <asm/armv8/mmu.h>
-#include <asm/cache.h>
 
 int print_cpuinfo(void)
 {
@@ -27,7 +25,7 @@ int dram_init(void)
 
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	psci_system_reset();
 }

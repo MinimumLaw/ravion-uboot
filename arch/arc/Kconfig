@@ -104,11 +104,13 @@ endchoice
 
 config CPU_BIG_ENDIAN
 	bool "Enable Big Endian Mode"
+	default n
 	help
 	  Build kernel for Big Endian Mode of ARC CPU
 
 config SYS_ICACHE_OFF
 	bool "Do not enable icache"
+	default n
 	help
 	  Do not enable instruction cache in U-Boot.
 
@@ -121,6 +123,7 @@ config SPL_SYS_ICACHE_OFF
 
 config SYS_DCACHE_OFF
 	bool "Do not enable dcache"
+	default n
 	help
 	  Do not enable data cache in U-Boot.
 
@@ -133,12 +136,14 @@ config SPL_SYS_DCACHE_OFF
 
 menuconfig ARC_DBG
 	bool "ARC debugging"
+	default n
 
 if ARC_DBG
 
 config ARC_DBG_IOC_ENABLE
 	bool "Enable IO coherency unit"
 	depends on CPU_ARCHS38
+	default n
 	help
 	  Enable IO coherency unit to debug problems with caches and
 	  DMA peripherals.
@@ -159,16 +164,18 @@ config TARGET_NSIM
 
 config TARGET_AXS101
 	bool "Support Synopsys Designware SDP board AXS101"
+	select BOUNCE_BUFFER if CMD_NAND
 
 config TARGET_AXS103
 	bool "Support Synopsys Designware SDP board AXS103"
+	select BOUNCE_BUFFER if CMD_NAND
 
 config TARGET_EMSDP
 	bool "Synopsys EM Software Development Platform"
 	select CPU_ARCEM6
 
 config TARGET_HSDK
-	bool "Support Synopsys HSDK or HSDK-4xD board"
+	bool "Support Synpsys HS DevelopmentKit board"
 
 config TARGET_IOT_DEVKIT
 	bool "Synopsys Brite IoT Development kit"

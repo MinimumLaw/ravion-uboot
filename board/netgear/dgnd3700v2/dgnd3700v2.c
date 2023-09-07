@@ -4,9 +4,7 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 
 #define GPIO_BASE_6362			0x10000080
 

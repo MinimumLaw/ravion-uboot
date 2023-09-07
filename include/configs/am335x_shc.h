@@ -15,12 +15,36 @@
 #include <configs/ti_am335x_common.h>
 
 /* settings we don;t want on this board */
+#undef CONFIG_CMD_SPI
+
+#define CONFIG_CMD_CACHE
+
+#ifndef CONFIG_SPL_BUILD
+# define CONFIG_TIMESTAMP
+#endif
 
 #define CONFIG_SYS_BOOTM_LEN		(16 << 20)
 
 /* Clock Defines */
 #define V_OSCK				24000000  /* Clock output from T2 */
 #define V_SCLK				(V_OSCK)
+
+/*
+ * in case of SD Card or Network boot we want to have a possibility to
+ * debrick the shc, therefore do not read environment from eMMC
+ */
+#if defined(CONFIG_SHC_SDBOOT) || defined(CONFIG_SHC_NETBOOT)
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#else
+#define CONFIG_SYS_MMC_ENV_DEV		1
+#endif
+
+/*
+ * Info when using boot partitions: As environment resides within first
+ * 128 kB, MLO must start at 128 kB == 0x20000
+ * ENV at MMC Boot0 Partition - 0/Undefined=user, 1=boot0, 2=boot1,
+ * 4..7=general0..3
+ */
 
 #define CONFIG_HSMMC2_8BIT
 
@@ -135,15 +159,64 @@
 
 #if defined CONFIG_SHC_NETBOOT
 /* Network Boot */
+# define CONFIG_BOOTCOMMAND \
+	"run fusecmd; " \
+	"if run netboot; then " \
+		"echo Booting from network; " \
+	"else " \
+		"echo ERROR: Cannot boot from network!; " \
+		"panic; " \
+	"fi; "
 
 #elif defined CONFIG_SHC_SDBOOT /* !defined CONFIG_SHC_NETBOOT */
 /* SD-Card Boot */
+# define CONFIG_BOOTCOMMAND \
+	"if mmc dev 0; mmc rescan; then " \
+		"run sd_setup; " \
+	"else " \
+		"echo ERROR: SD/MMC-Card not detected!; " \
+		"panic; " \
+	"fi; " \
+	"if run loaduimage; then " \
+		"echo Bootable SD/MMC-Card inserted, booting from it!; " \
+		"run mmcboot; " \
+	"else " \
+		"echo ERROR: Unable to load uImage from SD/MMC-Card!; " \
+		"panic; " \
+	"fi; "
 
 #elif defined CONFIG_SHC_ICT
 /* ICT adapter boots only u-boot and does HW partitioning */
+# define CONFIG_BOOTCOMMAND \
+	"if mmc dev 0; mmc rescan; then " \
+		"run sd_setup; " \
+	"else " \
+		"echo ERROR: SD/MMC-Card not detected!; " \
+		"panic; " \
+	"fi; " \
+	"run fusecmd; "
 
 #else /* !defined CONFIG_SHC_NETBOOT, !defined CONFIG_SHC_SDBOOT */
 /* Regular Boot from internal eMMC */
+# define CONFIG_BOOTCOMMAND \
+	"if mmc dev 1; mmc rescan; then " \
+		"run emmc_setup; " \
+	"else " \
+		"echo ERROR: eMMC device not detected!; " \
+		"panic; " \
+	"fi; " \
+	"if run loaduimage; then " \
+		"run mmcboot; " \
+	"else " \
+		"echo ERROR Unable to load uImage from eMMC!; " \
+		"echo Performing Rollback!; " \
+		"setenv _active_ ${active_root}; " \
+		"setenv _inactive_ ${inactive_root}; " \
+		"setenv active_root ${_inactive_}; " \
+		"setenv inactive_root ${_active_}; " \
+		"saveenv; " \
+		"reset; " \
+	"fi; "
 
 #endif /* Regular Boot */
 
@@ -169,5 +242,15 @@
 #undef CONFIG_TIMER
 #endif
 
+#define CONFIG_BOOTP_DEFAULT
+#define CONFIG_BOOTP_DNS2
+#define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_NET_RETRY_COUNT         10
+#define CONFIG_PHY_SMSC
+
+/* I2C configuration */
+#define CONFIG_SYS_I2C_EEPROM_ADDR	0x50	/* Main EEPROM */
+#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	2
+#define CONFIG_SYS_I2C_SPEED		400000
+#define CONFIG_SYS_I2C_SLAVE		1
 #endif	/* ! __CONFIG_AM335X_SHC_H */

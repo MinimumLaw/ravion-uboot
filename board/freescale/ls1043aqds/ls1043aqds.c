@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2015 Freescale Semiconductor, Inc.
- * Copyright 2019-2020 NXP
+ * Copyright 2019 NXP
  */
 
 #include <common.h>
-#include <clock_legacy.h>
 #include <i2c.h>
 #include <fdt_support.h>
 #include <fsl_ddr_sdram.h>
-#include <init.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/fsl_serdes.h>
@@ -29,7 +25,6 @@
 #include <fsl_esdhc.h>
 #include <fsl_ifc.h>
 #include <spl.h>
-#include "../common/i2c_mux.h"
 
 #include "../common/qixis.h"
 #include "ls1043aqds_qixis.h"
@@ -277,6 +272,32 @@ unsigned long get_board_ddr_clk(void)
 	return 66666666;
 }
 
+int select_i2c_ch_pca9547(u8 ch, int bus_num)
+{
+	int ret;
+
+#ifdef CONFIG_DM_I2C
+	struct udevice *dev;
+
+	ret = i2c_get_chip_for_busnum(bus_num, I2C_MUX_PCA_ADDR_PRI,
+				      1, &dev);
+	if (ret) {
+		printf("%s: Cannot find udev for a bus %d\n", __func__,
+		       bus_num);
+		return ret;
+	}
+	ret = dm_i2c_write(dev, 0, &ch, 1);
+#else
+	ret = i2c_write(I2C_MUX_PCA_ADDR_PRI, 0, 1, &ch, 1);
+#endif
+	if (ret) {
+		puts("PCA: failed to select proper channel\n");
+		return ret;
+	}
+
+	return 0;
+}
+
 int dram_init(void)
 {
 	/*
@@ -310,7 +331,7 @@ void board_retimer_init(void)
 	/* Retimer is connected to I2C1_CH7_CH5 */
 	select_i2c_ch_pca9547(I2C_MUX_CH7, bus_num);
 	reg = I2C_MUX_CH5;
-#if CONFIG_IS_ENABLED(DM_I2C)
+#ifdef CONFIG_DM_I2C
 	struct udevice *dev;
 	int ret;
 
@@ -430,7 +451,6 @@ void board_retimer_init(void)
 
 int board_early_init_f(void)
 {
-	u32 __iomem *cntcr = (u32 *)CONFIG_SYS_FSL_TIMER_ADDR;
 #ifdef CONFIG_HAS_FSL_XHCI_USB
 	struct ccsr_scfg *scfg = (struct ccsr_scfg *)CONFIG_SYS_FSL_SCFG_ADDR;
 	u32 usb_pwrfault;
@@ -439,13 +459,10 @@ int board_early_init_f(void)
 	u8 uart;
 #endif
 
-	/*
-	 * Enable secure system counter for timer
-	 */
-	out_le32(cntcr, 0x1);
-
-#if defined(CONFIG_SYS_I2C_EARLY_INIT)
+#ifdef CONFIG_SYS_I2C
+#ifdef CONFIG_SYS_I2C_EARLY_INIT
 	i2c_early_init_f();
+#endif
 #endif
 	fsl_lsch2_early_init_f();
 
@@ -541,7 +558,7 @@ int board_init(void)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	u64 base[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
@@ -557,9 +574,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	ft_cpu_setup(blob, bd);
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-#ifndef CONFIG_DM_ETH
 	fdt_fixup_fman_ethernet(blob);
-#endif
 	fdt_fixup_board_enet(blob);
 #endif
 

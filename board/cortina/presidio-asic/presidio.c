@@ -4,13 +4,10 @@
  *
  */
 #include <common.h>
-#include <init.h>
 #include <malloc.h>
 #include <errno.h>
 #include <netdev.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 #include <linux/compiler.h>
 #include <configs/presidio_asic.h>
 #include <linux/psci.h>
@@ -115,7 +112,7 @@ int dram_init(void)
 	return 0;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	invoke_psci_fn_smc(PSCI_0_2_FN_SYSTEM_RESET, 0, 0, 0);
 }

@@ -4,7 +4,6 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <dm.h>
 #include <fs.h>
 #include <part.h>
@@ -14,75 +13,57 @@
 
 static int host_curr_device = -1;
 
-static int do_host_load(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_host_load(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	return do_load(cmdtp, flag, argc, argv, FS_TYPE_SANDBOX);
 }
 
-static int do_host_ls(struct cmd_tbl *cmdtp, int flag, int argc,
-		      char *const argv[])
+static int do_host_ls(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	return do_ls(cmdtp, flag, argc, argv, FS_TYPE_SANDBOX);
 }
 
-static int do_host_size(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_host_size(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	return do_size(cmdtp, flag, argc, argv, FS_TYPE_SANDBOX);
 }
 
-static int do_host_save(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_host_save(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	return do_save(cmdtp, flag, argc, argv, FS_TYPE_SANDBOX);
 }
 
-static int do_host_bind(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_host_bind(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
-	bool removable = false;
-	const char *dev_str;
-	char *file;
+	if (argc < 2 || argc > 3)
+		return CMD_RET_USAGE;
 	char *ep;
-	int dev;
-
-	/* Skip 'bind' */
-	argc--;
-	argv++;
-	if (argc < 2)
-		return CMD_RET_USAGE;
-
-	if (!strcmp(argv[0], "-r")) {
-		removable = true;
-		argc--;
-		argv++;
-	}
-
-	if (argc > 2)
-		return CMD_RET_USAGE;
-	dev_str = argv[0];
-	dev = hextoul(dev_str, &ep);
+	char *dev_str = argv[1];
+	char *file = argc >= 3 ? argv[2] : NULL;
+	int dev = simple_strtoul(dev_str, &ep, 16);
 	if (*ep) {
 		printf("** Bad device specification %s **\n", dev_str);
 		return CMD_RET_USAGE;
 	}
-	file = argc > 1 ? argv[1] : NULL;
-
-	return !!host_dev_bind(dev, file, removable);
+	return host_dev_bind(dev, file);
 }
 
-static int do_host_info(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_host_info(cmd_tbl_t *cmdtp, int flag, int argc,
+			   char * const argv[])
 {
 	if (argc < 1 || argc > 2)
 		return CMD_RET_USAGE;
 	int min_dev = 0;
-	int max_dev = SANDBOX_HOST_MAX_DEVICES - 1;
+	int max_dev = CONFIG_HOST_MAX_DEVICES - 1;
 	if (argc >= 2) {
 		char *ep;
 		char *dev_str = argv[1];
-		int dev = hextoul(dev_str, &ep);
+		int dev = simple_strtoul(dev_str, &ep, 16);
 		if (*ep) {
 			printf("** Bad device specification %s **\n", dev_str);
 			return CMD_RET_USAGE;
@@ -109,7 +90,7 @@ static int do_host_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		struct host_block_dev *host_dev;
 
 #ifdef CONFIG_BLK
-		host_dev = dev_get_plat(blk_dev->bdev);
+		host_dev = dev_get_platdata(blk_dev->bdev);
 #else
 		host_dev = blk_dev->priv;
 #endif
@@ -119,8 +100,8 @@ static int do_host_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static int do_host_dev(struct cmd_tbl *cmdtp, int flag, int argc,
-		       char *const argv[])
+static int do_host_dev(cmd_tbl_t *cmdtp, int flag, int argc,
+		       char * const argv[])
 {
 	int dev;
 	char *ep;
@@ -139,7 +120,7 @@ static int do_host_dev(struct cmd_tbl *cmdtp, int flag, int argc,
 		return 0;
 	}
 
-	dev = hextoul(argv[1], &ep);
+	dev = simple_strtoul(argv[1], &ep, 16);
 	if (*ep) {
 		printf("** Bad device specification %s **\n", argv[2]);
 		return CMD_RET_USAGE;
@@ -159,20 +140,20 @@ static int do_host_dev(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static struct cmd_tbl cmd_host_sub[] = {
+static cmd_tbl_t cmd_host_sub[] = {
 	U_BOOT_CMD_MKENT(load, 7, 0, do_host_load, "", ""),
 	U_BOOT_CMD_MKENT(ls, 3, 0, do_host_ls, "", ""),
 	U_BOOT_CMD_MKENT(save, 6, 0, do_host_save, "", ""),
 	U_BOOT_CMD_MKENT(size, 3, 0, do_host_size, "", ""),
-	U_BOOT_CMD_MKENT(bind, 4, 0, do_host_bind, "", ""),
+	U_BOOT_CMD_MKENT(bind, 3, 0, do_host_bind, "", ""),
 	U_BOOT_CMD_MKENT(info, 3, 0, do_host_info, "", ""),
 	U_BOOT_CMD_MKENT(dev, 0, 1, do_host_dev, "", ""),
 };
 
-static int do_host(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_host(cmd_tbl_t *cmdtp, int flag, int argc,
+		      char * const argv[])
 {
-	struct cmd_tbl *c;
+	cmd_tbl_t *c;
 
 	/* Skip past 'host' */
 	argc--;
@@ -196,8 +177,7 @@ U_BOOT_CMD(
 	"host save hostfs - <addr> <filename> <bytes> [<offset>] - "
 		"save a file to host\n"
 	"host size hostfs - <filename> - determine size of file on host\n"
-	"host bind [-r] <dev> [<filename>] - bind \"host\" device to file\n"
-	"     -r = mark as removable\n"
+	"host bind <dev> [<filename>] - bind \"host\" device to file\n"
 	"host info [<dev>]            - show device binding & info\n"
 	"host dev [<dev>] - Set or retrieve the current host device\n"
 	"host commands use the \"hostfs\" device. The \"host\" device is used\n"

@@ -17,7 +17,7 @@ obj-$(CONFIG_EFI_LOADER) += sctlr.o
 obj-$(CONFIG_ARMV7_NONSEC) += exception_level.o
 endif
 
-ifneq ($(CONFIG_$(SPL_)SKIP_LOWLEVEL_INIT),y)
+ifneq ($(CONFIG_SKIP_LOWLEVEL_INIT),y)
 obj-y	+= lowlevel_init.o
 endif
 
@@ -42,5 +42,3 @@ obj-$(CONFIG_RMOBILE) += rmobile/
 obj-$(if $(filter stv0991,$(SOC)),y) += stv0991/
 obj-$(CONFIG_ARCH_SUNXI) += sunxi/
 obj-$(CONFIG_VF610) += vf610/
-obj-$(CONFIG_ARCH_S5P4418) += s5p4418/
-obj-$(CONFIG_ARCH_NEXELL) += s5p-common/

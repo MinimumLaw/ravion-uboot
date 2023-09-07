@@ -10,14 +10,13 @@
 #include <command.h>
 #include <errno.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <asm/gpio.h>
 #include <linux/err.h>
 
 __weak int name_to_gpio(const char *name)
 {
-	return dectoul(name, NULL);
+	return simple_strtoul(name, NULL, 10);
 }
 
 enum gpio_cmd {
@@ -99,7 +98,7 @@ static int do_gpio_status(bool all, const char *gpio_name)
 
 			p = gpio_name + banklen;
 			if (gpio_name && *p) {
-				offset = dectoul(p, NULL);
+				offset = simple_strtoul(p, NULL, 10);
 				gpio_get_description(dev, bank_name, offset,
 						     &flags, true);
 			} else {
@@ -118,8 +117,7 @@ static int do_gpio_status(bool all, const char *gpio_name)
 }
 #endif
 
-static int do_gpio(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned int gpio;
 	enum gpio_cmd sub_cmd;

@@ -22,7 +22,8 @@ import sys
 import tempfile
 import time
 
-from buildman import kconfiglib
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'buildman'))
+import kconfiglib
 
 ### constant variables ###
 OUTPUT_FILE = 'boards.cfg'
@@ -430,7 +431,7 @@ def main():
     # Add options here
     parser.add_option('-f', '--force', action="store_true", default=False,
                       help='regenerate the output even if it is new')
-    parser.add_option('-j', '--jobs', type='int', default=min(cpu_count, 240),
+    parser.add_option('-j', '--jobs', type='int', default=cpu_count,
                       help='the number of jobs to run simultaneously')
     parser.add_option('-o', '--output', default=OUTPUT_FILE,
                       help='output file [default=%s]' % OUTPUT_FILE)

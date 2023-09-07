@@ -6,12 +6,9 @@
 
 #include <common.h>
 #include <dm.h>
-#include <init.h>
-#include <log.h>
 #include <spi_flash.h>
 #include <asm/fsp/fsp_support.h>
 #include <asm/fsp2/fsp_internal.h>
-#include <asm/global_data.h>
 
 /* The amount of the FSP header to probe to obtain what we need */
 #define PROBE_BUF_SIZE 0x180
@@ -37,8 +34,7 @@ int fsp_get_header(ulong offset, ulong size, bool use_spi_flash,
 	 *
 	 * You are in a maze of twisty little headers all alike.
 	 */
-	log_debug("offset=%x buf=%x, use_spi_flash=%d\n", (uint)offset,
-		  (uint)buf, use_spi_flash);
+	debug("offset=%x buf=%x\n", (uint)offset, (uint)buf);
 	if (use_spi_flash) {
 		ret = uclass_first_device_err(UCLASS_SPI_FLASH, &dev);
 		if (ret)
@@ -55,16 +51,16 @@ int fsp_get_header(ulong offset, ulong size, bool use_spi_flash,
 	fv = ptr;
 
 	/* Check the FV signature, _FVH */
-	log_debug("offset=%x sign=%x\n", (uint)offset, (uint)fv->sign);
+	debug("offset=%x sign=%x\n", (uint)offset, (uint)fv->sign);
 	if (fv->sign != EFI_FVH_SIGNATURE)
 		return log_msg_ret("Base FV signature", -EINVAL);
 
 	/* Go to the end of the FV header and align the address */
-	log_debug("fv->ext_hdr_off = %x\n", fv->ext_hdr_off);
+	debug("fv->ext_hdr_off = %x\n", fv->ext_hdr_off);
 	ptr += fv->ext_hdr_off;
 	exhdr = ptr;
 	ptr += ALIGN(exhdr->ext_hdr_size, 8);
-	log_debug("ptr=%x\n", ptr - (void *)buf);
+	debug("ptr=%x\n", ptr - (void *)buf);
 
 	/* Check the FFS GUID */
 	file_hdr = ptr;
@@ -74,7 +70,7 @@ int fsp_get_header(ulong offset, ulong size, bool use_spi_flash,
 	ptr = file_hdr + 1;
 
 	raw = ptr;
-	log_debug("raw->type = %x\n", raw->type);
+	debug("raw->type = %x\n", raw->type);
 	if (raw->type != EFI_SECTION_RAW)
 		return log_msg_ret("Section type not RAW", -ENOEXEC);
 
@@ -83,18 +79,13 @@ int fsp_get_header(ulong offset, ulong size, bool use_spi_flash,
 	fsp = ptr;
 
 	/* Check the FSPH header */
-	log_debug("fsp %x, fsp-buf=%x, si=%x\n", (uint)fsp, ptr - (void *)buf,
-		  (void *)&fsp->fsp_silicon_init - (void *)buf);
+	debug("fsp %x\n", (uint)fsp);
 	if (fsp->sign != EFI_FSPH_SIGNATURE)
 		return log_msg_ret("Base FSPH signature", -EACCES);
 
 	base = (void *)fsp->img_base;
-	log_debug("image base %x\n", (uint)base);
-	if (fsp->fsp_mem_init)
-		log_debug("mem_init offset %x\n", (uint)fsp->fsp_mem_init);
-	else if (fsp->fsp_silicon_init)
-		log_debug("silicon_init offset %x\n",
-			  (uint)fsp->fsp_silicon_init);
+	debug("Image base %x\n", (uint)base);
+	debug("Image addr %x\n", (uint)fsp->fsp_mem_init);
 	if (use_spi_flash) {
 		ret = spi_flash_read_dm(dev, offset, size, base);
 		if (ret)
@@ -114,9 +105,6 @@ u32 fsp_notify(struct fsp_header *fsp_hdr, u32 phase)
 	struct fsp_notify_params params;
 	struct fsp_notify_params *params_ptr;
 	u32 status;
-
-	if (!ll_boot_init())
-		return 0;
 
 	if (!fsp_hdr)
 		fsp_hdr = gd->arch.fsp_s_hdr;

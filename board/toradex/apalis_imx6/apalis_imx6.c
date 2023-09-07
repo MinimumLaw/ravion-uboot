@@ -9,12 +9,7 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <dm.h>
-#include <image.h>
 #include <init.h>
-#include <net.h>
-#include <asm/global_data.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 #include <ahci.h>
 #include <asm/arch/clock.h>
@@ -142,79 +137,22 @@ iomux_v3_cfg_t const usdhc3_pads[] = {
 
 int mx6_rgmii_rework(struct phy_device *phydev)
 {
-	int tmp;
-
-	switch (ksz9xx1_phy_get_id(phydev) & MII_KSZ9x31_SILICON_REV_MASK) {
-	case PHY_ID_KSZ9131:
-		/* read rxc dll control - devaddr = 0x02, register = 0x4c */
-		tmp = ksz9031_phy_extended_read(phydev, 0x02,
-					   MII_KSZ9131_EXT_RGMII_2NS_SKEW_RXDLL,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC);
-		/* disable rxdll bypass (enable 2ns skew delay on RXC) */
-		tmp &= ~MII_KSZ9131_RXTXDLL_BYPASS;
-		/* rxc data pad skew 2ns - devaddr = 0x02, register = 0x4c */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9131_EXT_RGMII_2NS_SKEW_RXDLL,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   tmp);
-		/* read txc dll control - devaddr = 0x02, register = 0x4d */
-		tmp = ksz9031_phy_extended_read(phydev, 0x02,
-					   MII_KSZ9131_EXT_RGMII_2NS_SKEW_TXDLL,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC);
-		/* disable rxdll bypass (enable 2ns skew delay on TXC) */
-		tmp &= ~MII_KSZ9131_RXTXDLL_BYPASS;
-		/* txc data pad skew 2ns - devaddr = 0x02, register = 0x4d */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9131_EXT_RGMII_2NS_SKEW_TXDLL,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   tmp);
-
-		/* control data pad skew - devaddr = 0x02, register = 0x04 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_CTRL_SIG_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x007d);
-		/* rx data pad skew - devaddr = 0x02, register = 0x05 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_RX_DATA_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x7777);
-		/* tx data pad skew - devaddr = 0x02, register = 0x05 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_TX_DATA_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0xdddd);
-		/* gtx and rx clock pad skew - devaddr = 0x02,register = 0x08 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_CLOCK_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x0007);
-		break;
-	case PHY_ID_KSZ9031:
-	default:
-		/* control data pad skew - devaddr = 0x02, register = 0x04 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_CTRL_SIG_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x0000);
-		/* rx data pad skew - devaddr = 0x02, register = 0x05 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_RX_DATA_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x0000);
-		/* tx data pad skew - devaddr = 0x02, register = 0x05 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_TX_DATA_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x0000);
-		/* gtx and rx clock pad skew - devaddr = 0x02,register = 0x08 */
-		ksz9031_phy_extended_write(phydev, 0x02,
-					   MII_KSZ9031_EXT_RGMII_CLOCK_SKEW,
-					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
-					   0x03FF);
-		break;
-	}
-
+	/* control data pad skew - devaddr = 0x02, register = 0x04 */
+	ksz9031_phy_extended_write(phydev, 0x02,
+				   MII_KSZ9031_EXT_RGMII_CTRL_SIG_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0000);
+	/* rx data pad skew - devaddr = 0x02, register = 0x05 */
+	ksz9031_phy_extended_write(phydev, 0x02,
+				   MII_KSZ9031_EXT_RGMII_RX_DATA_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0000);
+	/* tx data pad skew - devaddr = 0x02, register = 0x05 */
+	ksz9031_phy_extended_write(phydev, 0x02,
+				   MII_KSZ9031_EXT_RGMII_TX_DATA_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0000);
+	/* gtx and rx clock pad skew - devaddr = 0x02, register = 0x08 */
+	ksz9031_phy_extended_write(phydev, 0x02,
+				   MII_KSZ9031_EXT_RGMII_CLOCK_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x03FF);
 	return 0;
 }
 
@@ -362,7 +300,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	return ret;
 }
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	struct src *psrc = (struct src *)SRC_BASE_ADDR;
 	unsigned reg = readl(&psrc->sbmr1) >> 11;
@@ -707,11 +645,12 @@ int board_init(void)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
-#if defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
+#if defined(CONFIG_REVISION_TAG) && \
+    defined(CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG)
 	char env_str[256];
 	u32 rev;
 
-	rev = get_board_revision();
+	rev = get_board_rev();
 	snprintf(env_str, ARRAY_SIZE(env_str), "%.4x", rev);
 	env_set("board_rev", env_str);
 
@@ -768,7 +707,7 @@ int checkboard(void)
 }
 
 #if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	return ft_common_board_setup(blob, bd);
 }
@@ -1076,24 +1015,6 @@ static void ddr_init(int *table, int size)
 		writel(table[2 * i + 1], table[2 * i]);
 }
 
-/* Perform DDR DRAM calibration */
-static void spl_dram_perform_cal(void)
-{
-#ifdef CONFIG_MX6_DDRCAL
-	int err;
-	struct mx6_ddr_sysinfo ddr_sysinfo = {
-		.dsize = 2,
-	};
-
-	err = mmdc_do_write_level_calibration(&ddr_sysinfo);
-	if (err)
-		printf("error %d from write level calibration\n", err);
-	err = mmdc_do_dqs_calibration(&ddr_sysinfo);
-	if (err)
-		printf("error %d from dqs calibration\n", err);
-#endif
-}
-
 static void spl_dram_init(void)
 {
 	int minc, maxc;
@@ -1112,7 +1033,6 @@ static void spl_dram_init(void)
 		break;
 	};
 	udelay(100);
-	spl_dram_perform_cal();
 }
 
 void board_init_f(ulong dummy)
@@ -1157,18 +1077,18 @@ int board_fit_config_name_match(const char *name)
 }
 #endif
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 }
 
 #endif /* CONFIG_SPL_BUILD */
 
-static struct mxc_serial_plat mxc_serial_plat = {
+static struct mxc_serial_platdata mxc_serial_plat = {
 	.reg = (struct mxc_uart *)UART1_BASE,
 	.use_dte = true,
 };
 
-U_BOOT_DRVINFO(mxc_serial) = {
+U_BOOT_DEVICE(mxc_serial) = {
 	.name = "serial_mxc",
-	.plat = &mxc_serial_plat,
+	.platdata = &mxc_serial_plat,
 };

@@ -27,7 +27,7 @@ SECTIONS
 		*(SORT_BY_ALIGNMENT(.sdata*))
 	} > .spl_mem
 
-#if defined(CONFIG_SPL_DM) || defined(CONFIG_SPL_LOADER_SUPPORT)
+#ifdef CONFIG_SPL_DM
 	. = ALIGN(4);
 	.u_boot_list : {
 		KEEP(*(SORT(.u_boot_list*)));
@@ -36,8 +36,6 @@ SECTIONS
 
 	. = ALIGN(4);
 	__image_copy_end = .;
-
-	_image_binary_end = .;
 
 	.bss (NOLOAD) : {
 		__bss_start = .;

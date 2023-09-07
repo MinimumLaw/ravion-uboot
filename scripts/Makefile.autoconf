@@ -61,14 +61,13 @@ quiet_cmd_autoconf = GEN     $@
 			if [ -n "${KCONFIG_IGNORE_DUPLICATES}" ] ||			\
 			   ! grep -q "$${line%=*}=" include/config/auto.conf; then	\
 				echo "$$line";						\
-			fi;								\
+			fi								\
 		done > $@
 
 quiet_cmd_u_boot_cfg = CFG     $@
       cmd_u_boot_cfg = \
 	$(CPP) $(c_flags) $2 -DDO_DEPS_ONLY -dM $(srctree)/include/common.h > $@.tmp && { \
-		grep 'define CONFIG_' $@.tmp | \
-			sed '/define CONFIG_IS_ENABLED(/d;/define CONFIG_IF_ENABLED_INT(/d;/define CONFIG_VAL(/d;' > $@; \
+		grep 'define CONFIG_' $@.tmp > $@;			\
 		rm $@.tmp;						\
 	} || {								\
 		rm $@.tmp; false;					\
@@ -105,6 +104,7 @@ define filechk_config_h
 		| sed '/=/ {s/=/	/;q; } ; { s/$$/	1/; }'; \
 	done;								\
 	echo \#define CONFIG_BOARDDIR board/$(if $(VENDOR),$(VENDOR)/)$(BOARD);\
+	echo \#include \<config_defaults.h\>;				\
 	echo \#include \<config_uncmd_spl.h\>;				\
 	echo \#include \<configs/$(CONFIG_SYS_CONFIG_NAME).h\>;		\
 	echo \#include \<asm/config.h\>;				\

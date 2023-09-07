@@ -6,13 +6,10 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <miiphy.h>
 #include <wait_bit.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 struct cpsw_mdio_regs {
 	u32	version;

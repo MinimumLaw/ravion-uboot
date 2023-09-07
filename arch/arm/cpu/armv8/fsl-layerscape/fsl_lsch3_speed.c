@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2014-2015, Freescale Semiconductor, Inc.
- * Copyright 2019-2020 NXP
+ * Copyright 2019 NXP Semiconductors
  *
  * Derived from arch/power/cpu/mpc85xx/speed.c
  */
@@ -9,7 +9,6 @@
 #include <common.h>
 #include <clock_legacy.h>
 #include <cpu_func.h>
-#include <asm/global_data.h>
 #include <linux/compiler.h>
 #include <fsl_ifc.h>
 #include <asm/processor.h>
@@ -72,16 +71,16 @@ void get_sys_info(struct sys_info *sys_info)
 #endif
 	uint freq_c_pll[CONFIG_SYS_FSL_NUM_CC_PLLS];
 	uint ratio[CONFIG_SYS_FSL_NUM_CC_PLLS];
-	unsigned long sysclk = get_board_sys_clk();
+	unsigned long sysclk = CONFIG_SYS_CLK_FREQ;
 	int cc_group[12] = CONFIG_SYS_FSL_CLUSTER_CLOCKS;
 	u32 c_pll_sel, cplx_pll;
 	void *offset;
 
 	sys_info->freq_systembus = sysclk;
-#if defined(CONFIG_DYNAMIC_DDR_CLK_FREQ) || defined(CONFIG_STATIC_DDR_CLK_FREQ)
-	sys_info->freq_ddrbus = get_board_ddr_clk();
+#ifdef CONFIG_DDR_CLK_FREQ
+	sys_info->freq_ddrbus = CONFIG_DDR_CLK_FREQ;
 #ifdef CONFIG_SYS_FSL_HAS_DP_DDR
-	sys_info->freq_ddrbus2 = get_board_ddr_clk();
+	sys_info->freq_ddrbus2 = CONFIG_DDR_CLK_FREQ;
 #endif
 #else
 	sys_info->freq_ddrbus = sysclk;
@@ -181,7 +180,7 @@ int get_clocks(void)
 #ifdef CONFIG_FSL_ESDHC
 #if defined(CONFIG_ARCH_LS1028A) || defined(CONFIG_ARCH_LS1088A)
 	clock = sys_info.freq_cga_m2;
-#elif defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LS2080A) || defined(CONFIG_ARCH_LX2162A)
+#elif defined(CONFIG_ARCH_LX2160A) || defined(CONFIG_ARCH_LS2080A)
 	clock = sys_info.freq_systembus;
 #endif
 	gd->arch.sdhc_per_clk = clock / CONFIG_SYS_FSL_SDHC_CLK_DIV;

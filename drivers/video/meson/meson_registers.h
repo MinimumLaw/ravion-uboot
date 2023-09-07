@@ -7,7 +7,6 @@
 #define __MESON_REGISTERS_H
 
 /* Shift all registers by 2 */
-#include <linux/bitops.h>
 #define _REG(reg)	((reg) << 2)
 
 #define writel_bits(mask, val, addr) \

@@ -8,10 +8,8 @@
 
 #include <common.h>
 #include <command.h>
-#include <log.h>
 #include <malloc.h>
 #include <net.h>
-#include <asm/cache.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <linux/dma-mapping.h>
@@ -257,7 +255,7 @@ static int ftmac110_reset(struct eth_device *dev)
 	return 0;
 }
 
-static int ftmac110_probe(struct eth_device *dev, struct bd_info *bis)
+static int ftmac110_probe(struct eth_device *dev, bd_t *bis)
 {
 	debug("ftmac110: probe\n");
 
@@ -404,7 +402,7 @@ static int ftmac110_mdio_write(struct mii_dev *bus, int addr, int devad,
 
 #endif    /* #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII) */
 
-int ftmac110_initialize(struct bd_info *bis)
+int ftmac110_initialize(bd_t *bis)
 {
 	int i, card_nr = 0;
 	struct eth_device *dev;
@@ -476,7 +474,7 @@ int ftmac110_initialize(struct bd_info *bis)
 	struct mii_dev *mdiodev = mdio_alloc();
 	if (!mdiodev)
 		return -ENOMEM;
-	strlcpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
+	strncpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
 	mdiodev->read = ftmac110_mdio_read;
 	mdiodev->write = ftmac110_mdio_write;
 

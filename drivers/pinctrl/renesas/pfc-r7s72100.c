@@ -7,10 +7,8 @@
 
 #include <common.h>
 #include <dm.h>
-#include <asm/global_data.h>
 #include <dm/lists.h>
 #include <dm/pinctrl.h>
-#include <linux/bitops.h>
 #include <linux/io.h>
 #include <linux/err.h>
 
@@ -33,14 +31,14 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-struct r7s72100_pfc_plat {
+struct r7s72100_pfc_platdata {
 	void __iomem	*base;
 };
 
 static void r7s72100_pfc_set_function(struct udevice *dev, u16 bank, u16 line,
 				      u16 func, u16 inbuf, u16 bidir)
 {
-	struct r7s72100_pfc_plat *plat = dev_get_plat(dev);
+	struct r7s72100_pfc_platdata *plat = dev_get_platdata(dev);
 
 	clrsetbits_le16(plat->base + PFCAE(bank), BIT(line),
 			(func & BIT(2)) ? BIT(line) : 0);
@@ -109,11 +107,11 @@ const struct pinctrl_ops r7s72100_pfc_ops  = {
 
 static int r7s72100_pfc_probe(struct udevice *dev)
 {
-	struct r7s72100_pfc_plat *plat = dev_get_plat(dev);
+	struct r7s72100_pfc_platdata *plat = dev_get_platdata(dev);
 	fdt_addr_t addr_base;
 	ofnode node;
 
-	addr_base = dev_read_addr(dev);
+	addr_base = devfdt_get_addr(dev);
 	if (addr_base == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -143,6 +141,6 @@ U_BOOT_DRIVER(r7s72100_pfc) = {
 	.id		= UCLASS_PINCTRL,
 	.of_match	= r7s72100_pfc_match,
 	.probe		= r7s72100_pfc_probe,
-	.plat_auto	= sizeof(struct r7s72100_pfc_plat),
+	.platdata_auto_alloc_size = sizeof(struct r7s72100_pfc_platdata),
 	.ops		= &r7s72100_pfc_ops,
 };

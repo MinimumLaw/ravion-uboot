@@ -15,7 +15,6 @@
  */
 
 #ifndef __UBOOT__
-#include <log.h>
 #include <dm/devres.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -32,14 +31,12 @@
 #include <common.h>
 #include <malloc.h>
 #include <memalign.h>
-#include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/log2.h>
 #include <linux/stat.h>
 #include <linux/err.h>
 #include "ubifs.h"
 #include <ubi_uboot.h>
-#include <linux/stringify.h>
 #include <mtd/ubi-user.h>
 
 struct dentry;

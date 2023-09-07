@@ -8,18 +8,17 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <pci.h>
 #include <asm/test.h>
 #include <power/acpi_pmc.h>
 
 /**
- * struct pmc_emul_plat - platform data for this device
+ * struct pmc_emul_platdata - platform data for this device
  *
  * @command:	Current PCI command value
  * @bar:	Current base address values
  */
-struct pmc_emul_plat {
+struct pmc_emul_platdata {
 	u16 command;
 	u32 bar[6];
 };
@@ -46,7 +45,7 @@ struct pmc_emul_priv {
 static int sandbox_pmc_emul_read_config(const struct udevice *emul, uint offset,
 					ulong *valuep, enum pci_size_t size)
 {
-	struct pmc_emul_plat *plat = dev_get_plat(emul);
+	struct pmc_emul_platdata *plat = dev_get_platdata(emul);
 
 	switch (offset) {
 	case PCI_COMMAND:
@@ -99,7 +98,7 @@ static int sandbox_pmc_emul_read_config(const struct udevice *emul, uint offset,
 static int sandbox_pmc_emul_write_config(struct udevice *emul, uint offset,
 					 ulong value, enum pci_size_t size)
 {
-	struct pmc_emul_plat *plat = dev_get_plat(emul);
+	struct pmc_emul_platdata *plat = dev_get_platdata(emul);
 
 	switch (offset) {
 	case PCI_COMMAND:
@@ -127,7 +126,7 @@ static int sandbox_pmc_emul_write_config(struct udevice *emul, uint offset,
 static int sandbox_pmc_emul_find_bar(struct udevice *emul, unsigned int addr,
 				     int *barnump, unsigned int *offsetp)
 {
-	struct pmc_emul_plat *plat = dev_get_plat(emul);
+	struct pmc_emul_platdata *plat = dev_get_platdata(emul);
 	int barnum;
 
 	for (barnum = 0; barnum < ARRAY_SIZE(barinfo); barnum++) {
@@ -235,8 +234,8 @@ U_BOOT_DRIVER(sandbox_pmc_emul_emul) = {
 	.of_match	= sandbox_pmc_emul_ids,
 	.ops		= &sandbox_pmc_emul_emul_ops,
 	.probe		= sandbox_pmc_probe,
-	.priv_auto	= sizeof(struct pmc_emul_priv),
-	.plat_auto	= sizeof(struct pmc_emul_plat),
+	.priv_auto_alloc_size = sizeof(struct pmc_emul_priv),
+	.platdata_auto_alloc_size = sizeof(struct pmc_emul_platdata),
 };
 
 static struct pci_device_id sandbox_pmc_emul_supported[] = {

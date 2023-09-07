@@ -131,20 +131,16 @@ int fdt_check_header(const void *fdt)
 
 const void *fdt_offset_ptr(const void *fdt, int offset, unsigned int len)
 {
-	unsigned int uoffset = offset;
-	unsigned int absoffset = offset + fdt_off_dt_struct(fdt);
-
-	if (offset < 0)
-		return NULL;
+	unsigned absoffset = offset + fdt_off_dt_struct(fdt);
 
 	if (fdt_chk_basic())
-		if ((absoffset < uoffset)
+		if ((absoffset < offset)
 		    || ((absoffset + len) < absoffset)
 		    || (absoffset + len) > fdt_totalsize(fdt))
 			return NULL;
 
 	if (!fdt_chk_version() || fdt_version(fdt) >= 0x11)
-		if (((uoffset + len) < uoffset)
+		if (((offset + len) < offset)
 		    || ((offset + len) > fdt_size_dt_struct(fdt)))
 			return NULL;
 
@@ -306,12 +302,9 @@ const char *fdt_find_string_(const char *strtab, int tabsize, const char *s)
 
 int fdt_move(const void *fdt, void *buf, int bufsize)
 {
-	if (fdt_chk_basic() && bufsize < 0)
-		return -FDT_ERR_NOSPACE;
-
 	FDT_RO_PROBE(fdt);
 
-	if (fdt_totalsize(fdt) > (unsigned int)bufsize)
+	if (fdt_totalsize(fdt) > bufsize)
 		return -FDT_ERR_NOSPACE;
 
 	memmove(buf, fdt, fdt_totalsize(fdt));

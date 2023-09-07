@@ -1,7 +1,3 @@
-// SPDX-License-Identifier: GPL-2.0+
-/*
- *  Main sandbox64 devicetree
- */
 /dts-v1/;
 
 #include <config.h>
@@ -14,7 +10,7 @@
 
 	aliases {
 		i2c0 = &i2c_0;
-		pci0 = &pcic;
+		pci0 = &pci;
 		rtc0 = &rtc_0;
 		axi0 = &axi;
 		spi0 = &spi;
@@ -24,26 +20,6 @@
 		reg = /bits/ 64 <0 CONFIG_SYS_SDRAM_SIZE>;
 	};
 
-	reserved-memory {
-		#address-cells = <2>;
-		#size-cells = <2>;
-		ranges;
-
-		reservation_test_size {
-			size = <0 0x4000>;
-			alignment = <0 0x2000>;
-		};
-
-		reservation_test@a000 {
-			reg = <0 0x00d0a000 0 0x2000>;
-		};
-
-		reservation_test@7000 {
-			reg = <0 0x00d07000 0 0x1000>;
-		};
-	};
-
-	/* ... */
 	cros_ec: cros-ec {
 		reg = <0 0 0 0>;
 		u-boot,dm-pre-reloc;
@@ -71,10 +47,9 @@
 		pinctrl-0 = <&pinctrl_i2c0>;
 	};
 
-	pcic: pci@0 {
+	pci: pci-controller {
 		compatible = "sandbox,pci";
 		device_type = "pci";
-		bus-range = <0x00 0xff>;
 		#address-cells = <3>;
 		#size-cells = <2>;
 		ranges = <0x02000000 0 0x10000000 0 0x10000000 0 0x2000

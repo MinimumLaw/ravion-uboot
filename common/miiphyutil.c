@@ -11,10 +11,8 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <miiphy.h>
 #include <phy.h>
-#include <linux/delay.h>
 
 #include <asm/types.h>
 #include <linux/list.h>

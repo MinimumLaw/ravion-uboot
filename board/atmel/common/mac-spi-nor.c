@@ -8,7 +8,6 @@
 #include <common.h>
 #include <dm.h>
 #include <env.h>
-#include <net.h>
 #include <linux/mtd/spi-nor.h>
 #include <netdev.h>
 

@@ -12,15 +12,11 @@
 #include <common.h>
 #include <env.h>
 #include <fdt_support.h>
-#include <fastboot.h>
-#include <image.h>
 #include <init.h>
 #include <spl.h>
-#include <net.h>
 #include <palmas.h>
 #include <sata.h>
 #include <serial.h>
-#include <asm/global_data.h>
 #include <linux/string.h>
 #include <asm/gpio.h>
 #include <usb.h>
@@ -628,7 +624,7 @@ int get_voltrail_opp(int rail_offset)
 /**
  * @brief board_init
  *
- * Return: 0
+ * @return 0
  */
 int board_init(void)
 {
@@ -922,7 +918,7 @@ err:
 #endif
 
 #if defined(CONFIG_MMC)
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	omap_mmc_init(0, 0, 0, -1, -1);
 	omap_mmc_init(1, 0, 0, -1, -1);
@@ -1019,7 +1015,7 @@ int board_early_init_f(void)
 #endif
 
 #if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	ft_cpu_setup(blob, bd);
 
@@ -1052,11 +1048,8 @@ int board_fit_config_name_match(const char *name)
 #endif
 
 #if CONFIG_IS_ENABLED(FASTBOOT) && !CONFIG_IS_ENABLED(ENV_IS_NOWHERE)
-int fastboot_set_reboot_flag(enum fastboot_reboot_reason reason)
+int fastboot_set_reboot_flag(void)
 {
-	if (reason != FASTBOOT_REBOOT_REASON_BOOTLOADER)
-		return -ENOTSUPP;
-
 	printf("Setting reboot to fastboot flag ...\n");
 	env_set("dofastboot", "1");
 	env_save();
@@ -1065,8 +1058,7 @@ int fastboot_set_reboot_flag(enum fastboot_reboot_reason reason)
 #endif
 
 #ifdef CONFIG_TI_SECURE_DEVICE
-void board_fit_image_post_process(const void *fit, int node, void **p_image,
-				  size_t *p_size)
+void board_fit_image_post_process(void **p_image, size_t *p_size)
 {
 	secure_boot_verify_image(p_image, p_size);
 }

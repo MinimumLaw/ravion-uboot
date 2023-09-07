@@ -9,7 +9,6 @@
 
 #include <common.h>
 #include <command.h>
-#include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <pci.h>
@@ -383,7 +382,7 @@ int tsi148_vme_crg_window(unsigned int vmeAddr, int vam)
 /*
  * Tundra Tsi148 configuration
  */
-int do_tsi148(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_tsi148(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr1 = 0, addr2 = 0, size = 0, vam = 0, vdw = 0;
 	char cmd = 'x';
@@ -392,15 +391,15 @@ int do_tsi148(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (argc > 1)
 		cmd = argv[1][0];
 	if (argc > 2)
-		addr1 = hextoul(argv[2], NULL);
+		addr1 = simple_strtoul(argv[2], NULL, 16);
 	if (argc > 3)
-		addr2 = hextoul(argv[3], NULL);
+		addr2 = simple_strtoul(argv[3], NULL, 16);
 	if (argc > 4)
-		size = hextoul(argv[4], NULL);
+		size = simple_strtoul(argv[4], NULL, 16);
 	if (argc > 5)
-		vam = hextoul(argv[5], NULL);
+		vam = simple_strtoul(argv[5], NULL, 16);
 	if (argc > 6)
-		vdw = hextoul(argv[6], NULL);
+		vdw = simple_strtoul(argv[6], NULL, 16);
 
 	switch (cmd) {
 	case 'c':

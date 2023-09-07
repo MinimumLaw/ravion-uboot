@@ -11,6 +11,14 @@
 
 #define CONFIG_SYS_INIT_SP_ADDR		0x20280000
 
+#ifdef CONFIG_SUPPORT_SPL
+#define CONFIG_SYS_LOAD_ADDR		0x20209000
+#else
+#define CONFIG_SYS_LOAD_ADDR		0x80000000
+#define CONFIG_LOADADDR			0x80000000
+#endif
+
+#define CONFIG_SYS_FSL_ERRATUM_ESDHC135		1
 #define ESDHCI_QUIRK_BROKEN_TIMEOUT_VALUE	1
 
 #define PHYS_SDRAM			0x80000000
@@ -20,18 +28,12 @@
 #define DMAMEM_BASE			(PHYS_SDRAM + PHYS_SDRAM_SIZE - \
 					 DMAMEM_SZ_ALL)
 
-#ifdef CONFIG_DM_VIDEO
-#define CONFIG_VIDEO_BMP_LOGO
-
-#define CONFIG_EXTRA_ENV_SETTINGS \
-		"stdin=serial\0" \
-		"stdout=serial,vidconsole\0" \
-		"stderr=serial,vidconsole\0"
-#endif
+#define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
 
 /*
  * Configuration of the external SDRAM memory
  */
+#define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
 
 /* For SPL */
 #ifdef CONFIG_SUPPORT_SPL

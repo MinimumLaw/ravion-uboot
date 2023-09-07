@@ -1,6 +1,6 @@
-if ARCH_TEGRA
+if TEGRA
 
-config SPL_GPIO
+config SPL_GPIO_SUPPORT
 	default y
 
 config SPL_LIBCOMMON_SUPPORT
@@ -9,7 +9,7 @@ config SPL_LIBCOMMON_SUPPORT
 config SPL_LIBGENERIC_SUPPORT
 	default y
 
-config SPL_SERIAL
+config SPL_SERIAL_SUPPORT
 	default y
 
 config TEGRA_CLKRST
@@ -41,6 +41,7 @@ config TEGRA_PMC_SECURE
 
 config TEGRA_COMMON
 	bool "Tegra common options"
+	select BINMAN
 	select BOARD_EARLY_INIT_F
 	select CLK
 	select DM
@@ -57,6 +58,7 @@ config TEGRA_COMMON
 	select MISC
 	select OF_CONTROL
 	select SPI
+	select VIDCONSOLE_AS_LCD if DM_VIDEO
 	imply CMD_DM
 	imply CRC32_VERIFY
 
@@ -68,11 +70,9 @@ config TEGRA_NO_BPMP
 
 config TEGRA_ARMV7_COMMON
 	bool "Tegra 32-bit common options"
-	select BINMAN
 	select CPU_V7A
 	select SPL
 	select SPL_BOARD_INIT if SPL
-	select SPL_SKIP_LOWLEVEL_INIT_ONLY if SPL
 	select SUPPORT_SPL
 	select TEGRA_CLKRST
 	select TEGRA_COMMON
@@ -125,7 +125,6 @@ config TEGRA124
 
 config TEGRA210
 	bool "Tegra210 family"
-	select GICV2
 	select TEGRA_ARMV8_COMMON
 	select TEGRA_CLKRST
 	select TEGRA_GPIO
@@ -139,7 +138,6 @@ config TEGRA210
 config TEGRA186
 	bool "Tegra186 family"
 	select DM_MAILBOX
-	select GICV2
 	select TEGRA186_BPMP
 	select TEGRA186_CLOCK
 	select TEGRA186_GPIO

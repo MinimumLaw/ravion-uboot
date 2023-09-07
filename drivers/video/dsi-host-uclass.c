@@ -5,8 +5,6 @@
  *
  */
 
-#define LOG_CATEGORY UCLASS_DSI_HOST
-
 #include <common.h>
 #include <dm.h>
 #include <dsi_host.h>
@@ -33,6 +31,16 @@ int dsi_host_enable(struct udevice *dev)
 		return -ENOSYS;
 
 	return ops->enable(dev);
+}
+
+int dsi_host_disable(struct udevice *dev)
+{
+	struct dsi_host_ops *ops = dsi_host_get_ops(dev);
+
+	if (!ops->disable)
+		return -ENOSYS;
+
+	return ops->disable(dev);
 }
 
 UCLASS_DRIVER(dsi_host) = {

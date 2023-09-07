@@ -7,11 +7,9 @@
 #include <clk.h>
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/system_manager.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <dt-bindings/clock/agilex-clock.h>
 
@@ -25,7 +23,7 @@ static ulong cm_get_rate_dm(u32 id)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_CLK,
-					  DM_DRIVER_GET(socfpga_agilex_clk),
+					  DM_GET_DRIVER(socfpga_agilex_clk),
 					  &dev);
 	if (ret)
 		return 0;
@@ -63,6 +61,12 @@ unsigned long cm_get_mpu_clk_hz(void)
 unsigned int cm_get_l4_sys_free_clk_hz(void)
 {
 	return cm_get_rate_dm(AGILEX_L4_SYS_FREE_CLK);
+}
+
+u32 cm_get_qspi_controller_clk_hz(void)
+{
+	return readl(socfpga_get_sysmgr_addr() +
+		     SYSMGR_SOC64_BOOT_SCRATCH_COLD0);
 }
 
 void cm_print_clock_quick_summary(void)

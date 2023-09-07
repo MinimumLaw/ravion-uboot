@@ -13,8 +13,8 @@ def ParseArgs():
             args: command lin arguments
     """
     parser = OptionParser()
-    parser.add_option('-a', '--adjust-cfg', type=str, action='append',
-          help='Adjust the Kconfig settings in .config before building')
+    parser.add_option('-a', '--print-arch', action='store_true',
+          help='Print the architecture for a board (ARCH=)')
     parser.add_option('-A', '--print-prefix', action='store_true',
           help='Print the tool-chain prefix for a board (CROSS_COMPILE=)')
     parser.add_option('-b', '--branch', type='string',
@@ -31,11 +31,9 @@ def ParseArgs():
           help='Reconfigure for every commit (disable incremental build)')
     parser.add_option('-d', '--detail', dest='show_detail',
           action='store_true', default=False,
-          help='Show detailed size delta for each board in the -S summary')
+          help='Show detailed information for each board in summary')
     parser.add_option('-D', '--config-only', action='store_true', default=False,
           help="Don't build, just configure each commit")
-    parser.add_option('--debug', action='store_true',
-        help='Enabling debugging (provides a full traceback on error)')
     parser.add_option('-e', '--show_errors', action='store_true',
           default=False, help='Show errors and warnings')
     parser.add_option('-E', '--warnings-as-errors', action='store_true',
@@ -59,9 +57,8 @@ def ParseArgs():
     parser.add_option('-i', '--in-tree', dest='in_tree',
           action='store_true', default=False,
           help='Build in the source tree instead of a separate directory')
-    # -I will be removed after April 2021
     parser.add_option('-I', '--incremental', action='store_true',
-          default=False, help='Deprecated, does nothing. See -m')
+          default=False, help='Do not run make mrproper (when reconfiguring)')
     parser.add_option('-j', '--jobs', dest='jobs', type='int',
           default=None, help='Number of jobs to run at once (passed to make)')
     parser.add_option('-k', '--keep-outputs', action='store_true',
@@ -74,13 +71,12 @@ def ParseArgs():
           default=False, help='Show a list of boards next to each error/warning')
     parser.add_option('--list-tool-chains', action='store_true', default=False,
           help='List available tool chains (use -v to see probing detail)')
-    parser.add_option('-m', '--mrproper', action='store_true',
-          default=False, help="Run 'make mrproper before reconfiguring")
     parser.add_option('-n', '--dry-run', action='store_true', dest='dry_run',
           default=False, help="Do a dry run (describe actions, but do nothing)")
     parser.add_option('-N', '--no-subdirs', action='store_true', dest='no_subdirs',
           default=False, help="Don't create subdirectories when building current source for a single board")
-    parser.add_option('-o', '--output-dir', type='string', dest='output_dir',
+    parser.add_option('-o', '--output-dir', type='string',
+          dest='output_dir', default='..',
           help='Directory where all builds happen and buildman has its workspace (default is ../)')
     parser.add_option('-O', '--override-toolchain', type='string',
           help="Override host toochain to use for sandbox (e.g. 'clang-7')")
@@ -101,8 +97,7 @@ def ParseArgs():
     parser.add_option('-t', '--test', action='store_true', dest='test',
                       default=False, help='run tests')
     parser.add_option('-T', '--threads', type='int',
-          default=None,
-          help='Number of builder threads to use (0=single-thread)')
+          default=None, help='Number of builder threads to use')
     parser.add_option('-u', '--show_unknown', action='store_true',
           default=False, help='Show boards with unknown build result')
     parser.add_option('-U', '--show-environment', action='store_true',
@@ -111,19 +106,9 @@ def ParseArgs():
           default=False, help='Show build results while the build progresses')
     parser.add_option('-V', '--verbose-build', action='store_true',
           default=False, help='Run make with V=1, logging all output')
-    parser.add_option('-w', '--work-in-output', action='store_true',
-          default=False, help='Use the output directory as the work directory')
-    parser.add_option('-W', '--ignore-warnings', action='store_true',
-          default=False, help='Return success even if there are warnings')
     parser.add_option('-x', '--exclude', dest='exclude',
           type='string', action='append',
           help='Specify a list of boards to exclude, separated by comma')
-    parser.add_option('-y', '--filter-dtb-warnings', action='store_true',
-          default=False,
-          help='Filter out device-tree-compiler warnings from output')
-    parser.add_option('-Y', '--filter-migration-warnings', action='store_true',
-          default=False,
-          help='Filter out migration warnings from output')
 
     parser.usage += """ [list of target/arch/cpu/board/vendor/soc to build]
 

@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <linux/bitops.h>
 #include <power/da9063_pmic.h>
 #include <power/pmic.h>
 #include <power/regulator.h>
@@ -135,7 +134,7 @@ static const struct da9063_reg_info da9063_buck_info[] = {
 
 static int da9063_get_enable(struct udevice *dev)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	int ret;
 
@@ -148,7 +147,7 @@ static int da9063_get_enable(struct udevice *dev)
 
 static int da9063_set_enable(struct udevice *dev, bool enable)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 
 	return pmic_clrsetbits(dev->parent, info->en_reg,
@@ -157,7 +156,7 @@ static int da9063_set_enable(struct udevice *dev, bool enable)
 
 static int da9063_get_voltage(struct udevice *dev)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	int ret;
 
@@ -170,7 +169,7 @@ static int da9063_get_voltage(struct udevice *dev)
 
 static int da9063_set_voltage(struct udevice *dev, int uV)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	uint sel;
 
@@ -198,7 +197,7 @@ static const struct dm_regulator_mode
 
 static int ldo_get_mode(struct udevice *dev)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	int val;
 
@@ -214,7 +213,7 @@ static int ldo_get_mode(struct udevice *dev)
 
 static int ldo_set_mode(struct udevice *dev, int mode_id)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	const struct dm_regulator_mode *mode;
 
@@ -230,7 +229,7 @@ static int ldo_set_mode(struct udevice *dev, int mode_id)
 
 static int buck_get_mode(struct udevice *dev)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	int i;
 	int val;
@@ -261,7 +260,7 @@ static int buck_get_mode(struct udevice *dev)
 
 static int buck_set_mode(struct udevice *dev, int mode_id)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	const struct dm_regulator_mode *mode;
 
@@ -277,7 +276,7 @@ static int buck_set_mode(struct udevice *dev, int mode_id)
 
 static int buck_get_current_limit(struct udevice *dev)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	int val;
 
@@ -293,7 +292,7 @@ static int buck_get_current_limit(struct udevice *dev)
 
 static int buck_set_current_limit(struct udevice *dev, int uA)
 {
-	const struct da9063_priv *priv = dev_get_priv(dev);
+	const struct da9063_priv *priv = dev->priv;
 	const struct da9063_reg_info *info = priv->reg_info;
 	int val;
 
@@ -309,8 +308,8 @@ static int buck_set_current_limit(struct udevice *dev, int uA)
 
 static int da9063_ldo_probe(struct udevice *dev)
 {
-	struct dm_regulator_uclass_plat *uc_pdata;
-	struct da9063_priv *priv = dev_get_priv(dev);
+	struct dm_regulator_uclass_platdata *uc_pdata;
+	struct da9063_priv *priv = dev->priv;
 
 	/* LDOs are named numerically in DT so can directly index */
 	if (dev->driver_data < 1 ||
@@ -318,7 +317,7 @@ static int da9063_ldo_probe(struct udevice *dev)
 		return -EINVAL;
 	priv->reg_info = &da9063_ldo_info[dev->driver_data - 1];
 
-	uc_pdata = dev_get_uclass_plat(dev);
+	uc_pdata = dev_get_uclass_platdata(dev);
 	uc_pdata->type = REGULATOR_TYPE_LDO;
 	uc_pdata->mode = da9063_ldo_modes;
 	uc_pdata->mode_count = ARRAY_SIZE(da9063_ldo_modes);
@@ -328,8 +327,8 @@ static int da9063_ldo_probe(struct udevice *dev)
 
 static int da9063_buck_probe(struct udevice *dev)
 {
-	struct dm_regulator_uclass_plat *uc_pdata;
-	struct da9063_priv *priv = dev_get_priv(dev);
+	struct dm_regulator_uclass_platdata *uc_pdata;
+	struct da9063_priv *priv = dev->priv;
 	int i;
 
 	/* Bucks have names rather than numbers so need to match with DT */
@@ -344,7 +343,7 @@ static int da9063_buck_probe(struct udevice *dev)
 	if (!priv->reg_info)
 		return -ENODEV;
 
-	uc_pdata = dev_get_uclass_plat(dev);
+	uc_pdata = dev_get_uclass_platdata(dev);
 	uc_pdata->type = REGULATOR_TYPE_BUCK;
 	uc_pdata->mode = da9063_buck_modes;
 	uc_pdata->mode_count = ARRAY_SIZE(da9063_buck_modes);
@@ -366,7 +365,7 @@ U_BOOT_DRIVER(da9063_ldo) = {
 	.id = UCLASS_REGULATOR,
 	.ops = &da9063_ldo_ops,
 	.probe = da9063_ldo_probe,
-	.priv_auto	= sizeof(struct da9063_priv),
+	.priv_auto_alloc_size = sizeof(struct da9063_priv),
 };
 
 static const struct dm_regulator_ops da9063_buck_ops = {
@@ -385,5 +384,5 @@ U_BOOT_DRIVER(da9063_buck) = {
 	.id = UCLASS_REGULATOR,
 	.ops = &da9063_buck_ops,
 	.probe = da9063_buck_probe,
-	.priv_auto	= sizeof(struct da9063_priv),
+	.priv_auto_alloc_size = sizeof(struct da9063_priv),
 };

@@ -16,25 +16,22 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <dm.h>
-#include <dm/device_compat.h>
-#include <malloc.h>
-#include <mxs_nand.h>
-#include <asm/arch/clock.h>
-#include <asm/arch/imx-regs.h>
-#include <asm/arch/sys_proto.h>
-#include <asm/cache.h>
-#include <asm/io.h>
-#include <asm/mach-imx/regs-bch.h>
-#include <asm/mach-imx/regs-gpmi.h>
-#include <linux/errno.h>
 #include <linux/mtd/rawnand.h>
 #include <linux/sizes.h>
 #include <linux/types.h>
+#include <malloc.h>
+#include <linux/errno.h>
+#include <asm/io.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/imx-regs.h>
+#include <asm/mach-imx/regs-bch.h>
+#include <asm/mach-imx/regs-gpmi.h>
+#include <asm/arch/sys_proto.h>
+#include <mxs_nand.h>
 
 #define	MXS_NAND_DMA_DESCRIPTOR_COUNT		4
 
-#if defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || \
-	defined(CONFIG_IMX8M)
+#if (defined(CONFIG_MX6) || defined(CONFIG_MX7) || defined(CONFIG_IMX8) || defined(CONFIG_IMX8M))
 #define	MXS_NAND_CHUNK_DATA_CHUNK_SIZE_SHIFT	2
 #else
 #define	MXS_NAND_CHUNK_DATA_CHUNK_SIZE_SHIFT	0
@@ -116,14 +113,13 @@ static uint32_t mxs_nand_aux_status_offset(void)
 	return (MXS_NAND_METADATA_SIZE + 0x3) & ~0x3;
 }
 
-static inline bool mxs_nand_bbm_in_data_chunk(struct bch_geometry *geo,
-					      struct mtd_info *mtd,
-					      unsigned int *chunk_num)
+static inline bool mxs_nand_bbm_in_data_chunk(struct bch_geometry *geo, struct mtd_info *mtd,
+		unsigned int *chunk_num)
 {
 	unsigned int i, j;
 
 	if (geo->ecc_chunk0_size != geo->ecc_chunkn_size) {
-		dev_err(mtd->dev, "The size of chunk0 must equal to chunkn\n");
+		dev_err(this->dev, "The size of chunk0 must equal to chunkn\n");
 		return false;
 	}
 
@@ -136,9 +132,9 @@ static inline bool mxs_nand_bbm_in_data_chunk(struct bch_geometry *geo,
 				geo->ecc_chunkn_size * 8) * i;
 
 	if (j < geo->ecc_chunkn_size * 8) {
-		*chunk_num = i + 1;
-		dev_dbg(mtd->dev, "Set ecc to %d and bbm in chunk %d\n",
-			geo->ecc_strength, *chunk_num);
+		*chunk_num = i+1;
+		dev_dbg(this->dev, "Set ecc to %d and bbm in chunk %d\n",
+				geo->ecc_strength, *chunk_num);
 		return true;
 	}
 
@@ -195,7 +191,6 @@ static inline int mxs_nand_legacy_calc_ecc_layout(struct bch_geometry *geo,
 	struct nand_chip *chip = mtd_to_nand(mtd);
 	struct mxs_nand_info *nand_info = nand_get_controller_data(chip);
 	unsigned int block_mark_bit_offset;
-	int corr, ds_corr;
 
 	/* The default for the length of Galois Field. */
 	geo->gf_len = 13;
@@ -225,17 +220,6 @@ static inline int mxs_nand_legacy_calc_ecc_layout(struct bch_geometry *geo,
 
 	geo->ecc_strength = min(round_down(geo->ecc_strength, 2),
 				nand_info->max_ecc_strength_supported);
-
-	/* check ecc strength, same as nand_ecc_is_strong_enough() did*/
-	if (chip->ecc_step_ds) {
-		corr = mtd->writesize * geo->ecc_strength /
-		       geo->ecc_chunkn_size;
-		ds_corr = mtd->writesize * chip->ecc_strength_ds /
-		       chip->ecc_step_ds;
-		if (corr < ds_corr ||
-		    geo->ecc_strength < chip->ecc_strength_ds)
-			return -EINVAL;
-	}
 
 	block_mark_bit_offset = mtd->writesize * 8 -
 		(geo->ecc_strength * geo->gf_len * (geo->ecc_chunk_count - 1)
@@ -630,14 +614,14 @@ static uint8_t mxs_nand_read_byte(struct mtd_info *mtd)
 }
 
 static bool mxs_nand_erased_page(struct mtd_info *mtd, struct nand_chip *nand,
-				 u8 *buf, int chunk, int page)
+				 uint8_t *buf, int chunk, int page)
 {
 	struct mxs_nand_info *nand_info = nand_get_controller_data(nand);
 	struct bch_geometry *geo = &nand_info->bch_geometry;
 	unsigned int flip_bits = 0, flip_bits_noecc = 0;
 	unsigned int threshold;
 	unsigned int base = geo->ecc_chunkn_size * chunk;
-	u32 *dma_buf = (u32 *)buf;
+	uint32_t *dma_buf = (uint32_t *)buf;
 	int i;
 
 	threshold = geo->gf_len / 2;
@@ -795,8 +779,8 @@ static int mxs_nand_ecc_read_page(struct mtd_info *mtd, struct nand_chip *nand,
 
 		if (status[i] == 0xff) {
 			if (!nand_info->en_randomizer &&
-			    (is_mx6dqp() || is_mx7() || is_mx6ul() ||
-			     is_imx8() || is_imx8m()))
+			    (is_mx6dqp() || is_mx7() || is_mx6ul()
+			    || is_imx8() || is_imx8m()))
 				if (readl(&bch_regs->hw_bch_debug1))
 					flag = 1;
 			continue;
@@ -1123,7 +1107,6 @@ static int mxs_nand_set_geometry(struct mtd_info *mtd, struct bch_geometry *geo)
 	struct nand_chip *chip = mtd_to_nand(mtd);
 	struct nand_chip *nand = mtd_to_nand(mtd);
 	struct mxs_nand_info *nand_info = nand_get_controller_data(nand);
-	int err;
 
 	if (chip->ecc_strength_ds > nand_info->max_ecc_strength_supported) {
 		printf("unsupported NAND chip, minimum ecc required %d\n"
@@ -1131,57 +1114,19 @@ static int mxs_nand_set_geometry(struct mtd_info *mtd, struct bch_geometry *geo)
 		return -EINVAL;
 	}
 
-	/* use the legacy bch setting by default */
-	if ((!nand_info->use_minimum_ecc && mtd->oobsize < 1024) ||
-	    !(chip->ecc_strength_ds > 0 && chip->ecc_step_ds > 0)) {
-		dev_dbg(mtd->dev, "use legacy bch geometry\n");
-		err = mxs_nand_legacy_calc_ecc_layout(geo, mtd);
-		if (!err)
-			return 0;
+	if ((!(chip->ecc_strength_ds > 0 && chip->ecc_step_ds > 0) &&
+			(mtd->oobsize < 1024)) || nand_info->legacy_bch_geometry) {
+		dev_warn(this->dev, "use legacy bch geometry\n");
+		return mxs_nand_legacy_calc_ecc_layout(geo, mtd);
 	}
 
-	/* for large oob nand */
-	if (mtd->oobsize > 1024) {
-		dev_dbg(mtd->dev, "use large oob bch geometry\n");
-		err = mxs_nand_calc_ecc_for_large_oob(geo, mtd);
-		if (!err)
-			return 0;
-	}
+	if (mtd->oobsize > 1024 || chip->ecc_step_ds < mtd->oobsize)
+		return mxs_nand_calc_ecc_for_large_oob(geo, mtd);
 
-	/* otherwise use the minimum ecc nand chips required */
-	dev_dbg(mtd->dev, "use minimum ecc bch geometry\n");
-	err = mxs_nand_calc_ecc_layout_by_info(geo, mtd, chip->ecc_strength_ds,
-					       chip->ecc_step_ds);
+	return mxs_nand_calc_ecc_layout_by_info(geo, mtd,
+				chip->ecc_strength_ds, chip->ecc_step_ds);
 
-	if (err)
-		dev_err(mtd->dev, "none of the bch geometry setting works\n");
-
-	return err;
-}
-
-void mxs_nand_dump_geo(struct mtd_info *mtd)
-{
-	struct nand_chip *nand = mtd_to_nand(mtd);
-	struct mxs_nand_info *nand_info = nand_get_controller_data(nand);
-	struct bch_geometry *geo = &nand_info->bch_geometry;
-
-	dev_dbg(mtd->dev, "BCH Geometry :\n"
-		"GF Length\t\t: %u\n"
-		"ECC Strength\t\t: %u\n"
-		"ECC for Meta\t\t: %u\n"
-		"ECC Chunk0 Size\t\t: %u\n"
-		"ECC Chunkn Size\t\t: %u\n"
-		"ECC Chunk Count\t\t: %u\n"
-		"Block Mark Byte Offset\t: %u\n"
-		"Block Mark Bit Offset\t: %u\n",
-		geo->gf_len,
-		geo->ecc_strength,
-		geo->ecc_for_meta,
-		geo->ecc_chunk0_size,
-		geo->ecc_chunkn_size,
-		geo->ecc_chunk_count,
-		geo->block_mark_byte_offset,
-		geo->block_mark_bit_offset);
+	return 0;
 }
 
 /*
@@ -1209,8 +1154,6 @@ int mxs_nand_setup_ecc(struct mtd_info *mtd)
 	ret = mxs_nand_set_geometry(mtd, geo);
 	if (ret)
 		return ret;
-
-	mxs_nand_dump_geo(mtd);
 
 	/* Configure BCH and set NFC geometry */
 	mxs_reset_block(&bch_regs->hw_bch_ctrl_reg);
@@ -1306,6 +1249,13 @@ int mxs_nand_alloc_buffers(struct mxs_nand_info *nand_info)
 static int mxs_nand_init_dma(struct mxs_nand_info *info)
 {
 	int i = 0, j, ret = 0;
+
+#ifdef CONFIG_MX6
+	if (check_module_fused(MX6_MODULE_GPMI)) {
+		printf("NAND GPMI@0x%x is fused, disable it\n", (u32)info->gpmi_regs);
+		return -EPERM;
+	}
+#endif
 
 	info->desc = malloc(sizeof(struct mxs_dma_desc *) *
 				MXS_NAND_DMA_DESCRIPTOR_COUNT);
@@ -1432,7 +1382,7 @@ int mxs_nand_init_ctrl(struct mxs_nand_info *nand_info)
 	nand->options |= NAND_NO_SUBPAGE_WRITE;
 
 	if (nand_info->dev)
-		nand->flash_node = dev_ofnode(nand_info->dev);
+		nand->flash_node = dev_of_offset(nand_info->dev);
 
 	nand->cmd_ctrl		= mxs_nand_cmd_ctrl;
 
@@ -1539,7 +1489,7 @@ void mxs_nand_get_layout(struct mtd_info *mtd, struct mxs_nand_layout *l)
 	l->eccn = (tmp & BCH_FLASHLAYOUT1_ECCN_MASK) >>
 			BCH_FLASHLAYOUT1_ECCN_OFFSET;
 	l->gf_len = (tmp & BCH_FLASHLAYOUT1_GF13_0_GF14_1_MASK) >>
-		     BCH_FLASHLAYOUT1_GF13_0_GF14_1_OFFSET;
+			BCH_FLASHLAYOUT1_GF13_0_GF14_1_OFFSET;
 }
 
 /*

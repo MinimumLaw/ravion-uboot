@@ -13,7 +13,6 @@
 #include <asm/byteorder.h>
 #include <asm/io.h>
 #include <usbdevice.h>
-#include <linux/delay.h>
 #include <usb/pxa27x_udc.h>
 #include <usb/udc.h>
 
@@ -472,7 +471,7 @@ void udc_irq(void)
  * so using '|=' isn't safe as it may ack an interrupt.
  */
 #define UDCCR_OEN		(1 << 31)   /* On-the-Go Enable */
-#define UDCCR_MASK_BITS		(UDCCR_OEN | UDCCR_UDE)
+#define UDCCR_MASK_BITS     	(UDCCR_OEN | UDCCR_UDE)
 
 static inline void udc_set_mask_UDCCR(int mask)
 {

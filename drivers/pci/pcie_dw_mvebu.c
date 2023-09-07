@@ -12,12 +12,9 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <pci.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm-generic/gpio.h>
-#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -115,7 +112,6 @@ struct pcie_dw_mvebu {
 	int first_busno;
 
 	/* IO and MEM PCI regions */
-	int region_count;
 	struct pci_region io;
 	struct pci_region mem;
 };
@@ -268,10 +264,9 @@ static int pcie_dw_mvebu_read_config(const struct udevice *bus, pci_dev_t bdf,
 	debug("(addr,val)=(0x%04x, 0x%08lx)\n", offset, value);
 	*valuep = pci_conv_32_to_size(value, offset, size);
 
-	if (pcie->region_count > 1)
-		pcie_dw_prog_outbound_atu(pcie, PCIE_ATU_REGION_INDEX0,
-					  PCIE_ATU_TYPE_IO, pcie->io.phys_start,
-					  pcie->io.bus_start, pcie->io.size);
+	pcie_dw_prog_outbound_atu(pcie, PCIE_ATU_REGION_INDEX0,
+				  PCIE_ATU_TYPE_IO, pcie->io.phys_start,
+				  pcie->io.bus_start, pcie->io.size);
 
 	return 0;
 }
@@ -314,10 +309,9 @@ static int pcie_dw_mvebu_write_config(struct udevice *bus, pci_dev_t bdf,
 	value = pci_conv_size_to_32(old, value, offset, size);
 	writel(value, va_address);
 
-	if (pcie->region_count > 1)
-		pcie_dw_prog_outbound_atu(pcie, PCIE_ATU_REGION_INDEX0,
-					  PCIE_ATU_TYPE_IO, pcie->io.phys_start,
-					  pcie->io.bus_start, pcie->io.size);
+	pcie_dw_prog_outbound_atu(pcie, PCIE_ATU_REGION_INDEX0,
+				  PCIE_ATU_TYPE_IO, pcie->io.phys_start,
+				  pcie->io.bus_start, pcie->io.size);
 
 	return 0;
 }
@@ -504,36 +498,26 @@ static int pcie_dw_mvebu_probe(struct udevice *dev)
 	debug("PCIE Reset on GPIO support is missing\n");
 #endif /* DM_GPIO */
 
-	pcie->first_busno = dev_seq(dev);
+	pcie->first_busno = dev->seq;
 
 	/* Don't register host if link is down */
 	if (!pcie_dw_mvebu_pcie_link_up(pcie->ctrl_base, LINK_SPEED_GEN_3)) {
-		printf("PCIE-%d: Link down\n", dev_seq(dev));
+		printf("PCIE-%d: Link down\n", dev->seq);
 	} else {
-		printf("PCIE-%d: Link up (Gen%d-x%d, Bus%d)\n", dev_seq(dev),
+		printf("PCIE-%d: Link up (Gen%d-x%d, Bus%d)\n", dev->seq,
 		       pcie_dw_get_link_speed(pcie->ctrl_base),
 		       pcie_dw_get_link_width(pcie->ctrl_base),
 		       hose->first_busno);
 	}
 
-	pcie->region_count = hose->region_count - CONFIG_NR_DRAM_BANKS;
-
 	/* Store the IO and MEM windows settings for future use by the ATU */
-	if (pcie->region_count > 1) {
-		/* IO base */
-		pcie->io.phys_start = hose->regions[0].phys_start;
-		/* IO_bus_addr */
-		pcie->io.bus_start  = hose->regions[0].bus_start;
-		/* IO size */
-		pcie->io.size       = hose->regions[0].size;
-	}
+	pcie->io.phys_start = hose->regions[0].phys_start; /* IO base */
+	pcie->io.bus_start  = hose->regions[0].bus_start;  /* IO_bus_addr */
+	pcie->io.size	    = hose->regions[0].size;	   /* IO size */
 
-	/* MEM base */
-	pcie->mem.phys_start = hose->regions[pcie->region_count - 1].phys_start;
-	/* MEM_bus_addr */
-	pcie->mem.bus_start  = hose->regions[pcie->region_count - 1].bus_start;
-	/* MEM size */
-	pcie->mem.size       = hose->regions[pcie->region_count - 1].size;
+	pcie->mem.phys_start = hose->regions[1].phys_start; /* MEM base */
+	pcie->mem.bus_start  = hose->regions[1].bus_start;  /* MEM_bus_addr */
+	pcie->mem.size	     = hose->regions[1].size;	    /* MEM size */
 
 	pcie_dw_prog_outbound_atu(pcie, PCIE_ATU_REGION_INDEX1,
 				  PCIE_ATU_TYPE_MEM, pcie->mem.phys_start,
@@ -549,7 +533,7 @@ static int pcie_dw_mvebu_probe(struct udevice *dev)
 }
 
 /**
- * pcie_dw_mvebu_of_to_plat() - Translate from DT to device state
+ * pcie_dw_mvebu_ofdata_to_platdata() - Translate from DT to device state
  *
  * @dev: A pointer to the device being operated on
  *
@@ -559,7 +543,7 @@ static int pcie_dw_mvebu_probe(struct udevice *dev)
  *
  * Return: 0 on success, else -EINVAL
  */
-static int pcie_dw_mvebu_of_to_plat(struct udevice *dev)
+static int pcie_dw_mvebu_ofdata_to_platdata(struct udevice *dev)
 {
 	struct pcie_dw_mvebu *pcie = dev_get_priv(dev);
 
@@ -592,7 +576,7 @@ U_BOOT_DRIVER(pcie_dw_mvebu) = {
 	.id			= UCLASS_PCI,
 	.of_match		= pcie_dw_mvebu_ids,
 	.ops			= &pcie_dw_mvebu_ops,
-	.of_to_plat	= pcie_dw_mvebu_of_to_plat,
+	.ofdata_to_platdata	= pcie_dw_mvebu_ofdata_to_platdata,
 	.probe			= pcie_dw_mvebu_probe,
-	.priv_auto	= sizeof(struct pcie_dw_mvebu),
+	.priv_auto_alloc_size	= sizeof(struct pcie_dw_mvebu),
 };

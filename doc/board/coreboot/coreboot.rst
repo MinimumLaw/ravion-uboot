@@ -40,34 +40,3 @@ To enable video you must enable these options in coreboot:
 At present it seems that for Minnowboard Max, coreboot does not pass through
 the video information correctly (it always says the resolution is 0x0). This
 works correctly for link though.
-
-64-bit U-Boot
--------------
-
-In addition to the 32-bit 'coreboot' build there is a 'coreboot64' build. This
-produces an image which can be booted from coreboot (32-bit). Internally it
-works by using a 32-bit SPL binary to switch to 64-bit for running U-Boot. It
-can be useful for running UEFI applications, for example.
-
-This has only been lightly tested.
-
-
-Memory map
-----------
-
-  ==========  ==================================================================
-     Address  Region at that address
-  ==========  ==================================================================
-    ffffffff  Top of ROM (and last byte of 32-bit address space)
-    7a9fd000  Typical top of memory available to U-Boot
-              (use cbsysinfo to see where memory range 'table' starts)
-    10000000  Memory reserved by coreboot for mapping PCI devices
-              (typical size 2151000, includes framebuffer)
-     1920000  CONFIG_SYS_CAR_ADDR, fake Cache-as-RAM memory, used during startup
-     1110000  CONFIG_SYS_TEXT_BASE (start address of U-Boot code, before reloc)
-      110000  CONFIG_BLOBLIST_ADDR (before being relocated)
-      100000  CONFIG_PRE_CON_BUF_ADDR
-       f0000  ACPI tables set up by U-Boot
-              (typically redirects to 7ab10030 or similar)
-         500  Location of coreboot sysinfo table, used during startup
-  ==========  ==================================================================

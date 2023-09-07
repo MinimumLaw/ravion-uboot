@@ -16,7 +16,6 @@
 #include <config.h>
 
 #include <dm/device.h>
-#include <linux/bitops.h>
 #include <linux/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/flashchip.h>
@@ -55,7 +54,7 @@ void nand_wait_ready(struct mtd_info *mtd);
  * is supported now. If you add a chip with bigger oobsize/page
  * adjust this accordingly.
  */
-#define NAND_MAX_OOBSIZE       1664
+#define NAND_MAX_OOBSIZE       1872
 #define NAND_MAX_PAGESIZE      16384
 
 /*
@@ -891,7 +890,7 @@ struct nand_chip {
 	void __iomem *IO_ADDR_R;
 	void __iomem *IO_ADDR_W;
 
-	ofnode flash_node;
+	int flash_node;
 
 	uint8_t (*read_byte)(struct mtd_info *mtd);
 	u16 (*read_word)(struct mtd_info *mtd);
@@ -945,7 +944,7 @@ struct nand_chip {
 	int jedec_version;
 	struct nand_onfi_params	onfi_params;
 	struct nand_jedec_params jedec_params;
-
+ 
 	struct nand_data_interface *data_interface;
 
 	int read_retries;
@@ -973,12 +972,12 @@ struct nand_chip {
 static inline void nand_set_flash_node(struct nand_chip *chip,
 				       ofnode node)
 {
-	chip->flash_node = node;
+	chip->flash_node = ofnode_to_offset(node);
 }
 
 static inline ofnode nand_get_flash_node(struct nand_chip *chip)
 {
-	return chip->flash_node;
+	return offset_to_ofnode(chip->flash_node);
 }
 
 static inline struct nand_chip *mtd_to_nand(struct mtd_info *mtd)

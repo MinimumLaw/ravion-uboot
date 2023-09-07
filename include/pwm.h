@@ -10,16 +10,10 @@
 #ifndef _pwm_h_
 #define _pwm_h_
 
-struct udevice;
-
 /* struct pwm_ops: Operations for the PWM uclass */
 struct pwm_ops {
 	/**
 	 * set_config() - Set the PWM configuration
-	 *
-	 * Change both the PWM device's period and it's duty period if
-	 * possible. Otherwise, set an appropriate duty period that best
-	 * matches the given period_ns / duty_ns ratio for the device.
 	 *
 	 * @dev:	PWM device to update
 	 * @channel:	PWM channel to update
@@ -55,15 +49,11 @@ struct pwm_ops {
 /**
  * pwm_set_config() - Set the PWM configuration
  *
- * Change both the PWM device's period and it's duty period if
- * possible. Otherwise, set an appropriate duty period that best
- * matches the given period_ns / duty_ns ratio for the device.
- *
  * @dev:	PWM device to update
  * @channel:	PWM channel to update
  * @period_ns:	PWM period in nanoseconds
  * @duty_ns:	PWM duty period in nanoseconds
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int pwm_set_config(struct udevice *dev, uint channel, uint period_ns,
 		   uint duty_ns);
@@ -74,7 +64,7 @@ int pwm_set_config(struct udevice *dev, uint channel, uint period_ns,
  * @dev:	PWM device to update
  * @channel:	PWM channel to update
  * @enable:	true to enable, false to disable
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int pwm_set_enable(struct udevice *dev, uint channel, bool enable);
 
@@ -84,7 +74,7 @@ int pwm_set_enable(struct udevice *dev, uint channel, bool enable);
  * @dev:	PWM device to update
  * @channel:	PWM channel to update
  * @polarity:	true to invert, false to keep normal polarity
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int pwm_set_invert(struct udevice *dev, uint channel, bool polarity);
 

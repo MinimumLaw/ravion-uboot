@@ -22,6 +22,4 @@ source "fs/cramfs/Kconfig"
 
 source "fs/yaffs2/Kconfig"
 
-source "fs/squashfs/Kconfig"
-
 endmenu

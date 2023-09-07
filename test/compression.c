@@ -7,13 +7,11 @@
 #include <bootm.h>
 #include <command.h>
 #include <gzip.h>
-#include <image.h>
-#include <log.h>
+#include <lz4.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <asm/io.h>
 
-#include <u-boot/lz4.h>
 #include <u-boot/zlib.h>
 #include <bzlib.h>
 
@@ -164,7 +162,7 @@ static int compress_using_bzip2(struct unit_test_state *uts,
 {
 	/* There is no bzip2 compression in u-boot, so fake it. */
 	ut_asserteq(in_size, strlen(plain));
-	ut_asserteq_mem(plain, in, in_size);
+	ut_asserteq(0, memcmp(plain, in, in_size));
 
 	if (bzip2_compressed_size > out_max)
 		return -1;
@@ -199,7 +197,7 @@ static int compress_using_lzma(struct unit_test_state *uts,
 {
 	/* There is no lzma compression in u-boot, so fake it. */
 	ut_asserteq(in_size,  strlen(plain));
-	ut_asserteq_mem(plain, in, in_size);
+	ut_asserteq(0, memcmp(plain, in, in_size));
 
 	if (lzma_compressed_size > out_max)
 		return -1;
@@ -233,7 +231,7 @@ static int compress_using_lzo(struct unit_test_state *uts,
 {
 	/* There is no lzo compression in u-boot, so fake it. */
 	ut_asserteq(in_size,  strlen(plain));
-	ut_asserteq_mem(plain, in, in_size);
+	ut_asserteq(0, memcmp(plain, in, in_size));
 
 	if (lzo_compressed_size > out_max)
 		return -1;
@@ -268,7 +266,7 @@ static int compress_using_lz4(struct unit_test_state *uts,
 {
 	/* There is no lz4 compression in u-boot, so fake it. */
 	ut_asserteq(in_size,  strlen(plain));
-	ut_asserteq_mem(plain, in, in_size);
+	ut_asserteq(0, memcmp(plain, in, in_size));
 
 	if (lz4_compressed_size > out_max)
 		return -1;
@@ -457,7 +455,7 @@ static int compress_using_none(struct unit_test_state *uts,
  *
  * @comp_type:	Compression type to test
  * @compress:	Our function to compress data
- * Return: 0 if OK, non-zero on failure
+ * @return 0 if OK, non-zero on failure
  */
 static int run_bootm_test(struct unit_test_state *uts, int comp_type,
 			  mutate_func compress)
@@ -536,11 +534,11 @@ static int compression_test_bootm_none(struct unit_test_state *uts)
 }
 COMPRESSION_TEST(compression_test_bootm_none, 0);
 
-int do_ut_compression(struct cmd_tbl *cmdtp, int flag, int argc,
-		      char *const argv[])
+int do_ut_compression(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	struct unit_test *tests = UNIT_TEST_SUITE_START(compression_test);
-	const int n_ents = UNIT_TEST_SUITE_COUNT(compression_test);
+	struct unit_test *tests = ll_entry_start(struct unit_test,
+						 compression_test);
+	const int n_ents = ll_entry_count(struct unit_test, compression_test);
 
 	return cmd_ut_category("compression", "compression_test_",
 			       tests, n_ents, argc, argv);

@@ -4,11 +4,9 @@
  */
 
 #include <common.h>
-#include <asm-offsets.h>
 #include <clock_legacy.h>
 #include <mpc83xx.h>
 #include <time.h>
-#include <asm/global_data.h>
 
 #include "lblaw/lblaw.h"
 #include "elbc/elbc.h"
@@ -102,5 +100,5 @@ ulong get_bus_freq(ulong dummy)
 	volatile immap_t *im = (immap_t *) CONFIG_SYS_IMMR;
 	u8 spmf = (im->clk.spmr & SPMR_SPMF) >> SPMR_SPMF_SHIFT;
 
-	return get_board_sys_clk() * spmf;
+	return CONFIG_SYS_CLK_FREQ * spmf;
 }

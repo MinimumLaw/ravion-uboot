@@ -7,15 +7,10 @@
 #include <debug_uart.h>
 #include <dm.h>
 #include <hang.h>
-#include <image.h>
-#include <init.h>
-#include <log.h>
 #include <ram.h>
 #include <spl.h>
 #include <asm/arch-rockchip/bootrom.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -54,10 +49,7 @@ u32 spl_boot_device(void)
 
 #if defined(CONFIG_TARGET_CHROMEBOOK_JERRY) || \
 		defined(CONFIG_TARGET_CHROMEBIT_MICKEY) || \
-		defined(CONFIG_TARGET_CHROMEBOOK_MINNIE) || \
-		defined(CONFIG_TARGET_CHROMEBOOK_SPEEDY) || \
-		defined(CONFIG_TARGET_CHROMEBOOK_BOB) || \
-		defined(CONFIG_TARGET_CHROMEBOOK_KEVIN)
+		defined(CONFIG_TARGET_CHROMEBOOK_MINNIE)
 	return BOOT_DEVICE_SPI;
 #endif
 	if (CONFIG_IS_ENABLED(ROCKCHIP_BACK_TO_BROM))
@@ -66,7 +58,7 @@ u32 spl_boot_device(void)
 	return boot_device;
 }
 
-u32 spl_mmc_boot_mode(const u32 boot_device)
+u32 spl_boot_mode(const u32 boot_device)
 {
 	return MMCSD_MODE_RAW;
 }
@@ -111,6 +103,9 @@ __weak int arch_cpu_init(void)
 void board_init_f(ulong dummy)
 {
 	int ret;
+#if !defined(CONFIG_TPL) || defined(CONFIG_SPL_OS_BOOT)
+	struct udevice *dev;
+#endif
 
 #ifdef CONFIG_DEBUG_UART
 	/*
@@ -140,15 +135,23 @@ void board_init_f(ulong dummy)
 	/* Init ARM arch timer in arch/arm/cpu/armv7/arch_timer.c */
 	timer_init();
 #endif
-#if !defined(CONFIG_TPL) || defined(CONFIG_SPL_RAM)
+#if !defined(CONFIG_TPL) || defined(CONFIG_SPL_OS_BOOT)
 	debug("\nspl:init dram\n");
-	ret = dram_init();
+	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
 	if (ret) {
 		printf("DRAM init failed: %d\n", ret);
 		return;
 	}
-	gd->ram_top = gd->ram_base + get_effective_memsize();
-	gd->ram_top = board_get_usable_ram_top(gd->ram_size);
 #endif
 	preloader_console_init();
 }
+
+#ifdef CONFIG_SPL_LOAD_FIT
+int __weak board_fit_config_name_match(const char *name)
+{
+	/* Just empty function now - can't decide what to choose */
+	debug("%s: %s\n", __func__, name);
+
+	return 0;
+}
+#endif

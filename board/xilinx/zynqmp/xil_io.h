@@ -6,7 +6,6 @@
 /* FIXME remove this when vivado is fixed */
 #include <asm/io.h>
 #include <common.h>
-#include <linux/delay.h>
 
 #define xil_printf(...)
 

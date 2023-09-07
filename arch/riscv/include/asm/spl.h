@@ -28,11 +28,4 @@ enum {
 	BOOT_DEVICE_NONE
 };
 
-/**
- * spl_board_init_f() - initialize board in the SPL phase
- *
- * Return: 0 if succeeded, -ve on error
- */
-int spl_board_init_f(void);
-
 #endif

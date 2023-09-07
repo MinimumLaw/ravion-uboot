@@ -6,8 +6,6 @@
 obj-y += mmc.o
 obj-$(CONFIG_$(SPL_)DM_MMC) += mmc-uclass.o
 obj-$(CONFIG_$(SPL_)MMC_WRITE) += mmc_write.o
-obj-$(CONFIG_MMC_PWRSEQ) += mmc-pwrseq.o
-obj-$(CONFIG_MMC_SDHCI_ADMA_HELPERS) += sdhci-adma.o
 
 ifndef CONFIG_$(SPL_)BLK
 obj-y += mmc_legacy.o
@@ -38,17 +36,14 @@ obj-$(CONFIG_MVEBU_MMC) += mvebu_mmc.o
 obj-$(CONFIG_MMC_OMAP_HS)		+= omap_hsmmc.o
 obj-$(CONFIG_MMC_MXC)			+= mxcmmc.o
 obj-$(CONFIG_MMC_MXS)			+= mxsmmc.o
-obj-$(CONFIG_MMC_OCTEONTX)		+= octeontx_hsmmc.o
-obj-$(CONFIG_MMC_OWL)			+= owl_mmc.o
 obj-$(CONFIG_MMC_PCI)			+= pci_mmc.o
 obj-$(CONFIG_PXA_MMC_GENERIC) += pxa_mmc_gen.o
-obj-$(CONFIG_$(SPL_TPL_)SUPPORT_EMMC_RPMB) += rpmb.o
+obj-$(CONFIG_SUPPORT_EMMC_RPMB) += rpmb.o
 obj-$(CONFIG_MMC_SANDBOX)		+= sandbox_mmc.o
 obj-$(CONFIG_SH_MMCIF) += sh_mmcif.o
 obj-$(CONFIG_SH_SDHI) += sh_sdhi.o
 obj-$(CONFIG_STM32_SDMMC2) += stm32_sdmmc2.o
 obj-$(CONFIG_JZ47XX_MMC) += jz_mmc.o
-obj-$(CONFIG_NEXELL_DWMMC) += nexell_dw_mmc.o
 
 # SDHCI
 obj-$(CONFIG_MMC_SDHCI)			+= sdhci.o
@@ -66,16 +61,14 @@ obj-$(CONFIG_MMC_SDHCI_PIC32)		+= pic32_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_ROCKCHIP)	+= rockchip_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_S5P)		+= s5p_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_SPEAR)		+= spear_sdhci.o
-obj-$(CONFIG_MMC_SDHCI_STI)		+= sti_sdhci.o
+obj-$(CONFIG_MMC_SDHCI_STI) 		+= sti_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_TANGIER)		+= tangier_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_TEGRA)		+= tegra_mmc.o
 obj-$(CONFIG_MMC_SDHCI_XENON)		+= xenon_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_ZYNQ)		+= zynq_sdhci.o
 
 obj-$(CONFIG_MMC_SUNXI)			+= sunxi_mmc.o
-obj-$(CONFIG_MMC_PITON)			+= piton_mmc.o
 obj-$(CONFIG_MMC_UNIPHIER)		+= tmio-common.o uniphier-sd.o
 obj-$(CONFIG_RENESAS_SDHI)		+= tmio-common.o renesas-sdhi.o
 obj-$(CONFIG_MMC_BCM2835)		+= bcm2835_sdhost.o
 obj-$(CONFIG_MMC_MTK)			+= mtk-sd.o
-obj-$(CONFIG_MMC_SDHCI_F_SDH30)		+= f_sdh30.o

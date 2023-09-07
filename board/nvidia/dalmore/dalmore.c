@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/gp_padctrl.h>
 #include "pinmux-config-dalmore.h"

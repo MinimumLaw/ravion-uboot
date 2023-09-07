@@ -1,4 +1,30 @@
 /*
+ * High Level Configuration Options
+ */
+#define CONFIG_KM8321	/* Keymile PBEC8321 board specific */
+
+/*
+ * System Clock Setup
+ */
+#define CONFIG_83XX_CLKIN		66000000
+#define CONFIG_SYS_CLK_FREQ		66000000
+#define CONFIG_83XX_PCICLK		66000000
+
+/*
+ * QE UEC ethernet configuration
+ */
+#define CONFIG_UEC_ETH1		/* GETH1 */
+#define UEC_VERBOSE_DEBUG	1
+
+#define CONFIG_SYS_UEC1_UCC_NUM	3	/* UCC4 */
+#define CONFIG_SYS_UEC1_RX_CLK		QE_CLK_NONE /* not used in RMII Mode */
+#define CONFIG_SYS_UEC1_TX_CLK		QE_CLK17
+#define CONFIG_SYS_UEC1_ETH_TYPE	FAST_ETH
+#define CONFIG_SYS_UEC1_PHY_ADDR	0
+#define CONFIG_SYS_UEC1_INTERFACE_TYPE	PHY_INTERFACE_MODE_RMII
+#define CONFIG_SYS_UEC1_INTERFACE_SPEED	100
+
+/*
  * System IO Config
  */
 #define CONFIG_SYS_SICRL	SICRL_IRQ_CKS
@@ -58,3 +84,7 @@
 
 #define CONFIG_SYS_KMBEC_FPGA_BASE	0xE8000000
 #define CONFIG_SYS_KMBEC_FPGA_SIZE	128
+
+/* EEprom support */
+#define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	1
+

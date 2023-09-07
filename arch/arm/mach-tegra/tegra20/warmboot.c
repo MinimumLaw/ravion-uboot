@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/errno.h>
 #include <asm/arch/clock.h>

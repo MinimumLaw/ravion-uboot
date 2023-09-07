@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2015 Freescale Semiconductor, Inc.
- * Copyright 2021 NXP
  */
 
 #include <common.h>
 #include <dm.h>
-#include <flash.h>
 #include <fsl_validate.h>
 #include <fsl_secboot_err.h>
 #include <fsl_sfp.h>
 #include <fsl_sec.h>
 #include <command.h>
-#include <log.h>
 #include <malloc.h>
 #include <u-boot/rsa-mod-exp.h>
 #include <hash.h>
@@ -501,6 +498,7 @@ static int calc_img_key_hash(struct fsl_secboot_img_priv *img)
 	ret = algo->hash_init(algo, &ctx);
 	if (ret)
 		return ret;
+
 	/* Update hash for ESBC key */
 #ifdef CONFIG_KEY_REVOCATION
 	if (check_srk(img)) {
@@ -515,12 +513,12 @@ static int calc_img_key_hash(struct fsl_secboot_img_priv *img)
 			img->img_key, img->key_len, 1);
 	if (ret)
 		return ret;
+
 	/* Copy hash at destination buffer */
 	ret = algo->hash_finish(algo, ctx, hash_val, algo->digest_size);
-	if (ret) {
-		free(ctx);
+	if (ret)
 		return ret;
-	}
+
 	for (i = 0; i < SHA256_BYTES; i++)
 		img->img_key_hash[i] = hash_val[i];
 
@@ -583,10 +581,9 @@ static int calc_esbchdr_esbc_hash(struct fsl_secboot_img_priv *img)
 #endif
 	if (ret)
 		return ret;
-	if (!key_hash) {
-		free(ctx);
+	if (!key_hash)
 		return ERROR_KEY_TABLE_NOT_FOUND;
-	}
+
 	/* Update hash for actual Image */
 	ret = algo->hash_update(algo, ctx,
 		(u8 *)(*(img->img_addr_ptr)), img->img_size, 1);
@@ -595,10 +592,9 @@ static int calc_esbchdr_esbc_hash(struct fsl_secboot_img_priv *img)
 
 	/* Copy hash at destination buffer */
 	ret = algo->hash_finish(algo, ctx, hash_val, algo->digest_size);
-	if (ret) {
-		free(ctx);
+	if (ret)
 		return ret;
-	}
+
 	return 0;
 }
 
@@ -769,7 +765,7 @@ static inline int str2longbe(const char *p, ulong *num)
 	if (!p) {
 		return 0;
 	} else {
-		tmp = hextoul(p, &endptr);
+		tmp = simple_strtoul(p, &endptr, 16);
 		if (sizeof(ulong) == 4)
 			*num = cpu_to_be32(tmp);
 		else

@@ -5,7 +5,6 @@
 
 #include <common.h>
 #include <fdtdec.h>
-#include <init.h>
 
 int board_init(void)
 {

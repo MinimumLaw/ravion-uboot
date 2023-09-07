@@ -28,7 +28,7 @@ extern struct serial_device *default_serial_console(void);
 
 #if	defined(CONFIG_MPC83xx) || defined(CONFIG_MPC85xx) || \
 	defined(CONFIG_MPC86xx) || \
-	defined(CONFIG_ARCH_TEGRA) || defined(CONFIG_SYS_COREBOOT) || \
+	defined(CONFIG_TEGRA) || defined(CONFIG_SYS_COREBOOT) || \
 	defined(CONFIG_MICROBLAZE)
 extern struct serial_device serial0_device;
 extern struct serial_device serial1_device;
@@ -42,10 +42,10 @@ extern struct serial_device eserial5_device;
 extern struct serial_device eserial6_device;
 
 extern void serial_register(struct serial_device *);
+extern void serial_initialize(void);
 extern void serial_stdio_init(void);
 extern int serial_assign(const char *name);
 extern void serial_reinit_all(void);
-int serial_initialize(void);
 
 /* For usbtty */
 #ifdef CONFIG_USB_TTY
@@ -139,7 +139,6 @@ enum adr_space_type {
  * @reg_width:	size (in bytes) of the IO accesses to the registers
  * @reg_offset:	offset to apply to the @addr from the start of the registers
  * @reg_shift:	quantity to shift the register offsets by
- * @clock:	UART base clock speed in Hz
  * @baudrate:	baud rate
  */
 struct serial_device_info {
@@ -149,12 +148,10 @@ struct serial_device_info {
 	u8 reg_width;
 	u8 reg_offset;
 	u8 reg_shift;
-	unsigned int clock;
 	unsigned int baudrate;
 };
 
 #define SERIAL_DEFAULT_ADDRESS	0xBADACCE5
-#define SERIAL_DEFAULT_CLOCK	(16 * 115200)
 
 /**
  * struct struct dm_serial_ops - Driver model serial operations
@@ -186,6 +183,14 @@ struct dm_serial_ops {
 	 * @return character (0..255), -ve on error
 	 */
 	int (*getc)(struct udevice *dev);
+	/**
+	 * puts() - puts a string
+	 *
+	 * @dev: Device pointer
+	 * @str: string to write
+	 * @return 0 if OK, -ve on error
+	 */
+	int (*puts)(struct udevice *dev, const char *str);
 	/**
 	 * putc() - Write a character
 	 *
@@ -293,7 +298,7 @@ struct serial_dev_priv {
  *
  * @dev: Device pointer
  * @serial_config: Returns config information (see SERIAL_... above)
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int serial_getconfig(struct udevice *dev, uint *config);
 
@@ -305,7 +310,7 @@ int serial_getconfig(struct udevice *dev, uint *config);
  *
  * @dev: Device pointer
  * @serial_config: number of bits, parity and number of stopbits to use
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int serial_setconfig(struct udevice *dev, uint config);
 
@@ -314,7 +319,7 @@ int serial_setconfig(struct udevice *dev, uint config);
  *
  * @dev: Device pointer
  * @info: struct serial_device_info to fill
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int serial_getinfo(struct udevice *dev, struct serial_device_info *info);
 
@@ -333,7 +338,7 @@ void sh_serial_initialize(void);
  * The total size of the output must be less than CONFIG_SYS_PBSIZE.
  *
  * @fmt: Printf format string, followed by format arguments
- * Return: number of characters written
+ * @return number of characters written
  */
 int serial_printf(const char *fmt, ...)
 		__attribute__ ((format (__printf__, 1, 2)));

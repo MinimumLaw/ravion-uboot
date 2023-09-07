@@ -9,9 +9,7 @@
 #include <command.h>
 #include <console.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <linux/usb/otg.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
@@ -34,17 +32,17 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static void ti_musb_set_phy_power(struct udevice *dev, u8 on)
 {
-	struct ti_musb_plat *plat = dev_get_plat(dev);
+	struct ti_musb_platdata *platdata = dev_get_platdata(dev);
 
-	if (!plat->ctrl_mod_base)
+	if (!platdata->ctrl_mod_base)
 		return;
 
 	if (on) {
-		clrsetbits_le32(plat->ctrl_mod_base,
+		clrsetbits_le32(platdata->ctrl_mod_base,
 				CM_PHY_PWRDN | CM_PHY_OTG_PWRDN,
 				OTGVDET_EN | OTGSESSENDEN);
 	} else {
-		clrsetbits_le32(plat->ctrl_mod_base, 0,
+		clrsetbits_le32(platdata->ctrl_mod_base, 0,
 				CM_PHY_PWRDN | CM_PHY_OTG_PWRDN);
 	}
 }
@@ -78,9 +76,9 @@ static int ti_musb_get_usb_index(int node)
 	return -ENOENT;
 }
 
-static int ti_musb_of_to_plat(struct udevice *dev)
+static int ti_musb_ofdata_to_platdata(struct udevice *dev)
 {
-	struct ti_musb_plat *plat = dev_get_plat(dev);
+	struct ti_musb_platdata *platdata = dev_get_platdata(dev);
 	const void *fdt = gd->fdt_blob;
 	int node = dev_of_offset(dev);
 	int phys;
@@ -88,18 +86,18 @@ static int ti_musb_of_to_plat(struct udevice *dev)
 	int usb_index;
 	struct musb_hdrc_config *musb_config;
 
-	plat->base = (void *)devfdt_get_addr_index(dev, 1);
+	platdata->base = (void *)devfdt_get_addr_index(dev, 1);
 
 	phys = fdtdec_lookup_phandle(fdt, node, "phys");
 	ctrl_mod = fdtdec_lookup_phandle(fdt, phys, "ti,ctrl_mod");
-	plat->ctrl_mod_base = (void *)fdtdec_get_addr(fdt, ctrl_mod, "reg");
+	platdata->ctrl_mod_base = (void *)fdtdec_get_addr(fdt, ctrl_mod, "reg");
 	usb_index = ti_musb_get_usb_index(node);
 	switch (usb_index) {
 	case 1:
-		plat->ctrl_mod_base += AM335X_USB1_CTRL;
+		platdata->ctrl_mod_base += AM335X_USB1_CTRL;
 		break;
 	case 0:
-		plat->ctrl_mod_base += AM335X_USB0_CTRL;
+		platdata->ctrl_mod_base += AM335X_USB0_CTRL;
 		break;
 	default:
 		break;
@@ -131,15 +129,15 @@ static int ti_musb_of_to_plat(struct udevice *dev)
 		return -ENOENT;
 	}
 
-	plat->plat.config = musb_config;
+	platdata->plat.config = musb_config;
 
-	plat->plat.power = fdtdec_get_int(fdt, node, "mentor,power", -1);
-	if (plat->plat.power < 0) {
+	platdata->plat.power = fdtdec_get_int(fdt, node, "mentor,power", -1);
+	if (platdata->plat.power < 0) {
 		pr_err("MUSB mentor,power DT entry missing\n");
 		return -ENOENT;
 	}
 
-	plat->plat.platform_ops = &musb_dsps_ops;
+	platdata->plat.platform_ops = &musb_dsps_ops;
 
 	return 0;
 }
@@ -148,15 +146,15 @@ static int ti_musb_of_to_plat(struct udevice *dev)
 static int ti_musb_host_probe(struct udevice *dev)
 {
 	struct musb_host_data *host = dev_get_priv(dev);
-	struct ti_musb_plat *plat = dev_get_plat(dev);
+	struct ti_musb_platdata *platdata = dev_get_platdata(dev);
 	struct usb_bus_priv *priv = dev_get_uclass_priv(dev);
 	int ret;
 
 	priv->desc_before_addr = true;
 
-	host->host = musb_init_controller(&plat->plat,
+	host->host = musb_init_controller(&platdata->plat,
 					  NULL,
-					  plat->base);
+					  platdata->base);
 	if (!host->host)
 		return -EIO;
 
@@ -177,20 +175,20 @@ static int ti_musb_host_remove(struct udevice *dev)
 }
 
 #if CONFIG_IS_ENABLED(OF_CONTROL)
-static int ti_musb_host_of_to_plat(struct udevice *dev)
+static int ti_musb_host_ofdata_to_platdata(struct udevice *dev)
 {
-	struct ti_musb_plat *plat = dev_get_plat(dev);
+	struct ti_musb_platdata *platdata = dev_get_platdata(dev);
 	const void *fdt = gd->fdt_blob;
 	int node = dev_of_offset(dev);
 	int ret;
 
-	ret = ti_musb_of_to_plat(dev);
+	ret = ti_musb_ofdata_to_platdata(dev);
 	if (ret) {
-		pr_err("plat dt parse error\n");
+		pr_err("platdata dt parse error\n");
 		return ret;
 	}
 
-	plat->plat.mode = MUSB_HOST;
+	platdata->plat.mode = MUSB_HOST;
 
 	return 0;
 }
@@ -200,13 +198,13 @@ U_BOOT_DRIVER(ti_musb_host) = {
 	.name	= "ti-musb-host",
 	.id	= UCLASS_USB,
 #if CONFIG_IS_ENABLED(OF_CONTROL)
-	.of_to_plat = ti_musb_host_of_to_plat,
+	.ofdata_to_platdata = ti_musb_host_ofdata_to_platdata,
 #endif
 	.probe = ti_musb_host_probe,
 	.remove = ti_musb_host_remove,
 	.ops	= &musb_usb_ops,
-	.plat_auto	= sizeof(struct ti_musb_plat),
-	.priv_auto	= sizeof(struct musb_host_data),
+	.platdata_auto_alloc_size = sizeof(struct ti_musb_platdata),
+	.priv_auto_alloc_size = sizeof(struct musb_host_data),
 };
 
 #if CONFIG_IS_ENABLED(DM_USB_GADGET)
@@ -215,25 +213,25 @@ struct ti_musb_peripheral {
 };
 
 #if CONFIG_IS_ENABLED(OF_CONTROL)
-static int ti_musb_peripheral_of_to_plat(struct udevice *dev)
+static int ti_musb_peripheral_ofdata_to_platdata(struct udevice *dev)
 {
-	struct ti_musb_plat *plat = dev_get_plat(dev);
+	struct ti_musb_platdata *platdata = dev_get_platdata(dev);
 	const void *fdt = gd->fdt_blob;
 	int node = dev_of_offset(dev);
 	int ret;
 
-	ret = ti_musb_of_to_plat(dev);
+	ret = ti_musb_ofdata_to_platdata(dev);
 	if (ret) {
-		pr_err("plat dt parse error\n");
+		pr_err("platdata dt parse error\n");
 		return ret;
 	}
-	plat->plat.mode = MUSB_PERIPHERAL;
+	platdata->plat.mode = MUSB_PERIPHERAL;
 
 	return 0;
 }
 #endif
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+static int ti_musb_peripheral_handle_interrupts(struct udevice *dev)
 {
 	struct ti_musb_peripheral *priv = dev_get_priv(dev);
 
@@ -245,12 +243,12 @@ int dm_usb_gadget_handle_interrupts(struct udevice *dev)
 static int ti_musb_peripheral_probe(struct udevice *dev)
 {
 	struct ti_musb_peripheral *priv = dev_get_priv(dev);
-	struct ti_musb_plat *plat = dev_get_plat(dev);
+	struct ti_musb_platdata *platdata = dev_get_platdata(dev);
 	int ret;
 
-	priv->periph = musb_init_controller(&plat->plat,
+	priv->periph = musb_init_controller(&platdata->plat,
 					    NULL,
-					    plat->base);
+					    platdata->base);
 	if (!priv->periph)
 		return -EIO;
 
@@ -273,13 +271,14 @@ U_BOOT_DRIVER(ti_musb_peripheral) = {
 	.name	= "ti-musb-peripheral",
 	.id	= UCLASS_USB_GADGET_GENERIC,
 #if CONFIG_IS_ENABLED(OF_CONTROL)
-	.of_to_plat = ti_musb_peripheral_of_to_plat,
+	.ofdata_to_platdata = ti_musb_peripheral_ofdata_to_platdata,
 #endif
 	.probe = ti_musb_peripheral_probe,
 	.remove = ti_musb_peripheral_remove,
 	.ops	= &musb_usb_ops,
-	.plat_auto	= sizeof(struct ti_musb_plat),
-	.priv_auto	= sizeof(struct ti_musb_peripheral),
+	.handle_interrupts = ti_musb_peripheral_handle_interrupts,
+	.platdata_auto_alloc_size = sizeof(struct ti_musb_platdata),
+	.priv_auto_alloc_size = sizeof(struct ti_musb_peripheral),
 	.flags = DM_FLAG_PRE_RELOC,
 };
 #endif
@@ -287,12 +286,14 @@ U_BOOT_DRIVER(ti_musb_peripheral) = {
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 static int ti_musb_wrapper_bind(struct udevice *parent)
 {
-	ofnode node;
+	const void *fdt = gd->fdt_blob;
+	int node;
 	int ret;
 
-	ofnode_for_each_subnode(node, dev_ofnode(parent)) {
+	for (node = fdt_first_subnode(fdt, dev_of_offset(parent)); node > 0;
+	     node = fdt_next_subnode(fdt, node)) {
 		struct udevice *dev;
-		const char *name = ofnode_get_name(node);
+		const char *name = fdt_get_name(fdt, node, NULL);
 		enum usb_dr_mode dr_mode;
 		struct driver *drv;
 
@@ -306,7 +307,7 @@ static int ti_musb_wrapper_bind(struct udevice *parent)
 			ret = device_bind_driver_to_node(parent,
 							 "ti-musb-peripheral",
 							 name,
-							 node,
+							 offset_to_ofnode(node),
 							 &dev);
 			if (ret)
 				pr_err("musb - not able to bind usb peripheral node\n");
@@ -316,7 +317,7 @@ static int ti_musb_wrapper_bind(struct udevice *parent)
 			ret = device_bind_driver_to_node(parent,
 							 "ti-musb-host",
 							 name,
-							 node,
+							 offset_to_ofnode(node),
 							 &dev);
 			if (ret)
 				pr_err("musb - not able to bind usb host node\n");

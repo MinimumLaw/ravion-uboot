@@ -11,9 +11,7 @@
 #include <env.h>
 #include <errno.h>
 #include <init.h>
-#include <net.h>
 #include <serial.h>
-#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <spl.h>
 #include <asm/arch/cpu.h>
@@ -187,7 +185,7 @@ void am33xx_spl_board_init(void)
 	 */
 	i2c_set_bus_num(1);
 
-	printf("I2C speed: %d Hz\n", CONFIG_SYS_I2C_SPEED);
+	printf("I2C speed: %d Hz\n", CONFIG_SYS_OMAP24_I2C_SPEED);
 
 	if (i2c_probe(TPS65910_CTRL_I2C_ADDR)) {
 		puts("i2c: cannot access TPS65910\n");
@@ -273,7 +271,7 @@ int board_init(void)
 	return 0;
 }
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	int node, ret;
 	unsigned char mac_addr[6];
@@ -379,7 +377,7 @@ int board_late_init(void)
 #endif
 
 #if (defined(CONFIG_DRIVER_TI_CPSW) && !defined(CONFIG_SPL_BUILD)) || \
-	(defined(CONFIG_SPL_ETH) && defined(CONFIG_SPL_BUILD))
+	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD))
 static void cpsw_control(int enabled)
 {
 	/* VTP can be added here */
@@ -421,12 +419,12 @@ static struct cpsw_platform_data cpsw_data = {
 };
 #endif
 
-#if ((defined(CONFIG_SPL_ETH) || defined(CONFIG_SPL_USB_ETHER)) \
+#if ((defined(CONFIG_SPL_ETH_SUPPORT) || defined(CONFIG_SPL_USB_ETHER)) \
 		&& defined(CONFIG_SPL_BUILD)) || \
 	((defined(CONFIG_DRIVER_TI_CPSW) || \
 	  defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET)) && \
 	 !defined(CONFIG_SPL_BUILD))
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 	int rv, n = 0;
 	uint8_t mac_addr[6];
@@ -450,7 +448,7 @@ int board_eth_init(struct bd_info *bis)
 	mac_addr[5] = (mac_lo & 0xFF00) >> 8;
 
 #if (defined(CONFIG_DRIVER_TI_CPSW) && !defined(CONFIG_SPL_BUILD)) || \
-	(defined(CONFIG_SPL_ETH) && defined(CONFIG_SPL_BUILD))
+	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD))
 	if (!env_get("ethaddr")) {
 		printf("<ethaddr> not set. Validating first E-fuse MAC\n");
 

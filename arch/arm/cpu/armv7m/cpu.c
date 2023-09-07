@@ -12,7 +12,6 @@
 #include <irq_func.h>
 #include <asm/io.h>
 #include <asm/armv7m.h>
-#include <spl.h>
 
 /*
  * This is called right before passing control to
@@ -48,7 +47,7 @@ int cleanup_before_linux(void)
 /*
  * Perform the low-level reset.
  */
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	/*
 	 * Perform reset but keep priority group unchanged.
@@ -56,9 +55,4 @@ void reset_cpu(void)
 	writel((V7M_AIRCR_VECTKEY << V7M_AIRCR_VECTKEY_SHIFT)
 		| (V7M_SCB->aircr & V7M_AIRCR_PRIGROUP_MSK)
 		| V7M_AIRCR_SYSRESET, &V7M_SCB->aircr);
-}
-
-void spl_perform_fixups(struct spl_image_info *spl_image)
-{
-	spl_image->entry_point |= 0x1;
 }

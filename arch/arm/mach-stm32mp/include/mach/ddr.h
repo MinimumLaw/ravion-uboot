@@ -9,10 +9,8 @@
 /* DDR power initializations */
 enum ddr_type {
 	STM32MP_DDR3,
-	STM32MP_LPDDR2_16,
-	STM32MP_LPDDR2_32,
-	STM32MP_LPDDR3_16,
-	STM32MP_LPDDR3_32,
+	STM32MP_LPDDR2,
+	STM32MP_LPDDR3,
 };
 
 int board_ddr_power_init(enum ddr_type ddr_type);

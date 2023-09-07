@@ -18,6 +18,8 @@
 /* SYS */
 #define CONFIG_SYS_BOOTM_LEN			SZ_64M
 #define CONFIG_SYS_INIT_SP_ADDR			0x200000
+#define CONFIG_SYS_LOAD_ADDR			0x800000
+#define CONFIG_SYS_MALLOC_LEN			SZ_32M
 
 /* ATF bl33.bin load address (must match) */
 
@@ -48,6 +50,10 @@
 			"fdtfile=hisilicon/hi3798cv200-poplar.dtb\0"	\
 			"ramdisk_addr_r=0x32400000\0"			\
 			BOOTENV
+
+
+/* Command line configuration */
+#define CONFIG_SYS_MMC_ENV_DEV		0
 
 /* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE		512

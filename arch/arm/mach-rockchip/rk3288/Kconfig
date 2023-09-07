@@ -5,9 +5,7 @@ choice
 
 config TARGET_CHROMEBOOK_JERRY
 	bool "Google/Rockchip Veyron-Jerry Chromebook"
-	select HAS_ROM
 	select BOARD_LATE_INIT
-	select ROCKCHIP_SPI_IMAGE
 	help
 	  Jerry is a RK3288-based clamshell device with 2 USB 3.0 ports,
 	  HDMI, an 11.9 inch EDP display, micro-SD card, touchpad and
@@ -48,7 +46,6 @@ config TARGET_CHROMEBOOK_SPEEDY
 
 config TARGET_EVB_RK3288
 	bool "Evb-RK3288"
-	select HAS_ROM
 	select BOARD_LATE_INIT
 	select TPL
 	help
@@ -154,7 +151,7 @@ config SYS_SOC
 config SYS_MALLOC_F_LEN
 	default 0x2000
 
-config SPL_DRIVERS_MISC
+config SPL_DRIVERS_MISC_SUPPORT
 	default y
 
 config SPL_LIBCOMMON_SUPPORT
@@ -163,7 +160,7 @@ config SPL_LIBCOMMON_SUPPORT
 config SPL_LIBGENERIC_SUPPORT
 	default y
 
-config SPL_SERIAL
+config SPL_SERIAL_SUPPORT
 	default y
 
 config TPL_LDSCRIPT

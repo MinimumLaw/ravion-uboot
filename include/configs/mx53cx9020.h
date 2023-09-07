@@ -14,6 +14,17 @@
 
 #include <asm/arch/imx-regs.h>
 
+#define CONFIG_CMDLINE_TAG
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
+
+#define CONFIG_SYS_FSL_CLK
+
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(32 * 1024 * 1024)
+
+#define CONFIG_REVISION_TAG
+
 #define CONFIG_MXC_UART_BASE UART2_BASE
 
 #define CONFIG_FPGA_COUNT 1
@@ -30,7 +41,12 @@
 #define CONFIG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CONFIG_MXC_USB_FLAGS	0
 
+/* allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
+
 /* Command definition */
+
+#define CONFIG_LOADADDR		0x70010000	/* loadaddr env var */
 
 #define BOOT_TARGET_DEVICES(func) \
 	func(MMC, mmc, 0) \
@@ -59,6 +75,11 @@
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
 
+#define CONFIG_SYS_MEMTEST_START       0x70000000
+#define CONFIG_SYS_MEMTEST_END         0x70010000
+
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+
 /* Physical Memory Map */
 #define PHYS_SDRAM_1			CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE		(gd->bd->bi_dram[0].size)
@@ -76,6 +97,7 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* environment organization */
+#define CONFIG_SYS_MMC_ENV_DEV 0
 
 /* Framebuffer and LCD */
 #define CONFIG_IMX_VIDEO_SKIP

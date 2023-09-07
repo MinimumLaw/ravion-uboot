@@ -22,6 +22,7 @@
  */
 
 #include <config.h>
+#include <asm/global_data.h>
 #include <asm/post.h>
 #include <asm/processor.h>
 #include <asm/processor-flags.h>
@@ -76,7 +77,7 @@ _start:
 	lgdt	gdt_ptr2
 #endif
 
-	/* Load the segment registers to match the GDT loaded in start16.S */
+	/* Load the segement registers to match the GDT loaded in start16.S */
 	movl	$(X86_GDT_ENTRY_32BIT_DS * X86_GDT_ENTRY_SIZE), %eax
 	movw	%ax, %fs
 	movw	%ax, %ds
@@ -87,7 +88,6 @@ _start:
 	/* Clear the interrupt vectors */
 	lidt	blank_idt_ptr
 
-#ifdef CONFIG_USE_EARLY_BOARD_INIT
 	/*
 	 * Critical early platform init - generally not used, we prefer init
 	 * to happen later when we have a console, in case something goes
@@ -96,8 +96,6 @@ _start:
 	jmp	early_board_init
 .globl early_board_init_ret
 early_board_init_ret:
-#endif
-
 	post_code(POST_START)
 
 	/* Initialise Cache-As-RAM */
@@ -126,7 +124,6 @@ car_init_ret:
 #endif
 #else
 	/*
-	 * Instructions for FSP1, but not FSP2:
 	 * U-Boot enters here twice. For the first time it comes from
 	 * car_init_done() with esp points to a temporary stack and esi
 	 * set to zero. For the second time it comes from fsp_init_done()

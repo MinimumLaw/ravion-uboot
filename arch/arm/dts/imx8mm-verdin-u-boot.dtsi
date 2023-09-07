@@ -1,31 +1,27 @@
 // SPDX-License-Identifier: GPL-2.0+ OR MIT
 /*
- * Copyright 2020-2021 Toradex
+ * Copyright 2020 Toradex
  */
 
-#include "imx8mm-u-boot.dtsi"
-
-/ {
-	firmware {
-		optee {
-			compatible = "linaro,optee-tz";
-			method = "smc";
-		};
-	};
-
-	wdt-reboot {
-		compatible = "wdt-reboot";
-		u-boot,dm-spl;
-		wdt = <&wdog1>;
-	};
+&aips1 {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pmic} {
+&aips2 {
 	u-boot,dm-spl;
 };
 
-&{/soc@0/bus@30800000/i2c@30a20000/pmic/regulators} {
+&aips3 {
 	u-boot,dm-spl;
+};
+
+&clk {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	/delete-property/ assigned-clock-rates;
 };
 
 &gpio1 {
@@ -52,6 +48,15 @@
 	u-boot,dm-spl;
 };
 
+&iomuxc {
+	u-boot,dm-spl;
+};
+
+&osc_24m {
+	u-boot,dm-spl;
+	u-boot,dm-pre-reloc;
+};
+
 &pinctrl_i2c1 {
 	u-boot,dm-spl;
 };
@@ -72,7 +77,16 @@
 	u-boot,dm-spl;
 };
 
-&pinctrl_wdog {
+&{/soc@0} {
+	u-boot,dm-pre-reloc;
+	u-boot,dm-spl;
+};
+
+&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b} {
+	u-boot,dm-spl;
+};
+
+&{/soc@0/bus@30800000/i2c@30a20000/pmic@4b/regulators} {
 	u-boot,dm-spl;
 };
 
@@ -90,12 +104,4 @@
 
 &usdhc3 {
 	u-boot,dm-spl;
-};
-
-&wdog1 {
-	u-boot,dm-spl;
-};
-
-&binman_uboot {
-	offset = <0x5fc00>;
 };

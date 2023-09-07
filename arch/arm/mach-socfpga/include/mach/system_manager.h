@@ -8,7 +8,8 @@
 
 phys_addr_t socfpga_get_sysmgr_addr(void);
 
-#if defined(CONFIG_TARGET_SOCFPGA_SOC64)
+#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10) || \
+	defined(CONFIG_TARGET_SOCFPGA_AGILEX)
 #include <asm/arch/system_manager_soc64.h>
 #else
 #define SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGPINMUX	BIT(0)
@@ -93,6 +94,5 @@ phys_addr_t socfpga_get_sysmgr_addr(void);
 
 #define SYSMGR_GET_BOOTINFO_BSEL(bsel)		\
 		(((bsel) >> SYSMGR_BOOTINFO_BSEL_SHIFT) & 7)
-#include <linux/bitops.h>
 #endif
 #endif /* _SYSTEM_MANAGER_H_ */

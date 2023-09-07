@@ -5,19 +5,17 @@
 
 /dts-v1/;
 #include "imx7-colibri.dtsi"
-#include "imx7-colibri-u-boot.dtsi"
 
 / {
 	model = "Toradex Colibri iMX7S/D";
 	compatible = "toradex,imx7-colibri", "fsl,imx7";
 
-	aliases {
-		display1 = &lcdif;
-		usb0 = &usbotg1; /* required for ums */
-	};
-
 	chosen {
 		stdout-path = &uart1;
+	};
+
+	aliases {
+		usb0 = &usbotg1; /* required for ums */
 	};
 
 	reg_5v0: regulator-5v0 {

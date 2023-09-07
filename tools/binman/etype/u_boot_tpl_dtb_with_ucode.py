@@ -5,7 +5,10 @@
 # Entry-type module for U-Boot device tree with the microcode removed
 #
 
-from binman.etype.u_boot_dtb_with_ucode import Entry_u_boot_dtb_with_ucode
+import control
+from entry import Entry
+from u_boot_dtb_with_ucode import Entry_u_boot_dtb_with_ucode
+import tools
 
 class Entry_u_boot_tpl_dtb_with_ucode(Entry_u_boot_dtb_with_ucode):
     """U-Boot TPL with embedded microcode pointer
@@ -16,7 +19,7 @@ class Entry_u_boot_tpl_dtb_with_ucode(Entry_u_boot_dtb_with_ucode):
     process.
     """
     def __init__(self, section, etype, node):
-        super().__init__(section, etype, node)
+        Entry_u_boot_dtb_with_ucode.__init__(self, section, etype, node)
 
     def GetDefaultFilename(self):
         return 'tpl/u-boot-tpl.dtb'

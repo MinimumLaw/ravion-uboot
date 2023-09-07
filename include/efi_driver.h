@@ -8,6 +8,8 @@
 #ifndef _EFI_DRIVER_H
 #define _EFI_DRIVER_H 1
 
+#include <common.h>
+#include <dm.h>
 #include <efi_loader.h>
 
 /*

@@ -11,10 +11,12 @@
 
 #include <configs/aspeed-common.h>
 
+#define CONFIG_SYS_MEMTEST_START	(CONFIG_SYS_SDRAM_BASE + 0x300000)
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x5000000)
+
 #define CONFIG_SYS_UBOOT_BASE		CONFIG_SYS_TEXT_BASE
 
-/* Misc */
-#define CONFIG_EXTRA_ENV_SETTINGS \
-	""
+/* Memory Info */
+#define CONFIG_SYS_LOAD_ADDR		0x83000000
 
 #endif	/* __CONFIG_H */

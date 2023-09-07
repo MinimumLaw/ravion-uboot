@@ -6,7 +6,6 @@
  */
 
 #include <malloc.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <common.h>
 #include <clk.h>
@@ -50,10 +49,6 @@ static int at91_i2c_xfer_msg(struct at91_i2c_bus *bus, struct i2c_msg *msg)
 	bool is_read = msg->flags & I2C_M_RD;
 	u32 i;
 	int ret = 0;
-
-	/* if there is no message to send/receive, just exit quietly */
-	if (msg->len == 0)
-		return ret;
 
 	readl(&reg->sr);
 	if (is_read) {
@@ -224,13 +219,13 @@ int at91_i2c_get_bus_speed(struct udevice *dev)
 	return bus->speed;
 }
 
-static int at91_i2c_of_to_plat(struct udevice *dev)
+static int at91_i2c_ofdata_to_platdata(struct udevice *dev)
 {
 	const void *blob = gd->fdt_blob;
 	struct at91_i2c_bus *bus = dev_get_priv(dev);
 	int node = dev_of_offset(dev);
 
-	bus->regs = dev_read_addr_ptr(dev);
+	bus->regs = (struct at91_i2c_regs *)devfdt_get_addr(dev);
 	bus->pdata = (struct at91_i2c_pdata *)dev_get_driver_data(dev);
 	bus->clock_frequency = fdtdec_get_int(blob, node,
 					      "clock-frequency", 100000);
@@ -305,11 +300,6 @@ static const struct at91_i2c_pdata sama5d2_config = {
 	.clk_offset = 3,
 };
 
-static const struct at91_i2c_pdata sam9x60_config = {
-	.clk_max_div = 7,
-	.clk_offset = 3,
-};
-
 static const struct udevice_id at91_i2c_ids[] = {
 { .compatible = "atmel,at91rm9200-i2c", .data = (long)&at91rm9200_config },
 { .compatible = "atmel,at91sam9260-i2c", .data = (long)&at91sam9260_config },
@@ -319,7 +309,6 @@ static const struct udevice_id at91_i2c_ids[] = {
 { .compatible = "atmel,at91sam9x5-i2c", .data = (long)&at91sam9x5_config },
 { .compatible = "atmel,sama5d4-i2c", .data = (long)&sama5d4_config },
 { .compatible = "atmel,sama5d2-i2c", .data = (long)&sama5d2_config },
-{ .compatible = "microchip,sam9x60-i2c", .data = (long)&sam9x60_config },
 { }
 };
 
@@ -328,8 +317,8 @@ U_BOOT_DRIVER(i2c_at91) = {
 	.id	= UCLASS_I2C,
 	.of_match = at91_i2c_ids,
 	.probe = at91_i2c_probe,
-	.of_to_plat = at91_i2c_of_to_plat,
-	.per_child_auto	= sizeof(struct dm_i2c_chip),
-	.priv_auto	= sizeof(struct at91_i2c_bus),
+	.ofdata_to_platdata = at91_i2c_ofdata_to_platdata,
+	.per_child_auto_alloc_size = sizeof(struct dm_i2c_chip),
+	.priv_auto_alloc_size = sizeof(struct at91_i2c_bus),
 	.ops	= &at91_i2c_ops,
 };

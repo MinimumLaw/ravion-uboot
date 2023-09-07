@@ -6,9 +6,7 @@
 #include <common.h>
 #include <dm.h>
 #include <mmc.h>
-#include <part.h>
 #include <dm/test.h>
-#include <test/test.h>
 #include <test/ut.h>
 
 /*
@@ -23,32 +21,23 @@ static int dm_test_mmc_base(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_mmc_base, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_mmc_base, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 static int dm_test_mmc_blk(struct unit_test_state *uts)
 {
 	struct udevice *dev;
 	struct blk_desc *dev_desc;
-	int i;
-	char write[1024], read[1024];
+	char cmp[1024];
 
 	ut_assertok(uclass_get_device(UCLASS_MMC, 0, &dev));
 	ut_assertok(blk_get_device_by_str("mmc", "0", &dev_desc));
 
-	/* Write a few blocks and verify that we get the same data back */
+	/* Read a few blocks and look for the string we expect */
 	ut_asserteq(512, dev_desc->blksz);
-	for (i = 0; i < sizeof(write); i++)
-		write[i] = i;
-	ut_asserteq(2, blk_dwrite(dev_desc, 0, 2, write));
-	ut_asserteq(2, blk_dread(dev_desc, 0, 2, read));
-	ut_asserteq_mem(write, read, sizeof(write));
-
-	/* Now erase them */
-	memset(write, '\0', sizeof(write));
-	ut_asserteq(2, blk_derase(dev_desc, 0, 2));
-	ut_asserteq(2, blk_dread(dev_desc, 0, 2, read));
-	ut_asserteq_mem(write, read, sizeof(write));
+	memset(cmp, '\0', sizeof(cmp));
+	ut_asserteq(2, blk_dread(dev_desc, 0, 2, cmp));
+	ut_assertok(strcmp(cmp, "this is a test"));
 
 	return 0;
 }
-DM_TEST(dm_test_mmc_blk, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_mmc_blk, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);

@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <asm/system.h>
 
@@ -20,7 +19,7 @@ extern void _main(void);
 void *secondary_boot_addr = (void *)_main;
 #endif /* CONFIG_TARGET_ESPRESSO7420 */
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 #ifdef CONFIG_CPU_V7A
 	writel(0x1, samsung_get_base_swreset());

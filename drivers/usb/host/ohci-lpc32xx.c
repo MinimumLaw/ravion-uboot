@@ -10,8 +10,6 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <init.h>
-#include <log.h>
 #include <wait_bit.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
@@ -86,7 +84,7 @@ static struct clk_pm_regs *clk_pwr = (struct clk_pm_regs *)CLK_PM_BASE;
 
 static int isp1301_set_value(struct udevice *dev, int reg, u8 value)
 {
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	return i2c_write(ISP1301_I2C_ADDR, reg, 1, &value, 1);
 #else
 	return dm_i2c_write(dev, reg, &value, 1);
@@ -95,7 +93,7 @@ static int isp1301_set_value(struct udevice *dev, int reg, u8 value)
 
 static void isp1301_configure(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 	i2c_set_bus_num(I2C_2);
 #endif
 
@@ -160,7 +158,7 @@ int usb_cpu_init(void)
 	u32 ret;
 	struct udevice *dev = NULL;
 
-#if CONFIG_IS_ENABLED(DM_I2C)
+#ifdef CONFIG_DM_I2C
 	ret = i2c_get_chip_for_busnum(I2C_2, ISP1301_I2C_ADDR, 1, &dev);
 	if (ret) {
 		debug("%s: No bus %d\n", __func__, I2C_2);
@@ -216,7 +214,7 @@ int usb_cpu_stop(void)
 	struct udevice *dev = NULL;
 	int ret = 0;
 
-#if CONFIG_IS_ENABLED(DM_I2C)
+#ifdef CONFIG_DM_I2C
 	ret = i2c_get_chip_for_busnum(I2C_2, ISP1301_I2C_ADDR, 1, &dev);
 	if (ret) {
 		debug("%s: No bus %d\n", __func__, I2C_2);

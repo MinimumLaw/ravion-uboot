@@ -17,7 +17,6 @@
 #include <asm/arch-fsl-layerscape/config.h>
 #include <asm/arch-fsl-layerscape/immap_lsch2.h>
 #include <asm/arch/fsl_serdes.h>
-#include <linux/delay.h>
 #include "../common/qixis.h"
 #include <net/pfe_eth/pfe_eth.h>
 #include <dm/platform_data/pfe_dm_eth.h>
@@ -244,7 +243,7 @@ int pfe_eth_board_init(struct udevice *dev)
 		bus = miiphy_get_dev_by_name(mdio_name);
 		pfe_set_mdio(1, bus);
 		pfe_set_phy_address_mode(1, CONFIG_PFE_SGMII_2500_PHY2_ADDR,
-					 PHY_INTERFACE_MODE_2500BASEX);
+					 PHY_INTERFACE_MODE_SGMII_2500);
 
 		data8 = QIXIS_READ(brdcfg[12]);
 		data8 |= 0x20;
@@ -263,7 +262,7 @@ int pfe_eth_board_init(struct udevice *dev)
 		pfe_set_mdio(0, bus);
 		pfe_set_phy_address_mode(0,
 					 CONFIG_PFE_SGMII_2500_PHY1_ADDR,
-					 PHY_INTERFACE_MODE_2500BASEX);
+					 PHY_INTERFACE_MODE_SGMII_2500);
 	}
 		break;
 
@@ -298,12 +297,12 @@ static struct pfe_eth_pdata pfe_pdata1 = {
 	},
 };
 
-U_BOOT_DRVINFO(ls1012a_pfe0) = {
+U_BOOT_DEVICE(ls1012a_pfe0) = {
 	.name = "pfe_eth",
-	.plat = &pfe_pdata0,
+	.platdata = &pfe_pdata0,
 };
 
-U_BOOT_DRVINFO(ls1012a_pfe1) = {
+U_BOOT_DEVICE(ls1012a_pfe1) = {
 	.name = "pfe_eth",
-	.plat = &pfe_pdata1,
+	.platdata = &pfe_pdata1,
 };

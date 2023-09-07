@@ -1,13 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
 /*
-  This code is based on a version of malloc/free/realloc written by Doug Lea and
-  released to the public domain. Send questions/comments/complaints/performance
-  data to dl@cs.oswego.edu
+  A version of malloc/free/realloc written by Doug Lea and released to the
+  public domain.  Send questions/comments/complaints/performance data
+  to dl@cs.oswego.edu
 
 * VERSION 2.6.6  Sun Mar  5 19:10:03 2000  Doug Lea  (dl at gee)
 
    Note: There may be an updated version of this malloc obtainable at
-	   http://g.oswego.edu/pub/misc/malloc.c
+	   ftp://g.oswego.edu/pub/misc/malloc.c
 	 Check before installing!
 
 * Why use this malloc?
@@ -362,11 +361,8 @@ extern "C" {
 #if (__STD_C || defined(HAVE_MEMCPY))
 
 #if __STD_C
-/* U-Boot defines memset() and memcpy in /include/linux/string.h
 void* memset(void*, int, size_t);
 void* memcpy(void*, const void*, size_t);
-*/
-#include <linux/string.h>
 #else
 #ifdef WIN32
 /* On Win32 platforms, 'memset()' and 'memcpy()' are already declared in */
@@ -881,8 +877,6 @@ extern Void_t*     sbrk();
 
 #else
 
-void malloc_simple_info(void);
-
 #if CONFIG_IS_ENABLED(SYS_MALLOC_SIMPLE)
 #define malloc malloc_simple
 #define realloc realloc_simple
@@ -890,6 +884,7 @@ void malloc_simple_info(void);
 static inline void free(void *ptr) {}
 void *calloc(size_t nmemb, size_t size);
 void *realloc_simple(void *ptr, size_t size);
+void malloc_simple_info(void);
 #else
 
 # ifdef USE_DL_PREFIX

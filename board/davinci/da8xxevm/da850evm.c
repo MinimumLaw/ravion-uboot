@@ -12,12 +12,10 @@
 #include <dm.h>
 #include <env.h>
 #include <i2c.h>
-#include <init.h>
 #include <net.h>
 #include <spi.h>
 #include <spi_flash.h>
 #include <asm/arch/hardware.h>
-#include <asm/global_data.h>
 #include <asm/ti-common/davinci_nand.h>
 #include <asm/arch/emac_defs.h>
 #include <asm/arch/pinmux_defs.h>
@@ -129,11 +127,18 @@ int misc_init_r(void)
 {
 	dspwake();
 
-#if defined(CONFIG_MAC_ADDR_IN_SPIFLASH)
-	uchar env_enetaddr[6], buff[6];
-	int enetaddr_found, spi_mac_read;
+#if defined(CONFIG_MAC_ADDR_IN_SPIFLASH) || defined(CONFIG_MAC_ADDR_IN_EEPROM)
+
+	uchar env_enetaddr[6];
+	int enetaddr_found;
 
 	enetaddr_found = eth_env_get_enetaddr("ethaddr", env_enetaddr);
+
+#endif
+
+#ifdef CONFIG_MAC_ADDR_IN_SPIFLASH
+	int spi_mac_read;
+	uchar buff[6];
 
 	spi_mac_read = get_mac_addr(buff);
 	buff[0] = 0;
@@ -166,12 +171,40 @@ int misc_init_r(void)
 					"with the MAC address in the environment\n");
 		printf("Default using MAC address from environment\n");
 	}
+
+#elif defined(CONFIG_MAC_ADDR_IN_EEPROM)
+	uint8_t enetaddr[8];
+	int eeprom_mac_read;
+
+	/* Read Ethernet MAC address from EEPROM */
+	eeprom_mac_read = dvevm_read_mac_address(enetaddr);
+
+	/*
+	 * MAC address not present in the environment
+	 * try and read the MAC address from EEPROM flash
+	 * and set it.
+	 */
+	if (!enetaddr_found) {
+		if (eeprom_mac_read)
+			/* Set Ethernet MAC address from EEPROM */
+			davinci_sync_env_enetaddr(enetaddr);
+	} else {
+		/*
+		 * MAC address present in environment compare it with
+		 * the MAC address in EEPROM and warn on mismatch
+		 */
+		if (eeprom_mac_read && memcmp(enetaddr, env_enetaddr, 6))
+			printf("Warning: MAC address in EEPROM don't match "
+					"with the MAC address in the environment\n");
+		printf("Default using MAC address from environment\n");
+	}
+
 #endif
 	return 0;
 }
 
 static const struct pinmux_config gpio_pins[] = {
-#ifdef CONFIG_MTD_NOR_FLASH
+#ifdef CONFIG_USE_NOR
 	/* GP0[11] is required for NOR to work on Rev 3 EVMs */
 	{ pinmux(0), 8, 4 },	/* GP0[11] */
 #endif
@@ -201,7 +234,7 @@ const struct pinmux_resource pinmuxes[] = {
 	PINMUX_ITEM(emifa_pins_cs3),
 	PINMUX_ITEM(emifa_pins_cs4),
 	PINMUX_ITEM(emifa_pins_nand),
-#elif defined(CONFIG_MTD_NOR_FLASH)
+#elif defined(CONFIG_USE_NOR)
 	PINMUX_ITEM(emifa_pins_cs2),
 	PINMUX_ITEM(emifa_pins_nor),
 #endif
@@ -232,7 +265,6 @@ const int lpsc_size = ARRAY_SIZE(lpsc);
 
 #define REV_AM18X_EVM		0x100
 
-#ifdef CONFIG_REVISION_TAG
 /*
  * get_board_rev() - setup to pass kernel board revision information
  * Returns:
@@ -250,7 +282,7 @@ u32 get_board_rev(void)
 
 	s = env_get("maxcpuclk");
 	if (s)
-		maxcpuclk = dectoul(s, NULL);
+		maxcpuclk = simple_strtoul(s, NULL, 10);
 
 	if (maxcpuclk >= 456000000)
 		rev = 3;
@@ -260,7 +292,6 @@ u32 get_board_rev(void)
 		rev = 1;
 	return rev;
 }
-#endif
 
 int board_early_init_f(void)
 {
@@ -309,7 +340,7 @@ int board_init(void)
 		 DAVINCI_SYSCFG_SUSPSRC_UART2),
 	       &davinci_syscfg_regs->suspsrc);
 
-#ifdef CONFIG_MTD_NOR_FLASH
+#ifdef CONFIG_USE_NOR
 	/* Set the GPIO direction as output */
 	clrbits_le32((u32 *)GPIO_BANK0_REG_DIR_ADDR, (0x01 << 11));
 
@@ -421,7 +452,7 @@ int rmii_hw_init(void)
 /*
  * Initializes on-board ethernet controllers.
  */
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_DRIVER_TI_EMAC_USE_RMII
 	/* Select RMII fucntion through the expander */

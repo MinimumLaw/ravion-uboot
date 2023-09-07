@@ -12,13 +12,11 @@
  */
 
 #include <common.h>
-#include <bootstage.h>
 #include <cpu_func.h>
 #include <env.h>
 #include <errno.h>
 #include <init.h>
 #include <irq_func.h>
-#include <net.h>
 #include <spl.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/hardware.h>
@@ -29,14 +27,12 @@
 #include <asm/arch/mmc_host_def.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mem.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/emif.h>
 #include <asm/gpio.h>
 #include <i2c.h>
 #include <miiphy.h>
 #include <cpsw.h>
-#include <linux/delay.h>
 #include <power/tps65217.h>
 #include <env_internal.h>
 #include <watchdog.h>
@@ -45,23 +41,22 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct shc_eeprom __section(".data") header;
+static struct shc_eeprom __attribute__((section(".data"))) header;
 static int shc_eeprom_valid;
 
 /*
  * Read header information from EEPROM into global structure.
  */
-#define EEPROM_ADDR	0x50
 static int read_eeprom(void)
 {
 	/* Check if baseboard eeprom is available */
-	if (i2c_probe(EEPROM_ADDR)) {
+	if (i2c_probe(CONFIG_SYS_I2C_EEPROM_ADDR)) {
 		puts("Could not probe the EEPROM; something fundamentally wrong on the I2C bus.\n");
 		return -ENODEV;
 	}
 
 	/* read the eeprom using i2c */
-	if (i2c_read(EEPROM_ADDR, 0, 2, (uchar *)&header,
+	if (i2c_read(CONFIG_SYS_I2C_EEPROM_ADDR, 0, 2, (uchar *)&header,
 		     sizeof(header))) {
 		puts("Could not read the EEPROM; something fundamentally wrong on the I2C bus.\n");
 		return -EIO;
@@ -189,7 +184,7 @@ static void __maybe_unused leds_set_booting(void)
 /*
  * Function to set the LEDs in the state "Bootloader error"
  */
-static void __maybe_unused leds_set_failure(int state)
+static void leds_set_failure(int state)
 {
 #if defined(CONFIG_B_SAMPLE)
 	/* Turn all blue and green LEDs off */
@@ -474,20 +469,20 @@ int board_late_init(void)
 
 #if defined(CONFIG_USB_ETHER) && \
 	(!defined(CONFIG_SPL_BUILD) || defined(CONFIG_SPL_USB_ETHER))
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 	return usb_eth_initialize(bis);
 }
 #endif
 
-#if CONFIG_IS_ENABLED(BOOTSTAGE)
+#ifdef CONFIG_SHOW_BOOT_PROGRESS
 static void bosch_check_reset_pin(void)
 {
 	if (readl(GPIO1_BASE + OMAP_GPIO_IRQSTATUS_SET_0) & RESET_MASK) {
 		printf("Resetting ...\n");
 		writel(RESET_MASK, GPIO1_BASE + OMAP_GPIO_IRQSTATUS_SET_0);
 		disable_interrupts();
-		reset_cpu();
+		reset_cpu(0);
 		/*NOTREACHED*/
 	}
 }
@@ -526,9 +521,9 @@ void show_boot_progress(int val)
 		break;
 	}
 }
-#endif
 
 void arch_preboot_os(void)
 {
 	leds_set_finish();
 }
+#endif

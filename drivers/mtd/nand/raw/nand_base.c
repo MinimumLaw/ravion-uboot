@@ -29,13 +29,12 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #include <common.h>
-#include <log.h>
+#if CONFIG_IS_ENABLED(OF_CONTROL)
+#include <fdtdec.h>
+#endif
 #include <malloc.h>
 #include <watchdog.h>
 #include <dm/devres.h>
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/compat.h>
 #include <linux/mtd/mtd.h>
@@ -263,7 +262,7 @@ static void ioread8_rep(void *addr, uint8_t *buf, int len)
 static void ioread16_rep(void *addr, void *buf, int len)
 {
 	int i;
-	u16 *p = (u16 *) buf;
+ 	u16 *p = (u16 *) buf;
 
 	for (i = 0; i < len; i++)
 		p[i] = readw(addr);
@@ -905,11 +904,11 @@ static int nand_wait(struct mtd_info *mtd, struct nand_chip *chip)
 	if (ret)
 		return ret;
 
-	u32 timer = (CONFIG_SYS_HZ * timeo) / 1000;
-	u32 time_start;
-
-	time_start = get_timer(0);
-	while (get_timer(time_start) < timer) {
+ 	u32 timer = (CONFIG_SYS_HZ * timeo) / 1000;
+ 	u32 time_start;
+ 
+ 	time_start = get_timer(0);
+ 	while (get_timer(time_start) < timer) {
 		if (chip->dev_ready) {
 			if (chip->dev_ready(mtd))
 				break;
@@ -3556,8 +3555,6 @@ int nand_erase_nand(struct mtd_info *mtd, struct erase_info *instr,
 			pr_warn("%s: attempt to erase a bad block at page 0x%08x\n",
 				    __func__, page);
 			instr->state = MTD_ERASE_FAILED;
-			instr->fail_addr =
-				((loff_t)page << chip->page_shift);
 			goto erase_exit;
 		}
 
@@ -3601,6 +3598,10 @@ erase_exit:
 	/* Deselect and wake up anyone waiting on the device */
 	chip->select_chip(mtd, -1);
 	nand_release_device(mtd);
+
+	/* Do call back function */
+	if (!ret)
+		mtd_erase_callback(instr);
 
 	/* Return more or less happy */
 	return ret;
@@ -4569,20 +4570,22 @@ ident_done:
 EXPORT_SYMBOL(nand_get_flash_type);
 
 #if CONFIG_IS_ENABLED(OF_CONTROL)
+DECLARE_GLOBAL_DATA_PTR;
 
-static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, ofnode node)
+static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, int node)
 {
 	int ret, ecc_mode = -1, ecc_strength, ecc_step;
+	const void *blob = gd->fdt_blob;
 	const char *str;
 
-	ret = ofnode_read_s32_default(node, "nand-bus-width", -1);
+	ret = fdtdec_get_int(blob, node, "nand-bus-width", -1);
 	if (ret == 16)
 		chip->options |= NAND_BUSWIDTH_16;
 
-	if (ofnode_read_bool(node, "nand-on-flash-bbt"))
+	if (fdtdec_get_bool(blob, node, "nand-on-flash-bbt"))
 		chip->bbt_options |= NAND_BBT_USE_FLASH;
 
-	str = ofnode_read_string(node, "nand-ecc-mode");
+	str = fdt_getprop(blob, node, "nand-ecc-mode", NULL);
 	if (str) {
 		if (!strcmp(str, "none"))
 			ecc_mode = NAND_ECC_NONE;
@@ -4598,10 +4601,9 @@ static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, ofnode nod
 			ecc_mode = NAND_ECC_SOFT_BCH;
 	}
 
-	ecc_strength = ofnode_read_s32_default(node,
-					       "nand-ecc-strength", -1);
-	ecc_step = ofnode_read_s32_default(node,
-					   "nand-ecc-step-size", -1);
+
+	ecc_strength = fdtdec_get_int(blob, node, "nand-ecc-strength", -1);
+	ecc_step = fdtdec_get_int(blob, node, "nand-ecc-step-size", -1);
 
 	if ((ecc_step >= 0 && !(ecc_strength >= 0)) ||
 	    (!(ecc_step >= 0) && ecc_strength >= 0)) {
@@ -4618,13 +4620,13 @@ static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, ofnode nod
 	if (ecc_step > 0)
 		chip->ecc.size = ecc_step;
 
-	if (ofnode_read_bool(node, "nand-ecc-maximize"))
+	if (fdt_getprop(blob, node, "nand-ecc-maximize", NULL))
 		chip->ecc.options |= NAND_ECC_MAXIMIZE;
 
 	return 0;
 }
 #else
-static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, ofnode node)
+static int nand_dt_init(struct mtd_info *mtd, struct nand_chip *chip, int node)
 {
 	return 0;
 }
@@ -4648,7 +4650,7 @@ int nand_scan_ident(struct mtd_info *mtd, int maxchips,
 	struct nand_flash_dev *type;
 	int ret;
 
-	if (ofnode_valid(chip->flash_node)) {
+	if (chip->flash_node) {
 		ret = nand_dt_init(mtd, chip, chip->flash_node);
 		if (ret)
 			return ret;

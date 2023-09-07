@@ -9,13 +9,8 @@
 
 #include <common.h>
 #include <command.h>
-#include <env.h>
-#include <image.h>
 #include <asm/byteorder.h>
-#include <asm/global_data.h>
 #include <asm/zimage.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_SYS_DEBUG
 static void hexdump(unsigned char *buf, int len)
@@ -54,8 +49,7 @@ static unsigned long sh_check_cmd_arg(char *cmdline, char *key, int base)
 	return val;
 }
 
-int do_bootm_linux(int flag, int argc, char *const argv[],
-		   bootm_headers_t *images)
+int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *images)
 {
 	/* Linux kernel load address */
 	void (*kernel) (void) = (void (*)(void))images->ep;
@@ -113,17 +107,4 @@ int do_bootm_linux(int flag, int argc, char *const argv[],
 
 	/* does not return */
 	return 1;
-}
-
-static ulong get_sp(void)
-{
-	ulong ret;
-
-	asm("mov r15, %0" : "=r"(ret) : );
-	return ret;
-}
-
-void arch_lmb_reserve(struct lmb *lmb)
-{
-	arch_lmb_reserve_generic(lmb, get_sp(), gd->ram_top, 4096);
 }

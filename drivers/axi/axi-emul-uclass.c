@@ -4,12 +4,9 @@
  * Mario Six, Guntermann & Drunck GmbH, mario.six@gdsys.cc
  */
 
-#define LOG_CATEGORY UCLASS_AXI_EMUL
-
 #include <common.h>
 #include <axi.h>
 #include <dm.h>
-#include <log.h>
 #include <dm/device-internal.h>
 #include <asm/axi.h>
 

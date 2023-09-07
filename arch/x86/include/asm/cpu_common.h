@@ -14,7 +14,6 @@ enum {
 };
 
 struct cpu_info;
-struct udevice;
 
 /**
  * cpu_common_init() - Set up common CPU init
@@ -22,7 +21,7 @@ struct udevice;
  * This reports BIST failure, enables the LAPIC, updates microcode, enables
  * the upper 128-bytes of CROM RAM, probes the northbridge, PCH, LPC and SATA.
  *
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int cpu_common_init(void);
 
@@ -35,7 +34,7 @@ int cpu_common_init(void);
  * Some details are available here:
  * http://forum.hwbot.org/showthread.php?t=76092
  *
- * Return: 0 if OK, -ve on error
+ * @return 0 if OK, -ve on error
  */
 int cpu_set_flex_ratio_to_tdp_nominal(void);
 
@@ -49,7 +48,7 @@ int cpu_set_flex_ratio_to_tdp_nominal(void);
  * @info:	cpu_info struct to fill in
  * @bclk_mz:	the base clock in MHz
  *
- * Return: 0 always
+ * @return 0 always
  */
 int cpu_intel_get_info(struct cpu_info *info, int bclk_mz);
 
@@ -60,7 +59,7 @@ int cpu_intel_get_info(struct cpu_info *info, int bclk_mz);
  * MSR_TEMPERATURE_TARGET value.
  *
  * @dev: CPU device
- * Return: 0 if OK, -ENOENT if no target is given in device tree
+ * @return 0 if OK, -ENOENT if no target is given in device tree
  */
 int cpu_configure_thermal_target(struct udevice *dev);
 
@@ -76,7 +75,7 @@ void cpu_set_perf_control(uint clk_ratio);
 /**
  * cpu_config_tdp_levels() - Check for configurable TDP option
  *
- * Return: true if the CPU has configurable TDP (Thermal-design power)
+ * @return true if the CPU has configurable TDP (Thermal-design power)
  */
 bool cpu_config_tdp_levels(void);
 
@@ -95,7 +94,7 @@ enum burst_mode_t {
  * Bit 38 - TURBO_MODE_DISABLE Bit to get state ENABLED / DISABLED.
  * Also checks cpuid 0x6 to see whether burst mode is supported.
  *
- * Return: current burst mode status
+ * @return current burst mode status
  */
 enum burst_mode_t cpu_get_burst_mode_state(void);
 
@@ -128,70 +127,5 @@ void cpu_set_eist(bool eist_status);
  * Set PERF_CTL MSR (0x199) P_Req with that value.
  */
 void cpu_set_p_state_to_turbo_ratio(void);
-
-/**
- * cpu_get_coord_type() - Get the type of coordination for P-State transition
- *
- * See ACPI spec v6.3 section 8.4.6.5 _PSD (P-State Dependency)
- *
- * Return: HW_ALL (always)
- */
-int cpu_get_coord_type(void);
-
-/**
- * cpu_get_min_ratio() - get minimum support frequency ratio for CPU
- *
- * Return: minimum ratio
- */
-int cpu_get_min_ratio(void);
-
-/**
- * cpu_get_max_ratio() - get nominal TDP ration or max non-turbo ratio
- *
- * If a nominal TDP ratio is available, it is returned. Otherwise this returns
- * the  maximum non-turbo frequency ratio for this processor
- *
- * Return: max ratio
- */
-int cpu_get_max_ratio(void);
-
-/**
- * cpu_get_bus_clock_khz() - Get the bus clock frequency in KHz
- *
- * This is the value the clock ratio is multiplied with
- *
- * Return: bus-block frequency in KHz
- */
-int cpu_get_bus_clock_khz(void);
-
-/**
- * cpu_get_power_max() - Get maximum CPU TDP
- *
- * Return: maximum CPU TDP (Thermal-design power) in mW
- */
-int cpu_get_power_max(void);
-
-/**
- * cpu_get_max_turbo_ratio() - Get maximum turbo ratio
- *
- * Return: maximum ratio
- */
-int cpu_get_max_turbo_ratio(void);
-
-/**
- * cpu_get_cores_per_package() - Get the number of CPU cores in each package
- *
- * Return: number of cores
- */
-int cpu_get_cores_per_package(void);
-
-/**
- * cpu_mca_configure() - Set up machine-check exceptions ready for use
- *
- * These allow the SoC to report errors while running. See here for details:
- *
- * https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/machine-check-exceptions-debug-paper.pdf
- */
-void cpu_mca_configure(void);
 
 #endif

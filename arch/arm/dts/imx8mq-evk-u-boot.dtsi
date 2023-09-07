@@ -1,12 +1,9 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright 2020 NXP
+ */
 
-#include "imx8mq-u-boot.dtsi"
-
-&usdhc1 {
-	mmc-hs400-1_8v;
-};
-
-&usdhc2 {
-	sd-uhs-sdr104;
-	sd-uhs-ddr50;
+&flash0 {
+	/delete-property/ spi-tx-bus-width;
+	/delete-property/ spi-rx-bus-width;
 };

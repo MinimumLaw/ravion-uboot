@@ -9,11 +9,6 @@
 #define TORADEX_USB_PRODUCT_NUM_OFFSET	0x4000
 #define TDX_USB_VID			0x1B67
 
-int ft_common_board_setup(void *blob, struct bd_info *bd);
-u32 get_board_revision(void);
-
-#if defined(CONFIG_DM_VIDEO)
-int show_boot_logo(void);
-#endif
+int ft_common_board_setup(void *blob, bd_t *bd);
 
 #endif /* _TDX_COMMON_H */

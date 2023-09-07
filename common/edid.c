@@ -13,7 +13,6 @@
 #include <edid.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <log.h>
 #include <linux/ctype.h>
 #include <linux/string.h>
 
@@ -139,7 +138,7 @@ static void decode_timing(u8 *buf, struct display_timing *timing)
 /**
  * Check if HDMI vendor specific data block is present in CEA block
  * @param info	CEA extension block
- * Return: true if block is found
+ * @return true if block is found
  */
 static bool cea_is_hdmi_vsdb_present(struct edid_cea861_info *info)
 {
@@ -169,29 +168,6 @@ static bool cea_is_hdmi_vsdb_present(struct edid_cea861_info *info)
 	return false;
 }
 
-static bool edid_find_valid_timing(void *buf, int count,
-				   struct display_timing *timing,
-				   bool (*mode_valid)(void *priv,
-					const struct display_timing *timing),
-				   void *mode_valid_priv)
-{
-	struct edid_detailed_timing *t = buf;
-	bool found = false;
-	int i;
-
-	for (i = 0; i < count && !found; i++, t++)
-		if (EDID_DETAILED_TIMING_PIXEL_CLOCK(*t) != 0) {
-			decode_timing((u8 *)t, timing);
-			if (mode_valid)
-				found = mode_valid(mode_valid_priv,
-						   timing);
-			else
-				found = true;
-		}
-
-	return found;
-}
-
 int edid_get_timing_validate(u8 *buf, int buf_size,
 			     struct display_timing *timing,
 			     int *panel_bits_per_colourp,
@@ -200,16 +176,12 @@ int edid_get_timing_validate(u8 *buf, int buf_size,
 			     void *mode_valid_priv)
 {
 	struct edid1_info *edid = (struct edid1_info *)buf;
-	bool found;
+	bool timing_done;
+	int i;
 
 	if (buf_size < sizeof(*edid) || edid_check_info(edid)) {
 		debug("%s: Invalid buffer\n", __func__);
 		return -EINVAL;
-	}
-
-	if (!EDID1_INFO_VIDEO_INPUT_DIGITAL(*edid)) {
-		debug("%s: Not a digital display\n", __func__);
-		return -ENOSYS;
 	}
 
 	if (!EDID1_INFO_FEATURE_PREFERRED_TIMING_MODE(*edid)) {
@@ -217,30 +189,31 @@ int edid_get_timing_validate(u8 *buf, int buf_size,
 		return -ENOENT;
 	}
 
-	/* Look for detailed timing in base EDID */
-	found = edid_find_valid_timing(edid->monitor_details.descriptor, 4,
-				       timing, mode_valid, mode_valid_priv);
+	/* Look for detailed timing */
+	timing_done = false;
+	for (i = 0; i < 4; i++) {
+		struct edid_monitor_descriptor *desc;
 
-	/* Look for detailed timing in CTA-861 Extension Block */
-	if (!found && edid->extension_flag && buf_size >= EDID_EXT_SIZE) {
-		struct edid_cea861_info *info =
-			(struct edid_cea861_info *)(buf + sizeof(*edid));
+		desc = &edid->monitor_details.descriptor[i];
+		if (desc->zero_flag_1 != 0) {
+			decode_timing((u8 *)desc, timing);
+			if (mode_valid)
+				timing_done = mode_valid(mode_valid_priv,
+							 timing);
+			else
+				timing_done = true;
 
-		if (info->extension_tag == EDID_CEA861_EXTENSION_TAG) {
-			int count = EDID_CEA861_DTD_COUNT(*info);
-			int offset = info->dtd_offset;
-			int size = count * sizeof(struct edid_detailed_timing);
-
-			if (offset >= 4 && offset + size < EDID_SIZE)
-				found = edid_find_valid_timing(
-					(u8 *)info + offset, count, timing,
-					mode_valid, mode_valid_priv);
+			if (timing_done)
+				break;
 		}
 	}
-
-	if (!found)
+	if (!timing_done)
 		return -EINVAL;
 
+	if (!EDID1_INFO_VIDEO_INPUT_DIGITAL(*edid)) {
+		debug("%s: Not a digital display\n", __func__);
+		return -ENOSYS;
+	}
 	if (edid->version != 1 || edid->revision < 4) {
 		debug("%s: EDID version %d.%d does not have required info\n",
 		      __func__, edid->version, edid->revision);
@@ -274,7 +247,7 @@ int edid_get_timing(u8 *buf, int buf_size, struct display_timing *timing,
  * Snip the tailing whitespace/return of a string.
  *
  * @param string	The string to be snipped
- * Return: the snipped string
+ * @return the snipped string
  */
 static char *snip(char *string)
 {

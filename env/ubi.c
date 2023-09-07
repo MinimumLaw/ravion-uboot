@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
 
 #include <command.h>
 #include <env.h>
@@ -142,7 +141,7 @@ static int env_ubi_load(void)
 		       CONFIG_ENV_UBI_PART, CONFIG_ENV_UBI_VOLUME_REDUND);
 
 	return env_import_redund((char *)tmp_env1, read1_fail, (char *)tmp_env2,
-				 read2_fail, H_EXTERNAL);
+							 read2_fail);
 }
 #else /* ! CONFIG_SYS_REDUNDAND_ENVIRONMENT */
 static int env_ubi_load(void)
@@ -173,7 +172,7 @@ static int env_ubi_load(void)
 		return -EIO;
 	}
 
-	return env_import(buf, 1, H_EXTERNAL);
+	return env_import(buf, 1);
 }
 #endif /* CONFIG_SYS_REDUNDAND_ENVIRONMENT */
 

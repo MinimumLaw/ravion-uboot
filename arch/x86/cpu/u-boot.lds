@@ -105,7 +105,6 @@ SECTIONS
 	/DISCARD/ : { *(.plt*) }
 	/DISCARD/ : { *(.interp*) }
 	/DISCARD/ : { *(.gnu*) }
-	/DISCARD/ : { *(.note.gnu.property) }
 
 #ifdef CONFIG_X86_16BIT_INIT
 	/*

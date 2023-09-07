@@ -9,13 +9,11 @@
 #include <common.h>
 #include <env.h>
 #include <errno.h>
-#include <image.h>
-#include <log.h>
 #include <spl.h>
 #include <net.h>
 #include <linux/libfdt.h>
 
-#if defined(CONFIG_SPL_ETH) || defined(CONFIG_SPL_USB_ETHER)
+#if defined(CONFIG_SPL_ETH_SUPPORT) || defined(CONFIG_SPL_USB_ETHER)
 static ulong spl_net_load_read(struct spl_load_info *load, ulong sector,
 			       ulong count, void *buf)
 {
@@ -58,7 +56,7 @@ static int spl_net_load_image(struct spl_image_info *spl_image,
 	} else {
 		debug("Legacy image\n");
 
-		rv = spl_parse_image_header(spl_image, bootdev, header);
+		rv = spl_parse_image_header(spl_image, header);
 		if (rv)
 			return rv;
 
@@ -69,7 +67,7 @@ static int spl_net_load_image(struct spl_image_info *spl_image,
 }
 #endif
 
-#ifdef CONFIG_SPL_ETH
+#ifdef CONFIG_SPL_ETH_SUPPORT
 int spl_net_load_image_cpgmac(struct spl_image_info *spl_image,
 			      struct spl_boot_device *bootdev)
 {

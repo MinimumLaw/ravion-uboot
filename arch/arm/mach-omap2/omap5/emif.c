@@ -9,7 +9,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/emif.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/utils.h>

@@ -7,8 +7,6 @@
 #include <common.h>
 #include <command.h>
 #include <console.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 #include <gdsys_fpga.h>
 
@@ -16,7 +14,7 @@
 #include <dm.h>
 #include <misc.h>
 #include <regmap.h>
-#include <sysinfo.h>
+#include <board.h>
 
 #include "../../../drivers/misc/gdsys_soc.h"
 #include "../../../drivers/misc/gdsys_ioep.h"
@@ -266,7 +264,7 @@ static void io_reflect(struct udevice *dev)
  * Syntax:
  *	ioreflect {fpga} {reportrate}
  */
-int do_ioreflect(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_ioreflect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	uint fpga;
 	uint rate = 0;
@@ -275,13 +273,13 @@ int do_ioreflect(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	fpga = dectoul(argv[1], NULL);
+	fpga = simple_strtoul(argv[1], NULL, 10);
 
 	/*
 	 * If another parameter, it is the report rate in packets.
 	 */
 	if (argc > 2)
-		rate = dectoul(argv[2], NULL);
+		rate = simple_strtoul(argv[2], NULL, 10);
 
 	/* Enable receive path */
 	FPGA_SET_REG(fpga, ep.rx_tx_control, CTRL_PROC_RECEIVE_ENABLE);
@@ -323,7 +321,7 @@ int do_ioreflect(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
  * Syntax:
  *	ioreflect {reportrate}
  */
-int do_ioreflect(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_ioreflect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct udevice *fpga;
 	struct regmap *map;
@@ -376,7 +374,7 @@ int do_ioreflect(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
  * Syntax:
  *	ioloop {fpga} {size} {rate}
  */
-int do_ioloop(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_ioloop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	uint fpga;
 	uint size;
@@ -388,18 +386,18 @@ int do_ioloop(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	/*
 	 * FPGA is specified since argc > 2
 	 */
-	fpga = dectoul(argv[1], NULL);
+	fpga = simple_strtoul(argv[1], NULL, 10);
 
 	/*
 	 * packet size is specified since argc > 2
 	 */
-	size = dectoul(argv[2], NULL);
+	size = simple_strtoul(argv[2], NULL, 10);
 
 	/*
 	 * If another parameter, it is the test rate in packets per second.
 	 */
 	if (argc > 3)
-		rate = dectoul(argv[3], NULL);
+		rate = simple_strtoul(argv[3], NULL, 10);
 
 	/* enable receive path */
 	FPGA_SET_REG(fpga, ep.rx_tx_control, CTRL_PROC_RECEIVE_ENABLE);
@@ -442,7 +440,7 @@ int do_ioloop(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
  * Syntax:
  *	ioloop {size} {rate}
  */
-int do_ioloop(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_ioloop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	uint size;
 	uint rate = 0;
@@ -463,13 +461,13 @@ int do_ioloop(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	/*
 	 * packet size is specified since argc > 1
 	 */
-	size = dectoul(argv[2], NULL);
+	size = simple_strtoul(argv[2], NULL, 10);
 
 	/*
 	 * If another parameter, it is the test rate in packets per second.
 	 */
 	if (argc > 2)
-		rate = dectoul(argv[3], NULL);
+		rate = simple_strtoul(argv[3], NULL, 10);
 
 	/* Enable receive path */
 	misc_set_enabled(dev, true);
@@ -503,23 +501,22 @@ int do_ioloop(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 #endif /* CONFIG_GDSYS_LEGACY_DRIVERS */
 
 #ifndef CONFIG_GDSYS_LEGACY_DRIVERS
-int do_iodev(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_iodev(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct udevice *ioep = NULL;
-	struct udevice *sysinfo;
+	struct udevice *board;
 	char name[8];
 	int ret;
 
-	if (sysinfo_get(&sysinfo))
+	if (board_get(&board))
 		return CMD_RET_FAILURE;
 
 	if (argc > 1) {
-		int i = dectoul(argv[1], NULL);
+		int i = simple_strtoul(argv[1], NULL, 10);
 
 		snprintf(name, sizeof(name), "ioep%d", i);
 
-		ret = uclass_get_device_by_phandle(UCLASS_MISC, sysinfo, name,
-						   &ioep);
+		ret = uclass_get_device_by_phandle(UCLASS_MISC, board, name, &ioep);
 
 		if (ret || !ioep) {
 			printf("Invalid IOEP %d\n", i);
@@ -533,8 +530,7 @@ int do_iodev(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		while (1) {
 			snprintf(name, sizeof(name), "ioep%d", i);
 
-			ret = uclass_get_device_by_phandle(UCLASS_MISC, sysinfo,
-							   name, &ioep);
+			ret = uclass_get_device_by_phandle(UCLASS_MISC, board, name, &ioep);
 
 			if (ret || !ioep)
 				break;

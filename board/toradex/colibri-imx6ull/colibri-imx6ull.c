@@ -4,8 +4,6 @@
  */
 #include <common.h>
 #include <init.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/crm_regs.h>
@@ -43,14 +41,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define NAND_PAD_READY0_CTRL (PAD_CTL_DSE_48ohm | PAD_CTL_PUS_22K_UP)
 
-#define FLASH_DETECTION_CTRL (PAD_CTL_HYS | PAD_CTL_PUE)
-#define FLASH_DET_GPIO	IMX_GPIO_NR(4, 1)
-static const iomux_v3_cfg_t flash_detection_pads[] = {
-	MX6_PAD_NAND_WE_B__GPIO4_IO01 | MUX_PAD_CTRL(FLASH_DETECTION_CTRL),
-};
-
-static bool is_emmc;
-
 int dram_init(void)
 {
 	gd->ram_size = get_ram_size((void *)PHYS_SDRAM, PHYS_SDRAM_SIZE);
@@ -61,14 +51,38 @@ int dram_init(void)
 #ifdef CONFIG_NAND_MXS
 static void setup_gpmi_nand(void)
 {
-	setup_gpmi_io_clk((MXC_CCM_CS2CDR_ENFC_CLK_PODF(0) |
-			   MXC_CCM_CS2CDR_ENFC_CLK_PRED(3) |
-			   MXC_CCM_CS2CDR_ENFC_CLK_SEL(3)));
+	setup_gpmi_io_clk((3 << MXC_CCM_CSCDR1_BCH_PODF_OFFSET) |
+			  (3 << MXC_CCM_CSCDR1_GPMI_PODF_OFFSET));
 }
 #endif /* CONFIG_NAND_MXS */
 
-#ifdef CONFIG_DM_VIDEO
-static const iomux_v3_cfg_t backlight_pads[] = {
+#ifdef CONFIG_VIDEO_MXS
+static iomux_v3_cfg_t const lcd_pads[] = {
+	MX6_PAD_LCD_CLK__LCDIF_CLK		| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_ENABLE__LCDIF_ENABLE	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_HSYNC__LCDIF_HSYNC		| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_CLK__LCDIF_CLK		| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA00__LCDIF_DATA00	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA01__LCDIF_DATA01	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA02__LCDIF_DATA02	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA03__LCDIF_DATA03	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA04__LCDIF_DATA04	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA05__LCDIF_DATA05	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA06__LCDIF_DATA06	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA07__LCDIF_DATA07	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA08__LCDIF_DATA08	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA09__LCDIF_DATA09	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA10__LCDIF_DATA10	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA11__LCDIF_DATA11	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA12__LCDIF_DATA12	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA13__LCDIF_DATA13	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA14__LCDIF_DATA14	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA15__LCDIF_DATA15	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA16__LCDIF_DATA16	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX6_PAD_LCD_DATA17__LCDIF_DATA17	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const backlight_pads[] = {
 	/* Backlight On */
 	MX6_PAD_JTAG_TMS__GPIO1_IO11		| MUX_PAD_CTRL(NO_PAD_CTRL),
 	/* Backlight PWM<A> (multiplexed pin) */
@@ -80,6 +94,8 @@ static const iomux_v3_cfg_t backlight_pads[] = {
 
 static int setup_lcd(void)
 {
+	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
+
 	imx_iomux_v3_setup_multiple_pads(backlight_pads, ARRAY_SIZE(backlight_pads));
 
 	/* Set BL_ON */
@@ -129,16 +145,6 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-	/*
-	 * Enable GPIO on NAND_WE_B/eMMC_RST with 100k pull-down. eMMC_RST
-	 * is pulled high with 4.7k for eMMC devices. This allows to reliably
-	 * detect eMMC/NAND flash
-	 */
-	imx_iomux_v3_setup_multiple_pads(flash_detection_pads, ARRAY_SIZE(flash_detection_pads));
-	gpio_request(FLASH_DET_GPIO, "flash-detection-gpio");
-	is_emmc = gpio_get_value(FLASH_DET_GPIO);
-	gpio_free(FLASH_DET_GPIO);
-
 #ifdef CONFIG_FEC_MXC
 	setup_fec();
 #endif
@@ -146,6 +152,11 @@ int board_init(void)
 #ifdef CONFIG_NAND_MXS
 	setup_gpmi_nand();
 #endif
+
+#ifdef CONFIG_VIDEO_MXS
+	setup_lcd();
+#endif
+
 	return 0;
 }
 
@@ -167,15 +178,8 @@ int board_late_init(void)
 	 * Wi-Fi/Bluetooth make sure we use the -wifi device tree.
 	 */
 	if (tdx_hw_tag.prodid == COLIBRI_IMX6ULL_WIFI_BT_IT ||
-	    tdx_hw_tag.prodid == COLIBRI_IMX6ULL_WIFI_BT) {
+	    tdx_hw_tag.prodid == COLIBRI_IMX6ULL_WIFI_BT)
 		env_set("variant", "-wifi");
-	} else {
-		if (is_emmc)
-			env_set("variant", "-emmc");
-	}
-#else
-	if (is_emmc)
-		env_set("variant", "-emmc");
 #endif
 
 	/*
@@ -198,10 +202,6 @@ int board_late_init(void)
 	}
 #endif /* CONFIG_CMD_USB_SDP */
 
-#if defined(CONFIG_DM_VIDEO)
-	setup_lcd();
-#endif
-
 	return 0;
 }
 
@@ -213,7 +213,7 @@ int checkboard(void)
 }
 
 #if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 #if defined(CONFIG_FDT_FIXUP_PARTITIONS)
 	static struct node_info nodes[] = {
@@ -230,12 +230,12 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 }
 #endif
 
-static struct mxc_serial_plat mxc_serial_plat = {
+static struct mxc_serial_platdata mxc_serial_plat = {
 	.reg = (struct mxc_uart *)UART1_BASE,
 	.use_dte = 1,
 };
 
-U_BOOT_DRVINFO(mxc_serial) = {
+U_BOOT_DEVICE(mxc_serial) = {
 	.name = "serial_mxc",
-	.plat = &mxc_serial_plat,
+	.platdata = &mxc_serial_plat,
 };

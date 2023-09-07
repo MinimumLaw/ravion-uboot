@@ -5,27 +5,23 @@
  *
  * Copyright (C) 2011 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
  */
-
-#define LOG_CATEGORY UCLASS_CLK
-
 #include <common.h>
-#include <clk.h>
-#include <clk-uclass.h>
-#include <div64.h>
-#include <log.h>
 #include <malloc.h>
+#include <clk-uclass.h>
 #include <dm/device.h>
 #include <dm/devres.h>
 #include <linux/clk-provider.h>
-#include <linux/err.h>
-
+#include <div64.h>
+#include <clk.h>
 #include "clk.h"
+#include <linux/err.h>
 
 #define UBOOT_DM_CLK_IMX_FIXED_FACTOR "ccf_clk_fixed_factor"
 
 static ulong clk_factor_recalc_rate(struct clk *clk)
 {
-	struct clk_fixed_factor *fix = to_clk_fixed_factor(clk);
+	struct clk_fixed_factor *fix =
+		to_clk_fixed_factor(dev_get_clk_ptr(clk->dev));
 	unsigned long parent_rate = clk_get_parent_rate(clk);
 	unsigned long long int rate;
 
@@ -54,7 +50,6 @@ struct clk *clk_hw_register_fixed_factor(struct device *dev,
 	fix->mult = mult;
 	fix->div = div;
 	clk = &fix->clk;
-	clk->flags = flags;
 
 	ret = clk_register(clk, UBOOT_DM_CLK_IMX_FIXED_FACTOR, name,
 			   parent_name);

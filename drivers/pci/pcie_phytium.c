@@ -10,7 +10,6 @@
 #include <common.h>
 #include <dm.h>
 #include <pci.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 
 /**
@@ -36,7 +35,9 @@ static int phytium_pci_skip_dev(pci_dev_t parent)
 	unsigned short capreg;
 	unsigned char port_type;
 
-	addr += PCIE_ECAM_OFFSET(PCI_BUS(parent), PCI_DEV(parent), PCI_FUNC(parent), 0);
+	addr += PCI_BUS(parent) << 20;
+	addr += PCI_DEV(parent) << 15;
+	addr += PCI_FUNC(parent) << 12;
 
 	pos = 0x34;
 	while (1) {
@@ -87,7 +88,9 @@ static int pci_phytium_conf_address(const struct udevice *bus, pci_dev_t bdf,
 	bdf_parent = PCI_BDF((bus_no - 1), 0, 0);
 
 	addr = pcie->cfg_base;
-	addr += PCIE_ECAM_OFFSET(PCI_BUS(bdf), PCI_DEV(bdf), PCI_FUNC(bdf), 0);
+	addr += PCI_BUS(bdf) << 20;
+	addr += PCI_DEV(bdf) << 15;
+	addr += PCI_FUNC(bdf) << 12;
 
 	if (bus_no > 0 && dev_no > 0) {
 		if ((readb(addr + PCI_HEADER_TYPE) & 0x7f) !=
@@ -144,7 +147,7 @@ static int pci_phytium_write_config(struct udevice *bus, pci_dev_t bdf,
 }
 
 /**
- * pci_phytium_of_to_plat() - Translate from DT to device state
+ * pci_phytium_ofdata_to_platdata() - Translate from DT to device state
  * @dev: A pointer to the device being operated on
  *
  * Translate relevant data from the device tree pertaining to device @dev into
@@ -153,7 +156,7 @@ static int pci_phytium_write_config(struct udevice *bus, pci_dev_t bdf,
  *
  * Return: 0 on success, else -EINVAL
  */
-static int pci_phytium_of_to_plat(struct udevice *dev)
+static int pci_phytium_ofdata_to_platdata(struct udevice *dev)
 {
 	struct phytium_pcie *pcie = dev_get_priv(dev);
 	struct fdt_resource reg_res;
@@ -191,6 +194,6 @@ U_BOOT_DRIVER(pci_phytium) = {
 	.id			= UCLASS_PCI,
 	.of_match		= pci_phytium_ids,
 	.ops			= &pci_phytium_ops,
-	.of_to_plat	= pci_phytium_of_to_plat,
-	.priv_auto	= sizeof(struct phytium_pcie),
+	.ofdata_to_platdata	= pci_phytium_ofdata_to_platdata,
+	.priv_auto_alloc_size	= sizeof(struct phytium_pcie),
 };

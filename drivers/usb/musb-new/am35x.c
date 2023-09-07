@@ -26,8 +26,6 @@
 #else
 #include <common.h>
 #include <asm/omap_musb.h>
-#include <linux/bug.h>
-#include <linux/delay.h>
 #include "linux-compat.h"
 #endif
 

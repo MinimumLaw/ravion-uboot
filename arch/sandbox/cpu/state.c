@@ -4,11 +4,8 @@
  */
 
 #include <common.h>
-#include <autoboot.h>
-#include <bloblist.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <log.h>
 #include <os.h>
 #include <asm/malloc.h>
 #include <asm/state.h>
@@ -31,17 +28,17 @@ static int state_ensure_space(int extra_size)
 		return 0;
 
 	size = used + extra_size;
-	buf = os_malloc(size);
+	buf = malloc(size);
 	if (!buf)
 		return -ENOMEM;
 
 	ret = fdt_open_into(blob, buf, size);
 	if (ret) {
-		os_free(buf);
+		free(buf);
 		return -EIO;
 	}
 
-	os_free(blob);
+	free(blob);
 	state->state_fdt = buf;
 	return 0;
 }
@@ -57,7 +54,7 @@ static int state_read_file(struct sandbox_state *state, const char *fname)
 		printf("Cannot find sandbox state file '%s'\n", fname);
 		return -ENOENT;
 	}
-	state->state_fdt = os_malloc(size);
+	state->state_fdt = malloc(size);
 	if (!state->state_fdt) {
 		puts("No memory to read sandbox state\n");
 		return -ENOMEM;
@@ -79,11 +76,7 @@ static int state_read_file(struct sandbox_state *state, const char *fname)
 err_read:
 	os_close(fd);
 err_open:
-	/*
-	 * tainted scalar, since size is obtained from the file. But we can rely
-	 * on os_malloc() to handle invalid values.
-	 */
-	os_free(state->state_fdt);
+	free(state->state_fdt);
 	state->state_fdt = NULL;
 
 	return ret;
@@ -101,7 +94,7 @@ err_open:
  * @state: Sandbox state
  * @io: Method to use for reading state
  * @blob: FDT containing state
- * Return: 0 if OK, -EINVAL if the read function returned failure
+ * @return 0 if OK, -EINVAL if the read function returned failure
  */
 int sandbox_read_state_nodes(struct sandbox_state *state,
 			     struct sandbox_state_io *io, const void *blob)
@@ -190,7 +183,7 @@ int sandbox_read_state(struct sandbox_state *state, const char *fname)
  *
  * @state: Sandbox state
  * @io: Method to use for writing state
- * Return: 0 if OK, -EIO if there is a fatal error (such as out of space
+ * @return 0 if OK, -EIO if there is a fatal error (such as out of space
  * for adding the data), -EINVAL if the write function failed.
  */
 int sandbox_write_state_node(struct sandbox_state *state,
@@ -250,7 +243,7 @@ int sandbox_write_state(struct sandbox_state *state, const char *fname)
 	/* Create a state FDT if we don't have one */
 	if (!state->state_fdt) {
 		size = 0x4000;
-		state->state_fdt = os_malloc(size);
+		state->state_fdt = malloc(size);
 		if (!state->state_fdt) {
 			puts("No memory to create FDT\n");
 			return -ENOMEM;
@@ -308,7 +301,7 @@ int sandbox_write_state(struct sandbox_state *state, const char *fname)
 err_write:
 	os_close(fd);
 err_create:
-	os_free(state->state_fdt);
+	free(state->state_fdt);
 
 	return ret;
 }
@@ -364,7 +357,6 @@ void state_reset_for_test(struct sandbox_state *state)
 	/* No reset yet, so mark it as such. Always allow power reset */
 	state->last_sysreset = SYSRESET_COUNT;
 	state->sysreset_allowed[SYSRESET_POWER_OFF] = true;
-	state->sysreset_allowed[SYSRESET_COLD] = true;
 	state->allow_memio = false;
 
 	memset(&state->wdt, '\0', sizeof(state->wdt));
@@ -379,33 +371,13 @@ void state_reset_for_test(struct sandbox_state *state)
 	state->next_tag = state->ram_size;
 }
 
-bool autoboot_keyed(void)
-{
-	struct sandbox_state *state = state_get_current();
-
-	return IS_ENABLED(CONFIG_AUTOBOOT_KEYED) && state->autoboot_keyed;
-}
-
-bool autoboot_set_keyed(bool autoboot_keyed)
-{
-	struct sandbox_state *state = state_get_current();
-	bool old_val = state->autoboot_keyed;
-
-	state->autoboot_keyed = autoboot_keyed;
-
-	return old_val;
-}
-
 int state_init(void)
 {
 	state = &main_state;
 
 	state->ram_size = CONFIG_SYS_SDRAM_SIZE;
 	state->ram_buf = os_malloc(state->ram_size);
-	if (!state->ram_buf) {
-		printf("Out of memory\n");
-		os_exit(1);
-	}
+	assert(state->ram_buf);
 
 	state_reset_for_test(state);
 	/*
@@ -421,11 +393,7 @@ int state_uninit(void)
 {
 	int err;
 
-	log_info("Writing sandbox state\n");
 	state = &main_state;
-
-	/* Finish the bloblist, so that it is correct before writing memory */
-	bloblist_finish();
 
 	if (state->write_ram_buf) {
 		err = os_write_ram_buf(state->ram_buf_fname);
@@ -442,12 +410,16 @@ int state_uninit(void)
 		}
 	}
 
+	/* Remove old memory file if required */
+	if (state->ram_buf_rm && state->ram_buf_fname)
+		os_unlink(state->ram_buf_fname);
+
 	/* Delete this at the last moment so as not to upset gdb too much */
 	if (state->jumped_fname)
 		os_unlink(state->jumped_fname);
 
-	os_free(state->state_fdt);
-	os_free(state->ram_buf);
+	if (state->state_fdt)
+		free(state->state_fdt);
 	memset(state, '\0', sizeof(*state));
 
 	return 0;

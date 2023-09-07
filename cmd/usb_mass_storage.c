@@ -6,18 +6,16 @@
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
  */
 
+#include <errno.h>
 #include <common.h>
-#include <blk.h>
 #include <command.h>
 #include <console.h>
-#include <errno.h>
 #include <g_dnl.h>
 #include <malloc.h>
 #include <part.h>
 #include <usb.h>
 #include <usb_mass_storage.h>
 #include <watchdog.h>
-#include <linux/delay.h>
 
 static int ums_read_sector(struct ums *ums_dev,
 			   ulong start, lbaint_t blkcnt, void *buf)
@@ -57,7 +55,7 @@ static int ums_init(const char *devtype, const char *devnums_part_str)
 {
 	char *s, *t, *devnum_part_str, *name;
 	struct blk_desc *block_dev;
-	struct disk_partition info;
+	disk_partition_t info;
 	int partnum;
 	int ret = -1;
 	struct ums *ums_new;
@@ -74,8 +72,8 @@ static int ums_init(const char *devtype, const char *devnums_part_str)
 		if (!devnum_part_str)
 			break;
 
-		partnum = part_get_info_by_dev_and_name_or_num(devtype, devnum_part_str,
-							       &block_dev, &info, 1);
+		partnum = blk_get_device_part_str(devtype, devnum_part_str,
+					&block_dev, &info, 1);
 
 		if (partnum < 0)
 			goto cleanup;
@@ -115,8 +113,8 @@ static int ums_init(const char *devtype, const char *devnums_part_str)
 		ums[ums_count].name = name;
 		ums[ums_count].block_dev = *block_dev;
 
-		printf("UMS: LUN %d, dev %s %d, hwpart %d, sector %#x, count %#x\n",
-		       ums_count, devtype, ums[ums_count].block_dev.devnum,
+		printf("UMS: LUN %d, dev %d, hwpart %d, sector %#x, count %#x\n",
+		       ums_count, ums[ums_count].block_dev.devnum,
 		       ums[ums_count].block_dev.hwpart,
 		       ums[ums_count].start_sector,
 		       ums[ums_count].num_sectors);
@@ -136,8 +134,8 @@ cleanup:
 	return ret;
 }
 
-static int do_usb_mass_storage(struct cmd_tbl *cmdtp, int flag,
-			       int argc, char *const argv[])
+static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag,
+			       int argc, char * const argv[])
 {
 	const char *usb_controller;
 	const char *devtype;

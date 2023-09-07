@@ -6,10 +6,7 @@
 
 #include <common.h>
 #include <dm.h>
-#include <env.h>
 #include <env_internal.h>
-#include <init.h>
-#include <net.h>
 #include <asm/io.h>
 #include <asm/arch/axg.h>
 #include <asm/arch/sm.h>
@@ -18,6 +15,9 @@
 
 int misc_init_r(void)
 {
+	meson_eth_init(PHY_INTERFACE_MODE_RMII,
+		       MESON_USE_INTERNAL_RMII_PHY);
+
 	meson_generate_serial_ethaddr();
 
 	env_set("serial#", "AMLG12ASEI510");

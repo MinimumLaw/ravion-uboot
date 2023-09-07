@@ -39,14 +39,14 @@ int cleanup_before_linux(void)
 	return 0;
 }
 
-int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	disable_interrupts();
 
 	/*
 	 * reset to the base addr of andesboot.
 	 * currently no ROM loader at addr 0.
-	 * do not use reset_cpu();
+	 * do not use reset_cpu(0);
 	 */
 #ifdef CONFIG_FTWDT010_WATCHDOG
 	/*

@@ -9,7 +9,6 @@
 #include <common.h>
 
 #include <gdsys_fpga.h>
-#include <linux/bitops.h>
 
 enum pcb_video_type {
 	PCB_DVI_SL,
@@ -444,7 +443,6 @@ static int get_features(unsigned int fpga, struct fpga_features *features)
 	return 0;
 }
 
-#include <linux/bitops.h>
 #endif
 
 bool ioep_fpga_has_osd(unsigned int fpga)

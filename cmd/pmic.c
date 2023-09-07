@@ -4,7 +4,6 @@
  * Przemyslaw Marczak <p.marczak@samsung.com>
  */
 #include <common.h>
-#include <command.h>
 #include <errno.h>
 #include <dm.h>
 #include <dm/uclass-internal.h>
@@ -22,7 +21,7 @@ static int failure(int ret)
 	return CMD_RET_FAILURE;
 }
 
-static int do_dev(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_dev(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *name;
 	int ret = -ENODEV;
@@ -41,14 +40,13 @@ static int do_dev(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 			return CMD_RET_USAGE;
 		}
 
-		printf("dev: %d @ %s\n", dev_seq(currdev), currdev->name);
+		printf("dev: %d @ %s\n", currdev->seq, currdev->name);
 	}
 
 	return CMD_RET_SUCCESS;
 }
 
-static int do_list(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_list(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct udevice *dev;
 	int ret;
@@ -66,7 +64,7 @@ static int do_list(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("| %-*.*s| %-*.*s| %s @ %d\n",
 		       LIMIT_DEV, LIMIT_DEV, dev->name,
 		       LIMIT_PARENT, LIMIT_PARENT, dev->parent->name,
-		       dev_get_uclass_name(dev->parent), dev_seq(dev->parent));
+		       dev_get_uclass_name(dev->parent), dev->parent->seq);
 	}
 
 	if (ret)
@@ -75,8 +73,7 @@ static int do_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_dump(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_dump(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct uc_pmic_priv *priv;
 	struct udevice *dev;
@@ -121,8 +118,7 @@ static int do_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_read(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_read(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct uc_pmic_priv *priv;
 	struct udevice *dev;
@@ -161,8 +157,7 @@ static int do_read(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_write(struct cmd_tbl *cmdtp, int flag, int argc,
-		    char *const argv[])
+static int do_write(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct udevice *dev;
 	uint reg, value;
@@ -196,7 +191,7 @@ static int do_write(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static struct cmd_tbl subcmd[] = {
+static cmd_tbl_t subcmd[] = {
 	U_BOOT_CMD_MKENT(dev, 2, 1, do_dev, "", ""),
 	U_BOOT_CMD_MKENT(list, 1, 1, do_list, "", ""),
 	U_BOOT_CMD_MKENT(dump, 1, 1, do_dump, "", ""),
@@ -204,10 +199,10 @@ static struct cmd_tbl subcmd[] = {
 	U_BOOT_CMD_MKENT(write, 3, 1, do_write, "", ""),
 };
 
-static int do_pmic(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
+static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc,
+			char * const argv[])
 {
-	struct cmd_tbl *cmd;
+	cmd_tbl_t *cmd;
 
 	argc--;
 	argv++;

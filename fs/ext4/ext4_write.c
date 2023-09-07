@@ -22,11 +22,8 @@
 
 
 #include <common.h>
-#include <blk.h>
-#include <log.h>
 #include <malloc.h>
 #include <memalign.h>
-#include <part.h>
 #include <linux/stat.h>
 #include <div64.h>
 #include "ext4_common.h"

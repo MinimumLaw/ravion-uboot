@@ -1,13 +1,15 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2017-2020 Hitachi Power Grids
+ * Copyright (C) 2017-2020 ABB
  *
  */
 #ifndef __CONFIG_SOCFPGA_SECU1_H__
 #define __CONFIG_SOCFPGA_SECU1_H__
 
 #include <asm/arch/base_addr_ac5.h>
-#include <linux/stringify.h>
+
+/* Call misc_init_r */
+#define CONFIG_MISC_INIT_R
 
 #define CONFIG_HUSH_INIT_VAR
 /* Eternal oscillator */
@@ -25,11 +27,31 @@
 #define CONFIG_SYS_I2C_RTC_ADDR         0x68
 
 /* Booting Linux */
+#define CONFIG_BOOTDELAY	2
 #define CONFIG_BOOTFILE		"zImage"
+#define CONFIG_BOOTARGS		\
+	"console=ttyS0," __stringify(CONFIG_BAUDRATE) \
+	" ubi.fm_autoconvert=1" \
+	" uio_pdrv_genirq.of_id=\"idq,regbank\""
 
+#define CONFIG_BOOTCOMMAND	\
+	"setenv bootcmd '"	\
+		"bridge enable; "	\
+		"if test ${bootnum} = \"b\"; " \
+		      "then run _fpga_loadsafe; " \
+		"else if test ${bootcount} -eq 4; then echo \"Switching copy...\"; setexpr x $bootnum % 2 && setexpr bootnum $x + 1; saveenv; fi; " \
+		      "run _fpga_loaduser; " \
+		"fi;" \
+		"echo \"Booting bank $bootnum\" && run userload && run userboot;" \
+	"' && " \
+	"setenv altbootcmd 'setenv bootnum b && saveenv && boot;' && " \
+	"saveenv && saveenv && boot;"
+
+#define CONFIG_CMDLINE_TAG
 #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
 /* Environment settings */
+#define CONFIG_ENV_OVERWRITE
 
 /*
  * Autoboot
@@ -39,6 +61,9 @@
  */
 #define CONFIG_BOOT_RETRY_TIME 45
 #define CONFIG_RESET_TO_RETRY
+
+#define CONFIG_LOADADDR		0x01000000
+#define CONFIG_SYS_LOAD_ADDR   CONFIG_KM_KERNEL_ADDR
 
 /*
  * FPGA Remote Update related environment
@@ -94,5 +119,13 @@
 
 /* The rest of the configuration is shared */
 #include <configs/socfpga_common.h>
+
+#ifdef CONFIG_SPL_NAND_SUPPORT
+#undef CONFIG_SYS_NAND_U_BOOT_OFFS
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x80000
+#endif
+
+#undef CONFIG_WATCHDOG_TIMEOUT_MSECS
+#define CONFIG_WATCHDOG_TIMEOUT_MSECS	60000
 
 #endif	/* __CONFIG_SOCFPGA_SECU1_H__ */

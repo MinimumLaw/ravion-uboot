@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * ENETC ethernet controller driver
- * Copyright 2017-2021 NXP
+ * Copyright 2017-2019 NXP
  */
 
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <fdt_support.h>
 #include <malloc.h>
 #include <memalign.h>
-#include <net.h>
-#include <asm/cache.h>
 #include <asm/io.h>
 #include <pci.h>
 #include <miiphy.h>
-#include <linux/bug.h>
-#include <linux/delay.h>
 
 #include "fsl_enetc.h"
 
@@ -54,7 +49,7 @@ static int ierb_fn_to_pf[] = {0, 1, 2, -1, -1, -1, 3};
 /* sets up primary MAC addresses in DT/IERB */
 void fdt_fixup_enetc_mac(void *blob)
 {
-	struct pci_child_plat *ppdata;
+	struct pci_child_platdata *ppdata;
 	struct eth_pdata *pdata;
 	struct udevice *dev;
 	struct uclass *uc;
@@ -68,8 +63,8 @@ void fdt_fixup_enetc_mac(void *blob)
 		    strcmp(dev->driver->name, ENETC_DRIVER_NAME))
 			continue;
 
-		pdata = dev_get_plat(dev);
-		ppdata = dev_get_parent_plat(dev);
+		pdata = dev_get_platdata(dev);
+		ppdata = dev_get_parent_platdata(dev);
 		devfn = PCI_FUNC(ppdata->devfn);
 
 		enetc_set_ierb_primary_mac(dev, devfn, pdata->enetaddr);
@@ -99,7 +94,7 @@ static int enetc_bind(struct udevice *dev)
 	 * and some are not, use different naming scheme - enetc-N based on
 	 * PCI function # and enetc#N based on interface count
 	 */
-	if (ofnode_valid(dev_ofnode(dev)))
+	if (ofnode_valid(dev->node))
 		sprintf(name, "enetc-%u", PCI_FUNC(pci_get_devfn(dev)));
 	else
 		sprintf(name, "enetc#%u", eth_num_devices++);
@@ -144,7 +139,7 @@ static int enetc_init_sgmii(struct udevice *dev)
 	if (!enetc_has_imdio(dev))
 		return 0;
 
-	if (priv->if_type == PHY_INTERFACE_MODE_2500BASEX)
+	if (priv->if_type == PHY_INTERFACE_MODE_SGMII_2500)
 		is2500 = true;
 
 	/*
@@ -178,43 +173,21 @@ static int enetc_init_sgmii(struct udevice *dev)
 }
 
 /* set up MAC for RGMII */
-static void enetc_init_rgmii(struct udevice *dev, struct phy_device *phydev)
+static int enetc_init_rgmii(struct udevice *dev)
 {
 	struct enetc_priv *priv = dev_get_priv(dev);
-	u32 old_val, val;
+	u32 if_mode;
 
-	old_val = val = enetc_read_port(priv, ENETC_PM_IF_MODE);
+	/* enable RGMII AN */
+	if_mode = enetc_read_port(priv, ENETC_PM_IF_MODE);
+	if_mode |= ENETC_PM_IF_MODE_AN_ENA;
+	enetc_write_port(priv, ENETC_PM_IF_MODE, if_mode);
 
-	/* disable unreliable RGMII in-band signaling and force the MAC into
-	 * the speed negotiated by the PHY.
-	 */
-	val &= ~ENETC_PM_IF_MODE_AN_ENA;
-
-	if (phydev->speed == SPEED_1000) {
-		val &= ~ENETC_PM_IFM_SSP_MASK;
-		val |= ENETC_PM_IFM_SSP_1000;
-	} else if (phydev->speed == SPEED_100) {
-		val &= ~ENETC_PM_IFM_SSP_MASK;
-		val |= ENETC_PM_IFM_SSP_100;
-	} else if (phydev->speed == SPEED_10) {
-		val &= ~ENETC_PM_IFM_SSP_MASK;
-		val |= ENETC_PM_IFM_SSP_10;
-	}
-
-	if (phydev->duplex == DUPLEX_FULL)
-		val |= ENETC_PM_IFM_FULL_DPX;
-	else
-		val &= ~ENETC_PM_IFM_FULL_DPX;
-
-	if (val == old_val)
-		return;
-
-	enetc_write_port(priv, ENETC_PM_IF_MODE, val);
+	return 0;
 }
 
 /* set up MAC configuration for the given interface type */
-static void enetc_setup_mac_iface(struct udevice *dev,
-				  struct phy_device *phydev)
+static void enetc_setup_mac_iface(struct udevice *dev)
 {
 	struct enetc_priv *priv = dev_get_priv(dev);
 	u32 if_mode;
@@ -224,10 +197,11 @@ static void enetc_setup_mac_iface(struct udevice *dev,
 	case PHY_INTERFACE_MODE_RGMII_ID:
 	case PHY_INTERFACE_MODE_RGMII_RXID:
 	case PHY_INTERFACE_MODE_RGMII_TXID:
-		enetc_init_rgmii(dev, phydev);
+		enetc_init_rgmii(dev);
 		break;
+	case PHY_INTERFACE_MODE_XGMII:
 	case PHY_INTERFACE_MODE_USXGMII:
-	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_XFI:
 		/* set ifmode to (US)XGMII */
 		if_mode = enetc_read_port(priv, ENETC_PM_IF_MODE);
 		if_mode &= ~ENETC_PM_IF_IFMODE_MASK;
@@ -269,17 +243,17 @@ static void enetc_start_pcs(struct udevice *dev)
 		priv->imdio.read = enetc_mdio_read;
 		priv->imdio.write = enetc_mdio_write;
 		priv->imdio.priv = priv->port_regs + ENETC_PM_IMDIO_BASE;
-		strlcpy(priv->imdio.name, dev->name, MDIO_NAME_LEN);
+		strncpy(priv->imdio.name, dev->name, MDIO_NAME_LEN);
 		if (!miiphy_get_dev_by_name(priv->imdio.name))
 			mdio_register(&priv->imdio);
 	}
 
-	if (!ofnode_valid(dev_ofnode(dev))) {
+	if (!ofnode_valid(dev->node)) {
 		enetc_dbg(dev, "no enetc ofnode found, skipping PCS set-up\n");
 		return;
 	}
 
-	if_str = ofnode_read_string(dev_ofnode(dev), "phy-mode");
+	if_str = ofnode_read_string(dev->node, "phy-mode");
 	if (if_str)
 		priv->if_type = phy_get_interface_by_name(if_str);
 	else
@@ -290,31 +264,33 @@ static void enetc_start_pcs(struct udevice *dev)
 
 	switch (priv->if_type) {
 	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_2500BASEX:
+	case PHY_INTERFACE_MODE_SGMII_2500:
 		enetc_init_sgmii(dev);
 		break;
+	case PHY_INTERFACE_MODE_XGMII:
 	case PHY_INTERFACE_MODE_USXGMII:
-	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_XFI:
 		enetc_init_sxgmii(dev);
 		break;
 	};
 }
 
 /* Configure the actual/external ethernet PHY, if one is found */
-static int enetc_config_phy(struct udevice *dev)
+static void enetc_config_phy(struct udevice *dev)
 {
 	struct enetc_priv *priv = dev_get_priv(dev);
 	int supported;
 
 	priv->phy = dm_eth_phy_connect(dev);
+
 	if (!priv->phy)
-		return -ENODEV;
+		return;
 
 	supported = PHY_GBIT_FEATURES | SUPPORTED_2500baseX_Full;
 	priv->phy->supported &= supported;
 	priv->phy->advertising &= supported;
 
-	return phy_config(priv->phy);
+	phy_config(priv->phy);
 }
 
 /*
@@ -325,7 +301,7 @@ static int enetc_probe(struct udevice *dev)
 {
 	struct enetc_priv *priv = dev_get_priv(dev);
 
-	if (ofnode_valid(dev_ofnode(dev)) && !ofnode_is_available(dev_ofnode(dev))) {
+	if (ofnode_valid(dev->node) && !ofnode_is_available(dev->node)) {
 		enetc_dbg(dev, "interface disabled\n");
 		return -ENODEV;
 	}
@@ -354,8 +330,9 @@ static int enetc_probe(struct udevice *dev)
 	dm_pci_clrset_config16(dev, PCI_COMMAND, 0, PCI_COMMAND_MEMORY);
 
 	enetc_start_pcs(dev);
+	enetc_config_phy(dev);
 
-	return enetc_config_phy(dev);
+	return 0;
 }
 
 /*
@@ -383,9 +360,9 @@ static int enetc_remove(struct udevice *dev)
 
 static int enetc_ls1028a_write_hwaddr(struct udevice *dev)
 {
-	struct pci_child_plat *ppdata = dev_get_parent_plat(dev);
+	struct pci_child_platdata *ppdata = dev_get_parent_platdata(dev);
 	const int devfn_to_pf[] = {0, 1, 2, -1, -1, -1, 3};
-	struct eth_pdata *plat = dev_get_plat(dev);
+	struct eth_pdata *plat = dev_get_platdata(dev);
 	int devfn = PCI_FUNC(ppdata->devfn);
 	u8 *addr = plat->enetaddr;
 	u32 lower, upper;
@@ -409,7 +386,7 @@ static int enetc_ls1028a_write_hwaddr(struct udevice *dev)
 
 static int enetc_write_hwaddr(struct udevice *dev)
 {
-	struct eth_pdata *plat = dev_get_plat(dev);
+	struct eth_pdata *plat = dev_get_platdata(dev);
 	struct enetc_priv *priv = dev_get_priv(dev);
 	u8 *addr = plat->enetaddr;
 
@@ -566,9 +543,12 @@ static int enetc_start(struct udevice *dev)
 	enetc_setup_tx_bdr(dev);
 	enetc_setup_rx_bdr(dev);
 
-	enetc_setup_mac_iface(dev, priv->phy);
+	enetc_setup_mac_iface(dev);
 
-	return phy_startup(priv->phy);
+	if (priv->phy)
+		phy_startup(priv->phy);
+
+	return 0;
 }
 
 /*
@@ -692,8 +672,8 @@ U_BOOT_DRIVER(eth_enetc) = {
 	.probe	= enetc_probe,
 	.remove = enetc_remove,
 	.ops	= &enetc_ops,
-	.priv_auto	= sizeof(struct enetc_priv),
-	.plat_auto	= sizeof(struct eth_pdata),
+	.priv_auto_alloc_size = sizeof(struct enetc_priv),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
 };
 
 static struct pci_device_id enetc_ids[] = {

@@ -69,7 +69,7 @@ config PINCONF_RECURSIVE
 	  direct children of the pin controller device (may be grandchildren for
 	  example). It is define is each individual pin controller device.
 	  Say Y here if you want to keep this behavior with the pinconfig
-	  u-class: all sub are recursively bounded.
+	  u-class: all sub are recursivelly bounded.
 	  If the option is disabled, this behavior is deactivated and only
 	  the direct children of pin controller will be assumed as pin
 	  configuration; you can save memory footprint when this feature is
@@ -145,17 +145,6 @@ config SPL_PINCONF_RECURSIVE
 
 if PINCTRL || SPL_PINCTRL
 
-config PINCTRL_APPLE
-	bool "Apple pinctrl driver"
-	depends on DM && PINCTRL_GENERIC && ARCH_APPLE
-	default y
-	help
-	  Support pin multiplexing on Apple SoCs.
-
-	  The driver is controlled by a device tree node which contains
-	  both the GPIO definitions and pin control functions for each
-	  available multiplex function.
-
 config PINCTRL_AR933X
 	bool "QCA/Athores ar933x pin control driver"
 	depends on DM && SOC_AR933X
@@ -215,13 +204,6 @@ config PINCTRL_QCA953X
 	  The driver is controlled by a device tree node which contains both
 	  the GPIO definitions and pin control functions for each available
 	  multiplex function.
-
-config PINCTRL_QE
-	bool "QE based pinctrl driver, like on mpc83xx"
-	depends on DM
-	help
-	  This option is to enable the QE pinctrl driver for QE based io
-	  controller.
 
 config PINCTRL_ROCKCHIP_RV1108
 	bool "Rockchip rv1108 pin control driver"
@@ -294,30 +276,14 @@ config SPL_PINCTRL_STMFX
 	  See the help of PINCTRL_STMFX for details.
 
 config ASPEED_AST2500_PINCTRL
-	bool "Aspeed AST2500 pin control driver"
-	depends on DM && PINCTRL_GENERIC && ASPEED_AST2500
-	default y
-	help
-	  Support pin multiplexing control on Aspeed ast2500 SoC. The driver
-	  uses Generic Pinctrl framework and is compatible with the Linux
-	  driver, i.e. it uses the same device tree configuration.
+  bool "Aspeed AST2500 pin control driver"
+  depends on DM && PINCTRL_GENERIC && ASPEED_AST2500
+  default y
+  help
+    Support pin multiplexing control on Aspeed ast2500 SoC. The driver uses
+	Generic Pinctrl framework and is compatible with the Linux driver,
+	i.e. it uses the same device tree configuration.
 
-config ASPEED_AST2600_PINCTRL
-	bool "Aspeed AST2600 pin control driver"
-	depends on DM && PINCTRL_GENERIC && ASPEED_AST2600
-	default y
-	help
-	  Support pin multiplexing control on Aspeed ast2600 SoC. The driver
-	  uses Generic Pinctrl framework and is compatible with the Linux
-	  driver, i.e. it uses the same device tree configuration.
-
-config PINCTRL_K210
-	bool "Kendryte K210 Fully-Programmable Input/Output Array driver"
-	depends on DM && PINCTRL_GENERIC
-	help
-	  Support pin multiplexing on the K210. The "FPIOA" can remap any
-	  supported function to any multifunctional IO pin. It can also perform
-	  basic GPIO functions, such as reading the current value of a pin.
 endif
 
 source "drivers/pinctrl/broadcom/Kconfig"
@@ -328,7 +294,6 @@ source "drivers/pinctrl/meson/Kconfig"
 source "drivers/pinctrl/mscc/Kconfig"
 source "drivers/pinctrl/mtmips/Kconfig"
 source "drivers/pinctrl/mvebu/Kconfig"
-source "drivers/pinctrl/nexell/Kconfig"
 source "drivers/pinctrl/nxp/Kconfig"
 source "drivers/pinctrl/renesas/Kconfig"
 source "drivers/pinctrl/rockchip/Kconfig"

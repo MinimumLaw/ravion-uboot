@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <power/pmic.h>
 #include <power/power_chrg.h>
 #include <power/max8997_muic.h>

@@ -11,14 +11,11 @@
 #include <clk.h>
 #include <dm.h>
 #include <generic-phy.h>
-#include <log.h>
 #include <malloc.h>
 #include <power-domain.h>
 #include <reset.h>
 #include <asm/io.h>
 #include <dm/device.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 /* USBH PLL Control register */
 #define USBH_PLL_REG		0x18
@@ -191,6 +188,6 @@ U_BOOT_DRIVER(bcm6368_usbh) = {
 	.id = UCLASS_PHY,
 	.of_match = bcm6368_usbh_ids,
 	.ops = &bcm6368_usbh_ops,
-	.priv_auto	= sizeof(struct bcm6368_usbh_priv),
+	.priv_auto_alloc_size = sizeof(struct bcm6368_usbh_priv),
 	.probe = bcm6368_usbh_probe,
 };

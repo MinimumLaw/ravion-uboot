@@ -7,9 +7,6 @@
  */
 
 #include <common.h>
-#include <fdt_support.h>
-#include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <spl.h>
 #include <asm/arch/hardware.h>
@@ -20,11 +17,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/pinctrl.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
-#include <log.h>
 #include <mmc.h>
-#include <stdlib.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_SPL_BUILD
 #ifdef CONFIG_K3_LOAD_SYSFW
@@ -46,6 +39,16 @@ struct fwl_data main_cbass_fwls[] = {
 };
 #endif
 #endif
+
+static void mmr_unlock(u32 base, u32 partition)
+{
+	/* Translate the base address */
+	phys_addr_t part_base = base + partition * CTRL_MMR0_PARTITION_SIZE;
+
+	/* Unlock the requested partition if locked using two-step sequence */
+	writel(CTRLMMR_LOCK_KICK0_UNLOCK_VAL, part_base + CTRLMMR_LOCK_KICK0);
+	writel(CTRLMMR_LOCK_KICK1_UNLOCK_VAL, part_base + CTRLMMR_LOCK_KICK1);
+}
 
 static void ctrl_mmr_unlock(void)
 {
@@ -77,14 +80,14 @@ static void ctrl_mmr_unlock(void)
  * but the .bss is cleared between writing and reading this variable, so move
  * it to the .data section.
  */
-u32 bootindex __section(".data");
+u32 bootindex __attribute__((section(".data")));
 
 static void store_boot_index_from_rom(void)
 {
 	bootindex = *(u32 *)(CONFIG_SYS_K3_BOOT_PARAM_TABLE_INDEX);
 }
 
-#if defined(CONFIG_K3_LOAD_SYSFW) && CONFIG_IS_ENABLED(DM_MMC)
+#if defined(CONFIG_K3_LOAD_SYSFW)
 void k3_mmc_stop_clock(void)
 {
 	if (spl_boot_device() == BOOT_DEVICE_MMC1) {
@@ -109,67 +112,12 @@ void k3_mmc_restart_clock(void)
 		mmc_set_clock(mmc, mmc->saved_clock, false);
 	}
 }
-#else
-void k3_mmc_stop_clock(void) {}
-void k3_mmc_restart_clock(void) {}
 #endif
-#if CONFIG_IS_ENABLED(DFU) || CONFIG_IS_ENABLED(USB_STORAGE)
-#define CTRLMMR_SERDES0_CTRL	0x00104080
-#define PCIE_LANE0		0x1
-static int fixup_usb_boot(void)
-{
-	int ret;
-
-	switch (spl_boot_device()) {
-	case BOOT_DEVICE_USB:
-		/*
-		 * If bootmode is Host bootmode, fixup the dr_mode to host
-		 * before the dwc3 bind takes place
-		 */
-		ret = fdt_find_and_setprop((void *)gd->fdt_blob,
-				"/interconnect@100000/dwc3@4000000/usb@10000",
-				"dr_mode", "host", 11, 0);
-		if (ret)
-			printf("%s: fdt_find_and_setprop() failed:%d\n", __func__,
-			       ret);
-		fallthrough;
-	case BOOT_DEVICE_DFU:
-		/*
-		 * The serdes mux between PCIe and USB3 needs to be set to PCIe for
-		 * accessing the interface at USB 2.0
-		 */
-		writel(PCIE_LANE0, CTRLMMR_SERDES0_CTRL);
-	default:
-		break;
-	}
-
-	return 0;
-}
-
-int fdtdec_board_setup(const void *fdt_blob)
-{
-	return fixup_usb_boot();
-}
-#endif
-
-static void setup_am654_navss_northbridge(void)
-{
-	/*
-	 * NB0 is bridge to SRAM and NB1 is bridge to DDR.
-	 * To ensure that SRAM transfers are not stalled due to
-	 * delays during DDR refreshes, SRAM traffic should be higher
-	 * priority (threadmap=2) than DDR traffic (threadmap=0).
-	 */
-	writel(0x2, NAVSS0_NBSS_NB0_CFG_BASE + NAVSS_NBSS_THREADMAP);
-	writel(0x0, NAVSS0_NBSS_NB1_CFG_BASE + NAVSS_NBSS_THREADMAP);
-}
 
 void board_init_f(ulong dummy)
 {
 #if defined(CONFIG_K3_LOAD_SYSFW) || defined(CONFIG_K3_AM654_DDRSS)
 	struct udevice *dev;
-	size_t pool_size;
-	void *pool_addr;
 	int ret;
 #endif
 	/*
@@ -180,8 +128,6 @@ void board_init_f(ulong dummy)
 
 	/* Make all control module registers accessible */
 	ctrl_mmr_unlock();
-
-	setup_am654_navss_northbridge();
 
 #ifdef CONFIG_CPU_V7R
 	disable_linefill_optimization();
@@ -203,20 +149,6 @@ void board_init_f(ulong dummy)
 
 #ifdef CONFIG_K3_LOAD_SYSFW
 	/*
-	 * Initialize an early full malloc environment. Do so by allocating a
-	 * new malloc area inside the currently active pre-relocation "first"
-	 * malloc pool of which we use all that's left.
-	 */
-	pool_size = CONFIG_VAL(SYS_MALLOC_F_LEN) - gd->malloc_ptr;
-	pool_addr = malloc(pool_size);
-	if (!pool_addr)
-		panic("ERROR: Can't allocate full malloc pool!\n");
-
-	mem_malloc_init((ulong)pool_addr, (ulong)pool_size);
-	gd->flags |= GD_FLG_FULL_MALLOC_INIT;
-	debug("%s: initialized an early full malloc pool at 0x%08lx of 0x%lx bytes\n",
-	      __func__, (unsigned long)pool_addr, (unsigned long)pool_size);
-	/*
 	 * Process pinctrl for the serial0 a.k.a. WKUP_UART0 module and continue
 	 * regardless of the result of pinctrl. Do this without probing the
 	 * device, but instead by searching the device that would request the
@@ -224,15 +156,17 @@ void board_init_f(ulong dummy)
 	 * firmware (SYSFW) image for various purposes and SYSFW depends on us
 	 * to initialize its pin settings.
 	 */
-	ret = uclass_find_device_by_seq(UCLASS_SERIAL, 0, &dev);
+	ret = uclass_find_device_by_seq(UCLASS_SERIAL, 0, true, &dev);
 	if (!ret)
 		pinctrl_select_state(dev, "default");
 
 	/*
-	 * Load, start up, and configure system controller firmware while
-	 * also populating the SYSFW post-PM configuration callback hook.
+	 * Load, start up, and configure system controller firmware. Provide
+	 * the U-Boot console init function to the SYSFW post-PM configuration
+	 * callback hook, effectively switching on (or over) the console
+	 * output.
 	 */
-	k3_sysfw_loader(false, k3_mmc_stop_clock, k3_mmc_restart_clock);
+	k3_sysfw_loader(k3_mmc_stop_clock, k3_mmc_restart_clock);
 
 	/* Prepare console output */
 	preloader_console_init();
@@ -247,15 +181,11 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 
-	/* Output System Firmware version info */
-	k3_sysfw_print_ver();
-
 	/* Perform EEPROM-based board detection */
-	if (IS_ENABLED(CONFIG_TI_I2C_BOARD_DETECT))
-		do_board_detect();
+	do_board_detect();
 
 #if defined(CONFIG_CPU_V7R) && defined(CONFIG_K3_AVS0)
-	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(k3_avs),
+	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_GET_DRIVER(k3_avs),
 					  &dev);
 	if (ret)
 		printf("AVS init failed: %d\n", ret);
@@ -266,10 +196,9 @@ void board_init_f(ulong dummy)
 	if (ret)
 		panic("DRAM init failed: %d\n", ret);
 #endif
-	spl_enable_dcache();
 }
 
-u32 spl_mmc_boot_mode(const u32 boot_device)
+u32 spl_boot_mode(const u32 boot_device)
 {
 #if defined(CONFIG_SUPPORT_EMMC_BOOT)
 	u32 devstat = readl(CTRLMMR_MAIN_DEVSTAT);
@@ -340,11 +269,6 @@ static u32 __get_primary_bootmedia(u32 devstat)
 			    CTRLMMR_MAIN_DEVSTAT_EMMC_PORT_SHIFT;
 		if (port == 0x1)
 			bootmode = BOOT_DEVICE_MMC2;
-	} else if (bootmode == BOOT_DEVICE_DFU) {
-		u32 mode = (devstat & CTRLMMR_MAIN_DEVSTAT_USB_MODE_MASK) >>
-			    CTRLMMR_MAIN_DEVSTAT_USB_MODE_SHIFT;
-		if (mode == 0x2)
-			bootmode = BOOT_DEVICE_USB;
 	}
 
 	return bootmode;

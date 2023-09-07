@@ -22,12 +22,9 @@ ifeq ($(CONFIG_SPL_BUILD)$(CONFIG_TPL_BUILD),)
 # we can have the preprocessor correctly recognise both 0x0 and 0
 # meaning "turn it off".
 obj-y += boot_mode.o
+obj-$(CONFIG_DISPLAY_CPUINFO) += cpu-info.o
 obj-$(CONFIG_ROCKCHIP_COMMON_BOARD) += board.o
 obj-$(CONFIG_MISC_INIT_R) += misc.o
-endif
-
-ifeq ($(CONFIG_TPL_BUILD),)
-obj-$(CONFIG_DISPLAY_CPUINFO) += cpu-info.o
 endif
 
 obj-$(CONFIG_$(SPL_TPL_)RAM) += sdram.o
@@ -42,7 +39,6 @@ obj-$(CONFIG_ROCKCHIP_RK3308) += rk3308/
 obj-$(CONFIG_ROCKCHIP_RK3328) += rk3328/
 obj-$(CONFIG_ROCKCHIP_RK3368) += rk3368/
 obj-$(CONFIG_ROCKCHIP_RK3399) += rk3399/
-obj-$(CONFIG_ROCKCHIP_RK3568) += rk3568/
 obj-$(CONFIG_ROCKCHIP_RV1108) += rv1108/
 
 # Clear out SPL objects, in case this is a TPL build

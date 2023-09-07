@@ -9,6 +9,7 @@
  * Daniel Engström, Omicron Ceti AB, <daniel@omicron.se>
  */
 
+#include <asm/global_data.h>
 #include <asm/processor-flags.h>
 
 #define BOOT_SEG	0xffff0000	/* linear segment of boot code */

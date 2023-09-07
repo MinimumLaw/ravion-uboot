@@ -6,11 +6,8 @@
  */
 
 #include <common.h>
+#include <cpu_func.h>
 #include <hang.h>
-#include <image.h>
-#include <init.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <asm/io.h>
@@ -23,7 +20,6 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
 #include <mmc.h>
-#include <linux/delay.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include <spl.h>
@@ -36,7 +32,7 @@ extern struct dram_timing_info dram_timing_b0;
 static void spl_dram_init(void)
 {
 	/* ddr init */
-	if (soc_rev() >= CHIP_REV_2_1)
+	if ((get_cpu_rev() & 0xfff) == CHIP_REV_2_1)
 		ddr_init(&dram_timing);
 	else
 		ddr_init(&dram_timing_b0);
@@ -112,7 +108,7 @@ static struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC2_BASE_ADDR, 0, 4},
 };
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
 	/*
@@ -125,7 +121,7 @@ int board_mmc_init(struct bd_info *bis)
 		switch (i) {
 		case 0:
 			init_clk_usdhc(0);
-			usdhc_cfg[0].sdhc_clk = mxc_get_clock(USDHC1_CLK_ROOT);
+			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
 			imx_iomux_v3_setup_multiple_pads(usdhc1_pads,
 							 ARRAY_SIZE(usdhc1_pads));
 			gpio_request(USDHC1_PWR_GPIO, "usdhc1_reset");
@@ -135,7 +131,7 @@ int board_mmc_init(struct bd_info *bis)
 			break;
 		case 1:
 			init_clk_usdhc(1);
-			usdhc_cfg[1].sdhc_clk = mxc_get_clock(USDHC2_CLK_ROOT);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			imx_iomux_v3_setup_multiple_pads(usdhc2_pads,
 							 ARRAY_SIZE(usdhc2_pads));
 			gpio_request(USDHC2_PWR_GPIO, "usdhc2_reset");
@@ -156,7 +152,7 @@ int board_mmc_init(struct bd_info *bis)
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(POWER_LEGACY)
+#ifdef CONFIG_POWER
 #define I2C_PMIC	0
 int power_init_board(void)
 {
@@ -199,6 +195,16 @@ int power_init_board(void)
 
 void spl_board_init(void)
 {
+#ifndef CONFIG_SPL_USB_SDP_SUPPORT
+	/* Serial download mode */
+	if (is_usb_boot()) {
+		puts("Back to ROM, SDP\n");
+		restore_boot_params();
+	}
+#endif
+
+	init_usb_clk();
+
 	puts("Normal Boot\n");
 }
 
@@ -216,8 +222,8 @@ void board_init_f(ulong dummy)
 {
 	int ret;
 
-	/* Clear global data */
-	memset((void *)gd, 0, sizeof(gd_t));
+	/* Clear the BSS. */
+	memset(__bss_start, 0, __bss_end - __bss_start);
 
 	arch_cpu_init();
 
@@ -229,9 +235,6 @@ void board_init_f(ulong dummy)
 
 	preloader_console_init();
 
-	/* Clear the BSS. */
-	memset(__bss_start, 0, __bss_end - __bss_start);
-
 	ret = spl_init();
 	if (ret) {
 		debug("spl_init() failed: %d\n", ret);
@@ -240,6 +243,7 @@ void board_init_f(ulong dummy)
 
 	enable_tzc380();
 
+	/* Adjust pmic voltage to 1.0V for 800M */
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 
 	power_init_board();
@@ -248,4 +252,13 @@ void board_init_f(ulong dummy)
 	spl_dram_init();
 
 	board_init_r(NULL, 0);
+}
+
+int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	puts ("resetting ...\n");
+
+	reset_cpu(WDOG1_BASE_ADDR);
+
+	return 0;
 }

@@ -15,7 +15,6 @@
 
 #include <common.h>
 #include <dm/devres.h>
-#include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <asm/io.h>

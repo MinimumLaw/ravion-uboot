@@ -16,9 +16,7 @@
  *
  */
 #include <common.h>
-#include <command.h>
 #include <dm.h>
-#include <init.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
@@ -38,7 +36,7 @@ static void omap3_invalidate_l2_cache_secure(void);
 #if CONFIG_IS_ENABLED(DM_GPIO)
 #if !CONFIG_IS_ENABLED(OF_CONTROL)
 /* Manually initialize GPIO banks when OF_CONTROL doesn't */
-static const struct omap_gpio_plat omap34xx_gpio[] = {
+static const struct omap_gpio_platdata omap34xx_gpio[] = {
 	{ 0, OMAP34XX_GPIO1_BASE },
 	{ 1, OMAP34XX_GPIO2_BASE },
 	{ 2, OMAP34XX_GPIO3_BASE },
@@ -47,7 +45,7 @@ static const struct omap_gpio_plat omap34xx_gpio[] = {
 	{ 5, OMAP34XX_GPIO6_BASE },
 };
 
-U_BOOT_DRVINFOS(omap34xx_gpios) = {
+U_BOOT_DEVICES(omap34xx_gpios) = {
 	{ "gpio_omap", &omap34xx_gpio[0] },
 	{ "gpio_omap", &omap34xx_gpio[1] },
 	{ "gpio_omap", &omap34xx_gpio[2] },
@@ -71,20 +69,12 @@ const struct gpio_bank *const omap_gpio_bank = gpio_bank_34xx;
 
 #endif
 
-void early_system_init(void)
-{
-	hw_data_init();
-}
-
-#if !CONFIG_IS_ENABLED(SKIP_LOWLEVEL_INIT) && \
-	!CONFIG_IS_ENABLED(SKIP_LOWLEVEL_INIT_ONLY)
-
 /******************************************************************************
  * Routine: secure_unlock
  * Description: Setup security registers for access
  *              (GP Device only)
  *****************************************************************************/
-static void secure_unlock_mem(void)
+void secure_unlock_mem(void)
 {
 	struct pm *pm_rt_ape_base = (struct pm *)PM_RT_APE_BASE_ADDR_ARM;
 	struct pm *pm_gpmc_base = (struct pm *)PM_GPMC_BASE_ADDR_ARM;
@@ -122,7 +112,7 @@ static void secure_unlock_mem(void)
  *		configure secure registers and exit secure world
  *              general use.
  *****************************************************************************/
-static void secureworld_exit(void)
+void secureworld_exit(void)
 {
 	unsigned long i;
 
@@ -153,7 +143,7 @@ static void secureworld_exit(void)
  * Description: If chip is GP/EMU(special) type, unlock the SRAM for
  *              general use.
  *****************************************************************************/
-static void try_unlock_memory(void)
+void try_unlock_memory(void)
 {
 	int mode;
 	int in_sdram = is_running_in_sdram();
@@ -180,6 +170,11 @@ static void try_unlock_memory(void)
 	}
 
 	return;
+}
+
+void early_system_init(void)
+{
+	hw_data_init();
 }
 
 /******************************************************************************
@@ -210,7 +205,6 @@ void s_init(void)
 	ehci_clocks_enable();
 #endif
 }
-#endif
 
 #ifdef CONFIG_SPL_BUILD
 void board_init_f(ulong dummy)
@@ -285,8 +279,7 @@ void abort(void)
 /******************************************************************************
  * OMAP3 specific command to switch between NAND HW and SW ecc
  *****************************************************************************/
-static int do_switch_ecc(struct cmd_tbl *cmdtp, int flag, int argc,
-			 char *const argv[])
+static int do_switch_ecc(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	int hw, strength = 1;
 

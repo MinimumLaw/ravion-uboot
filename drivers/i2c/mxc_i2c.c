@@ -4,7 +4,8 @@
  *
  * (c) 2007 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  * (c) 2011 Marek Vasut <marek.vasut@gmail.com>
- * Copyright 2020 NXP
+ *
+ * Copyright (C) 2016 Freescale Semiconductor, Inc.
  *
  * Based on i2c-imx.c from linux kernel:
  *  Copyright (C) 2005 Torsten Koschorrek <koschorrek at synertronixx.de>
@@ -15,21 +16,18 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
-#include <asm/global_data.h>
 #include <dm/device_compat.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/mach-imx/mxc_i2c.h>
-#include <asm/mach-imx/sys_proto.h>
 #include <asm/io.h>
 #include <i2c.h>
 #include <watchdog.h>
 #include <dm.h>
 #include <dm/pinctrl.h>
 #include <fdtdec.h>
+#include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -108,6 +106,32 @@ static u16 i2c_clk_div[50][2] = {
 	{ 1920,	0x1B }, { 2048,	0x3F }, { 2304,	0x1C }, { 2560,	0x1D },
 	{ 3072,	0x1E }, { 3840,	0x1F }
 };
+#endif
+
+#ifndef CONFIG_SYS_MXC_I2C1_SPEED
+#define CONFIG_SYS_MXC_I2C1_SPEED 100000
+#endif
+#ifndef CONFIG_SYS_MXC_I2C2_SPEED
+#define CONFIG_SYS_MXC_I2C2_SPEED 100000
+#endif
+#ifndef CONFIG_SYS_MXC_I2C3_SPEED
+#define CONFIG_SYS_MXC_I2C3_SPEED 100000
+#endif
+#ifndef CONFIG_SYS_MXC_I2C4_SPEED
+#define CONFIG_SYS_MXC_I2C4_SPEED 100000
+#endif
+
+#ifndef CONFIG_SYS_MXC_I2C1_SLAVE
+#define CONFIG_SYS_MXC_I2C1_SLAVE 0
+#endif
+#ifndef CONFIG_SYS_MXC_I2C2_SLAVE
+#define CONFIG_SYS_MXC_I2C2_SLAVE 0
+#endif
+#ifndef CONFIG_SYS_MXC_I2C3_SLAVE
+#define CONFIG_SYS_MXC_I2C3_SLAVE 0
+#endif
+#ifndef CONFIG_SYS_MXC_I2C4_SLAVE
+#define CONFIG_SYS_MXC_I2C4_SLAVE 0
 #endif
 
 /*
@@ -317,58 +341,7 @@ static int i2c_init_transfer_(struct mxc_i2c_bus *i2c_bus, u8 chip,
 	return 0;
 }
 
-#if !defined(I2C2_BASE_ADDR)
-#define I2C2_BASE_ADDR	0
-#endif
-
-#if !defined(I2C3_BASE_ADDR)
-#define I2C3_BASE_ADDR	0
-#endif
-
-#if !defined(I2C4_BASE_ADDR)
-#define I2C4_BASE_ADDR	0
-#endif
-
-#if !defined(I2C5_BASE_ADDR)
-#define I2C5_BASE_ADDR 0
-#endif
-
-#if !defined(I2C6_BASE_ADDR)
-#define I2C6_BASE_ADDR 0
-#endif
-
-#if !defined(I2C7_BASE_ADDR)
-#define I2C7_BASE_ADDR 0
-#endif
-
-#if !defined(I2C8_BASE_ADDR)
-#define I2C8_BASE_ADDR 0
-#endif
-
-static struct mxc_i2c_bus mxc_i2c_buses[] = {
-#if defined(CONFIG_ARCH_LS1021A) || defined(CONFIG_VF610) || \
-	defined(CONFIG_FSL_LAYERSCAPE)
-	{ 0, I2C1_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 1, I2C2_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 2, I2C3_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 3, I2C4_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 4, I2C5_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 5, I2C6_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 6, I2C7_BASE_ADDR, I2C_QUIRK_FLAG },
-	{ 7, I2C8_BASE_ADDR, I2C_QUIRK_FLAG },
-#else
-	{ 0, I2C1_BASE_ADDR, 0 },
-	{ 1, I2C2_BASE_ADDR, 0 },
-	{ 2, I2C3_BASE_ADDR, 0 },
-	{ 3, I2C4_BASE_ADDR, 0 },
-	{ 4, I2C5_BASE_ADDR, 0 },
-	{ 5, I2C6_BASE_ADDR, 0 },
-	{ 6, I2C7_BASE_ADDR, 0 },
-	{ 7, I2C8_BASE_ADDR, 0 },
-#endif
-};
-
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 int i2c_idle_bus(struct mxc_i2c_bus *i2c_bus)
 {
 	if (i2c_bus && i2c_bus->idle_bus_fn)
@@ -461,24 +434,6 @@ exit:
 	return ret;
 }
 #endif
-/*
- * Early init I2C for prepare read the clk through I2C.
- */
-void i2c_early_init_f(void)
-{
-	ulong base = mxc_i2c_buses[I2C_EARLY_INIT_INDEX].base;
-	bool quirk = mxc_i2c_buses[I2C_EARLY_INIT_INDEX].driver_data
-					& I2C_QUIRK_FLAG ? true : false;
-	int reg_shift = quirk ? VF610_I2C_REGSHIFT : IMX_I2C_REGSHIFT;
-
-	/* Set I2C divider value */
-	writeb(I2C_IFDR_DIV_CONSERVATIVE, base + (IFDR << reg_shift));
-	/* Reset module */
-	writeb(I2CR_IDIS, base + (I2CR << reg_shift));
-	writeb(0, base + (I2SR << reg_shift));
-	/* Enable I2C */
-	writeb(I2CR_IEN, base + (I2CR << reg_shift));
-}
 
 static int i2c_init_transfer(struct mxc_i2c_bus *i2c_bus, u8 chip,
 			     u32 addr, int alen)
@@ -620,7 +575,7 @@ int __enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 int enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 	__attribute__((weak, alias("__enable_i2c_clk")));
 
-#if !CONFIG_IS_ENABLED(DM_I2C)
+#ifndef CONFIG_DM_I2C
 /*
  * Read data from I2C device
  *
@@ -707,6 +662,57 @@ static int bus_i2c_write(struct mxc_i2c_bus *i2c_bus, u8 chip, u32 addr,
 	return ret;
 }
 
+#if !defined(I2C2_BASE_ADDR)
+#define I2C2_BASE_ADDR	0
+#endif
+
+#if !defined(I2C3_BASE_ADDR)
+#define I2C3_BASE_ADDR	0
+#endif
+
+#if !defined(I2C4_BASE_ADDR)
+#define I2C4_BASE_ADDR	0
+#endif
+
+#if !defined(I2C5_BASE_ADDR)
+#define I2C5_BASE_ADDR 0
+#endif
+
+#if !defined(I2C6_BASE_ADDR)
+#define I2C6_BASE_ADDR 0
+#endif
+
+#if !defined(I2C7_BASE_ADDR)
+#define I2C7_BASE_ADDR 0
+#endif
+
+#if !defined(I2C8_BASE_ADDR)
+#define I2C8_BASE_ADDR 0
+#endif
+
+static struct mxc_i2c_bus mxc_i2c_buses[] = {
+#if defined(CONFIG_ARCH_LS1021A) || defined(CONFIG_VF610) || \
+	defined(CONFIG_FSL_LAYERSCAPE)
+	{ 0, I2C1_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 1, I2C2_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 2, I2C3_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 3, I2C4_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 4, I2C5_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 5, I2C6_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 6, I2C7_BASE_ADDR, I2C_QUIRK_FLAG },
+	{ 7, I2C8_BASE_ADDR, I2C_QUIRK_FLAG },
+#else
+	{ 0, I2C1_BASE_ADDR, 0 },
+	{ 1, I2C2_BASE_ADDR, 0 },
+	{ 2, I2C3_BASE_ADDR, 0 },
+	{ 3, I2C4_BASE_ADDR, 0 },
+	{ 4, I2C5_BASE_ADDR, 0 },
+	{ 5, I2C6_BASE_ADDR, 0 },
+	{ 6, I2C7_BASE_ADDR, 0 },
+	{ 7, I2C8_BASE_ADDR, 0 },
+#endif
+};
+
 struct mxc_i2c_bus *i2c_get_base(struct i2c_adapter *adap)
 {
 	return &mxc_i2c_buses[adap->hwadapnr];
@@ -744,13 +750,13 @@ void bus_i2c_init(int index, int speed, int unused,
 		return;
 	}
 
-	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
-		if (i2c_fused((ulong)mxc_i2c_buses[index].base)) {
-			printf("SoC fuse indicates I2C@0x%lx is unavailable.\n",
-			       (ulong)mxc_i2c_buses[index].base);
-			return;
-		}
+#ifdef CONFIG_MX6
+	if (mx6_i2c_fused((u32)mxc_i2c_buses[index].base)) {
+		printf("I2C@0x%x is fused, disable it\n",
+			(u32)mxc_i2c_buses[index].base);
+		return;
 	}
+#endif
 
 	/*
 	 * Warning: Be careful to allow the assignment to a static
@@ -770,6 +776,25 @@ void bus_i2c_init(int index, int speed, int unused,
 	}
 
 	bus_i2c_set_bus_speed(&mxc_i2c_buses[index], speed);
+}
+
+/*
+ * Early init I2C for prepare read the clk through I2C.
+ */
+void i2c_early_init_f(void)
+{
+	ulong base = mxc_i2c_buses[I2C_EARLY_INIT_INDEX].base;
+	bool quirk = mxc_i2c_buses[I2C_EARLY_INIT_INDEX].driver_data
+					& I2C_QUIRK_FLAG ? true : false;
+	int reg_shift = quirk ? VF610_I2C_REGSHIFT : IMX_I2C_REGSHIFT;
+
+	/* Set I2C divider value */
+	writeb(I2C_IFDR_DIV_CONSERVATIVE, base + (IFDR << reg_shift));
+	/* Reset module */
+	writeb(I2CR_IDIS, base + (I2CR << reg_shift));
+	writeb(0, base + (I2SR << reg_shift));
+	/* Enable I2C */
+	writeb(I2CR_IEN, base + (I2CR << reg_shift));
 }
 
 /*
@@ -874,20 +899,19 @@ static int mxc_i2c_probe(struct udevice *bus)
 
 	i2c_bus->driver_data = dev_get_driver_data(bus);
 
-	addr = dev_read_addr(bus);
+	addr = devfdt_get_addr(bus);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
-	if (CONFIG_IS_ENABLED(IMX_MODULE_FUSE)) {
-		if (i2c_fused((ulong)addr)) {
-			printf("SoC fuse indicates I2C@0x%lx is unavailable.\n",
-			       (ulong)addr);
-			return -ENODEV;
-		}
+#ifdef CONFIG_MX6
+	if (mx6_i2c_fused(addr)) {
+		printf("I2C@0x%lx is fused, disable it\n", addr);
+		return -ENODEV;
 	}
+#endif
 
 	i2c_bus->base = addr;
-	i2c_bus->index = dev_seq(bus);
+	i2c_bus->index = bus->seq;
 	i2c_bus->bus = bus;
 
 	/* Enable clk */
@@ -903,7 +927,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 		return ret;
 	}
 #else
-	ret = enable_i2c_clk(1, dev_seq(bus));
+	ret = enable_i2c_clk(1, bus->seq);
 	if (ret < 0)
 		return ret;
 #endif
@@ -914,8 +938,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 	 */
 	ret = fdt_stringlist_search(fdt, node, "pinctrl-names", "gpio");
 	if (ret < 0) {
-		debug("i2c bus %d at 0x%2lx, no gpio pinctrl state.\n",
-		      dev_seq(bus), i2c_bus->base);
+		debug("i2c bus %d at 0x%2lx, no gpio pinctrl state.\n", bus->seq, i2c_bus->base);
 	} else {
 		ret = gpio_request_by_name_nodev(offset_to_ofnode(node),
 				"scl-gpios", 0, &i2c_bus->scl_gpio,
@@ -926,9 +949,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 		if (!dm_gpio_is_valid(&i2c_bus->sda_gpio) ||
 		    !dm_gpio_is_valid(&i2c_bus->scl_gpio) ||
 		    ret || ret2) {
-			dev_err(bus,
-				"i2c bus %d at 0x%2lx, fail to request scl/sda gpio\n",
-				dev_seq(bus), i2c_bus->base);
+			dev_err(dev, "i2c bus %d at %lu, fail to request scl/sda gpio\n", bus->seq, i2c_bus->base);
 			return -EINVAL;
 		}
 	}
@@ -939,7 +960,7 @@ static int mxc_i2c_probe(struct udevice *bus)
 	 */
 
 	debug("i2c : controller bus %d at %lu , speed %d: ",
-	      dev_seq(bus), i2c_bus->base,
+	      bus->seq, i2c_bus->base,
 	      i2c_bus->speed);
 
 	return 0;
@@ -1045,7 +1066,7 @@ U_BOOT_DRIVER(i2c_mxc) = {
 	.id = UCLASS_I2C,
 	.of_match = mxc_i2c_ids,
 	.probe = mxc_i2c_probe,
-	.priv_auto	= sizeof(struct mxc_i2c_bus),
+	.priv_auto_alloc_size = sizeof(struct mxc_i2c_bus),
 	.ops = &mxc_i2c_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };

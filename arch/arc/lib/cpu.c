@@ -4,14 +4,10 @@
  */
 
 #include <common.h>
-#include <clock_legacy.h>
-#include <init.h>
 #include <malloc.h>
 #include <vsprintf.h>
 #include <asm/arcregs.h>
 #include <asm/cache.h>
-#include <asm/global_data.h>
-#include <linux/bitops.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -19,11 +15,18 @@ int arch_cpu_init(void)
 {
 	timer_init();
 
-	gd->cpu_clk = get_board_sys_clk();
+	gd->cpu_clk = CONFIG_SYS_CLK_FREQ;
 	gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
 
 	cache_init();
 
+	return 0;
+}
+
+int arch_early_init_r(void)
+{
+	gd->bd->bi_memstart = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_memsize = CONFIG_SYS_SDRAM_SIZE;
 	return 0;
 }
 

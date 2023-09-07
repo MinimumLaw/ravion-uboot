@@ -7,7 +7,6 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/armv7_mpu.h>
@@ -19,10 +18,7 @@
 #include <dm.h>
 #include <dm/uclass-internal.h>
 #include <dm/pinctrl.h>
-#include <dm/root.h>
-#include <fdtdec.h>
 #include <mmc.h>
-#include <remoteproc.h>
 
 #ifdef CONFIG_SPL_BUILD
 #ifdef CONFIG_K3_LOAD_SYSFW
@@ -66,6 +62,16 @@ struct fwl_data cbass_hc_cfg0_fwls[] = {
 #endif
 #endif
 
+static void mmr_unlock(u32 base, u32 partition)
+{
+	/* Translate the base address */
+	phys_addr_t part_base = base + partition * CTRL_MMR0_PARTITION_SIZE;
+
+	/* Unlock the requested partition if locked using two-step sequence */
+	writel(CTRLMMR_LOCK_KICK0_UNLOCK_VAL, part_base + CTRLMMR_LOCK_KICK0);
+	writel(CTRLMMR_LOCK_KICK1_UNLOCK_VAL, part_base + CTRLMMR_LOCK_KICK1);
+}
+
 static void ctrl_mmr_unlock(void)
 {
 	/* Unlock all WKUP_CTRL_MMR0 module registers */
@@ -89,9 +95,9 @@ static void ctrl_mmr_unlock(void)
 	mmr_unlock(CTRL_MMR0_BASE, 1);
 	mmr_unlock(CTRL_MMR0_BASE, 2);
 	mmr_unlock(CTRL_MMR0_BASE, 3);
+	mmr_unlock(CTRL_MMR0_BASE, 4);
 	mmr_unlock(CTRL_MMR0_BASE, 5);
-	if (soc_is_j721e())
-		mmr_unlock(CTRL_MMR0_BASE, 6);
+	mmr_unlock(CTRL_MMR0_BASE, 6);
 	mmr_unlock(CTRL_MMR0_BASE, 7);
 }
 
@@ -127,68 +133,12 @@ void k3_mmc_restart_clock(void)
  * but the .bss is cleared between writing and reading this variable, so move
  * it to the .data section.
  */
-u32 bootindex __section(".data");
-static struct rom_extended_boot_data bootdata __section(".data");
+u32 bootindex __attribute__((section(".data")));
 
-static void store_boot_info_from_rom(void)
+static void store_boot_index_from_rom(void)
 {
 	bootindex = *(u32 *)(CONFIG_SYS_K3_BOOT_PARAM_TABLE_INDEX);
-	memcpy(&bootdata, (uintptr_t *)ROM_ENTENDED_BOOT_DATA_INFO,
-	       sizeof(struct rom_extended_boot_data));
 }
-
-#ifdef CONFIG_SPL_OF_LIST
-void do_dt_magic(void)
-{
-	int ret, rescan, mmc_dev = -1;
-	static struct mmc *mmc;
-
-	if (IS_ENABLED(CONFIG_TI_I2C_BOARD_DETECT))
-		do_board_detect();
-
-	/*
-	 * Board detection has been done.
-	 * Let us see if another dtb wouldn't be a better match
-	 * for our board
-	 */
-	if (IS_ENABLED(CONFIG_CPU_V7R)) {
-		ret = fdtdec_resetup(&rescan);
-		if (!ret && rescan) {
-			dm_uninit();
-			dm_init_and_scan(true);
-		}
-	}
-
-	/*
-	 * Because of multi DTB configuration, the MMC device has
-	 * to be re-initialized after reconfiguring FDT inorder to
-	 * boot from MMC. Do this when boot mode is MMC and ROM has
-	 * not loaded SYSFW.
-	 */
-	switch (spl_boot_device()) {
-	case BOOT_DEVICE_MMC1:
-		mmc_dev = 0;
-		break;
-	case BOOT_DEVICE_MMC2:
-	case BOOT_DEVICE_MMC2_2:
-		mmc_dev = 1;
-		break;
-	}
-
-	if (mmc_dev > 0 && !is_rom_loaded_sysfw(&bootdata)) {
-		ret = mmc_init_device(mmc_dev);
-		if (!ret) {
-			mmc = find_mmc_device(mmc_dev);
-			if (mmc) {
-				ret = mmc_init(mmc);
-				if (ret) {
-					printf("mmc init failed with error: %d\n", ret);
-				}
-			}
-		}
-	}
-}
-#endif
 
 void board_init_f(ulong dummy)
 {
@@ -200,7 +150,7 @@ void board_init_f(ulong dummy)
 	 * Cannot delay this further as there is a chance that
 	 * K3_BOOT_PARAM_TABLE_INDEX can be over written by SPL MALLOC section.
 	 */
-	store_boot_info_from_rom();
+	store_boot_index_from_rom();
 
 	/* Make all control module registers accessible */
 	ctrl_mmr_unlock();
@@ -222,7 +172,7 @@ void board_init_f(ulong dummy)
 	 * firmware (SYSFW) image for various purposes and SYSFW depends on us
 	 * to initialize its pin settings.
 	 */
-	ret = uclass_find_device_by_seq(UCLASS_SERIAL, 0, &dev);
+	ret = uclass_find_device_by_seq(UCLASS_SERIAL, 0, true, &dev);
 	if (!ret)
 		pinctrl_select_state(dev, "default");
 
@@ -232,24 +182,7 @@ void board_init_f(ulong dummy)
 	 * callback hook, effectively switching on (or over) the console
 	 * output.
 	 */
-	k3_sysfw_loader(is_rom_loaded_sysfw(&bootdata),
-			k3_mmc_stop_clock, k3_mmc_restart_clock);
-
-#ifdef CONFIG_SPL_OF_LIST
-	do_dt_magic();
-#endif
-
-	/*
-	 * Force probe of clk_k3 driver here to ensure basic default clock
-	 * configuration is always done.
-	 */
-	if (IS_ENABLED(CONFIG_SPL_CLK_K3)) {
-		ret = uclass_get_device_by_driver(UCLASS_CLK,
-						  DM_DRIVER_GET(ti_clk),
-						  &dev);
-		if (ret)
-			panic("Failed to initialize clk-k3!\n");
-	}
+	k3_sysfw_loader(k3_mmc_stop_clock, k3_mmc_restart_clock);
 
 	/* Prepare console output */
 	preloader_console_init();
@@ -269,15 +202,11 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 
-	/* Output System Firmware version info */
-	k3_sysfw_print_ver();
-
 	/* Perform EEPROM-based board detection */
-	if (IS_ENABLED(CONFIG_TI_I2C_BOARD_DETECT))
-		do_board_detect();
+	do_board_detect();
 
 #if defined(CONFIG_CPU_V7R) && defined(CONFIG_K3_AVS0)
-	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_DRIVER_GET(k3_avs),
+	ret = uclass_get_device_by_driver(UCLASS_MISC, DM_GET_DRIVER(k3_avs),
 					  &dev);
 	if (ret)
 		printf("AVS init failed: %d\n", ret);
@@ -288,10 +217,9 @@ void board_init_f(ulong dummy)
 	if (ret)
 		panic("DRAM init failed: %d\n", ret);
 #endif
-	spl_enable_dcache();
 }
 
-u32 spl_mmc_boot_mode(const u32 boot_device)
+u32 spl_boot_mode(const u32 boot_device)
 {
 	switch (boot_device) {
 	case BOOT_DEVICE_MMC1:
@@ -301,35 +229,6 @@ u32 spl_mmc_boot_mode(const u32 boot_device)
 	default:
 		return MMCSD_MODE_RAW;
 	}
-}
-
-static u32 __get_backup_bootmedia(u32 main_devstat)
-{
-	u32 bkup_boot = (main_devstat & MAIN_DEVSTAT_BKUP_BOOTMODE_MASK) >>
-			MAIN_DEVSTAT_BKUP_BOOTMODE_SHIFT;
-
-	switch (bkup_boot) {
-	case BACKUP_BOOT_DEVICE_USB:
-		return BOOT_DEVICE_DFU;
-	case BACKUP_BOOT_DEVICE_UART:
-		return BOOT_DEVICE_UART;
-	case BACKUP_BOOT_DEVICE_ETHERNET:
-		return BOOT_DEVICE_ETHERNET;
-	case BACKUP_BOOT_DEVICE_MMC2:
-	{
-		u32 port = (main_devstat & MAIN_DEVSTAT_BKUP_MMC_PORT_MASK) >>
-			    MAIN_DEVSTAT_BKUP_MMC_PORT_SHIFT;
-		if (port == 0x0)
-			return BOOT_DEVICE_MMC1;
-		return BOOT_DEVICE_MMC2;
-	}
-	case BACKUP_BOOT_DEVICE_SPI:
-		return BOOT_DEVICE_SPI;
-	case BACKUP_BOOT_DEVICE_I2C:
-		return BOOT_DEVICE_I2C;
-	}
-
-	return BOOT_DEVICE_RAM;
 }
 
 static u32 __get_primary_bootmedia(u32 main_devstat, u32 wkup_devstat)
@@ -368,10 +267,8 @@ u32 spl_boot_device(void)
 	/* MAIN CTRL MMR can only be read if MCU ONLY is 0 */
 	main_devstat = readl(CTRLMMR_MAIN_DEVSTAT);
 
-	if (bootindex == K3_PRIMARY_BOOTMODE)
-		return __get_primary_bootmedia(main_devstat, wkup_devstat);
-	else
-		return __get_backup_bootmedia(main_devstat);
+	/* ToDo: Add support for backup boot media */
+	return __get_primary_bootmedia(main_devstat, wkup_devstat);
 }
 #endif
 

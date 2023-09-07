@@ -7,7 +7,6 @@
 
 /* Here we keep miscellaneous functions which are used all over the UBI code */
 
-#include <log.h>
 #include <malloc.h>
 #include <ubi_uboot.h>
 #include "ubi.h"

@@ -13,8 +13,6 @@
 #ifndef __U_BOOT_H__
 #define __U_BOOT_H__
 
-#include <config.h>
-
 /* For image.h:image_check_target_arch() */
 #define IH_ARCH_DEFAULT IH_ARCH_PPC
 

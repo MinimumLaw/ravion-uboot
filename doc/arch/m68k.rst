@@ -35,7 +35,7 @@ development boards.
 Supported CPU families
 ----------------------
 
-Please "make menuconfig" and select "m68k" or check arch/m68k/cpu to see the
+Please "make menuconfig" with ARCH=m68k, or check arch/m68k/cpu to see the
 currently supported processor and families.
 
 
@@ -72,11 +72,11 @@ A bash script similar to the one below may be used:
 
    export CROSS_COMPILE=/opt/toolchains/m68k/gcc-4.9.0-nolibc/bin/m68k-linux-
 
-   board=M5249EVB
+   board=M5475DFE
 
    make distclean
-   make ${board}_defconfig
-   make KBUILD_VERBOSE=1
+   make ARCH=m68k ${board}_defconfig
+   make ARCH=m68k KBUILD_VERBOSE=1
 
 
 Adopted toolchains

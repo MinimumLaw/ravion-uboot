@@ -11,7 +11,7 @@
 #include <malloc.h>
 #include <rng.h>
 
-static int do_rng(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_rng(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	size_t n = 0x40;
 	struct udevice *dev;
@@ -24,7 +24,7 @@ static int do_rng(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	}
 
 	if (argc >= 2)
-		n = hextoul(argv[1], NULL);
+		n = simple_strtoul(argv[1], NULL, 16);
 
 	buf = malloc(n);
 	if (!buf) {

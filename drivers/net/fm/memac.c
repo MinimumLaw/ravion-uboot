@@ -8,7 +8,6 @@
 #define MAXFRM_MASK	0x0000ffff
 
 #include <common.h>
-#include <log.h>
 #include <phy.h>
 #include <asm/types.h>
 #include <asm/io.h>
@@ -93,12 +92,11 @@ static void memac_set_interface_mode(struct fsl_enet_mac *mac,
 		if_mode |= (IF_MODE_GMII | IF_MODE_RM);
 		break;
 	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_2500BASEX:
+	case PHY_INTERFACE_MODE_SGMII_2500:
 	case PHY_INTERFACE_MODE_QSGMII:
 		if_mode &= ~IF_MODE_MASK;
 		if_mode |= (IF_MODE_GMII);
 		break;
-	case PHY_INTERFACE_MODE_10GBASER:
 	case PHY_INTERFACE_MODE_XGMII:
 		if_mode &= ~IF_MODE_MASK;
 		if_mode |= IF_MODE_XGMII;
@@ -107,7 +105,7 @@ static void memac_set_interface_mode(struct fsl_enet_mac *mac,
 		break;
 	}
 	/* Enable automatic speed selection for Non-XGMII */
-	if (type != PHY_INTERFACE_MODE_XGMII && type != PHY_INTERFACE_MODE_10GBASER)
+	if (type != PHY_INTERFACE_MODE_XGMII)
 		if_mode |= IF_MODE_EN_AUTO;
 
 	if (type == PHY_INTERFACE_MODE_RGMII ||
@@ -139,7 +137,6 @@ static void memac_set_interface_mode(struct fsl_enet_mac *mac,
 void init_memac(struct fsl_enet_mac *mac, void *base,
 		void *phyregs, int max_rx_len)
 {
-	debug("%s: @ %p, mdio @ %p\n", __func__, base, phyregs);
 	mac->base = base;
 	mac->phyregs = phyregs;
 	mac->max_rx_len = max_rx_len;

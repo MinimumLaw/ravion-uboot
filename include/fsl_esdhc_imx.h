@@ -24,10 +24,12 @@
 #define SYSCTL_INITA		0x08000000
 #define SYSCTL_TIMEOUT_MASK	0x000f0000
 #define SYSCTL_CLOCK_MASK	0x0000fff0
+#if !defined(CONFIG_FSL_USDHC)
 #define SYSCTL_CKEN		0x00000008
 #define SYSCTL_PEREN		0x00000004
 #define SYSCTL_HCKEN		0x00000002
 #define SYSCTL_IPGEN		0x00000001
+#endif
 #define SYSCTL_RSTA		0x01000000
 #define SYSCTL_RSTC		0x02000000
 #define SYSCTL_RSTD		0x04000000
@@ -37,7 +39,6 @@
 #define VENDORSPEC_HCKEN	0x00001000
 #define VENDORSPEC_IPGEN	0x00000800
 #define VENDORSPEC_INIT		0x20007809
-#define VENDORSPEC_FRC_SDCLK_ON 0x00000100
 
 #define IRQSTAT			0x0002e030
 #define IRQSTAT_DMAE		(0x10000000)
@@ -95,7 +96,6 @@
 #define PRSSTAT_CINS		(0x00010000)
 #define PRSSTAT_BREN		(0x00000800)
 #define PRSSTAT_BWEN		(0x00000400)
-#define PRSSTAT_SDOFF		(0x00000080)
 #define PRSSTAT_SDSTB		(0X00000008)
 #define PRSSTAT_DLA		(0x00000004)
 #define PRSSTAT_CICHB		(0x00000002)
@@ -164,12 +164,12 @@
 #define BLKATTR_SIZE(x)	(x & 0x1fff)
 #define MAX_BLK_CNT	0x7fff	/* so malloc will have enough room with 32M */
 
-#define HOSTCAPBLT_VS18	0x04000000
-#define HOSTCAPBLT_VS30	0x02000000
-#define HOSTCAPBLT_VS33	0x01000000
-#define HOSTCAPBLT_SRS	0x00800000
-#define HOSTCAPBLT_DMAS	0x00400000
-#define HOSTCAPBLT_HSS	0x00200000
+#define ESDHC_HOSTCAPBLT_VS18	0x04000000
+#define ESDHC_HOSTCAPBLT_VS30	0x02000000
+#define ESDHC_HOSTCAPBLT_VS33	0x01000000
+#define ESDHC_HOSTCAPBLT_SRS	0x00800000
+#define ESDHC_HOSTCAPBLT_DMAS	0x00400000
+#define ESDHC_HOSTCAPBLT_HSS	0x00200000
 
 #define ESDHC_VENDORSPEC_VSELECT 0x00000002 /* Use 1.8V */
 
@@ -194,7 +194,6 @@
 #define ESDHC_STROBE_DLL_CTRL_RESET	BIT(1)
 #define ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_DEFAULT	0x7
 #define ESDHC_STROBE_DLL_CTRL_SLV_DLY_TARGET_SHIFT	3
-#define ESDHC_STROBE_DLL_CTRL_SLV_UPDATE_INT_DEFAULT   (4 << 20)
 
 #define ESDHC_STROBE_DLL_STATUS		0x74
 #define ESDHC_STROBE_DLL_STS_REF_LOCK	BIT(1)
@@ -260,12 +259,12 @@ struct fsl_esdhc_cfg {
 #endif
 
 #ifdef CONFIG_FSL_ESDHC_IMX
-int fsl_esdhc_mmc_init(struct bd_info *bis);
-int fsl_esdhc_initialize(struct bd_info *bis, struct fsl_esdhc_cfg *cfg);
-void fdt_fixup_esdhc(void *blob, struct bd_info *bd);
+int fsl_esdhc_mmc_init(bd_t *bis);
+int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg);
+void fdt_fixup_esdhc(void *blob, bd_t *bd);
 #else
-static inline int fsl_esdhc_mmc_init(struct bd_info *bis) { return -ENOSYS; }
-static inline void fdt_fixup_esdhc(void *blob, struct bd_info *bd) {}
+static inline int fsl_esdhc_mmc_init(bd_t *bis) { return -ENOSYS; }
+static inline void fdt_fixup_esdhc(void *blob, bd_t *bd) {}
 #endif /* CONFIG_FSL_ESDHC_IMX */
 void __noreturn mmc_boot(void);
 void mmc_spl_load_image(uint32_t offs, unsigned int size, void *vdst);

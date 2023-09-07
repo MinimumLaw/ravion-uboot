@@ -6,7 +6,6 @@
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
  */
 #include <common.h>
-#include <init.h>
 #include <nand.h>
 #include <ns16550.h>
 #include <post.h>
@@ -290,8 +289,8 @@ int arch_cpu_init(void)
 	board_gpio_init();
 
 #if !CONFIG_IS_ENABLED(DM_SERIAL)
-	ns16550_init((struct ns16550 *)(CONFIG_SYS_NS16550_COM1),
-		     CONFIG_SYS_NS16550_CLK / 16 / CONFIG_BAUDRATE);
+	NS16550_init((NS16550_t)(CONFIG_SYS_NS16550_COM1),
+			CONFIG_SYS_NS16550_CLK / 16 / CONFIG_BAUDRATE);
 #endif
 	/*
 	 * Fix Power and Emulation Management Register

@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <init.h>
 #include <vsprintf.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
@@ -24,16 +23,11 @@
 
 int arch_cpu_init(void)
 {
-#if defined(CONFIG_CLK_CCF)
-	return 0;
-#else
 	return at91_clock_init(CONFIG_SYS_AT91_MAIN_CLOCK);
-#endif
 }
 
 void arch_preboot_os(void)
 {
-#if (IS_ENABLED(CONFIG_ATMEL_PIT_TIMER))
 	ulong cpiv;
 	at91_pit_t *pit = (at91_pit_t *)ATMEL_BASE_PIT;
 
@@ -45,7 +39,6 @@ void arch_preboot_os(void)
 	 * without waiting for wrapping back to 0
 	 */
 	writel(cpiv + 0x1000, &pit->mr);
-#endif
 }
 
 #if defined(CONFIG_DISPLAY_CPUINFO)

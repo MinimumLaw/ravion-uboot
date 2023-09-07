@@ -7,11 +7,8 @@
  */
 
 #include <common.h>
-#include <init.h>
 #include <irq_func.h>
 #include <time.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 
 #include <asm/timer.h>
 #include <asm/immap.h>
@@ -71,7 +68,7 @@ void dtimer_interrupt(void *not_used)
 		timestamp++;
 
 		#if defined(CONFIG_WATCHDOG) || defined (CONFIG_HW_WATCHDOG)
-		if (CONFIG_SYS_WATCHDOG_FREQ && (timestamp % (CONFIG_SYS_WATCHDOG_FREQ)) == 0) {
+		if ((timestamp % (CONFIG_SYS_WATCHDOG_FREQ)) == 0) {
 			WATCHDOG_RESET ();
 		}
 		#endif    /* CONFIG_WATCHDOG || CONFIG_HW_WATCHDOG */

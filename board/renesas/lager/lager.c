@@ -8,22 +8,17 @@
  */
 
 #include <common.h>
-#include <clock_legacy.h>
 #include <cpu_func.h>
 #include <env.h>
 #include <env_internal.h>
 #include <hang.h>
-#include <init.h>
 #include <malloc.h>
 #include <netdev.h>
 #include <dm.h>
-#include <asm/global_data.h>
 #include <dm/platform_data/serial_sh.h>
 #include <asm/processor.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
@@ -51,7 +46,7 @@ void s_init(void)
 	/* CPU frequency setting. Set to 1.4GHz */
 	if (rmobile_get_cpu_rev_integer() >= R8A7790_CUT_ES2X) {
 		u32 stat = 0;
-		u32 stc = ((1400 / CLK2MHZ(get_board_sys_clk())) - 1)
+		u32 stc = ((1400 / CLK2MHZ(CONFIG_SYS_CLK_FREQ)) - 1)
 			<< PLL0_STC_BIT;
 		clrsetbits_le32(PLL0CR, PLL0_STC_MASK, stc);
 
@@ -129,7 +124,7 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	struct udevice *dev;
 	const u8 pmic_bus = 2;

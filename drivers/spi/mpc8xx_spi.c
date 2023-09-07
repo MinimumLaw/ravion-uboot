@@ -20,7 +20,6 @@
 #include <dm.h>
 #include <mpc8xx.h>
 #include <spi.h>
-#include <linux/delay.h>
 
 #include <asm/cpm_8xx.h>
 #include <asm/io.h>

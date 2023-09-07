@@ -2,4 +2,4 @@
 #
 # Copyright (C) 2015, Bin Meng <bmeng.cn@gmail.com>
 
-obj-y	+= qemu-x86.o
+obj-y	+= start.o

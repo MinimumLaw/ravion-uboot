@@ -12,7 +12,6 @@
 #ifndef __ASSEMBLY__
 
 /* sd controller register */
-#include <linux/bitops.h>
 struct ftsdc010_mmc {
 	unsigned int	cmd;		/* 0x00 - command reg		*/
 	unsigned int	argu;		/* 0x04 - argument reg		*/

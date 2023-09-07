@@ -5,9 +5,9 @@
 # Entry-type module for a U-Boot binary with an embedded microcode pointer
 #
 
-from binman.entry import Entry
-from binman.etype.blob import Entry_blob
-from patman import tools
+from entry import Entry
+from blob import Entry_blob
+import tools
 
 class Entry_u_boot_ucode(Entry_blob):
     """U-Boot microcode block
@@ -58,7 +58,7 @@ class Entry_u_boot_ucode(Entry_blob):
             contents of this entry.
     """
     def __init__(self, section, etype, node):
-        super().__init__(section, etype, node)
+        Entry_blob.__init__(self, section, etype, node)
 
     def ObtainContents(self):
         # If the section does not need microcode, there is nothing to do
@@ -81,7 +81,6 @@ class Entry_u_boot_ucode(Entry_blob):
             if fdt_entry:
                 break
         if not fdt_entry:
-            self.data = b''
             return True
         if not fdt_entry.ready:
             return False
@@ -92,8 +91,8 @@ class Entry_u_boot_ucode(Entry_blob):
             return True
 
         # Write it out to a file
-        self._pathname = tools.get_output_filename('u-boot-ucode.bin')
-        tools.write_file(self._pathname, fdt_entry.ucode_data)
+        self._pathname = tools.GetOutputFilename('u-boot-ucode.bin')
+        tools.WriteFile(self._pathname, fdt_entry.ucode_data)
 
         self.ReadBlobContents()
 

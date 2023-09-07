@@ -8,6 +8,9 @@
 #ifndef _MSCC_SERVAL_H_
 #define _MSCC_SERVAL_H_
 
+#include <linux/bitops.h>
+#include <dm.h>
+
 /*
  * Target offset base(s)
  */

@@ -25,7 +25,6 @@
  */
 
 #include <common.h>
-#include <flash.h>
 #include <malloc.h>
 #include <asm/byteorder.h>
 #include <linux/stat.h>

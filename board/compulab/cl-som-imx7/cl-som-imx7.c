@@ -11,12 +11,9 @@
 #include <env.h>
 #include <init.h>
 #include <mmc.h>
-#include <net.h>
 #include <phy.h>
 #include <netdev.h>
 #include <fsl_esdhc_imx.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
 #include <power/pmic.h>
 #include <power/pfuze3000_pmic.h>
 #include <asm/mach-imx/mxc_i2c.h>
@@ -81,7 +78,7 @@ static struct fsl_esdhc_cfg cl_som_imx7_usdhc_cfg[3] = {
 	{USDHC3_BASE_ADDR},
 };
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int i, ret;
 	/*
@@ -200,7 +197,7 @@ static int cl_som_imx7_handle_mac_address(char *env_var, uint eeprom_bus)
 
 #define CL_SOM_IMX7_FEC_DEV_ID_PRI 0
 
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 	/* set Ethernet MAC address environment */
 	cl_som_imx7_handle_mac_address("ethaddr", CONFIG_SYS_I2C_EEPROM_BUS);
@@ -267,7 +264,7 @@ int board_init(void)
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(POWER_LEGACY)
+#ifdef CONFIG_POWER
 #define I2C_PMIC	0
 int power_init_board(void)
 {
@@ -293,7 +290,7 @@ int power_init_board(void)
 
 	return 0;
 }
-#endif /* CONFIG_IS_ENABLED(POWER_LEGACY) */
+#endif /* CONFIG_POWER */
 
 /*
  * cl_som_imx7_setup_wdog() - watchdog configuration.

@@ -54,7 +54,7 @@ static int list_leds(void)
 	for (uclass_find_first_device(UCLASS_LED, &dev);
 	     dev;
 	     uclass_find_next_device(&dev)) {
-		struct led_uc_plat *plat = dev_get_uclass_plat(dev);
+		struct led_uc_plat *plat = dev_get_uclass_platdata(dev);
 
 		if (!plat->label)
 			continue;
@@ -71,7 +71,7 @@ static int list_leds(void)
 	return 0;
 }
 
-int do_led(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	enum led_state_t cmd;
 	const char *led_label;
@@ -93,7 +93,7 @@ int do_led(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (cmd == LEDST_BLINK) {
 		if (argc < 4)
 			return CMD_RET_USAGE;
-		freq_ms = dectoul(argv[3], NULL);
+		freq_ms = simple_strtoul(argv[3], NULL, 10);
 	}
 #endif
 	ret = led_get_by_label(led_label, &dev);

@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <malloc.h>
 #include <reset-uclass.h>
 #include <dm/device_compat.h>
@@ -50,7 +49,6 @@ static const struct uniphier_reset_data uniphier_pro4_sys_reset_data[] = {
 	UNIPHIER_RESETX(12, 0x2000, 6),		/* GIO */
 	UNIPHIER_RESETX(14, 0x2000, 17),	/* USB30 */
 	UNIPHIER_RESETX(15, 0x2004, 17),	/* USB31 */
-	UNIPHIER_RESETX(24, 0x2008, 2),		/* PCIE */
 	UNIPHIER_RESET_END,
 };
 
@@ -80,7 +78,6 @@ static const struct uniphier_reset_data uniphier_ld20_sys_reset_data[] = {
 	UNIPHIER_RESETX(17, 0x200c, 13),	/* USB30-PHY1 */
 	UNIPHIER_RESETX(18, 0x200c, 14),	/* USB30-PHY2 */
 	UNIPHIER_RESETX(19, 0x200c, 15),	/* USB30-PHY3 */
-	UNIPHIER_RESETX(24, 0x200c, 4),		/* PCIE */
 	UNIPHIER_RESET_END,
 };
 
@@ -97,7 +94,6 @@ static const struct uniphier_reset_data uniphier_pxs3_sys_reset_data[] = {
 	UNIPHIER_RESETX(18, 0x200c, 20),	/* USB30-PHY2 */
 	UNIPHIER_RESETX(20, 0x200c, 17),	/* USB31-PHY0 */
 	UNIPHIER_RESETX(21, 0x200c, 19),	/* USB31-PHY1 */
-	UNIPHIER_RESETX(24, 0x200c, 3),		/* PCIE */
 	UNIPHIER_RESET_END,
 };
 
@@ -250,7 +246,7 @@ static int uniphier_reset_probe(struct udevice *dev)
 	struct uniphier_reset_priv *priv = dev_get_priv(dev);
 	fdt_addr_t addr;
 
-	addr = dev_read_addr(dev->parent);
+	addr = devfdt_get_addr(dev->parent);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -375,6 +371,6 @@ U_BOOT_DRIVER(uniphier_reset) = {
 	.id = UCLASS_RESET,
 	.of_match = uniphier_reset_match,
 	.probe = uniphier_reset_probe,
-	.priv_auto	= sizeof(struct uniphier_reset_priv),
+	.priv_auto_alloc_size = sizeof(struct uniphier_reset_priv),
 	.ops = &uniphier_reset_ops,
 };

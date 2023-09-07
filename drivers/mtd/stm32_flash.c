@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <flash.h>
 #include <asm/io.h>
 #include <asm/arch/stm32.h>
 #include "stm32_flash.h"

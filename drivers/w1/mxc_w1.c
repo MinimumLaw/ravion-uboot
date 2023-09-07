@@ -17,12 +17,10 @@
  * Martin Fuzzey <martin.fuzzey@flowbird.group>
  */
 
-#include <common.h>
 #include <asm/arch/clock.h>
+#include <common.h>
 #include <dm.h>
 #include <dm/device_compat.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/io.h>
 #include <w1.h>
 
@@ -79,7 +77,7 @@ static u8 mxc_w1_touch_bit(struct mxc_w1_pdata *pdata, u8 bit)
 
 static u8 mxc_w1_read_byte(struct udevice *dev)
 {
-	struct mxc_w1_pdata *pdata = dev_get_plat(dev);
+	struct mxc_w1_pdata *pdata = dev_get_platdata(dev);
 	struct mxc_w1_regs *regs = pdata->regs;
 	u16 status;
 
@@ -106,7 +104,7 @@ static u8 mxc_w1_read_byte(struct udevice *dev)
 
 static void mxc_w1_write_byte(struct udevice *dev, u8 byte)
 {
-	struct mxc_w1_pdata *pdata = dev_get_plat(dev);
+	struct mxc_w1_pdata *pdata = dev_get_platdata(dev);
 	struct mxc_w1_regs *regs = pdata->regs;
 	u16 status;
 
@@ -130,7 +128,7 @@ static void mxc_w1_write_byte(struct udevice *dev, u8 byte)
 
 static bool mxc_w1_reset(struct udevice *dev)
 {
-	struct mxc_w1_pdata *pdata = dev_get_plat(dev);
+	struct mxc_w1_pdata *pdata = dev_get_platdata(dev);
 	u16 reg_val;
 
 	writew(MXC_W1_CONTROL_RPP, &pdata->regs->control);
@@ -144,7 +142,7 @@ static bool mxc_w1_reset(struct udevice *dev)
 
 static u8 mxc_w1_triplet(struct udevice *dev, bool bdir)
 {
-	struct mxc_w1_pdata *pdata = dev_get_plat(dev);
+	struct mxc_w1_pdata *pdata = dev_get_platdata(dev);
 	u8 id_bit   = mxc_w1_touch_bit(pdata, 1);
 	u8 comp_bit = mxc_w1_touch_bit(pdata, 1);
 	u8 retval;
@@ -166,12 +164,12 @@ static u8 mxc_w1_triplet(struct udevice *dev, bool bdir)
 	return retval;
 }
 
-static int mxc_w1_of_to_plat(struct udevice *dev)
+static int mxc_w1_ofdata_to_platdata(struct udevice *dev)
 {
-	struct mxc_w1_pdata *pdata = dev_get_plat(dev);
+	struct mxc_w1_pdata *pdata = dev_get_platdata(dev);
 	fdt_addr_t addr;
 
-	addr = dev_read_addr(dev);
+	addr = devfdt_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -182,7 +180,7 @@ static int mxc_w1_of_to_plat(struct udevice *dev)
 
 static int mxc_w1_probe(struct udevice *dev)
 {
-	struct mxc_w1_pdata *pdata = dev_get_plat(dev);
+	struct mxc_w1_pdata *pdata = dev_get_platdata(dev);
 	unsigned int clkrate = mxc_get_clock(MXC_IPG_PERCLK);
 	unsigned int clkdiv;
 
@@ -228,8 +226,8 @@ U_BOOT_DRIVER(mxc_w1_drv) = {
 	.id				= UCLASS_W1,
 	.name				= "mxc_w1_drv",
 	.of_match			= mxc_w1_id,
-	.of_to_plat		= mxc_w1_of_to_plat,
+	.ofdata_to_platdata		= mxc_w1_ofdata_to_platdata,
 	.ops				= &mxc_w1_ops,
-	.plat_auto	= sizeof(struct mxc_w1_pdata),
+	.platdata_auto_alloc_size	= sizeof(struct mxc_w1_pdata),
 	.probe				= mxc_w1_probe,
 };

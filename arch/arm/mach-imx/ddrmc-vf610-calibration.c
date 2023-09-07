@@ -8,7 +8,6 @@
  */
 /* #define DEBUG */
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <linux/bitmap.h>

@@ -5,10 +5,8 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/unaligned.h>
-#include <linux/delay.h>
 #include <linux/mtd/rawnand.h>
 #include "denali.h"
 

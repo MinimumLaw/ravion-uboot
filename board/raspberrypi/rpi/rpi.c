@@ -72,7 +72,7 @@ struct msg_get_clock_rate {
 #endif
 
 /*
- * https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#raspberry-pi-revision-codes
+ * https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
  */
 struct rpi_model {
 	const char *name;
@@ -155,21 +155,6 @@ static const struct rpi_model rpi_models_new_scheme[] = {
 	[0x11] = {
 		"4 Model B",
 		DTB_DIR "bcm2711-rpi-4-b.dtb",
-		true,
-	},
-	[0x12] = {
-		"Zero 2 W",
-		DTB_DIR "bcm2837-rpi-zero-2.dtb",
-		false,
-	},
-	[0x13] = {
-		"400",
-		DTB_DIR "bcm2711-rpi-400.dtb",
-		true,
-	},
-	[0x14] = {
-		"Compute Module 4",
-		DTB_DIR "bcm2711-rpi-cm4.dtb",
 		true,
 	},
 };
@@ -282,13 +267,6 @@ int dram_init(void)
 	}
 
 	gd->ram_size = msg->get_arm_mem.body.resp.mem_size;
-
-	/*
-	 * In some configurations the memory size returned by VideoCore
-	 * is not aligned to the section size, what is mandatory for
-	 * the u-boot's memory setup.
-	 */
-	gd->ram_size &= ~MMU_SECTION_SIZE;
 
 	return 0;
 }
@@ -424,7 +402,7 @@ int misc_init_r(void)
 	return 0;
 }
 
-static void get_board_revision(void)
+static void get_board_rev(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(struct msg_get_board_rev, msg, 1);
 	int ret;
@@ -483,7 +461,7 @@ int board_init(void)
 	hw_watchdog_init();
 #endif
 
-	get_board_revision();
+	get_board_rev();
 
 	gd->bd->bi_boot_params = 0x100;
 
@@ -493,29 +471,25 @@ int board_init(void)
 /*
  * If the firmware passed a device tree use it for U-Boot.
  */
-void *board_fdt_blob_setup(int *err)
+void *board_fdt_blob_setup(void)
 {
-	*err = 0;
-	if (fdt_magic(fw_dtb_pointer) != FDT_MAGIC) {
-		*err = -ENXIO;
+	if (fdt_magic(fw_dtb_pointer) != FDT_MAGIC)
 		return NULL;
-	}
-
 	return (void *)fw_dtb_pointer;
 }
 
-int ft_board_setup(void *blob, struct bd_info *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
-	int node;
-
-	node = fdt_node_offset_by_compatible(blob, -1, "simple-framebuffer");
-	if (node < 0)
-		fdt_simplefb_add_node(blob);
+	/*
+	 * For now, we simply always add the simplefb DT node. Later, we
+	 * should be more intelligent, and e.g. only do this if no enabled DT
+	 * node exists for the "real" graphics driver.
+	 */
+	lcd_dt_simplefb_add_node(blob);
 
 #ifdef CONFIG_EFI_LOADER
 	/* Reserve the spin table */
-	efi_add_memory_map(0, CONFIG_RPI_EFI_NR_SPIN_PAGES << EFI_PAGE_SHIFT,
-			   EFI_RESERVED_MEMORY_TYPE);
+	efi_add_memory_map(0, 1, EFI_RESERVED_MEMORY_TYPE, 0);
 #endif
 
 	return 0;

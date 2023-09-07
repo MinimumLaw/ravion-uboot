@@ -8,7 +8,6 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include <log.h>
 #include <sysreset.h>
 #include <asm/pci.h>
 #include <asm/cpu.h>
@@ -16,7 +15,6 @@
 #include <asm/arch/me.h>
 #include <asm/arch/pch.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 
 static const char *const me_ack_values[] = {
 	[ME_HFS_ACK_NO_DID]	= "No DID Ack received",

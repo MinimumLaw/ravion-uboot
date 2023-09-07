@@ -8,18 +8,14 @@
 #include <dm.h>
 #include <div64.h>
 #include <errno.h>
-#include <log.h>
 #include <malloc.h>
 #include <syscon.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/cru_rk3308.h>
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/hardware.h>
-#include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dt-bindings/clock/rk3308-cru.h>
-#include <linux/bitops.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -939,7 +935,7 @@ static ulong rk3308_clk_set_rate(struct clk *clk, ulong rate)
 	return ret;
 }
 
-#if CONFIG_IS_ENABLED(OF_REAL)
+#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 static int __maybe_unused rk3308_mac_set_parent(struct clk *clk, struct clk *parent)
 {
 	struct rk3308_clk_priv *priv = dev_get_priv(clk->dev);
@@ -976,7 +972,7 @@ static int __maybe_unused rk3308_clk_set_parent(struct clk *clk, struct clk *par
 static struct clk_ops rk3308_clk_ops = {
 	.get_rate = rk3308_clk_get_rate,
 	.set_rate = rk3308_clk_set_rate,
-#if CONFIG_IS_ENABLED(OF_REAL)
+#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 	.set_parent = rk3308_clk_set_parent,
 #endif
 };
@@ -1014,14 +1010,14 @@ static int rk3308_clk_probe(struct udevice *dev)
 	rk3308_clk_init(dev);
 
 	/* Process 'assigned-{clocks/clock-parents/clock-rates}' properties */
-	ret = clk_set_defaults(dev, CLK_DEFAULTS_POST);
+	ret = clk_set_defaults(dev, 1);
 	if (ret)
 		debug("%s clk_set_defaults failed %d\n", __func__, ret);
 
 	return ret;
 }
 
-static int rk3308_clk_of_to_plat(struct udevice *dev)
+static int rk3308_clk_ofdata_to_platdata(struct udevice *dev)
 {
 	struct rk3308_clk_priv *priv = dev_get_priv(dev);
 
@@ -1047,7 +1043,7 @@ static int rk3308_clk_bind(struct udevice *dev)
 						    glb_srst_fst);
 		priv->glb_srst_snd_value = offsetof(struct rk3308_cru,
 						    glb_srst_snd);
-		dev_set_priv(sys_child, priv);
+		sys_child->priv = priv;
 	}
 
 #if CONFIG_IS_ENABLED(RESET_ROCKCHIP)
@@ -1069,8 +1065,8 @@ U_BOOT_DRIVER(rockchip_rk3308_cru) = {
 	.name		= "rockchip_rk3308_cru",
 	.id		= UCLASS_CLK,
 	.of_match	= rk3308_clk_ids,
-	.priv_auto	= sizeof(struct rk3308_clk_priv),
-	.of_to_plat = rk3308_clk_of_to_plat,
+	.priv_auto_alloc_size = sizeof(struct rk3308_clk_priv),
+	.ofdata_to_platdata = rk3308_clk_ofdata_to_platdata,
 	.ops		= &rk3308_clk_ops,
 	.bind		= rk3308_clk_bind,
 	.probe		= rk3308_clk_probe,

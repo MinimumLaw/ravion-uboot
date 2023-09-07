@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <fsl_ifc.h>
-#include <part.h>
 
 #ifdef CONFIG_TFABOOT
 struct ifc_regs ifc_cfg_default_boot[CONFIG_SYS_FSL_IFC_BANK_COUNT] = {

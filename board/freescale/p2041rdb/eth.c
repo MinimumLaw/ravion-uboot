@@ -13,7 +13,6 @@
  */
 
 #include <common.h>
-#include <net.h>
 #include <netdev.h>
 #include <asm/fsl_serdes.h>
 #include <fm_eth.h>
@@ -81,21 +80,17 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 {
 	phy_interface_t intf = fm_info_get_enet_if(port);
 	char phy[16];
-	int lane;
-	u8 slot;
 
-	switch (intf) {
 	/* The RGMII PHY is identified by the MAC connected to it */
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
+	if (intf == PHY_INTERFACE_MODE_RGMII) {
 		sprintf(phy, "phy_rgmii_%u", port == FM1_DTSEC5 ? 0 : 1);
 		fdt_set_phy_handle(fdt, compat, addr, phy);
-		break;
+	}
+
 	/* The SGMII PHY is identified by the MAC connected to it */
-	case PHY_INTERFACE_MODE_SGMII:
-		lane = serdes_get_first_lane(SGMII_FM1_DTSEC1 + port);
+	if (intf == PHY_INTERFACE_MODE_SGMII) {
+		int lane = serdes_get_first_lane(SGMII_FM1_DTSEC1 + port);
+		u8 slot;
 		if (lane < 0)
 			return;
 		slot = lane_to_slot[lane];
@@ -110,23 +105,21 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 					+ (port - FM1_DTSEC1));
 			fdt_set_phy_handle(fdt, compat, addr, phy);
 		}
-		break;
-	case PHY_INTERFACE_MODE_XGMII:
+	}
+
+	if (intf == PHY_INTERFACE_MODE_XGMII) {
 		/* XAUI */
-		lane = serdes_get_first_lane(XAUI_FM1);
+		int lane = serdes_get_first_lane(XAUI_FM1);
 		if (lane >= 0) {
 			/* The XAUI PHY is identified by the slot */
 			sprintf(phy, "phy_xgmii_%u", lane_to_slot[lane]);
 			fdt_set_phy_handle(fdt, compat, addr, phy);
 		}
-		break;
-	default:
-		break;
 	}
 }
 #endif /* #ifdef CONFIG_FMAN_ENET */
 
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_FMAN_ENET
 	struct fsl_pq_mdio_info dtsec_mdio_info;
@@ -175,9 +168,6 @@ int board_eth_init(struct bd_info *bis)
 				fm_info_set_phy_address(i, riser_phy_addr[i]);
 			break;
 		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_ID:
 			/* Only DTSEC4 and DTSEC5 can be routed to RGMII */
 			fm_info_set_phy_address(i, i == FM1_DTSEC5 ?
 					CONFIG_SYS_FM1_DTSEC5_PHY_ADDR :

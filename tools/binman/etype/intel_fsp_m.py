@@ -5,10 +5,11 @@
 # Entry-type module for Intel Firmware Support Package binary blob (M section)
 #
 
-from binman.etype.blob_ext import Entry_blob_ext
+from entry import Entry
+from blob import Entry_blob
 
-class Entry_intel_fsp_m(Entry_blob_ext):
-    """Intel Firmware Support Package (FSP) memory init
+class Entry_intel_fsp_m(Entry_blob):
+    """Entry containing Intel Firmware Support Package (FSP) memory init
 
     Properties / Entry arguments:
         - filename: Filename of file to read into entry
@@ -23,4 +24,4 @@ class Entry_intel_fsp_m(Entry_blob_ext):
     See README.x86 for information about x86 binary blobs.
     """
     def __init__(self, section, etype, node):
-        super().__init__(section, etype, node)
+        Entry_blob.__init__(self, section, etype, node)

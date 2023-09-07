@@ -4,13 +4,9 @@
  */
 
 #include <common.h>
-#include <command.h>
 #include <cpu_func.h>
 #include <dwmmc.h>
-#include <init.h>
 #include <malloc.h>
-#include <asm/global_data.h>
-#include <linux/bitops.h>
 
 #include <asm/arcregs.h>
 
@@ -98,15 +94,14 @@ int board_early_init_r(void)
 /* Bits in CREG_BOOT register */
 #define CREG_BOOT_WP_BIT	BIT(8)
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	writel(1, CREG_IP_SW_RESET);
 	while (1)
 		; /* loop forever till reset */
 }
 
-static int do_emsdp_rom(struct cmd_tbl *cmdtp, int flag, int argc,
-			char *const argv[])
+static int do_emsdp_rom(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	u32 creg_boot = readl(CREG_BOOT);
 
@@ -122,14 +117,13 @@ static int do_emsdp_rom(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-struct cmd_tbl cmd_emsdp[] = {
+cmd_tbl_t cmd_emsdp[] = {
 	U_BOOT_CMD_MKENT(rom, 2, 0, do_emsdp_rom, "", ""),
 };
 
-static int do_emsdp(struct cmd_tbl *cmdtp, int flag, int argc,
-		    char *const argv[])
+static int do_emsdp(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	struct cmd_tbl *c;
+	cmd_tbl_t *c;
 
 	c = find_cmd_tbl(argv[1], cmd_emsdp, ARRAY_SIZE(cmd_emsdp));
 

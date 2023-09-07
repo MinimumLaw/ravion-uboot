@@ -19,7 +19,6 @@
  */
 
 #include <common.h>
-#include <log.h>
 #include <net.h>
 #include <malloc.h>
 #include <linux/types.h>

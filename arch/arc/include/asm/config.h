@@ -8,4 +8,6 @@
 
 #define CONFIG_SYS_BOOT_RAMDISK_HIGH
 
+#define CONFIG_LMB
+
 #endif /*__ASM_ARC_CONFIG_H_ */

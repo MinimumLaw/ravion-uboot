@@ -34,11 +34,3 @@
 &usdhc1 {
 	status = "disabled";
 };
-
-&usdhc2 {
-	u-boot,dm-pre-reloc;
-};
-
-&usdhc3 {
-	u-boot,dm-pre-reloc;
-};

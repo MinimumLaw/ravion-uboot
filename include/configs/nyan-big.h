@@ -19,12 +19,17 @@
 #define CONFIG_SYS_NS16550_COM1		NV_PA_APB_UARTA_BASE
 
 /* Environment in eMMC, at the end of 2nd "boot sector" */
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#define CONFIG_SYS_MMC_ENV_PART		2
 
 /* Align LCD to 1MB boundary */
 #define CONFIG_LCD_ALIGNMENT	MMU_SECTION_SIZE
 
 /* SPI */
 #define CONFIG_SPI_FLASH_SIZE          (4 << 20)
+
+#undef CONFIG_LOADADDR
+#define CONFIG_LOADADDR		0x82408000
 
 #include "tegra-common-usb-gadget.h"
 #include "tegra-common-post.h"

@@ -10,7 +10,6 @@
 #include <common.h>
 #include <serial.h>
 #include <asm/io.h>
-#include <linux/delay.h>
 
 #include <env.h>
 #include <usbdevice.h>

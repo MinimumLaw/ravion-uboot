@@ -11,11 +11,8 @@
 
 #include <common.h>
 #include <dm.h>
-#include <log.h>
 #include <regmap.h>
 #include <asm/gpio.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
 
 #include "ihs_fpga.h"
 
@@ -866,5 +863,5 @@ U_BOOT_DRIVER(ihs_fpga_bus) = {
 	.id             = UCLASS_MISC,
 	.of_match       = ihs_fpga_ids,
 	.probe          = ihs_fpga_probe,
-	.priv_auto	= sizeof(struct ihs_fpga_priv),
+	.priv_auto_alloc_size = sizeof(struct ihs_fpga_priv),
 };

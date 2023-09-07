@@ -6,8 +6,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <log.h>
-#include <asm/global_data.h>
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <linux/compiler.h>
@@ -22,8 +20,11 @@ __weak void arm_init_before_mmu(void)
 {
 }
 
-static void set_section_phys(int section, phys_addr_t phys,
-			     enum dcache_option option)
+__weak void arm_init_domains(void)
+{
+}
+
+void set_section_dcache(int section, enum dcache_option option)
 {
 #ifdef CONFIG_ARMV7_LPAE
 	u64 *page_table = (u64 *)gd->arch.tlb_addr;
@@ -35,7 +36,7 @@ static void set_section_phys(int section, phys_addr_t phys,
 #endif
 
 	/* Add the page offset */
-	value |= phys;
+	value |= ((u32)section << MMU_SECTION_SHIFT);
 
 	/* Add caching bits */
 	value |= option;
@@ -44,18 +45,13 @@ static void set_section_phys(int section, phys_addr_t phys,
 	page_table[section] = value;
 }
 
-void set_section_dcache(int section, enum dcache_option option)
-{
-	set_section_phys(section, (u32)section << MMU_SECTION_SHIFT, option);
-}
-
 __weak void mmu_page_table_flush(unsigned long start, unsigned long stop)
 {
 	debug("%s: Warning: not implemented\n", __func__);
 }
 
-void mmu_set_region_dcache_behaviour_phys(phys_addr_t start, phys_addr_t phys,
-					size_t size, enum dcache_option option)
+void mmu_set_region_dcache_behaviour(phys_addr_t start, size_t size,
+				     enum dcache_option option)
 {
 #ifdef CONFIG_ARMV7_LPAE
 	u64 *page_table = (u64 *)gd->arch.tlb_addr;
@@ -65,11 +61,8 @@ void mmu_set_region_dcache_behaviour_phys(phys_addr_t start, phys_addr_t phys,
 	unsigned long startpt, stoppt;
 	unsigned long upto, end;
 
-	/* div by 2 before start + size to avoid phys_addr_t overflow */
-	end = ALIGN((start / 2) + (size / 2), MMU_SECTION_SIZE / 2)
-	      >> (MMU_SECTION_SHIFT - 1);
+	end = ALIGN(start + size, MMU_SECTION_SIZE) >> MMU_SECTION_SHIFT;
 	start = start >> MMU_SECTION_SHIFT;
-
 #ifdef CONFIG_ARMV7_LPAE
 	debug("%s: start=%pa, size=%zu, option=%llx\n", __func__, &start, size,
 	      option);
@@ -77,8 +70,8 @@ void mmu_set_region_dcache_behaviour_phys(phys_addr_t start, phys_addr_t phys,
 	debug("%s: start=%pa, size=%zu, option=0x%x\n", __func__, &start, size,
 	      option);
 #endif
-	for (upto = start; upto < end; upto++, phys += MMU_SECTION_SIZE)
-		set_section_phys(upto, phys, option);
+	for (upto = start; upto < end; upto++)
+		set_section_dcache(upto, option);
 
 	/*
 	 * Make sure range is cache line aligned
@@ -95,19 +88,22 @@ void mmu_set_region_dcache_behaviour_phys(phys_addr_t start, phys_addr_t phys,
 
 __weak void dram_bank_mmu_setup(int bank)
 {
-	struct bd_info *bd = gd->bd;
+	bd_t *bd = gd->bd;
 	int	i;
-
-	/* bd->bi_dram is available only after relocation */
-	if ((gd->flags & GD_FLG_RELOC) == 0)
-		return;
 
 	debug("%s: bank: %d\n", __func__, bank);
 	for (i = bd->bi_dram[bank].start >> MMU_SECTION_SHIFT;
 	     i < (bd->bi_dram[bank].start >> MMU_SECTION_SHIFT) +
 		 (bd->bi_dram[bank].size >> MMU_SECTION_SHIFT);
-	     i++)
-		set_section_dcache(i, DCACHE_DEFAULT_OPTION);
+	     i++) {
+#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
+		set_section_dcache(i, DCACHE_WRITETHROUGH);
+#elif defined(CONFIG_SYS_ARM_CACHE_WRITEALLOC)
+		set_section_dcache(i, DCACHE_WRITEALLOC);
+#else
+		set_section_dcache(i, DCACHE_WRITEBACK);
+#endif
+	}
 }
 
 /* to activate the MMU we need to set up virtual memory: use 1M areas */
@@ -193,12 +189,11 @@ static inline void mmu_setup(void)
 	asm volatile("mcr p15, 0, %0, c2, c0, 0"
 		     : : "r" (gd->arch.tlb_addr) : "memory");
 #endif
-	/*
-	 * initial value of Domain Access Control Register (DACR)
-	 * Set the access control to client (1U) for each of the 16 domains
-	 */
+	/* Set the access control to all-supervisor */
 	asm volatile("mcr p15, 0, %0, c3, c0, 0"
-		     : : "r" (0x55555555));
+		     : : "r" (~0));
+
+	arm_init_domains();
 
 	/* and enable the mmu */
 	reg = get_cr();	/* get control reg. */
@@ -249,11 +244,14 @@ static void cache_disable(uint32_t cache_bit)
 	reg = get_cr();
 
 #ifdef CONFIG_SYS_ARM_MMU
-	if (cache_bit == (CR_C | CR_M))
+	if (cache_bit == (CR_C | CR_M)) {
 #elif defined(CONFIG_SYS_ARM_MPU)
-	if (cache_bit == CR_C)
+	if (cache_bit == CR_C) {
 #endif
 		flush_dcache_all();
+		set_cr(reg & ~CR_C);
+		flush_dcache_all();
+	}
 	set_cr(reg & ~cache_bit);
 }
 #endif
@@ -305,12 +303,6 @@ int dcache_status(void)
 {
 	return 0;					/* always off */
 }
-
-void mmu_set_region_dcache_behaviour(phys_addr_t start, size_t size,
-				     enum dcache_option option)
-{
-}
-
 #else
 void dcache_enable(void)
 {
@@ -325,11 +317,5 @@ void dcache_disable(void)
 int dcache_status(void)
 {
 	return (get_cr() & CR_C) != 0;
-}
-
-void mmu_set_region_dcache_behaviour(phys_addr_t start, size_t size,
-				     enum dcache_option option)
-{
-	mmu_set_region_dcache_behaviour_phys(start, start, size, option);
 }
 #endif

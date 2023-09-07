@@ -2302,7 +2302,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 127 0x7f */
+	/* 127 0x7f '' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -2320,7 +2320,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 128 0x80 */
+	/* 128 0x80 'Ä' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x3c, /* 00111100 */
@@ -2338,7 +2338,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 129 0x81 */
+	/* 129 0x81 'Å' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xcc, /* 11001100 */
@@ -2356,7 +2356,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 130 0x82 */
+	/* 130 0x82 'Ç' */
 	0x00, /* 00000000 */
 	0x0c, /* 00001100 */
 	0x18, /* 00011000 */
@@ -2374,7 +2374,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 131 0x83 */
+	/* 131 0x83 'É' */
 	0x00, /* 00000000 */
 	0x10, /* 00010000 */
 	0x38, /* 00111000 */
@@ -2392,7 +2392,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 132 0x84 */
+	/* 132 0x84 'Ñ' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xcc, /* 11001100 */
@@ -2410,7 +2410,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 133 0x85 */
+	/* 133 0x85 'Ö' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0x30, /* 00110000 */
@@ -2428,7 +2428,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 134 0x86 */
+	/* 134 0x86 'Ü' */
 	0x00, /* 00000000 */
 	0x38, /* 00111000 */
 	0x6c, /* 01101100 */
@@ -2446,7 +2446,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 135 0x87 */
+	/* 135 0x87 'á' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -2464,7 +2464,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 136 0x88 */
+	/* 136 0x88 'à' */
 	0x00, /* 00000000 */
 	0x10, /* 00010000 */
 	0x38, /* 00111000 */
@@ -2482,7 +2482,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 137 0x89 */
+	/* 137 0x89 'â' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xc6, /* 11000110 */
@@ -2500,7 +2500,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 138 0x8a */
+	/* 138 0x8a 'ä' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0x30, /* 00110000 */
@@ -2518,7 +2518,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 139 0x8b */
+	/* 139 0x8b 'ã' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x66, /* 01100110 */
@@ -2536,7 +2536,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 140 0x8c */
+	/* 140 0x8c 'å' */
 	0x00, /* 00000000 */
 	0x18, /* 00011000 */
 	0x3c, /* 00111100 */
@@ -2554,7 +2554,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 141 0x8d */
+	/* 141 0x8d 'ç' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0x30, /* 00110000 */
@@ -2572,7 +2572,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 142 0x8e */
+	/* 142 0x8e 'é' */
 	0x00, /* 00000000 */
 	0xc6, /* 11000110 */
 	0x00, /* 00000000 */
@@ -2590,7 +2590,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 143 0x8f */
+	/* 143 0x8f 'è' */
 	0x38, /* 00111000 */
 	0x6c, /* 01101100 */
 	0x38, /* 00111000 */
@@ -2608,7 +2608,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 144 0x90 */
+	/* 144 0x90 'ê' */
 	0x0c, /* 00001100 */
 	0x18, /* 00011000 */
 	0x00, /* 00000000 */
@@ -2626,7 +2626,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 145 0x91 */
+	/* 145 0x91 'ë' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -2644,7 +2644,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 146 0x92 */
+	/* 146 0x92 'í' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x3e, /* 00111110 */
@@ -2662,7 +2662,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 147 0x93 */
+	/* 147 0x93 'ì' */
 	0x00, /* 00000000 */
 	0x10, /* 00010000 */
 	0x38, /* 00111000 */
@@ -2680,7 +2680,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 148 0x94 */
+	/* 148 0x94 'î' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xc6, /* 11000110 */
@@ -2698,7 +2698,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 149 0x95 */
+	/* 149 0x95 'ï' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0x30, /* 00110000 */
@@ -2716,7 +2716,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 150 0x96 */
+	/* 150 0x96 'ñ' */
 	0x00, /* 00000000 */
 	0x30, /* 00110000 */
 	0x78, /* 01111000 */
@@ -2734,7 +2734,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 151 0x97 */
+	/* 151 0x97 'ó' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0x30, /* 00110000 */
@@ -2752,7 +2752,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 152 0x98 */
+	/* 152 0x98 'ò' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xc6, /* 11000110 */
@@ -2770,7 +2770,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x78, /* 01111000 */
 	0x00, /* 00000000 */
 
-	/* 153 0x99 */
+	/* 153 0x99 'ô' */
 	0x00, /* 00000000 */
 	0xc6, /* 11000110 */
 	0x00, /* 00000000 */
@@ -2788,7 +2788,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 154 0x9a */
+	/* 154 0x9a 'ö' */
 	0x00, /* 00000000 */
 	0xc6, /* 11000110 */
 	0x00, /* 00000000 */
@@ -2806,7 +2806,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 155 0x9b */
+	/* 155 0x9b 'õ' */
 	0x00, /* 00000000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -2824,7 +2824,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 156 0x9c */
+	/* 156 0x9c 'ú' */
 	0x00, /* 00000000 */
 	0x38, /* 00111000 */
 	0x6c, /* 01101100 */
@@ -2842,7 +2842,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 157 0x9d */
+	/* 157 0x9d 'ù' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x66, /* 01100110 */
@@ -2860,7 +2860,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 158 0x9e */
+	/* 158 0x9e 'û' */
 	0x00, /* 00000000 */
 	0xf8, /* 11111000 */
 	0xcc, /* 11001100 */
@@ -2878,7 +2878,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 159 0x9f */
+	/* 159 0x9f 'ü' */
 	0x00, /* 00000000 */
 	0x0e, /* 00001110 */
 	0x1b, /* 00011011 */
@@ -2896,7 +2896,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 160 0xa0 */
+	/* 160 0xa0 '†' */
 	0x00, /* 00000000 */
 	0x18, /* 00011000 */
 	0x30, /* 00110000 */
@@ -2914,7 +2914,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 161 0xa1 */
+	/* 161 0xa1 '°' */
 	0x00, /* 00000000 */
 	0x0c, /* 00001100 */
 	0x18, /* 00011000 */
@@ -2932,7 +2932,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 162 0xa2 */
+	/* 162 0xa2 '¢' */
 	0x00, /* 00000000 */
 	0x18, /* 00011000 */
 	0x30, /* 00110000 */
@@ -2950,7 +2950,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 163 0xa3 */
+	/* 163 0xa3 '£' */
 	0x00, /* 00000000 */
 	0x18, /* 00011000 */
 	0x30, /* 00110000 */
@@ -2968,7 +2968,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 164 0xa4 */
+	/* 164 0xa4 '§' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x76, /* 01110110 */
@@ -2986,7 +2986,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 165 0xa5 */
+	/* 165 0xa5 '•' */
 	0x76, /* 01110110 */
 	0xdc, /* 11011100 */
 	0x00, /* 00000000 */
@@ -3004,7 +3004,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 166 0xa6 */
+	/* 166 0xa6 '¶' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x3c, /* 00111100 */
@@ -3022,7 +3022,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 167 0xa7 */
+	/* 167 0xa7 'ß' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x38, /* 00111000 */
@@ -3040,7 +3040,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 168 0xa8 */
+	/* 168 0xa8 '®' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x30, /* 00110000 */
@@ -3058,7 +3058,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 169 0xa9 */
+	/* 169 0xa9 '©' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3076,7 +3076,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 170 0xaa */
+	/* 170 0xaa '™' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3094,7 +3094,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 171 0xab */
+	/* 171 0xab '´' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0xe0, /* 11100000 */
@@ -3112,7 +3112,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 172 0xac */
+	/* 172 0xac '¨' */
 	0x00, /* 00000000 */
 	0x60, /* 01100000 */
 	0xe0, /* 11100000 */
@@ -3130,7 +3130,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 173 0xad */
+	/* 173 0xad '≠' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x18, /* 00011000 */
@@ -3148,7 +3148,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 174 0xae */
+	/* 174 0xae 'Æ' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3166,7 +3166,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 175 0xaf */
+	/* 175 0xaf 'Ø' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3184,7 +3184,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 176 0xb0 */
+	/* 176 0xb0 '∞' */
 	0x11, /* 00010001 */
 	0x44, /* 01000100 */
 	0x11, /* 00010001 */
@@ -3202,7 +3202,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x11, /* 00010001 */
 	0x44, /* 01000100 */
 
-	/* 177 0xb1 */
+	/* 177 0xb1 '±' */
 	0x55, /* 01010101 */
 	0xaa, /* 10101010 */
 	0x55, /* 01010101 */
@@ -3220,7 +3220,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x55, /* 01010101 */
 	0xaa, /* 10101010 */
 
-	/* 178 0xb2 */
+	/* 178 0xb2 '≤' */
 	0xdd, /* 11011101 */
 	0x77, /* 01110111 */
 	0xdd, /* 11011101 */
@@ -3238,7 +3238,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0xdd, /* 11011101 */
 	0x77, /* 01110111 */
 
-	/* 179 0xb3 */
+	/* 179 0xb3 '≥' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3256,7 +3256,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 180 0xb4 */
+	/* 180 0xb4 '¥' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3274,7 +3274,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 181 0xb5 */
+	/* 181 0xb5 'µ' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3292,7 +3292,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 182 0xb6 */
+	/* 182 0xb6 '∂' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3310,7 +3310,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 183 0xb7 */
+	/* 183 0xb7 '∑' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3328,7 +3328,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 184 0xb8 */
+	/* 184 0xb8 '∏' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3346,7 +3346,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 185 0xb9 */
+	/* 185 0xb9 'π' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3364,7 +3364,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 186 0xba */
+	/* 186 0xba '∫' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3382,7 +3382,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 187 0xbb */
+	/* 187 0xbb 'ª' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3400,7 +3400,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 188 0xbc */
+	/* 188 0xbc 'º' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3418,7 +3418,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 189 0xbd */
+	/* 189 0xbd 'Ω' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3436,7 +3436,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 190 0xbe */
+	/* 190 0xbe 'æ' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3454,7 +3454,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 191 0xbf */
+	/* 191 0xbf 'ø' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3472,7 +3472,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 192 0xc0 */
+	/* 192 0xc0 '¿' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3490,7 +3490,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 193 0xc1 */
+	/* 193 0xc1 '¡' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3508,7 +3508,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 194 0xc2 */
+	/* 194 0xc2 '¬' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3526,7 +3526,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 195 0xc3 */
+	/* 195 0xc3 '√' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3544,7 +3544,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 196 0xc4 */
+	/* 196 0xc4 'ƒ' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3562,7 +3562,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 197 0xc5 */
+	/* 197 0xc5 '≈' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3580,7 +3580,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 198 0xc6 */
+	/* 198 0xc6 '∆' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3598,7 +3598,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 199 0xc7 */
+	/* 199 0xc7 '«' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3616,7 +3616,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 200 0xc8 */
+	/* 200 0xc8 '»' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3634,7 +3634,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 201 0xc9 */
+	/* 201 0xc9 '…' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3652,7 +3652,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 202 0xca */
+	/* 202 0xca ' ' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3670,7 +3670,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 203 0xcb */
+	/* 203 0xcb 'À' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3688,7 +3688,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 204 0xcc */
+	/* 204 0xcc 'Ã' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3706,7 +3706,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 205 0xcd */
+	/* 205 0xcd 'Õ' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3724,7 +3724,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 206 0xce */
+	/* 206 0xce 'Œ' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3742,7 +3742,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 207 0xcf */
+	/* 207 0xcf 'œ' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3760,7 +3760,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 208 0xd0 */
+	/* 208 0xd0 '–' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3778,7 +3778,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 209 0xd1 */
+	/* 209 0xd1 '—' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3796,7 +3796,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 210 0xd2 */
+	/* 210 0xd2 '“' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3814,7 +3814,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 211 0xd3 */
+	/* 211 0xd3 '”' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3832,7 +3832,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 212 0xd4 */
+	/* 212 0xd4 '‘' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3850,7 +3850,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 213 0xd5 */
+	/* 213 0xd5 '’' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3868,7 +3868,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 214 0xd6 */
+	/* 214 0xd6 '÷' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3886,7 +3886,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 215 0xd7 */
+	/* 215 0xd7 '◊' */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
@@ -3904,7 +3904,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x36, /* 00110110 */
 	0x36, /* 00110110 */
 
-	/* 216 0xd8 */
+	/* 216 0xd8 'ÿ' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3922,7 +3922,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 217 0xd9 */
+	/* 217 0xd9 'Ÿ' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -3940,7 +3940,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 218 0xda */
+	/* 218 0xda '⁄' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3958,7 +3958,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 219 0xdb */
+	/* 219 0xdb '€' */
 	0xff, /* 11111111 */
 	0xff, /* 11111111 */
 	0xff, /* 11111111 */
@@ -3976,7 +3976,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0xff, /* 11111111 */
 	0xff, /* 11111111 */
 
-	/* 220 0xdc */
+	/* 220 0xdc '‹' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -3994,7 +3994,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0xff, /* 11111111 */
 	0xff, /* 11111111 */
 
-	/* 221 0xdd */
+	/* 221 0xdd '›' */
 	0xf0, /* 11110000 */
 	0xf0, /* 11110000 */
 	0xf0, /* 11110000 */
@@ -4012,7 +4012,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0xf0, /* 11110000 */
 	0xf0, /* 11110000 */
 
-	/* 222 0xde */
+	/* 222 0xde 'ﬁ' */
 	0x0f, /* 00001111 */
 	0x0f, /* 00001111 */
 	0x0f, /* 00001111 */
@@ -4030,7 +4030,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x0f, /* 00001111 */
 	0x0f, /* 00001111 */
 
-	/* 223 0xdf */
+	/* 223 0xdf 'ﬂ' */
 	0xff, /* 11111111 */
 	0xff, /* 11111111 */
 	0xff, /* 11111111 */
@@ -4048,7 +4048,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 224 0xe0 */
+	/* 224 0xe0 '‡' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4066,7 +4066,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 225 0xe1 */
+	/* 225 0xe1 '·' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x78, /* 01111000 */
@@ -4084,7 +4084,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 226 0xe2 */
+	/* 226 0xe2 '‚' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xfe, /* 11111110 */
@@ -4102,7 +4102,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 227 0xe3 */
+	/* 227 0xe3 '„' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4120,7 +4120,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 228 0xe4 */
+	/* 228 0xe4 '‰' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0xfe, /* 11111110 */
@@ -4138,7 +4138,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 229 0xe5 */
+	/* 229 0xe5 'Â' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4156,7 +4156,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 230 0xe6 */
+	/* 230 0xe6 'Ê' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4174,7 +4174,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0xc0, /* 11000000 */
 	0x00, /* 00000000 */
 
-	/* 231 0xe7 */
+	/* 231 0xe7 'Á' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4192,7 +4192,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 232 0xe8 */
+	/* 232 0xe8 'Ë' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x7e, /* 01111110 */
@@ -4210,7 +4210,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 233 0xe9 */
+	/* 233 0xe9 'È' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x38, /* 00111000 */
@@ -4228,7 +4228,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 234 0xea */
+	/* 234 0xea 'Í' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x38, /* 00111000 */
@@ -4246,7 +4246,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 235 0xeb */
+	/* 235 0xeb 'Î' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x1e, /* 00011110 */
@@ -4264,7 +4264,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 236 0xec */
+	/* 236 0xec 'Ï' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4282,7 +4282,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 237 0xed */
+	/* 237 0xed 'Ì' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4300,7 +4300,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 238 0xee */
+	/* 238 0xee 'Ó' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x1c, /* 00011100 */
@@ -4318,7 +4318,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 239 0xef */
+	/* 239 0xef 'Ô' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4336,7 +4336,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 240 0xf0 */
+	/* 240 0xf0 '' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4354,7 +4354,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 241 0xf1 */
+	/* 241 0xf1 'Ò' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4372,7 +4372,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 242 0xf2 */
+	/* 242 0xf2 'Ú' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4390,7 +4390,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 243 0xf3 */
+	/* 243 0xf3 'Û' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4408,7 +4408,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 244 0xf4 */
+	/* 244 0xf4 'Ù' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x0e, /* 00001110 */
@@ -4426,7 +4426,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 
-	/* 245 0xf5 */
+	/* 245 0xf5 'ı' */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
 	0x18, /* 00011000 */
@@ -4444,7 +4444,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 246 0xf6 */
+	/* 246 0xf6 'ˆ' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4462,7 +4462,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 247 0xf7 */
+	/* 247 0xf7 '˜' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4480,7 +4480,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 248 0xf8 */
+	/* 248 0xf8 '¯' */
 	0x00, /* 00000000 */
 	0x38, /* 00111000 */
 	0x6c, /* 01101100 */
@@ -4498,7 +4498,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 249 0xf9 */
+	/* 249 0xf9 '˘' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4516,7 +4516,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 250 0xfa */
+	/* 250 0xfa '˙' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4534,7 +4534,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 251 0xfb */
+	/* 251 0xfb '˚' */
 	0x00, /* 00000000 */
 	0x0f, /* 00001111 */
 	0x0c, /* 00001100 */
@@ -4552,7 +4552,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 252 0xfc */
+	/* 252 0xfc '¸' */
 	0x00, /* 00000000 */
 	0x6c, /* 01101100 */
 	0x36, /* 00110110 */
@@ -4570,7 +4570,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 253 0xfd */
+	/* 253 0xfd '˝' */
 	0x00, /* 00000000 */
 	0x3c, /* 00111100 */
 	0x66, /* 01100110 */
@@ -4588,7 +4588,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 254 0xfe */
+	/* 254 0xfe '˛' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
@@ -4606,7 +4606,7 @@ static unsigned char __maybe_unused video_fontdata[VIDEO_FONT_SIZE] = {
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 
-	/* 255 0xff */
+	/* 255 0xff 'ˇ' */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */
 	0x00, /* 00000000 */

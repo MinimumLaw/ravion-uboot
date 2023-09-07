@@ -19,7 +19,7 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	memory@c0000000 {
+	memory {
 		device_type = "memory";
 		reg = <0xc0000000 0x2000000>;
 	};
@@ -30,17 +30,17 @@
 
 	leds {
 		compatible = "gpio-leds";
-		led-green {
+		green {
 			gpios = <&gpiof 10 1>;
 			linux,default-trigger = "heartbeat";
 		};
-		led-orange {
+		orange {
 			gpios = <&stmfx_pinctrl 17 1>;
 		};
-		led-red {
+		red {
 			gpios = <&gpiob 7 1>;
 		};
-		led-blue {
+		blue {
 			gpios = <&stmfx_pinctrl 19 1>;
 		};
 	};
@@ -59,6 +59,7 @@
 
 	joystick {
 		compatible = "gpio-keys";
+		#size-cells = <0>;
 		pinctrl-0 = <&joystick_pins>;
 		pinctrl-names = "default";
 		button-0 {
@@ -129,7 +130,7 @@
 		interrupts = <8 IRQ_TYPE_EDGE_RISING>;
 		interrupt-parent = <&gpioi>;
 
-		stmfx_pinctrl: pinctrl {
+		stmfx_pinctrl: stmfx-pin-controller {
 			compatible = "st,stmfx-0300-pinctrl";
 			gpio-controller;
 			#gpio-cells = <2>;

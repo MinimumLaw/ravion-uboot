@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2016 Freescale Semiconductors, Inc.
+ * Copyright 2019 NXP
  */
 
 #include <common.h>
 #include <errno.h>
-#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
@@ -289,7 +289,7 @@ static int bus_i2c_set_bus_speed(struct udevice *bus, int speed)
 			return clock_rate;
 		}
 	} else {
-		clock_rate = imx_get_i2cclk(dev_seq(bus));
+		clock_rate = imx_get_i2cclk(bus->seq);
 		if (!clock_rate)
 			return -EPERM;
 	}
@@ -377,7 +377,7 @@ static int bus_i2c_init(struct udevice *bus, int speed)
 	val = readl(&regs->mcr) & ~LPI2C_MCR_MEN_MASK;
 	writel(val | LPI2C_MCR_MEN(1), &regs->mcr);
 
-	debug("i2c : controller bus %d, speed %d:\n", dev_seq(bus), speed);
+	debug("i2c : controller bus %d, speed %d:\n", bus->seq, speed);
 
 	return ret;
 }
@@ -447,16 +447,16 @@ static int imx_lpi2c_probe(struct udevice *bus)
 
 	i2c_bus->driver_data = dev_get_driver_data(bus);
 
-	addr = dev_read_addr(bus);
+	addr = devfdt_get_addr(bus);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
 	i2c_bus->base = addr;
-	i2c_bus->index = dev_seq(bus);
+	i2c_bus->index = bus->seq;
 	i2c_bus->bus = bus;
 
 	/* power up i2c resource */
-	ret = init_i2c_power(dev_seq(bus));
+	ret = init_i2c_power(bus->seq);
 	if (ret) {
 		debug("init_i2c_power err = %d\n", ret);
 		return ret;
@@ -486,7 +486,7 @@ static int imx_lpi2c_probe(struct udevice *bus)
 		}
 	} else {
 		/* To i.MX7ULP, only i2c4-7 can be handled by A7 core */
-		ret = enable_i2c_clk(1, dev_seq(bus));
+		ret = enable_i2c_clk(1, bus->seq);
 		if (ret < 0)
 			return ret;
 	}
@@ -496,10 +496,22 @@ static int imx_lpi2c_probe(struct udevice *bus)
 		return ret;
 
 	debug("i2c : controller bus %d at 0x%lx , speed %d: ",
-	      dev_seq(bus), i2c_bus->base,
+	      bus->seq, i2c_bus->base,
 	      i2c_bus->speed);
 
 	return 0;
+}
+
+int __weak board_imx_lpi2c_bind(struct udevice *dev)
+{
+	return 0;
+}
+
+static int imx_lpi2c_bind(struct udevice *dev)
+{
+	debug("imx_lpi2c_bind, %s, seq %d\n", dev->name, dev->req_seq);
+
+	return board_imx_lpi2c_bind(dev);
 }
 
 static const struct dm_i2c_ops imx_lpi2c_ops = {
@@ -518,7 +530,8 @@ U_BOOT_DRIVER(imx_lpi2c) = {
 	.name = "imx_lpi2c",
 	.id = UCLASS_I2C,
 	.of_match = imx_lpi2c_ids,
+	.bind = imx_lpi2c_bind,
 	.probe = imx_lpi2c_probe,
-	.priv_auto	= sizeof(struct imx_lpi2c_bus),
+	.priv_auto_alloc_size = sizeof(struct imx_lpi2c_bus),
 	.ops = &imx_lpi2c_ops,
 };

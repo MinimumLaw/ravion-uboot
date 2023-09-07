@@ -16,7 +16,6 @@
 #include <ioports.h>
 #include <ppc_asm.tmpl>
 #include <miiphy.h>
-#include <asm/global_data.h>
 
 #define BB_MII_RELOCATE(v,off) (v += (v?off:0))
 
@@ -106,7 +105,7 @@ int bb_miiphy_buses_num = sizeof(bb_miiphy_buses) /
 			  sizeof(bb_miiphy_buses[0]);
 #endif
 
-int bb_miiphy_init(void)
+void bb_miiphy_init(void)
 {
 	int i;
 
@@ -125,8 +124,6 @@ int bb_miiphy_init(void)
 			bb_miiphy_buses[i].init(&bb_miiphy_buses[i]);
 		}
 	}
-
-	return 0;
 }
 
 static inline struct bb_miiphy_bus *bb_miiphy_getbus(const char *devname)

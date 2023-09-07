@@ -13,10 +13,10 @@
 #include <test/ut.h>
 
 #ifdef CONFIG_PKCS7_MESSAGE_PARSER
-#include <crypto/pkcs7_parser.h>
+#include "../../lib/crypto/pkcs7_parser.h"
 #else
 #ifdef CONFIG_X509_CERTIFICATE_PARSER
-#include <crypto/x509_parser.h>
+#include "../../lib/crypto/x509_parser.h"
 #endif
 #endif
 

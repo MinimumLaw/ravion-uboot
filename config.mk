@@ -12,7 +12,8 @@
 #  If we did not have Tegra SoCs, build system would be much simpler...)
 PLATFORM_RELFLAGS :=
 PLATFORM_CPPFLAGS :=
-KBUILD_LDFLAGS :=
+PLATFORM_LDFLAGS :=
+LDFLAGS :=
 LDFLAGS_FINAL :=
 LDFLAGS_STANDALONE :=
 OBJCOPYFLAGS :=
@@ -23,7 +24,7 @@ VENDOR :=
 ARCH := $(CONFIG_SYS_ARCH:"%"=%)
 CPU := $(CONFIG_SYS_CPU:"%"=%)
 ifdef CONFIG_SPL_BUILD
-ifdef CONFIG_ARCH_TEGRA
+ifdef CONFIG_TEGRA
 CPU := arm720t
 endif
 endif
@@ -50,10 +51,8 @@ endif
 ifneq ($(BOARD),)
 ifdef	VENDOR
 BOARDDIR = $(VENDOR)/$(BOARD)
-ENVDIR=${vendor}/env
 else
 BOARDDIR = $(BOARD)
-ENVDIR=${board}/env
 endif
 endif
 ifdef	BOARD
@@ -71,6 +70,7 @@ RELFLAGS := $(PLATFORM_RELFLAGS)
 PLATFORM_CPPFLAGS += $(RELFLAGS)
 PLATFORM_CPPFLAGS += -pipe
 
+LDFLAGS += $(PLATFORM_LDFLAGS)
 LDFLAGS_FINAL += -Bstatic
 
 export PLATFORM_CPPFLAGS

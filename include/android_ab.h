@@ -6,8 +6,7 @@
 #ifndef __ANDROID_AB_H
 #define __ANDROID_AB_H
 
-struct blk_desc;
-struct disk_partition;
+#include <common.h>
 
 /* Android standard boot slot names are 'a', 'b', 'c', ... */
 #define BOOT_SLOT_NAME(slot_num) ('a' + (slot_num))
@@ -28,8 +27,8 @@ struct disk_partition;
  *
  * @param[in] dev_desc Place to store the device description pointer
  * @param[in] part_info Place to store the partition information
- * Return: The slot number (>= 0) on success, or a negative on error
+ * @return The slot number (>= 0) on success, or a negative on error
  */
-int ab_select_slot(struct blk_desc *dev_desc, struct disk_partition *part_info);
+int ab_select_slot(struct blk_desc *dev_desc, disk_partition_t *part_info);
 
 #endif /* __ANDROID_AB_H */

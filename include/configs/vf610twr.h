@@ -9,9 +9,24 @@
 #define __CONFIG_H
 
 #include <asm/arch/imx-regs.h>
-#include <linux/stringify.h>
+
+#define CONFIG_SYS_FSL_CLK
+
+#define CONFIG_MACH_TYPE		4146
+
+#define CONFIG_SKIP_LOWLEVEL_INIT
+
+/* Enable passing of ATAGs */
+#define CONFIG_CMDLINE_TAG
+
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
+
+/* Allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
 
 /* NAND support */
+#define CONFIG_SYS_NAND_ONFI_DETECTION
 
 #ifdef CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
@@ -23,12 +38,28 @@
 #define CONFIG_SYS_FSL_ESDHC_ADDR	0
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
 
+#define CONFIG_FEC_MXC
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RMII
 #define CONFIG_FEC_MXC_PHYADDR          0
 
+/* QSPI Configs*/
+
+#ifdef CONFIG_FSL_QSPI
+#define FSL_QSPI_FLASH_SIZE		(1 << 24)
+#define FSL_QSPI_FLASH_NUM		2
+#define CONFIG_SYS_FSL_QSPI_LE
+#endif
+
 /* I2C Configs */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
+#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_SPD_BUS_NUM		0
+
+
+#define CONFIG_SYS_LOAD_ADDR		0x82000000
 
 /* We boot from the gfxRAM area of the OCRAM. */
 #define CONFIG_BOARD_SIZE_LIMIT		520192
@@ -125,7 +156,22 @@
 			"bootz; " \
 		"fi;\0"
 
+#define CONFIG_BOOTCOMMAND \
+	   "mmc dev ${mmcdev}; if mmc rescan; then " \
+		   "if run loadbootscript; then " \
+			   "run bootscript; " \
+		   "else " \
+			   "if run loadimage; then " \
+				   "run mmcboot; " \
+			   "else run netboot; " \
+			   "fi; " \
+		   "fi; " \
+	   "else run netboot; fi"
+
 /* Miscellaneous configurable options */
+
+#define CONFIG_SYS_MEMTEST_START	0x80010000
+#define CONFIG_SYS_MEMTEST_END		0x87C00000
 
 /* Physical memory map */
 #define PHYS_SDRAM			(0x80000000)
@@ -139,6 +185,10 @@
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
+
+#ifdef CONFIG_ENV_IS_IN_MMC
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#endif
 
 #ifdef CONFIG_ENV_IS_IN_NAND
 #define CONFIG_ENV_RANGE		(512 * 1024)

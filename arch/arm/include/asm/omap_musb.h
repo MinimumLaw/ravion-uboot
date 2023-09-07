@@ -23,7 +23,7 @@ struct omap_musb_board_data {
 
 enum musb_interface    {MUSB_INTERFACE_ULPI, MUSB_INTERFACE_UTMI};
 
-struct ti_musb_plat {
+struct ti_musb_platdata {
 	void *base;
 	void *ctrl_mod_base;
 	struct musb_hdrc_platform_data plat;

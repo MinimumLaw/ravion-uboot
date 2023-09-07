@@ -11,14 +11,12 @@
 #include <command.h>
 #include <fs.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/crm_regs.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/iomux-mx53.h>
-#include <linux/delay.h>
 #include <linux/errno.h>
 #include <i2c.h>
 #include <mmc.h>
@@ -27,7 +25,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifdef CONFIG_REVISION_TAG
 u32 get_board_rev(void)
 {
 	struct iim_regs *iim = (struct iim_regs *)IMX_IIM_BASE;
@@ -39,7 +36,6 @@ u32 get_board_rev(void)
 
 	return (get_cpu_rev() & ~(0xF << 8)) | (rev & 0xF) << 8;
 }
-#endif
 
 struct fsl_esdhc_cfg esdhc_cfg[1] = {
 	{MMC_SDHC1_BASE_ADDR}
@@ -51,7 +47,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;
 }
 
-int board_mmc_init(struct bd_info *bis)
+int board_mmc_init(bd_t *bis)
 {
 	int ret = 0;
 

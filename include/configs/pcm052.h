@@ -10,11 +10,31 @@
 
 #include <asm/arch/imx-regs.h>
 #include <linux/sizes.h>
-#include <linux/stringify.h>
+
+#define CONFIG_SKIP_LOWLEVEL_INIT
+
+/* Enable passing of ATAGs */
+#define CONFIG_CMDLINE_TAG
+
+/* Size of malloc() pool */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * SZ_1M)
+
+/* Allow to overwrite serial and ethaddr */
+#define CONFIG_ENV_OVERWRITE
 
 /* NAND support */
+#define CONFIG_SYS_NAND_ONFI_DETECTION
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
+/* QSPI Configs*/
+#ifdef CONFIG_FSL_QSPI
+#define FSL_QSPI_FLASH_SIZE		(SZ_16M)
+#define FSL_QSPI_FLASH_NUM		2
+#define CONFIG_SYS_FSL_QSPI_LE
+#endif
+
+
+#define CONFIG_LOADADDR			0x82000000
 
 /* We boot from the gfxRAM area of the OCRAM. */
 #define CONFIG_BOARD_SIZE_LIMIT		520192
@@ -25,6 +45,12 @@
 #define PCM052_EXTRA_ENV_SETTINGS
 #endif
 
+/* if no target-specific boot command was defined by the target,
+   define an empty one */
+#ifndef PCM052_BOOTCOMMAND
+#define PCM052_BOOTCOMMAND
+#endif
+
 /* if no target-specific extra environment settings were defined by the
    target, define an empty one */
 #ifndef PCM052_NET_INIT
@@ -32,6 +58,7 @@
 #endif
 
 /* boot command, including the target-defined one if any */
+#define CONFIG_BOOTCOMMAND	PCM052_BOOTCOMMAND "run bootcmd_nand"
 
 /* Extra env settings (including the target-defined ones if any) */
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -121,6 +148,11 @@
 
 /* Miscellaneous configurable options */
 
+#define CONFIG_SYS_MEMTEST_START	0x80010000
+#define CONFIG_SYS_MEMTEST_END		0x87C00000
+
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+
 /* Physical memory map */
 #define PHYS_SDRAM			(0x80000000)
 #define PHYS_SDRAM_SIZE			(CONFIG_PCM052_DDR_SIZE * SZ_1M)
@@ -135,5 +167,8 @@
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* environment organization */
+#ifdef CONFIG_ENV_IS_IN_MMC
+#define CONFIG_SYS_MMC_ENV_DEV		0
+#endif
 
 #endif

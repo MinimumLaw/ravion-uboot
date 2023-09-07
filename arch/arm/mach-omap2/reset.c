@@ -14,7 +14,7 @@
 #include <asm/arch/cpu.h>
 #include <linux/compiler.h>
 
-void __weak reset_cpu(void)
+void __weak reset_cpu(unsigned long ignored)
 {
 	writel(PRM_RSTCTRL_RESET, PRM_RSTCTRL);
 }

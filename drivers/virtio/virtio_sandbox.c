@@ -10,7 +10,6 @@
 #include <virtio_types.h>
 #include <virtio.h>
 #include <virtio_ring.h>
-#include <linux/bug.h>
 #include <linux/compat.h>
 #include <linux/err.h>
 #include <linux/io.h>
@@ -204,7 +203,7 @@ U_BOOT_DRIVER(virtio_sandbox1) = {
 	.ops	= &virtio_sandbox1_ops,
 	.probe	= virtio_sandbox_probe,
 	.child_post_remove = virtio_sandbox_child_post_remove,
-	.priv_auto	= sizeof(struct virtio_sandbox_priv),
+	.priv_auto_alloc_size = sizeof(struct virtio_sandbox_priv),
 };
 
 /* this one without notify op */
@@ -231,5 +230,5 @@ U_BOOT_DRIVER(virtio_sandbox2) = {
 	.of_match = virtio_sandbox2_ids,
 	.ops	= &virtio_sandbox2_ops,
 	.probe	= virtio_sandbox_probe,
-	.priv_auto	= sizeof(struct virtio_sandbox_priv),
+	.priv_auto_alloc_size = sizeof(struct virtio_sandbox_priv),
 };

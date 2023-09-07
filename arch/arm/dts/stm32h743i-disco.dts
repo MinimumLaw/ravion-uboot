@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0+ OR X11
 /*
- * Copyright 2017 - Patrice Chotard <patrice.chotard@foss.st.com>
+ * Copyright 2017 - Patrice Chotard <patrice.chotard@st.com>
  *
  */
 
 /dts-v1/;
 #include "stm32h743.dtsi"
-#include "stm32h7-pinctrl.dtsi"
+#include "stm32h743-pinctrl.dtsi"
 
 / {
 	model = "STMicroelectronics STM32H743i-Discovery board";
@@ -17,7 +17,7 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	memory@d0000000 {
+	memory {
 		device_type = "memory";
 		reg = <0xd0000000 0x2000000>;
 	};

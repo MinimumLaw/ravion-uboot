@@ -7,13 +7,13 @@
 
 from collections import OrderedDict
 
-from binman import cbfs_util
-from binman.cbfs_util import CbfsWriter
-from binman.entry import Entry
-from dtoc import fdt_util
+import cbfs_util
+from cbfs_util import CbfsWriter
+from entry import Entry
+import fdt_util
 
 class Entry_cbfs(Entry):
-    """Coreboot Filesystem (CBFS)
+    """Entry containing a Coreboot Filesystem (CBFS)
 
     A CBFS provides a way to group files into a group. It has a simple directory
     structure and allows the position of individual files to be set, since it is
@@ -22,7 +22,7 @@ class Entry_cbfs(Entry):
 
     CBFS is used by coreboot as its way of orgnanising SPI-flash contents.
 
-    The contents of the CBFS are defined by subnodes of the cbfs entry, e.g.::
+    The contents of the CBFS are defined by subnodes of the cbfs entry, e.g.:
 
         cbfs {
             size = <0x100000>;
@@ -38,7 +38,7 @@ class Entry_cbfs(Entry):
     Note that the size is required since binman does not support calculating it.
     The contents of each entry is just what binman would normally provide if it
     were not a CBFS node. A blob type can be used to import arbitrary files as
-    with the second subnode below::
+    with the second subnode below:
 
         cbfs {
             size = <0x100000>;
@@ -84,7 +84,7 @@ class Entry_cbfs(Entry):
             This is an ELF file that has been loaded (i.e. mapped to memory), so
             appears in the CBFS as a flat binary. The input file must be an ELF
             image, for example this puts "u-boot" (the ELF image) into a 'stage'
-            entry::
+            entry:
 
                 cbfs {
                     size = <0x100000>;
@@ -94,7 +94,7 @@ class Entry_cbfs(Entry):
                     };
                 };
 
-            You can use your own ELF file with something like::
+            You can use your own ELF file with something like:
 
                 cbfs {
                     size = <0x100000>;
@@ -127,7 +127,7 @@ class Entry_cbfs(Entry):
     particular offset in the CBFS and a few other things.
 
     Of course binman can create images containing multiple CBFSs, simply by
-    defining these in the binman config::
+    defining these in the binman config:
 
 
         binman {
@@ -165,21 +165,46 @@ class Entry_cbfs(Entry):
     def __init__(self, section, etype, node):
         # Put this here to allow entry-docs and help to work without libfdt
         global state
-        from binman import state
+        import state
 
-        super().__init__(section, etype, node)
-        self.align_default = None
-        self._entries = OrderedDict()
+        Entry.__init__(self, section, etype, node)
+        self._cbfs_arg = fdt_util.GetString(node, 'cbfs-arch', 'x86')
+        self._cbfs_entries = OrderedDict()
+        self._ReadSubnodes()
         self.reader = None
 
-    def ReadNode(self):
-        """Read properties from the atf-fip node"""
-        super().ReadNode()
-        self._cbfs_arg = fdt_util.GetString(self._node, 'cbfs-arch', 'x86')
-        self.ReadEntries()
+    def ObtainContents(self, skip=None):
+        arch = cbfs_util.find_arch(self._cbfs_arg)
+        if arch is None:
+            self.Raise("Invalid architecture '%s'" % self._cbfs_arg)
+        if self.size is None:
+            self.Raise("'cbfs' entry must have a size property")
+        cbfs = CbfsWriter(self.size, arch)
+        for entry in self._cbfs_entries.values():
+            # First get the input data and put it in a file. If not available,
+            # try later.
+            if entry != skip and not entry.ObtainContents():
+                return False
+            data = entry.GetData()
+            cfile = None
+            if entry._type == 'raw':
+                cfile = cbfs.add_file_raw(entry._cbfs_name, data,
+                                          entry._cbfs_offset,
+                                          entry._cbfs_compress)
+            elif entry._type == 'stage':
+                cfile = cbfs.add_file_stage(entry._cbfs_name, data,
+                                            entry._cbfs_offset)
+            else:
+                entry.Raise("Unknown cbfs-type '%s' (use 'raw', 'stage')" %
+                            entry._type)
+            if cfile:
+                entry._cbfs_file = cfile
+        data = cbfs.get_data()
+        self.SetContents(data)
+        return True
 
-    def ReadEntries(self):
-        """Read the subnodes to find out what should go in this CBFS"""
+    def _ReadSubnodes(self):
+        """Read the subnodes to find out what should go in this IFWI"""
         for node in self._node.subnodes:
             entry = Entry.Create(self, node)
             entry.ReadNode()
@@ -191,41 +216,7 @@ class Entry_cbfs(Entry):
             if entry._cbfs_compress is None:
                 self.Raise("Invalid compression in '%s': '%s'" %
                            (node.name, compress))
-            self._entries[entry._cbfs_name] = entry
-
-    def ObtainCfile(self, cbfs, entry):
-        # First get the input data and put it in a file. If not available,
-        # try later.
-        data = entry.GetData()
-        cfile = None
-        if entry._type == 'raw':
-            cfile = cbfs.add_file_raw(entry._cbfs_name, data,
-                                      entry._cbfs_offset,
-                                      entry._cbfs_compress)
-        elif entry._type == 'stage':
-            cfile = cbfs.add_file_stage(entry._cbfs_name, data,
-                                        entry._cbfs_offset)
-        else:
-            entry.Raise("Unknown cbfs-type '%s' (use 'raw', 'stage')" %
-                        entry._type)
-        return cfile
-
-    def ObtainContents(self, skip_entry=None):
-        arch = cbfs_util.find_arch(self._cbfs_arg)
-        if arch is None:
-            self.Raise("Invalid architecture '%s'" % self._cbfs_arg)
-        if self.size is None:
-            self.Raise("'cbfs' entry must have a size property")
-        cbfs = CbfsWriter(self.size, arch)
-        for entry in self._entries.values():
-            if entry != skip_entry and not entry.ObtainContents():
-                return False
-            cfile = self.ObtainCfile(cbfs, entry)
-            if cfile:
-                entry._cbfs_file = cfile
-        data = cbfs.get_data()
-        self.SetContents(data)
-        return True
+            self._cbfs_entries[entry._cbfs_name] = entry
 
     def SetImagePos(self, image_pos):
         """Override this function to set all the entry properties from CBFS
@@ -235,10 +226,10 @@ class Entry_cbfs(Entry):
         Args:
             image_pos: Position of this entry in the image
         """
-        super().SetImagePos(image_pos)
+        Entry.SetImagePos(self, image_pos)
 
         # Now update the entries with info from the CBFS entries
-        for entry in self._entries.values():
+        for entry in self._cbfs_entries.values():
             cfile = entry._cbfs_file
             entry.size = cfile.data_len
             entry.offset = cfile.calced_cbfs_offset
@@ -246,10 +237,10 @@ class Entry_cbfs(Entry):
             if entry._cbfs_compress:
                 entry.uncomp_size = cfile.memlen
 
-    def AddMissingProperties(self, have_image_pos):
-        super().AddMissingProperties(have_image_pos)
-        for entry in self._entries.values():
-            entry.AddMissingProperties(have_image_pos)
+    def AddMissingProperties(self):
+        Entry.AddMissingProperties(self)
+        for entry in self._cbfs_entries.values():
+            entry.AddMissingProperties()
             if entry._cbfs_compress:
                 state.AddZeroProp(entry._node, 'uncomp-size')
                 # Store the 'compress' property, since we don't look at
@@ -259,8 +250,8 @@ class Entry_cbfs(Entry):
 
     def SetCalculatedProperties(self):
         """Set the value of device-tree properties calculated by binman"""
-        super().SetCalculatedProperties()
-        for entry in self._entries.values():
+        Entry.SetCalculatedProperties(self)
+        for entry in self._cbfs_entries.values():
             state.SetInt(entry._node, 'offset', entry.offset)
             state.SetInt(entry._node, 'size', entry.size)
             state.SetInt(entry._node, 'image-pos', entry.image_pos)
@@ -269,27 +260,25 @@ class Entry_cbfs(Entry):
 
     def ListEntries(self, entries, indent):
         """Override this method to list all files in the section"""
-        super().ListEntries(entries, indent)
-        for entry in self._entries.values():
+        Entry.ListEntries(self, entries, indent)
+        for entry in self._cbfs_entries.values():
             entry.ListEntries(entries, indent + 1)
 
     def GetEntries(self):
-        return self._entries
+        return self._cbfs_entries
 
-    def ReadData(self, decomp=True, alt_format=None):
-        data = super().ReadData(True, alt_format)
+    def ReadData(self, decomp=True):
+        data = Entry.ReadData(self, True)
         return data
 
-    def ReadChildData(self, child, decomp=True, alt_format=None):
+    def ReadChildData(self, child, decomp=True):
         if not self.reader:
-            data = super().ReadData(True, alt_format)
+            data = Entry.ReadData(self, True)
             self.reader = cbfs_util.CbfsReader(data)
         reader = self.reader
         cfile = reader.files.get(child.name)
         return cfile.data if decomp else cfile.orig_data
 
     def WriteChildData(self, child):
-        # Recreate the data structure, leaving the data for this child alone,
-        # so that child.data is used to pack into the FIP.
-        self.ObtainContents(skip_entry=child)
+        self.ObtainContents(skip=child)
         return True

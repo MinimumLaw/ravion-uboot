@@ -5,7 +5,6 @@
  */
 
 #include <common.h>
-#include <dm.h>
 #include <env.h>
 #include <w1.h>
 #include <w1-eeprom.h>
@@ -47,7 +46,7 @@ void at91_pda_detect(void)
 			break;
 		}
 	}
-	pda = dectoul((const char *)buf, NULL);
+	pda = simple_strtoul((const char *)buf, NULL, 10);
 
 	switch (pda) {
 	case 7000:

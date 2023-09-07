@@ -11,9 +11,6 @@
  */
 
 #include <common.h>
-#include <log.h>
-#include <part.h>
-#include <asm/cache.h>
 #include <linux/errno.h>
 #include <asm/global_data.h>
 #include <linux/string.h>
@@ -38,6 +35,8 @@ DECLARE_GLOBAL_DATA_PTR;
 static int mxcfb_map_video_memory(struct fb_info *fbi);
 static int mxcfb_unmap_video_memory(struct fb_info *fbi);
 
+/* graphics setup */
+static GraphicDevice panel;
 static struct fb_videomode const *gmode;
 static uint8_t gdisp;
 static uint32_t gpixfmt;
@@ -66,7 +65,6 @@ static void fb_videomode_to_var(struct fb_var_screeninfo *var,
  * Structure containing the MXC specific framebuffer information.
  */
 struct mxcfb_info {
-	struct udevice *udev;
 	int blank;
 	ipu_channel_t ipu_ch;
 	int ipu_di;
@@ -117,6 +115,27 @@ static uint32_t bpp_to_pixfmt(struct fb_info *fbi)
 		break;
 	}
 	return pixfmt;
+}
+
+/*
+ * Set fixed framebuffer parameters based on variable settings.
+ *
+ * @param       info     framebuffer information pointer
+ */
+static int mxcfb_set_fix(struct fb_info *info)
+{
+	struct fb_fix_screeninfo *fix = &info->fix;
+	struct fb_var_screeninfo *var = &info->var;
+
+	fix->line_length = var->xres_virtual * var->bits_per_pixel / 8;
+
+	fix->type = FB_TYPE_PACKED_PIXELS;
+	fix->accel = FB_ACCEL_NONE;
+	fix->visual = FB_VISUAL_TRUECOLOR;
+	fix->xpanstep = 1;
+	fix->ypanstep = 1;
+
+	return 0;
 }
 
 static int setup_disp_channel1(struct fb_info *fbi)
@@ -204,6 +223,7 @@ static int mxcfb_set_par(struct fb_info *fbi)
 
 	ipu_disable_channel(mxc_fbi->ipu_ch);
 	ipu_uninit_channel(mxc_fbi->ipu_ch);
+	mxcfb_set_fix(fbi);
 
 	mem_len = fbi->var.yres_virtual * fbi->fix.line_length;
 	if (!fbi->fix.smem_start || (mem_len > fbi->fix.smem_len)) {
@@ -382,16 +402,18 @@ static int mxcfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 
 static int mxcfb_map_video_memory(struct fb_info *fbi)
 {
-	struct mxcfb_info *mxc_fbi = (struct mxcfb_info *)fbi->par;
-	struct video_uc_plat *plat = dev_get_uclass_plat(mxc_fbi->udev);
-
 	if (fbi->fix.smem_len < fbi->var.yres_virtual * fbi->fix.line_length) {
 		fbi->fix.smem_len = fbi->var.yres_virtual *
 				    fbi->fix.line_length;
 	}
 	fbi->fix.smem_len = roundup(fbi->fix.smem_len, ARCH_DMA_MINALIGN);
 
-	fbi->screen_base = (char *)plat->base;
+#if CONFIG_IS_ENABLED(DM_VIDEO)
+	fbi->screen_base = (char *)gd->video_bottom;
+#else
+	fbi->screen_base = (char *)memalign(ARCH_DMA_MINALIGN,
+					    fbi->fix.smem_len);
+#endif
 
 	fbi->fix.smem_start = (unsigned long)fbi->screen_base;
 	if (fbi->screen_base == 0) {
@@ -405,7 +427,10 @@ static int mxcfb_map_video_memory(struct fb_info *fbi)
 		(uint32_t) fbi->fix.smem_start, fbi->fix.smem_len);
 
 	fbi->screen_size = fbi->fix.smem_len;
+
+#if CONFIG_IS_ENABLED(VIDEO)
 	gd->fb_base = fbi->fix.smem_start;
+#endif
 
 	/* Clear the screen */
 	memset((char *)fbi->screen_base, 0, fbi->fix.smem_len);
@@ -428,7 +453,7 @@ static int mxcfb_unmap_video_memory(struct fb_info *fbi)
  * structures.  This includes information such as bits per pixel,
  * color maps, screen width/height and RGBA offsets.
  *
- * Return:      Framebuffer structure initialized with our information
+ * @return      Framebuffer structure initialized with our information
  */
 static struct fb_info *mxcfb_init_fbinfo(void)
 {
@@ -471,29 +496,29 @@ static struct fb_info *mxcfb_init_fbinfo(void)
 	return fbi;
 }
 
-extern struct clk *g_ipu_clk;
-
 /*
  * Probe routine for the framebuffer driver. It is called during the
  * driver binding process. The following functions are performed in
  * this routine: Framebuffer initialization, Memory allocation and
  * mapping, Framebuffer registration, IPU initialization.
  *
- * Return:      Appropriate error code to the kernel common code
+ * @return      Appropriate error code to the kernel common code
  */
-static int mxcfb_probe(struct udevice *dev, u32 interface_pix_fmt,
-		       uint8_t disp, struct fb_videomode const *mode)
+static int mxcfb_probe(u32 interface_pix_fmt, uint8_t disp,
+			struct fb_videomode const *mode)
 {
 	struct fb_info *fbi;
 	struct mxcfb_info *mxcfbi;
+	int ret = 0;
 
 	/*
 	 * Initialize FB structures
 	 */
 	fbi = mxcfb_init_fbinfo();
-	if (!fbi)
-		return -ENOMEM;
-
+	if (!fbi) {
+		ret = -ENOMEM;
+		goto err0;
+	}
 	mxcfbi = (struct mxcfb_info *)fbi->par;
 
 	if (!g_dp_in_use) {
@@ -505,13 +530,10 @@ static int mxcfb_probe(struct udevice *dev, u32 interface_pix_fmt,
 	}
 
 	mxcfbi->ipu_di = disp;
-	mxcfbi->udev = dev;
-
-	if (!ipu_clk_enabled())
-		clk_enable(g_ipu_clk);
 
 	ipu_disp_set_global_alpha(mxcfbi->ipu_ch, 1, 0x80);
 	ipu_disp_set_color_key(mxcfbi->ipu_ch, 0, 0);
+	strcpy(fbi->fix.id, "DISP3 BG");
 
 	g_dp_in_use = 1;
 
@@ -522,8 +544,7 @@ static int mxcfb_probe(struct udevice *dev, u32 interface_pix_fmt,
 	mxcfbi->ipu_di_pix_fmt = interface_pix_fmt;
 	fb_videomode_to_var(&fbi->var, mode);
 	fbi->var.bits_per_pixel = 16;
-	fbi->fix.line_length = fbi->var.xres_virtual *
-			       (fbi->var.bits_per_pixel / 8);
+	fbi->fix.line_length = fbi->var.xres * (fbi->var.bits_per_pixel / 8);
 	fbi->fix.smem_len = fbi->var.yres_virtual * fbi->fix.line_length;
 
 	mxcfb_check_var(&fbi->var, fbi);
@@ -531,17 +552,31 @@ static int mxcfb_probe(struct udevice *dev, u32 interface_pix_fmt,
 	/* Default Y virtual size is 2x panel size */
 	fbi->var.yres_virtual = fbi->var.yres * 2;
 
+	mxcfb_set_fix(fbi);
+
 	/* allocate fb first */
 	if (mxcfb_map_video_memory(fbi) < 0)
 		return -ENOMEM;
 
 	mxcfb_set_par(fbi);
 
-#ifdef DEBUG
+	panel.winSizeX = mode->xres;
+	panel.winSizeY = mode->yres;
+	panel.plnSizeX = mode->xres;
+	panel.plnSizeY = mode->yres;
+
+	panel.frameAdrs = (u32)fbi->screen_base;
+	panel.memSize = fbi->screen_size;
+
+	panel.gdfBytesPP = 2;
+	panel.gdfIndex = GDF_16BIT_565RGB;
+
 	ipu_dump_registers();
-#endif
 
 	return 0;
+
+err0:
+	return ret;
 }
 
 void ipuv3_fb_shutdown(void)
@@ -566,6 +601,21 @@ void ipuv3_fb_shutdown(void)
 	}
 }
 
+void *video_hw_init(void)
+{
+	int ret;
+
+	ret = ipu_probe();
+	if (ret)
+		puts("Error initializing IPU\n");
+
+	ret = mxcfb_probe(gpixfmt, gdisp, gmode);
+	debug("Framebuffer at 0x%x\n", (unsigned int)panel.frameAdrs);
+	gd->fb_base = panel.frameAdrs;
+
+	return (void *)&panel;
+}
+
 int ipuv3_fb_init(struct fb_videomode const *mode,
 		  uint8_t disp,
 		  uint32_t pixfmt)
@@ -577,6 +627,7 @@ int ipuv3_fb_init(struct fb_videomode const *mode,
 	return 0;
 }
 
+#if CONFIG_IS_ENABLED(DM_VIDEO)
 enum {
 	/* Maximum display size we support */
 	LCD_MAX_WIDTH		= 1920,
@@ -586,11 +637,12 @@ enum {
 
 static int ipuv3_video_probe(struct udevice *dev)
 {
-	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
 #if defined(CONFIG_DISPLAY)
 	struct udevice *disp_dev;
 #endif
+	struct udevice *panel_dev;
 	u32 fb_start, fb_end;
 	int ret;
 
@@ -605,7 +657,7 @@ static int ipuv3_video_probe(struct udevice *dev)
 	if (ret < 0)
 		return ret;
 
-	ret = mxcfb_probe(dev, gpixfmt, gdisp, gmode);
+	ret = mxcfb_probe(gpixfmt, gdisp, gmode);
 	if (ret < 0)
 		return ret;
 
@@ -617,13 +669,9 @@ static int ipuv3_video_probe(struct udevice *dev)
 			return ret;
 	}
 #endif
-	if (CONFIG_IS_ENABLED(PANEL)) {
-		struct udevice *panel_dev;
-
-		ret = uclass_get_device(UCLASS_PANEL, 0, &panel_dev);
-		if (panel_dev)
-			panel_enable_backlight(panel_dev);
-	}
+	ret = uclass_get_device(UCLASS_PANEL, 0, &panel_dev);
+	if (panel_dev)
+		panel_enable_backlight(panel_dev);
 
 	uc_priv->xsize = gmode->xres;
 	uc_priv->ysize = gmode->yres;
@@ -647,7 +695,7 @@ struct ipuv3_video_priv {
 
 static int ipuv3_video_bind(struct udevice *dev)
 {
-	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct video_uc_platdata *plat = dev_get_uclass_platdata(dev);
 
 	plat->size = LCD_MAX_WIDTH * LCD_MAX_HEIGHT *
 		     (1 << VIDEO_BPP32) / 8;
@@ -656,21 +704,18 @@ static int ipuv3_video_bind(struct udevice *dev)
 }
 
 static const struct udevice_id ipuv3_video_ids[] = {
-#ifdef CONFIG_ARCH_MX6
 	{ .compatible = "fsl,imx6q-ipu" },
-#endif
-#ifdef CONFIG_ARCH_MX5
 	{ .compatible = "fsl,imx53-ipu" },
-#endif
 	{ }
 };
 
-U_BOOT_DRIVER(fsl_imx6q_ipu) = {
-	.name	= "fsl_imx6q_ipu",
+U_BOOT_DRIVER(ipuv3_video) = {
+	.name	= "ipuv3_video",
 	.id	= UCLASS_VIDEO,
 	.of_match = ipuv3_video_ids,
 	.bind	= ipuv3_video_bind,
 	.probe	= ipuv3_video_probe,
-	.priv_auto	= sizeof(struct ipuv3_video_priv),
+	.priv_auto_alloc_size = sizeof(struct ipuv3_video_priv),
 	.flags	= DM_FLAG_PRE_RELOC,
 };
+#endif /* CONFIG_DM_VIDEO */

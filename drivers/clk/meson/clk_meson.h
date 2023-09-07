@@ -10,7 +10,6 @@
 
 /* Gate Structure */
 
-#include <linux/bitops.h>
 struct meson_gate {
 	unsigned int reg;
 	unsigned int bit;

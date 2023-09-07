@@ -15,7 +15,6 @@
 #include <asm/test.h>
 #include <dm/test.h>
 #include <dm/util.h>
-#include <test/test.h>
 #include <test/ut.h>
 
 /* Simple test of sandbox SPI flash */
@@ -36,7 +35,7 @@ static int dm_test_spi_flash(struct unit_test_state *uts)
 
 	dst = map_sysmem(0x20000 + full_size, full_size);
 	ut_assertok(spi_flash_read_dm(dev, 0, size, dst));
-	ut_asserteq_mem(src, dst, size);
+	ut_assertok(memcmp(src, dst, size));
 
 	/* Erase */
 	ut_assertok(spi_flash_erase_dm(dev, 0, size));
@@ -49,7 +48,7 @@ static int dm_test_spi_flash(struct unit_test_state *uts)
 		src[i] = i;
 	ut_assertok(spi_flash_write_dm(dev, 0, size, src));
 	ut_assertok(spi_flash_read_dm(dev, 0, size, dst));
-	ut_asserteq_mem(src, dst, size);
+	ut_assertok(memcmp(src, dst, size));
 
 	/* Try the write-protect stuff */
 	ut_assertok(uclass_first_device_err(UCLASS_SPI_EMUL, &emul));
@@ -73,7 +72,7 @@ static int dm_test_spi_flash(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_spi_flash, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_spi_flash, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
 
 /* Functional test that sandbox SPI flash works correctly */
 static int dm_test_spi_flash_func(struct unit_test_state *uts)
@@ -101,4 +100,4 @@ static int dm_test_spi_flash_func(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_spi_flash_func, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_spi_flash_func, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);

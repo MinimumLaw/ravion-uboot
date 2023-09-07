@@ -10,7 +10,6 @@
 #include <dm.h>
 #include <asm/io.h>
 #include <dt-bindings/clock/mt8512-clk.h>
-#include <linux/bitops.h>
 
 #include "clk-mtk.h"
 
@@ -838,7 +837,7 @@ U_BOOT_DRIVER(mtk_clk_apmixedsys) = {
 	.id = UCLASS_CLK,
 	.of_match = mt8512_apmixed_compat,
 	.probe = mt8512_apmixedsys_probe,
-	.priv_auto	= sizeof(struct mtk_clk_priv),
+	.priv_auto_alloc_size = sizeof(struct mtk_clk_priv),
 	.ops = &mtk_clk_apmixedsys_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
@@ -848,7 +847,7 @@ U_BOOT_DRIVER(mtk_clk_topckgen) = {
 	.id = UCLASS_CLK,
 	.of_match = mt8512_topckgen_compat,
 	.probe = mt8512_topckgen_probe,
-	.priv_auto	= sizeof(struct mtk_clk_priv),
+	.priv_auto_alloc_size = sizeof(struct mtk_clk_priv),
 	.ops = &mtk_clk_topckgen_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
@@ -858,7 +857,7 @@ U_BOOT_DRIVER(mtk_clk_topckgen_cg) = {
 	.id = UCLASS_CLK,
 	.of_match = mt8512_topckgen_cg_compat,
 	.probe = mt8512_topckgen_cg_probe,
-	.priv_auto	= sizeof(struct mtk_cg_priv),
+	.priv_auto_alloc_size = sizeof(struct mtk_cg_priv),
 	.ops = &mtk_clk_gate_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
@@ -868,7 +867,7 @@ U_BOOT_DRIVER(mtk_clk_infracfg) = {
 	.id = UCLASS_CLK,
 	.of_match = mt8512_infracfg_compat,
 	.probe = mt8512_infracfg_probe,
-	.priv_auto	= sizeof(struct mtk_cg_priv),
+	.priv_auto_alloc_size = sizeof(struct mtk_cg_priv),
 	.ops = &mtk_clk_gate_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };

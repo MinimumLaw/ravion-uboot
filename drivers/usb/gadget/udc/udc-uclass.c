@@ -4,8 +4,6 @@
  * Written by Jean-Jacques Hiblot <jjhiblot@ti.com>
  */
 
-#define LOG_CATEGORY UCLASS_USB_GADGET_GENERIC
-
 #include <common.h>
 #include <dm.h>
 #include <dm/device-internal.h>
@@ -47,15 +45,26 @@ int usb_gadget_release(int index)
 		dev_array[index] = NULL;
 	return ret;
 #else
-	return -ENOSYS;
+	return -ENOTSUPP;
 #endif
 }
 
 int usb_gadget_handle_interrupts(int index)
 {
+	const struct driver *drv;
+
 	if (index < 0 || index >= ARRAY_SIZE(dev_array))
 		return -EINVAL;
-	return dm_usb_gadget_handle_interrupts(dev_array[index]);
+
+	drv = dev_array[index]->driver;
+	assert(drv);
+
+	if (drv->handle_interrupts)
+		return drv->handle_interrupts(dev_array[index]);
+	else
+		pr_err("No handle_interrupts function found\n");
+
+	return -EINVAL;
 }
 #endif
 

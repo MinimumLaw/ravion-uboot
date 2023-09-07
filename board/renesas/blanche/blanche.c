@@ -8,14 +8,11 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <init.h>
-#include <net.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/rcar-mstp.h>
 #include <asm/arch/rmobile.h>
 #include <asm/arch/sh_sdhi.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/mach-types.h>
@@ -25,7 +22,6 @@
 #include <env.h>
 #include <hang.h>
 #include <i2c.h>
-#include <linux/bitops.h>
 #include <linux/errno.h>
 #include <malloc.h>
 #include <miiphy.h>
@@ -319,7 +315,7 @@ int board_init(void)
 
 /* Added for BLANCHE(R-CarV2H board) */
 #ifndef CONFIG_DM_ETH
-int board_eth_init(struct bd_info *bis)
+int board_eth_init(bd_t *bis)
 {
 	int rc = 0;
 
@@ -360,7 +356,7 @@ int dram_init_banksize(void)
 	return 0;
 }
 
-void reset_cpu(void)
+void reset_cpu(ulong addr)
 {
 	struct udevice *dev;
 	const u8 pmic_bus = 6;
