@@ -1,0 +1,14 @@
+if TARGET_IMX8MQ_RHOS
+
+config SYS_BOARD
+	default "imx8mq_rhos"
+
+config SYS_VENDOR
+	default "ravion"
+
+config SYS_CONFIG_NAME
+	default "imx8mq_rhos"
+
+source "board/ravion/common/Kconfig"
+
+endif

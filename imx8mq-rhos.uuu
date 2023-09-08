@@ -1,0 +1,32 @@
+uuu_version 1.4.1
+###################################################################
+# Radioavionica Corp. IMX8MQ based RHOS CPU Module bring-up begin #
+#                                                                 #
+# (C) Alex A. Mihaylov AKA MinimumLaw, 2024                       #
+#     Email: minimumlaw@rambler.ru                                #
+# (C) Radioavionica Corp. 2024                                    #
+#     190005 Russia, Saint-Petersburg, pr Troitskiy, 4 lit "B"    #
+#     https://www.radioavionica.ru                                #
+###################################################################
+# Load SPL & U-Boot, then start bootloader                        #
+SDP: boot -f flash.bin
+SDPV: write -f flash.bin -skipspl -addr 0x40400000
+SDPV: jump
+# Programm fuse bank for eMMC boot first                          #
+FB: ucmd fuse prog -y 1 3 0x10002222
+# Switch eMMC to BOOT0 boot partition                             #
+FB: ucmd mmc dev 0 0
+FB: ucmd mmc bootbus  0 2 0 1
+FB: ucmd mmc partconf 0 1 1 0
+FB: ucmd mmc rst-function 0 1
+# Programm                                                        #
+FB: ucmd setenv fastboot_dev mmc
+FB: ucmd setenv mmcdev 0
+FB: ucmd setenv mmcpart 1
+FB: ucmd mmc dev ${mmcdev} ${mmcpart}
+FB: ucmd mmc info
+FB: flash bootloader flash.bin
+# Done                                                            #
+FB: done
+#  Radioavionica Corp. IMX8MQ based RHOS CPU Module bring-up end  #
+###################################################################

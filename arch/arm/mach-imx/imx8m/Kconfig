@@ -55,6 +55,11 @@ config TARGET_IMX8MQ_EVK
 	select IMX8MQ
 	select IMX8M_LPDDR4
 
+config TARGET_IMX8MQ_RHOS
+	bool "Radioavionica Corp. IMX8MQ RHOS board"
+	select IMX8MQ
+	select IMX8M_LPDDR4
+
 config TARGET_IMX8MQ_DDR3L_VAL
 	bool "imx8mq_ddr3l_val"
 	select IMX8MQ
@@ -145,6 +150,7 @@ source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mm_val/Kconfig"
 source "board/freescale/imx8mn_evk/Kconfig"
 source "board/freescale/imx8mp_evk/Kconfig"
+source "board/ravion/imx8mq_rhos/Kconfig"
 source "board/toradex/verdin-imx8mm/Kconfig"
 
 endif
