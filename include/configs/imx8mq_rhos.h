@@ -83,6 +83,7 @@
 	"initrd_addr=0x43800000\0" \
 	"initrd_high=0xffffffffffffffff\0" \
 	"fdt_addr=0x43000000\0"			\
+	"fdt_addr_r=0x44000000\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"kernel_addr_r=0x40500000\0" \
 	"splashimage=0x50000000\0" \
