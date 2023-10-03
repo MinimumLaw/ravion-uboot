@@ -27,7 +27,8 @@ const char *const type_name[] = {
 	"test",
 
 	/* Events related to driver model */
-	"dm_post_init",
+	"dm_post_init_f",
+	"dm_post_init_r",
 	"dm_pre_probe",
 	"dm_post_probe",
 	"dm_pre_remove",
@@ -35,6 +36,9 @@ const char *const type_name[] = {
 
 	/* init hooks */
 	"misc_init_f",
+
+	/* Fpga load hook */
+	"fpga_load",
 
 	/* fdt hooks */
 	"ft_fixup",

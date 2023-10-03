@@ -249,6 +249,13 @@ config DWC_ETH_QOS_QCOM
 	  The Synopsys Designware Ethernet QOS IP block with specific
 	  configuration used in Qcom QCS404 SoC.
 
+config DWC_ETH_QOS_STARFIVE
+	bool "Synopsys DWC Ethernet QOS device support for STARFIVE"
+	depends on DWC_ETH_QOS
+	help
+	  The Synopsys Designware Ethernet QOS IP block with specific
+	  configuration used in STARFIVE  JH7110 soc.
+
 config E1000
 	bool "Intel PRO/1000 Gigabit Ethernet support"
 	depends on PCI
@@ -696,6 +703,7 @@ config SUN8I_EMAC
 config SH_ETHER
 	bool "Renesas SH Ethernet MAC"
 	select PHYLIB
+	select PHY_ETHERNET_ID
 	help
 	  This driver supports the Ethernet for Renesas SH and ARM SoCs.
 
@@ -765,6 +773,7 @@ config RENESAS_RAVB
 	bool "Renesas Ethernet AVB MAC"
 	depends on RCAR_64
 	select PHYLIB
+	select PHY_ETHERNET_ID
 	help
 	  This driver implements support for the Ethernet AVB block in
 	  Renesas M3 and H3 SoCs.

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2023
-PATCHLEVEL = 07
+PATCHLEVEL = 10
 SUBLEVEL =
-EXTRAVERSION = -rc6
+EXTRAVERSION =
 NAME =
 
 # *DOCUMENTATION*
@@ -423,7 +423,8 @@ DTC_MIN_VERSION	:= 010406
 CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
-		  -Wbitwise -Wno-return-void -D__CHECK_ENDIAN__ $(CF)
+		  -Wbitwise -Wno-return-void -Wno-unknown-attribute \
+		  -D__CHECK_ENDIAN__ $(CF)
 
 KBUILD_CPPFLAGS := -D__KERNEL__ -D__UBOOT__
 
@@ -1032,6 +1033,9 @@ ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
 LDFLAGS_u-boot += -Ttext $(CONFIG_TEXT_BASE)
 endif
 
+# make the checker run with the right architecture
+CHECKFLAGS += --arch=$(ARCH)
+
 # insure the checker run with the right endianness
 CHECKFLAGS += $(if $(CONFIG_CPU_BIG_ENDIAN),-mbig-endian,-mlittle-endian)
 
@@ -1330,7 +1334,7 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
                 --toolpath $(objtree)/tools \
 		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
 		build -u -d u-boot.dtb -O . -m \
-		$(if $(BINMAN_ALLOW_MISSING),--allow-missing --ignore-missing) \
+		--allow-missing $(if $(BINMAN_ALLOW_MISSING),--ignore-missing) \
 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
 		-I arch/$(ARCH)/dts -a of-list=$(CONFIG_OF_LIST) \
 		$(foreach f,$(BINMAN_INDIRS),-I $(f)) \
@@ -1808,7 +1812,7 @@ quiet_cmd_gen_envp = ENVP    $@
 		rm -f $@; \
 		touch $@ ; \
 	fi
-include/generated/env.in: include/generated/env.txt FORCE
+include/generated/env.in: include/generated/env.txt
 	$(call cmd,gen_envp)
 
 # Regenerate the environment if it changes
@@ -1826,7 +1830,7 @@ quiet_cmd_envc = ENVC    $@
 		touch $@ ; \
 	fi
 
-include/generated/env.txt: $(wildcard $(ENV_FILE)) FORCE
+include/generated/env.txt: $(wildcard $(ENV_FILE))
 	$(call cmd,envc)
 
 # Write out the resulting environment, converted to a C string
@@ -2148,7 +2152,7 @@ CHANGELOG:
 
 # Directories & files removed with 'make clean'
 CLEAN_DIRS  += $(MODVERDIR) \
-	       $(foreach d, spl tpl, $(patsubst %,$d/%, \
+	       $(foreach d, spl tpl vpl, $(patsubst %,$d/%, \
 			$(filter-out include, $(shell ls -1 $d 2>/dev/null))))
 
 CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h \
@@ -2163,7 +2167,7 @@ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S
 
 # Directories & files removed with 'make mrproper'
-MRPROPER_DIRS  += include/config include/generated spl tpl \
+MRPROPER_DIRS  += include/config include/generated spl tpl vpl \
 		  .tmp_objdiff doc/output include/asm
 
 # Remove include/asm symlink created by U-Boot before v2014.01
@@ -2440,7 +2444,7 @@ quiet_cmd_genenv = GENENV  $@
 cmd_genenv = \
 	$(objtree)/tools/printinitialenv | \
 	sed -e '/^\s*$$/d' | \
-	sort --field-separator== -k1,1 --stable -o $@
+	sort -t '=' -k 1,1 -s -o $@
 
 u-boot-initial-env: $(env_h) FORCE
 	$(Q)$(MAKE) $(build)=tools $(objtree)/tools/printinitialenv

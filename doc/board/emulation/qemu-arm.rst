@@ -54,7 +54,7 @@ Note that for some odd reason qemu-system-aarch64 needs to be explicitly
 told to use a 64-bit CPU or it will boot in 32-bit mode. The -nographic argument
 ensures that output appears on the terminal. Use Ctrl-A X to quit.
 
-Additional persistent U-boot environment support can be added as follows:
+Additional persistent U-Boot environment support can be added as follows:
 
 - Create envstore.img using qemu-img::
 
@@ -113,7 +113,7 @@ In a second console invoke qemu-system-aarch64 with::
 
 Enable the TPM on U-Boot's command line with::
 
-    tpm2 startup TPM2_SU_CLEAR
+    tpm autostart
 
 Debug UART
 ----------

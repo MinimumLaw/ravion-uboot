@@ -64,6 +64,7 @@ enum video_log2_bpp {
 
 enum video_format {
 	VIDEO_UNKNOWN,
+	VIDEO_RGBA8888,
 	VIDEO_X8B8G8R8,
 	VIDEO_X8R8G8B8,
 	VIDEO_X2R10G10B10,
@@ -133,6 +134,30 @@ struct video_ops {
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
 
+/**
+ * struct video_handoff - video information passed from SPL
+ *
+ * This is used when video is set up by SPL, to provide the details to U-Boot
+ * proper.
+ *
+ * @fb: Base address of frame buffer, 0 if not yet known
+ * @size: Frame-buffer size, in bytes
+ * @xsize:	Number of pixel columns (e.g. 1366)
+ * @ysize:	Number of pixels rows (e.g.. 768)
+ * @line_length:	Length of each frame buffer line, in bytes. This can be
+ *		set by the driver, but if not, the uclass will set it after
+ *		probing
+ * @bpix:	Encoded bits per pixel (enum video_log2_bpp)
+ */
+struct video_handoff {
+	u64 fb;
+	u32 size;
+	u16 xsize;
+	u16 ysize;
+	u32 line_length;
+	u8 bpix;
+};
+
 /** enum colour_idx - the 16 colors supported by consoles */
 enum colour_idx {
 	VID_BLACK = 0,
@@ -162,11 +187,11 @@ enum colour_idx {
  * The caller has to guarantee that the color index is less than
  * VID_COLOR_COUNT.
  *
- * @priv	private data of the console device
- * @idx		color index
+ * @priv	private data of the video device (UCLASS_VIDEO)
+ * @idx		color index (e.g. VID_YELLOW)
  * Return:	color value
  */
-u32 video_index_to_colour(struct video_priv *priv, unsigned int idx);
+u32 video_index_to_colour(struct video_priv *priv, enum colour_idx idx);
 
 /**
  * video_reserve() - Reserve frame-buffer memory for video devices
@@ -204,6 +229,22 @@ int video_clear(struct udevice *dev);
 int video_fill(struct udevice *dev, u32 colour);
 
 /**
+ * video_fill_part() - Erase a region
+ *
+ * Erase a rectangle of the display within the given bounds.
+ *
+ * @dev:	Device to update
+ * @xstart:	X start position in pixels from the left
+ * @ystart:	Y start position in pixels from the top
+ * @xend:	X end position in pixels from the left
+ * @yend:	Y end position  in pixels from the top
+ * @colour:	Value to write
+ * Return: 0 if OK, -ENOSYS if the display depth is not supported
+ */
+int video_fill_part(struct udevice *dev, int xstart, int ystart, int xend,
+		    int yend, u32 colour);
+
+/**
  * video_sync() - Sync a device's frame buffer with its hardware
  *
  * @vid:	Device to sync
@@ -219,7 +260,7 @@ int video_fill(struct udevice *dev, u32 colour);
 int video_sync(struct udevice *vid, bool force);
 
 /**
- * video_sync_all() - Sync all devices' frame buffers with there hardware
+ * video_sync_all() - Sync all devices' frame buffers with their hardware
  *
  * This calls video_sync() on all active video devices.
  */
@@ -364,5 +405,14 @@ int bmp_display(ulong addr, int x, int y);
  * Returns: 0 if OK, else 1 if bmp image not found
  */
 int bmp_info(ulong addr);
+
+/*
+ * video_reserve_from_bloblist()- Reserve frame-buffer memory for video devices
+ * using blobs.
+ *
+ * @ho: video information passed from SPL
+ * Returns: 0 (always)
+ */
+int video_reserve_from_bloblist(struct video_handoff *ho);
 
 #endif

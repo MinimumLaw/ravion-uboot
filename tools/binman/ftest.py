@@ -94,9 +94,13 @@ ROCKCHIP_TPL_DATA     = b'rockchip-tpl'
 TEST_FDT1_DATA        = b'fdt1'
 TEST_FDT2_DATA        = b'test-fdt2'
 ENV_DATA              = b'var1=1\nvar2="2"'
+ENCRYPTED_IV_DATA     = b'123456'
+ENCRYPTED_KEY_DATA    = b'abcde'
 PRE_LOAD_MAGIC        = b'UBSH'
 PRE_LOAD_VERSION      = 0x11223344.to_bytes(4, 'big')
 PRE_LOAD_HDR_SIZE     = 0x00001000.to_bytes(4, 'big')
+TI_BOARD_CONFIG_DATA  = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+TI_UNSECURE_DATA      = b'unsecuredata'
 
 # Subdirectory of the input dir to use to put test FDTs
 TEST_FDT_SUBDIR       = 'fdts'
@@ -199,6 +203,9 @@ class TestFunctional(unittest.TestCase):
         shutil.copytree(cls.TestFile('files'),
                         os.path.join(cls._indir, 'files'))
 
+        shutil.copytree(cls.TestFile('yaml'),
+                        os.path.join(cls._indir, 'yaml'))
+
         TestFunctional._MakeInputFile('compress', COMPRESS_DATA)
         TestFunctional._MakeInputFile('compress_big', COMPRESS_DATA_BIG)
         TestFunctional._MakeInputFile('bl31.bin', ATF_BL31_DATA)
@@ -207,6 +214,7 @@ class TestFunctional(unittest.TestCase):
         TestFunctional._MakeInputFile('fw_dynamic.bin', OPENSBI_DATA)
         TestFunctional._MakeInputFile('scp.bin', SCP_DATA)
         TestFunctional._MakeInputFile('rockchip-tpl.bin', ROCKCHIP_TPL_DATA)
+        TestFunctional._MakeInputFile('ti_unsecure.bin', TI_UNSECURE_DATA)
 
         # Add a few .dtb files for testing
         TestFunctional._MakeInputFile('%s/test-fdt1.dtb' % TEST_FDT_SUBDIR,
@@ -225,6 +233,10 @@ class TestFunctional(unittest.TestCase):
 
         # Newer OP_TEE file in v1 binary format
         cls.make_tee_bin('tee.bin')
+
+        # test files for encrypted tests
+        TestFunctional._MakeInputFile('encrypted-file.iv', ENCRYPTED_IV_DATA)
+        TestFunctional._MakeInputFile('encrypted-file.key', ENCRYPTED_KEY_DATA)
 
         cls.comp_bintools = {}
         for name in COMP_BINTOOLS:
@@ -347,7 +359,7 @@ class TestFunctional(unittest.TestCase):
                     use_expanded=False, verbosity=None, allow_missing=False,
                     allow_fake_blobs=False, extra_indirs=None, threads=None,
                     test_section_timeout=False, update_fdt_in_elf=None,
-                    force_missing_bintools='', ignore_missing=False):
+                    force_missing_bintools='', ignore_missing=False, output_dir=None):
         """Run binman with a given test file
 
         Args:
@@ -378,6 +390,7 @@ class TestFunctional(unittest.TestCase):
             update_fdt_in_elf: Value to pass with --update-fdt-in-elf=xxx
             force_missing_tools (str): comma-separated list of bintools to
                 regard as missing
+            output_dir: Specific output directory to use for image using -O
 
         Returns:
             int return code, 0 on success
@@ -424,6 +437,8 @@ class TestFunctional(unittest.TestCase):
         if extra_indirs:
             for indir in extra_indirs:
                 args += ['-I', indir]
+        if output_dir:
+            args += ['-O', output_dir]
         return self._DoBinman(*args)
 
     def _SetupDtb(self, fname, outfile='u-boot.dtb'):
@@ -636,6 +651,16 @@ class TestFunctional(unittest.TestCase):
             Filename of ELF file to use as VPL
         """
         TestFunctional._MakeInputFile('vpl/u-boot-vpl',
+            tools.read_file(cls.ElfTestFile(src_fname)))
+
+    @classmethod
+    def _SetupPmuFwlElf(cls, src_fname='bss_data'):
+        """Set up an ELF file with a '_dt_ucode_base_size' symbol
+
+        Args:
+            Filename of ELF file to use as VPL
+        """
+        TestFunctional._MakeInputFile('pmu-firmware.elf',
             tools.read_file(cls.ElfTestFile(src_fname)))
 
     @classmethod
@@ -1103,6 +1128,7 @@ class TestFunctional(unittest.TestCase):
 
     def testPackZeroOffset(self):
         """Test that an entry at offset 0 is not given a new offset"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as e:
             self._DoTestFile('025_pack_zero_size.dts')
         self.assertIn("Node '/binman/u-boot-spl': Offset 0x0 (0) overlaps "
@@ -1116,6 +1142,7 @@ class TestFunctional(unittest.TestCase):
 
     def testPackX86RomNoSize(self):
         """Test that the end-at-4gb property requires a size property"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as e:
             self._DoTestFile('027_pack_4gb_no_size.dts')
         self.assertIn("Image '/binman': Section size must be provided when "
@@ -1124,6 +1151,7 @@ class TestFunctional(unittest.TestCase):
     def test4gbAndSkipAtStartTogether(self):
         """Test that the end-at-4gb and skip-at-size property can't be used
         together"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as e:
             self._DoTestFile('098_4gb_and_skip_at_start_together.dts')
         self.assertIn("Image '/binman': Provide either 'end-at-4gb' or "
@@ -1131,6 +1159,7 @@ class TestFunctional(unittest.TestCase):
 
     def testPackX86RomOutside(self):
         """Test that the end-at-4gb property checks for offset boundaries"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as e:
             self._DoTestFile('028_pack_4gb_outside.dts')
         self.assertIn("Node '/binman/u-boot': Offset 0x0 (0) size 0x4 (4) "
@@ -1423,6 +1452,7 @@ class TestFunctional(unittest.TestCase):
 
     def testPackUbootSplMicrocode(self):
         """Test that x86 microcode can be handled correctly in SPL"""
+        self._SetupSplElf()
         self._PackUbootSplMicrocode('049_x86_ucode_spl.dts')
 
     def testPackUbootSplMicrocodeReorder(self):
@@ -1442,6 +1472,7 @@ class TestFunctional(unittest.TestCase):
 
     def testSplDtb(self):
         """Test that an image with spl/u-boot-spl.dtb can be created"""
+        self._SetupSplElf()
         data = self._DoReadFile('051_u_boot_spl_dtb.dts')
         self.assertEqual(U_BOOT_SPL_DTB_DATA, data[:len(U_BOOT_SPL_DTB_DATA)])
 
@@ -1452,7 +1483,7 @@ class TestFunctional(unittest.TestCase):
         self.assertEqual(U_BOOT_SPL_NODTB_DATA, data[:len(U_BOOT_SPL_NODTB_DATA)])
 
     def checkSymbols(self, dts, base_data, u_boot_offset, entry_args=None,
-                     use_expanded=False):
+                     use_expanded=False, no_write_symbols=False):
         """Check the image contains the expected symbol values
 
         Args:
@@ -1481,9 +1512,14 @@ class TestFunctional(unittest.TestCase):
         sym_values = struct.pack('<LLQLL', elf.BINMAN_SYM_MAGIC_VALUE,
                                  0x00, u_boot_offset + len(U_BOOT_DATA),
                                  0x10 + u_boot_offset, 0x04)
-        expected = (sym_values + base_data[24:] +
-                    tools.get_bytes(0xff, 1) + U_BOOT_DATA + sym_values +
-                    base_data[24:])
+        if no_write_symbols:
+            expected = (base_data +
+                        tools.get_bytes(0xff, 0x38 - len(base_data)) +
+                        U_BOOT_DATA + base_data)
+        else:
+            expected = (sym_values + base_data[24:] +
+                        tools.get_bytes(0xff, 1) + U_BOOT_DATA + sym_values +
+                        base_data[24:])
         self.assertEqual(expected, data)
 
     def testSymbols(self):
@@ -1957,6 +1993,8 @@ class TestFunctional(unittest.TestCase):
 
     def testUpdateFdtAll(self):
         """Test that all device trees are updated with offset/size info"""
+        self._SetupSplElf()
+        self._SetupTplElf()
         data = self._DoReadFileRealDtb('082_fdt_update_all.dts')
 
         base_expected = {
@@ -3279,6 +3317,8 @@ class TestFunctional(unittest.TestCase):
 
     def testUpdateFdtAllRepack(self):
         """Test that all device trees are updated with offset/size info"""
+        self._SetupSplElf()
+        self._SetupTplElf()
         data = self._DoReadFileRealDtb('134_fdt_update_all_repack.dts')
         SECTION_SIZE = 0x300
         DTB_SIZE = 602
@@ -3732,6 +3772,7 @@ class TestFunctional(unittest.TestCase):
 
     def testMkimage(self):
         """Test using mkimage to build an image"""
+        self._SetupSplElf()
         data = self._DoReadFile('156_mkimage.dts')
 
         # Just check that the data appears in the file somewhere
@@ -3739,6 +3780,7 @@ class TestFunctional(unittest.TestCase):
 
     def testMkimageMissing(self):
         """Test that binman still produces an image if mkimage is missing"""
+        self._SetupSplElf()
         with test_util.capture_sys_output() as (_, stderr):
             self._DoTestFile('156_mkimage.dts',
                              force_missing_bintools='mkimage')
@@ -3764,6 +3806,7 @@ class TestFunctional(unittest.TestCase):
                                    allow_missing=True)
         self.assertEqual(103, ret)
         err = stderr.getvalue()
+        self.assertIn('(missing-file)', err)
         self.assertRegex(err, "Image 'image'.*missing.*: blob-ext")
         self.assertIn('Some images are invalid', err)
 
@@ -3774,6 +3817,7 @@ class TestFunctional(unittest.TestCase):
                                    allow_missing=True, ignore_missing=True)
         self.assertEqual(0, ret)
         err = stderr.getvalue()
+        self.assertIn('(missing-file)', err)
         self.assertRegex(err, "Image 'image'.*missing.*: blob-ext")
         self.assertIn('Some images are invalid', err)
 
@@ -3851,6 +3895,7 @@ class TestFunctional(unittest.TestCase):
 
     def testSimpleFit(self):
         """Test an image with a FIT inside"""
+        self._SetupSplElf()
         data = self._DoReadFile('161_fit.dts')
         self.assertEqual(U_BOOT_DATA, data[:len(U_BOOT_DATA)])
         self.assertEqual(U_BOOT_NODTB_DATA, data[-len(U_BOOT_NODTB_DATA):])
@@ -5370,6 +5415,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testFitSubentryHashSubnode(self):
         """Test an image with a FIT inside"""
+        self._SetupSplElf()
         data, _, _, out_dtb_name = self._DoReadFileDtb(
             '221_fit_subentry_hash.dts', use_real_dtb=True, update_dtb=True)
 
@@ -5619,41 +5665,61 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
     def testPreLoad(self):
         """Test an image with a pre-load header"""
         entry_args = {
-            'pre-load-key-path': '.',
+            'pre-load-key-path': os.path.join(self._binman_dir, 'test'),
         }
-        data, _, _, _ = self._DoReadFileDtb('230_pre_load.dts',
-                                            entry_args=entry_args)
-        self.assertEqual(PRE_LOAD_MAGIC, data[:len(PRE_LOAD_MAGIC)])
-        self.assertEqual(PRE_LOAD_VERSION, data[4:4 + len(PRE_LOAD_VERSION)])
-        self.assertEqual(PRE_LOAD_HDR_SIZE, data[8:8 + len(PRE_LOAD_HDR_SIZE)])
-        data = self._DoReadFile('230_pre_load.dts')
+        data = self._DoReadFileDtb(
+            '230_pre_load.dts', entry_args=entry_args,
+            extra_indirs=[os.path.join(self._binman_dir, 'test')])[0]
         self.assertEqual(PRE_LOAD_MAGIC, data[:len(PRE_LOAD_MAGIC)])
         self.assertEqual(PRE_LOAD_VERSION, data[4:4 + len(PRE_LOAD_VERSION)])
         self.assertEqual(PRE_LOAD_HDR_SIZE, data[8:8 + len(PRE_LOAD_HDR_SIZE)])
 
+    def testPreLoadNoKey(self):
+        """Test an image with a pre-load heade0r with missing key"""
+        with self.assertRaises(FileNotFoundError) as exc:
+            self._DoReadFile('230_pre_load.dts')
+        self.assertIn("No such file or directory: 'dev.key'",
+                      str(exc.exception))
+
     def testPreLoadPkcs(self):
         """Test an image with a pre-load header with padding pkcs"""
-        data = self._DoReadFile('231_pre_load_pkcs.dts')
+        entry_args = {
+            'pre-load-key-path': os.path.join(self._binman_dir, 'test'),
+        }
+        data = self._DoReadFileDtb('231_pre_load_pkcs.dts',
+                                   entry_args=entry_args)[0]
         self.assertEqual(PRE_LOAD_MAGIC, data[:len(PRE_LOAD_MAGIC)])
         self.assertEqual(PRE_LOAD_VERSION, data[4:4 + len(PRE_LOAD_VERSION)])
         self.assertEqual(PRE_LOAD_HDR_SIZE, data[8:8 + len(PRE_LOAD_HDR_SIZE)])
 
     def testPreLoadPss(self):
         """Test an image with a pre-load header with padding pss"""
-        data = self._DoReadFile('232_pre_load_pss.dts')
+        entry_args = {
+            'pre-load-key-path': os.path.join(self._binman_dir, 'test'),
+        }
+        data = self._DoReadFileDtb('232_pre_load_pss.dts',
+                                   entry_args=entry_args)[0]
         self.assertEqual(PRE_LOAD_MAGIC, data[:len(PRE_LOAD_MAGIC)])
         self.assertEqual(PRE_LOAD_VERSION, data[4:4 + len(PRE_LOAD_VERSION)])
         self.assertEqual(PRE_LOAD_HDR_SIZE, data[8:8 + len(PRE_LOAD_HDR_SIZE)])
 
     def testPreLoadInvalidPadding(self):
         """Test an image with a pre-load header with an invalid padding"""
+        entry_args = {
+            'pre-load-key-path': os.path.join(self._binman_dir, 'test'),
+        }
         with self.assertRaises(ValueError) as e:
-            data = self._DoReadFile('233_pre_load_invalid_padding.dts')
+            self._DoReadFileDtb('233_pre_load_invalid_padding.dts',
+                                entry_args=entry_args)
 
     def testPreLoadInvalidSha(self):
         """Test an image with a pre-load header with an invalid hash"""
+        entry_args = {
+            'pre-load-key-path': os.path.join(self._binman_dir, 'test'),
+        }
         with self.assertRaises(ValueError) as e:
-            data = self._DoReadFile('234_pre_load_invalid_sha.dts')
+            self._DoReadFileDtb('234_pre_load_invalid_sha.dts',
+                                entry_args=entry_args)
 
     def testPreLoadInvalidAlgo(self):
         """Test an image with a pre-load header with an invalid algo"""
@@ -5662,8 +5728,12 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testPreLoadInvalidKey(self):
         """Test an image with a pre-load header with an invalid key"""
+        entry_args = {
+            'pre-load-key-path': os.path.join(self._binman_dir, 'test'),
+        }
         with self.assertRaises(ValueError) as e:
-            data = self._DoReadFile('236_pre_load_invalid_key.dts')
+            data = self._DoReadFileDtb('236_pre_load_invalid_key.dts',
+                                       entry_args=entry_args)
 
     def _CheckSafeUniqueNames(self, *images):
         """Check all entries of given images for unsafe unique names"""
@@ -5888,6 +5958,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageImagename(self):
         """Test using mkimage with -n holding the data too"""
+        self._SetupSplElf()
         data = self._DoReadFile('242_mkimage_name.dts')
 
         # Check that the data appears in the file somewhere
@@ -5905,6 +5976,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageImage(self):
         """Test using mkimage with -n holding the data too"""
+        self._SetupSplElf()
         data = self._DoReadFile('243_mkimage_image.dts')
 
         # Check that the data appears in the file somewhere
@@ -5925,6 +5997,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageImageNoContent(self):
         """Test using mkimage with -n and no data"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as exc:
             self._DoReadFile('244_mkimage_image_no_content.dts')
         self.assertIn('Could not complete processing of contents',
@@ -5932,6 +6005,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageImageBad(self):
         """Test using mkimage with imagename node and data-to-imagename"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as exc:
             self._DoReadFile('245_mkimage_image_bad.dts')
         self.assertIn('Cannot use both imagename node and data-to-imagename',
@@ -5947,6 +6021,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageCollection(self):
         """Test using a collection referring to an entry in a mkimage entry"""
+        self._SetupSplElf()
         data = self._DoReadFile('247_mkimage_coll.dts')
         expect = U_BOOT_SPL_DATA + U_BOOT_DATA
         self.assertEqual(expect, data[:len(expect)])
@@ -6032,6 +6107,8 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageMultipleDataFiles(self):
         """Test passing multiple files to mkimage in a mkimage entry"""
+        self._SetupSplElf()
+        self._SetupTplElf()
         data = self._DoReadFile('252_mkimage_mult_data.dts')
         # Size of files are packed in their 4B big-endian format
         expect = struct.pack('>I', len(U_BOOT_TPL_DATA))
@@ -6046,8 +6123,42 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         expect += U_BOOT_SPL_DATA
         self.assertEqual(expect, data[-len(expect):])
 
+    def testMkimageMultipleExpanded(self):
+        """Test passing multiple files to mkimage in a mkimage entry"""
+        self._SetupSplElf()
+        self._SetupTplElf()
+        entry_args = {
+            'spl-bss-pad': 'y',
+            'spl-dtb': 'y',
+        }
+        data = self._DoReadFileDtb('252_mkimage_mult_data.dts',
+                                   use_expanded=True, entry_args=entry_args)[0]
+        pad_len = 10
+        tpl_expect = U_BOOT_TPL_DATA
+        spl_expect = U_BOOT_SPL_NODTB_DATA + tools.get_bytes(0, pad_len)
+        spl_expect += U_BOOT_SPL_DTB_DATA
+
+        content = data[0x40:]
+        lens = struct.unpack('>III', content[:12])
+
+        # Size of files are packed in their 4B big-endian format
+        # Size info is always followed by a 4B zero value.
+        self.assertEqual(len(tpl_expect), lens[0])
+        self.assertEqual(len(spl_expect), lens[1])
+        self.assertEqual(0, lens[2])
+
+        rest = content[12:]
+        self.assertEqual(tpl_expect, rest[:len(tpl_expect)])
+
+        rest = rest[len(tpl_expect):]
+        align_pad = len(tpl_expect) % 4
+        self.assertEqual(tools.get_bytes(0, align_pad), rest[:align_pad])
+        rest = rest[align_pad:]
+        self.assertEqual(spl_expect, rest)
+
     def testMkimageMultipleNoContent(self):
         """Test passing multiple data files to mkimage with one data file having no content"""
+        self._SetupSplElf()
         with self.assertRaises(ValueError) as exc:
             self._DoReadFile('253_mkimage_mult_no_content.dts')
         self.assertIn('Could not complete processing of contents',
@@ -6055,6 +6166,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testMkimageFilename(self):
         """Test using mkimage to build a binary with a filename"""
+        self._SetupSplElf()
         retcode = self._DoTestFile('254_mkimage_filename.dts')
         self.assertEqual(0, retcode)
         fname = tools.get_output_filename('mkimage-test.bin')
@@ -6107,10 +6219,21 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
                       str(e.exception))
 
     def testSymlink(self):
-        """Test that image files can be named"""
+        """Test that image files can be symlinked"""
         retcode = self._DoTestFile('259_symlink.dts', debug=True, map=True)
         self.assertEqual(0, retcode)
         image = control.images['test_image']
+        fname = tools.get_output_filename('test_image.bin')
+        sname = tools.get_output_filename('symlink_to_test.bin')
+        self.assertTrue(os.path.islink(sname))
+        self.assertEqual(os.readlink(sname), fname)
+
+    def testSymlinkOverwrite(self):
+        """Test that symlinked images can be overwritten"""
+        testdir = TestFunctional._MakeInputDir('symlinktest')
+        self._DoTestFile('259_symlink.dts', debug=True, map=True, output_dir=testdir)
+        # build the same image again in the same directory so that existing symlink is present
+        self._DoTestFile('259_symlink.dts', debug=True, map=True, output_dir=testdir)
         fname = tools.get_output_filename('test_image.bin')
         sname = tools.get_output_filename('symlink_to_test.bin')
         self.assertTrue(os.path.islink(sname))
@@ -6237,6 +6360,13 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
                          fdt_util.fdt32_to_cpu(node.props['entry'].value))
         self.assertEqual(U_BOOT_DATA, node.props['data'].bytes)
 
+        with test_util.capture_sys_output() as (stdout, stderr):
+            self.checkFitTee('264_tee_os_opt_fit.dts', '')
+        err = stderr.getvalue()
+        self.assertRegex(
+            err,
+            "Image '.*' is missing optional external blobs but is still functional: tee-os")
+
     def testFitTeeOsOptionalFitBad(self):
         """Test an image with a FIT with an optional OP-TEE binary"""
         with self.assertRaises(ValueError) as exc:
@@ -6269,7 +6399,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         err = stderr.getvalue()
         self.assertRegex(
             err,
-            "Image '.*' is missing external blobs but is still functional: missing")
+            "Image '.*' is missing optional external blobs but is still functional: missing")
 
     def testSectionInner(self):
         """Test an inner section with a size"""
@@ -6529,6 +6659,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testReplaceFitSibling(self):
         """Test an image with a FIT inside where we replace its sibling"""
+        self._SetupSplElf()
         fname = TestFunctional._MakeInputFile('once', b'available once')
         self._DoReadFileRealDtb('277_replace_fit_sibling.dts')
         os.remove(fname)
@@ -6577,18 +6708,18 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testPackRockchipTpl(self):
         """Test that an image with a Rockchip TPL binary can be created"""
-        data = self._DoReadFile('277_rockchip_tpl.dts')
+        data = self._DoReadFile('291_rockchip_tpl.dts')
         self.assertEqual(ROCKCHIP_TPL_DATA, data[:len(ROCKCHIP_TPL_DATA)])
 
     def testMkimageMissingBlobMultiple(self):
         """Test missing blob with mkimage entry and multiple-data-files"""
         with test_util.capture_sys_output() as (stdout, stderr):
-            self._DoTestFile('278_mkimage_missing_multiple.dts', allow_missing=True)
+            self._DoTestFile('292_mkimage_missing_multiple.dts', allow_missing=True)
         err = stderr.getvalue()
         self.assertIn("is missing external blobs and is non-functional", err)
 
         with self.assertRaises(ValueError) as e:
-            self._DoTestFile('278_mkimage_missing_multiple.dts', allow_missing=False)
+            self._DoTestFile('292_mkimage_missing_multiple.dts', allow_missing=False)
         self.assertIn("not found in input path", str(e.exception))
 
     def _PrepareSignEnv(self, dts='280_fit_sign.dts'):
@@ -6603,7 +6734,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
                 Private key
                 DTB
         """
-
+        self._SetupSplElf()
         data = self._DoReadFileRealDtb(dts)
         updated_fname = tools.get_output_filename('image-updated.bin')
         tools.write_file(updated_fname, data)
@@ -6676,6 +6807,414 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
                                 ['fit'])
         self.assertIn("Node '/fit': Missing tool: 'mkimage'", str(e.exception))
 
+    def testSymbolNoWrite(self):
+        """Test disabling of symbol writing"""
+        self._SetupSplElf()
+        self.checkSymbols('282_symbols_disable.dts', U_BOOT_SPL_DATA, 0x1c,
+                          no_write_symbols=True)
+
+    def testSymbolNoWriteExpanded(self):
+        """Test disabling of symbol writing in expanded entries"""
+        entry_args = {
+            'spl-dtb': '1',
+        }
+        self.checkSymbols('282_symbols_disable.dts', U_BOOT_SPL_NODTB_DATA +
+                          U_BOOT_SPL_DTB_DATA, 0x38,
+                          entry_args=entry_args, use_expanded=True,
+                          no_write_symbols=True)
+
+    def testMkimageSpecial(self):
+        """Test mkimage ignores special hash-1 node"""
+        data = self._DoReadFile('283_mkimage_special.dts')
+
+        # Just check that the data appears in the file somewhere
+        self.assertIn(U_BOOT_DATA, data)
+
+    def testFitFdtList(self):
+        """Test an image with an FIT with the fit,fdt-list-val option"""
+        entry_args = {
+            'default-dt': 'test-fdt2',
+        }
+        data = self._DoReadFileDtb(
+            '284_fit_fdt_list.dts',
+            entry_args=entry_args,
+            extra_indirs=[os.path.join(self._indir, TEST_FDT_SUBDIR)])[0]
+        self.assertEqual(U_BOOT_NODTB_DATA, data[-len(U_BOOT_NODTB_DATA):])
+        fit_data = data[len(U_BOOT_DATA):-len(U_BOOT_NODTB_DATA)]
+
+    def testSplEmptyBss(self):
+        """Test an expanded SPL with a zero-size BSS"""
+        # ELF file with a '__bss_size' symbol
+        self._SetupSplElf(src_fname='bss_data_zero')
+
+        entry_args = {
+            'spl-bss-pad': 'y',
+            'spl-dtb': 'y',
+        }
+        data = self._DoReadFileDtb('285_spl_expand.dts',
+                                   use_expanded=True, entry_args=entry_args)[0]
+
+    def testTemplate(self):
+        """Test using a template"""
+        TestFunctional._MakeInputFile('vga2.bin', b'#' + VGA_DATA)
+        data = self._DoReadFile('286_template.dts')
+        first = U_BOOT_DATA + VGA_DATA + U_BOOT_DTB_DATA
+        second = U_BOOT_DATA + b'#' + VGA_DATA + U_BOOT_DTB_DATA
+        self.assertEqual(U_BOOT_IMG_DATA + first + second, data)
+
+        dtb_fname1 = tools.get_output_filename('u-boot.dtb.tmpl1')
+        self.assertTrue(os.path.exists(dtb_fname1))
+        dtb = fdt.Fdt.FromData(tools.read_file(dtb_fname1))
+        dtb.Scan()
+        node1 = dtb.GetNode('/binman/template')
+        self.assertTrue(node1)
+        vga = dtb.GetNode('/binman/first/intel-vga')
+        self.assertTrue(vga)
+
+        dtb_fname2 = tools.get_output_filename('u-boot.dtb.tmpl2')
+        self.assertTrue(os.path.exists(dtb_fname2))
+        dtb2 = fdt.Fdt.FromData(tools.read_file(dtb_fname2))
+        dtb2.Scan()
+        node2 = dtb2.GetNode('/binman/template')
+        self.assertFalse(node2)
+
+    def testTemplateBlobMulti(self):
+        """Test using a template with 'multiple-images' enabled"""
+        TestFunctional._MakeInputFile('my-blob.bin', b'blob')
+        TestFunctional._MakeInputFile('my-blob2.bin', b'other')
+        retcode = self._DoTestFile('287_template_multi.dts')
+
+        self.assertEqual(0, retcode)
+        image = control.images['image']
+        image_fname = tools.get_output_filename('my-image.bin')
+        data = tools.read_file(image_fname)
+        self.assertEqual(b'blob@@@@other', data)
+
+    def testTemplateFit(self):
+        """Test using a template in a FIT"""
+        fit_data = self._DoReadFile('288_template_fit.dts')
+        fname = os.path.join(self._indir, 'fit_data.fit')
+        tools.write_file(fname, fit_data)
+        out = tools.run('dumpimage', '-l', fname)
+
+    def testTemplateSection(self):
+        """Test using a template in a section (not at top level)"""
+        TestFunctional._MakeInputFile('vga2.bin', b'#' + VGA_DATA)
+        data = self._DoReadFile('289_template_section.dts')
+        first = U_BOOT_DATA + VGA_DATA + U_BOOT_DTB_DATA
+        second = U_BOOT_DATA + b'#' + VGA_DATA + U_BOOT_DTB_DATA
+        self.assertEqual(U_BOOT_IMG_DATA + first + second + first, data)
+
+    def testMkimageSymbols(self):
+        """Test using mkimage to build an image with symbols in it"""
+        self._SetupSplElf('u_boot_binman_syms')
+        data = self._DoReadFile('290_mkimage_sym.dts')
+
+        image = control.images['image']
+        entries = image.GetEntries()
+        self.assertIn('u-boot', entries)
+        u_boot = entries['u-boot']
+
+        mkim = entries['mkimage']
+        mkim_entries = mkim.GetEntries()
+        self.assertIn('u-boot-spl', mkim_entries)
+        spl = mkim_entries['u-boot-spl']
+        self.assertIn('u-boot-spl2', mkim_entries)
+        spl2 = mkim_entries['u-boot-spl2']
+
+        # skip the mkimage header and the area sizes
+        mk_data = data[mkim.offset + 0x40:]
+        size, term = struct.unpack('>LL', mk_data[:8])
+
+        # There should be only one image, so check that the zero terminator is
+        # present
+        self.assertEqual(0, term)
+
+        content = mk_data[8:8 + size]
+
+        # The image should contain the symbols from u_boot_binman_syms.c
+        # Note that image_pos is adjusted by the base address of the image,
+        # which is 0x10 in our test image
+        spl_data = content[:0x18]
+        content = content[0x1b:]
+
+        # After the header is a table of offsets for each image. There should
+        # only be one image, then a 0 terminator, so figure out the real start
+        # of the image data
+        base = 0x40 + 8
+
+        # Check symbols in both u-boot-spl and u-boot-spl2
+        for i in range(2):
+            vals = struct.unpack('<LLQLL', spl_data)
+
+            # The image should contain the symbols from u_boot_binman_syms.c
+            # Note that image_pos is adjusted by the base address of the image,
+            # which is 0x10 in our 'u_boot_binman_syms' test image
+            self.assertEqual(elf.BINMAN_SYM_MAGIC_VALUE, vals[0])
+            self.assertEqual(base, vals[1])
+            self.assertEqual(spl2.offset, vals[2])
+            # figure out the internal positions of its components
+            self.assertEqual(0x10 + u_boot.image_pos, vals[3])
+
+            # Check that spl and spl2 are actually at the indicated positions
+            self.assertEqual(
+                elf.BINMAN_SYM_MAGIC_VALUE,
+                struct.unpack('<I', data[spl.image_pos:spl.image_pos + 4])[0])
+            self.assertEqual(
+                elf.BINMAN_SYM_MAGIC_VALUE,
+                struct.unpack('<I', data[spl2.image_pos:spl2.image_pos + 4])[0])
+
+            self.assertEqual(len(U_BOOT_DATA), vals[4])
+
+            # Move to next
+            spl_data = content[:0x18]
+
+    def testTemplatePhandle(self):
+        """Test using a template in a node containing a phandle"""
+        entry_args = {
+            'atf-bl31-path': 'bl31.elf',
+        }
+        data = self._DoReadFileDtb('309_template_phandle.dts',
+                                   entry_args=entry_args)
+        fname = tools.get_output_filename('image.bin')
+        out = tools.run('dumpimage', '-l', fname)
+
+        # We should see the FIT description and one for each of the two images
+        lines = out.splitlines()
+        descs = [line.split()[-1] for line in lines if 'escription' in line]
+        self.assertEqual(['test-desc', 'atf', 'fdt'], descs)
+
+    def testTemplatePhandleDup(self):
+        """Test using a template in a node containing a phandle"""
+        entry_args = {
+            'atf-bl31-path': 'bl31.elf',
+        }
+        with self.assertRaises(ValueError) as e:
+            self._DoReadFileDtb('310_template_phandle_dup.dts',
+                                entry_args=entry_args)
+        self.assertIn(
+            'Duplicate phandle 1 in nodes /binman/image/fit/images/atf/atf-bl31 and /binman/image-2/fit/images/atf/atf-bl31',
+            str(e.exception))
+
+    def testTIBoardConfig(self):
+        """Test that a schema validated board config file can be generated"""
+        data = self._DoReadFile('293_ti_board_cfg.dts')
+        self.assertEqual(TI_BOARD_CONFIG_DATA, data)
+
+    def testTIBoardConfigCombined(self):
+        """Test that a schema validated combined board config file can be generated"""
+        data = self._DoReadFile('294_ti_board_cfg_combined.dts')
+        configlen_noheader = TI_BOARD_CONFIG_DATA * 4
+        self.assertGreater(data, configlen_noheader)
+
+    def testTIBoardConfigNoDataType(self):
+        """Test that error is thrown when data type is not supported"""
+        with self.assertRaises(ValueError) as e:
+            data = self._DoReadFile('295_ti_board_cfg_no_type.dts')
+        self.assertIn("Schema validation error", str(e.exception))
+
+    def testPackTiSecure(self):
+        """Test that an image with a TI secured binary can be created"""
+        keyfile = self.TestFile('key.key')
+        entry_args = {
+            'keyfile': keyfile,
+        }
+        data = self._DoReadFileDtb('296_ti_secure.dts',
+                                   entry_args=entry_args)[0]
+        self.assertGreater(len(data), len(TI_UNSECURE_DATA))
+
+    def testPackTiSecureMissingTool(self):
+        """Test that an image with a TI secured binary (non-functional) can be created
+        when openssl is missing"""
+        keyfile = self.TestFile('key.key')
+        entry_args = {
+            'keyfile': keyfile,
+        }
+        with test_util.capture_sys_output() as (_, stderr):
+            self._DoTestFile('296_ti_secure.dts',
+                             force_missing_bintools='openssl',
+                             entry_args=entry_args)
+        err = stderr.getvalue()
+        self.assertRegex(err, "Image 'image'.*missing bintools.*: openssl")
+
+    def testPackTiSecureROM(self):
+        """Test that a ROM image with a TI secured binary can be created"""
+        keyfile = self.TestFile('key.key')
+        entry_args = {
+            'keyfile': keyfile,
+        }
+        data = self._DoReadFileDtb('297_ti_secure_rom.dts',
+                                entry_args=entry_args)[0]
+        data_a = self._DoReadFileDtb('299_ti_secure_rom_a.dts',
+                                entry_args=entry_args)[0]
+        data_b = self._DoReadFileDtb('300_ti_secure_rom_b.dts',
+                                entry_args=entry_args)[0]
+        self.assertGreater(len(data), len(TI_UNSECURE_DATA))
+        self.assertGreater(len(data_a), len(TI_UNSECURE_DATA))
+        self.assertGreater(len(data_b), len(TI_UNSECURE_DATA))
+
+    def testPackTiSecureROMCombined(self):
+        """Test that a ROM image with a TI secured binary can be created"""
+        keyfile = self.TestFile('key.key')
+        entry_args = {
+            'keyfile': keyfile,
+        }
+        data = self._DoReadFileDtb('298_ti_secure_rom_combined.dts',
+                                entry_args=entry_args)[0]
+        self.assertGreater(len(data), len(TI_UNSECURE_DATA))
+
+    def testEncryptedNoAlgo(self):
+        """Test encrypted node with missing required properties"""
+        with self.assertRaises(ValueError) as e:
+            self._DoReadFileDtb('301_encrypted_no_algo.dts')
+        self.assertIn(
+            "Node '/binman/fit/images/u-boot/encrypted': 'encrypted' entry is missing properties: algo iv-filename",
+            str(e.exception))
+
+    def testEncryptedInvalidIvfile(self):
+        """Test encrypted node with invalid iv file"""
+        with self.assertRaises(ValueError) as e:
+            self._DoReadFileDtb('302_encrypted_invalid_iv_file.dts')
+        self.assertIn("Filename 'invalid-iv-file' not found in input path",
+                      str(e.exception))
+
+    def testEncryptedMissingKey(self):
+        """Test encrypted node with missing key properties"""
+        with self.assertRaises(ValueError) as e:
+            self._DoReadFileDtb('303_encrypted_missing_key.dts')
+        self.assertIn(
+            "Node '/binman/fit/images/u-boot/encrypted': Provide either 'key-filename' or 'key-source'",
+            str(e.exception))
+
+    def testEncryptedKeySource(self):
+        """Test encrypted node with key-source property"""
+        data = self._DoReadFileDtb('304_encrypted_key_source.dts')[0]
+
+        dtb = fdt.Fdt.FromData(data)
+        dtb.Scan()
+
+        node = dtb.GetNode('/images/u-boot/cipher')
+        self.assertEqual('algo-name', node.props['algo'].value)
+        self.assertEqual('key-source-value', node.props['key-source'].value)
+        self.assertEqual(ENCRYPTED_IV_DATA,
+                         tools.to_bytes(''.join(node.props['iv'].value)))
+        self.assertNotIn('key', node.props)
+
+    def testEncryptedKeyFile(self):
+        """Test encrypted node with key-filename property"""
+        data = self._DoReadFileDtb('305_encrypted_key_file.dts')[0]
+
+        dtb = fdt.Fdt.FromData(data)
+        dtb.Scan()
+
+        node = dtb.GetNode('/images/u-boot/cipher')
+        self.assertEqual('algo-name', node.props['algo'].value)
+        self.assertEqual(ENCRYPTED_IV_DATA,
+                         tools.to_bytes(''.join(node.props['iv'].value)))
+        self.assertEqual(ENCRYPTED_KEY_DATA,
+                         tools.to_bytes(''.join(node.props['key'].value)))
+        self.assertNotIn('key-source', node.props)
+
+
+    def testSplPubkeyDtb(self):
+         """Test u_boot_spl_pubkey_dtb etype"""
+         data = tools.read_file(self.TestFile("key.pem"))
+         self._MakeInputFile("key.crt", data)
+         self._DoReadFileRealDtb('306_spl_pubkey_dtb.dts')
+         image = control.images['image']
+         entries = image.GetEntries()
+         dtb_entry = entries['u-boot-spl-pubkey-dtb']
+         dtb_data = dtb_entry.GetData()
+         dtb = fdt.Fdt.FromData(dtb_data)
+         dtb.Scan()
+
+         signature_node = dtb.GetNode('/signature')
+         self.assertIsNotNone(signature_node)
+         key_node = signature_node.FindNode("key-key")
+         self.assertIsNotNone(key_node)
+         self.assertEqual(fdt_util.GetString(key_node, "required"),
+                          "conf")
+         self.assertEqual(fdt_util.GetString(key_node, "algo"),
+                          "sha384,rsa4096")
+         self.assertEqual(fdt_util.GetString(key_node, "key-name-hint"),
+                          "key")
+
+    def testXilinxBootgenSigning(self):
+        """Test xilinx-bootgen etype"""
+        bootgen = bintool.Bintool.create('bootgen')
+        self._CheckBintool(bootgen)
+        data = tools.read_file(self.TestFile("key.key"))
+        self._MakeInputFile("psk.pem", data)
+        self._MakeInputFile("ssk.pem", data)
+        self._SetupPmuFwlElf()
+        self._SetupSplElf()
+        self._DoReadFileRealDtb('307_xilinx_bootgen_sign.dts')
+        image_fname = tools.get_output_filename('image.bin')
+
+        # Read partition header table and check if authentication is enabled
+        bootgen_out = bootgen.run_cmd("-arch", "zynqmp",
+                                      "-read", image_fname, "pht").splitlines()
+        attributes = {"authentication": None,
+                      "core": None,
+                      "encryption": None}
+
+        for l in bootgen_out:
+            for a in attributes.keys():
+                if a in l:
+                   m = re.match(fr".*{a} \[([^]]+)\]", l)
+                   attributes[a] = m.group(1)
+
+        self.assertTrue(attributes['authentication'] == "rsa")
+        self.assertTrue(attributes['core'] == "a53-0")
+        self.assertTrue(attributes['encryption'] == "no")
+
+    def testXilinxBootgenSigningEncryption(self):
+        """Test xilinx-bootgen etype"""
+        bootgen = bintool.Bintool.create('bootgen')
+        self._CheckBintool(bootgen)
+        data = tools.read_file(self.TestFile("key.key"))
+        self._MakeInputFile("psk.pem", data)
+        self._MakeInputFile("ssk.pem", data)
+        self._SetupPmuFwlElf()
+        self._SetupSplElf()
+        self._DoReadFileRealDtb('308_xilinx_bootgen_sign_enc.dts')
+        image_fname = tools.get_output_filename('image.bin')
+
+        # Read boot header in order to verify encryption source and
+        # encryption parameter
+        bootgen_out = bootgen.run_cmd("-arch", "zynqmp",
+                                      "-read", image_fname, "bh").splitlines()
+        attributes = {"auth_only":
+                        {"re": r".*auth_only \[([^]]+)\]", "value": None},
+                      "encryption_keystore":
+                        {"re": r" *encryption_keystore \(0x28\) : (.*)",
+                            "value": None},
+                     }
+
+        for l in bootgen_out:
+            for a in attributes.keys():
+                if a in l:
+                   m = re.match(attributes[a]['re'], l)
+                   attributes[a] = m.group(1)
+
+        # Check if fsbl-attribute is set correctly
+        self.assertTrue(attributes['auth_only'] == "true")
+        # Check if key is stored in efuse
+        self.assertTrue(attributes['encryption_keystore'] == "0xa5c3c5a3")
+
+    def testXilinxBootgenMissing(self):
+        """Test that binman still produces an image if bootgen is missing"""
+        data = tools.read_file(self.TestFile("key.key"))
+        self._MakeInputFile("psk.pem", data)
+        self._MakeInputFile("ssk.pem", data)
+        self._SetupPmuFwlElf()
+        self._SetupSplElf()
+        with test_util.capture_sys_output() as (_, stderr):
+            self._DoTestFile('307_xilinx_bootgen_sign.dts',
+                             force_missing_bintools='bootgen')
+        err = stderr.getvalue()
+        self.assertRegex(err,
+                         "Image 'image'.*missing bintools.*: bootgen")
 
 if __name__ == "__main__":
     unittest.main()

@@ -517,6 +517,17 @@ struct efi_register_notify_event {
 int efi_init_early(void);
 /* Initialize efi execution environment */
 efi_status_t efi_init_obj_list(void);
+/* Append new boot option in BootOrder variable */
+efi_status_t efi_bootmgr_append_bootorder(u16 index);
+/* Get unused "Boot####" index */
+efi_status_t efi_bootmgr_get_unused_bootoption(u16 *buf,
+					       efi_uintn_t buf_size, u32 *index);
+/* Generate the media device boot option */
+efi_status_t efi_bootmgr_update_media_device_boot_option(void);
+/* Delete selected boot option */
+efi_status_t efi_bootmgr_delete_boot_option(u16 boot_index);
+/* search the boot option index in BootOrder */
+bool efi_search_bootorder(u16 *bootorder, efi_uintn_t num, u32 target, u32 *index);
 /* Set up console modes */
 void efi_setup_console_size(void);
 /* Install device tree */
@@ -618,7 +629,7 @@ void efi_add_handle(efi_handle_t obj);
 /* Create handle */
 efi_status_t efi_create_handle(efi_handle_t *handle);
 /* Delete handle */
-void efi_delete_handle(efi_handle_t obj);
+efi_status_t efi_delete_handle(efi_handle_t obj);
 /* Call this to validate a handle and find the EFI object for it */
 struct efi_object *efi_search_obj(const efi_handle_t handle);
 /* Locate device_path handle */
@@ -651,10 +662,6 @@ efi_status_t efi_protocol_open(struct efi_handler *handler,
 			       void **protocol_interface, void *agent_handle,
 			       void *controller_handle, uint32_t attributes);
 
-/* Delete protocol from a handle */
-efi_status_t efi_remove_protocol(const efi_handle_t handle,
-				 const efi_guid_t *protocol,
-				 void *protocol_interface);
 /* Install multiple protocol interfaces */
 efi_status_t EFIAPI
 efi_install_multiple_protocol_interfaces(efi_handle_t *handle, ...);
@@ -689,9 +696,21 @@ void efi_signal_event(struct efi_event *event);
 /* return true if the device is removable */
 bool efi_disk_is_removable(efi_handle_t handle);
 
-/* open file system: */
-struct efi_simple_file_system_protocol *efi_simple_file_system(
-		struct blk_desc *desc, int part, struct efi_device_path *dp);
+/**
+ * efi_create_simple_file_system() - create simple file system protocol
+ *
+ * Create a simple file system protocol for a partition.
+ *
+ * @desc:	block device descriptor
+ * @part:	partition number
+ * @dp:		device path
+ * @fsp:	simple file system protocol
+ * Return:	status code
+ */
+efi_status_t
+efi_create_simple_file_system(struct blk_desc *desc, int part,
+			      struct efi_device_path *dp,
+			      struct efi_simple_file_system_protocol **fsp);
 
 /* open file from device-path: */
 struct efi_file_handle *efi_file_from_path(struct efi_device_path *fp);
@@ -1078,15 +1097,16 @@ struct efi_fw_image {
  * platforms which enable capsule updates
  *
  * @dfu_string:		String used to populate dfu_alt_info
+ * @num_images:		The number of images array entries
  * @images:		Pointer to an array of updatable images
  */
 struct efi_capsule_update_info {
 	const char *dfu_string;
+	int num_images;
 	struct efi_fw_image *images;
 };
 
 extern struct efi_capsule_update_info update_info;
-extern u8 num_image_type_guids;
 
 /**
  * Install the ESRT system table.

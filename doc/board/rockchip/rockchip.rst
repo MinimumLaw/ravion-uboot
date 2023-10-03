@@ -84,21 +84,35 @@ List of mainline supported Rockchip boards:
      - Orange Pi RK3399 (orangepi-rk3399)
      - Pine64 RockPro64 (rockpro64-rk3399)
      - Radxa ROCK 4C+ (rock-4c-plus-rk3399)
-     - Radxa ROCK 4SE (rock-pi-4-rk3399)
+     - Radxa ROCK 4SE (rock-4se-rk3399)
      - Radxa ROCK Pi 4A/B/A+/B+ (rock-pi-4-rk3399)
      - Radxa ROCK Pi 4C (rock-pi-4c-rk3399)
      - Rockchip Evb-RK3399 (evb_rk3399)
      - Theobroma Systems RK3399-Q7 SoM - Puma (puma_rk3399)
 
 * rk3566
-     - Anbernic RGxx3 (rgxx3-rk3566)
+     - Anbernic RGxx3 (anbernic-rgxx3-rk3566)
+     - Pine64 Quartz64-A Board (quartz64-a-rk3566)
+     - Pine64 Quartz64-B Board (quartz64-b-rk3566)
+     - Pine64 SOQuartz on Blade (soquartz-blade-rk3566)
+     - Pine64 SOQuartz on CM4-IO (soquartz-cm4-rk3566)
+     - Pine64 SOQuartz on Model A (soquartz-model-a-rk3566)
+     - Radxa CM3 IO Board (radxa-cm3-io-rk3566)
 
 * rk3568
      - Rockchip Evb-RK3568 (evb-rk3568)
+     - EmbedFire LubanCat 2 (lubancat-2-rk3568)
+     - FriendlyElec NanoPi R5C (nanopi-r5c-rk3568)
+     - FriendlyElec NanoPi R5S (nanopi-r5s-rk3568)
+     - Hardkernel ODROID-M1 (odroid-m1-rk3568)
+     - Radxa E25 Carrier Board (radxa-e25-rk3568)
+     - Radxa ROCK 3 Model A (rock-3a-rk3568)
 
 * rk3588
      - Rockchip EVB (evb-rk3588)
-     - Edgeble Neural Compute Module 6 SoM - Neu6a (neu6a-io-rk3588)
+     - Edgeble Neural Compute Module 6A SoM - Neu6a (neu6a-io-rk3588)
+     - Edgeble Neural Compute Module 6B SoM - Neu6b (neu6b-io-rk3588)
+     - Radxa ROCK 5A (rock5a-rk3588s)
      - Radxa ROCK 5B (rock5b-rk3588)
 
 * rv1108
@@ -211,7 +225,7 @@ SD Card
 ^^^^^^^
 
 All Rockchip platforms (except rk3128 which doesn't use SPL) are now
-supporting a single boot image using binman and pad_cat.
+supporting a single boot image using binman.
 
 To write an image that boots from a SD card (assumed to be /dev/sda):
 
@@ -262,31 +276,15 @@ is u-boot-dtb.img
 SPI
 ^^^
 
-The SPI boot method requires the generation of idbloader.img with help of the mkimage tool.
+Write u-boot-rockchip-spi.bin to offset 0 of SPI flash.
 
-SPL-alone SPI boot image:
-
-.. code-block:: bash
-
-        ./tools/mkimage -n rk3399 -T rkspi -d spl/u-boot-spl.bin idbloader.img
-
-TPL+SPL SPI boot image:
-
-.. code-block:: bash
-
-        ./tools/mkimage -n rk3399 -T rkspi -d tpl/u-boot-tpl.bin:spl/u-boot-spl.bin idbloader.img
-
-Copy SPI boot images into SD card and boot from SD:
+Copy u-boot-rockchip-spi.bin into SD card and boot from SD:
 
 .. code-block:: bash
 
         sf probe
-        load mmc 1:1 $kernel_addr_r idbloader.img
-        sf erase 0 +$filesize
-        sf write $kernel_addr_r 0 ${filesize}
-        load mmc 1:1 ${kernel_addr_r} u-boot.itb
-        sf erase 0x60000 +$filesize
-        sf write $kernel_addr_r 0x60000 ${filesize}
+        load mmc 1:1 $kernel_addr_r u-boot-rockchip-spi.bin
+        sf update $fileaddr 0 $filesize
 
 2. Package the image with Rockchip miniloader
 ---------------------------------------------
@@ -333,12 +331,12 @@ Note:
 
 Unlike later SoC models the rk3066 BootROM doesn't have SDMMC support.
 If all other boot options fail then it enters into a BootROM mode on the USB OTG port.
-This method loads TPL/SPL on NAND with U-boot and kernel on SD card.
+This method loads TPL/SPL on NAND with U-Boot and kernel on SD card.
 
 SD Card
 ^^^^^^^
 
-U-boot expects a GPT partition map and a boot directory structure with files on the SD card.
+U-Boot expects a GPT partition map and a boot directory structure with files on the SD card.
 
 .. code-block:: none
 
@@ -363,7 +361,7 @@ Boot partition:
         zImage
         rk3066a-mk808.dtb
 
-To write a U-boot image to the SD card (assumed to be /dev/sda):
+To write a U-Boot image to the SD card (assumed to be /dev/sda):
 
 .. code-block:: bash
 

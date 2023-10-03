@@ -7,6 +7,7 @@
 
 #include "jh7110.dtsi"
 #include <dt-bindings/pinctrl/pinctrl-starfive-jh7110.h>
+#include <dt-bindings/gpio/gpio.h>
 / {
 	aliases {
 		serial0 = &uart0;
@@ -17,6 +18,8 @@
 		i2c2 = &i2c2;
 		i2c5 = &i2c5;
 		i2c6 = &i2c6;
+		ethernet0 = &gmac0;
+		ethernet1 = &gmac1;
 	};
 
 	chosen {
@@ -118,6 +121,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c5_pins>;
 	status = "okay";
+
+	eeprom@50 {
+		compatible = "atmel,24c04";
+		reg = <0x50>;
+		pagesize = <16>;
+	};
 };
 
 &i2c6 {
@@ -300,14 +309,24 @@
 	};
 };
 
+&pcie0 {
+	reset-gpios = <&sysgpio 26 GPIO_ACTIVE_LOW>;
+	status = "okay";
+};
+
+&pcie1 {
+	reset-gpios = <&sysgpio 28 GPIO_ACTIVE_LOW>;
+	status = "okay";
+};
+
 &syscrg {
 	assigned-clocks = <&syscrg JH7110_SYSCLK_CPU_ROOT>,
 			  <&syscrg JH7110_SYSCLK_BUS_ROOT>,
 			  <&syscrg JH7110_SYSCLK_PERH_ROOT>,
 			  <&syscrg JH7110_SYSCLK_QSPI_REF>;
-	assigned-clock-parents = <&syscrg JH7110_SYSCLK_PLL0_OUT>,
-				 <&syscrg JH7110_SYSCLK_PLL2_OUT>,
-				 <&syscrg JH7110_SYSCLK_PLL2_OUT>,
+	assigned-clock-parents = <&pllclk JH7110_SYSCLK_PLL0_OUT>,
+				 <&pllclk JH7110_SYSCLK_PLL2_OUT>,
+				 <&pllclk JH7110_SYSCLK_PLL2_OUT>,
 				 <&syscrg JH7110_SYSCLK_QSPI_REF_SRC>;
 	assigned-clock-rates = <0>, <0>, <0>, <0>;
 };
@@ -316,4 +335,36 @@
 	assigned-clocks = <&aoncrg JH7110_AONCLK_APB_FUNC>;
 	assigned-clock-parents = <&osc>;
 	assigned-clock-rates = <0>;
+};
+
+&gmac0 {
+	phy-handle = <&phy0>;
+	phy-mode = "rgmii-id";
+	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "snps,dwmac-mdio";
+
+		phy0: ethernet-phy@0 {
+			reg = <0>;
+		};
+	};
+};
+
+&gmac1 {
+	phy-handle = <&phy1>;
+	phy-mode = "rgmii-id";
+	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "snps,dwmac-mdio";
+
+		phy1: ethernet-phy@1 {
+			reg = <0>;
+		};
+	};
 };

@@ -247,6 +247,20 @@ fdt_addr_t dev_read_addr_size_index(const struct udevice *dev, int index,
 				    fdt_size_t *size);
 
 /**
+ * dev_read_addr_size_index_ptr() - Get the indexed reg property of a device
+ *                                  as a pointer
+ *
+ * @dev: Device to read from
+ * @index: the 'reg' property can hold a list of <addr, size> pairs
+ *	   and @index is used to select which one is required
+ * @size: place to put size value (on success)
+ *
+ * Return: pointer or NULL if not found
+ */
+void *dev_read_addr_size_index_ptr(const struct udevice *dev, int index,
+				   fdt_size_t *size);
+
+/**
  * dev_remap_addr_index() - Get the indexed reg property of a device
  *                               as a memory-mapped I/O pointer
  *
@@ -347,18 +361,13 @@ fdt_addr_t dev_read_addr_pci(const struct udevice *dev);
 void *dev_remap_addr(const struct udevice *dev);
 
 /**
- * dev_read_addr_size() - get address and size from a device property
- *
- * This does no address translation. It simply reads an property that contains
- * an address and a size value, one after the other.
+ * dev_read_addr_size() - Get the reg property of a device
  *
  * @dev: Device to read from
- * @propname: property to read
  * @sizep: place to put size value (on success)
  * Return: address value, or FDT_ADDR_T_NONE on error
  */
-fdt_addr_t dev_read_addr_size(const struct udevice *dev, const char *propname,
-			      fdt_size_t *sizep);
+fdt_addr_t dev_read_addr_size(const struct udevice *dev, fdt_size_t *sizep);
 
 /**
  * dev_read_name() - get the name of a device's node
@@ -957,6 +966,13 @@ static inline fdt_addr_t dev_read_addr_size_index(const struct udevice *dev,
 	return devfdt_get_addr_size_index(dev, index, size);
 }
 
+static inline void *dev_read_addr_size_index_ptr(const struct udevice *dev,
+						 int index,
+						 fdt_size_t *size)
+{
+	return devfdt_get_addr_size_index_ptr(dev, index, size);
+}
+
 static inline fdt_addr_t dev_read_addr_name(const struct udevice *dev,
 					    const char *name)
 {
@@ -1002,10 +1018,9 @@ static inline void *dev_remap_addr_name(const struct udevice *dev,
 }
 
 static inline fdt_addr_t dev_read_addr_size(const struct udevice *dev,
-					    const char *propname,
 					    fdt_size_t *sizep)
 {
-	return ofnode_get_addr_size(dev_ofnode(dev), propname, sizep);
+	return dev_read_addr_size_index(dev, 0, sizep);
 }
 
 static inline const char *dev_read_name(const struct udevice *dev)

@@ -54,7 +54,7 @@ obj-$(CONFIG_IMX_RDC) += rdc-sema.o
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
 endif
-obj-$(CONFIG_SATA) += sata.o
+obj-$(CONFIG_$(SPL_)SATA) += sata.o
 obj-$(CONFIG_IMX_HAB)    += hab.o
 obj-$(CONFIG_SYSCOUNTER_TIMER) += syscounter.o
 endif
@@ -65,6 +65,11 @@ endif
 ifeq ($(SOC),$(filter $(SOC),vf610))
 obj-y += ddrmc-vf610.o
 obj-$(CONFIG_DDRMC_VF610_CALIBRATION) += ddrmc-vf610-calibration.o
+endif
+ifeq ($(SOC),$(filter $(SOC),imx8))
+ifneq ($(CONFIG_SPL_BUILD),y)
+obj-$(CONFIG_IMX_BOOTAUX) += imx_bootaux.o
+endif
 endif
 ifneq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_CMD_BMODE) += cmd_bmode.o

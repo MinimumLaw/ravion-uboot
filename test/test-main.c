@@ -272,7 +272,7 @@ static int dm_test_restore(struct device_node *of_root)
 		return ret;
 	dm_scan_plat(false);
 	if (!CONFIG_IS_ENABLED(OF_PLATDATA))
-		dm_scan_fdt(false);
+		dm_extended_scan(false);
 
 	return 0;
 }
@@ -476,7 +476,8 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	 *   (for sandbox we handle this by copying the tree, but not for other
 	 *    boards)
 	 */
-	if (!(test->flags & UT_TESTF_LIVE_TREE) &&
+	if ((test->flags & UT_TESTF_SCAN_FDT) &&
+	    !(test->flags & UT_TESTF_LIVE_TREE) &&
 	    (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) ||
 	     !(test->flags & UT_TESTF_OTHER_FDT)) &&
 	    (!runs || ut_test_run_on_flattree(test)) &&

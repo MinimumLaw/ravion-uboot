@@ -12,6 +12,7 @@ obj-y += panic.o
 obj-y += version.o
 
 # command
+obj-$(CONFIG_CMD_ARMFFA) += armffa.o
 obj-$(CONFIG_CMD_2048) += 2048.o
 obj-$(CONFIG_CMD_ACPI) += acpi.o
 obj-$(CONFIG_CMD_ADDRMAP) += addrmap.o
@@ -43,6 +44,7 @@ obj-$(CONFIG_CMD_BUTTON) += button.o
 obj-$(CONFIG_CMD_CAT) += cat.o
 obj-$(CONFIG_CMD_CACHE) += cache.o
 obj-$(CONFIG_CMD_CBFS) += cbfs.o
+obj-$(CONFIG_CMD_CEDIT) += cedit.o
 obj-$(CONFIG_CMD_CLK) += clk.o
 obj-$(CONFIG_CMD_CLS) += cls.o
 obj-$(CONFIG_CMD_CONFIG) += config.o

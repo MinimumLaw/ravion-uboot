@@ -150,6 +150,17 @@ fdt_addr_t dev_read_addr_size_index(const struct udevice *dev, int index,
 		return devfdt_get_addr_size_index(dev, index, size);
 }
 
+void *dev_read_addr_size_index_ptr(const struct udevice *dev, int index,
+				   fdt_size_t *size)
+{
+	fdt_addr_t addr = dev_read_addr_size_index(dev, index, size);
+
+	if (addr == FDT_ADDR_T_NONE)
+		return NULL;
+
+	return map_sysmem(addr, 0);
+}
+
 void *dev_remap_addr_index(const struct udevice *dev, int index)
 {
 	fdt_addr_t addr = dev_read_addr_index(dev, index);
@@ -211,10 +222,9 @@ void *dev_remap_addr(const struct udevice *dev)
 	return dev_remap_addr_index(dev, 0);
 }
 
-fdt_addr_t dev_read_addr_size(const struct udevice *dev, const char *property,
-			      fdt_size_t *sizep)
+fdt_addr_t dev_read_addr_size(const struct udevice *dev, fdt_size_t *sizep)
 {
-	return ofnode_get_addr_size(dev_ofnode(dev), property, sizep);
+	return dev_read_addr_size_index(dev, 0, sizep);
 }
 
 const char *dev_read_name(const struct udevice *dev)

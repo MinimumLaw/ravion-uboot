@@ -81,6 +81,12 @@ class Entry_fit(Entry_section):
             `of-list` meaning that `-a of-list="dtb1 dtb2..."` should be passed
             to binman.
 
+        fit,fdt-list-val
+            As an alternative to fit,fdt-list the list of device tree files
+            can be provided in this property as a string list, e.g.::
+
+                fit,fdt-list-val = "dtb1", "dtb2";
+
     Substitutions
     ~~~~~~~~~~~~~
 
@@ -361,6 +367,9 @@ class Entry_fit(Entry_section):
                 [EntryArg(self._fit_list_prop.value, str)])
             if fdts is not None:
                 self._fdts = fdts.split()
+        else:
+            self._fdts = fdt_util.GetStringList(self._node, 'fit,fdt-list-val')
+
         self._fit_default_dt = self.GetEntryArgsOrProps([EntryArg('default-dt',
                                                                   str)])[0]
 
@@ -832,6 +841,13 @@ class Entry_fit(Entry_section):
         # missing
         for entry in self._priv_entries.values():
             entry.CheckMissing(missing_list)
+
+    def CheckOptional(self, optional_list):
+        # We must use our private entry list for this since generator nodes
+        # which are removed from self._entries will otherwise not show up as
+        # optional
+        for entry in self._priv_entries.values():
+            entry.CheckOptional(optional_list)
 
     def CheckEntries(self):
         pass

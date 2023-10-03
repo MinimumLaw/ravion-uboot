@@ -52,10 +52,10 @@ struct efi_fw_image fw_images[] = {
 };
 
 struct efi_capsule_update_info update_info = {
+	.num_images = ARRAY_SIZE(fw_images),
 	.images = fw_images,
 };
 
-u8 num_image_type_guids = ARRAY_SIZE(fw_images);
 #endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
 #define EEPROM_HEADER_MAGIC		0xdaaddeed
@@ -627,7 +627,7 @@ int embedded_dtb_select(void)
 #endif
 
 #if defined(CONFIG_LMB)
-phys_size_t board_get_usable_ram_top(phys_size_t total_size)
+phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
 {
 	phys_size_t size;
 	phys_addr_t reg;

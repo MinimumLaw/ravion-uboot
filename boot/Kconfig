@@ -125,8 +125,7 @@ config FIT_BEST_MATCH
 config FIT_IMAGE_POST_PROCESS
 	bool "Enable post-processing of FIT artifacts after loading by U-Boot"
 	depends on FIT
-	depends on TI_SECURE_DEVICE || SOCFPGA_SECURE_VAB_AUTH
-	default y if TI_SECURE_DEVICE
+	depends on SOCFPGA_SECURE_VAB_AUTH
 	help
 	  Allows doing any sort of manipulation to blobs after they got extracted
 	  from FIT images like stripping off headers or modifying the size of the
@@ -462,6 +461,17 @@ config BOOTMETH_GLOBAL
 	  Add support for global bootmeths. This feature is used by VBE and
 	  EFI bootmgr, since they take full control over which bootdevs are
 	  selected to boot.
+
+config BOOTMETH_CROS
+	bool "Bootdev support for Chromium OS"
+	depends on X86 || SANDBOX
+	default y
+	help
+	  Enables support for booting Chromium OS using bootdevs. This uses the
+	  kernel A slot and obtains the kernel command line from the parameters
+	  provided there.
+
+	  Note that only x86 devices are supported at present.
 
 config BOOTMETH_EXTLINUX
 	bool "Bootdev support for extlinux boot"
@@ -1429,7 +1439,7 @@ config AUTOBOOT_MENU_SHOW
 	  This enables the boot menu, controlled by environment variables
 	  defined by the board. The menu starts after running the 'preboot'
 	  environmnent variable (if enabled) and before handling the boot delay.
-	  See README.bootmenu for more details.
+	  See doc/usage/cmd/bootmenu.rst for more details.
 
 config BOOTMENU_DISABLE_UBOOT_CONSOLE
 	bool "Disallow bootmenu to enter the U-Boot console"
@@ -1629,5 +1639,19 @@ config SAVE_PREV_BL_INITRAMFS_START_ADDR
 
 	  If no initramfs was provided by previous bootloader, no env variables
 	  will be created.
+
+menu "Configuration editor"
+
+config CEDIT
+	bool "Configuration editor"
+	depends on BOOTSTD
+	help
+	  Provides a way to deal with board configuration and present it to
+	  the user for adjustment.
+
+	  This is intended to provide both graphical and text-based user
+	  interfaces, but only graphical is support at present.
+
+endmenu		# Configuration editor
 
 endmenu		# Booting

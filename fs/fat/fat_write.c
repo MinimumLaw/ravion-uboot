@@ -132,9 +132,9 @@ static int set_name(fat_itr *itr, const char *filename, char *shortname)
 		return period_location;
 	if (*dirent.name == ' ')
 		*dirent.name = '_';
-	/* 0xe5 signals a deleted directory entry. Replace it by 0x05. */
-	if (*dirent.name == 0xe5)
-		*dirent.name = 0x05;
+	/* Substitute character 0xe5 signaling deletetion by character 0x05 */
+	if (*dirent.name == DELETED_FLAG)
+		*dirent.name = aRING;
 
 	/* If filename and short name are the same, quit. */
 	sprintf(buf, "%.*s.%.3s", period_location, dirent.name, dirent.ext);
@@ -1571,8 +1571,9 @@ int fat_unlink(const char *filename)
 	char *filename_copy, *dirname, *basename;
 
 	filename_copy = strdup(filename);
-	if (!filename_copy) {
-		printf("Error: allocating memory\n");
+	itr = malloc_cache_aligned(sizeof(fat_itr));
+	if (!itr || !filename_copy) {
+		printf("Error: out of memory\n");
 		ret = -ENOMEM;
 		goto exit;
 	}
@@ -1581,13 +1582,6 @@ int fat_unlink(const char *filename)
 	if (!strcmp(dirname, "/") && !strcmp(basename, "")) {
 		printf("Error: cannot remove root\n");
 		ret = -EINVAL;
-		goto exit;
-	}
-
-	itr = malloc_cache_aligned(sizeof(fat_itr));
-	if (!itr) {
-		printf("Error: allocating memory\n");
-		ret = -ENOMEM;
 		goto exit;
 	}
 
@@ -1605,7 +1599,7 @@ int fat_unlink(const char *filename)
 	}
 
 	if (!find_directory_entry(itr, basename)) {
-		printf("%s: doesn't exist\n", basename);
+		log_err("%s: doesn't exist (%d)\n", basename, -ENOENT);
 		ret = -ENOENT;
 		goto exit;
 	}

@@ -727,6 +727,13 @@ optional:
     Note that missing, optional blobs do not produce a non-zero exit code from
     binman, although it does show a warning about the missing external blob.
 
+insert-template:
+    This is not strictly speaking an entry property, since it is processed early
+    in Binman before the entries are read. It is a list of phandles of nodes to
+    include in the current (target) node. For each node, its subnodes and their
+    properties are brought into the target node. See Templates_ below for
+    more information.
+
 The attributes supported for images and sections are described below. Several
 are similar to those for entries.
 
@@ -830,6 +837,13 @@ write-symbols:
     Indicates that the blob should be updated with symbol values calculated by
     binman. This is automatic for certain entry types, e.g. `u-boot-spl`. See
     binman_syms_ for more information.
+
+no-write-symbols:
+    Disables symbol writing for this entry. This can be used in entry types
+    where symbol writing is automatic. For example, if `u-boot-spl` refers to
+    the `u_boot_any_image_pos` symbol but U-Boot is not available in the image
+    containing SPL, this can be used to disable the writing. Quite likely this
+    indicates a bug in your setup.
 
 elf-filename:
     Sets the file name of a blob's associated ELF file. For example, if the
@@ -1165,6 +1179,110 @@ If you are having trouble figuring out what is going on, you can use
      arch/arm/dts/u-boot.dtsi ... found: "arch/arm/dts/juno-r2-u-boot.dtsi"
 
 
+Templates
+=========
+
+Sometimes multiple images need to be created which have all have a common
+part. For example, a board may generate SPI and eMMC images which both include
+a FIT. Since the FIT includes many entries, it is tedious to repeat them twice
+in the image description.
+
+Templates provide a simple way to handle this::
+
+    binman {
+        multiple-images;
+        common_part: template-1 {
+            some-property;
+            fit {
+                ... lots of entries in here
+            };
+
+            text {
+                text = "base image";
+            };
+        };
+
+        spi-image {
+            filename = "image-spi.bin";
+            insert-template = <&fit>;
+
+            /* things specific to SPI follow */
+            footer {
+            ];
+
+            text {
+                text = "SPI image";
+            };
+        };
+
+        mmc-image {
+            filename = "image-mmc.bin";
+            insert-template = <&fit>;
+
+            /* things specific to MMC follow */
+            footer {
+            ];
+
+            text {
+                text = "MMC image";
+            };
+        };
+    };
+
+The template node name must start with 'template', so it is not considered to be
+an image itself.
+
+The mechanism is very simple. For each phandle in the 'insert-templates'
+property, the source node is looked up. Then the subnodes of that source node
+are copied into the target node, i.e. the one containing the `insert-template`
+property.
+
+If the target node has a node with the same name as a template, its properties
+override corresponding properties in the template. This allows the template to
+be uses as a base, with the node providing updates to the properties as needed.
+The overriding happens recursively.
+
+Template nodes appear first in each node that they are inserted into and
+ordering of template nodes is preserved. Other nodes come afterwards. If a
+template node also appears in the target node, then the template node sets the
+order. Thus the template can be used to set the ordering, even if the target
+node provides all the properties. In the above example, `fit` and `text` appear
+first in the `spi-image` and `mmc-image` images, followed by `footer`.
+
+Where there are multiple template nodes, they are inserted in that order. so
+the first template node appears first, then the second.
+
+Properties in the template node are inserted into the destination node if they
+do not exist there. In the example above, `some-property` is added to each of
+`spi-image` and `mmc-image`.
+
+Note that template nodes are removed from the binman description after
+processing and before binman builds the image descriptions.
+
+The initial devicetree produced by the templating process is written to the
+`u-boot.dtb.tmpl1` file. This can be useful to see what is going on if there is
+a failure before the final `u-boot.dtb.out` file is written. A second
+`u-boot.dtb.tmpl2` file is written when the templates themselves are removed.
+
+Dealing with phandles
+---------------------
+
+Templates can contain phandles and these are copied to the destination node.
+However this should be used with care, since if a template is instantiated twice
+then the phandle will be copied twice, resulting in a devicetree with duplicate
+phandles, i.e. the same phandle used by two different nodes. Binman detects this
+situation and produces an error, for example::
+
+  Duplicate phandle 1 in nodes /binman/image/fit/images/atf/atf-bl31 and
+  /binman/image-2/fit/images/atf/atf-bl31
+
+In this case an atf-bl31 node containing a phandle has been copied into two
+different target nodes, resulting in the same phandle for each. See
+testTemplatePhandleDup() for the test case.
+
+The solution is typically to put the phandles in the corresponding target nodes
+(one for each) and remove the phandle from the template.
+
 Updating an ELF file
 ====================
 
@@ -1362,9 +1480,6 @@ as set in stone, so Binman will ensure it doesn't change. Without this feature,
 repacking an entry might cause it to disobey the original constraints provided
 when it was created.
 
- Repacking an image involves
-
-.. _`BinmanLogging`:
 
 Signing FIT container with private key in an image
 --------------------------------------------------
@@ -1383,6 +1498,7 @@ If you want to sign and replace FIT container in place::
 which will sign FIT container with private key and replace it immediately
 inside your image.
 
+.. _`BinmanLogging`:
 
 Logging
 -------

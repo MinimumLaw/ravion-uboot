@@ -135,6 +135,14 @@ config CMD_BDI
 	help
 	  Print board info
 
+config CMD_BDINFO_EXTRA
+	bool "bdinfo extra features"
+	default y if SANDBOX || X86
+	help
+	  Show additional information about the board. This uses a little more
+	  code space but provides more options, particularly those useful for
+	  bringup, development and debugging.
+
 config CMD_CONFIG
 	bool "config"
 	default SANDBOX
@@ -427,6 +435,15 @@ config CMD_ABOOTIMG
 	  obtain corresponding meta-information from boot.img.
 
 	  See doc/android/boot-image.rst for details.
+
+config CMD_CEDIT
+	bool "cedit - Configuration editor"
+	depends on CEDIT
+	default y
+	help
+	  Provides a command to allow editing of board configuration and
+	  providing a UI for the user to adjust settings. Subcommands allow
+	  loading and saving of configuration as well as showing an editor.
 
 config CMD_ELF
 	bool "bootelf, bootvx"
@@ -935,6 +952,16 @@ endmenu
 
 menu "Device access commands"
 
+config CMD_ARMFFA
+	bool "Arm FF-A test command"
+	depends on ARM_FFA_TRANSPORT
+	help
+	  Provides a test command for the FF-A support
+	  supported options:
+		- Listing the partition(s) info
+		- Sending a data pattern to the specified partition
+		- Displaying the arm_ffa device info
+
 config CMD_ARMFLASH
 	#depends on FLASH_CFI_DRIVER
 	bool "armflash"
@@ -969,6 +996,7 @@ config CMD_BCB
 config CMD_BIND
 	bool "bind/unbind - Bind or unbind a device to/from a driver"
 	depends on DM
+	default y if USB_ETHER
 	help
 	  Bind or unbind a device to/from a driver from the command line.
 	  This is useful in situations where a device may be handled by several
@@ -1228,6 +1256,7 @@ config LOADS_ECHO
 
 config CMD_SAVES
 	bool "saves - Save a file over serial in S-Record format"
+	depends on CMD_LOADS
 	help
 	  Provides a way to save a binary file using the Motorola S-Record
 	  format over the serial line.
@@ -1849,7 +1878,6 @@ config CMD_RARP
 
 config CMD_NFS
 	bool "nfs"
-	default y
 	help
 	  Boot image via network using NFS protocol.
 
@@ -1988,6 +2016,7 @@ config CMD_2048
 config CMD_BMP
 	bool "Enable 'bmp' command"
 	depends on VIDEO
+	select BMP
 	help
 	  This provides a way to obtain information about a BMP-format image
 	  and to display it. BMP (which presumably stands for BitMaP) is a

@@ -9,6 +9,7 @@ General
 .. toctree::
    :maxdepth: 1
 
+   board_best_practices
    codingstyle
    designprinciples
    docstyle
@@ -45,6 +46,7 @@ Implementation
    printf
    smbios
    spl
+   falcon
    uefi/index
    vbe
    version

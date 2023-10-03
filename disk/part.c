@@ -26,6 +26,22 @@
 /* Check all partition types */
 #define PART_TYPE_ALL		-1
 
+static struct part_driver *part_driver_get_type(int part_type)
+{
+	struct part_driver *drv =
+		ll_entry_start(struct part_driver, part_driver);
+	const int n_ents = ll_entry_count(struct part_driver, part_driver);
+	struct part_driver *entry;
+
+	for (entry = drv; entry != drv + n_ents; entry++) {
+		if (part_type == entry->part_type)
+			return entry;
+	}
+
+	/* Not found */
+	return NULL;
+}
+
 static struct part_driver *part_driver_lookup_type(struct blk_desc *dev_desc)
 {
 	struct part_driver *drv =
@@ -44,14 +60,27 @@ static struct part_driver *part_driver_lookup_type(struct blk_desc *dev_desc)
 			}
 		}
 	} else {
-		for (entry = drv; entry != drv + n_ents; entry++) {
-			if (dev_desc->part_type == entry->part_type)
-				return entry;
-		}
+		return part_driver_get_type(dev_desc->part_type);
 	}
 
 	/* Not found */
 	return NULL;
+}
+
+int part_get_type_by_name(const char *name)
+{
+	struct part_driver *drv =
+		ll_entry_start(struct part_driver, part_driver);
+	const int n_ents = ll_entry_count(struct part_driver, part_driver);
+	struct part_driver *entry;
+
+	for (entry = drv; entry != drv + n_ents; entry++) {
+		if (!strcasecmp(name, entry->name))
+			return entry->part_type;
+	}
+
+	/* Not found */
+	return PART_TYPE_UNKNOWN;
 }
 
 static struct blk_desc *get_dev_hwpart(const char *ifname, int dev, int hwpart)
@@ -306,8 +335,8 @@ void part_print(struct blk_desc *dev_desc)
 		drv->print(dev_desc);
 }
 
-int part_get_info(struct blk_desc *dev_desc, int part,
-		       struct disk_partition *info)
+int part_get_info_by_type(struct blk_desc *dev_desc, int part, int part_type,
+			  struct disk_partition *info)
 {
 	struct part_driver *drv;
 
@@ -320,7 +349,12 @@ int part_get_info(struct blk_desc *dev_desc, int part,
 		info->type_guid[0] = 0;
 #endif
 
-		drv = part_driver_lookup_type(dev_desc);
+		if (part_type == PART_TYPE_UNKNOWN) {
+			drv = part_driver_lookup_type(dev_desc);
+		} else {
+			drv = part_driver_get_type(part_type);
+		}
+
 		if (!drv) {
 			debug("## Unknown partition table type %x\n",
 			      dev_desc->part_type);
@@ -338,6 +372,12 @@ int part_get_info(struct blk_desc *dev_desc, int part,
 	}
 
 	return -ENOENT;
+}
+
+int part_get_info(struct blk_desc *dev_desc, int part,
+		  struct disk_partition *info)
+{
+	return part_get_info_by_type(dev_desc, part, PART_TYPE_UNKNOWN, info);
 }
 
 int part_get_info_whole_disk(struct blk_desc *dev_desc,
@@ -468,9 +508,11 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 #endif
 
 	/* If no dev_part_str, use bootdevice environment variable */
-	if (!dev_part_str || !strlen(dev_part_str) ||
-	    !strcmp(dev_part_str, "-"))
-		dev_part_str = env_get("bootdevice");
+	if (CONFIG_IS_ENABLED(ENV_SUPPORT)) {
+		if (!dev_part_str || !strlen(dev_part_str) ||
+		    !strcmp(dev_part_str, "-"))
+			dev_part_str = env_get("bootdevice");
+	}
 
 	/* If still no dev_part_str, it's an error */
 	if (!dev_part_str) {
@@ -630,8 +672,8 @@ cleanup:
 	return ret;
 }
 
-int part_get_info_by_name_type(struct blk_desc *dev_desc, const char *name,
-			       struct disk_partition *info, int part_type)
+int part_get_info_by_name(struct blk_desc *dev_desc, const char *name,
+			  struct disk_partition *info)
 {
 	struct part_driver *part_drv;
 	int ret;
@@ -660,12 +702,6 @@ int part_get_info_by_name_type(struct blk_desc *dev_desc, const char *name,
 	}
 
 	return -ENOENT;
-}
-
-int part_get_info_by_name(struct blk_desc *dev_desc, const char *name,
-			  struct disk_partition *info)
-{
-	return part_get_info_by_name_type(dev_desc, name, info, PART_TYPE_ALL);
 }
 
 /**

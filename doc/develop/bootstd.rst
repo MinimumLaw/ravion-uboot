@@ -132,6 +132,9 @@ above bootdev scanning.
 Controlling ordering
 --------------------
 
+By default, faster bootdevs (or those which are assumed to be faster) are used
+first, since they are more likely to be able to boot the device quickly.
+
 Several options are available to control the ordering of boot scanning:
 
 
@@ -151,6 +154,10 @@ bootdevs and their sequence numbers.
 bootmeths
 ~~~~~~~~~
 
+By default bootmeths are checked in name order. Use `bootmeth list` to see the
+ordering. Note that the `extlinux` and `script` bootmeth is first, to preserve the behaviour
+used by the old distro scripts.
+
 This environment variable can be used to control the list of bootmeths used and
 their ordering for example::
 
@@ -163,7 +170,6 @@ controlled by aliases.
 
 The :ref:`usage/cmd/bootmeth:bootmeth command` (`bootmeth order`) operates in
 the same way as setting this variable.
-
 
 Bootdev uclass
 --------------
@@ -306,7 +312,7 @@ media device::
 
 The bootdev device is typically created automatically in the media uclass'
 `post_bind()` method by calling `bootdev_setup_for_dev()` or
-`bootdev_setup_sibling_blk()`. The code typically something like this::
+`bootdev_setup_for_sibling_blk()`. The code typically something like this::
 
     /* dev is the Ethernet device */
     ret = bootdev_setup_for_dev(dev, "eth_bootdev");
@@ -316,7 +322,7 @@ The bootdev device is typically created automatically in the media uclass'
 or::
 
     /* blk is the block device (child of MMC device)
-    ret = bootdev_setup_sibling_blk(blk, "mmc_bootdev");
+    ret = bootdev_setup_for_sibling_blk(blk, "mmc_bootdev");
     if (ret)
         return log_msg_ret("bootdev", ret);
 

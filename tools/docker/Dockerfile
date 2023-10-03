@@ -2,7 +2,7 @@
 # This Dockerfile is used to build an image containing basic stuff to be used
 # to build U-Boot and run our test suites.
 
-FROM ubuntu:jammy-20230308
+FROM ubuntu:jammy-20230624
 MAINTAINER Tom Rini <trini@konsulko.com>
 LABEL Description=" This image is for building U-Boot inside a container"
 
@@ -14,22 +14,22 @@ RUN apt-get update && apt-get install -y gnupg2 wget xz-utils && rm -rf /var/lib
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 RUN echo deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main | tee /etc/apt/sources.list.d/llvm.list
 
-# Manually install the kernel.org "Crosstool" based toolchains for gcc-12.2.0
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-aarch64-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-arm-linux-gnueabi.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-i386-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-m68k-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-mips-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-microblaze-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-nios2-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-powerpc-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-riscv64-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-riscv32-linux.tar.xz | tar -C /opt -xJ
-RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/12.2.0/x86_64-gcc-12.2.0-nolibc-sh2-linux.tar.xz | tar -C /opt -xJ
+# Manually install the kernel.org "Crosstool" based toolchains for gcc-13.1.0
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-aarch64-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-arc-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-arm-linux-gnueabi.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-i386-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-m68k-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-mips-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-microblaze-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-nios2-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-powerpc-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-riscv64-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-riscv32-linux.tar.xz | tar -C /opt -xJ
+RUN wget -O - https://mirrors.edge.kernel.org/pub/tools/crosstool/files/bin/x86_64/13.1.0/x86_64-gcc-13.1.0-nolibc-sh2-linux.tar.xz | tar -C /opt -xJ
 
 # Manually install other toolchains
 RUN wget -O - https://github.com/foss-xtensa/toolchain/releases/download/2020.07/x86_64-2020.07-xtensa-dc233c-elf.tar.gz | tar -C /opt -xz
-RUN wget -O - https://github.com/foss-for-synopsys-dwc-arc-processors/toolchain/releases/download/arc-2021.03-release/arc_gnu_2021.03_prebuilt_uclibc_le_archs_linux_install.tar.gz | tar --no-same-owner -C /opt -xz
 
 # Update and install things from apt now
 RUN apt-get update && apt-get install -y \
@@ -77,6 +77,7 @@ RUN apt-get update && apt-get install -y \
 	libsdl1.2-dev \
 	libsdl2-dev \
 	libseccomp-dev \
+	libslirp-dev \
 	libssl-dev \
 	libtool \
 	libudev-dev \
@@ -128,15 +129,16 @@ RUN git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
 	git config --global user.name "GitLab CI Runner" && \
 	git config --global user.email trini@konsulko.com && \
 	git cherry-pick 049efdd72eb7baa7b2bf8884391ee7fe650da5a0 && \
+	git cherry-pick 403d6540cd608b2706cfa0cb4713f7e4b490ff45 && \
 	./bootstrap && \
 	mkdir -p /opt/grub && \
 	./configure --target=aarch64 --with-platform=efi \
 	CC=gcc \
-	TARGET_CC=/opt/gcc-12.2.0-nolibc/aarch64-linux/bin/aarch64-linux-gcc \
-	TARGET_OBJCOPY=/opt/gcc-12.2.0-nolibc/aarch64-linux/bin/aarch64-linux-objcopy \
-	TARGET_STRIP=/opt/gcc-12.2.0-nolibc/aarch64-linux/bin/aarch64-linux-strip \
-	TARGET_NM=/opt/gcc-12.2.0-nolibc/aarch64-linux/bin/aarch64-linux-nm \
-	TARGET_RANLIB=/opt/gcc-12.2.0-nolibc/aarch64-linux/bin/aarch64-linux-ranlib && \
+	TARGET_CC=/opt/gcc-13.1.0-nolibc/aarch64-linux/bin/aarch64-linux-gcc \
+	TARGET_OBJCOPY=/opt/gcc-13.1.0-nolibc/aarch64-linux/bin/aarch64-linux-objcopy \
+	TARGET_STRIP=/opt/gcc-13.1.0-nolibc/aarch64-linux/bin/aarch64-linux-strip \
+	TARGET_NM=/opt/gcc-13.1.0-nolibc/aarch64-linux/bin/aarch64-linux-nm \
+	TARGET_RANLIB=/opt/gcc-13.1.0-nolibc/aarch64-linux/bin/aarch64-linux-ranlib && \
 	make && \
 	./grub-mkimage -O arm64-efi -o /opt/grub/grubaa64.efi --prefix= -d \
 	grub-core cat chain configfile echo efinet ext2 fat halt help linux \
@@ -146,11 +148,11 @@ RUN git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
 	make clean && \
 	./configure --target=arm --with-platform=efi \
 	CC=gcc \
-	TARGET_CC=/opt/gcc-12.2.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-gcc \
-	TARGET_OBJCOPY=/opt/gcc-12.2.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-objcopy \
-	TARGET_STRIP=/opt/gcc-12.2.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-strip \
-	TARGET_NM=/opt/gcc-12.2.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-nm \
-	TARGET_RANLIB=/opt/gcc-12.2.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-ranlib && \
+	TARGET_CC=/opt/gcc-13.1.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-gcc \
+	TARGET_OBJCOPY=/opt/gcc-13.1.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-objcopy \
+	TARGET_STRIP=/opt/gcc-13.1.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-strip \
+	TARGET_NM=/opt/gcc-13.1.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-nm \
+	TARGET_RANLIB=/opt/gcc-13.1.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-ranlib && \
 	make && \
 	./grub-mkimage -O arm-efi -o /opt/grub/grubarm.efi --prefix= -d \
 	grub-core cat chain configfile echo efinet ext2 fat halt help linux \
@@ -160,11 +162,11 @@ RUN git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
 	make clean && \
 	./configure --target=riscv64 --with-platform=efi \
 	CC=gcc \
-	TARGET_CC=/opt/gcc-12.2.0-nolibc/riscv64-linux/bin/riscv64-linux-gcc \
-	TARGET_OBJCOPY=/opt/gcc-12.2.0-nolibc/riscv64-linux/bin/riscv64-linux-objcopy \
-	TARGET_STRIP=/opt/gcc-12.2.0-nolibc/riscv64-linux/bin/riscv64-linux-strip \
-	TARGET_NM=/opt/gcc-12.2.0-nolibc/riscv64-linux/bin/riscv64-linux-nm \
-	TARGET_RANLIB=/opt/gcc-12.2.0-nolibc/riscv64-linux/bin/riscv64-linux-ranlib && \
+	TARGET_CC=/opt/gcc-13.1.0-nolibc/riscv64-linux/bin/riscv64-linux-gcc \
+	TARGET_OBJCOPY=/opt/gcc-13.1.0-nolibc/riscv64-linux/bin/riscv64-linux-objcopy \
+	TARGET_STRIP=/opt/gcc-13.1.0-nolibc/riscv64-linux/bin/riscv64-linux-strip \
+	TARGET_NM=/opt/gcc-13.1.0-nolibc/riscv64-linux/bin/riscv64-linux-nm \
+	TARGET_RANLIB=/opt/gcc-13.1.0-nolibc/riscv64-linux/bin/riscv64-linux-ranlib && \
 	make && \
 	./grub-mkimage -O riscv64-efi -o /opt/grub/grubriscv64.efi --prefix= -d \
 	grub-core cat chain configfile echo efinet ext2 fat halt help linux \
@@ -175,37 +177,13 @@ RUN git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
 
 RUN git clone https://gitlab.com/qemu-project/qemu.git /tmp/qemu && \
 	cd /tmp/qemu && \
-	git submodule update --init dtc && \
-	git checkout v6.1.0 && \
+	git checkout v8.0.3 && \
 	# config user.name and user.email to make 'git am' happy
 	git config user.name u-boot && \
 	git config user.email u-boot@denx.de && \
-	# manually apply the bug fix for QEMU 6.1.0 Xilinx Zynq UART emulation codes
-	wget -O - http://patchwork.ozlabs.org/project/qemu-devel/patch/20210823020813.25192-2-bmeng.cn@gmail.com/mbox/ | git am && \
 	./configure --prefix=/opt/qemu --target-list="aarch64-softmmu,arm-softmmu,i386-softmmu,m68k-softmmu,mips-softmmu,mips64-softmmu,mips64el-softmmu,mipsel-softmmu,ppc-softmmu,riscv32-softmmu,riscv64-softmmu,sh4-softmmu,x86_64-softmmu,xtensa-softmmu" && \
 	make -j$(nproc) all install && \
 	rm -rf /tmp/qemu
-
-# Build QEMU supporting Nokia n900 emulation
-RUN mkdir -p /opt/nokia && \
-	cd /tmp && \
-	git clone https://git.linaro.org/qemu/qemu-linaro.git && \
-	cd /tmp/qemu-linaro && \
-	git checkout 8f8d8e0796efe1a6f34cdd83fb798f3c41217ec1 && \
-	./configure --enable-system --target-list=arm-softmmu \
-	--python=/usr/bin/python2.7 --disable-sdl --disable-gtk \
-	--disable-curses --audio-drv-list= --audio-card-list= \
-	--disable-werror --disable-xen --disable-xen-pci-passthrough \
-	--disable-brlapi --disable-vnc --disable-curl --disable-slirp \
-	--disable-kvm --disable-user --disable-linux-user --disable-bsd-user \
-	--disable-guest-base --disable-uuid --disable-vde --disable-linux-aio \
-	--disable-cap-ng --disable-attr --disable-blobs --disable-docs \
-	--disable-spice --disable-libiscsi --disable-smartcard-nss \
-	--disable-usb-redir --disable-guest-agent --disable-seccomp \
-	--disable-glusterfs --disable-nptl --disable-fdt && \
-	make -j$(nproc) && \
-	cp /tmp/qemu-linaro/arm-softmmu/qemu-system-arm /opt/nokia && \
-	rm -rf /tmp/qemu-linaro
 
 # Build genimage (required by some targets to generate disk images)
 RUN wget -O - https://github.com/pengutronix/genimage/releases/download/v14/genimage-14.tar.xz | tar -C /tmp -xJ && \
@@ -250,16 +228,6 @@ RUN mkdir /tmp/trace && \
     sudo make install && \
     rm -rf /tmp/trace
 
-# Files to run Nokia RX-51 (aka N900) tests
-RUN mkdir -p /opt/nokia && \
-	cd /opt/nokia && \
-	wget https://raw.githubusercontent.com/pali/u-boot-maemo/master/debian/u-boot-gen-combined && \
-	chmod 0755 u-boot-gen-combined && \
-	wget http://repository.maemo.org/qemu-n900/qemu-n900.tar.gz && \
-	wget http://repository.maemo.org/pool/maemo5.0/free/k/kernel/kernel_2.6.28-20103103+0m5_armel.deb && \
-	wget http://repository.maemo.org/pool/maemo5.0/free/g/glibc/libc6_2.5.1-1eglibc27+0m5_armel.deb && \
-	wget http://repository.maemo.org/pool/maemo5.0/free/b/busybox/busybox_1.10.2.legal-1osso30+0m5_armel.deb
-
 # Create our user/group
 RUN echo uboot ALL=NOPASSWD: ALL > /etc/sudoers.d/uboot
 RUN useradd -m -U uboot
@@ -278,8 +246,7 @@ RUN virtualenv -p /usr/bin/python3 /tmp/venv && \
 
 # Create the buildman config file
 RUN /bin/echo -e "[toolchain]\nroot = /usr" > ~/.buildman
-RUN /bin/echo -e "kernelorg = /opt/gcc-12.2.0-nolibc/*" >> ~/.buildman
-RUN /bin/echo -e "arc = /opt/arc_gnu_2021.03_prebuilt_uclibc_le_archs_linux_install" >> ~/.buildman
+RUN /bin/echo -e "kernelorg = /opt/gcc-13.1.0-nolibc/*" >> ~/.buildman
 RUN /bin/echo -e "\n[toolchain-prefix]\nxtensa = /opt/2020.07/xtensa-dc233c-elf/bin/xtensa-dc233c-elf-" >> ~/.buildman;
 RUN /bin/echo -e "\n[toolchain-alias]\nsh = sh2" >> ~/.buildman
 RUN /bin/echo -e "\nsandbox = x86_64" >> ~/.buildman

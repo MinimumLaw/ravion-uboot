@@ -163,6 +163,15 @@
 		};
 	};
 
+	timer {
+		compatible = "riscv,timer";
+		interrupts-extended = <&cpu0_intc 5>,
+				      <&cpu1_intc 5>,
+				      <&cpu2_intc 5>,
+				      <&cpu3_intc 5>,
+				      <&cpu4_intc 5>;
+	};
+
 	osc: oscillator {
 		compatible = "fixed-clock";
 		clock-output-names = "osc";
@@ -233,6 +242,13 @@
 		compatible = "fixed-clock";
 		clock-output-names = "mclk_ext";
 		#clock-cells = <0>;
+	};
+
+	stmmac_axi_setup: stmmac-axi-config {
+		snps,lpi_en;
+		snps,wr_osr_lmt = <4>;
+		snps,rd_osr_lmt = <4>;
+		snps,blen = <256 128 64 32 0 0 0>;
 	};
 
 	soc {
@@ -480,19 +496,29 @@
 				 <&gmac1_rgmii_rxin>,
 				 <&i2stx_bclk_ext>, <&i2stx_lrck_ext>,
 				 <&i2srx_bclk_ext>, <&i2srx_lrck_ext>,
-				 <&tdm_ext>, <&mclk_ext>;
+				 <&tdm_ext>, <&mclk_ext>,
+				 <&pllclk JH7110_SYSCLK_PLL0_OUT>,
+				 <&pllclk JH7110_SYSCLK_PLL1_OUT>,
+				 <&pllclk JH7110_SYSCLK_PLL2_OUT>;
 			clock-names = "osc", "gmac1_rmii_refin",
 				      "gmac1_rgmii_rxin",
 				      "i2stx_bclk_ext", "i2stx_lrck_ext",
 				      "i2srx_bclk_ext", "i2srx_lrck_ext",
-				      "tdm_ext", "mclk_ext";
+				      "tdm_ext", "mclk_ext",
+				      "pll0_out", "pll1_out", "pll2_out";
 			#clock-cells = <1>;
 			#reset-cells = <1>;
 		};
 
 		sys_syscon: sys_syscon@13030000 {
-			compatible = "starfive,jh7110-sys-syscon","syscon";
+			compatible = "starfive,jh7110-sys-syscon","syscon", "simple-mfd";
 			reg = <0x0 0x13030000 0x0 0x1000>;
+
+			pllclk: clock-controller {
+				compatible = "starfive,jh7110-pll";
+				clocks = <&osc>;
+				#clock-cells = <1>;
+			};
 		};
 
 		sysgpio: pinctrl@13040000 {
@@ -539,6 +565,68 @@
 			status = "disabled";
 		};
 
+		gmac0: ethernet@16030000 {
+			compatible = "starfive,jh7110-dwmac", "snps,dwmac-5.20";
+			reg = <0x0 0x16030000 0x0 0x10000>;
+			clocks = <&aoncrg JH7110_AONCLK_GMAC0_AXI>,
+				 <&aoncrg JH7110_AONCLK_GMAC0_AHB>,
+				 <&syscrg JH7110_SYSCLK_GMAC0_PTP>,
+				 <&aoncrg JH7110_AONCLK_GMAC0_TX_INV>,
+				 <&syscrg JH7110_SYSCLK_GMAC0_GTXC>;
+			clock-names = "stmmaceth", "pclk", "ptp_ref",
+				      "tx", "gtx";
+			resets = <&aoncrg JH7110_AONRST_GMAC0_AXI>,
+				 <&aoncrg JH7110_AONRST_GMAC0_AHB>;
+			reset-names = "stmmaceth", "ahb";
+			interrupts = <7>, <6>, <5>;
+			interrupt-names = "macirq", "eth_wake_irq", "eth_lpi";
+			snps,multicast-filter-bins = <64>;
+			snps,perfect-filter-entries = <8>;
+			rx-fifo-depth = <2048>;
+			tx-fifo-depth = <2048>;
+			snps,fixed-burst;
+			snps,no-pbl-x8;
+			snps,force_thresh_dma_mode;
+			snps,axi-config = <&stmmac_axi_setup>;
+			snps,tso;
+			snps,en-tx-lpi-clockgating;
+			snps,txpbl = <16>;
+			snps,rxpbl = <16>;
+			starfive,syscon = <&aon_syscon 0xc 0x12>;
+			status = "disabled";
+		};
+
+		gmac1: ethernet@16040000 {
+			compatible = "starfive,jh7110-dwmac", "snps,dwmac-5.20";
+			reg = <0x0 0x16040000 0x0 0x10000>;
+			clocks = <&syscrg JH7110_SYSCLK_GMAC1_AXI>,
+				 <&syscrg JH7110_SYSCLK_GMAC1_AHB>,
+				 <&syscrg JH7110_SYSCLK_GMAC1_PTP>,
+				 <&syscrg JH7110_SYSCLK_GMAC1_TX_INV>,
+				 <&syscrg JH7110_SYSCLK_GMAC1_GTXC>;
+			clock-names = "stmmaceth", "pclk", "ptp_ref",
+				      "tx", "gtx";
+			resets = <&syscrg JH7110_SYSRST_GMAC1_AXI>,
+				 <&syscrg JH7110_SYSRST_GMAC1_AHB>;
+			reset-names = "stmmaceth", "ahb";
+			interrupts = <78>, <77>, <76>;
+			interrupt-names = "macirq", "eth_wake_irq", "eth_lpi";
+			snps,multicast-filter-bins = <64>;
+			snps,perfect-filter-entries = <8>;
+			rx-fifo-depth = <2048>;
+			tx-fifo-depth = <2048>;
+			snps,fixed-burst;
+			snps,no-pbl-x8;
+			snps,force_thresh_dma_mode;
+			snps,axi-config = <&stmmac_axi_setup>;
+			snps,tso;
+			snps,en-tx-lpi-clockgating;
+			snps,txpbl = <16>;
+			snps,rxpbl = <16>;
+			starfive,syscon = <&sys_syscon 0x90 0x2>;
+			status = "disabled";
+		};
+
 		aoncrg: clock-controller@17000000 {
 			compatible = "starfive,jh7110-aoncrg";
 			reg = <0x0 0x17000000 0x0 0x10000>;
@@ -568,6 +656,80 @@
 			#interrupt-cells = <2>;
 			gpio-controller;
 			#gpio-cells = <2>;
+		};
+
+		pcie0: pcie@2b000000 {
+			compatible = "starfive,jh7110-pcie";
+			reg = <0x0 0x2b000000 0x0 0x1000000
+			       0x9 0x40000000 0x0 0x10000000>;
+			reg-names = "reg", "config";
+			#address-cells = <3>;
+			#size-cells = <2>;
+			#interrupt-cells = <1>;
+			ranges = <0x82000000  0x0 0x30000000  0x0 0x30000000 0x0 0x08000000>,
+				 <0xc3000000  0x9 0x00000000  0x9 0x00000000 0x0 0x40000000>;
+			interrupts = <56>;
+			interrupt-parent = <&plic>;
+			interrupt-map-mask = <0x0 0x0 0x0 0x7>;
+			interrupt-map = <0x0 0x0 0x0 0x1 &plic 0x1>,
+					<0x0 0x0 0x0 0x2 &plic 0x2>,
+					<0x0 0x0 0x0 0x3 &plic 0x3>,
+					<0x0 0x0 0x0 0x4 &plic 0x4>;
+			msi-parent = <&plic>;
+			device_type = "pci";
+			starfive,stg-syscon = <&stg_syscon 0xc0 0xc4 0x130 0x1b8>;
+			bus-range = <0x0 0xff>;
+			clocks = <&syscrg JH7110_SYSCLK_NOC_BUS_STG_AXI>,
+				 <&stgcrg JH7110_STGCLK_PCIE0_TL>,
+				 <&stgcrg JH7110_STGCLK_PCIE0_AXI>,
+				 <&stgcrg JH7110_STGCLK_PCIE0_APB>;
+			clock-names = "noc", "tl", "axi", "apb";
+			resets = <&stgcrg JH7110_STGRST_PCIE0_MST0>,
+				 <&stgcrg JH7110_STGRST_PCIE0_SLV0>,
+				 <&stgcrg JH7110_STGRST_PCIE0_SLV>,
+				 <&stgcrg JH7110_STGRST_PCIE0_BRG>,
+				 <&stgcrg JH7110_STGRST_PCIE0_CORE>,
+				 <&stgcrg JH7110_STGRST_PCIE0_APB>;
+			reset-names = "mst0", "slv0", "slv", "brg",
+				      "core", "apb";
+			status = "disabled";
+		};
+
+		pcie1: pcie@2c000000 {
+			compatible = "starfive,jh7110-pcie";
+			reg = <0x0 0x2c000000 0x0 0x1000000
+			       0x9 0xc0000000 0x0 0x10000000>;
+			reg-names = "reg", "config";
+			#address-cells = <3>;
+			#size-cells = <2>;
+			#interrupt-cells = <1>;
+			ranges = <0x82000000  0x0 0x38000000  0x0 0x38000000 0x0 0x08000000>,
+				 <0xc3000000  0x9 0x80000000  0x9 0x80000000 0x0 0x40000000>;
+			interrupts = <57>;
+			interrupt-parent = <&plic>;
+			interrupt-map-mask = <0x0 0x0 0x0 0x7>;
+			interrupt-map = <0x0 0x0 0x0 0x1 &plic 0x1>,
+					<0x0 0x0 0x0 0x2 &plic 0x2>,
+					<0x0 0x0 0x0 0x3 &plic 0x3>,
+					<0x0 0x0 0x0 0x4 &plic 0x4>;
+			msi-parent = <&plic>;
+			device_type = "pci";
+			starfive,stg-syscon = <&stg_syscon 0x270 0x274 0x2e0 0x368>;
+			bus-range = <0x0 0xff>;
+			clocks = <&syscrg JH7110_SYSCLK_NOC_BUS_STG_AXI>,
+				 <&stgcrg JH7110_STGCLK_PCIE1_TL>,
+				 <&stgcrg JH7110_STGCLK_PCIE1_AXI>,
+				 <&stgcrg JH7110_STGCLK_PCIE1_APB>;
+			clock-names = "noc", "tl", "axi", "apb";
+			resets = <&stgcrg JH7110_STGRST_PCIE1_MST0>,
+				 <&stgcrg JH7110_STGRST_PCIE1_SLV0>,
+				 <&stgcrg JH7110_STGRST_PCIE1_SLV>,
+				 <&stgcrg JH7110_STGRST_PCIE1_BRG>,
+				 <&stgcrg JH7110_STGRST_PCIE1_CORE>,
+				 <&stgcrg JH7110_STGRST_PCIE1_APB>;
+			reset-names = "mst0", "slv0", "slv", "brg",
+				      "core", "apb";
+			status = "disabled";
 		};
 	};
 };

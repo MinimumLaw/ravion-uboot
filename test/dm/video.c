@@ -15,6 +15,7 @@
 #include <video.h>
 #include <video_console.h>
 #include <asm/test.h>
+#include <asm/sdl.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
 #include <test/test.h>
@@ -556,7 +557,7 @@ static int dm_test_video_truetype(struct unit_test_state *uts)
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(12237, compress_frame_buffer(uts, dev));
+	ut_asserteq(12174, compress_frame_buffer(uts, dev));
 
 	return 0;
 }
@@ -577,7 +578,7 @@ static int dm_test_video_truetype_scroll(struct unit_test_state *uts)
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(35030, compress_frame_buffer(uts, dev));
+	ut_asserteq(34287, compress_frame_buffer(uts, dev));
 
 	return 0;
 }
@@ -598,7 +599,7 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(29018, compress_frame_buffer(uts, dev));
+	ut_asserteq(29471, compress_frame_buffer(uts, dev));
 
 	return 0;
 }

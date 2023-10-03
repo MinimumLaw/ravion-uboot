@@ -508,6 +508,7 @@ config SHA256
 
 config SHA512
 	bool "Enable SHA512 support"
+	default y if TI_SECURE_DEVICE && FIT_SIGNATURE
 	help
 	  This option enables support of hashing using SHA512 algorithm.
 	  The hash is calculated in software.
@@ -532,6 +533,17 @@ config SHA_HW_ACCEL
 	  hash_lookup_algo() function.
 
 if SPL
+
+config SPL_CRC32
+	bool "Enable CRC32 support in SPL"
+	default y if SPL_LEGACY_IMAGE_SUPPORT || SPL_EFI_PARTITION
+	default y if SPL_ENV_SUPPORT || TPL_BLOBLIST
+	help
+	  This option enables support of hashing using CRC32 algorithm.
+	  The CRC32 algorithm produces 32-bit checksum value. For FIT
+	  images, this is the least secure type of checksum, suitable for
+	  detected accidental image corruption. For secure applications you
+	  should consider SHA256 or SHA384.
 
 config SPL_SHA1
 	bool "Enable SHA1 support in SPL"

@@ -96,12 +96,14 @@
 
 		theme {
 			font-size = <30>;
+			menu-inset = <3>;
+			menuitem-gap-y = <1>;
 		};
 
 		/*
 		 * This is used for the VBE OS-request tests. A FAT filesystem
 		 * created in a partition with the VBE information appearing
-		 * before the parititon starts
+		 * before the partition starts
 		 */
 		firmware0 {
 			bootph-verify;
@@ -137,6 +139,15 @@
 			version-offset = <0xdffe00>;
 			version-size = <0x100>;
 		};
+	};
+
+	cedit: cedit {
+	};
+
+	cedit-theme {
+		font-size = <30>;
+		menu-inset = <3>;
+		menuitem-gap-y = <1>;
 	};
 
 	fuzzing-engine {
@@ -1820,6 +1831,14 @@
 	extcon {
 		compatible = "sandbox,extcon";
 	};
+
+	arm-ffa-emul {
+		compatible = "sandbox,arm-ffa-emul";
+
+		sandbox-arm-ffa {
+				compatible = "sandbox,arm-ffa";
+		};
+	};
 };
 
 #include "sandbox_pmic.dtsi"
@@ -1828,3 +1847,5 @@
 #ifdef CONFIG_SANDBOX_VPL
 #include "sandbox_vpl.dtsi"
 #endif
+
+#include "cedit.dtsi"

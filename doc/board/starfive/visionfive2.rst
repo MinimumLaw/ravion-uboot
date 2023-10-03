@@ -20,6 +20,8 @@ The support for following drivers are already enabled:
 3. StarFive JH7110 reset Driver.
 4. Cadence QSPI controller Driver.
 5. MMC SPI Driver for MMC/SD support.
+6. PLDA PCIE controller driver.
+7. On-board VL805 PCIE-USB controller driver.
 
 Booting from MMC using U-Boot SPL
 ---------------------------------
@@ -62,7 +64,7 @@ Now build the U-Boot SPL and U-Boot proper
 .. code-block:: console
 
 	cd <U-Boot-dir>
-	make starfive_visionfive2_13b_defconfig
+	make starfive_visionfive2_defconfig
 	make OPENSBI=$(opensbi_dir)/opensbi/build/platform/generic/firmware/fw_dynamic.bin
 
 This will generate spl/u-boot-spl.bin and FIT image (u-boot.itb)
@@ -118,7 +120,7 @@ Program the SD card
 	sudo cp u-boot.itb /mnt/
 	sudo cp Image.gz /mnt/
 	sudo cp initramfs.cpio.gz /mnt/
-	sudo cp jh7110-starfive-visionfive-2-v1.3b.dtb /mnt/
+	sudo cp jh7110-starfive-visionfive-2.dtb /mnt/
 	sudo umount /mnt
 
 Booting
@@ -206,16 +208,16 @@ Sample boot log from StarFive VisionFive2 board
 	Working FDT set to ff74a340
 	Hit any key to stop autoboot:  0
 	StarFive #
-	StarFive #version
+	StarFive # version
 	U-Boot 2023.04-rc2-00055-gfc43b9c51a-dirty (Mar 02 2023 - 10:51:39 +0800)
 
 	riscv64-buildroot-linux-gnu-gcc.br_real (Buildroot VF2_515_v1.0.0_rc4) 10.3.0
 	GNU ld (GNU Binutils) 2.36.1
 	StarFive #
-	StarFive #mmc dev 1
+	StarFive # mmc dev 1
 	switch to partitions #0, OK
 	mmc1 is current device
-	StarFive #mmc info
+	StarFive # mmc info
 	Device: mmc@16020000
 	Manufacturer ID: 9f
 	OEM: 5449
@@ -229,7 +231,7 @@ Sample boot log from StarFive VisionFive2 board
 	Bus Width: 4-bit
 	Erase Group Size: 512 Bytes
 	StarFive #
-	StarFive #mmc part
+	StarFive # mmc part
 
 	Partition Map for MMC device 1  --   Partition Type: EFI
 
@@ -253,7 +255,7 @@ Sample boot log from StarFive VisionFive2 board
 					(data)
 			guid:   539a6df9-4655-4953-8541-733ca36eb1db
 	StarFive #
-	StarFive #fatls mmc 1:3
+	StarFive # fatls mmc 1:3
 	6429424   Image.gz
 	717705   u-boot.itb
 	125437   u-boot-spl.bin.normal.out
@@ -262,13 +264,13 @@ Sample boot log from StarFive VisionFive2 board
 
 	5 file(s), 0 dir(s)
 
-	StarFive #fatload mmc 1:3 ${kernel_addr_r} Image.gz
+	StarFive # fatload mmc 1:3 ${kernel_addr_r} Image.gz
 	6429424 bytes read in 394 ms (15.6 MiB/s)
-	StarFive #fatload mmc 1:3 ${fdt_addr_r} jh7110-starfive-visionfive-2-v1.3b.dtb
+	StarFive # fatload mmc 1:3 ${fdt_addr_r} jh7110-starfive-visionfive-2.dtb
 	11285 bytes read in 5 ms (2.2 MiB/s)
-	StarFive #fatload mmc 1:3 ${ramdisk_addr_r} initramfs.cpio.gz
+	StarFive # fatload mmc 1:3 ${ramdisk_addr_r} initramfs.cpio.gz
 	152848495 bytes read in 9271 ms (15.7 MiB/s)
-	StarFive #booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdt_addr_r}
+	StarFive # booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdt_addr_r}
 	Uncompressing Kernel Image
 	## Flattened Device Tree blob at 46000000
 	Booting using the fdt blob at 0x46000000

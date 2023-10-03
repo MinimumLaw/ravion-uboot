@@ -706,8 +706,7 @@ static efi_status_t tcg2_create_digest(const u8 *input, u32 length,
 			sha512_finish(&ctx_512, final);
 			break;
 		default:
-			EFI_PRINT("Unsupported algorithm %x\n", hash_alg);
-			return EFI_INVALID_PARAMETER;
+			continue;
 		}
 		digest_list->digests[digest_list->count].hash_alg = hash_alg;
 		memcpy(&digest_list->digests[digest_list->count].digest, final,
@@ -930,8 +929,7 @@ static efi_status_t tcg2_hash_pe_image(void *efi, u64 efi_size,
 			hash_calculate("sha512", regs->reg, regs->num, hash);
 			break;
 		default:
-			EFI_PRINT("Unsupported algorithm %x\n", hash_alg);
-			return EFI_INVALID_PARAMETER;
+			continue;
 		}
 		digest_list->digests[digest_list->count].hash_alg = hash_alg;
 		memcpy(&digest_list->digests[digest_list->count].digest, hash,
@@ -1680,8 +1678,8 @@ void tcg2_uninit(void)
 	if (!is_tcg2_protocol_installed())
 		return;
 
-	ret = efi_remove_protocol(efi_root, &efi_guid_tcg2_protocol,
-				  (void *)&efi_tcg2_protocol);
+	ret = efi_uninstall_multiple_protocol_interfaces(efi_root, &efi_guid_tcg2_protocol,
+							 &efi_tcg2_protocol, NULL);
 	if (ret != EFI_SUCCESS)
 		log_err("Failed to remove EFI TCG2 protocol\n");
 }
@@ -2507,8 +2505,8 @@ efi_status_t efi_tcg2_register(void)
 		goto fail;
 	}
 
-	ret = efi_add_protocol(efi_root, &efi_guid_tcg2_protocol,
-			       (void *)&efi_tcg2_protocol);
+	ret = efi_install_multiple_protocol_interfaces(&efi_root, &efi_guid_tcg2_protocol,
+						       &efi_tcg2_protocol, NULL);
 	if (ret != EFI_SUCCESS) {
 		tcg2_uninit();
 		goto fail;

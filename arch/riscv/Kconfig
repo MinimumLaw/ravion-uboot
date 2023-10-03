@@ -26,6 +26,11 @@ config TARGET_SIFIVE_UNMATCHED
 
 config TARGET_STARFIVE_VISIONFIVE2
 	bool "Support StarFive VisionFive2 Board"
+	select BOARD_LATE_INIT
+
+config TARGET_TH1520_LPI4A
+	bool "Support Sipeed's TH1520 Lichee PI 4A Board"
+	select SYS_CACHE_SHIFT_6
 
 config TARGET_SIPEED_MAIX
 	bool "Support Sipeed Maix Board"
@@ -60,12 +65,21 @@ config SPL_SYS_DCACHE_OFF
 	help
 	  Do not enable data cache in SPL.
 
+config SPL_ZERO_MEM_BEFORE_USE
+	bool "Zero memory before use"
+	depends on SPL
+	default n
+	help
+	  Zero stack/GD/malloc area in SPL before using them, this is needed for
+	  Sifive core devices that uses L2 cache to store SPL.
+
 # board-specific options below
 source "board/AndesTech/ae350/Kconfig"
 source "board/emulation/qemu-riscv/Kconfig"
 source "board/microchip/mpfs_icicle/Kconfig"
 source "board/sifive/unleashed/Kconfig"
 source "board/sifive/unmatched/Kconfig"
+source "board/thead/th1520_lpi4a/Kconfig"
 source "board/openpiton/riscv64/Kconfig"
 source "board/sipeed/maix/Kconfig"
 source "board/starfive/visionfive2/Kconfig"
@@ -185,18 +199,22 @@ config DMA_ADDR_T_64BIT
 	bool
 	default y if 64BIT
 
-config SIFIVE_CLINT
+config RISCV_ACLINT
 	bool
 	depends on RISCV_MMODE
+	select REGMAP
+	select SYSCON
 	help
-	  The SiFive CLINT block holds memory-mapped control and status registers
+	  The RISC-V ACLINT block holds memory-mapped control and status registers
 	  associated with software and timer interrupts.
 
-config SPL_SIFIVE_CLINT
+config SPL_RISCV_ACLINT
 	bool
 	depends on SPL_RISCV_MMODE
+	select SPL_REGMAP
+	select SPL_SYSCON
 	help
-	  The SiFive CLINT block holds memory-mapped control and status registers
+	  The RISC-V ACLINT block holds memory-mapped control and status registers
 	  associated with software and timer interrupts.
 
 config SIFIVE_CACHE

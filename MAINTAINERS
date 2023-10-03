@@ -132,6 +132,7 @@ M:	Tom Rini <trini@konsulko.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-arm.git
 F:	arch/arm/
+F:	arch/arm/dts/Makefile
 F:	cmd/arm/
 
 ARM ALTERA SOCFPGA
@@ -266,12 +267,26 @@ F:	drivers/net/cortina_ni.h
 F:	drivers/net/phy/ca_phy.c
 F:	configs/cortina_presidio-asic-pnand_defconfig
 
+ARM FF-A
+M:	Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+S:	Maintained
+F:	arch/sandbox/include/asm/sandbox_arm_ffa.h
+F:	arch/sandbox/include/asm/sandbox_arm_ffa_priv.h
+F:	cmd/armffa.c
+F:	doc/arch/arm64.ffa.rst
+F:	doc/usage/cmd/armffa.rst
+F:	drivers/firmware/arm-ffa/
+F:	include/arm_ffa.h
+F:	test/cmd/armffa.c
+F:	test/dm/ffa.c
+
 ARM FREESCALE IMX
 M:	Stefano Babic <sbabic@denx.de>
 M:	Fabio Estevam <festevam@gmail.com>
 R:	NXP i.MX U-Boot Team <uboot-imx@nxp.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-imx.git
+F:	arch/Kconfig.nxp
 F:	arch/arm/cpu/arm1136/mx*/
 F:	arch/arm/cpu/arm926ejs/mx*/
 F:	arch/arm/cpu/armv7/vf610/
@@ -282,6 +297,7 @@ F:	arch/arm/include/asm/arch-mx*/
 F:	arch/arm/include/asm/arch-vf610/
 F:	arch/arm/include/asm/mach-imx/
 F:	board/freescale/*mx*/
+F:	board/freescale/common/
 F:	drivers/serial/serial_mxc.c
 
 ARM HISILICON
@@ -343,12 +359,12 @@ F:	drivers/rtc/armada38x.c
 F:	drivers/spi/kirkwood_spi.c
 F:	drivers/spi/mvebu_a3700_spi.c
 F:	drivers/pci/pcie_dw_mvebu.c
+F:	drivers/pci/pcie-xilinx-nwl.c
 F:	drivers/watchdog/armada-37xx-wdt.c
 F:	drivers/watchdog/orion_wdt.c
 F:	include/configs/mv-common.h
 
 ARM MARVELL PCIE CONTROLLER DRIVERS
-M:	Pali Rohár <pali@kernel.org>
 M:	Stefan Roese <sr@denx.de>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-marvell.git
@@ -409,13 +425,21 @@ ARM MICROCHIP/ATMEL AT91
 M:	Eugen Hristev <eugen.hristev@microchip.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-at91.git
+F:	arch/arm/dts/at91*
+F:	arch/arm/dts/sam*
 F:	arch/arm/mach-at91/
 F:	board/atmel/
 F:	drivers/cpu/at91_cpu.c
 F:	drivers/memory/atmel-ebi.c
 F:	drivers/misc/microchip_flexcom.c
 F:	drivers/timer/atmel_tcb_timer.c
+F:	include/dt-bindings/clk/at91.h
+F:	include/dt-bindings/clock/at91.h
+F:	include/dt-bindings/dma/at91.h
+F:	include/dt-bindings/mfd/at91-usart.h
 F:	include/dt-bindings/mfd/atmel-flexcom.h
+F:	include/dt-bindings/pinctrl/at91.h
+F:	include/dt-bindings/sound/microchip,pdmc.h
 F:	drivers/timer/mchp-pit64b-timer.c
 
 ARM MSC SM2S IMX8MP SOM
@@ -459,10 +483,30 @@ F:	configs/cubieboard7_defconfig
 
 ARM RENESAS RMOBILE/R-CAR
 M:	Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
-M:	Marek Vasut <marek.vasut+renesas@gmail.com>
+M:	Marek Vasut <marek.vasut+renesas@mailbox.org>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-sh.git
 F:	arch/arm/mach-rmobile/
+F:	drivers/clk/renesas/
+F:	drivers/gpio/gpio-rcar.c
+F:	drivers/i2c/rcar_*
+F:	drivers/i2c/sh_i2c.c
+F:	drivers/mmc/renesas-sdhi.c
+F:	drivers/mmc/sh_mmcif*
+F:	drivers/mmc/tmio-common*
+F:	drivers/mtd/renesas_rpc_hf.c
+F:	drivers/net/ravb.c
+F:	drivers/net/rswitch.c
+F:	drivers/net/sh_eth*
+F:	drivers/pci/pci-rcar-*
+F:	drivers/phy/phy-rcar-*
+F:	drivers/phy/renesas/
+F:	drivers/pinctrl/renesas/
+F:	drivers/serial/serial_sh*
+F:	drivers/spi/renesas_rpc_spi.c
+F:	drivers/spi/sh_qspi.c
+F:	drivers/sysinfo/rcar3.c
+F:	drivers/usb/host/xhci-rcar*
 
 ARM ROCKCHIP
 M:	Simon Glass <sjg@chromium.org>
@@ -470,12 +514,24 @@ M:	Philipp Tomsich <philipp.tomsich@vrull.eu>
 M:	Kever Yang <kever.yang@rock-chips.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-rockchip.git
+F:	arch/arm/dts/px30*
 F:	arch/arm/dts/rk3*
 F:	arch/arm/dts/rockchip*
-F:	arch/arm/dts/rv1108*
+F:	arch/arm/dts/rv11*
 F:	arch/arm/include/asm/arch-rockchip/
 F:	arch/arm/mach-rockchip/
+F:	board/amarula/vyasa-rk3288/
+F:	board/anbernic/rgxx3_rk3566/
+F:	board/chipspark/popmetal_rk3288
+F:	board/engicam/px30_core/
+F:	board/firefly/
+F:	board/mqmaker/miqi_rk3288/
+F:	board/phytec/phycore_rk3288
+F:	board/pine64
+F:	board/radxa/
 F:	board/rockchip/
+F:	board/theobroma-systems
+F:	board/vamrs/rock960_rk3399/
 F:	drivers/clk/rockchip/
 F:	drivers/gpio/rk_gpio.c
 F:	drivers/misc/rockchip-efuse.c
@@ -577,6 +633,7 @@ F:	include/dt-bindings/clock/stm32mp*
 F:	include/dt-bindings/pinctrl/stm32-pinfunc.h
 F:	include/dt-bindings/reset/stm32mp*
 F:	include/stm32_rcc.h
+F:	tools/logos/st.bmp
 F:	tools/stm32image.c
 N:	stm
 N:	stm32
@@ -666,7 +723,10 @@ F:	drivers/usb/musb-new/ux500.c
 F:	drivers/video/mcde_simple.c
 
 ARM UNIPHIER
-S:	Orphan (Since 2020-09)
+M:	Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
+R:	Dai Okamura <okamura.dai@socionext.com>
+S:	Maintained
+F:	arch/arm/dts/uniphier-*
 F:	arch/arm/mach-uniphier/
 F:	configs/uniphier_*_defconfig
 N:	uniphier
@@ -755,6 +815,7 @@ F:	drivers/spi/zynq_qspi.c
 F:	drivers/spi/zynq_spi.c
 F:	drivers/timer/cadence-ttc.c
 F:	drivers/video/seps525.c
+F:	drivers/video/zynqmp/
 F:	drivers/watchdog/cdns_wdt.c
 F:	include/zynqmppl.h
 F:	include/zynqmp_firmware.h
@@ -838,6 +899,13 @@ M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	tools/buildman/
 
+CAAM
+M:	Gaurav Jain <gaurav.jain@nxp.com>
+S:	Maintained
+F:	arch/arm/dts/ls1021a-twr-u-boot.dtsi
+F:	drivers/crypto/fsl/
+F:	include/fsl_sec.h
+
 CAT
 M:	Roger Knecht <rknecht@pm.me>
 S:	Maintained
@@ -865,6 +933,7 @@ S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-coldfire.git
 F:	arch/m68k/
 F:	doc/arch/m68k.rst
+F:	drivers/watchdog/mcf_wdt.c
 
 CYCLIC
 M:	Stefan Roese <sr@denx.de>
@@ -948,7 +1017,6 @@ F:	tools/mkeficapsule.c
 
 ENVIRONMENT
 M:	Joe Hershberger <joe.hershberger@ni.com>
-R:	Wolfgang Denk <wd@denx.de>
 S:	Maintained
 F:	env/
 F:	include/env*
@@ -958,7 +1026,6 @@ F:	tools/mkenvimage.c
 
 ENVIRONMENT AS TEXT
 M:	Simon Glass <sjg@chromium.org>
-R:	Wolfgang Denk <wd@denx.de>
 S:	Maintained
 F:	doc/usage/environment.rst
 F:	scripts/env2string.awk
@@ -1276,8 +1343,7 @@ F:	drivers/power/
 F:	include/power/
 
 POWERPC
-M:	Wolfgang Denk <wd@denx.de>
-S:	Maintained
+S:	Orphan (Since 2022-10-21)
 F:	arch/powerpc/
 
 POWERPC MPC8XX
@@ -1328,7 +1394,7 @@ F:	doc/arch/riscv.rst
 F:	doc/usage/sbi.rst
 F:	drivers/sysreset/sysreset_sbi.c
 F:	drivers/timer/andes_plmt_timer.c
-F:	drivers/timer/sifive_clint_timer.c
+F:	drivers/timer/riscv_aclint_timer.c
 F:	tools/prelink-riscv.c
 
 RISC-V CANAAN KENDRYTE K210
@@ -1532,7 +1598,8 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-ubi.git
 F:	drivers/mtd/ubi/
 
 UFS
-M:	Faiz Abbas <faiz_abbas@ti.com>
+M:	Bhupesh Sharma <bhupesh.linux@gmail.com>
+M:	Neha Malcom Francis <n-francis@ti.com>
 S:	Maintained
 F:	drivers/ufs/
 
@@ -1552,6 +1619,11 @@ S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-usb.git topic-xhci
 F:	drivers/usb/host/xhci*
 F:	include/usb/xhci.h
+
+UUID testing
+M:	Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
+S:	Maintained
+F:	test/lib/uuid.c
 
 VIDEO
 M:	Anatolij Gustschin <agust@denx.de>
@@ -1625,10 +1697,3 @@ T:	git https://source.denx.de/u-boot/u-boot.git
 F:	configs/tools-only_defconfig
 F:	*
 F:	*/
-
-CAAM
-M:	Gaurav Jain <gaurav.jain@nxp.com>
-S:	Maintained
-F:	arch/arm/dts/ls1021a-twr-u-boot.dtsi
-F:	drivers/crypto/fsl/
-F:	include/fsl_sec.h

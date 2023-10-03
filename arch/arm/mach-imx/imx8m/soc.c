@@ -244,7 +244,7 @@ int dram_init(void)
 		return ret;
 
 	/* rom_pointer[1] contains the size of TEE occupies */
-	if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && rom_pointer[1])
+	if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && !IS_ENABLED(CONFIG_SPL_BUILD) && rom_pointer[1])
 		gd->ram_size = sdram_size - rom_pointer[1];
 	else
 		gd->ram_size = sdram_size;
@@ -273,7 +273,7 @@ int dram_init_banksize(void)
 	}
 
 	gd->bd->bi_dram[bank].start = PHYS_SDRAM;
-	if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && rom_pointer[1]) {
+	if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && !IS_ENABLED(CONFIG_SPL_BUILD) && rom_pointer[1]) {
 		phys_addr_t optee_start = (phys_addr_t)rom_pointer[0];
 		phys_size_t optee_size = (size_t)rom_pointer[1];
 
@@ -318,7 +318,8 @@ phys_size_t get_effective_memsize(void)
 			sdram_b1_size = sdram_size;
 		}
 
-		if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && rom_pointer[1]) {
+		if (!IS_ENABLED(CONFIG_ARMV8_PSCI) && !IS_ENABLED(CONFIG_SPL_BUILD) &&
+		    rom_pointer[1]) {
 			/* We will relocate u-boot to Top of dram1. Tee position has two cases:
 			 * 1. At the top of dram1,  Then return the size removed optee size.
 			 * 2. In the middle of dram1, return the size of dram1.
@@ -333,7 +334,7 @@ phys_size_t get_effective_memsize(void)
 	}
 }
 
-phys_size_t board_get_usable_ram_top(phys_size_t total_size)
+phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
 {
 	ulong top_addr;
 
@@ -737,7 +738,7 @@ static int disable_fdt_nodes(void *blob, const char *const nodes_path[], int siz
 		if (nodeoff < 0)
 			continue; /* Not found, skip it */
 
-		printf("Found %s node\n", nodes_path[i]);
+		debug("Found %s node\n", nodes_path[i]);
 
 add_status:
 		rc = fdt_setprop(blob, nodeoff, "status", status, strlen(status) + 1);
@@ -1266,7 +1267,7 @@ int ft_system_setup(void *blob, struct bd_info *bd)
 		if (nodeoff >= 0) {
 			const char *speed = "high-speed";
 
-			printf("Found %s node\n", usb_dwc3_path[v]);
+			debug("Found %s node\n", usb_dwc3_path[v]);
 
 usb_modify_speed:
 

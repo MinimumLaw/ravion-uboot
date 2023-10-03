@@ -330,7 +330,7 @@ __weak int mach_cpu_init(void)
 }
 
 /* Get the top of usable RAM */
-__weak phys_size_t board_get_usable_ram_top(phys_size_t total_size)
+__weak phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
 {
 #if defined(CFG_SYS_SDRAM_BASE) && CFG_SYS_SDRAM_BASE > 0
 	/*
@@ -411,7 +411,15 @@ __weak int arch_reserve_mmu(void)
 
 static int reserve_video(void)
 {
-	if (IS_ENABLED(CONFIG_VIDEO)) {
+	if (IS_ENABLED(CONFIG_SPL_VIDEO_HANDOFF) && spl_phase() > PHASE_SPL) {
+		struct video_handoff *ho;
+
+		ho = bloblist_find(BLOBLISTT_U_BOOT_VIDEO, sizeof(*ho));
+		if (!ho)
+			return log_msg_ret("blf", -ENOENT);
+		video_reserve_from_bloblist(ho);
+		gd->relocaddr = ho->fb;
+	} else if (CONFIG_IS_ENABLED(VIDEO)) {
 		ulong addr;
 		int ret;
 
@@ -633,8 +641,6 @@ static int init_post(void)
 static int reloc_fdt(void)
 {
 	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
-		if (gd->flags & GD_FLG_SKIP_RELOC)
-			return 0;
 		if (gd->new_fdt) {
 			memcpy(gd->new_fdt, gd->fdt_blob,
 			       fdt_totalsize(gd->fdt_blob));
@@ -731,8 +737,7 @@ static int fix_fdt(void)
 #endif
 
 /* ARM calls relocate_code from its crt0.S */
-#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
-		!CONFIG_IS_ENABLED(X86_64)
+#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
 
 static int jump_to_copy(void)
 {
@@ -754,7 +759,11 @@ static int jump_to_copy(void)
 	 * (CPU cache)
 	 */
 	arch_setup_gd(gd->new_gd);
-	board_init_f_r_trampoline(gd->start_addr_sp);
+# if CONFIG_IS_ENABLED(X86_64)
+		board_init_f_r_trampoline64(gd->new_gd, gd->start_addr_sp);
+# else
+		board_init_f_r_trampoline(gd->start_addr_sp);
+# endif
 #else
 	relocate_code(gd->start_addr_sp, gd->new_gd, gd->relocaddr);
 #endif
@@ -969,8 +978,7 @@ static const init_fnc_t init_sequence_f[] = {
 	 * watchdog device is not serviced is as small as possible.
 	 */
 	cyclic_unregister_all,
-#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
-		!CONFIG_IS_ENABLED(X86_64)
+#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
 	jump_to_copy,
 #endif
 	NULL,
