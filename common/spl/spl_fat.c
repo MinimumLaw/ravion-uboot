@@ -25,7 +25,7 @@ static int spl_register_fat_device(struct blk_desc *block_dev, int partition)
 	int err = 0;
 
 	if (fat_registered)
-		return err;
+		printf("FAT already registered, force re-register\n");
 
 	err = fat_register_device(block_dev, partition);
 	if (err) {

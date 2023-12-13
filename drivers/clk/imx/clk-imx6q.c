@@ -125,6 +125,8 @@ static int imx6q_clk_probe(struct udevice *dev)
 	       imx_clk_divider("ipg", "ahb", base + 0x14, 8, 2));
 	clk_dm(IMX6QDL_CLK_IPG_PER,
 	       imx_clk_divider("ipg_per", "ipg", base + 0x1c, 0, 6));
+	clk_dm(IMX6QDL_CLK_USBOH3,
+	       imx_clk_gate2("usboh3", "ipg",   base + 0x80, 0));
 	clk_dm(IMX6QDL_CLK_I2C1,
 	       imx_clk_gate2("i2c1", "ipg_per", base + 0x70, 6));
 	clk_dm(IMX6QDL_CLK_I2C2,

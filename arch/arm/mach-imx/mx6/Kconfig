@@ -537,6 +537,23 @@ config TARGET_PCM058
 	select OF_CONTROL
 	imply CMD_DM
 
+config TARGET_RAVION_IMX6
+	bool "OAO Radioavionica Ravion200 iMX6 QuadPlus/DualLite module"
+	depends on MX6Q || MX6QDL
+	select DM
+	select DM_GPIO
+	select DM_I2C
+	select DM_PMIC
+	select DM_REGULATOR
+	select DM_MMC
+	select DM_ETH
+	select DM_SERIAL
+	select DM_THERMAL
+	select DM_USB
+	select SUPPORT_SPL
+	imply DISTRO_DEFAULTS
+	imply CMD_DM
+
 config TARGET_PCL063
 	bool "PHYTEC PCL063 (phyCORE-i.MX6UL)"
 	depends on MX6UL
@@ -705,6 +722,7 @@ source "board/softing/vining_2000/Kconfig"
 source "board/liebherr/display5/Kconfig"
 source "board/liebherr/mccmon6/Kconfig"
 source "board/logicpd/imx6/Kconfig"
+source "board/ravion/ravion/Kconfig"
 source "board/solidrun/mx6cuboxi/Kconfig"
 source "board/somlabs/visionsom-6ull/Kconfig"
 source "board/technexion/pico-imx6/Kconfig"
