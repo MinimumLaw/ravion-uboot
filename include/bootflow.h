@@ -43,9 +43,14 @@ enum bootflow_state_t {
  *	and it is using the prior-stage FDT, which is the U-Boot control FDT.
  *	This is only possible with the EFI bootmeth (distro-efi) and only when
  *	CONFIG_OF_HAS_PRIOR_STAGE is enabled
+ * @BOOTFLOWF_STATIC_BUF: Indicates that @bflow->buf is statically set, rather
+ *	than being allocated by malloc().
+ * @BOOTFLOWF_USE_BUILTIN_FDT : Indicates that current bootflow uses built-in FDT
  */
 enum bootflow_flags_t {
 	BOOTFLOWF_USE_PRIOR_FDT	= 1 << 0,
+	BOOTFLOWF_STATIC_BUF	= 1 << 1,
+	BOOTFLOWF_USE_BUILTIN_FDT	= 1 << 2,
 };
 
 /**
@@ -72,7 +77,7 @@ enum bootflow_flags_t {
  * @fname: Filename of bootflow file (allocated)
  * @logo: Logo to display for this bootflow (BMP format)
  * @logo_size: Size of the logo in bytes
- * @buf: Bootflow file contents (allocated)
+ * @buf: Bootflow file contents (allocated unless @flags & BOOTFLOWF_STATIC_BUF)
  * @size: Size of bootflow file in bytes
  * @err: Error number received (0 if OK)
  * @os_name: Name of the OS / distro being booted, or NULL if not known
@@ -83,6 +88,7 @@ enum bootflow_flags_t {
  * @flags: Flags for the bootflow (see enum bootflow_flags_t)
  * @cmdline: OS command line, or NULL if not known (allocated)
  * @x86_setup: Pointer to x86 setup block inside @buf, NULL if not present
+ * @bootmeth_priv: Private data for the bootmeth
  */
 struct bootflow {
 	struct list_head bm_node;
@@ -107,7 +113,8 @@ struct bootflow {
 	ulong fdt_addr;
 	int flags;
 	char *cmdline;
-	char *x86_setup;
+	void *x86_setup;
+	void *bootmeth_priv;
 };
 
 /**
@@ -349,6 +356,17 @@ void bootflow_free(struct bootflow *bflow);
  *	be tried again unless something changes
  */
 int bootflow_boot(struct bootflow *bflow);
+
+/**
+ * bootflow_read_all() - Read all bootflow files
+ *
+ * Some bootmeths delay reading of large files until booting is requested. This
+ * causes those files to be read.
+ *
+ * @bflow: Bootflow to read
+ * Return: result of trying to read
+ */
+int bootflow_read_all(struct bootflow *bflow);
 
 /**
  * bootflow_run_boot() - Try to boot a bootflow

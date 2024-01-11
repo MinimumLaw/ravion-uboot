@@ -216,7 +216,7 @@ fdt_high
     0xffffffffffffffff (64-bit machines) then
     the fdt will not be copied at all on boot.  For this
     to work it must reside in writable memory, have
-    sufficient padding on the end of it for u-boot to
+    sufficient padding on the end of it for U-Boot to
     add the information it needs into it, and the memory
     must be accessible by the kernel. This usage is strongly discouraged
     however as it also stops U-Boot from ensuring the device tree starting
@@ -305,6 +305,10 @@ ethrotate
     It just stays at the currently selected interface. When unset or set to
     anything other than "no", U-Boot does go through all
     available network interfaces.
+
+httpdstp
+    If this is set, the value is used for HTTP's TCP
+    destination port instead of the default port 80.
 
 netretry
     When set to "no" each network operation will

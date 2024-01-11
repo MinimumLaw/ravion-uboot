@@ -2,6 +2,7 @@
 
 #include <common.h>
 #include <env.h>
+#include <mapmem.h>
 #include <part.h>
 #include <spl.h>
 #include <asm/u-boot.h>
@@ -53,7 +54,8 @@ int spl_load_image_ext(struct spl_image_info *spl_image,
 		goto end;
 	}
 
-	err = ext4fs_read((char *)spl_image->load_addr, 0, filelen, &actlen);
+	err = ext4fs_read(map_sysmem(spl_image->load_addr, filelen), 0, filelen,
+			  &actlen);
 
 end:
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
@@ -97,7 +99,7 @@ int spl_load_image_ext_os(struct spl_image_info *spl_image,
 			puts("spl: ext4fs_open failed\n");
 			goto defaults;
 		}
-		err = ext4fs_read((void *)CONFIG_SYS_SPL_ARGS_ADDR, 0, filelen, &actlen);
+		err = ext4fs_read((void *)CONFIG_SPL_PAYLOAD_ARGS_ADDR, 0, filelen, &actlen);
 		if (err < 0) {
 			printf("spl: error reading image %s, err - %d, falling back to default\n",
 			       file, err);
@@ -127,7 +129,7 @@ defaults:
 	if (err < 0)
 		puts("spl: ext4fs_open failed\n");
 
-	err = ext4fs_read((void *)CONFIG_SYS_SPL_ARGS_ADDR, 0, filelen, &actlen);
+	err = ext4fs_read((void *)CONFIG_SPL_PAYLOAD_ARGS_ADDR, 0, filelen, &actlen);
 	if (err < 0) {
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 		printf("%s: error reading image %s, err - %d\n",

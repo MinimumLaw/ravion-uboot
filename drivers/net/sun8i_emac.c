@@ -29,6 +29,7 @@
 #include <net.h>
 #include <reset.h>
 #include <wait_bit.h>
+#include <power/regulator.h>
 
 #define MDIO_CMD_MII_BUSY		BIT(0)
 #define MDIO_CMD_MII_WRITE		BIT(1)
@@ -167,9 +168,8 @@ struct emac_eth_dev {
 	struct clk ephy_clk;
 	struct reset_ctl tx_rst;
 	struct reset_ctl ephy_rst;
-#if CONFIG_IS_ENABLED(DM_GPIO)
 	struct gpio_desc reset_gpio;
-#endif
+	struct udevice *phy_reg;
 };
 
 
@@ -615,7 +615,6 @@ err_tx_clk:
 	return ret;
 }
 
-#if CONFIG_IS_ENABLED(DM_GPIO)
 static int sun8i_mdio_reset(struct mii_dev *bus)
 {
 	struct udevice *dev = bus->priv;
@@ -647,7 +646,6 @@ static int sun8i_mdio_reset(struct mii_dev *bus)
 
 	return 0;
 }
-#endif
 
 static int sun8i_mdio_init(const char *name, struct udevice *priv)
 {
@@ -662,9 +660,7 @@ static int sun8i_mdio_init(const char *name, struct udevice *priv)
 	bus->write = sun8i_mdio_write;
 	snprintf(bus->name, sizeof(bus->name), name);
 	bus->priv = (void *)priv;
-#if CONFIG_IS_ENABLED(DM_GPIO)
 	bus->reset = sun8i_mdio_reset;
-#endif
 
 	return  mdio_register(bus);
 }
@@ -719,6 +715,9 @@ static int sun8i_emac_eth_probe(struct udevice *dev)
 		return ret;
 
 	sun8i_emac_set_syscon(sun8i_pdata, priv);
+
+	if (priv->phy_reg)
+		regulator_set_enable(priv->phy_reg, true);
 
 	sun8i_mdio_init(dev->name, dev);
 	priv->bus = miiphy_get_dev_by_name(dev->name);
@@ -778,9 +777,7 @@ static int sun8i_emac_eth_of_to_plat(struct udevice *dev)
 	const fdt32_t *reg;
 	int node = dev_of_offset(dev);
 	int offset = 0;
-#if CONFIG_IS_ENABLED(DM_GPIO)
 	int reset_flags = GPIOD_IS_OUT;
-#endif
 	int ret;
 
 	pdata->iobase = dev_read_addr(dev);
@@ -829,6 +826,8 @@ static int sun8i_emac_eth_of_to_plat(struct udevice *dev)
 
 	priv->sysctl_reg = (void *)syscon_base + priv->variant->syscon_offset;
 
+	device_get_supply_regulator(dev, "phy-supply", &priv->phy_reg);
+
 	pdata->phy_interface = -1;
 	priv->phyaddr = -1;
 	priv->use_internal_phy = false;
@@ -865,7 +864,6 @@ static int sun8i_emac_eth_of_to_plat(struct udevice *dev)
 		printf("%s: Invalid RX delay value %d\n", __func__,
 		       sun8i_pdata->rx_delay_ps);
 
-#if CONFIG_IS_ENABLED(DM_GPIO)
 	if (fdtdec_get_bool(gd->fdt_blob, dev_of_offset(dev),
 			    "snps,reset-active-low"))
 		reset_flags |= GPIOD_ACTIVE_LOW;
@@ -880,7 +878,6 @@ static int sun8i_emac_eth_of_to_plat(struct udevice *dev)
 	} else if (ret == -ENOENT) {
 		ret = 0;
 	}
-#endif
 
 	return 0;
 }

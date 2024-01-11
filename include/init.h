@@ -58,17 +58,6 @@ int arch_cpu_init(void);
 int mach_cpu_init(void);
 
 /**
- * arch_fsp_init() - perform firmware support package init
- *
- * Where U-Boot relies on binary blobs to handle part of the system init, this
- * function can be used to set up the blobs. This is used on some Intel
- * platforms.
- *
- * Return: 0
- */
-int arch_fsp_init(void);
-
-/**
  * arch_fsp_init() - perform post-relocation firmware support package init
  *
  * Where U-Boot relies on binary blobs to handle part of the system init, this
@@ -281,15 +270,25 @@ void board_init_r(struct global_data *id, ulong dest_addr)
 	__attribute__ ((noreturn));
 
 int cpu_init_r(void);
-int last_stage_init(void);
 int mac_read_from_eeprom(void);
+
+/**
+ *  serial_read_from_eeprom - read the serial number from EEPROM
+ *
+ *  This function reads the serial number from the EEPROM and sets the
+ *  appropriate environment variable.
+ *
+ *  The environment variable is only set if it has not been set
+ *  already. This ensures that any user-saved variables are never
+ *  overwritten.
+ *
+ *  This function must be called after relocation.
+ */
+int serial_read_from_eeprom(int devnum);
 int set_cpu_clk_info(void);
 int update_flash_size(int flash_size);
 int arch_early_init_r(void);
 int misc_init_r(void);
-#if defined(CONFIG_VID)
-int init_func_vid(void);
-#endif
 
 /* common/board_info.c */
 int checkboard(void);

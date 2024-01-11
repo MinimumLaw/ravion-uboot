@@ -46,6 +46,7 @@ config SPL_DM_MMC
 	depends on SPL_DM && DM_MMC
 	default n if ARCH_MVEBU && !MVEBU_SPL_BOOT_DEVICE_MMC
 	default y
+	select SPL_BLK
 	help
 	  This enables the MultiMediaCard (MMC) uclass which supports MMC and
 	  Secure Digital I/O (SDIO) cards. Both removable (SD, micro-SD, etc.)
@@ -389,12 +390,6 @@ config HSMMC2_8BIT
 	bool "Enable 8-bit interface for eMMC (interface #2)"
 	depends on MMC_OMAP_HS && (OMAP44XX || OMAP54XX || DRA7XX || AM33XX || \
 		AM43XX || ARCH_KEYSTONE)
-
-config SH_SDHI
-	bool "SuperH/Renesas ARM SoCs on-chip SDHI host controller support"
-	depends on ARCH_RMOBILE
-	help
-	  Support for the on-chip SDHI host controller on SuperH/Renesas ARM SoCs platform
 
 config SH_MMCIF
 	bool "SuperH/Renesas ARM SoCs on-chip MMCIF host controller support"

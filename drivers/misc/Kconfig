@@ -101,6 +101,15 @@ config ROCKCHIP_OTP
 	  addressing and a length or through child-nodes that are generated
 	  based on the e-fuse map retrieved from the DTS.
 
+config ROCKCHIP_IODOMAIN
+	bool "Rockchip IO-domain driver support"
+	depends on DM_REGULATOR && ARCH_ROCKCHIP
+	default y if ROCKCHIP_RK3568
+	help
+	  Enable support for IO-domains in Rockchip SoCs. It is necessary
+	  for the IO-domain setting of the SoC to match the voltage supplied
+	  by the regulators.
+
 config SIFIVE_OTP
 	bool "SiFive eMemory OTP driver"
 	depends on MISC
@@ -121,6 +130,14 @@ config VEXPRESS_CONFIG
 	  If you say Y here, you will get support for accessing the
 	  configuration bus on the Arm Versatile Express boards via
 	  a sysreg driver.
+
+config CBMEM_CONSOLE
+	bool "Write console output to coreboot cbmem"
+	depends on X86
+	help
+	  Enables console output to the cbmem console, which is a memory
+	  region set up by coreboot to hold a record of all console output.
+	  Enable this only if booting from coreboot.
 
 config CMD_CROS_EC
 	bool "Enable crosec command"
@@ -358,7 +375,6 @@ config SPL_MXC_OCOTP
 config NPCM_OTP
 	bool "Nnvoton NPCM BMC On-Chip OTP Memory Support"
 	depends on (ARM && ARCH_NPCM)
-	default n
 	help
 	  Support NPCM BMC OTP memory (fuse).
 	  To compile this driver as a module, choose M here: the module
@@ -555,7 +571,7 @@ config SPL_I2C_EEPROM
 config SYS_I2C_EEPROM_ADDR
 	hex "Chip address of the EEPROM device"
 	depends on ID_EEPROM || I2C_EEPROM || SPL_I2C_EEPROM || CMD_EEPROM || ENV_IS_IN_EEPROM
-	default 0
+	default 0x0
 
 if I2C_EEPROM
 
@@ -599,7 +615,7 @@ config FS_LOADER
 	  ie. the FPGA device.
 
 config SPL_FS_LOADER
-	bool "Enable loader driver for file system"
+	bool "Enable loader driver for file system in SPL"
 	depends on SPL
 	help
 	  This is file system generic loader which can be used to load

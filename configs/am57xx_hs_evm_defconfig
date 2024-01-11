@@ -21,8 +21,8 @@ CONFIG_SPL_SPI=y
 CONFIG_ARMV7_LPAE=y
 CONFIG_AHCI=y
 CONFIG_SPL_LOAD_FIT=y
-CONFIG_OF_BOARD_SETUP=y
 CONFIG_DISTRO_DEFAULTS=y
+CONFIG_OF_BOARD_SETUP=y
 CONFIG_USE_BOOTARGS=y
 CONFIG_BOOTARGS="androidboot.serialno=${serial#} console=ttyS2,115200 androidboot.console=ttyS2 androidboot.hardware=beagle_x15board"
 CONFIG_BOOTCOMMAND="if test ${dofastboot} -eq 1; then echo Boot fastboot requested, resetting dofastboot ...;setenv dofastboot 0; saveenv;echo Booting into fastboot ...; fastboot 1;fi;if test ${boot_fit} -eq 1; then run update_to_fit;fi;run findfdt; run finduuid; run distro_bootcmd;run emmc_android_boot; "
@@ -33,8 +33,8 @@ CONFIG_AVB_VERIFY=y
 CONFIG_ANDROID_AB=y
 CONFIG_SPL_MAX_SIZE=0x7a8b0
 CONFIG_SPL_SYS_MALLOC_SIMPLE=y
-CONFIG_SYS_SPL_MALLOC=y
-CONFIG_SYS_SPL_MALLOC_SIZE=0x800000
+CONFIG_SPL_SYS_MALLOC=y
+CONFIG_SPL_SYS_MALLOC_SIZE=0x800000
 CONFIG_SPL_DMA=y
 CONFIG_SPL_FS_LOAD_PAYLOAD_NAME="u-boot.img"
 # CONFIG_SPL_NAND_SUPPORT is not set

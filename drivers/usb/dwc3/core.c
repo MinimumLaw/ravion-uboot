@@ -2,7 +2,7 @@
 /**
  * core.c - DesignWare USB3 DRD Controller Core file
  *
- * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com
+ * Copyright (C) 2015 Texas Instruments Incorporated - https://www.ti.com
  *
  * Authors: Felipe Balbi <balbi@ti.com>,
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
@@ -986,18 +986,18 @@ void dwc3_uboot_exit(int index)
 
 /**
  * dwc3_uboot_handle_interrupt - handle dwc3 core interrupt
- * @index: index of this controller
+ * @dev: device of this controller
  *
  * Invokes dwc3 gadget interrupts.
  *
  * Generally called from board file.
  */
-void dwc3_uboot_handle_interrupt(int index)
+void dwc3_uboot_handle_interrupt(struct udevice *dev)
 {
 	struct dwc3 *dwc = NULL;
 
 	list_for_each_entry(dwc, &dwc3_list, list) {
-		if (dwc->index != index)
+		if (dwc->dev != dev)
 			continue;
 
 		dwc3_gadget_uboot_handle_interrupt(dwc);

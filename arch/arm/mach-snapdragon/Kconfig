@@ -6,12 +6,14 @@ config SYS_SOC
 config SYS_MALLOC_F_LEN
 	default 0x2000
 
+config SPL_SYS_MALLOC_F
+	default y
+
 config SPL_SYS_MALLOC_F_LEN
 	default 0x2000
 
 config SDM845
 	bool "Qualcomm Snapdragon 845 SoC"
-	default n
 	select LINUX_KERNEL_IMAGE_HEADER
 
 config LNX_KRNL_IMG_TEXT_OFFSET_BASE

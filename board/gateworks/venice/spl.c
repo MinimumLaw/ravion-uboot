@@ -19,6 +19,7 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/ddr.h>
 #include <asm-generic/gpio.h>
+#include <asm/sections.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <dm/pinctrl.h>
@@ -158,9 +159,9 @@ static int power_init_board(void)
 	}
 
 	else if (!strncmp(model, "GW74", 4)) {
-		ret = uclass_get_device_by_seq(UCLASS_I2C, 0, &bus);
+		ret = uclass_get_device_by_seq(UCLASS_I2C, 2, &bus);
 		if (ret) {
-			printf("PMIC    : failed I2C1 probe: %d\n", ret);
+			printf("PMIC    : failed I2C3 probe: %d\n", ret);
 			return ret;
 		}
 		ret = dm_i2c_probe(bus, 0x25, 0, &dev);
@@ -345,7 +346,7 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	}
 }
 
-unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long raw_sect)
+unsigned long board_spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long raw_sect)
 {
 	if (!IS_SD(mmc)) {
 		switch (EXT_CSD_EXTRACT_BOOT_PART(mmc->part_config)) {

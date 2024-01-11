@@ -434,6 +434,15 @@ static int jh7110_syscrg_init(struct udevice *dev)
 	       starfive_clk_gate(priv->reg,
 				 "i2c5_apb", "apb0",
 				 OFFSET(JH7110_SYSCLK_I2C5_APB)));
+	/* Watchdog clocks */
+	clk_dm(JH7110_SYS_ID_TRANS(JH7110_SYSCLK_WDT_APB),
+	       starfive_clk_gate(priv->reg,
+				 "wdt_apb", "apb0",
+				 OFFSET(JH7110_SYSCLK_WDT_APB)));
+	clk_dm(JH7110_SYS_ID_TRANS(JH7110_SYSCLK_WDT_CORE),
+	       starfive_clk_gate(priv->reg,
+				 "wdt_core", "oscillator",
+				 OFFSET(JH7110_SYSCLK_WDT_CORE)));
 
 	/* enable noc_bus_stg_axi clock */
 	if (!clk_get_by_id(JH7110_SYSCLK_NOC_BUS_STG_AXI, &pclk))
@@ -538,6 +547,16 @@ static int jh7110_stgcrg_init(struct udevice *dev)
 	       starfive_clk_gate(priv->reg,
 				 "pcie1_tl", "stg_axiahb",
 				 OFFSET(JH7110_STGCLK_PCIE1_TL)));
+
+	/* Security clocks */
+	clk_dm(JH7110_STG_ID_TRANS(JH7110_STGCLK_SEC_HCLK),
+	       starfive_clk_gate(priv->reg,
+				 "sec_ahb", "stg_axiahb",
+				 OFFSET(JH7110_STGCLK_SEC_HCLK)));
+	clk_dm(JH7110_STG_ID_TRANS(JH7110_STGCLK_SEC_MISCAHB),
+	       starfive_clk_gate(priv->reg,
+				 "sec_misc_ahb", "stg_axiahb",
+				 OFFSET(JH7110_STGCLK_SEC_MISCAHB)));
 
 	return 0;
 }

@@ -511,12 +511,12 @@ restart:
 			tftp_start_server();
 			break;
 #endif
-#if defined(CONFIG_UDP_FUNCTION_FASTBOOT)
+#if CONFIG_IS_ENABLED(UDP_FUNCTION_FASTBOOT)
 		case FASTBOOT_UDP:
 			fastboot_udp_start_server();
 			break;
 #endif
-#if defined(CONFIG_TCP_FUNCTION_FASTBOOT)
+#if CONFIG_IS_ENABLED(TCP_FUNCTION_FASTBOOT)
 		case FASTBOOT_TCP:
 			fastboot_tcp_start_server();
 			break;
@@ -716,7 +716,7 @@ restart:
 		case NETLOOP_SUCCESS:
 			net_cleanup_loop();
 			if (net_boot_file_size > 0) {
-				printf("Bytes transferred = %d (%x hex)\n",
+				printf("Bytes transferred = %u (%x hex)\n",
 				       net_boot_file_size, net_boot_file_size);
 				env_set_hex("filesize", net_boot_file_size);
 				env_set_hex("fileaddr", image_load_addr);
@@ -1201,6 +1201,9 @@ void net_process_received_packet(uchar *in_packet, int len)
 	ushort cti = 0, vlanid = VLAN_NONE, myvlanid, mynvlanid;
 
 	debug_cond(DEBUG_NET_PKT, "packet received\n");
+	if (DEBUG_NET_PKT_TRACE)
+		print_hex_dump_bytes("rx: ", DUMP_PREFIX_OFFSET, in_packet,
+				     len);
 
 #if defined(CONFIG_CMD_PCAP)
 	pcap_post(in_packet, len, false);

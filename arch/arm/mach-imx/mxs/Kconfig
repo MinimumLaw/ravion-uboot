@@ -18,9 +18,6 @@ config TARGET_MX23EVK
 	select PL01X_SERIAL
 	select BOARD_EARLY_INIT_F
 
-config TARGET_XFI3
-	bool "Support xfi3"
-
 endchoice
 
 config SYS_SOC
@@ -57,7 +54,6 @@ config SYS_SOC
 
 config SPL_MXS_PMU_MINIMAL_VDD5V_CURRENT
 	bool "Force minimal current draw from VDD5V by MX28 PMU"
-	default n
 	help
 	  After setting this option, the current drawn from VDD5V
 	  by the PMU is reduced to zero - the DCDC_BATT is used as
@@ -65,7 +61,6 @@ config SPL_MXS_PMU_MINIMAL_VDD5V_CURRENT
 
 config SPL_MXS_PMU_DISABLE_BATT_CHARGE
 	bool "Disable Battery Charging in MX28 PMU"
-	default n
 
 config SPL_MXS_PMU_ENABLE_4P2_LINEAR_REGULATOR
 	bool "Enable the 4P2 linear regulator in MX28 PMU"

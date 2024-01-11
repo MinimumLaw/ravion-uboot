@@ -141,6 +141,14 @@ int pxe_get(ulong pxefile_addr_r, char **bootdirp, ulong *sizep, bool use_ipv6)
 			  env_get("bootfile"), use_ipv6))
 		return -ENOMEM;
 
+	if (IS_ENABLED(CONFIG_BOOTP_PXE_DHCP_OPTION) &&
+	    pxelinux_configfile && !use_ipv6) {
+		if (pxe_dhcp_option_path(&ctx, pxefile_addr_r) > 0)
+			goto done;
+
+		goto error_exit;
+	}
+
 	if (IS_ENABLED(CONFIG_DHCP6_PXE_DHCP_OPTION) &&
 	    pxelinux_configfile && use_ipv6) {
 		if (pxe_dhcp_option_path(&ctx, pxefile_addr_r) > 0)
@@ -299,23 +307,9 @@ static struct cmd_tbl cmd_pxe_sub[] = {
 	U_BOOT_CMD_MKENT(boot, 3, 1, do_pxe_boot, "", "")
 };
 
-static void __maybe_unused pxe_reloc(void)
-{
-	static int relocated_pxe;
-
-	if (!relocated_pxe) {
-		fixup_cmdtable(cmd_pxe_sub, ARRAY_SIZE(cmd_pxe_sub));
-		relocated_pxe = 1;
-	}
-}
-
 static int do_pxe(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct cmd_tbl *cp;
-
-#if defined(CONFIG_NEEDS_MANUAL_RELOC)
-	pxe_reloc();
-#endif
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
@@ -333,8 +327,7 @@ static int do_pxe(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 }
 
 U_BOOT_CMD(pxe, 4, 1, do_pxe,
-	   "commands to get and boot from pxe files\n"
-	   "To use IPv6 add -ipv6 parameter",
+	   "get and boot from pxe files",
 	   "get [" USE_IP6_CMD_PARAM "] - try to retrieve a pxe file using tftp\n"
 	   "pxe boot [pxefile_addr_r] [-ipv6] - boot from the pxe file at pxefile_addr_r\n"
 );

@@ -28,26 +28,26 @@ config CONSOLE_RECORD_OUT_SIZE
 	depends on CONSOLE_RECORD
 	default 0x400 if CONSOLE_RECORD
 	help
-	  Set the size of the console output buffer. When this fills up, no
-	  more data will be recorded until some is removed. The buffer is
-	  allocated immediately after the malloc() region is ready.
+	  Set the size of the console recording output buffer. When this fills
+	  up, no more data will be recorded until some is removed. The buffer
+	  is allocated immediately after the malloc() region is ready.
 
 config CONSOLE_RECORD_OUT_SIZE_F
 	hex "Output buffer size before relocation"
 	depends on CONSOLE_RECORD
 	default 0x400 if CONSOLE_RECORD
 	help
-	  Set the size of the console output buffer before relocation. When
-	  this fills up, no more data will be recorded until some is removed.
-	  The buffer is allocated immediately after the early malloc() region is
-	  ready.
+	  Set the size of the console recording output buffer before
+	  relocation. When this fills up, no more data will be recorded until
+	  some is removed.  The buffer is allocated immediately after the early
+	  malloc() region is ready.
 
 config CONSOLE_RECORD_IN_SIZE
 	hex "Input buffer size"
 	depends on CONSOLE_RECORD
 	default 0x100 if CONSOLE_RECORD
 	help
-	  Set the size of the console input buffer. When this contains data,
+	  Set the size of the console recording input buffer. When this contains data,
 	  tstc() and getc() will use this in preference to real device input.
 	  The buffer is allocated immediately after the malloc() region is
 	  ready.
@@ -223,6 +223,16 @@ config CONSOLE_FLUSH_SUPPORT
 	default y
 	help
 	  This enables compilation of flush() function for console flush support.
+
+config CONSOLE_FLUSH_ON_NEWLINE
+	bool "Flush console buffer on every newline character"
+	depends on DM_SERIAL
+	help
+	  This makes the serial core code flush the console device
+	  whenever a newline (\n) character has been emitted. This can
+	  be especially useful when "printf debugging", as otherwise
+	  lots of output could still be in the UART's FIFO by the time
+	  one hits the code which causes the CPU to hang or reset.
 
 config CONSOLE_MUX
 	bool "Enable console multiplexing"
@@ -620,7 +630,7 @@ config EVENT_DYNAMIC
 	bool
 	help
 	  Enable this to support adding an event spy at runtime, without adding
-	  it to the EVENT_SPY() linker list. This increases code size slightly
+	  it to the EVENT_SPY*() linker list. This increases code size slightly
 	  but provides more flexibility for boards and subsystems that need it.
 
 config EVENT_DEBUG
@@ -648,7 +658,7 @@ config SPL_EVENT_DYNAMIC
 	depends on SPL_EVENT && EVENT_DYNAMIC
 	help
 	  Enable this to support adding an event spy at runtime, without adding
-	  it to the EVENT_SPY() linker list. This increases code size slightly
+	  it to the EVENT_SPY*() linker list. This increases code size slightly
 	  but provides more flexibility for boards and subsystems that need it.
 
 endif # EVENT
@@ -720,6 +730,7 @@ config SYS_FSL_CLK
 
 config LAST_STAGE_INIT
 	bool "Call board-specific as last setup step"
+	select EVENT
 	help
 	  Some boards need to perform initialisation immediately before control
 	  is passed to the command-line interpreter (e.g. for initializations
@@ -1011,7 +1022,7 @@ endchoice
 
 config BLOBLIST_ADDR
 	hex "Address of bloblist"
-	default 0xc000 if SANDBOX
+	default 0xb000 if SANDBOX
 	depends on BLOBLIST_FIXED
 	help
 	  Sets the address of the bloblist, set up by the first part of U-Boot
@@ -1031,7 +1042,7 @@ config BLOBLIST_SIZE
 config BLOBLIST_SIZE_RELOC
 	hex "Size of bloblist after relocation"
 	default BLOBLIST_SIZE if BLOBLIST_FIXED || BLOBLIST_ALLOC
-	default 0 if BLOBLIST_PASSAGE
+	default 0x0 if BLOBLIST_PASSAGE
 	help
 	  Sets the size of the bloblist in bytes after relocation. Since U-Boot
 	  has a lot more memory available then, it is possible to use a larger
@@ -1156,25 +1167,5 @@ config VPL_IMAGE_SIGN_INFO
 
 endif
 
-config FDT_SIMPLEFB
-	bool "FDT tools for simplefb support"
-	depends on OF_LIBFDT
-	help
-	  Enable the fdt tools to manage the simple fb nodes in device tree.
-	  These functions can be used by board to indicate to the OS
-	  the presence of the simple frame buffer with associated reserved
-	  memory
-
 config IO_TRACE
 	bool
-
-config BMP
-	bool "Enable bmp image display"
-	help
-	  Enable bmp functions to display bmp image and get bmp info.
-
-config SPL_BMP
-	bool "Enable bmp image display at SPL"
-	depends on SPL_VIDEO
-	help
-	  Enable bmp functions to display bmp image and get bmp info at SPL.

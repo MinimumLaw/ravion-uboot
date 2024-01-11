@@ -3,7 +3,6 @@
  * Copyright (C) 2018 Marek Vasut <marek.vasut@gmail.com>
  */
 
-#include <common.h>
 #include <bouncebuf.h>
 #include <clk.h>
 #include <fdtdec.h>
@@ -20,6 +19,7 @@
 #include <linux/io.h>
 #include <linux/sizes.h>
 #include <power/regulator.h>
+#include <reset.h>
 #include <asm/unaligned.h>
 #include "tmio-common.h"
 
@@ -318,7 +318,7 @@ static unsigned int renesas_sdhi_init_tuning(struct tmio_sd_priv *priv)
 		RENESAS_SDHI_SCC_DTCNTL_TAPNUM_MASK;
 }
 
-static void renesas_sdhi_reset_tuning(struct tmio_sd_priv *priv)
+static void renesas_sdhi_reset_tuning(struct tmio_sd_priv *priv, bool clk_disable)
 {
 	u32 reg;
 
@@ -350,6 +350,12 @@ static void renesas_sdhi_reset_tuning(struct tmio_sd_priv *priv)
 	reg = tmio_sd_readl(priv, RENESAS_SDHI_SCC_RVSCNTL);
 	reg &= ~RENESAS_SDHI_SCC_RVSCNTL_RVSEN;
 	tmio_sd_writel(priv, reg, RENESAS_SDHI_SCC_RVSCNTL);
+
+	if (clk_disable) {
+		reg = tmio_sd_readl(priv, TMIO_SD_CLKCTL);
+		reg &= ~TMIO_SD_CLKCTL_SCLKEN;
+		tmio_sd_writel(priv, reg, TMIO_SD_CLKCTL);
+	}
 }
 
 static int renesas_sdhi_hs400(struct udevice *dev)
@@ -629,7 +635,7 @@ int renesas_sdhi_execute_tuning(struct udevice *dev, uint opcode)
 out:
 	if (ret < 0) {
 		dev_warn(dev, "Tuning procedure failed\n");
-		renesas_sdhi_reset_tuning(priv);
+		renesas_sdhi_reset_tuning(priv, true);
 	}
 
 	return ret;
@@ -668,7 +674,7 @@ static int renesas_sdhi_set_ios(struct udevice *dev)
 	    (mmc->selected_mode != UHS_SDR104) &&
 	    (mmc->selected_mode != MMC_HS_200) &&
 	    (mmc->selected_mode != MMC_HS_400)) {
-		renesas_sdhi_reset_tuning(priv);
+		renesas_sdhi_reset_tuning(priv, mmc->clk_disable);
 	}
 #endif
 
@@ -958,17 +964,87 @@ static void renesas_sdhi_filter_caps(struct udevice *dev)
 		priv->needs_clkh_fallback = false;
 }
 
+static int rzg2l_sdhi_setup(struct udevice *dev)
+{
+	struct tmio_sd_priv *priv = dev_get_priv(dev);
+	struct clk imclk2, aclk;
+	struct reset_ctl rst;
+	int ret;
+
+	/*
+	 * On members of the RZ/G2L SoC family, we need to enable
+	 * additional chip detect and bus clocks, then release the SDHI
+	 * module from reset.
+	 */
+	ret = clk_get_by_name(dev, "cd", &imclk2);
+	if (ret < 0) {
+		dev_err(dev, "failed to get imclk2 (chip detect clk)\n");
+		goto err_get_imclk2;
+	}
+
+	ret = clk_get_by_name(dev, "aclk", &aclk);
+	if (ret < 0) {
+		dev_err(dev, "failed to get aclk\n");
+		goto err_get_aclk;
+	}
+
+	ret = clk_enable(&imclk2);
+	if (ret < 0) {
+		dev_err(dev, "failed to enable imclk2 (chip detect clk)\n");
+		goto err_imclk2;
+	}
+
+	ret = clk_enable(&aclk);
+	if (ret < 0) {
+		dev_err(dev, "failed to enable aclk\n");
+		goto err_aclk;
+	}
+
+	ret = reset_get_by_index(dev, 0, &rst);
+	if (ret < 0) {
+		dev_err(dev, "failed to get reset line\n");
+		goto err_get_reset;
+	}
+
+	ret = reset_deassert(&rst);
+	if (ret < 0) {
+		dev_err(dev, "failed to de-assert reset line\n");
+		goto err_reset;
+	}
+
+	ret = tmio_sd_probe(dev, priv->quirks);
+	if (ret)
+		goto err_tmio_probe;
+
+	return 0;
+
+err_tmio_probe:
+	reset_assert(&rst);
+err_reset:
+	reset_free(&rst);
+err_get_reset:
+	clk_disable(&aclk);
+err_aclk:
+	clk_disable(&imclk2);
+err_imclk2:
+	clk_free(&aclk);
+err_get_aclk:
+	clk_free(&imclk2);
+err_get_imclk2:
+	return ret;
+}
+
 static int renesas_sdhi_probe(struct udevice *dev)
 {
 	struct tmio_sd_priv *priv = dev_get_priv(dev);
-	u32 quirks = dev_get_driver_data(dev);
 	struct fdt_resource reg_res;
 	DECLARE_GLOBAL_DATA_PTR;
 	int ret;
 
 	priv->clk_get_rate = renesas_sdhi_clk_get_rate;
 
-	if (quirks == RENESAS_GEN2_QUIRKS) {
+	priv->quirks = dev_get_driver_data(dev);
+	if (priv->quirks == RENESAS_GEN2_QUIRKS) {
 		ret = fdt_get_resource(gd->fdt_blob, dev_of_offset(dev),
 				       "reg", 0, &reg_res);
 		if (ret < 0) {
@@ -978,7 +1054,7 @@ static int renesas_sdhi_probe(struct udevice *dev)
 		}
 
 		if (fdt_resource_size(&reg_res) == 0x100)
-			quirks |= TMIO_SD_CAP_16BIT;
+			priv->quirks |= TMIO_SD_CAP_16BIT;
 	}
 
 	ret = clk_get_by_index(dev, 0, &priv->clk);
@@ -1012,8 +1088,10 @@ static int renesas_sdhi_probe(struct udevice *dev)
 		goto err_clkh;
 	}
 
-	priv->quirks = quirks;
-	ret = tmio_sd_probe(dev, quirks);
+	if (device_is_compatible(dev, "renesas,sdhi-r9a07g044"))
+		ret = rzg2l_sdhi_setup(dev);
+	else
+		ret = tmio_sd_probe(dev, priv->quirks);
 	if (ret)
 		goto err_tmio_probe;
 
@@ -1023,7 +1101,7 @@ static int renesas_sdhi_probe(struct udevice *dev)
     CONFIG_IS_ENABLED(MMC_HS200_SUPPORT) || \
     CONFIG_IS_ENABLED(MMC_HS400_SUPPORT)
 	if (priv->caps & TMIO_SD_CAP_RCAR_UHS)
-		renesas_sdhi_reset_tuning(priv);
+		renesas_sdhi_reset_tuning(priv, true);
 #endif
 	return 0;
 

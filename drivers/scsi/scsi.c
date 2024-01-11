@@ -14,6 +14,7 @@
 #include <env.h>
 #include <libata.h>
 #include <log.h>
+#include <memalign.h>
 #include <part.h>
 #include <pci.h>
 #include <scsi.h>
@@ -42,7 +43,7 @@ const struct pci_device_id scsi_device_list[] = { SCSI_DEV_LIST };
 #endif
 static struct scsi_cmd tempccb;	/* temporary scsi command buffer */
 
-static unsigned char tempbuff[512]; /* temporary data buffer */
+DEFINE_CACHE_ALIGN_BUFFER(u8, tempbuff, 512);	/* temporary data buffer */
 
 #if !defined(CONFIG_DM_SCSI)
 static int scsi_max_devs; /* number of highest available scsi device */
@@ -273,6 +274,18 @@ static ulong scsi_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	      __func__, start, smallblks, buf_addr);
 	return blkcnt;
 }
+
+#if IS_ENABLED(CONFIG_BOUNCE_BUFFER)
+static int scsi_buffer_aligned(struct udevice *dev, struct bounce_buffer *state)
+{
+	struct scsi_ops *ops = scsi_get_ops(dev->parent);
+
+	if (ops->buffer_aligned)
+		return ops->buffer_aligned(dev->parent, state);
+
+	return 1;
+}
+#endif	/* CONFIG_BOUNCE_BUFFER */
 #endif
 
 #if defined(CONFIG_PCI) && !defined(CONFIG_SCSI_AHCI_PLAT) && \
@@ -361,6 +374,7 @@ static int scsi_read_capacity(struct udevice *dev, struct scsi_cmd *pccb,
 	pccb->cmd[0] = SCSI_RD_CAPAC10;
 	pccb->cmd[1] = pccb->lun << 5;
 	pccb->cmdlen = 10;
+	pccb->dma_dir = DMA_FROM_DEVICE;
 	pccb->msgout[0] = SCSI_IDENTIFY; /* NOT USED */
 
 	pccb->datalen = 8;
@@ -437,15 +451,15 @@ static void scsi_setup_test_unit_ready(struct scsi_cmd *pccb)
  */
 static void scsi_init_dev_desc_priv(struct blk_desc *dev_desc)
 {
+	memset(dev_desc, 0, sizeof(struct blk_desc));
 	dev_desc->target = 0xff;
 	dev_desc->lun = 0xff;
 	dev_desc->log2blksz =
 		LOG2_INVALID(typeof(dev_desc->log2blksz));
 	dev_desc->type = DEV_TYPE_UNKNOWN;
-	dev_desc->vendor[0] = 0;
-	dev_desc->product[0] = 0;
-	dev_desc->revision[0] = 0;
-	dev_desc->removable = false;
+#if IS_ENABLED(CONFIG_BOUNCE_BUFFER)
+	dev_desc->bb = true;
+#endif	/* CONFIG_BOUNCE_BUFFER */
 }
 
 #if !defined(CONFIG_DM_SCSI)
@@ -490,7 +504,7 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 
 	pccb->target = target;
 	pccb->lun = lun;
-	pccb->pdata = (unsigned char *)&tempbuff;
+	pccb->pdata = tempbuff;
 	pccb->datalen = 512;
 	pccb->dma_dir = DMA_FROM_DEVICE;
 	scsi_setup_inquiry(pccb);
@@ -525,6 +539,7 @@ static int scsi_detect_dev(struct udevice *dev, int target, int lun,
 
 	for (count = 0; count < 3; count++) {
 		pccb->datalen = 0;
+		pccb->dma_dir = DMA_NONE;
 		scsi_setup_test_unit_ready(pccb);
 		err = scsi_exec(dev, pccb);
 		if (!err)
@@ -593,6 +608,7 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 	bdesc->lun = lun;
 	bdesc->removable = bd.removable;
 	bdesc->type = bd.type;
+	bdesc->bb = bd.bb;
 	memcpy(&bdesc->vendor, &bd.vendor, sizeof(bd.vendor));
 	memcpy(&bdesc->product, &bd.product, sizeof(bd.product));
 	memcpy(&bdesc->revision, &bd.revision,	sizeof(bd.revision));
@@ -719,6 +735,9 @@ int scsi_scan(bool verbose)
 static const struct blk_ops scsi_blk_ops = {
 	.read	= scsi_read,
 	.write	= scsi_write,
+#if IS_ENABLED(CONFIG_BOUNCE_BUFFER)
+	.buffer_aligned	= scsi_buffer_aligned,
+#endif	/* CONFIG_BOUNCE_BUFFER */
 };
 
 U_BOOT_DRIVER(scsi_blk) = {

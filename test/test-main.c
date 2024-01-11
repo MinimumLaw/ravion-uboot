@@ -303,7 +303,7 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 	if (test->flags & UT_TESTF_PROBE_TEST)
 		ut_assertok(do_autoprobe(uts));
 
-	if (!CONFIG_IS_ENABLED(OF_PLATDATA) &&
+	if (CONFIG_IS_ENABLED(OF_REAL) &&
 	    (test->flags & UT_TESTF_SCAN_FDT)) {
 		/*
 		 * only set this if we know the ethernet uclass will be created
@@ -476,7 +476,8 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	 *   (for sandbox we handle this by copying the tree, but not for other
 	 *    boards)
 	 */
-	if ((test->flags & UT_TESTF_SCAN_FDT) &&
+	if ((!CONFIG_IS_ENABLED(OF_LIVE) ||
+	     (test->flags & UT_TESTF_SCAN_FDT)) &&
 	    !(test->flags & UT_TESTF_LIVE_TREE) &&
 	    (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) ||
 	     !(test->flags & UT_TESTF_OTHER_FDT)) &&
