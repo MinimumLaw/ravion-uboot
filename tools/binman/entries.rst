@@ -1,5 +1,5 @@
 Binman Entry Documentation
-===========================
+==========================
 
 This file describes the entry types supported by binman. These entry types can
 be placed in an image one by one to build up a final firmware image. It is
@@ -465,6 +465,114 @@ Properties / Entry arguments:
 
 This entry holds a Chromium OS EC (embedded controller) image, for use in
 updating the EC on startup via software sync.
+
+
+
+.. _etype_efi_capsule:
+
+Entry: capsule: Entry for generating EFI Capsule files
+------------------------------------------------------
+
+The parameters needed for generation of the capsules can be provided
+as properties in the entry.
+
+Properties / Entry arguments:
+    - image-index: Unique number for identifying corresponding
+      payload image. Number between 1 and descriptor count, i.e.
+      the total number of firmware images that can be updated. Mandatory
+      property.
+    - image-guid: Image GUID which will be used for identifying the
+      updatable image on the board. Mandatory property.
+    - hardware-instance: Optional number for identifying unique
+      hardware instance of a device in the system. Default value of 0
+      for images where value is not to be used.
+    - fw-version: Value of image version that can be put on the capsule
+      through the Firmware Management Protocol(FMP) header.
+    - monotonic-count: Count used when signing an image.
+    - private-key: Path to PEM formatted .key private key file. Mandatory
+      property for generating signed capsules.
+    - public-key-cert: Path to PEM formatted .crt public key certificate
+      file. Mandatory property for generating signed capsules.
+    - oem-flags - OEM flags to be passed through capsule header.
+
+    Since this is a subclass of Entry_section, all properties of the parent
+    class also apply here. Except for the properties stated as mandatory, the
+    rest of the properties are optional.
+
+For more details on the description of the capsule format, and the capsule
+update functionality, refer Section 8.5 and Chapter 23 in the `UEFI
+specification`_.
+
+The capsule parameters like image index and image GUID are passed as
+properties in the entry. The payload to be used in the capsule is to be
+provided as a subnode of the capsule entry.
+
+A typical capsule entry node would then look something like this::
+
+    capsule {
+            type = "efi-capsule";
+            image-index = <0x1>;
+            /* Image GUID for testing capsule update */
+            image-guid = SANDBOX_UBOOT_IMAGE_GUID;
+            hardware-instance = <0x0>;
+            private-key = "path/to/the/private/key";
+            public-key-cert = "path/to/the/public-key-cert";
+            oem-flags = <0x8000>;
+
+            u-boot {
+            };
+    };
+
+In the above example, the capsule payload is the U-Boot image. The
+capsule entry would read the contents of the payload and put them
+into the capsule. Any external file can also be specified as the
+payload using the blob-ext subnode.
+
+.. _`UEFI specification`: https://uefi.org/sites/default/files/resources/UEFI_Spec_2_10_Aug29.pdf
+
+
+
+.. _etype_efi_empty_capsule:
+
+Entry: efi-empty-capsule: Entry for generating EFI Empty Capsule files
+----------------------------------------------------------------------
+
+The parameters needed for generation of the empty capsules can
+be provided as properties in the entry.
+
+Properties / Entry arguments:
+    - image-guid: Image GUID which will be used for identifying the
+      updatable image on the board. Mandatory for accept capsule.
+    - capsule-type - String to indicate type of capsule to generate. Valid
+      values are 'accept' and 'revert'.
+
+For more details on the description of the capsule format, and the capsule
+update functionality, refer Section 8.5 and Chapter 23 in the `UEFI
+specification`_. For more information on the empty capsule, refer the
+sections 2.3.2 and 2.3.3 in the `Dependable Boot specification`_.
+
+A typical accept empty capsule entry node would then look something
+like this::
+
+    empty-capsule {
+            type = "efi-empty-capsule";
+            /* GUID of the image being accepted */
+            image-type-id = SANDBOX_UBOOT_IMAGE_GUID;
+            capsule-type = "accept";
+    };
+
+A typical revert empty capsule entry node would then look something
+like this::
+
+    empty-capsule {
+            type = "efi-empty-capsule";
+            capsule-type = "revert";
+    };
+
+The empty capsules do not have any input payload image.
+
+.. _`UEFI specification`: https://uefi.org/sites/default/files/resources/UEFI_Spec_2_10_Aug29.pdf
+.. _`Dependable Boot specification`: https://git.codelinaro.org/linaro/dependable-boot/mbfw/uploads/6f7ddfe3be24e18d4319e108a758d02e/mbfw.pdf
 
 
 
@@ -1836,6 +1944,7 @@ Properties / Entry arguments:
     - core: core on which bootloader runs, valid cores are 'secure' and 'public'
     - content: phandle of SPL in case of legacy bootflow or phandles of component binaries
       in case of combined bootflow
+    - core-opts (optional): lockstep (0) or split (2) mode set to 0 by default
 
 The following properties are only for generating a combined bootflow binary:
     - sysfw-inner-cert: boolean if binary contains sysfw inner certificate

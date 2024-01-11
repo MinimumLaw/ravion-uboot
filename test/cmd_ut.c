@@ -87,6 +87,10 @@ static struct cmd_tbl cmd_ut_sub[] = {
 #ifdef CONFIG_UT_LOG
 	U_BOOT_CMD_MKENT(log, CONFIG_SYS_MAXARGS, 1, do_ut_log, "", ""),
 #endif
+#if defined(CONFIG_SANDBOX) && defined(CONFIG_CMD_MBR) && defined(CONFIG_CMD_MMC) \
+        && defined(CONFIG_MMC_SANDBOX) && defined(CONFIG_MMC_WRITE)
+	U_BOOT_CMD_MKENT(mbr, CONFIG_SYS_MAXARGS, 1, do_ut_mbr, "", ""),
+#endif
 	U_BOOT_CMD_MKENT(mem, CONFIG_SYS_MAXARGS, 1, do_ut_mem, "", ""),
 #if defined(CONFIG_SANDBOX) && defined(CONFIG_CMD_SETEXPR)
 	U_BOOT_CMD_MKENT(setexpr, CONFIG_SYS_MAXARGS, 1, do_ut_setexpr, "",
@@ -98,6 +102,10 @@ static struct cmd_tbl cmd_ut_sub[] = {
 #endif
 #if CONFIG_IS_ENABLED(UT_UNICODE) && !defined(API_BUILD)
 	U_BOOT_CMD_MKENT(unicode, CONFIG_SYS_MAXARGS, 1, do_ut_unicode, "", ""),
+#endif
+#ifdef CONFIG_MEASURED_BOOT
+	U_BOOT_CMD_MKENT(measurement, CONFIG_SYS_MAXARGS, 1, do_ut_measurement,
+			 "", ""),
 #endif
 #ifdef CONFIG_SANDBOX
 	U_BOOT_CMD_MKENT(compression, CONFIG_SYS_MAXARGS, 1, do_ut_compression,
@@ -166,8 +174,7 @@ static int do_ut(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	return CMD_RET_USAGE;
 }
 
-#ifdef CONFIG_SYS_LONGHELP
-static char ut_help_text[] =
+U_BOOT_LONGHELP(ut,
 	"[-r] [-f] [<suite>] - run unit tests\n"
 	"   -r<runs>   Number of times to run each test\n"
 	"   -f         Force 'manual' tests to run as well\n"
@@ -201,7 +208,7 @@ static char ut_help_text[] =
 	"\nfdt - fdt command"
 #endif
 #ifdef CONFIG_CONSOLE_TRUETYPE
-	"\nut font - font command"
+	"\nfont - font command"
 #endif
 #ifdef CONFIG_CMD_LOADM
 	"\nloadm - loadm command parameters and loading memory blob"
@@ -237,8 +244,7 @@ static char ut_help_text[] =
 	!defined(CONFIG_SPL_BUILD) && !defined(API_BUILD)
 	"\nunicode - Unicode functions"
 #endif
-	;
-#endif /* CONFIG_SYS_LONGHELP */
+	);
 
 U_BOOT_CMD(
 	ut, CONFIG_SYS_MAXARGS, 1, do_ut,

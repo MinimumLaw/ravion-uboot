@@ -71,7 +71,7 @@ config CSF_SIZE
 config CMD_BMODE
 	bool "Support the 'bmode' command"
 	default y
-	depends on ARCH_MX7 || ARCH_MX6 || ARCH_MX5
+	depends on ARCH_IMX8M || ARCH_MX7 || ARCH_MX6 || ARCH_MX5
 	help
 	  This enables the 'bmode' (bootmode) command for forcing
 	  a boot from specific media.
@@ -182,7 +182,7 @@ config IMX8_ROMAPI
 config SPL_IMX_ROMAPI_LOADADDR
 	hex "Default load address to load image through ROM API"
 	depends on IMX8_ROMAPI || SPL_BOOTROM_SUPPORT
-	default 0
+	default 0x0
 
 config IMX_DCD_ADDR
 	hex "DCD Blocks location on the image"
@@ -193,19 +193,6 @@ config IMX_DCD_ADDR
 	  the ROM code to configure the device at early boot stage, is located.
 	  This information is shared with the user via mkimage -l just so the
 	  image can be signed.
-
-config SPL_LOAD_IMX_CONTAINER
-	bool "Enable SPL loading U-Boot as a i.MX Container image"
-	depends on SPL
-	help
-	  This is to let SPL could load i.MX Container image
-
-config IMX_CONTAINER_CFG
-	string "i.MX Container config file"
-	depends on SPL
-	help
-	  This is to specific the cfg file for generating container
-	  image which will be loaded by SPL.
 
 config IOMUX_LPSR
 	bool

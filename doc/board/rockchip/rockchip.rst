@@ -53,6 +53,7 @@ List of mainline supported Rockchip boards:
      - Google Speedy (chromebook_speedy)
      - Amarula Vyasa-RK3288 (vyasa-rk3288)
 * rk3308
+     - Radxa ROCK Pi S (rock-pi-s-rk3308)
      - Rockchip Evb-RK3308 (evb-rk3308)
      - Roc-cc-RK3308 (roc-cc-rk3308)
 * rk3326
@@ -101,9 +102,11 @@ List of mainline supported Rockchip boards:
 
 * rk3568
      - Rockchip Evb-RK3568 (evb-rk3568)
+     - Banana Pi BPI-R2 Pro (bpi-r2-pro-rk3568)
      - EmbedFire LubanCat 2 (lubancat-2-rk3568)
      - FriendlyElec NanoPi R5C (nanopi-r5c-rk3568)
      - FriendlyElec NanoPi R5S (nanopi-r5s-rk3568)
+     - Generic RK3566/RK3568 (generic-rk3568)
      - Hardkernel ODROID-M1 (odroid-m1-rk3568)
      - Radxa E25 Carrier Board (radxa-e25-rk3568)
      - Radxa ROCK 3 Model A (rock-3a-rk3568)
@@ -112,8 +115,12 @@ List of mainline supported Rockchip boards:
      - Rockchip EVB (evb-rk3588)
      - Edgeble Neural Compute Module 6A SoM - Neu6a (neu6a-io-rk3588)
      - Edgeble Neural Compute Module 6B SoM - Neu6b (neu6b-io-rk3588)
+     - FriendlyElec NanoPC-T6 (nanopc-t6-rk3588)
+     - Pine64 QuartzPro64 (quartzpro64-rk3588)
      - Radxa ROCK 5A (rock5a-rk3588s)
      - Radxa ROCK 5B (rock5b-rk3588)
+     - Xunlong Orange Pi 5 (orangepi-5-rk3588s)
+     - Xunlong Orange Pi 5 Plus (orangepi-5-plus-rk3588)
 
 * rv1108
      - Rockchip Evb-rv1108 (evb-rv1108)
@@ -141,6 +148,19 @@ To build TF-A:
         cd ..
 
 Specify the PLAT= with desired Rockchip platform to build TF-A for.
+
+For SoCs whose TF-A code is not available as open source, use BL31 binary provided by Rockchip:
+
+.. code-block:: bash
+
+        git clone --depth 1 https://github.com/rockchip-linux/rkbin
+
+TPL
+^^^
+
+For some SoCs U-Boot sources lack of support to inizialize DRAM.
+In these cases, to get a fully functional image following :ref:`PackageWithTPLandSPL`, use DDR binary provided by Rockchip rkbin repository as ROCKCHIP_TPL when building U-Boot.
+Otherwise, follow :ref:`PackageWithRockchipMiniloader`. 
 
 U-Boot
 ^^^^^^
@@ -171,6 +191,15 @@ To build rk3288 boards:
 
         make evb-rk3288_defconfig
         make CROSS_COMPILE=arm-linux-gnueabihf-
+
+To build rk3308 boards:
+
+.. code-block:: bash
+
+        export BL31=../rkbin/bin/rk33/rk3308_bl31_v2.26.elf
+        export ROCKCHIP_TPL=../rkbin/bin/rk33/rk3308_ddr_589MHz_uartX_mY_v2.07.bin
+        make evb-rk3308_defconfig
+        make CROSS_COMPILE=aarch64-linux-gnu-
 
 To build rk3328 boards:
 
@@ -218,11 +247,13 @@ To build rk3588 boards:
 Flashing
 --------
 
+.. _`PackageWithTPLandSPL`:
+
 1. Package the image with U-Boot TPL/SPL
------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 SD Card
-^^^^^^^
+"""""""
 
 All Rockchip platforms (except rk3128 which doesn't use SPL) are now
 supporting a single boot image using binman.
@@ -235,7 +266,7 @@ To write an image that boots from a SD card (assumed to be /dev/sda):
         sync
 
 eMMC
-^^^^
+""""
 
 eMMC flash would probe on mmc0 in most of the Rockchip platforms.
 
@@ -274,7 +305,7 @@ For Rockchip 32-bit platforms the U-Boot proper image
 is u-boot-dtb.img
 
 SPI
-^^^
+"""
 
 Write u-boot-rockchip-spi.bin to offset 0 of SPI flash.
 
@@ -286,8 +317,10 @@ Copy u-boot-rockchip-spi.bin into SD card and boot from SD:
         load mmc 1:1 $kernel_addr_r u-boot-rockchip-spi.bin
         sf update $fileaddr 0 $filesize
 
+.. _`PackageWithRockchipMiniloader`:
+
 2. Package the image with Rockchip miniloader
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Image package with Rockchip miniloader requires rkbin [1].
 
@@ -327,14 +360,14 @@ Note:
 2. 0x200000 is a load address and is an option for some platforms.
 
 3. Package the RK3066 image with U-Boot TPL/SPL on NAND
--------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Unlike later SoC models the rk3066 BootROM doesn't have SDMMC support.
 If all other boot options fail then it enters into a BootROM mode on the USB OTG port.
 This method loads TPL/SPL on NAND with U-Boot and kernel on SD card.
 
 SD Card
-^^^^^^^
+"""""""
 
 U-Boot expects a GPT partition map and a boot directory structure with files on the SD card.
 
@@ -369,7 +402,7 @@ To write a U-Boot image to the SD card (assumed to be /dev/sda):
         sync
 
 NAND
-^^^^
+""""
 
 Bring device in BootROM mode:
 

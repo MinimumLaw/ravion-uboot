@@ -2,7 +2,7 @@
 /*
  * Library to support early TI EVM EEPROM handling
  *
- * Copyright (C) 2015-2016 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2015-2016 Texas Instruments Incorporated - https://www.ti.com/
  *	Lokesh Vutla
  *	Steve Kipisz
  */
@@ -19,6 +19,7 @@
 #include <mmc.h>
 #include <errno.h>
 #include <malloc.h>
+#include <linux/printk.h>
 
 #include "board_detect.h"
 

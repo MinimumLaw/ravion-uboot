@@ -571,22 +571,32 @@ config ENV_OFFSET
 	default 0xE0000 if ARCH_ZYNQ
 	default 0x1E00000 if ARCH_ZYNQMP
 	default 0x7F40000 if ARCH_VERSAL || ARCH_VERSAL_NET
-	default 0 if ARC
+	default 0x0 if ARC
 	default 0x140000 if ARCH_AT91
 	default 0x260000 if ARCH_OMAP2PLUS
 	default 0x1080000 if MICROBLAZE && ENV_IS_IN_SPI_FLASH
 	help
-	  Offset from the start of the device (or partition)
+	  Offset from the start of the device (or partition).
+
+	  This offset may be interpreted differently depending on the chosen
+	  ENV_IS_IN_* options. For example, for ENV_IS_IN_MMC=y, this offset may
+	  be negative to indicate an offset backwards from the end of the
+	  partition. See the relevant help messages for more details.
 
 config ENV_OFFSET_REDUND
 	hex "Redundant environment offset"
 	depends on (ENV_IS_IN_EEPROM || ENV_IS_IN_MMC || ENV_IS_IN_NAND || \
 		    ENV_IS_IN_SPI_FLASH) && SYS_REDUNDAND_ENVIRONMENT
 	default 0x10C0000 if MICROBLAZE
-	default 0
+	default 0x0
 	help
 	  Offset from the start of the device (or partition) of the redundant
 	  environment location.
+
+	  This offset may be interpreted differently depending on the chosen
+	  ENV_IS_IN_* options. For example, for ENV_IS_IN_MMC=y, this offset may
+	  be negative to indicate an offset backwards from the end of the
+	  partition. See the relevant help messages for more details.
 
 config ENV_SIZE
 	hex "Environment Size"
@@ -645,7 +655,7 @@ config SYS_RELOC_GD_ENV_ADDR
 
 config SYS_MMC_ENV_DEV
 	int "mmc device number"
-	depends on ENV_IS_IN_MMC || ENV_IS_IN_FAT || SYS_LS_PPA_FW_IN_MMC || \
+	depends on ENV_IS_IN_MMC || ENV_IS_IN_FAT || \
 		CMD_MVEBU_BUBT || FMAN_ENET || QE || PHY_CORTINA
 	default 0
 	help

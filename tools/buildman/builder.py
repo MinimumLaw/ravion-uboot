@@ -35,6 +35,10 @@ from u_boot_pylib.terminal import tprint
 # which indicates that BREAK_ME has an empty default
 RE_NO_DEFAULT = re.compile(b'\((\w+)\) \[] \(NEW\)')
 
+# Symbol types which appear in the bloat feature (-B). Others are silently
+# dropped when reading in the 'nm' output
+NM_SYMBOL_TYPES = 'tTdDbBr'
+
 """
 Theory of Operation
 
@@ -328,7 +332,7 @@ class Builder:
         self._build_period_us = None
         self._complete_delay = None
         self._next_delay_update = datetime.now()
-        self._start_time = datetime.now()
+        self._start_time = None
         self._step = step
         self._error_lines = 0
         self.no_subdirs = no_subdirs
@@ -693,7 +697,7 @@ class Builder:
             parts = line.split()
             if line and len(parts) == 3:
                     size, type, name = line.split()
-                    if type in 'tTdDbB':
+                    if type in NM_SYMBOL_TYPES:
                         # function names begin with '.' on 64-bit powerpc
                         if '.' in name[1:]:
                             name = 'static.' + name.split('.')[0]
@@ -1778,6 +1782,7 @@ class Builder:
         self._prepare_output_space()
         if not self._ide:
             tprint('\rStarting build...', newline=False)
+        self._start_time = datetime.now()
         self.setup_build(board_selected, commits)
         self.process_result(None)
         self.thread_exceptions = []

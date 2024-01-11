@@ -3,7 +3,6 @@
  * Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
  */
 
-#include <common.h>
 #include <cpu.h>
 #include <dm.h>
 #include <dm/lists.h>
@@ -66,7 +65,7 @@ static inline bool supports_extension(char ext)
 #endif /* CONFIG_CPU */
 }
 
-static int riscv_cpu_probe(void *ctx, struct event *event)
+static int riscv_cpu_probe(void)
 {
 #ifdef CONFIG_CPU
 	int ret;
@@ -79,7 +78,7 @@ static int riscv_cpu_probe(void *ctx, struct event *event)
 
 	return 0;
 }
-EVENT_SPY(EVT_DM_POST_INIT_R, riscv_cpu_probe);
+EVENT_SPY_SIMPLE(EVT_DM_POST_INIT_R, riscv_cpu_probe);
 
 /*
  * This is called on secondary harts just after the IPI is init'd. Currently
@@ -92,13 +91,9 @@ static void dummy_pending_ipi_clear(ulong hart, ulong arg0, ulong arg1)
 }
 #endif
 
-int riscv_cpu_setup(void *ctx, struct event *event)
+int riscv_cpu_setup(void)
 {
-	int ret;
-
-	ret = riscv_cpu_probe(ctx, event);
-	if (ret)
-		return ret;
+	int __maybe_unused ret;
 
 	/* Enable FPU */
 	if (supports_extension('d') || supports_extension('f')) {
@@ -146,7 +141,7 @@ int riscv_cpu_setup(void *ctx, struct event *event)
 
 	return 0;
 }
-EVENT_SPY(EVT_DM_POST_INIT_F, riscv_cpu_setup);
+EVENT_SPY_SIMPLE(EVT_DM_POST_INIT_F, riscv_cpu_setup);
 
 int arch_early_init_r(void)
 {

@@ -66,6 +66,7 @@ dtb-$(CONFIG_ARCH_KIRKWOOD) += \
 	kirkwood-ns2max.dtb \
 	kirkwood-ns2mini.dtb \
 	kirkwood-nsa310s.dtb \
+	kirkwood-nsa325.dtb \
 	kirkwood-openrd-base.dtb \
 	kirkwood-openrd-client.dtb \
 	kirkwood-openrd-ultimate.dtb \
@@ -177,6 +178,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3568) += \
 	rk3566-soquartz-blade.dtb \
 	rk3566-soquartz-cm4.dtb \
 	rk3566-soquartz-model-a.dtb \
+	rk3568-bpi-r2-pro.dtb \
 	rk3568-evb.dtb \
 	rk3568-lubancat-2.dtb \
 	rk3568-nanopi-r5c.dtb \
@@ -189,6 +191,10 @@ dtb-$(CONFIG_ROCKCHIP_RK3588) += \
 	rk3588-edgeble-neu6a-io.dtb \
 	rk3588-edgeble-neu6b-io.dtb \
 	rk3588-evb1-v10.dtb \
+	rk3588-nanopc-t6.dtb \
+	rk3588s-orangepi-5.dtb \
+	rk3588-orangepi-5-plus.dtb \
+	rk3588-quartzpro64.dtb \
 	rk3588s-rock-5a.dtb \
 	rk3588-rock-5b.dtb
 
@@ -317,6 +323,7 @@ else
 dtb-$(CONFIG_ARCH_MVEBU) +=			\
 	armada-3720-db.dtb			\
 	armada-3720-espressobin.dtb		\
+	armada-3720-ripe-atlas.dtb		\
 	armada-3720-turris-mox.dtb		\
 	armada-3720-eDPU.dtb			\
 	armada-3720-uDPU.dtb			\
@@ -370,6 +377,12 @@ dtb-$(CONFIG_ARCH_ZYNQ) += \
 	zynq-cse-nand.dtb \
 	zynq-cse-nor.dtb \
 	zynq-cse-qspi-single.dtb \
+	zynq-cse-qspi-parallel.dtb \
+	zynq-cse-qspi-stacked.dtb \
+	zynq-cse-qspi-x1-single.dtb \
+	zynq-cse-qspi-x1-stacked.dtb \
+	zynq-cse-qspi-x2-single.dtb \
+	zynq-cse-qspi-x2-stacked.dtb \
 	zynq-dlc20-rev1.0.dtb \
 	zynq-microzed.dtb \
 	zynq-minized.dtb \
@@ -395,25 +408,50 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-a2197-revA.dtb			\
 	zynqmp-dlc21-revA.dtb			\
 	zynqmp-e-a2197-00-revA.dtb		\
+	zynqmp-e-a2197-00-revB.dtb		\
 	zynqmp-g-a2197-00-revA.dtb		\
 	zynqmp-m-a2197-01-revA.dtb		\
 	zynqmp-m-a2197-02-revA.dtb		\
 	zynqmp-m-a2197-03-revA.dtb		\
 	zynqmp-p-a2197-00-revA.dtb		\
+	zynqmp-p-a2197-00-revA-x-prc-01-revA.dtbo	\
+	zynqmp-p-a2197-00-revA-x-prc-02-revA.dtbo	\
+	zynqmp-p-a2197-00-revA-x-prc-03-revA.dtbo	\
+	zynqmp-p-a2197-00-revA-x-prc-04-revA.dtbo	\
+	zynqmp-p-a2197-00-revA-x-prc-05-revA.dtbo	\
 	zynqmp-mini.dtb				\
 	zynqmp-mini-emmc0.dtb			\
 	zynqmp-mini-emmc1.dtb			\
 	zynqmp-mini-nand.dtb			\
 	zynqmp-mini-qspi.dtb			\
+	zynqmp-mini-qspi-parallel.dtb		\
+	zynqmp-mini-qspi-single.dtb		\
+	zynqmp-mini-qspi-stacked.dtb		\
+	zynqmp-mini-qspi-x1-single.dtb		\
+	zynqmp-mini-qspi-x1-stacked.dtb		\
+	zynqmp-mini-qspi-x2-single.dtb		\
+	zynqmp-mini-qspi-x2-stacked.dtb		\
+	zynqmp-sc-revB.dtb			\
+	zynqmp-sc-revC.dtb			\
+	zynqmp-sc-vek280-revA.dtbo		\
+	zynqmp-sc-vek280-revB.dtbo		\
+	zynqmp-sc-vhk158-revA.dtbo		\
+	zynqmp-sc-vpk120-revB.dtbo		\
+	zynqmp-sc-vpk180-revA.dtbo		\
+	zynqmp-sc-vpk180-revB.dtbo		\
+	zynqmp-sc-vn-p-b2197-00-revA.dtbo	\
 	zynqmp-sm-k24-revA.dtb			\
 	zynqmp-smk-k24-revA.dtb			\
 	zynqmp-sm-k26-revA.dtb			\
 	zynqmp-smk-k26-revA.dtb			\
+	zynqmp-sck-kd-g-revA.dtbo		\
 	zynqmp-sck-kr-g-revA.dtbo		\
 	zynqmp-sck-kr-g-revB.dtbo		\
 	zynqmp-sck-kv-g-revA.dtbo		\
 	zynqmp-sck-kv-g-revB.dtbo		\
 	zynqmp-topic-miamimp-xilinx-xdp-v1r1.dtb	\
+	zynqmp-vpk120-revA.dtb			\
+	zynqmp-vp-x-a2785-00-revA.dtb		\
 	zynqmp-zcu100-revC.dtb			\
 	zynqmp-zcu102-revA.dtb			\
 	zynqmp-zcu102-revB.dtb			\
@@ -429,6 +467,8 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-zcu1285-revA.dtb			\
 	zynqmp-zcu208-revA.dtb			\
 	zynqmp-zcu216-revA.dtb			\
+	zynqmp-zcu670-revA.dtb			\
+	zynqmp-zcu670-revB.dtb			\
 	zynqmp-zc1232-revA.dtb			\
 	zynqmp-zc1254-revA.dtb			\
 	zynqmp-zc1751-xm015-dc1.dtb		\
@@ -441,13 +481,27 @@ dtb-$(CONFIG_ARCH_VERSAL) += \
 	versal-mini-emmc0.dtb \
 	versal-mini-emmc1.dtb \
 	versal-mini-ospi-single.dtb \
+	versal-mini-ospi-stacked.dtb \
+	versal-mini-qspi-parallel.dtb \
 	versal-mini-qspi-single.dtb \
+	versal-mini-qspi-stacked.dtb \
+	versal-mini-qspi-x1-single.dtb \
+	versal-mini-qspi-x1-stacked.dtb \
+	versal-mini-qspi-x2-single.dtb \
+	versal-mini-qspi-x2-stacked.dtb \
 	xilinx-versal-virt.dtb
 dtb-$(CONFIG_ARCH_VERSAL_NET) += \
 	versal-net-mini.dtb \
 	versal-net-mini-emmc.dtb \
 	versal-net-mini-ospi-single.dtb \
+	versal-net-mini-ospi-stacked.dtb \
 	versal-net-mini-qspi-single.dtb \
+	versal-net-mini-qspi-parallel.dtb \
+	versal-net-mini-qspi-stacked.dtb \
+	versal-net-mini-qspi-x1-single.dtb \
+	versal-net-mini-qspi-x1-stacked.dtb \
+	versal-net-mini-qspi-x2-single.dtb \
+	versal-net-mini-qspi-x2-stacked.dtb \
 	xilinx-versal-net-virt.dtb
 dtb-$(CONFIG_ARCH_ZYNQMP_R5) += \
 	zynqmp-r5.dtb
@@ -667,6 +721,7 @@ dtb-$(CONFIG_MACH_SUN7I) += \
 	sun7i-a20-haoyu-marsboard.dtb \
 	sun7i-a20-hummingbird.dtb \
 	sun7i-a20-i12-tvbox.dtb \
+	sun7i-a20-icnova-a20-adb4006.dtb \
 	sun7i-a20-icnova-swac.dtb \
 	sun7i-a20-itead-ibox.dtb \
 	sun7i-a20-lamobo-r1.dtb \
@@ -754,6 +809,8 @@ dtb-$(CONFIG_MACH_SUN8I_V3S) += \
 	sun8i-s3-pinecube.dtb \
 	sun8i-v3-sl631-imx179.dtb \
 	sun8i-v3s-licheepi-zero.dtb
+dtb-$(CONFIG_MACH_SUN8I_R528) += \
+	sun8i-t113s-mangopi-mq-r-t113.dtb
 dtb-$(CONFIG_MACH_SUN50I_H5) += \
 	sun50i-h5-bananapi-m2-plus.dtb \
 	sun50i-h5-emlid-neutis-n5-devboard.dtb \
@@ -778,6 +835,7 @@ dtb-$(CONFIG_MACH_SUN50I_H6) += \
 	sun50i-h6-tanix-tx6-mini.dtb
 dtb-$(CONFIG_MACH_SUN50I_H616) += \
 	sun50i-h616-orangepi-zero2.dtb \
+	sun50i-h618-orangepi-zero3.dtb \
 	sun50i-h616-x96-mate.dtb
 dtb-$(CONFIG_MACH_SUN50I) += \
 	sun50i-a64-amarula-relic.dtb \
@@ -1025,6 +1083,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-venice-gw7902.dtb \
 	imx8mm-venice-gw7903.dtb \
 	imx8mm-venice-gw7904.dtb \
+	imx8mm-venice-gw7905-0x.dtb \
 	imx8mm-verdin-wifi-dev.dtb \
 	phycore-imx8mm.dtb \
 	imx8mn-bsh-smm-s2.dtb \
@@ -1042,13 +1101,21 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mq-phanbell.dtb \
 	imx8mp-beacon-kit.dtb \
 	imx8mp-data-modul-edm-sbc.dtb \
+	imx8mp-dhcom-som-overlay-rev100.dtbo \
+	imx8mp-dhcom-som-overlay-eth1xfast.dtbo \
+	imx8mp-dhcom-som-overlay-eth2xfast.dtbo \
+	imx8mp-dhcom-pdk-overlay-eth2xfast.dtbo \
 	imx8mp-dhcom-pdk2.dtb \
 	imx8mp-dhcom-pdk3.dtb \
+	imx8mp-dhcom-pdk3-overlay-rev100.dtbo \
 	imx8mp-evk.dtb \
 	imx8mp-icore-mx8mp-edimm2.2.dtb \
 	imx8mp-msc-sm2s.dtb \
 	imx8mp-phyboard-pollux-rdk.dtb \
 	imx8mp-venice.dtb \
+	imx8mp-venice-gw71xx-2x.dtb \
+	imx8mp-venice-gw72xx-2x.dtb \
+	imx8mp-venice-gw73xx-2x.dtb \
 	imx8mp-venice-gw74xx.dtb \
 	imx8mp-venice-gw7905-2x.dtb \
 	imx8mp-verdin-wifi-dev.dtb \
@@ -1098,6 +1165,9 @@ dtb-$(CONFIG_RCAR_GEN4) += \
 	r8a779a0-falcon-u-boot.dtb \
 	r8a779f0-spider-u-boot.dtb \
 	r8a779g0-white-hawk-u-boot.dtb
+
+dtb-$(CONFIG_TARGET_RZG2L) += \
+	r9a07g044l2-smarc.dts
 
 ifdef CONFIG_RCAR_64
 DTC_FLAGS += -R 4 -p 0x1000
@@ -1198,8 +1268,14 @@ dtb-$(CONFIG_TARGET_SAMA5D27_SOM1_EK) += \
 dtb-$(CONFIG_TARGET_SAMA5D27_WLSOM1_EK) += \
 	at91-sama5d27_wlsom1_ek.dtb
 
+dtb-$(CONFIG_TARGET_KSTR_SAMA5D27) += \
+	at91-kstr-sama5d27.dtb
+
 dtb-$(CONFIG_TARGET_SAMA5D2_ICP) += \
 	at91-sama5d2_icp.dtb
+
+dtb-$(CONFIG_TARGET_SAMA5D29_CURIOSITY) += \
+	at91-sama5d29_curiosity.dtb
 
 dtb-$(CONFIG_TARGET_SAMA5D3XEK) += \
 	sama5d31ek.dtb \
@@ -1334,6 +1410,8 @@ dtb-$(CONFIG_SOC_K3_AM642) += k3-am642-evm.dtb \
 
 dtb-$(CONFIG_SOC_K3_AM625) += k3-am625-sk.dtb \
 			      k3-am625-r5-sk.dtb \
+			      k3-am625-beagleplay.dtb \
+			      k3-am625-r5-beagleplay.dtb \
 			      k3-am625-verdin-wifi-dev.dtb \
 			      k3-am625-verdin-r5.dtb
 
@@ -1431,6 +1509,8 @@ targets += $(dtb-y)
 
 # Add any required device tree compiler flags here
 DTC_FLAGS += -a 0x8
+
+DTC_FLAGS_imx8mp-dhcom-pdk3-overlay-rev100 += -Wno-avoid_default_addr_size -Wno-reg_format
 
 PHONY += dtbs
 dtbs: $(addprefix $(obj)/, $(dtb-y))

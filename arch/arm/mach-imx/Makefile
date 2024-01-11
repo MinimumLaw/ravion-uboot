@@ -79,7 +79,7 @@ obj-$(CONFIG_CMD_NANDBCB) += cmd_nandbcb.o
 endif
 
 ifeq ($(CONFIG_SPL_BUILD),y)
-obj-$(CONFIG_SPL_LOAD_IMX_CONTAINER) += image-container.o parse-container.o
+obj-$(CONFIG_SPL_LOAD_IMX_CONTAINER) += image-container.o
 endif
 
 ifeq ($(SOC),$(filter $(SOC),imx8ulp imx9))
@@ -142,7 +142,9 @@ u-boot.imx: u-boot.bin u-boot.cfgout $(PLUGIN).bin FORCE
 	$(call if_changed,mkimage)
 
 quiet_cmd_u-boot-nand_imx = GEN     $@
-cmd_u-boot-nand_imx = (dd bs=1024 count=1 if=/dev/zero 2>/dev/null) | cat - $< > $@
+cmd_u-boot-nand_imx = (dd bs=1024 count=1 if=/dev/zero 2>/dev/null) | cat - $< > $@.zero-padded ; \
+		      (dd bs=10k count=1 if=/dev/zero 2>/dev/null) | cat $@.zero-padded - > $@ ; \
+		      rm -f $@.zero-padded
 
 u-boot-nand.imx: u-boot.imx FORCE
 	$(call if_changed,u-boot-nand_imx)

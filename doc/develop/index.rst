@@ -19,6 +19,7 @@ General
    security
    sending_patches
    system_configuration
+   ide_integration
 
 Implementation
 --------------
@@ -38,6 +39,7 @@ Implementation
    driver-model/index
    environment
    expo
+   cedit
    event
    global_data
    logging
@@ -87,7 +89,7 @@ Refactoring
 
    checkpatch
    coccinelle
-   moveconfig
+   qconfig
 
 Code quality
 ------------

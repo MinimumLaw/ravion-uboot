@@ -28,8 +28,10 @@
 #include <errno.h>
 #include <fdt_support.h>
 #include <fsl_wdog.h>
+#include <fuse.h>
 #include <imx_sip.h>
 #include <linux/bitops.h>
+#include <linux/bitfield.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -533,7 +535,7 @@ static void imx_set_wdog_powerdown(bool enable)
 	writew(enable, &wdog3->wmcr);
 }
 
-static int imx8m_check_clock(void *ctx, struct event *event)
+static int imx8m_check_clock(void)
 {
 	struct udevice *dev;
 	int ret;
@@ -550,7 +552,7 @@ static int imx8m_check_clock(void *ctx, struct event *event)
 
 	return 0;
 }
-EVENT_SPY(EVT_DM_POST_INIT_F, imx8m_check_clock);
+EVENT_SPY_SIMPLE(EVT_DM_POST_INIT_F, imx8m_check_clock);
 
 static void imx8m_setup_snvs(void)
 {
@@ -648,19 +650,17 @@ struct rom_api *g_rom_api = (struct rom_api *)0x980;
 
 #if defined(CONFIG_IMX8M)
 #include <spl.h>
-int spl_mmc_emmc_boot_partition(struct mmc *mmc)
+int imx8m_detect_secondary_image_boot(void)
 {
 	u32 *rom_log_addr = (u32 *)0x9e0;
 	u32 *rom_log;
 	u8 event_id;
-	int i, part;
-
-	part = default_spl_mmc_emmc_boot_partition(mmc);
+	int i, boot_secondary = 0;
 
 	/* If the ROM event log pointer is not valid. */
 	if (*rom_log_addr < 0x900000 || *rom_log_addr >= 0xb00000 ||
 	    *rom_log_addr & 0x3)
-		return part;
+		return -EINVAL;
 
 	/* Parse the ROM event ID version 2 log */
 	rom_log = (u32 *)(uintptr_t)(*rom_log_addr);
@@ -668,7 +668,7 @@ int spl_mmc_emmc_boot_partition(struct mmc *mmc)
 		event_id = rom_log[i] >> 24;
 		switch (event_id) {
 		case 0x00: /* End of list */
-			return part;
+			return boot_secondary;
 		/* Log entries with 1 parameter, skip 1 */
 		case 0x80: /* Start to perform the device initialization */
 		case 0x81: /* The boot device initialization completes */
@@ -686,25 +686,88 @@ int spl_mmc_emmc_boot_partition(struct mmc *mmc)
 			continue;
 		/* Boot from the secondary boot image */
 		case 0x51:
-			/*
-			 * Swap the eMMC boot partitions in case there was a
-			 * fallback event (i.e. primary image was corrupted
-			 * and that corruption was recognized by the BootROM),
-			 * so the SPL loads the rest of the U-Boot from the
-			 * correct eMMC boot partition, since the BootROM
-			 * leaves the boot partition set to the corrupted one.
-			 */
-			if (part == 1)
-				part = 2;
-			else if (part == 2)
-				part = 1;
+			boot_secondary = 1;
 			continue;
 		default:
 			continue;
 		}
 	}
 
+	return boot_secondary;
+}
+
+int spl_mmc_emmc_boot_partition(struct mmc *mmc)
+{
+	int part, ret;
+
+	part = default_spl_mmc_emmc_boot_partition(mmc);
+	if (part == 0)
+		return part;
+
+	ret = imx8m_detect_secondary_image_boot();
+	if (ret < 0) {
+		printf("Could not get boot partition! Using %d\n", part);
+		return part;
+	}
+
+	if (ret == 1) {
+		/*
+		 * Swap the eMMC boot partitions in case there was a
+		 * fallback event (i.e. primary image was corrupted
+		 * and that corruption was recognized by the BootROM),
+		 * so the SPL loads the rest of the U-Boot from the
+		 * correct eMMC boot partition, since the BootROM
+		 * leaves the boot partition set to the corrupted one.
+		 */
+		if (part == 1)
+			part = 2;
+		else if (part == 2)
+			part = 1;
+	}
+
 	return part;
+}
+
+int boot_mode_getprisec(void)
+{
+	return !!imx8m_detect_secondary_image_boot();
+}
+#endif
+
+#if defined(CONFIG_IMX8MN) || defined(CONFIG_IMX8MP)
+#define IMG_CNTN_SET1_OFFSET	GENMASK(22, 19)
+unsigned long arch_spl_mmc_get_uboot_raw_sector(struct mmc *mmc,
+						unsigned long raw_sect)
+{
+	u32 val, offset;
+
+	if (fuse_read(2, 1, &val)) {
+		debug("Error reading fuse!\n");
+		return raw_sect;
+	}
+
+	val = FIELD_GET(IMG_CNTN_SET1_OFFSET, val);
+	if (val > 10) {
+		debug("Secondary image boot disabled!\n");
+		return raw_sect;
+	}
+
+	if (val == 0)
+		offset = SZ_4M;
+	else if (val == 1)
+		offset = SZ_2M;
+	else if (val == 2)
+		offset = SZ_1M;
+	else	/* flash.bin offset = 1 MiB * 2^n */
+		offset = SZ_1M << val;
+
+	offset /= 512;
+	offset -= CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_DATA_PART_OFFSET;
+
+	if (imx8m_detect_secondary_image_boot())
+		raw_sect += offset;
+
+	return raw_sect;
 }
 #endif
 
@@ -1246,6 +1309,82 @@ static int fixup_thermal_trips(void *blob, const char *name)
 	return 0;
 }
 
+#define OPTEE_SHM_SIZE 0x00400000
+static int ft_add_optee_node(void *fdt, struct bd_info *bd)
+{
+	struct fdt_memory carveout;
+	const char *path, *subpath;
+	phys_addr_t optee_start;
+	size_t optee_size;
+	int offs;
+	int ret;
+
+	/*
+	 * No TEE space allocated indicating no TEE running, so no
+	 * need to add optee node in dts
+	 */
+	if (!rom_pointer[1])
+		return 0;
+
+	optee_start = (phys_addr_t)rom_pointer[0];
+	optee_size = rom_pointer[1] - OPTEE_SHM_SIZE;
+
+	offs = fdt_increase_size(fdt, 512);
+	if (offs) {
+		printf("No Space for dtb\n");
+		return 1;
+	}
+
+	path = "/firmware";
+	offs = fdt_path_offset(fdt, path);
+	if (offs < 0) {
+		path = "/";
+		offs = fdt_path_offset(fdt, path);
+
+		if (offs < 0) {
+			printf("Could not find root node.\n");
+			return offs;
+		}
+
+		subpath = "firmware";
+		offs = fdt_add_subnode(fdt, offs, subpath);
+		if (offs < 0) {
+			printf("Could not create %s node.\n", subpath);
+			return offs;
+		}
+	}
+
+	subpath = "optee";
+	offs = fdt_add_subnode(fdt, offs, subpath);
+	if (offs < 0) {
+		printf("Could not create %s node.\n", subpath);
+		return offs;
+	}
+
+	fdt_setprop_string(fdt, offs, "compatible", "linaro,optee-tz");
+	fdt_setprop_string(fdt, offs, "method", "smc");
+
+	carveout.start = optee_start,
+	carveout.end = optee_start + optee_size - 1,
+	ret = fdtdec_add_reserved_memory(fdt, "optee_core", &carveout, NULL, 0,
+					 NULL, FDTDEC_RESERVED_MEMORY_NO_MAP);
+	if (ret < 0) {
+		printf("Could not create optee_core node.\n");
+		return ret;
+	}
+
+	carveout.start = optee_start + optee_size;
+	carveout.end = optee_start + optee_size + OPTEE_SHM_SIZE - 1;
+	ret = fdtdec_add_reserved_memory(fdt, "optee_shm", &carveout, NULL, 0,
+					 NULL, FDTDEC_RESERVED_MEMORY_NO_MAP);
+	if (ret < 0) {
+		printf("Could not create optee_shm node.\n");
+		return ret;
+	}
+
+	return 0;
+}
+
 int ft_system_setup(void *blob, struct bd_info *bd)
 {
 #ifdef CONFIG_IMX8MQ
@@ -1395,7 +1534,7 @@ usb_modify_speed:
 	    fixup_thermal_trips(blob, "soc-thermal"))
 		printf("Failed to update soc-thermal trip(s)");
 
-	return 0;
+	return ft_add_optee_node(blob, bd);
 }
 #endif
 

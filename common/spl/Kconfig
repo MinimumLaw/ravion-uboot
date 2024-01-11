@@ -67,7 +67,7 @@ config SPL_SIZE_LIMIT_SUBTRACT_MALLOC
 config SPL_SIZE_LIMIT_PROVIDE_STACK
 	hex "SPL image size check: provide stack space before relocation"
 	depends on SPL_SIZE_LIMIT > 0
-	default 0
+	default 0x0
 	help
 	  If set, this size is reserved in SPL_SIZE_LIMIT check to ensure such
 	  an image does not overflow SRAM if SPL_SIZE_LIMIT describes the size
@@ -265,7 +265,7 @@ config SPL_TEXT_BASE
 	default 0x402F0400 if AM33XX
 	default 0x40301350 if OMAP54XX
 	default 0x10060 if MACH_SUN50I || MACH_SUN50I_H5 || MACH_SUN9I
-	default 0x20060 if SUN50I_GEN_H6
+	default 0x20060 if SUN50I_GEN_H6 || SUNXI_GEN_NCAT2
 	default 0x00060 if ARCH_SUNXI
 	default 0xfffc0000 if ARCH_ZYNQMP
 	default 0x0
@@ -330,6 +330,20 @@ config SPL_LEGACY_IMAGE_CRC_CHECK
 	  If disabled, Legacy images are booted if the image magic and size
 	  are correct, without further integrity checks.
 
+config SPL_LOAD_IMX_CONTAINER
+	bool "Enable SPL loading and booting of i.MX8 Containers"
+	depends on SPL
+	help
+	  Support booting U-Boot from an i.MX8 container image. If you are not
+	  using i.MX8, say 'n'.
+
+config IMX_CONTAINER_CFG
+	string "i.MX8 Container config file"
+	depends on SPL && SPL_LOAD_IMX_CONTAINER
+	help
+	  Specify the cfg file for generating the container image which will be
+	  loaded by SPL.
+
 config SPL_SYS_MALLOC_SIMPLE
 	bool "Only use malloc_simple functions in the SPL"
 	help
@@ -356,7 +370,8 @@ config SPL_STACK
 	default 0x93ffb8 if ARCH_MX6 && MX6_OCRAM_256KB
 	default 0x91ffb8 if ARCH_MX6 && !MX6_OCRAM_256KB
 	default 0x118000 if MACH_SUN50I_H6
-	default 0x58000 if MACH_SUN50I_H616
+	default 0x52a00 if MACH_SUN50I_H616
+	default 0x40000 if MACH_SUN8I_R528
 	default 0x54000 if MACH_SUN50I || MACH_SUN50I_H5
 	default 0x18000 if MACH_SUN9I
 	default 0x8000 if ARCH_SUNXI
@@ -402,21 +417,21 @@ config SPL_SEPARATE_BSS
 	  location is used. Normally we put the device tree at the end of BSS
 	  but with this option enabled, it goes at _image_binary_end.
 
-config SYS_SPL_MALLOC
+config SPL_SYS_MALLOC
 	bool "Enable malloc pool in SPL"
 	depends on SPL_FRAMEWORK
 
-config HAS_CUSTOM_SPL_MALLOC_START
+config SPL_HAS_CUSTOM_MALLOC_START
 	bool "For the SPL malloc pool, define a custom starting address"
-	depends on SYS_SPL_MALLOC
+	depends on SPL_SYS_MALLOC
 
-config CUSTOM_SYS_SPL_MALLOC_ADDR
+config SPL_CUSTOM_SYS_MALLOC_ADDR
 	hex "SPL malloc addr"
-	depends on HAS_CUSTOM_SPL_MALLOC_START
+	depends on SPL_HAS_CUSTOM_MALLOC_START
 
-config SYS_SPL_MALLOC_SIZE
+config SPL_SYS_MALLOC_SIZE
 	hex "Size of the SPL malloc pool"
-	depends on SYS_SPL_MALLOC
+	depends on SPL_SYS_MALLOC
 	default 0x100000
 
 config SPL_READ_ONLY
@@ -643,6 +658,7 @@ config SPL_ETH
 
 config SPL_FS_EXT4
 	bool "Support EXT filesystems"
+	select SPL_CRC16 if EXT4_WRITE
 	help
 	  Enable support for EXT2/3/4 filesystems with SPL. This permits
 	  U-Boot (or Linux in Falcon mode) to be loaded from an EXT
@@ -1063,7 +1079,7 @@ config SPL_OS_BOOT
 	  Enable booting directly to an OS from SPL.
 	  for more info read doc/README.falcon
 
-config SYS_SPL_ARGS_ADDR
+config SPL_PAYLOAD_ARGS_ADDR
 	hex "Address in memory to load 'args' file for Falcon Mode to"
 	depends on SPL_OS_BOOT
 	default 0x88000000 if ARCH_OMAP2PLUS

@@ -2,7 +2,7 @@
 /*
  * Board specific initialization for J721E EVM
  *
- * Copyright (C) 2018-2019 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2018-2019 Texas Instruments Incorporated - https://www.ti.com/
  *	Lokesh Vutla <lokeshvutla@ti.com>
  *
  */
@@ -22,6 +22,7 @@
 #include <spl.h>
 #include <dm.h>
 #include <dm/uclass-internal.h>
+#include <linux/printk.h>
 
 #include "../common/board_detect.h"
 

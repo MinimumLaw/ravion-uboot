@@ -366,7 +366,7 @@ static int do_spi_flash_erase(int argc, char *const argv[])
 	}
 
 	if (flash->flash_is_unlocked &&
-	    !flash->flash_is_unlocked(flash, offset, len)) {
+	    !flash->flash_is_unlocked(flash, offset, size)) {
 		printf("ERROR: flash area is locked\n");
 		return CMD_RET_FAILURE;
 	}
@@ -604,7 +604,7 @@ static int do_spi_flash(struct cmd_tbl *cmdtp, int flag, int argc,
 		ret = do_spi_flash_read_write(argc, argv);
 	else if (strcmp(cmd, "erase") == 0)
 		ret = do_spi_flash_erase(argc, argv);
-	else if (strcmp(cmd, "protect") == 0)
+	else if (IS_ENABLED(CONFIG_SPI_FLASH_LOCK) && strcmp(cmd, "protect") == 0)
 		ret = do_spi_protect(argc, argv);
 	else if (IS_ENABLED(CONFIG_CMD_SF_TEST) && !strcmp(cmd, "test"))
 		ret = do_spi_flash_test(argc, argv);
@@ -614,8 +614,7 @@ static int do_spi_flash(struct cmd_tbl *cmdtp, int flag, int argc,
 	return ret;
 }
 
-#ifdef CONFIG_SYS_LONGHELP
-static const char long_help[] =
+U_BOOT_LONGHELP(sf,
 	"probe [[bus:]cs] [hz] [mode]	- init flash device on given SPI bus\n"
 	"				  and chip select\n"
 	"sf read addr offset|partition len	- read `len' bytes starting at\n"
@@ -630,15 +629,16 @@ static const char long_help[] =
 	"sf update addr offset|partition len	- erase and write `len' bytes from memory\n"
 	"					  at `addr' to flash at `offset'\n"
 	"					  or to start of mtd `partition'\n"
+#ifdef CONFIG_SPI_FLASH_LOCK
 	"sf protect lock/unlock sector len	- protect/unprotect 'len' bytes starting\n"
 	"					  at address 'sector'"
+#endif
 #ifdef CONFIG_CMD_SF_TEST
 	"\nsf test offset len		- run a very basic destructive test"
 #endif
-#endif /* CONFIG_SYS_LONGHELP */
-	;
+	);
 
 U_BOOT_CMD(
 	sf,	5,	1,	do_spi_flash,
-	"SPI flash sub-system", long_help
+	"SPI flash sub-system", sf_help_text
 );

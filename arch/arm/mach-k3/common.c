@@ -2,7 +2,7 @@
 /*
  * K3: Common Architecture initialization
  *
- * Copyright (C) 2018 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  *	Lokesh Vutla <lokeshvutla@ti.com>
  */
 
@@ -13,6 +13,7 @@
 #include <log.h>
 #include <spl.h>
 #include <asm/global_data.h>
+#include <linux/printk.h>
 #include "common.h"
 #include <dm.h>
 #include <remoteproc.h>
@@ -83,10 +84,10 @@ void k3_sysfw_print_ver(void)
 	       ti_sci->version.firmware_revision, fw_desc);
 }
 
-void mmr_unlock(phys_addr_t base, u32 partition)
+void mmr_unlock(uintptr_t base, u32 partition)
 {
 	/* Translate the base address */
-	phys_addr_t part_base = base + partition * CTRL_MMR0_PARTITION_SIZE;
+	uintptr_t part_base = base + partition * CTRL_MMR0_PARTITION_SIZE;
 
 	/* Unlock the requested partition if locked using two-step sequence */
 	writel(CTRLMMR_LOCK_KICK0_UNLOCK_VAL, part_base + CTRLMMR_LOCK_KICK0);

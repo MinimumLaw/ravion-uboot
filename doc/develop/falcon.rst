@@ -63,7 +63,7 @@ CONFIG_CMD_SPL
     Enable the "spl export" command.
     The command "spl export" is then available in U-Boot mode.
 
-CONFIG_SYS_SPL_ARGS_ADDR
+CONFIG_SPL_PAYLOAD_ARGS_ADDR
     Address in RAM where the parameters must be copied by SPL.
     In most cases, it is <start_of_ram> + 0x100.
 
@@ -220,7 +220,7 @@ setting the GPIO (on twister GPIO 55 is used) to kernel mode.
 The kernel is loaded directly by the SPL without passing through U-Boot.
 
 Example with FDT: a3m071 board
--------------------------------
+------------------------------
 
 To boot the Linux kernel from the SPL, the DT blob (fdt) needs to get
 prepared/patched first. U-Boot usually inserts some dynamic values into

@@ -65,7 +65,7 @@ struct bootdev_hunter;
  *
  * @info: Info structure describing this hunter
  * @show: true to show information from the hunter
- * Returns: 0 if OK, -ve on error
+ * Returns: 0 if OK, -ENOENT on device not found, otherwise -ve on error
  */
 typedef int (*bootdev_hunter_func)(struct bootdev_hunter *info, bool show);
 
@@ -319,6 +319,15 @@ int bootdev_hunt(const char *spec, bool show);
  * Returns: 0 if OK, -ve on error
  */
 int bootdev_hunt_prio(enum bootdev_prio_t prio, bool show);
+
+/**
+ * bootdev_unhunt() - Mark a device as needing to be hunted again
+ *
+ * @id: uclass ID to update
+ * Return: 0 if done, -EALREADY if already in this state, -ENOENT if no hunter
+ * found for that uclass
+ */
+int bootdev_unhunt(enum uclass_id id);
 
 /**
  * bootdev_hunt_and_find_by_label() - Hunt for bootdevs by label

@@ -68,6 +68,11 @@ int data_modul_imx_edm_sbc_board_power_init(void)
 	/* To avoid timing risk from SoC to ARM, increase VDD_ARM to OD voltage 0.95V */
 	pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x1c);
 
+	/* DRAM Vdd1 always FPWM */
+	pmic_reg_write(dev, PCA9450_BUCK5CTRL, 0x0d);
+	/* DRAM Vdd2/Vddq always FPWM */
+	pmic_reg_write(dev, PCA9450_BUCK6CTRL, 0x0d);
+
 	/* Set LDO4 and CONFIG2 to enable the I2C level translator. */
 	pmic_reg_write(dev, PCA9450_LDO4CTRL, 0x59);
 	pmic_reg_write(dev, PCA9450_CONFIG2, 0x1);
@@ -107,7 +112,7 @@ void board_boot_order(u32 *spl_boot_list)
 	spl_boot_list[4] = BOOT_DEVICE_NONE;
 }
 
-unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long sect)
+unsigned long board_spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long sect)
 {
 	const u32 boot_dev = spl_boot_device();
 	int part;

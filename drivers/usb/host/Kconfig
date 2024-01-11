@@ -90,7 +90,7 @@ config USB_XHCI_OMAP
 
 config USB_XHCI_PCI
 	bool "Support for PCI-based xHCI USB controller"
-	depends on DM_USB
+	depends on DM_USB && PCI
 	default y if X86
 	help
 	  Enables support for the PCI-based xHCI controller.
@@ -231,7 +231,6 @@ config USB_EHCI_MXS
 config USB_EHCI_NPCM
 	bool "Support for Nuvoton NPCM on-chip EHCI USB controller"
 	depends on ARCH_NPCM
-	default n
 	---help---
 	  Enables support for the on-chip EHCI controller on
 	  Nuvoton NPCM chips.
@@ -368,7 +367,6 @@ config USB_OHCI_DA8XX
 config USB_OHCI_NPCM
 	bool "Support for Nuvoton NPCM on-chip OHCI USB controller"
 	depends on ARCH_NPCM
-	default n
 	---help---
 	  Enables support for the on-chip OHCI controller on
 	  Nuvoton NPCM chips.

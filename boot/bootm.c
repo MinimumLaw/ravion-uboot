@@ -8,6 +8,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <cli.h>
+#include <command.h>
 #include <cpu_func.h>
 #include <env.h>
 #include <errno.h>
@@ -22,6 +23,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/sizes.h>
+#include <tpm-v2.h>
 #if defined(CONFIG_CMD_USB)
 #include <usb.h>
 #endif
@@ -29,7 +31,6 @@
 #include "mkimage.h"
 #endif
 
-#include <command.h>
 #include <bootm.h>
 #include <image.h>
 
@@ -673,6 +674,75 @@ int bootm_process_cmdline_env(int flags)
 	return 0;
 }
 
+int bootm_measure(struct bootm_headers *images)
+{
+	int ret = 0;
+
+	/* Skip measurement if EFI is going to do it */
+	if (images->os.os == IH_OS_EFI &&
+	    IS_ENABLED(CONFIG_EFI_TCG2_PROTOCOL) &&
+	    IS_ENABLED(CONFIG_BOOTM_EFI))
+		return ret;
+
+	if (IS_ENABLED(CONFIG_MEASURED_BOOT)) {
+		struct tcg2_event_log elog;
+		struct udevice *dev;
+		void *initrd_buf;
+		void *image_buf;
+		const char *s;
+		u32 rd_len;
+		bool ign;
+
+		elog.log_size = 0;
+		ign = IS_ENABLED(CONFIG_MEASURE_IGNORE_LOG);
+		ret = tcg2_measurement_init(&dev, &elog, ign);
+		if (ret)
+			return ret;
+
+		image_buf = map_sysmem(images->os.image_start,
+				       images->os.image_len);
+		ret = tcg2_measure_data(dev, &elog, 8, images->os.image_len,
+					image_buf, EV_COMPACT_HASH,
+					strlen("linux") + 1, (u8 *)"linux");
+		if (ret)
+			goto unmap_image;
+
+		rd_len = images->rd_end - images->rd_start;
+		initrd_buf = map_sysmem(images->rd_start, rd_len);
+		ret = tcg2_measure_data(dev, &elog, 9, rd_len, initrd_buf,
+					EV_COMPACT_HASH, strlen("initrd") + 1,
+					(u8 *)"initrd");
+		if (ret)
+			goto unmap_initrd;
+
+		if (IS_ENABLED(CONFIG_MEASURE_DEVICETREE)) {
+			ret = tcg2_measure_data(dev, &elog, 0, images->ft_len,
+						(u8 *)images->ft_addr,
+						EV_TABLE_OF_DEVICES,
+						strlen("dts") + 1,
+						(u8 *)"dts");
+			if (ret)
+				goto unmap_initrd;
+		}
+
+		s = env_get("bootargs");
+		if (!s)
+			s = "";
+		ret = tcg2_measure_data(dev, &elog, 1, strlen(s) + 1, (u8 *)s,
+					EV_PLATFORM_CONFIG_FLAGS,
+					strlen(s) + 1, (u8 *)s);
+
+unmap_initrd:
+		unmap_sysmem(initrd_buf);
+
+unmap_image:
+		unmap_sysmem(image_buf);
+		tcg2_measurement_term(dev, &elog, ret != 0);
+	}
+
+	return ret;
+}
+
 /**
  * Execute selected states of the bootm command.
  *
@@ -723,6 +793,10 @@ int do_bootm_states(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (!ret && (states & BOOTM_STATE_FINDOTHER))
 		ret = bootm_find_other(cmdtp, flag, argc, argv);
+
+	if (IS_ENABLED(CONFIG_MEASURED_BOOT) && !ret &&
+	    (states & BOOTM_STATE_MEASURE))
+		bootm_measure(images);
 
 	/* Load the OS */
 	if (!ret && (states & BOOTM_STATE_LOADOS)) {
@@ -819,6 +893,43 @@ err:
 		bootstage_error(BOOTSTAGE_ID_DECOMP_UNIMPL);
 	else if (ret == BOOTM_ERR_RESET)
 		do_reset(cmdtp, flag, argc, argv);
+
+	return ret;
+}
+
+int bootm_boot_start(ulong addr, const char *cmdline)
+{
+	static struct cmd_tbl cmd = {"bootm"};
+	char addr_str[30];
+	char *argv[] = {addr_str, NULL};
+	int states;
+	int ret;
+
+	/*
+	 * TODO(sjg@chromium.org): This uses the command-line interface, but
+	 * should not. To clean this up, the various bootm states need to be
+	 * passed an info structure instead of cmdline flags. Then this can
+	 * set up the required info and move through the states without needing
+	 * the command line.
+	 */
+	states = BOOTM_STATE_START | BOOTM_STATE_FINDOS | BOOTM_STATE_PRE_LOAD |
+		BOOTM_STATE_FINDOTHER | BOOTM_STATE_LOADOS |
+		BOOTM_STATE_OS_PREP | BOOTM_STATE_OS_FAKE_GO |
+		BOOTM_STATE_OS_GO;
+	if (IS_ENABLED(CONFIG_SYS_BOOT_RAMDISK_HIGH))
+		states |= BOOTM_STATE_RAMDISK;
+	if (IS_ENABLED(CONFIG_PPC) || IS_ENABLED(CONFIG_MIPS))
+		states |= BOOTM_STATE_OS_CMDLINE;
+	images.state |= states;
+
+	snprintf(addr_str, sizeof(addr_str), "%lx", addr);
+
+	ret = env_set("bootargs", cmdline);
+	if (ret) {
+		printf("Failed to set cmdline\n");
+		return ret;
+	}
+	ret = do_bootm_states(&cmd, 0, 1, argv, states, &images, 1);
 
 	return ret;
 }

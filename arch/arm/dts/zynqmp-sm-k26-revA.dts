@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * dts file for Xilinx ZynqMP SM-K26 rev1/B/A
+ * dts file for Xilinx ZynqMP SM-K26 rev2/1/B/A
  *
  * (C) Copyright 2020 - 2021, Xilinx, Inc.
+ * (C) Copyright 2023, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -17,8 +18,9 @@
 #include <dt-bindings/pinctrl/pinctrl-zynqmp.h>
 
 / {
-	model = "ZynqMP SM-K26 Rev1/B/A";
-	compatible = "xlnx,zynqmp-sm-k26-rev1", "xlnx,zynqmp-sm-k26-revB",
+	model = "ZynqMP SM-K26 Rev2/1/B/A";
+	compatible = "xlnx,zynqmp-sm-k26-rev2",
+		     "xlnx,zynqmp-sm-k26-rev1", "xlnx,zynqmp-sm-k26-revB",
 		     "xlnx,zynqmp-sm-k26-revA", "xlnx,zynqmp-sm-k26",
 		     "xlnx,zynqmp";
 
@@ -143,8 +145,6 @@
 	status = "okay";
 	spi_flash: flash@0 { /* MT25QU512A */
 		compatible = "mt25qu512a", "jedec,spi-nor"; /* 64MB */
-		#address-cells = <1>;
-		#size-cells = <1>;
 		reg = <0>;
 		spi-tx-bus-width = <4>;
 		spi-rx-bus-width = <4>;
@@ -233,9 +233,9 @@
 				label = "Secure OS Storage";
 				reg = <0x2280000 0x20000>; /* 128KB */
 			};
-			partition@22A0000 {
+			partition@22a0000 {
 				label = "User";
-				reg = <0x22A0000 0x1d60000>; /* 29.375 MB */
+				reg = <0x22a0000 0x1d60000>; /* 29.375 MB */
 			};
 		};
 	};

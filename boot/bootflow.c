@@ -156,6 +156,27 @@ static void bootflow_iter_set_dev(struct bootflow_iter *iter,
 }
 
 /**
+ * scan_next_in_uclass() - Scan for the next bootdev in the same media uclass
+ *
+ * Move through the following bootdevs until we find another in this media
+ * uclass, or run out
+ *
+ * @devp: On entry, the device to check, on exit the new device, or NULL if
+ * there is none
+ */
+static void scan_next_in_uclass(struct udevice **devp)
+{
+	struct udevice *dev = *devp;
+	enum uclass_id cur_id = device_get_uclass_id(dev->parent);
+
+	do {
+		uclass_find_next_device(&dev);
+	} while (dev && cur_id != device_get_uclass_id(dev->parent));
+
+	*devp = dev;
+}
+
+/**
  * iter_incr() - Move to the next item (method, part, bootdev)
  *
  * Return: 0 if OK, BF_NO_MORE_DEVICES if there are no more bootdevs
@@ -230,8 +251,7 @@ static int iter_incr(struct bootflow_iter *iter)
 						 &method_flags);
 		} else if (IS_ENABLED(CONFIG_BOOTSTD_FULL) &&
 			   (iter->flags & BOOTFLOWIF_SINGLE_UCLASS)) {
-			/* Move to the next bootdev in this uclass */
-			uclass_find_next_device(&dev);
+			scan_next_in_uclass(&dev);
 			if (!dev) {
 				log_debug("finished uclass %s\n",
 					  dev_get_uclass_name(dev));
@@ -260,8 +280,26 @@ static int iter_incr(struct bootflow_iter *iter)
 		} else {
 			log_debug("labels %p\n", iter->labels);
 			if (iter->labels) {
-				ret = bootdev_next_label(iter, &dev,
-							 &method_flags);
+				/*
+				 * when the label is "mmc" we want to scan all
+				 * mmc bootdevs, not just the first. See
+				 * bootdev_find_by_label() where this flag is
+				 * set up
+				 */
+				if (iter->method_flags &
+				    BOOTFLOW_METHF_SINGLE_UCLASS) {
+					scan_next_in_uclass(&dev);
+					log_debug("looking for next device %s: %s\n",
+						  iter->dev->name,
+						  dev ? dev->name : "<none>");
+				} else {
+					dev = NULL;
+				}
+				if (!dev) {
+					log_debug("looking at next label\n");
+					ret = bootdev_next_label(iter, &dev,
+								 &method_flags);
+				}
 			} else {
 				ret = bootdev_next_prio(iter, &dev);
 				method_flags = 0;
@@ -429,9 +467,11 @@ void bootflow_free(struct bootflow *bflow)
 	free(bflow->name);
 	free(bflow->subdir);
 	free(bflow->fname);
-	free(bflow->buf);
+	if (!(bflow->flags & BOOTFLOWF_STATIC_BUF))
+		free(bflow->buf);
 	free(bflow->os_name);
 	free(bflow->fdt_fname);
+	free(bflow->bootmeth_priv);
 }
 
 void bootflow_remove(struct bootflow *bflow)
@@ -443,6 +483,22 @@ void bootflow_remove(struct bootflow *bflow)
 	bootflow_free(bflow);
 	free(bflow);
 }
+
+#if CONFIG_IS_ENABLED(BOOTSTD_FULL)
+int bootflow_read_all(struct bootflow *bflow)
+{
+	int ret;
+
+	if (bflow->state != BOOTFLOWST_READY)
+		return log_msg_ret("rd", -EPROTO);
+
+	ret = bootmeth_read_all(bflow->method, bflow);
+	if (ret)
+		return log_msg_ret("rd2", ret);
+
+	return 0;
+}
+#endif /* BOOTSTD_FULL */
 
 int bootflow_boot(struct bootflow *bflow)
 {
@@ -697,7 +753,7 @@ int cmdline_set_arg(char *buf, int maxlen, const char *cmdline,
 					in_quote = false;
 				continue;
 			}
-			if (*p == '=') {
+			if (*p == '=' && !arg_end) {
 				arg_end = p;
 				val = p + 1;
 			} else if (*p == '"') {
@@ -733,7 +789,8 @@ int cmdline_set_arg(char *buf, int maxlen, const char *cmdline,
 		}
 
 		/* if this is the target arg, update it */
-		if (!strncmp(from, set_arg, arg_end - from)) {
+		if (arg_end - from == set_arg_len &&
+		    !strncmp(from, set_arg, set_arg_len)) {
 			if (!buf) {
 				bool has_quote = val_end[-1] == '"';
 

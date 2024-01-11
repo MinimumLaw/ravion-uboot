@@ -9,6 +9,7 @@
 #include <common.h>
 #include <bootdev.h>
 #include <bootflow.h>
+#include <bootm.h>
 #include <bootstd.h>
 #include <command.h>
 #include <console.h>
@@ -70,7 +71,7 @@ static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 	printf("%3x  %-11s  %-6s  %-9.9s %4x  %-25.25s %s\n", index,
 	       bflow->method->name, bootflow_state_get_name(bflow->state),
 	       bflow->dev ? dev_get_uclass_name(dev_get_parent(bflow->dev)) :
-	       "(none)", bflow->part, bflow->name, bflow->fname);
+	       "(none)", bflow->part, bflow->name, bflow->fname ?: "");
 	if (errors)
 		report_bootflow_err(bflow, bflow->err);
 }
@@ -86,6 +87,44 @@ static void show_footer(int count, int num_valid)
 	printf("---  -----------  ------  --------  ----  ------------------------  ----------------\n");
 	printf("(%d bootflow%s, %d valid)\n", count, count != 1 ? "s" : "",
 	       num_valid);
+}
+
+/**
+ * bootflow_handle_menu() - Handle running the menu and updating cur bootflow
+ *
+ * This shows the menu, allows the user to select something and then prints
+ * what happened
+ *
+ * @std: bootstd information
+ * @text_mode: true to run the menu in text mode
+ * @bflowp: Returns selected bootflow, on success
+ * Return: 0 on success (a bootflow was selected), -EAGAIN if nothing was
+ *	chosen, other -ve value on other error
+ */
+__maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
+					       bool text_mode,
+					       struct bootflow **bflowp)
+{
+	struct bootflow *bflow;
+	int ret;
+
+	ret = bootflow_menu_run(std, text_mode, &bflow);
+	if (ret) {
+		if (ret == -EAGAIN) {
+			printf("Nothing chosen\n");
+			std->cur_bootflow = NULL;
+		} else {
+			printf("Menu failed (err=%d)\n", ret);
+		}
+
+		return ret;
+	}
+
+	printf("Selected: %s\n", bflow->os_name ? bflow->os_name : bflow->name);
+	std->cur_bootflow = bflow;
+	*bflowp = bflow;
+
+	return 0;
 }
 
 static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -303,11 +342,14 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	struct bootstd_priv *std;
 	struct bootflow *bflow;
+	bool x86_setup = false;
 	bool dump = false;
 	int ret;
 
-	if (argc > 1 && *argv[1] == '-')
+	if (argc > 1 && *argv[1] == '-') {
 		dump = strchr(argv[1], 'd');
+		x86_setup = strchr(argv[1], 's');
+	}
 
 	ret = bootstd_get_priv(&std);
 	if (ret)
@@ -318,6 +360,12 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 	}
 	bflow = std->cur_bootflow;
+
+	if (IS_ENABLED(CONFIG_X86) && x86_setup) {
+		zimage_dump(bflow->x86_setup, false);
+
+		return 0;
+	}
 
 	printf("Name:      %s\n", bflow->name);
 	printf("Device:    %s\n", bflow->dev->name);
@@ -364,6 +412,35 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 				break;
 			}
 		}
+	}
+
+	return 0;
+}
+
+static int do_bootflow_read(struct cmd_tbl *cmdtp, int flag, int argc,
+			    char *const argv[])
+{
+	struct bootstd_priv *std;
+	struct bootflow *bflow;
+	int ret;
+
+	ret = bootstd_get_priv(&std);
+	if (ret)
+		return CMD_RET_FAILURE;
+
+	/*
+	 * Require a current bootflow. Users can use 'bootflow scan -b' to
+	 * automatically scan and boot, if needed.
+	 */
+	if (!std->cur_bootflow) {
+		printf("No bootflow selected\n");
+		return CMD_RET_FAILURE;
+	}
+	bflow = std->cur_bootflow;
+	ret = bootflow_read_all(bflow);
+	if (ret) {
+		printf("Failed: err=%dE\n", ret);
+		return CMD_RET_FAILURE;
 	}
 
 	return 0;
@@ -416,18 +493,9 @@ static int do_bootflow_menu(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (ret)
 		return CMD_RET_FAILURE;
 
-	ret = bootflow_menu_run(std, text_mode, &bflow);
-	if (ret) {
-		if (ret == -EAGAIN)
-			printf("Nothing chosen\n");
-		else {
-			printf("Menu failed (err=%d)\n", ret);
-			return CMD_RET_FAILURE;
-		}
-	}
-
-	printf("Selected: %s\n", bflow->os_name ? bflow->os_name : bflow->name);
-	std->cur_bootflow = bflow;
+	ret = bootflow_handle_menu(std, text_mode, &bflow);
+	if (ret)
+		return CMD_RET_FAILURE;
 
 	return 0;
 }
@@ -502,20 +570,20 @@ static int do_bootflow_cmdline(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 #endif /* CONFIG_CMD_BOOTFLOW_FULL */
 
-#ifdef CONFIG_SYS_LONGHELP
-static char bootflow_help_text[] =
+U_BOOT_LONGHELP(bootflow,
 #ifdef CONFIG_CMD_BOOTFLOW_FULL
 	"scan [-abeGl] [bdev]  - scan for valid bootflows (-l list, -a all, -e errors, -b boot, -G no global)\n"
 	"bootflow list [-e]             - list scanned bootflows (-e errors)\n"
 	"bootflow select [<num>|<name>] - select a bootflow\n"
-	"bootflow info [-d]             - show info on current bootflow (-d dump bootflow)\n"
-	"bootflow boot                  - boot current bootflow (or first available if none selected)\n"
+	"bootflow info [-ds]            - show info on current bootflow (-d dump bootflow)\n"
+	"bootflow read                  - read all current-bootflow files\n"
+	"bootflow boot                  - boot current bootflow\n"
 	"bootflow menu [-t]             - show a menu of available bootflows\n"
-	"bootflow cmdline [set|get|clear|delete|auto] <param> [<value>] - update cmdline";
+	"bootflow cmdline [set|get|clear|delete|auto] <param> [<value>] - update cmdline"
 #else
-	"scan - boot first available bootflow\n";
+	"scan - boot first available bootflow\n"
 #endif
-#endif /* CONFIG_SYS_LONGHELP */
+	);
 
 U_BOOT_CMD_WITH_SUBCMDS(bootflow, "Boot flows", bootflow_help_text,
 	U_BOOT_SUBCMD_MKENT(scan, 3, 1, do_bootflow_scan),
@@ -523,6 +591,7 @@ U_BOOT_CMD_WITH_SUBCMDS(bootflow, "Boot flows", bootflow_help_text,
 	U_BOOT_SUBCMD_MKENT(list, 2, 1, do_bootflow_list),
 	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootflow_select),
 	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_bootflow_info),
+	U_BOOT_SUBCMD_MKENT(read, 1, 1, do_bootflow_read),
 	U_BOOT_SUBCMD_MKENT(boot, 1, 1, do_bootflow_boot),
 	U_BOOT_SUBCMD_MKENT(menu, 2, 1, do_bootflow_menu),
 	U_BOOT_SUBCMD_MKENT(cmdline, 4, 1, do_bootflow_cmdline),

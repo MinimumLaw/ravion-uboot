@@ -133,18 +133,20 @@ endif
 
 config EFI_VAR_BUF_SIZE
 	int "Memory size of the UEFI variable store"
-	default 16384 if EFI_MM_COMM_TEE
-	default 65536
+	default 131072
 	range 4096 2147483647
 	help
 	  This defines the size in bytes of the memory area reserved for keeping
 	  UEFI variables.
 
-	  When using StandAloneMM (CONFIG_EFI_MM_COMM_TEE=y) this value should
-	  match the value of PcdFlashNvStorageVariableSize used to compile the
-	  StandAloneMM module.
+	  When using StandAloneMM (CONFIG_EFI_MM_COMM_TEE=y) is used the
+	  available size for storing variables is defined in
+	  PcdFlashNvStorageVariableSize.
+	  That value is probed at runtime from U-Boot. In that case,
+	  EFI_VAR_BUF_SIZE represents the memory U-Boot reserves to present
+	  runtime variables to the OS.
 
-	  Minimum 4096, default 65536, or 16384 when using StandAloneMM.
+	  Minimum 4096, default 131072
 
 config EFI_GET_TIME
 	bool "GetTime() runtime service"
@@ -272,6 +274,14 @@ config EFI_CAPSULE_MAX
 	  Select the max capsule index value used for capsule report
 	  variables. This value is used to create CapsuleMax variable.
 
+config EFI_CAPSULE_ESL_FILE
+	string "Path to the EFI Signature List File"
+	depends on EFI_CAPSULE_AUTHENTICATE
+	help
+	  Provides the path to the EFI Signature List file which will
+	  be embedded in the platform's device tree and used for
+	  capsule authentication at the time of capsule update.
+
 config EFI_DEVICE_PATH_TO_TEXT
 	bool "Device path to text protocol"
 	default y
@@ -371,8 +381,6 @@ config EFI_TCG2_PROTOCOL
 	bool "EFI_TCG2_PROTOCOL support"
 	default y
 	depends on TPM_V2
-	# Sandbox TPM currently fails on GetCapabilities needed for TCG2
-	depends on !SANDBOX
 	select SHA1
 	select SHA256
 	select SHA384

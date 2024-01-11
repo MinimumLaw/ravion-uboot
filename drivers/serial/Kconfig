@@ -24,6 +24,21 @@ config BAUDRATE
 	  in the SPL stage (most drivers) or for choosing a default baudrate
 	  in the absence of an environment setting (serial_mxc.c).
 
+config OF_SERIAL_BAUD
+	bool "Fetch serial baudrate from device tree"
+	depends on DM_SERIAL && SPL_ENV_SUPPORT
+	select DEFAULT_ENV_IS_RW
+	help
+	  Select this to enable fetching and setting of the baudrate
+	  configured in the DT. Replace the default baudrate with the DT
+	  baudrate and also set it to the environment.
+
+config DEFAULT_ENV_IS_RW
+	bool "Make default environment as writable"
+	help
+	  Select this to enable to make default environment writable. This
+	  allows modifying the default environment.
+
 config REQUIRE_SERIAL_CONSOLE
 	bool "Require a serial port for console"
 	# Running without a serial console is not supported by the
@@ -160,7 +175,6 @@ config SERIAL_PROBE_ALL
 config SPL_DM_SERIAL
 	bool "Enable Driver Model for serial drivers in SPL"
 	depends on DM_SERIAL && SPL_DM
-	select SYS_SPL_MALLOC_F
 	default y
 	help
 	  Enable driver model for serial in SPL. This replaces
@@ -171,7 +185,6 @@ config SPL_DM_SERIAL
 config TPL_DM_SERIAL
 	bool "Enable Driver Model for serial drivers in TPL"
 	depends on DM_SERIAL && TPL_DM
-	select SYS_TPL_MALLOC_F
 	default y if TPL && DM_SERIAL
 	help
 	  Enable driver model for serial in TPL. This replaces
@@ -485,8 +498,8 @@ endchoice
 config DEBUG_UART_BASE
 	hex "Base address of UART"
 	depends on DEBUG_UART
-	default 0 if DEBUG_SBI_CONSOLE
-	default 0 if DEBUG_UART_SANDBOX
+	default 0x0 if DEBUG_SBI_CONSOLE
+	default 0x0 if DEBUG_UART_SANDBOX
 	default 0xff000000 if DEBUG_UART_ZYNQ && ARCH_ZYNQMP
 	default 0xe0000000 if DEBUG_UART_ZYNQ && ARCH_ZYNQ
 	help
@@ -675,7 +688,7 @@ config COREBOOT_SERIAL
 config COREBOOT_SERIAL_FROM_DBG2
 	bool "Obtain UART from ACPI tables"
 	depends on COREBOOT_SERIAL
-	default y if !SPL
+	default y
 	help
 	  Select this to try to find a DBG2 record in the ACPI tables, in the
 	  event that coreboot does not provide information about the UART in the
@@ -1142,6 +1155,6 @@ config SYS_SDSR
 config SYS_SDMR
 	hex "SDMR Value"
 	depends on MPC8XX_CONS
-	default 0
+	default 0x0
 
 endif

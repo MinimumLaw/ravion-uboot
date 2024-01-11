@@ -2,7 +2,7 @@
 /*
  * ti_armv7_common.h
  *
- * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2013 Texas Instruments Incorporated - https://www.ti.com/
  *
  * The various ARMv7 SoCs from TI all share a number of IP blocks when
  * implementing a given feature.  Rather than define these in every
@@ -200,7 +200,7 @@
 #define CFG_EXTRA_ENV_SETTINGS					\
 	BOOTENV
 
-#endif
+#endif /* CONFIG_DISTRO_DEFAULTS */
 
 #endif /* CONFIG_ARM64 */
 

@@ -2,7 +2,7 @@
 /*
  * Board specific initialization for AM654 EVM
  *
- * Copyright (C) 2017-2018 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2017-2018 Texas Instruments Incorporated - https://www.ti.com/
  *	Lokesh Vutla <lokeshvutla@ti.com>
  *
  */
@@ -20,6 +20,7 @@
 #include <asm/omap_common.h>
 #include <env.h>
 #include <spl.h>
+#include <linux/printk.h>
 
 #include "../common/board_detect.h"
 
