@@ -55,7 +55,8 @@ const char * const ravion_modules[] = {
 	 [1] = "Ravion-v2 iMX6 QuadPlus 2Gb IT",
 	 [2] = "Ravion-v2 iMX6 DualLite 2Gb IT",
 	 [3] = "Ravion-v2 iMX6 DualLite 512Mb IT",
-	 [4] = "RHOS iMX8MQ 4Gb Ravion IT",
+	 [4] = "RHOS iMX8MQ 4Gb IT",
+	 [5] = "RHOS RK3568J 4Gb IT",
 };
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC
@@ -201,6 +202,8 @@ static int get_cfgblock_interactive(void)
 		};
 	} else if (!strcmp("imx8mq", soc)) {
 		rav_hw_tag.prodid = RHOS_IMX8MQ_4GB_IT;
+	} else if (!strcmp("rk3568", soc)) {
+		rav_hw_tag.prodid = RHOS_RK3568_4GB_IT;
 	} else {
 		printf("Module type not detectable due to unknown SoC\n");
 		return -1;

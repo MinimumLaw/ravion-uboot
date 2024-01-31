@@ -112,7 +112,7 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 
 int show_board_info(void)
 {
-	printf("Bootloader not report board info!\n");
+	printf("ERROR: Bootloader not report board info!\n");
 	return -1;
 }
 

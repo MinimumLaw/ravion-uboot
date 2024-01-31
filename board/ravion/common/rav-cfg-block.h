@@ -27,6 +27,7 @@ enum {
 	RAVION_IMX6DL_2GB_IT,
 	RAVION_IMX6DL_512MB_IT,
 	RHOS_IMX8MQ_4GB_IT,
+	RHOS_RK3568_4GB_IT,
 };
 
 extern const char * const ravion_modules[];

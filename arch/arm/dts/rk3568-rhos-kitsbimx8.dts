@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2024 Radioavionica Corp
+ *   190005, Russia, Saint-Petersburg, Troitsky pr. 4, lit "B"
+ * Copyright (c) 2024 Alex A. Mihaylov <minimumlaw@rambler.ru>
+ */
+
+/dts-v1/;
+
+#include "rk3568-rhos.dtsi"
+#include "rk3568-rhos-u-boot.dtsi"
