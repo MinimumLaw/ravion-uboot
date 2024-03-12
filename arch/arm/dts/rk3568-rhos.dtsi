@@ -38,13 +38,6 @@
 	/*
 	 * Clock sources
 	 */
-	gmac1_clkin: external-gmac1-clock {
-		compatible = "fixed-clock";
-		clock-frequency = <125000000>;
-		clock-output-names = "gmac1_clkin";
-		#clock-cells = <0>;
-	};
-
 	pcie0_refclk: pcie0-refclk { /* DD8, DIF0, PCIe3 */
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -394,31 +387,39 @@
 };
 
 &gmac1 { /* Ethernet */
-	clock_in_out = "input";
-	phy-handle = <&rgmii_phy1>;
-	phy-mode = "rgmii";
-	phy-supply = <&vcc_1v8>;
-	snps,reset-gpio = <&gpio3 RK_PB0 GPIO_ACTIVE_LOW>;
-	snps,reset-delays-us = <75000000>;
-	snps,reset-active-low;
-	tx_delay = <0x42>;
-	rx_delay = <0x28>;
+	/*
+	 * RHOS module _NOT_ used 125MHz (GMAC1_MCLKINOUTM1) and
+	 * 25MHz (CLK025M1) outputs, so we not init this clocks.
+	 */
+	clock_in_out = "output";
+	assigned-clocks = <&cru SCLK_GMAC1_RX_TX>, <&cru SCLK_GMAC1>;
+	assigned-clock-parents = <&cru SCLK_GMAC1_RGMII_SPEED>, <&cru CLK_MAC1_2TOP>;
+	assigned-clock-rates = <0>, <125000000>;
+
 	pinctrl-names = "default";
 	pinctrl-0 = <&gmac1m1_miim
 		     &gmac1m1_tx_bus2
 		     &gmac1m1_rx_bus2
 		     &gmac1m1_rgmii_clk
-		     &gmac1m1_clkinout
-		     &gmac1m1_rgmii_bus
-		     &gmac1_phy1_pins>;
+		     &gmac1m1_rgmii_bus>;
+
+	phy-handle = <&rgmii_phy1>;
+	phy-mode = "rgmii";
+	phy-supply = <&vcc_1v8>;
+
 	status = "okay";
 };
 
 &mdio1 {
 	rgmii_phy1: ethernet-phy@1 {
 		compatible = "ethernet-phy-ieee802.3-c22";
+		pinctrl-names = "default";
+		pinctrl-0 = <&gmac1_phy1_pins>;
 		reg = <0x1>;
-		vddio-supply = <&vcc_1v8>;
+
+		reset-gpios = <&gpio3 RK_PB0 GPIO_ACTIVE_LOW>;
+		reset-aasert-us = <20000>;
+		reset-deassert-us= <100000>;
 	};
 };
 
@@ -452,7 +453,7 @@
 
 	gmac1_phy1_ctrl {
 		gmac1_phy1_pins: gmac1_phy1_pins {
-			rockchip,pins = <3 RK_PB0 &pcfg_pull_up>; /* RSTN_ETHPHY */
+			rockchip,pins = <3 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>; /* RSTN_ETHPHY */
 		};
 	};
 
