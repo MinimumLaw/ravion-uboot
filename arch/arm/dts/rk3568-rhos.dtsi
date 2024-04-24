@@ -35,6 +35,22 @@
 		regulator-max-microvolt = <3300000>;
 	};
 
+	PSDCARD: sdcard-vmmc-regulatror {
+		pinctrl-names = "default";
+		pinctrl-0 = <&psdcard_pins>;
+		compatible = "regulator-gpio";
+		regulator-name = "PSDCARD";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+		enable-gpios = <&gpio2 RK_PB0 GPIO_ACTIVE_LOW>;	/* soDimm157 */
+		gpios = <&gpio2 RK_PB7 GPIO_ACTIVE_HIGH>;	/* soDimm159 */
+		states =
+		    <1800000 0x0>,
+		    <3300000 0x1>;
+	};
+
 	/*
 	 * Clock sources
 	 */
@@ -50,84 +66,87 @@
 		clock-frequency = <100000000>;
 	};
 
-	/*
-	 * ToDo: HDMI connector _MUST_ be moved into board DTS (from this SoM DTS)
-	 */
-	hdmi-con {
-		compatible = "hdmi-connector";
-		type = "a";
+	gpio-leds {
+		compatible = "gpio-leds";
 
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
+		sys_rst {
+			label = "sys::RESET";
+			gpios = <&gpio3 RK_PA3 GPIO_ACTIVE_LOW>;	/* soDimm165 */
+			default-state = "off";
 		};
 	};
 };
 
 /*
+ * CPU and them power management
+ */
+&cpu0 {	cpu-supply = <&vdd_cpu>; };
+&cpu1 {	cpu-supply = <&vdd_cpu>; };
+&cpu2 {	cpu-supply = <&vdd_cpu>; };
+&cpu3 {	cpu-supply = <&vdd_cpu>; };
+
+/*
+ * GPU and them power management
+ */
+&gpu {
+	mali-supply = <&vdd_gpu>;
+	status = "okay";
+};
+
+/*
  * UARTs
  */
-&uart2 { status = "okay"; };	/* Debug UART0 on module */
-&uart3 { status = "okay"; };	/* Generic UART1 on module */
-&uart4 { status = "okay"; };	/* Generic UART2 on module */
 &uart1 {			/* Bluetooth UART3 on module */
 	pinctrl-names = "default";
-	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn &uart1m0_rtsn>;
+	pinctrl-0 = <&uart1m0_xfer
+		    &uart1m0_ctsn
+		    &uart1m0_rtsn>;
 	uart-has-rtscts;
+	status = "okay";
+};
+&uart2 { status = "okay"; };	/* Debug UART0 on module */
+&uart3 { status = "okay"; };	/* Generic UART1 on module */
+&uart4 {			/* Generic UART2 on module */
+	pinctrl-0 = <&uart4m1_xfer>;
 	status = "okay";
 };
 
 /*
  * USB interfaces
  */
-&usb_host0_ehci { status = "okay"; };
-&usb_host0_ohci { status = "okay"; };
 &usb_host0_xhci {
 	extcon = <&usb2phy0>;
 	status = "okay";
 };
-&usb2phy0	{ status = "okay"; };
-&usb2phy0_host {
-/*	phy-supply = <&vcc5v0_usb_host>; */
-	status = "okay";
-};
-&usb2phy0_otg {
-/*	phy-supply = <&vcc5v0_usb_otg>; */
-	status = "okay";
-};
+&usb2phy0      { status = "okay"; };
+&usb2phy0_host { status = "okay"; };
+&usb2phy0_otg  { status = "okay"; };
 
-&usb_host1_ehci { status = "okay"; };
-&usb_host1_ohci { status = "okay"; };
-&usb_host1_xhci { status = "okay"; };
-&usb2phy1	{ status = "okay"; };
-&usb2phy1_host {
-/*	phy-supply = <&vcc5v0_usb_host>; */
+&usb_host1_xhci {
+	extcon = <&usb2phy1>;
 	status = "okay";
 };
-&usb2phy1_otg {
-/*	phy-supply = <&vcc5v0_usb_host>; */
-	status = "okay";
-};
-
+&usb2phy1      { status = "okay"; };
+&usb2phy1_host { status = "okay"; };
+&usb2phy1_otg  { status = "okay"; };
 
 /*
  * PCI-e interfaces
  */
 &pcie2x1 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pcie20m2_pins>;
+	pinctrl-0 = <&pcie20m2_pins
+		     &pcie2_clkreq_soc>; /* pull-up GPIO4 C6 - PCI0_CLKREQ_SOC */
 	status = "okay";
 };
 
 &pcie30phy { status = "okay"; };
 &pcie3x2 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pcie30x2m2_pins>;
+	pinctrl-0 = <&pcie30x2m2_pins
+		     &pcie3_clkreq_soc>; /* pull-up GPIO1 A4 - PCI1_CLKREQ_SOC */
 	status = "okay";
 };
-
-
 
 /*
  * I2C/SMBUS
@@ -135,9 +154,9 @@
 &i2c0 { /* PMIC, CPU voltage */
 	status = "okay";
 
-	pcie_clkgen: glkgen@f { /* FixMe: DD8 real address?? */
+	pcie_clkgen: glkgen@68 { /* DD8 - not have driver this time */
 		compatible = "9FGV0641AKLF";
-		reg = <0x0f>;
+		reg = <0x68>;
 	};
 
 	vdd_cpu: regulator@1c {
@@ -151,6 +170,7 @@
 		regulator-max-microvolt = <1150000>;
 		regulator-ramp-delay = <2300>;
 		vin-supply = <&P3V3>;
+		status = "okay";
 
 		regulator-state-mem {
 			regulator-off-in-suspend;
@@ -249,6 +269,9 @@
 				regulator-name = "vdda0v9_image";
 				regulator-min-microvolt = <900000>;
 				regulator-max-microvolt = <900000>;
+				regulator-always-on;
+				regulator-boot-on;
+
 
 				regulator-state-mem {
 					regulator-off-in-suspend;
@@ -287,7 +310,7 @@
 				regulator-max-microvolt = <3300000>;
 
 				regulator-state-mem {
-					regulator-off-in-suspend;
+					regulator-on-in-suspend;
 				};
 			};
 
@@ -295,9 +318,10 @@
 				regulator-name = "vccio_sd";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
 
 				regulator-state-mem {
-					regulator-off-in-suspend;
+					regulator-on-in-suspend;
 				};
 			};
 
@@ -343,6 +367,8 @@
 				regulator-name = "vcca1v8_image";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+				regulator-boot-on;
 
 				regulator-state-mem {
 					regulator-off-in-suspend;
@@ -358,31 +384,54 @@
 					regulator-off-in-suspend;
 				};
 			};
-
-			vcc3v3_sd: SWITCH_REG2 {
-				regulator-name = "vcc3v3_sd";
-
-				regulator-state-mem {
-					regulator-off-in-suspend;
-				};
-			};
-		};
-
-		codec {
-			mic-in-differential;
 		};
 	};
+};
 
+/* soDimm099 SDA
+ * soDimm101 SCL */
+&i2c1 {
+    status = "okay";
+};
+
+/* soDimm100 SDA
+ * soDimm102 SCL */
+&i2c2 {
+    status = "okay";
+};
+
+/* soDimm129 SDA
+ * soDimm127 SCL => SMBUS */
+&i2c3 {
+	pinctrl-0 = <&i2c3m1_xfer>;
+	pinctrl-names = "default";
+	status = "okay";
 };
 
 &sdhci { /* eMMC */
 	pinctrl-names = "default";
-	pinctrl-0 = <&emmc_bus8>, <&emmc_cmd>, <&emmc_clk>,
-		<&emmc_datastrobe>, <&emmc_rstnout>;
+	pinctrl-0 = <&emmc_bus8
+		     &emmc_cmd
+		     &emmc_clk
+		     &emmc_datastrobe
+		     &emmc_rstnout>;
+	non-removable;
+	bus-width = <8>;
+	vmmc-supply = <&vcc_3v3>;
+	vqmmc-supply = <&vcc_1v8>;	/* PMIC: SW5 */
 	status = "okay";
 };
 
 &sdmmc0 { /* SD-Card */
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdmmc0_bus4
+		     &sdmmc0_clk
+		     &sdmmc0_cmd>;
+	bus-width = <4>;
+	vmmc-supply = <&PSDCARD>;	/* Use soDimm159 pin for select voltatge */
+	vqmmc-supply = <&vccio_sd>;	/* PMIC: LDO5 */
+	broken-cd;			/* Ne _NOT_ use &sdmmc0_det gpio */
+	no-1-8-v;			/* 3,3V default for board level, fix if required */
 	status = "okay";
 };
 
@@ -403,6 +452,8 @@
 		     &gmac1m1_rgmii_clk
 		     &gmac1m1_rgmii_bus>;
 
+	tx-delay = <48>;
+	rx-delay = <16>;
 	phy-handle = <&rgmii_phy1>;
 	phy-mode = "rgmii";
 	phy-supply = <&vcc_1v8>;
@@ -423,14 +474,134 @@
 	};
 };
 
+&pwm0 { /* soDimm122 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm0m0_pins>;
+	status = "okay";
+};
+
+&pwm1 { /* soDimm124 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm1m0_pins>;
+	status = "okay";
+};
+
+/*****************************************************************************
+* Required for proper work, but not critical for project
+*****************************************************************************/
+&combphy0 { status = "okay"; };
+&combphy1 { status = "okay"; };
+&combphy2 { status = "okay"; };
+
+/*
+ * Video and display subsustem
+ */
+&vop { status = "okay"; };
+&vop_mmu { status = "okay"; };
+
+/* VP0 support up to 4096x2304@60 with HDR10 (TRM-Part2, chapter 13.1)
+ * We want hold them for (external) HDMI display
+ **********************************************************************/
+&vp0 {
+	vp0_out_hdmi: endpoint@ROCKCHIP_VOP2_EP_HDMI0 {
+		reg = <ROCKCHIP_VOP2_EP_HDMI0>;
+		remote-endpoint = <&hdmi_in_vp0>;
+	};
+};
+
+&hdmi_in {
+	hdmi_in_vp0: endpoint {
+		remote-endpoint = <&vp0_out_hdmi>;
+	};
+};
+
+/* VP1/2 support up to 1920x1080@60 with 24bit (TRM-Part2, chapter 13.1)
+ * We use them for (internal) display
+ **********************************************************************/
+&vp1 {
+	vp1_out_mipi1: endpoint@ROCKCHIP_VOP2_EP_MIPI1 {
+		reg = <ROCKCHIP_VOP2_EP_MIPI1>;
+		remote-endpoint = <&mipi1_in_vp1>;
+	};
+};
+
+&dsi1_in {
+	mipi1_in_vp1: endpoint {
+		remote-endpoint = <&vp1_out_mipi1>;
+	};
+};
+
+&hdmi {
+	avdd-0v9-supply = <&vdda0v9_image>;
+	avdd-1v8-supply = <&vcca1v8_image>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&hdmitx_scl &hdmitx_sda>;
+};
+
+&i2s2_2ch {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s2m0_sclktx	/* soDimm130 */
+		     &i2s2m0_lrcktx	/* soDimm132 */
+		     &i2s2m0_sdo	/* soDimm134 */
+		     &i2s2m0_sdi>;	/* soDimm136 */
+	rockchip,trcm-sync-tx-only;	/* use only sclktx/lrcktx for both tx & rx */
+	status = "okay";
+};
+
+/*
+ * MIPI DSI interface
+ */
+&dsi_dphy1 { status = "okay"; };
+&dsi1 { status = "okay"; };
+
+/*
+ * MIPI CSI interface
+ */
+&csi_dphy {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+
+			mipi_csi_receiver: endpoint@0 {
+				reg = <0>;
+			};
+		};
+	};
+};
+
+&pmu_io_domains {
+	pmuio1-supply = <&vcc3v3_pmu>;
+	pmuio2-supply = <&vcca1v8_pmu>;
+	vccio1-supply = <&vcc_1v8>;
+	vccio2-supply = <&vcc_1v8>;	/* PMIC: SW5 */
+	vccio3-supply = <&vccio_sd>;	/* PMIC: LDO5 */
+	vccio4-supply = <&vcc_1v8>;
+	vccio5-supply = <&vcc_1v8>;
+	vccio6-supply = <&vcc_1v8>;
+	vccio7-supply = <&vcc_1v8>;
+	status = "okay";
+};
+
+
 &pinctrl {
 	pinctrl-names = "default";
-	pinctrl-0 = <&hog_ctrl_pins>, <&gpio_bank1_pins>,
-		<&gpio_bank2_pins>, <&gpio_bank3_pins>;
+	pinctrl-0 = <&gpio_bank1_pins
+		     &gpio_bank2_pins
+		     &gpio_bank3_pins
+		     &smb_ctrl_pins>;
 
-	hog_ctrl {
-		hog_ctrl_pins: hog_ctrl_pins {
-			/* ToDo: not used pins here */
+	psdcard {
+		psdcard_pins: psdcard_pins {
+			rockchip,pins =
+/* 157 */			<2 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>, /* SD1_PWR  */
+/* 159 */			<2 RK_PB7 RK_FUNC_GPIO &pcfg_pull_up>; /* SD1_18EN */
 		};
 	};
 
@@ -442,12 +613,12 @@
 	};
 
 	pcie {
-		pcie3_clkreq_soc: pcie2-clkreq-soc {
-			rockchip,pins = <4 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		pcie3_clkreq_soc: pcie3-clkreq-soc {
+			rockchip,pins = <4 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 
-		pcie2_clkreq_soc: pcie3-clkreq-soc {
-			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+		pcie2_clkreq_soc: pcie2-clkreq-soc {
+			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 
@@ -460,142 +631,74 @@
 	usb2_ctrl {
 		usb2_0_ctrl_pins {
 			rockchip,pins = /* VCCIO4 domain */
-/* 013 */			<2 RK_PA3 0 &pcfg_pull_up>,	/* USB2_PEN0 */
-/* 015 */			<2 RK_PA5 0 &pcfg_pull_up>;	/* USB2_OC0 */
+/* 013 */			<2 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_PEN0 */
+/* 015 */			<2 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>;	/* USB2_OC0 */
 		};
 
 		usb2_1_ctrl_pins {
 			rockchip,pins = /* VCCIO4 domain */
-/* 006 */			<2 RK_PA7 0 &pcfg_pull_up>,	/* USB2_ID1 */
-/* 014 */			<2 RK_PA4 0 &pcfg_pull_up>,     /* USB2_PEN1 */
-/* 016 */			<2 RK_PA6 0 &pcfg_pull_up>;     /* USB2_OC1 */
+/* 006 */			<2 RK_PA7 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_ID1 */
+/* 014 */			<2 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_PEN1 */
+/* 016 */			<2 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>;	/* USB2_OC1 */
 		};
 	};
 
 	smbus_ctrl {
-		smb_ctrl_pins {
+	  	smb_ctrl_pins: smb_ctrl_pins {
 			rockchip,pins =
-/* 131 */			<0 RK_PB0 0 &pcfg_pull_up>,	/* SMB_ALERT */
-/* 133 */			<0 RK_PC1 0 &pcfg_pull_up>,	/* SMB_IN */
-/* 135 */			<0 RK_PC4 0 &pcfg_pull_up>;	/* SMB_OUT */
+/* 131 */			<0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>,	/* SMB_ALERT */
+/* 133 */			<0 RK_PC1 RK_FUNC_GPIO &pcfg_pull_up>,	/* SMB_IN */
+/* 135 */			<0 RK_PC4 RK_FUNC_GPIO &pcfg_pull_up>;	/* SMB_OUT */
 		};
 	};
 
 	sdio_ctrl {
 		sdio_ctrl_pins {
 			rockchip,pins = /* VCCIO4 domain */
-/* 157 */			<2 RK_PB0 0 &pcfg_pull_up>,	/* MMC1_PEN */
-/* 159 */ 			<2 RK_PB7 0 &pcfg_pull_up>;	/* MMC1_18EN */
+/* 157 */			<2 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>,	/* MMC1_PEN */
+/* 159 */ 			<2 RK_PB7 RK_FUNC_GPIO &pcfg_pull_up>;	/* MMC1_18EN */
 		};
 	};
 
 	gpio_bank1_ctrl {
 		gpio_bank1_pins: gpio_bank1_pins {
 			rockchip,pins = /* VCCIO5 domain */
-/* 146 */			<2 RK_PD0 0 &pcfg_pull_up>,	/* UIO1_1 */
-/* 148 */			<2 RK_PD1 0 &pcfg_pull_up>,	/* UIO1_2 */
-/* 150 */			<2 RK_PD2 0 &pcfg_pull_up>,	/* UIO1_3 */
-/* 152 */			<2 RK_PD3 0 &pcfg_pull_up>,	/* UIO1_4 */
-/* 154 */			<2 RK_PD4 0 &pcfg_pull_up>,	/* UIO1_5 */
-/* 156 */			<2 RK_PD5 0 &pcfg_pull_up>,	/* UIO1_6 */
-/* 158 */			<2 RK_PD6 0 &pcfg_pull_up>,	/* UIO1_7 */
-/* 160 */			<2 RK_PD7 0 &pcfg_pull_up>;	/* UIO1_8 */
+/* 146 */			<2 RK_PD0 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_1 */
+/* 148 */			<2 RK_PD1 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_2 */
+/* 150 */			<2 RK_PD2 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_3 */
+/* 152 */			<2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_4 */
+/* 154 */			<2 RK_PD4 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_5 */
+/* 156 */			<2 RK_PD5 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_6 */
+/* 158 */			<2 RK_PD6 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO1_7 */
+/* 160 */			<2 RK_PD7 RK_FUNC_GPIO &pcfg_pull_up>;	/* UIO1_8 */
 		};
 	};
 
 	gpio_bank2_ctrl {
 		gpio_bank2_pins: gpio_bank2_pins {
 			rockchip,pins = /* VCCIO6 domain */
-/* 163 */ 			<3 RK_PD0 0 &pcfg_pull_up>,	/* UIO2_1 */
-/* 165 */			<3 RK_PD1 0 &pcfg_pull_up>,	/* UIO2_2 */
-/* 167 */			<3 RK_PD2 0 &pcfg_pull_up>,	/* UIO2_3 */
-/* 169 */			<3 RK_PD3 0 &pcfg_pull_up>,	/* UIO2_4 */
-/* 171 */			<3 RK_PD4 0 &pcfg_pull_up>,	/* UIO2_5 */
-/* 173 */			<3 RK_PD5 0 &pcfg_pull_up>,	/* UIO2_6 */
-/* 175 */			<3 RK_PC6 0 &pcfg_pull_up>,	/* UIO2_7 */
-/* 177 */			<3 RK_PC7 0 &pcfg_pull_up>;	/* UIO2_8 */
+/* 163 */ 			<3 RK_PD0 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_1 */
+/* 165 */			<3 RK_PD1 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_2 */
+/* 167 */			<3 RK_PD2 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_3 */
+/* 169 */			<3 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_4 */
+/* 171 */			<3 RK_PD4 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_5 */
+/* 173 */			<3 RK_PD5 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_6 */
+/* 175 */			<3 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO2_7 */
+/* 177 */			<3 RK_PC7 RK_FUNC_GPIO &pcfg_pull_up>;	/* UIO2_8 */
 		};
 	};
 
 	gpio_bank3_ctrl {
 		gpio_bank3_pins: gpio_bank3_pins {
 			rockchip,pins = /* VCCIO5 domain */
-/* 164 */			<3 RK_PA2 0 &pcfg_pull_up>,	/* UIO3_1 */
-/* 166 */			<3 RK_PA3 0 &pcfg_pull_up>,	/* UIO3_2 */
-/* 168 */			<3 RK_PA4 0 &pcfg_pull_up>,	/* UIO3_3 */
-/* 170 */			<3 RK_PA5 0 &pcfg_pull_up>,	/* UIO3_4 */
-/* 172 */			<3 RK_PA6 0 &pcfg_pull_up>,	/* UIO3_5 */
-/* 174 */			<3 RK_PC4 0 &pcfg_pull_up>,	/* UIO3_6 */
-/* 176 */			<3 RK_PC5 0 &pcfg_pull_up>,	/* UIO3_7 */
-/* 178 */			<3 RK_PB4 0 &pcfg_pull_up>;	/* UIO3_8 */
+/* 164 */			<3 RK_PA2 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_1 */
+/* 166 */			<3 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_2 */
+/* 168 */			<3 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_3 */
+/* 170 */			<3 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_4 */
+/* 172 */			<3 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_5 */
+/* 174 */			<3 RK_PC4 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_6 */
+/* 176 */			<3 RK_PC5 RK_FUNC_GPIO &pcfg_pull_up>,	/* UIO3_7 */
+/* 178 */			<3 RK_PB4 RK_FUNC_GPIO &pcfg_pull_up>;	/* UIO3_8 */
 		};
 	};
-};
-
-/*****************************************************************************
-* Required for proper work, but not critical for project
-*****************************************************************************/
-&combphy0 { status = "okay"; };
-&combphy1 { status = "okay"; };
-&combphy2 { status = "okay"; };
-
-&cpu0 {	cpu-supply = <&vdd_cpu>; };
-&cpu1 {	cpu-supply = <&vdd_cpu>; };
-&cpu2 {	cpu-supply = <&vdd_cpu>; };
-&cpu3 {	cpu-supply = <&vdd_cpu>; };
-
-&vop {
-	assigned-clocks = <&cru DCLK_VOP0>, <&cru DCLK_VOP1>;
-	assigned-clock-parents = <&pmucru PLL_HPLL>, <&cru PLL_VPLL>;
-	status = "okay";
-};
-&vop_mmu { status = "okay"; };
-
-&vp0 {
-	vp0_out_hdmi: endpoint@ROCKCHIP_VOP2_EP_HDMI0 {
-		reg = <ROCKCHIP_VOP2_EP_HDMI0>;
-		remote-endpoint = <&hdmi_in_vp0>;
-	};
-};
-
-&gpu {
-	mali-supply = <&vdd_gpu>;
-	status = "okay";
-};
-
-&hdmi {
-	avdd-0v9-supply = <&vdda0v9_image>;
-	avdd-1v8-supply = <&vcca1v8_image>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm1_cec>;
-	status = "okay";
-};
-
-&hdmi_in {
-	hdmi_in_vp0: endpoint {
-		remote-endpoint = <&vp0_out_hdmi>;
-	};
-};
-
-&hdmi_out {
-	hdmi_out_con: endpoint {
-		remote-endpoint = <&hdmi_con_in>;
-	};
-};
-
-&hdmi_sound {
-	status = "okay";
-};
-
-&pmu_io_domains {
-	pmuio1-supply = <&vcc3v3_pmu>;
-	pmuio2-supply = <&vcc_1v8>;
-	vccio1-supply = <&vcc_1v8>;
-	vccio2-supply = <&vcc_1v8>;
-	vccio3-supply = <&vccio_sd>;
-	vccio4-supply = <&vcc_1v8>;
-	vccio5-supply = <&vcc_1v8>;
-	vccio6-supply = <&vcc_1v8>;
-	vccio7-supply = <&vcc_1v8>;
-	status = "okay";
 };
