@@ -9,12 +9,6 @@ config BUTTON
 	  can provide access to board-specific buttons. Use of the device tree
 	  for configuration is encouraged.
 
-config SPL_BUTTON
-	bool "Enable button support on SPL"
-	depends on DM
-	help
-	  See "Enable buttom support" help
-
 config BUTTON_ADC
 	bool "Button adc"
 	depends on BUTTON
@@ -33,10 +27,13 @@ config BUTTON_GPIO
 	  The GPIO driver must used driver model. Buttons are configured using
 	  the device tree.
 
-config SPL_BUTTON_GPIO
-	bool "Button gpio support in SPL"
+config BUTTON_QCOM_PMIC
+	bool "Qualcomm power button"
 	depends on BUTTON
+	depends on PMIC_QCOM
 	help
-	  See help for "Button gpio"
+	  Enable support for the power and "resin" (usually volume down) buttons
+	  on Qualcomm SoCs. These will be configured as the Enter and Down keys
+	  respectively, allowing navigation of bootmenu with buttons on device.
 
 endmenu

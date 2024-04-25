@@ -46,7 +46,7 @@ static int is_imx8dx(void)
 	u32 val = 0;
 	int sc_err = sc_misc_otp_fuse_read(-1, 6, &val);
 
-	if (sc_err) {
+	if (!sc_err) {
 		/* DX has two A35 cores disabled */
 		return (val & 0xf) != 0x0;
 	}
@@ -113,16 +113,6 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 #endif
-
-int checkboard(void)
-{
-	puts("Model: Toradex Colibri iMX8X\n");
-
-	build_info();
-	print_bootinfo();
-
-	return 0;
-}
 
 static void select_dt_from_module_version(void)
 {

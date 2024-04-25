@@ -17,6 +17,7 @@ Board-specific doc
    asus/index
    atmel/index
    beacon/index
+   beagle/index
    broadcom/index
    bsh/index
    cloos/index
@@ -41,10 +42,12 @@ Board-specific doc
    renesas/index
    rockchip/index
    samsung/index
+   sielaff/index
    siemens/index
    sifive/index
    sipeed/index
    socionext/index
+   sophgo/index
    st/index
    starfive/index
    ste/index

@@ -3,10 +3,13 @@
  * Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
  */
 
+#include <command.h>
 #include <cpu.h>
+#include <cpu_func.h>
 #include <dm.h>
 #include <dm/lists.h>
 #include <event.h>
+#include <hang.h>
 #include <init.h>
 #include <log.h>
 #include <asm/encoding.h>
@@ -46,14 +49,24 @@ static inline bool supports_extension(char ext)
 	}
 	if (!cpu_get_desc(dev, desc, sizeof(desc))) {
 		/*
-		 * skip the first 4 characters (rv32|rv64) and
-		 * check until underscore
+		 * skip the first 4 characters (rv32|rv64)
 		 */
 		for (i = 4; i < sizeof(desc); i++) {
-			if (desc[i] == '_' || desc[i] == '\0')
-				break;
-			if (desc[i] == ext)
-				return true;
+			switch (desc[i]) {
+			case 's':
+			case 'x':
+			case 'z':
+			case '_':
+			case '\0':
+				/*
+				 * Any of these characters mean the single
+				 * letter extensions have all been consumed.
+				 */
+				return false;
+			default:
+				if (desc[i] == ext)
+					return true;
+			}
 		}
 	}
 
@@ -162,3 +175,13 @@ int arch_early_init_r(void)
 __weak void harts_early_init(void)
 {
 }
+
+#if !CONFIG_IS_ENABLED(SYSRESET)
+void reset_cpu(void)
+{
+	printf("resetting ...\n");
+
+	printf("reset not supported yet\n");
+	hang();
+}
+#endif

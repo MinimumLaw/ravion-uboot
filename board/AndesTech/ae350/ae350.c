@@ -13,41 +13,39 @@
 #if defined(CONFIG_FTMAC100) && !defined(CONFIG_DM_ETH)
 #include <netdev.h>
 #endif
+#include <asm/csr.h>
 #include <asm/global_data.h>
+#include <asm/sbi.h>
 #include <linux/io.h>
 #include <faraday/ftsmc020.h>
 #include <fdtdec.h>
 #include <dm.h>
 #include <spl.h>
-#include <mapmem.h>
-#include <hang.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * Miscellaneous platform dependent initializations
  */
-
-#if CONFIG_IS_ENABLED(LOAD_FIT) || CONFIG_IS_ENABLED(LOAD_FIT_FULL)
-#define ANDES_SPL_FDT_ADDR	(CONFIG_TEXT_BASE - 0x100000)
-void spl_perform_fixups(struct spl_image_info *spl_image)
+#if IS_ENABLED(CONFIG_MISC_INIT_R)
+int misc_init_r(void)
 {
-	/*
-	 * Originally, u-boot-spl will place DTB directly after the kernel,
-	 * but the size of the kernel did not include the BSS section, which
-	 * means u-boot-spl will place the DTB in the kernel BSS section
-	 * causing the DTB to be cleared by kernel BSS initializtion.
-	 * Moving DTB in front of the kernel can avoid the error.
-	 */
-	if (ANDES_SPL_FDT_ADDR < 0) {
-		printf("%s: CONFIG_TEXT_BASE needs to be larger than 0x100000\n",
-		       __func__);
-		hang();
-	}
+    long csr_marchid = 0;
+    const long mask_64 = 0x8000;
+    const long mask_cpu = 0xff;
+    char cpu_name[10] = {};
 
-	memcpy((void *)ANDES_SPL_FDT_ADDR, spl_image->fdt_addr,
-	       fdt_totalsize(spl_image->fdt_addr));
-	spl_image->fdt_addr = map_sysmem(ANDES_SPL_FDT_ADDR, 0);
+#if CONFIG_IS_ENABLED(RISCV_SMODE)
+    sbi_get_marchid(&csr_marchid);
+#elif CONFIG_IS_ENABLED(RISCV_MMODE)
+    csr_marchid = csr_read(CSR_MARCHID);
+#endif
+    if (mask_64 & csr_marchid)
+        snprintf(cpu_name, sizeof(cpu_name), "ax%lx", (mask_cpu & csr_marchid));
+    else
+        snprintf(cpu_name, sizeof(cpu_name), "a%lx", (mask_cpu & csr_marchid));
+
+    return env_set("cpu", cpu_name);
 }
 #endif
 
@@ -102,7 +100,8 @@ void *board_fdt_blob_setup(int *err)
 void spl_board_init()
 {
 	/* enable v5l2 cache */
-	enable_caches();
+	if (!CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
+		enable_caches();
 }
 #endif
 

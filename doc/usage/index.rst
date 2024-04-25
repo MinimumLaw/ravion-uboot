@@ -43,6 +43,7 @@ Shell commands
    cmd/cat
    cmd/cbsysinfo
    cmd/cedit
+   cmd/cli
    cmd/cls
    cmd/cmp
    cmd/coninfo
@@ -70,6 +71,8 @@ Shell commands
    cmd/gpt
    cmd/history
    cmd/host
+   cmd/if
+   cmd/itest
    cmd/imxtract
    cmd/load
    cmd/loadb
@@ -94,6 +97,7 @@ Shell commands
    cmd/rng
    cmd/saves
    cmd/sbi
+   cmd/scmi
    cmd/scp03
    cmd/seama
    cmd/setexpr
@@ -101,6 +105,7 @@ Shell commands
    cmd/size
    cmd/sleep
    cmd/sm
+   cmd/smbios
    cmd/sound
    cmd/source
    cmd/temperature
