@@ -144,6 +144,7 @@ endchoice
 
 config SPL_OMAP3_ID_NAND
 	bool "Support OMAP3-specific ID and MFR function"
+	depends on NAND_OMAP_GPMC
 	help
 	  Support for an OMAP3-specific set of functions to return the
 	  ID and MFR of the first attached NAND chip, if present.
@@ -152,7 +153,7 @@ config SYS_SOC
 	default "omap3"
 
 source "board/logicpd/am3517evm/Kconfig"
-source "board/ti/beagle/Kconfig"
+source "board/beagle/beagle/Kconfig"
 source "board/timll/devkit8000/Kconfig"
 source "board/ti/omap3evm/Kconfig"
 source "board/isee/igep00x0/Kconfig"

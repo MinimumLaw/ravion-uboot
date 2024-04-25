@@ -53,13 +53,16 @@ Maintainers List (try to look for most precise areas first)
 ACPI:
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
+F:	board/emulation/configs/acpi.config
 F:	cmd/acpi.c
 F:	lib/acpi/
 
 ANDROID AB
 M:	Igor Opaniuk <igor.opaniuk@gmail.com>
+M:	Mattijs Korpershoek <mkorpershoek@baylibre.com>
 R:	Sam Protsenko <semen.protsenko@linaro.org>
 S:	Maintained
+T:	git https://source.denx.de/u-boot/custodians/u-boot-dfu.git
 F:	boot/android_ab.c
 F:	cmd/ab_select.c
 F:	doc/android/ab.rst
@@ -68,7 +71,9 @@ F:	test/py/tests/test_android/test_ab.py
 
 ANDROID AVB
 M:	Igor Opaniuk <igor.opaniuk@gmail.com>
+M:	Mattijs Korpershoek <mkorpershoek@baylibre.com>
 S:	Maintained
+T:	git https://source.denx.de/u-boot/custodians/u-boot-dfu.git
 F:	cmd/avb.c
 F:	common/avb_verify.c
 F:	doc/android/avb2.rst
@@ -411,6 +416,8 @@ F:	drivers/watchdog/mtk_wdt.c
 F:	drivers/net/mtk_eth.c
 F:	drivers/net/mtk_eth.h
 F:	drivers/reset/reset-mediatek.c
+F:	include/dt-bindings/clock/mediatek,*
+F:	include/dt-bindings/power/mediatek,*
 F:	tools/mtk_image.c
 F:	tools/mtk_image.h
 F:	tools/mtk_nand_headers.c
@@ -448,7 +455,7 @@ F:	drivers/timer/mchp-pit64b-timer.c
 
 ARM MSC SM2S IMX8MP SOM
 M:	Martyn Welch <martyn.welch@collabora.com>
-M:	Ian Ray <ian.ray@ge.com>
+M:	Ian Ray <ian.ray@gehealthcare.com>
 S:	Maintained
 F:	arch/arm/dts/imx8mp-msc-sm2s*
 F:	board/msc/sm2s_imx8mp/
@@ -490,7 +497,7 @@ M:	Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
 M:	Marek Vasut <marek.vasut+renesas@mailbox.org>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-sh.git
-F:	arch/arm/mach-rmobile/
+F:	arch/arm/mach-renesas/
 F:	drivers/clk/renesas/
 F:	drivers/gpio/gpio-rcar.c
 F:	drivers/i2c/rcar_*
@@ -560,6 +567,31 @@ F:	arch/arm/mach-exynos/
 F:	arch/arm/mach-s5pc1xx/
 F:	arch/arm/cpu/armv7/s5p-common/
 
+ARM SAMSUNG CLOCK
+M:	Sam Protsenko <semen.protsenko@linaro.org>
+S:	Maintained
+F:	drivers/clk/exynos/clk-pll.c
+F:	drivers/clk/exynos/clk-pll.h
+F:	drivers/clk/exynos/clk.c
+F:	drivers/clk/exynos/clk.h
+
+ARM SAMSUNG EXYNOS850 SOC
+M:	Sam Protsenko <semen.protsenko@linaro.org>
+S:	Maintained
+F:	arch/arm/dts/exynos850-pinctrl.dtsi
+F:	arch/arm/dts/exynos850.dtsi
+F:	doc/device-tree-bindings/clock/samsung,exynos850-clock.yaml
+F:	drivers/clk/exynos/clk-exynos850.c
+F:	drivers/pinctrl/exynos/pinctrl-exynos850.c
+F:	include/dt-bindings/clock/exynos850.h
+
+ARM SAMSUNG SOC DRIVERS
+M:	Sam Protsenko <semen.protsenko@linaro.org>
+S:	Maintained
+F:	doc/device-tree-bindings/soc/samsung/*
+F:	drivers/soc/samsung/*
+F:	include/dt-bindings/soc/samsung,*.h
+
 ARM SANCLOUD
 M:	Paul Barker <paul.barker@sancloud.com>
 R:	Marc Murphy <marc.murphy@sancloud.com>
@@ -572,9 +604,12 @@ M:	Neil Armstrong <neil.armstrong@linaro.org>
 R:	Sumit Garg <sumit.garg@linaro.org>
 S:	Maintained
 F:	arch/arm/mach-snapdragon/
+F:	drivers/button/button-qcom-pmic.c
+F:	drivers/clk/qcom/
 F:	drivers/gpio/msm_gpio.c
 F:	drivers/mmc/msm_sdhci.c
 F:	drivers/phy/msm8916-usbh-phy.c
+F:	drivers/pinctrl/qcom/
 F:	drivers/serial/serial_msm.c
 F:	drivers/serial/serial_msm_geni.c
 F:	drivers/smem/msm_smem.c
@@ -982,7 +1017,7 @@ EFI APP
 M:	Simon Glass <sjg@chromium.org>
 M:	Heinrich Schuchardt <xypron.glpk@gmx.de>
 S:	Maintained
-W:	https://u-boot.readthedocs.io/en/latest/develop/uefi/u-boot_on_efi.html
+W:	https://docs.u-boot.org/en/latest/develop/uefi/u-boot_on_efi.html
 F:	board/efi/efi-x86_app
 F:	configs/efi-x86_app*
 F:	doc/develop/uefi/u-boot_on_efi.rst
@@ -1554,6 +1589,11 @@ TDA19988 HDMI ENCODER
 M:	Liviu Dudau <liviu.dudau@foss.arm.com>
 S:	Maintained
 F:	drivers/video/tda19988.c
+
+TI LP5562 LED DRIVER
+M:	Rasmus Villemoes <rasmus.villemoes@prevas.dk>
+S:	Supported
+F:	drivers/led/led_lp5562.c
 
 TI SYSTEM SECURITY
 M:	Andrew F. Davis <afd@ti.com>

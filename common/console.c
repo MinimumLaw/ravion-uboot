@@ -19,11 +19,14 @@
 #include <stdio_dev.h>
 #include <exports.h>
 #include <env_internal.h>
+#include <video_console.h>
 #include <watchdog.h>
 #include <asm/global_data.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#define CSI "\x1b["
 
 static int on_console(const char *name, const char *value, enum env_op op,
 	int flags)
@@ -818,6 +821,9 @@ int console_record_init(void)
 	ret = membuff_new((struct membuff *)&gd->console_in,
 			  CONFIG_CONSOLE_RECORD_IN_SIZE);
 
+	/* Start recording from the beginning */
+	gd->flags |= GD_FLG_RECORD;
+
 	return ret;
 }
 
@@ -842,12 +848,17 @@ int console_record_readline(char *str, int maxlen)
 		return -ENOSPC;
 
 	return membuff_readline((struct membuff *)&gd->console_out, str,
-				maxlen, '\0');
+				maxlen, '\0', false);
 }
 
 int console_record_avail(void)
 {
 	return membuff_avail((struct membuff *)&gd->console_out);
+}
+
+bool console_record_isempty(void)
+{
+	return membuff_isempty((struct membuff *)&gd->console_out);
 }
 
 int console_in_puts(const char *str)
@@ -1010,9 +1021,44 @@ int console_init_f(void)
 	return 0;
 }
 
+int console_clear(void)
+{
+	/*
+	 * Send clear screen and home
+	 *
+	 * FIXME(Heinrich Schuchardt <xypron.glpk@gmx.de>): This should go
+	 * through an API and only be written to serial terminals, not video
+	 * displays
+	 */
+	printf(CSI "2J" CSI "1;1H");
+	if (IS_ENABLED(CONFIG_VIDEO_ANSI))
+		return 0;
+
+	if (IS_ENABLED(CONFIG_VIDEO)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev);
+		if (ret)
+			return ret;
+		ret = vidconsole_clear_and_reset(dev);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+static char *get_stdio(const u8 std)
+{
+	return stdio_devices[std] ? stdio_devices[std]->name : "No devices available!";
+}
+
 static void stdio_print_current_devices(void)
 {
-	char *stdinname, *stdoutname, *stderrname;
+	char *stdinname = NULL;
+	char *stdoutname = NULL;
+	char *stderrname = NULL;
 
 	if (CONFIG_IS_ENABLED(CONSOLE_MUX) &&
 	    CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV)) {
@@ -1020,21 +1066,11 @@ static void stdio_print_current_devices(void)
 		stdinname  = env_get("stdin");
 		stdoutname = env_get("stdout");
 		stderrname = env_get("stderr");
-
-		stdinname = stdinname ? : "No input devices available!";
-		stdoutname = stdoutname ? : "No output devices available!";
-		stderrname = stderrname ? : "No error devices available!";
-	} else {
-		stdinname = stdio_devices[stdin] ?
-			stdio_devices[stdin]->name :
-			"No input devices available!";
-		stdoutname = stdio_devices[stdout] ?
-			stdio_devices[stdout]->name :
-			"No output devices available!";
-		stderrname = stdio_devices[stderr] ?
-			stdio_devices[stderr]->name :
-			"No error devices available!";
 	}
+
+	stdinname = stdinname ? : get_stdio(stdin);
+	stdoutname = stdoutname ? : get_stdio(stdout);
+	stderrname = stderrname ? : get_stdio(stderr);
 
 	/* Print information */
 	puts("In:    ");

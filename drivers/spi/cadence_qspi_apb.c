@@ -171,8 +171,7 @@ static unsigned int cadence_qspi_wait_idle(void *reg_base)
 	}
 
 	/* Timeout, still in busy mode. */
-	printf("QSPI: QSPI is still busy after poll for %d times.\n",
-	       CQSPI_REG_RETRY);
+	printf("QSPI: QSPI is still busy after poll for %d ms.\n", timeout);
 	return 0;
 }
 
@@ -469,6 +468,9 @@ int cadence_qspi_apb_command_read(struct cadence_spi_priv *priv,
 		opcode = op->cmd.opcode >> 8;
 	else
 		opcode = op->cmd.opcode;
+
+	if (opcode == CMD_4BYTE_OCTAL_READ && !priv->dtr)
+		opcode = CMD_4BYTE_FAST_READ;
 
 	reg = opcode << CQSPI_REG_CMDCTRL_OPCODE_LSB;
 

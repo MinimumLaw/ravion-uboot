@@ -1,6 +1,6 @@
 config CLK_RENESAS
 	bool "Renesas clock drivers"
-	depends on CLK && ARCH_RMOBILE
+	depends on CLK && ARCH_RENESAS
 	help
 	  Enable support for clock present on Renesas SoCs.
 
@@ -150,6 +150,12 @@ config CLK_R8A779G0
 	depends on CLK_RCAR_GEN3
 	help
 	  Enable this to support the clocks on Renesas R8A779G0 SoC.
+
+config CLK_R8A779H0
+	bool "Renesas R8A779H0 clock driver"
+	depends on CLK_RCAR_GEN3
+	help
+	  Enable this to support the clocks on Renesas R8A779H0 SoC.
 
 config CLK_R9A06G032
 	bool "Renesas R9A06G032 clock driver"

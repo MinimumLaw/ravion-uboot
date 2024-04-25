@@ -31,6 +31,7 @@ dtb-$(CONFIG_EXYNOS7420) += exynos7420-espresso7420.dtb
 dtb-$(CONFIG_TARGET_A5Y17LTE) += exynos78x0-axy17lte.dtb
 dtb-$(CONFIG_TARGET_A3Y17LTE) += exynos78x0-axy17lte.dtb
 dtb-$(CONFIG_TARGET_A7Y17LTE) += exynos78x0-axy17lte.dtb
+dtb-$(CONFIG_TARGET_E850_96) += exynos850-e850-96.dtb
 
 dtb-$(CONFIG_ARCH_APPLE) += \
 	t8103-j274.dtb \
@@ -126,6 +127,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3308) += \
 dtb-$(CONFIG_ROCKCHIP_RK3328) += \
 	rk3328-evb.dtb \
 	rk3328-nanopi-r2c.dtb \
+	rk3328-nanopi-r2c-plus.dtb \
 	rk3328-nanopi-r2s.dtb \
 	rk3328-orangepi-r1-plus.dtb \
 	rk3328-orangepi-r1-plus-lts.dtb \
@@ -180,6 +182,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3568) += \
 	rk3566-soquartz-model-a.dtb \
 	rk3568-bpi-r2-pro.dtb \
 	rk3568-evb.dtb \
+	rk3568-generic.dtb \
 	rk3568-lubancat-2.dtb \
 	rk3568-nanopi-r5c.dtb \
 	rk3568-nanopi-r5s.dtb \
@@ -195,6 +198,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3588) += \
 	rk3588s-orangepi-5.dtb \
 	rk3588-orangepi-5-plus.dtb \
 	rk3588-quartzpro64.dtb \
+	rk3588-turing-rk1.dtb \
 	rk3588s-rock-5a.dtb \
 	rk3588-rock-5b.dtb
 
@@ -835,7 +839,9 @@ dtb-$(CONFIG_MACH_SUN50I_H6) += \
 	sun50i-h6-tanix-tx6-mini.dtb
 dtb-$(CONFIG_MACH_SUN50I_H616) += \
 	sun50i-h616-orangepi-zero2.dtb \
+	sun50i-h618-orangepi-zero2w.dtb \
 	sun50i-h618-orangepi-zero3.dtb \
+	sun50i-h618-transpeed-8k618-t.dtb \
 	sun50i-h616-x96-mate.dtb
 dtb-$(CONFIG_MACH_SUN50I) += \
 	sun50i-a64-amarula-relic.dtb \
@@ -926,6 +932,7 @@ dtb-y += \
 	imx6dl-riotboard.dtb \
 	imx6dl-sabreauto.dtb \
 	imx6dl-sabresd.dtb \
+	imx6dl-sielaff.dtb \
 	imx6dl-wandboard-revd1.dtb \
 	imx6s-dhcom-drc02.dtb
 
@@ -1075,6 +1082,8 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-kontron-bl-osm-s.dtb \
 	imx8mm-mx8menlo.dtb \
 	imx8mm-phg.dtb \
+	imx8mm-phyboard-polis-rdk.dtb \
+	imx8mm-phygate-tauri-l.dtb \
 	imx8mm-venice.dtb \
 	imx8mm-venice-gw71xx-0x.dtb \
 	imx8mm-venice-gw72xx-0x.dtb \
@@ -1085,7 +1094,6 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-venice-gw7904.dtb \
 	imx8mm-venice-gw7905-0x.dtb \
 	imx8mm-verdin-wifi-dev.dtb \
-	phycore-imx8mm.dtb \
 	imx8mn-bsh-smm-s2.dtb \
 	imx8mn-bsh-smm-s2pro.dtb \
 	imx8mn-ddr4-evk.dtb \
@@ -1105,6 +1113,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mp-dhcom-som-overlay-eth1xfast.dtbo \
 	imx8mp-dhcom-som-overlay-eth2xfast.dtbo \
 	imx8mp-dhcom-pdk-overlay-eth2xfast.dtbo \
+	imx8mp-debix-model-a.dtb \
 	imx8mp-dhcom-pdk2.dtb \
 	imx8mp-dhcom-pdk3.dtb \
 	imx8mp-dhcom-pdk3-overlay-rev100.dtbo \
@@ -1124,7 +1133,9 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mq-librem5-r4.dtb
 
 dtb-$(CONFIG_ARCH_IMX9) += \
-	imx93-11x11-evk.dtb
+	imx93-11x11-evk.dtb \
+	imx93-var-som-symphony.dtb \
+	imx93-phyboard-segin.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 	imxrt1020-evk.dtb \
@@ -1164,7 +1175,8 @@ dtb-$(CONFIG_RCAR_GEN3) += \
 dtb-$(CONFIG_RCAR_GEN4) += \
 	r8a779a0-falcon-u-boot.dtb \
 	r8a779f0-spider-u-boot.dtb \
-	r8a779g0-white-hawk-u-boot.dtb
+	r8a779g0-white-hawk-u-boot.dtb \
+	r8a779h0-gray-hawk-u-boot.dtb
 
 dtb-$(CONFIG_TARGET_RZG2L) += \
 	r9a07g044l2-smarc.dts
@@ -1358,10 +1370,10 @@ dtb-$(CONFIG_ASPEED_AST2600) += ast2600-evb.dtb
 
 dtb-$(CONFIG_ARCH_STI) += stih410-b2260.dtb
 
-dtb-$(CONFIG_STM32MP13x) += \
+dtb-$(CONFIG_STM32MP13X) += \
 	stm32mp135f-dk.dtb
 
-dtb-$(CONFIG_STM32MP15x) += \
+dtb-$(CONFIG_STM32MP15X) += \
 	stm32mp157a-dk1.dtb \
 	stm32mp157a-dk1-scmi.dtb \
 	stm32mp157a-icore-stm32mp1-ctouch2.dtb \
@@ -1382,6 +1394,9 @@ dtb-$(CONFIG_STM32MP15x) += \
 	stm32mp15xx-dhcor-drc-compact.dtb \
 	stm32mp15xx-dhcor-testbench.dtb
 
+dtb-$(CONFIG_STM32MP25X) += \
+	stm32mp257f-ev1.dtb
+
 dtb-$(CONFIG_SOC_K3_AM654) += \
 	k3-am654-base-board.dtb \
 	k3-am654-r5-base-board.dtb \
@@ -1398,7 +1413,10 @@ dtb-$(CONFIG_SOC_K3_J721E) += k3-j721e-common-proc-board.dtb \
 			      k3-j7200-common-proc-board.dtb \
 			      k3-j7200-r5-common-proc-board.dtb \
 			      k3-j721e-sk.dtb \
-			      k3-j721e-r5-sk.dtb
+			      k3-j721e-r5-sk.dtb \
+			      k3-j721e-beagleboneai64.dtb \
+			      k3-j721e-r5-beagleboneai64.dtb
+
 dtb-$(CONFIG_SOC_K3_J721S2) += k3-am68-sk-base-board.dtb\
 			       k3-am68-sk-r5-base-board.dtb\
 			       k3-j721s2-common-proc-board.dtb\
@@ -1413,7 +1431,9 @@ dtb-$(CONFIG_SOC_K3_AM625) += k3-am625-sk.dtb \
 			      k3-am625-beagleplay.dtb \
 			      k3-am625-r5-beagleplay.dtb \
 			      k3-am625-verdin-wifi-dev.dtb \
-			      k3-am625-verdin-r5.dtb
+			      k3-am625-verdin-r5.dtb \
+			      k3-am625-phyboard-lyra-rdk.dtb \
+			      k3-am625-r5-phycore-som-2gb.dtb
 
 dtb-$(CONFIG_SOC_K3_AM62A7) += k3-am62a7-sk.dtb \
 			      k3-am62a7-r5-sk.dtb
@@ -1469,6 +1489,7 @@ dtb-$(CONFIG_TARGET_TOTAL_COMPUTE) += total_compute.dtb
 
 dtb-$(CONFIG_TARGET_DURIAN) += phytium-durian.dtb
 dtb-$(CONFIG_TARGET_POMELO) += phytium-pomelo.dtb
+dtb-$(CONFIG_TARGET_PE2201) += phytium-pe2201.dtb
 
 dtb-$(CONFIG_TARGET_PRESIDIO_ASIC) += ca-presidio-engboard.dtb
 
