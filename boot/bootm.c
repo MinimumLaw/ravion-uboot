@@ -242,13 +242,13 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 #ifdef CONFIG_LMB
 static void boot_start_lmb(struct bootm_headers *images)
 {
-	ulong		mem_start;
+	phys_addr_t	mem_start;
 	phys_size_t	mem_size;
 
 	mem_start = env_get_bootm_low();
 	mem_size = env_get_bootm_size();
 
-	lmb_init_and_reserve_range(&images->lmb, (phys_addr_t)mem_start,
+	lmb_init_and_reserve_range(&images->lmb, mem_start,
 				   mem_size, NULL);
 }
 #else
@@ -964,7 +964,7 @@ int bootm_measure(struct bootm_headers *images)
 			goto unmap_initrd;
 
 		if (IS_ENABLED(CONFIG_MEASURE_DEVICETREE)) {
-			ret = tcg2_measure_data(dev, &elog, 0, images->ft_len,
+			ret = tcg2_measure_data(dev, &elog, 1, images->ft_len,
 						(u8 *)images->ft_addr,
 						EV_TABLE_OF_DEVICES,
 						strlen("dts") + 1,

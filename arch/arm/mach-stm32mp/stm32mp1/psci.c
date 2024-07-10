@@ -703,6 +703,8 @@ void __secure psci_system_suspend(u32 __always_unused function_id,
 {
 	u32 saved_mcudivr, saved_pll3cr, saved_pll4cr, saved_mssckselr;
 	u32 gicd_addr = stm32mp_get_gicd_base_address();
+	u32 cpu = psci_get_cpu_id();
+	u32 sp = (u32)__secure_stack_end - (cpu << ARM_PSCI_STACK_SHIFT);
 	bool iwdg1_wake = false;
 	bool iwdg2_wake = false;
 	bool other_wake = false;
@@ -805,4 +807,37 @@ void __secure psci_system_suspend(u32 __always_unused function_id,
 
 	writel(SYSCFG_CMPENR_MPUEN, STM32_SYSCFG_BASE + SYSCFG_CMPENSETR);
 	clrbits_le32(STM32_SYSCFG_BASE + SYSCFG_CMPCR, SYSCFG_CMPCR_SW_CTRL);
+
+	/*
+	 * Make sure the OS would not get any spurious IWDG pretimeout IRQ
+	 * right after the system wakes up. This may happen in case the SoC
+	 * got woken up by another source than the IWDG pretimeout and the
+	 * pretimeout IRQ arrived immediately afterward, but too late to be
+	 * handled by the main loop above. In case either of the IWDG is
+	 * enabled, ping it first and then return to the OS.
+	 */
+
+	/* Ping IWDG1 and ACK pretimer IRQ */
+	if (gic_enabled[4] & BIT(22)) {
+		writel(IWDG_KR_RELOAD_KEY, STM32_IWDG1_BASE + IWDG_KR);
+		writel(IWDG_EWCR_EWIC, STM32_IWDG1_BASE + IWDG_EWCR);
+	}
+
+	/* Ping IWDG2 and ACK pretimer IRQ */
+	if (gic_enabled[4] & BIT(23)) {
+		writel(IWDG_KR_RELOAD_KEY, STM32_IWDG2_BASE + IWDG_KR);
+		writel(IWDG_EWCR_EWIC, STM32_IWDG2_BASE + IWDG_EWCR);
+	}
+
+	/*
+	 * The system has resumed successfully. Rewrite LR register stored
+	 * on stack with 'ep' value, so that on return from this PSCI call,
+	 * the code would jump to that 'ep' resume entry point code path
+	 * instead of the previous 'lr' register content which (e.g. with
+	 * Linux) points to resume failure code path.
+	 *
+	 * See arch/arm/cpu/armv7/psci.S _smc_psci: for the stack layout
+	 * used here, SP-4 is PC, SP-8 is LR, SP-12 is R7, and so on.
+	 */
+	writel(ep, sp - 8);
 }
