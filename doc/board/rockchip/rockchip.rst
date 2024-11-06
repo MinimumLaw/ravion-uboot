@@ -54,6 +54,7 @@ List of mainline supported Rockchip boards:
      - Amarula Vyasa-RK3288 (vyasa-rk3288)
 * rk3308
      - Radxa ROCK Pi S (rock-pi-s-rk3308)
+     - Radxa ROCK S0 (rock-s0-rk3308)
      - Rockchip Evb-RK3308 (evb-rk3308)
      - Roc-cc-RK3308 (roc-cc-rk3308)
 * rk3326
@@ -72,7 +73,6 @@ List of mainline supported Rockchip boards:
      - GeekBox (geekbox)
      - PX5 EVB (evb-px5)
      - Rockchip Sheep (sheep-rk3368)
-     - Theobroma Systems RK3368-uQ7 SoM - Lion (lion-rk3368)
 * rk3399
      - 96boards RK3399 Ficus (ficus-rk3399)
      - 96boards Rock960 (rock960-rk3399)
@@ -106,6 +106,9 @@ List of mainline supported Rockchip boards:
      - Pine64 SOQuartz on Model A (soquartz-model-a-rk3566)
      - Powkiddy X55 (powkiddy-x55-rk3566)
      - Radxa CM3 IO Board (radxa-cm3-io-rk3566)
+     - Radxa ROCK 3C (rock-3c-rk3566)
+     - Radxa ZERO 3W/3E (radxa-zero-3-rk3566)
+     - Xunlong Orange Pi 3B (orangepi-3b-rk3566)
 
 * rk3568
      - Rockchip Evb-RK3568 (evb-rk3568)
@@ -116,20 +119,27 @@ List of mainline supported Rockchip boards:
      - Generic RK3566/RK3568 (generic-rk3568)
      - Hardkernel ODROID-M1 (odroid-m1-rk3568)
      - Radxa E25 Carrier Board (radxa-e25-rk3568)
-     - Radxa ROCK 3 Model A (rock-3a-rk3568)
+     - Radxa ROCK 3A (rock-3a-rk3568)
+     - Radxa ROCK 3B (rock-3b-rk3568)
 
 * rk3588
+     - ArmSoM Sige7 (sige7-rk3588)
      - Rockchip EVB (evb-rk3588)
      - Edgeble Neural Compute Module 6A SoM - Neu6a (neu6a-io-rk3588)
      - Edgeble Neural Compute Module 6B SoM - Neu6b (neu6b-io-rk3588)
+     - FriendlyElec CM3588 NAS (cm3588-nas-rk3588)
      - FriendlyElec NanoPC-T6 (nanopc-t6-rk3588)
+     - FriendlyElec NanoPi R6C (nanopi-r6c-rk3588s)
+     - FriendlyElec NanoPi R6S (nanopi-r6s-rk3588s)
      - Generic RK3588S/RK3588 (generic-rk3588)
      - Indiedroid Nova (nova-rk3588s)
      - Pine64 QuartzPro64 (quartzpro64-rk3588)
+     - Radxa ROCK 5 ITX (rock-5-itx-rk3588)
      - Radxa ROCK 5A (rock5a-rk3588s)
      - Radxa ROCK 5B (rock5b-rk3588)
      - Rockchip Toybrick TB-RK3588X (toybrick-rk3588)
      - Theobroma Systems RK3588-SBC Jaguar (jaguar-rk3588)
+     - Theobroma Systems SOM-RK3588-Q7 - Tiger (tiger-rk3588)
      - Turing Machines RK1 (turing-rk1-rk3588)
      - Xunlong Orange Pi 5 (orangepi-5-rk3588s)
      - Xunlong Orange Pi 5 Plus (orangepi-5-plus-rk3588)
@@ -156,8 +166,8 @@ To build TF-A:
 
 .. code-block:: bash
 
-        git clone --depth 1 https://github.com/ARM-software/arm-trusted-firmware.git
-        cd arm-trusted-firmware
+        git clone --depth 1 https://github.com/TrustedFirmware-A/trusted-firmware-a.git
+        cd trusted-firmware-a
         make realclean
         make CROSS_COMPILE=aarch64-linux-gnu- PLAT=rk3399
         cd ..
@@ -189,7 +199,7 @@ To build px30 boards:
 
 .. code-block:: bash
 
-        export BL31=../arm-trusted-firmware/build/px30/release/bl31/bl31.elf
+        export BL31=../trusted-firmware-a/build/px30/release/bl31/bl31.elf
         make evb-px30_defconfig
         make CROSS_COMPILE=aarch64-linux-gnu-
 
@@ -220,7 +230,7 @@ To build rk3328 boards:
 
 .. code-block:: bash
 
-        export BL31=../arm-trusted-firmware/build/rk3328/release/bl31/bl31.elf
+        export BL31=../trusted-firmware-a/build/rk3328/release/bl31/bl31.elf
         make evb-rk3328_defconfig
         make CROSS_COMPILE=aarch64-linux-gnu-
 
@@ -228,7 +238,7 @@ To build rk3368 boards:
 
 .. code-block:: bash
 
-        export BL31=../arm-trusted-firmware/build/rk3368/release/bl31/bl31.elf
+        export BL31=../trusted-firmware-a/build/rk3368/release/bl31/bl31.elf
         make evb-px5_defconfig
         make CROSS_COMPILE=aarch64-linux-gnu-
 
@@ -236,7 +246,7 @@ To build rk3399 boards:
 
 .. code-block:: bash
 
-        export BL31=../arm-trusted-firmware/build/rk3399/release/bl31/bl31.elf
+        export BL31=../trusted-firmware-a/build/rk3399/release/bl31/bl31.elf
         make evb-rk3399_defconfig
         make CROSS_COMPILE=aarch64-linux-gnu-
 
@@ -244,7 +254,7 @@ To build rk3568 boards:
 
 .. code-block:: bash
 
-        export BL31=../arm-trusted-firmware/build/rk3568/release/bl31/bl31.elf
+        export BL31=../trusted-firmware-a/build/rk3568/release/bl31/bl31.elf
         [or]export BL31=../rkbin/bin/rk35/rk3568_bl31_v1.34.elf
         export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3568_ddr_1560MHz_v1.13.bin
         make evb-rk3568_defconfig

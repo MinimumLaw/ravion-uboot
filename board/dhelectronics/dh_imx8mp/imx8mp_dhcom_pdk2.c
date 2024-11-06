@@ -3,7 +3,6 @@
  * Copyright 2022 Marek Vasut <marex@denx.de>
  */
 
-#include <common.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/ddr.h>
 #include <asm/arch/sys_proto.h>
@@ -15,6 +14,7 @@
 #include <malloc.h>
 #include <net.h>
 #include <miiphy.h>
+#include <power/regulator.h>
 
 #include "lpddr4_timing.h"
 #include "../common/dh_common.h"
@@ -112,6 +112,8 @@ int dh_setup_mac_address(void)
 
 int board_init(void)
 {
+	regulators_enable_boot_on(_DEBUG);
+
 	return 0;
 }
 

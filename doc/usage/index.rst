@@ -33,6 +33,7 @@ Shell commands
    cmd/bootd
    cmd/bootdev
    cmd/bootefi
+   cmd/bootelf
    cmd/bootflow
    cmd/booti
    cmd/bootm
@@ -49,6 +50,7 @@ Shell commands
    cmd/coninfo
    cmd/conitrace
    cmd/cp
+   cmd/cpu
    cmd/cyclic
    cmd/dm
    cmd/ebtupdate
@@ -91,6 +93,7 @@ Shell commands
    cmd/pinmux
    cmd/printenv
    cmd/pstore
+   cmd/pwm
    cmd/qfw
    cmd/read
    cmd/reset

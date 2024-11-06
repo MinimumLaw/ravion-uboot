@@ -2,7 +2,6 @@
 /*
  * Copyright (C) 2017 The Android Open Source Project
  */
-#include <common.h>
 #include <android_ab.h>
 #include <android_bootloader_message.h>
 #include <blk.h>
@@ -140,8 +139,13 @@ static int ab_control_store(struct blk_desc *dev_desc,
 {
 	ulong abc_offset, abc_blocks, ret;
 
-	abc_offset = offset +
-		     offsetof(struct bootloader_message_ab, slot_suffix) /
+	if (offset % part_info->blksz) {
+		log_err("ANDROID: offset not block aligned\n");
+		return -EINVAL;
+	}
+
+	abc_offset = (offset +
+		      offsetof(struct bootloader_message_ab, slot_suffix)) /
 		     part_info->blksz;
 	abc_blocks = DIV_ROUND_UP(sizeof(struct bootloader_control),
 				  part_info->blksz);
