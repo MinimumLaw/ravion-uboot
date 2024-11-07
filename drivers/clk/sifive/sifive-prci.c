@@ -22,7 +22,6 @@
  * https://github.com/riscv/riscv-linux/commit/999529edf517ed75b56659d456d221b2ee56bb60
  */
 
-#include <common.h>
 #include <clk-uclass.h>
 #include <clk.h>
 #include <dm.h>
@@ -34,8 +33,7 @@
 #include <linux/math64.h>
 #include <dt-bindings/clock/sifive-fu740-prci.h>
 
-#include "fu540-prci.h"
-#include "fu740-prci.h"
+#include "sifive-prci.h"
 
 /*
  * Private functions

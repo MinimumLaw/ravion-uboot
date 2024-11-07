@@ -7,7 +7,7 @@
  *   Marvell/db-88f6820-gp by Stefan Roese <sr@denx.de>
  */
 
-#include <common.h>
+#include <config.h>
 #include <env.h>
 #include <i2c.h>
 #include <init.h>
@@ -23,6 +23,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <fdt_support.h>
 #include <hexdump.h>
+#include <i2c_eeprom.h>
 #include <time.h>
 #include <turris-omnia-mcu-interface.h>
 #include <linux/bitops.h>
@@ -45,6 +46,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define OMNIA_I2C_EEPROM_CHIP_ADDR	0x54
 #define OMNIA_I2C_EEPROM_CHIP_LEN	2
 #define OMNIA_I2C_EEPROM_MAGIC		0x0341a034
+
+#define OMNIA_RESET_TO_LOWER_DDR_SPEED	9
+#define OMNIA_LOWER_DDR_SPEED		"1333H"
 
 #define A385_SYS_RSTOUT_MASK		MVEBU_REGISTER(0x18260)
 #define   A385_SYS_RSTOUT_MASK_WD	BIT(10)
@@ -203,6 +207,20 @@ static u32 omnia_mcu_crc32(const void *p, size_t len)
 	}
 
 	return ~bitrev32(crc);
+}
+
+static int omnia_mcu_get_reset(void)
+{
+	u8 reset_status;
+	int ret;
+
+	ret = omnia_mcu_read(CMD_GET_RESET, &reset_status, 1);
+	if (ret) {
+		printf("omnia_mcu_read failed: %i, reset status unknown!\n", ret);
+		return ret;
+	}
+
+	return reset_status;
 }
 
 /* Can only be called after relocation, since it needs cleared BSS */
@@ -429,23 +447,60 @@ struct omnia_eeprom {
 	u32 ramsize;
 	char region[4];
 	u32 crc;
+
+	/* second part (only considered if crc2 is not all-ones) */
+	char ddr_speed[5];
+	u8 old_ddr_training;
+	u8 reserved[38];
+	u32 crc2;
 };
+
+static bool is_omnia_eeprom_second_part_valid(const struct omnia_eeprom *oep)
+{
+	return oep->crc2 != 0xffffffff;
+}
+
+static void make_omnia_eeprom_second_part_invalid(struct omnia_eeprom *oep)
+{
+	oep->crc2 = 0xffffffff;
+}
+
+static bool check_eeprom_crc(const void *buf, size_t size, u32 expected,
+			     const char *name)
+{
+	u32 crc;
+
+	crc = crc32(0, buf, size);
+	if (crc != expected) {
+		printf("bad %s EEPROM CRC (stored %08x, computed %08x)\n",
+		       name, expected, crc);
+		return false;
+	}
+
+	return true;
+}
+
+static struct udevice *omnia_get_eeprom(void)
+{
+	return omnia_get_i2c_chip("EEPROM", OMNIA_I2C_EEPROM_CHIP_ADDR,
+				  OMNIA_I2C_EEPROM_CHIP_LEN);
+}
 
 static bool omnia_read_eeprom(struct omnia_eeprom *oep)
 {
-	struct udevice *chip;
-	u32 crc;
+	struct udevice *eeprom = omnia_get_eeprom();
 	int ret;
 
-	chip = omnia_get_i2c_chip("EEPROM", OMNIA_I2C_EEPROM_CHIP_ADDR,
-				  OMNIA_I2C_EEPROM_CHIP_LEN);
-
-	if (!chip)
+	if (!eeprom)
 		return false;
 
-	ret = dm_i2c_read(chip, 0, (void *)oep, sizeof(*oep));
+	if (IS_ENABLED(CONFIG_SPL_BUILD))
+		ret = dm_i2c_read(eeprom, 0, (void *)oep, sizeof(*oep));
+	else
+		ret = i2c_eeprom_read(eeprom, 0, (void *)oep, sizeof(*oep));
+
 	if (ret) {
-		printf("dm_i2c_read failed: %i, cannot read EEPROM\n", ret);
+		printf("cannot read EEPROM: %d\n", ret);
 		return false;
 	}
 
@@ -455,17 +510,48 @@ static bool omnia_read_eeprom(struct omnia_eeprom *oep)
 		return false;
 	}
 
-	crc = crc32(0, (void *)oep, sizeof(*oep) - 4);
-	if (crc != oep->crc) {
-		printf("bad EEPROM CRC (stored %08x, computed %08x)\n",
-		       oep->crc, crc);
+	if (!check_eeprom_crc(oep, offsetof(struct omnia_eeprom, crc), oep->crc,
+			      "first"))
 		return false;
-	}
+
+	if (is_omnia_eeprom_second_part_valid(oep) &&
+	    !check_eeprom_crc(oep, offsetof(struct omnia_eeprom, crc2),
+			      oep->crc2, "second"))
+		make_omnia_eeprom_second_part_invalid(oep);
 
 	return true;
 }
 
-static int omnia_get_ram_size_gb(void)
+static void omnia_eeprom_set_lower_ddr_speed(void)
+{
+	struct udevice *eeprom = omnia_get_eeprom();
+	struct omnia_eeprom oep;
+	int ret;
+
+	if (!eeprom || !omnia_read_eeprom(&oep))
+		return;
+
+	puts("Setting DDR speed to " OMNIA_LOWER_DDR_SPEED " in EEPROM as requested by reset button... ");
+
+	/* check if already set */
+	if (!strncmp(oep.ddr_speed, OMNIA_LOWER_DDR_SPEED, sizeof(oep.ddr_speed)) &&
+	    (oep.old_ddr_training == 0 || oep.old_ddr_training == 0xff)) {
+		puts("was already set\n");
+		return;
+	}
+
+	strncpy(oep.ddr_speed, OMNIA_LOWER_DDR_SPEED, sizeof(oep.ddr_speed));
+	oep.old_ddr_training = 0xff;
+	oep.crc2 = crc32(0, (const void *)&oep, offsetof(struct omnia_eeprom, crc2));
+
+	ret = i2c_eeprom_write(eeprom, 0, (const void *)&oep, sizeof(oep));
+	if (ret)
+		printf("cannot write EEPROM: %d\n", ret);
+	else
+		puts("done\n");
+}
+
+int omnia_get_ram_size_gb(void)
 {
 	static int ram_size;
 	struct omnia_eeprom oep;
@@ -488,6 +574,46 @@ static int omnia_get_ram_size_gb(void)
 	}
 
 	return ram_size;
+}
+
+bool board_use_old_ddr3_training(void)
+{
+	struct omnia_eeprom oep;
+
+	/*
+	 * If lower DDR speed is requested by reset button, we can't use old DDR
+	 * training algorithm.
+	 */
+	if (omnia_mcu_get_reset() == OMNIA_RESET_TO_LOWER_DDR_SPEED)
+		return false;
+
+	if (!omnia_read_eeprom(&oep))
+		return false;
+
+	if (!is_omnia_eeprom_second_part_valid(&oep))
+		return false;
+
+	return oep.old_ddr_training == 1;
+}
+
+static const char *omnia_get_ddr_speed(void)
+{
+	struct omnia_eeprom oep;
+	static char speed[sizeof(oep.ddr_speed) + 1];
+
+	if (!omnia_read_eeprom(&oep))
+		return NULL;
+
+	if (!is_omnia_eeprom_second_part_valid(&oep))
+		return NULL;
+
+	if (!oep.ddr_speed[0] || oep.ddr_speed[0] == 0xff)
+		return NULL;
+
+	memcpy(&speed, &oep.ddr_speed, sizeof(oep.ddr_speed));
+	speed[sizeof(speed) - 1] = '\0';
+
+	return speed;
 }
 
 static const char * const omnia_get_mcu_type(void)
@@ -604,12 +730,93 @@ static struct mv_ddr_topology_map board_topology_map_2g = {
 	{0}				/* timing parameters */
 };
 
+static const struct omnia_ddr_speed {
+	char name[5];
+	u8 speed_bin;
+	u8 freq;
+} omnia_ddr_speeds[] = {
+	{ "1066F", SPEED_BIN_DDR_1066F, MV_DDR_FREQ_533 },
+	{ "1333H", SPEED_BIN_DDR_1333H, MV_DDR_FREQ_667 },
+	{ "1600K", SPEED_BIN_DDR_1600K, MV_DDR_FREQ_800 },
+};
+
+static const struct omnia_ddr_speed *find_ddr_speed_setting(const char *name)
+{
+	for (int i = 0; i < ARRAY_SIZE(omnia_ddr_speeds); ++i)
+		if (!strncmp(name, omnia_ddr_speeds[i].name, 5))
+			return &omnia_ddr_speeds[i];
+
+	return NULL;
+}
+
+bool omnia_valid_ddr_speed(const char *name)
+{
+	return find_ddr_speed_setting(name) != NULL;
+}
+
+void omnia_print_ddr_speeds(void)
+{
+	for (int i = 0; i < ARRAY_SIZE(omnia_ddr_speeds); ++i)
+		printf("%.5s%s", omnia_ddr_speeds[i].name,
+		       i == ARRAY_SIZE(omnia_ddr_speeds) - 1 ? "\n" : ", ");
+}
+
+static void fixup_speed_in_ddr_topology(struct mv_ddr_topology_map *topology)
+{
+	typeof(topology->interface_params[0]) *params;
+	const struct omnia_ddr_speed *setting;
+	const char *speed;
+	static bool done;
+	int reset_status;
+
+	if (done)
+		return;
+
+	done = true;
+
+	reset_status = omnia_mcu_get_reset();
+	if (reset_status == OMNIA_RESET_TO_LOWER_DDR_SPEED)
+		speed = OMNIA_LOWER_DDR_SPEED;
+	else
+		speed = omnia_get_ddr_speed();
+
+	if (!speed)
+		return;
+
+	setting = find_ddr_speed_setting(speed);
+	if (!setting) {
+		printf("Unsupported value %s for DDR3 speed in EEPROM!\n",
+		       speed);
+		return;
+	}
+
+	params = &topology->interface_params[0];
+
+	/* don't inform if we are not changing the speed from the default one */
+	if (params->speed_bin_index == setting->speed_bin)
+		return;
+
+	if (reset_status == OMNIA_RESET_TO_LOWER_DDR_SPEED)
+		printf("Fixing up DDR3 speed to %s as requested by reset button\n", speed);
+	else
+		printf("Fixing up DDR3 speed (EEPROM defines %s)\n", speed);
+
+	params->speed_bin_index = setting->speed_bin;
+	params->memory_freq = setting->freq;
+}
+
 struct mv_ddr_topology_map *mv_ddr_topology_map_get(void)
 {
+	struct mv_ddr_topology_map *topology;
+
 	if (omnia_get_ram_size_gb() == 2)
-		return &board_topology_map_2g;
+		topology = &board_topology_map_2g;
 	else
-		return &board_topology_map_1g;
+		topology = &board_topology_map_1g;
+
+	fixup_speed_in_ddr_topology(topology);
+
+	return topology;
 }
 
 static int set_regdomain(void)
@@ -629,8 +836,7 @@ static int set_regdomain(void)
 static void handle_reset_button(void)
 {
 	const char * const vars[1] = { "bootcmd_rescue", };
-	int ret;
-	u8 reset_status;
+	int reset_status;
 
 	/*
 	 * Ensure that bootcmd_rescue has always stock value, so that running
@@ -639,12 +845,12 @@ static void handle_reset_button(void)
 	 */
 	env_set_default_vars(1, (char * const *)vars, 0);
 
-	ret = omnia_mcu_read(CMD_GET_RESET, &reset_status, 1);
-	if (ret) {
-		printf("omnia_mcu_read failed: %i, reset status unknown!\n",
-		       ret);
+	reset_status = omnia_mcu_get_reset();
+	if (reset_status < 0)
 		return;
-	}
+
+	if (reset_status == OMNIA_RESET_TO_LOWER_DDR_SPEED)
+		return omnia_eeprom_set_lower_ddr_speed();
 
 	env_set_ulong("omnia_reset", reset_status);
 
@@ -978,11 +1184,21 @@ static int fixup_mcu_gpio_in_pcie_nodes(void *blob)
 	return 0;
 }
 
-static int fixup_mcu_gpio_in_eth_wan_node(void *blob)
+static int get_phy_wan_node_offset(const void *blob)
+{
+	u32 phy_wan_phandle;
+
+	phy_wan_phandle = fdt_getprop_u32_default(blob, "ethernet2", "phy-handle", 0);
+	if (!phy_wan_phandle)
+		return -FDT_ERR_NOTFOUND;
+
+	return fdt_node_offset_by_phandle(blob, phy_wan_phandle);
+}
+
+static int fixup_mcu_gpio_in_phy_wan_node(void *blob)
 {
 	unsigned int mcu_phandle;
-	int eth_wan_node;
-	int ret;
+	int phy_wan_node, ret;
 
 	ret = fdt_increase_size(blob, 64);
 	if (ret < 0) {
@@ -990,21 +1206,17 @@ static int fixup_mcu_gpio_in_eth_wan_node(void *blob)
 		return ret;
 	}
 
-	eth_wan_node = fdt_path_offset(blob, "ethernet2");
-	if (eth_wan_node < 0)
-		return eth_wan_node;
+	phy_wan_node = get_phy_wan_node_offset(blob);
+	if (phy_wan_node < 0)
+		return phy_wan_node;
 
 	mcu_phandle = fdt_create_phandle_by_compatible(blob, "cznic,turris-omnia-mcu");
 	if (!mcu_phandle)
 		return -FDT_ERR_NOPHANDLES;
 
-	/* insert: phy-reset-gpios = <&mcu 2 gpio GPIO_ACTIVE_LOW>; */
-	ret = insert_mcu_gpio_prop(blob, eth_wan_node, "phy-reset-gpios",
-				   mcu_phandle, 2, ilog2(EXT_CTL_nRES_PHY), GPIO_ACTIVE_LOW);
-	if (ret < 0)
-		return ret;
-
-	return 0;
+	/* insert: reset-gpios = <&mcu 2 gpio GPIO_ACTIVE_LOW>; */
+	return insert_mcu_gpio_prop(blob, phy_wan_node, "reset-gpios",
+				    mcu_phandle, 2, ilog2(EXT_CTL_nRES_PHY), GPIO_ACTIVE_LOW);
 }
 
 static void fixup_atsha_node(void *blob)
@@ -1033,7 +1245,7 @@ int board_fix_fdt(void *blob)
 {
 	if (omnia_mcu_has_feature(FEAT_PERIPH_MCU)) {
 		fixup_mcu_gpio_in_pcie_nodes(blob);
-		fixup_mcu_gpio_in_eth_wan_node(blob);
+		fixup_mcu_gpio_in_phy_wan_node(blob);
 	}
 
 	fixup_msata_port_nodes(blob);
@@ -1218,14 +1430,14 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	int node;
 
 	/*
-	 * U-Boot's FDT blob contains phy-reset-gpios in ethernet2
-	 * node when MCU controls all peripherals resets.
+	 * U-Boot's FDT blob contains reset-gpios in ethernet2 PHY node when MCU
+	 * controls all peripherals resets.
 	 * Fixup MCU GPIO nodes in PCIe and eth wan nodes in this case.
 	 */
-	node = fdt_path_offset(gd->fdt_blob, "ethernet2");
-	if (node >= 0 && fdt_getprop(gd->fdt_blob, node, "phy-reset-gpios", NULL)) {
+	node = get_phy_wan_node_offset(gd->fdt_blob);
+	if (node >= 0 && fdt_getprop(gd->fdt_blob, node, "reset-gpios", NULL)) {
 		fixup_mcu_gpio_in_pcie_nodes(blob);
-		fixup_mcu_gpio_in_eth_wan_node(blob);
+		fixup_mcu_gpio_in_phy_wan_node(blob);
 	}
 
 	fixup_spi_nor_partitions(blob);

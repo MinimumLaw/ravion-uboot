@@ -5,7 +5,6 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
-#include <common.h>
 #include <g_dnl.h>
 #include <linux/libfdt.h>
 #include <init.h>

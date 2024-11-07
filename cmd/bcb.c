@@ -8,12 +8,12 @@
 #include <android_bootloader_message.h>
 #include <bcb.h>
 #include <command.h>
-#include <common.h>
 #include <display_options.h>
 #include <log.h>
 #include <part.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <vsprintf.h>
 #include <linux/err.h>
 
 enum bcb_cmd {
@@ -172,8 +172,8 @@ static int __bcb_initialize(const char *iface, int devnum, const char *partp)
 	return CMD_RET_SUCCESS;
 
 err_read_fail:
-	printf("Error: %d %d:%s read failed (%d)\n", block->uclass_id,
-	       block->devnum, partition->name, ret);
+	printf("Error: %s %d:%s read failed (%d)\n", iface, devnum,
+	       partition->name, ret);
 	__bcb_reset();
 	return CMD_RET_FAILURE;
 }

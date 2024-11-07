@@ -100,6 +100,7 @@ enum {
 	IH_OS_TEE,			/* Trusted Execution Environment */
 	IH_OS_OPENSBI,			/* RISC-V OpenSBI */
 	IH_OS_EFI,			/* EFI Firmware (e.g. GRUB2) */
+	IH_OS_ELF,			/* ELF Image (e.g. seL4) */
 
 	IH_OS_COUNT,
 };
@@ -1857,7 +1858,7 @@ int android_image_get_kernel(const void *hdr,
  * @vendor_boot_img : Pointer to vendor boot image header
  * @rd_data:	Pointer to a ulong variable, will hold ramdisk address
  * @rd_len:	Pointer to a ulong variable, will hold ramdisk length
- * Return: 0 if succeeded, -1 if ramdisk size is 0
+ * Return: 0 if OK, -ENOPKG if no ramdisk, -EINVAL if invalid image
  */
 int android_image_get_ramdisk(const void *hdr, const void *vendor_boot_img,
 			      ulong *rd_data, ulong *rd_len);
@@ -1971,11 +1972,32 @@ bool is_android_vendor_boot_image_header(const void *vendor_boot_img);
 ulong get_abootimg_addr(void);
 
 /**
+ * set_abootimg_addr() - Set Android boot image address
+ *
+ * Return: no returned results
+ */
+void set_abootimg_addr(ulong addr);
+
+/**
+ * get_ainit_bootimg_addr() - Get Android init boot image address
+ *
+ * Return: Android init boot image address
+ */
+ulong get_ainit_bootimg_addr(void);
+
+/**
  * get_avendor_bootimg_addr() - Get Android vendor boot image address
  *
  * Return: Android vendor boot image address
  */
 ulong get_avendor_bootimg_addr(void);
+
+/**
+ * set_abootimg_addr() - Set Android vendor boot image address
+ *
+ * Return: no returned results
+ */
+void set_avendor_bootimg_addr(ulong addr);
 
 /**
  * board_fit_config_name_match() - Check for a matching board name
