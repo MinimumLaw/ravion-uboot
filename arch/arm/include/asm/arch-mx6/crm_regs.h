@@ -215,6 +215,7 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CCDR_MMDC_CH1_HS_MASK			(1 << 16)
 #define MXC_CCM_CCDR_MMDC_CH0_HS_MASK			(1 << 17)
 /* Exists on i.MX6QP */
+#define MXC_CCM_CCDR_MMDC_CH1_MASK			(1 << 16)
 #define MXC_CCM_CCDR_MMDC_CH1_AXI_ROOT_CG		(1 << 18)
 
 /* Define the bits in register CSR */

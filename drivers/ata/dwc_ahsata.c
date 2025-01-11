@@ -407,7 +407,7 @@ static int ahci_exec_ata_cmd(struct ahci_uc_priv *uc_priv, u8 port,
 	flush_cache((int)(pp->cmd_slot), AHCI_PORT_PRIV_DMA_SZ);
 	writel_with_flush(1 << cmd_slot, &port_mmio->ci);
 
-	if (waiting_for_cmd_completed((u8 *)&port_mmio->ci, 10000,
+	if (waiting_for_cmd_completed((u8 *)&port_mmio->ci, 100,
 				      0x1 << cmd_slot)) {
 		printf("timeout exit!\n");
 		return -1;

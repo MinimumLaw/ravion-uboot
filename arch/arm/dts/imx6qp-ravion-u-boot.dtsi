@@ -1,0 +1,84 @@
+/*****************************************************************************
+ *
+ *****************************************************************************/
+
+#include <imx6qdl-u-boot.dtsi> 
+
+/ {
+	chosen {
+		bootph-pre-ram;
+		stdout-path = &uart1;
+	};
+
+	gpio-poweroff { bootph-pre-ram; };
+
+	gpio-keys {
+		bootph-pre-ram;
+		power { bootph-pre-ram; };
+	};
+
+	gpio-leds {
+		bootph-pre-ram;
+		sys_reset { bootph-pre-ram; };
+	};
+
+	wdt-reboot {
+		compatible = "wdt-reboot";
+		wdt = <&wdog1>;
+	};
+
+	clocks {
+		bootph-pre-ram;
+		ckil {	/* 32768 */
+			bootph-pre-ram;
+		};
+		osc {	/* 24000000 */
+			bootph-pre-ram;
+		};
+	}; /* Clocks */
+};
+
+/* keep specific clocks for SPL */
+&clks	{ bootph-pre-ram; };
+&wdog1	{ bootph-pre-ram; };
+&wdog2	{ bootph-pre-ram; };
+
+/*
+ * keep specific devices for SPL
+ */
+&uart1		{ bootph-pre-ram; };	/* Console */
+&i2c1		{ bootph-pre-ram; };	/* PMIC interface */
+&usdhc2		{ bootph-pre-ram; };	/* SD1 */
+&usdhc3		{ bootph-pre-ram; };	/* eMMC */
+&wdog1		{ bootph-pre-ram; };	/* WatchDog */
+&usbh1		{ bootph-pre-ram; };	/* HOST */
+&usbotg		{ bootph-pre-ram;	/* OTG */
+		  power-active-high; };
+&usbphy1	{ bootph-pre-ram; };
+&usbphy2	{ bootph-pre-ram; };
+&usbmisc	{ bootph-pre-ram; };
+&anatop		{ bootph-pre-ram; };
+&gpio1		{ bootph-pre-ram; };
+&gpio2		{ bootph-pre-ram; };
+&gpio3		{ bootph-pre-ram; };
+&gpio4		{ bootph-pre-ram; };
+&gpio5		{ bootph-pre-ram; };
+&gpio6		{ bootph-pre-ram; };
+&gpio7		{ bootph-pre-ram; };
+&iomuxc		{ bootph-pre-ram; };
+
+&pinctrl_hog	{ bootph-pre-ram; };
+&pinctrl_uart1	{ bootph-pre-ram; };
+&pinctrl_pmic	{ bootph-pre-ram; };
+&pinctrl_sd1	{ bootph-pre-ram; };
+&pinctrl_emmc	{ bootph-pre-ram; };
+
+&pmic { /* PMIC chip */
+	bootph-pre-ram;
+
+	regulators {
+		bootph-pre-ram;
+	};
+};
+
+&pinctrl_i2c_int	{ bootph-pre-ram; };
