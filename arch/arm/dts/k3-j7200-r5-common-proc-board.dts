@@ -23,7 +23,8 @@
 				<&k3_pds 202 TI_SCI_PD_EXCLUSIVE>,
 				<&k3_pds 4 TI_SCI_PD_EXCLUSIVE>;
 		resets = <&k3_reset 202 0>;
-		clocks = <&k3_clks 61 1>;
+		clocks = <&k3_clks 61 1>, <&k3_clks 202 2>;
+		clock-names = "gtc", "core";
 		assigned-clocks = <&k3_clks 202 2>, <&k3_clks 61 1>, <&k3_clks 323 0>;
 		assigned-clock-parents= <0>, <0>, <&k3_clks 323 2>;
 		assigned-clock-rates = <2000000000>, <200000000>;
@@ -89,10 +90,21 @@
           <0x0 0x50000000 0x0 0x8000000>;
 };
 
+&fss {
+	/* enable ranges missing from the FSS node */
+	ranges = <0x0 0x47000000 0x0 0x47000000 0x0 0x00068400>,
+	         <0x0 0x50000000 0x0 0x50000000 0x0 0x08000000>;
+};
+
 &mcu_ringacc {
     ti,sci = <&dm_tifs>;
 };
 
 &mcu_udmap {
     ti,sci = <&dm_tifs>;
+};
+
+&wkup_vtm0 {
+	vdd-supply-2 = <&buckb1>;
+	bootph-pre-ram;
 };

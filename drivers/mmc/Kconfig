@@ -61,6 +61,17 @@ config SPL_DM_MMC
 	  appear as block devices in U-Boot and can support filesystems such
 	  as EXT4 and FAT.
 
+config TPL_DM_MMC
+	bool "Enable MMC controllers using Driver Model in TPL"
+	depends on TPL_DM && DM_MMC
+	select TPL_BLK
+	help
+	  This enables the MultiMediaCard (MMC) uclass which supports MMC and
+	  Secure Digital I/O (SDIO) cards. Both removable (SD, micro-SD, etc.)
+	  and non-removable (e.g. eMMC chip) devices are supported. These
+	  appear as block devices in U-Boot and can support filesystems such
+	  as EXT4 and FAT.
+
 if MMC
 
 config MMC_SDHCI_ADMA_HELPERS
@@ -119,6 +130,7 @@ config MMC_HW_PARTITIONING
 config SUPPORT_EMMC_RPMB
 	bool "Support eMMC replay protected memory block (RPMB)"
 	imply CMD_MMC_RPMB
+	select SHA256
 	help
 	  Enable support for reading, writing and programming the
 	  key for the Replay Protection Memory Block partition in eMMC.

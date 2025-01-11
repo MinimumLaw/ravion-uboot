@@ -49,7 +49,7 @@ void bootm_announce_and_cleanup(void)
 	 * This may be useful for last-stage operations, like cancelling
 	 * of DMA operation or releasing device internal buffers.
 	 */
-	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL);
+	dm_remove_devices_active();
 }
 
 #if defined(CONFIG_OF_LIBFDT) && !defined(CONFIG_OF_NO_KERNEL)
@@ -252,22 +252,4 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 		return boot_jump_linux(images);
 
 	return boot_jump_linux(images);
-}
-
-static ulong get_sp(void)
-{
-	ulong ret;
-
-#if CONFIG_IS_ENABLED(X86_64)
-	asm("mov %%rsp, %0" : "=r"(ret) : );
-#else
-	asm("mov %%esp, %0" : "=r"(ret) : );
-#endif
-
-	return ret;
-}
-
-void arch_lmb_reserve(struct lmb *lmb)
-{
-	arch_lmb_reserve_generic(lmb, get_sp(), gd->ram_top, 4096);
 }

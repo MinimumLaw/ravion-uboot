@@ -1,5 +1,7 @@
 menu "Boot options"
 
+source "lib/efi_loader/Kconfig"
+
 menu "Boot images"
 
 config ANDROID_BOOT_IMAGE
@@ -231,6 +233,7 @@ config SPL_LOAD_FIT
 config SPL_LOAD_FIT_ADDRESS
 	hex "load address of fit image"
 	depends on SPL_LOAD_FIT
+	default 0x44000000 if ARCH_IMX8M
 	default 0x0
 	help
 	  Specify the load address of the fit image that will be loaded
@@ -279,14 +282,6 @@ config SPL_FIT_IMAGE_POST_PROCESS
 	  need to be comprehended in how the images were prepared before being
 	  injected into the FIT creation (i.e. the blobs would have been pre-
 	  processed before being added to the FIT image).
-
-config SPL_FIT_SOURCE
-	string ".its source file for U-Boot FIT image"
-	depends on SPL_FIT
-	help
-	  Specifies a (platform specific) FIT source file to generate the
-	  U-Boot FIT image. This could specify further image to load and/or
-	  execute.
 
 config USE_SPL_FIT_GENERATOR
 	bool "Use a script to generate the .its script"
@@ -475,6 +470,13 @@ config BOOTSTD_BOOTCOMMAND
 	  standard boot does not support all of the features of distro boot
 	  yet.
 
+config BOOTSTD_MENU
+	bool "Provide a menu of available bootflows for standard boot"
+	depends on BOOTSTD_FULL && EXPO
+	default y
+	help
+	  Provide a menu of available bootflows and related options.
+
 config BOOTSTD_PROG
 	bool "Use programmatic boot"
 	depends on !CMDLINE
@@ -501,7 +503,8 @@ config BOOTMETH_ANDROID
 	select ANDROID_AB
 	select ANDROID_BOOT_IMAGE
 	select CMD_BCB
-	select CMD_FASTBOOT
+	imply CMD_FASTBOOT
+	imply FASTBOOT if !NET_LWIP
 	select PARTITION_TYPE_GUID
 	select PARTITION_UUIDS
 	help
@@ -557,6 +560,7 @@ config BOOTMETH_EXTLINUX_PXE
 config BOOTMETH_EFILOADER
 	bool "Bootdev support for EFI boot"
 	depends on EFI_BINARY_EXEC
+	imply CMD_TFTPBOOT if CMD_NET
 	default y
 	help
 	  Enables support for EFI boot using bootdevs. This makes the
@@ -744,6 +748,76 @@ config BOOTMETH_SCRIPT
 
 	  This provides a way to try out standard boot on an existing boot flow.
 	  It is not enabled by default to save space.
+
+config UPL
+	bool "upl - Universal Payload Specification"
+	imply CMD_UPL
+	imply UPL_READ
+	imply UPL_WRITE
+	imply SPL_UPL if SPL
+	help
+	  Provides support for UPL payloads and handoff information. U-Boot
+	  supports generating and accepting handoff information. The mkimage
+	  tool will eventually support creating payloads.
+
+if UPL
+
+config UPL_READ
+	bool "upl - Support reading a Universal Payload handoff"
+	help
+	  Provides support for decoding a UPL-format payload into a C structure
+	  which can be used elsewhere in U-Boot. This is just the reading
+	  implementation, useful for trying it out. See UPL_IN for how
+	  to tell U-Boot to actually read it on startup and use it for memory
+	  and device information, etc.
+
+config UPL_WRITE
+	bool "upl - Support writing a Universal Payload handoff"
+	help
+	  Provides support for encoding a UPL-format payload from a C structure
+	  so it can be passed to another program. This is just the writing
+	  implementation, useful for trying it out. See SPL_UPL_OUT
+	  for how to tell U-Boot SPL to actually write it before jumping to
+	  the next phase.
+
+config UPL_IN
+	bool "upl - Read the UPL handoff on startup"
+	select UPL_READ
+	help
+	  Read an SPL handoff when U-Boot starts and use it to provide
+	  devices, memory layout, etc. required by U-Boot. This allows U-Boot
+	  to function as a payload in the meaning of the specification.
+
+if SPL
+
+config SPL_UPL
+	bool "Write a UPL handoff in SPL"
+	imply SPL_UPL_OUT
+	help
+	  This tells SPL to write a UPL handoff and pass it to the next phase
+	  (e.g. to U-Boot or another program which SPL loads and runs). THis
+	  provides information to help that program run correctly and
+	  efficiently on the machine.
+
+config SPL_UPL_WRITE
+	bool  # upl - Support writing a Universal Payload handoff in SPL
+	select SPL_BLOBLIST
+	help
+	  Provides support for encoding a UPL-format payload from a C structure
+	  so it can be passed to another program. This is just the writing
+	  implementation, useful for trying it out.
+
+config SPL_UPL_OUT
+	bool "upl - Support writing a Universal Payload handoff in SPL"
+	select SPL_UPL_WRITE
+	help
+	  Provides support for encoding a UPL-format payload and passing it to
+	  the next firmware phase. This allows U-Boot SPL to function as
+	  Platform Init in the meaning of the specification.
+
+endif  # SPL
+
+endif  # UPL
 
 endif # BOOTSTD
 
@@ -1617,6 +1691,7 @@ config FDT_FIXUP_PARTITIONS
 
 config FDT_SIMPLEFB
 	bool "FDT tools for simplefb support"
+	depends on VIDEO
 	help
 	  Enable the fdt tools to manage the simple fb nodes in device tree.
 	  These functions can be used by board to indicate to the OS
@@ -1624,7 +1699,7 @@ config FDT_SIMPLEFB
 	  memory
 
 config ARCH_FIXUP_FDT_MEMORY
-	bool "Enable arch_fixup_memory_banks() call"
+	bool "Enable fdt_fixup_memory_banks() call"
 	default y
 	help
 	  Enable FDT memory map syncup before OS boot. This feature can be

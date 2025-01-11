@@ -8,6 +8,7 @@
 #include <command.h>
 #include <display_options.h>
 #include <env.h>
+#include <efi_loader.h>
 #include <image.h>
 #include <lmb.h>
 #include <mapmem.h>
@@ -25,7 +26,6 @@ static const char bootfile1[] = "GET ";
 static const char bootfile3[] = " HTTP/1.0\r\n\r\n";
 static const char http_eom[] = "\r\n\r\n";
 static const char http_ok[] = "200";
-static const char content_len[] = "Content-Length";
 static const char linefeed[] = "\r\n";
 static struct in_addr web_server_ip;
 static int our_port;
@@ -45,7 +45,6 @@ struct pkt_qd {
 #define PKTQ_SZ (PKTBUFSRX / 4)
 static struct pkt_qd pkt_q[PKTQ_SZ];
 static int pkt_q_idx;
-static unsigned long content_length;
 static unsigned int packets;
 
 static unsigned int initial_data_seq_num;
@@ -64,29 +63,6 @@ static unsigned int retry_tcp_ack_num;	/* TCP retry acknowledge number*/
 static unsigned int retry_tcp_seq_num;	/* TCP retry sequence number */
 static int retry_len;			/* TCP retry length */
 
-static ulong wget_load_size;
-
-/**
- * wget_init_max_size() - initialize maximum load size
- *
- * Return:	0 if success, -1 if fails
- */
-static int wget_init_load_size(void)
-{
-	struct lmb lmb;
-	phys_size_t max_size;
-
-	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
-
-	max_size = lmb_get_free_size(&lmb, image_load_addr);
-	if (!max_size)
-		return -1;
-
-	wget_load_size = max_size;
-
-	return 0;
-}
-
 /**
  * store_block() - store block in memory
  * @src: source of data
@@ -99,14 +75,9 @@ static inline int store_block(uchar *src, unsigned int offset, unsigned int len)
 	ulong newsize = offset + len;
 	uchar *ptr;
 
-	if (IS_ENABLED(CONFIG_LMB)) {
-		ulong end_addr = image_load_addr + wget_load_size;
-
-		if (!end_addr)
-			end_addr = ULONG_MAX;
-
+	if (CONFIG_IS_ENABLED(LMB)) {
 		if (store_addr < image_load_addr ||
-		    store_addr + len > end_addr) {
+		    lmb_read_check(store_addr, len)) {
 			printf("\nwget error: ");
 			printf("trying to overwrite reserved memory...\n");
 			return -1;
@@ -199,13 +170,6 @@ void wget_fail(char *error_message, unsigned int tcp_seq_num,
 	wget_send(action, tcp_seq_num, tcp_ack_num, 0);
 }
 
-void wget_success(u8 action, unsigned int tcp_seq_num,
-		  unsigned int tcp_ack_num, int len, int packets)
-{
-	printf("Packets received %d, Transfer Successful\n", packets);
-	wget_send(action, tcp_seq_num, tcp_ack_num, len);
-}
-
 /*
  * Interfaces of U-BOOT
  */
@@ -244,7 +208,7 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 		pkt_in_q = (void *)image_load_addr + PKT_QUEUE_OFFSET +
 			(pkt_q_idx * PKT_QUEUE_PACKET_SIZE);
 
-		ptr1 = map_sysmem((phys_addr_t)pkt_in_q, len);
+		ptr1 = map_sysmem((ulong)pkt_in_q, len);
 		memcpy(ptr1, pkt, len);
 		unmap_sysmem(ptr1);
 
@@ -282,19 +246,8 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 			wget_send(action, tcp_seq_num, tcp_ack_num, len);
 		} else {
 			debug_cond(DEBUG_WGET,
-				   "wget: Connctd pkt %p  hlen %x\n",
+				   "wget: Connected Pkt %p hlen %x\n",
 				   pkt, hlen);
-
-			pos = strstr((char *)pkt, content_len);
-			if (!pos) {
-				content_length = -1;
-			} else {
-				pos += sizeof(content_len) + 2;
-				strict_strtoul(pos, 10, &content_length);
-				debug_cond(DEBUG_WGET,
-					   "wget: Connected Len %lu\n",
-					   content_length);
-			}
 
 			net_boot_file_size = 0;
 
@@ -307,23 +260,18 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 				}
 			}
 
-			debug_cond(DEBUG_WGET,
-				   "wget: Connected Pkt %p hlen %x\n",
-				   pkt, hlen);
-
 			for (i = 0; i < pkt_q_idx; i++) {
 				int err;
 
-				ptr1 = map_sysmem(
-					(phys_addr_t)(pkt_q[i].pkt),
-					pkt_q[i].len);
+				ptr1 = map_sysmem((ulong)pkt_q[i].pkt,
+						  pkt_q[i].len);
 				err = store_block(ptr1,
 					  pkt_q[i].tcp_seq_num -
 					  initial_data_seq_num,
 					  pkt_q[i].len);
 				unmap_sysmem(ptr1);
 				debug_cond(DEBUG_WGET,
-					   "wget: Connctd pkt Q %p len %x\n",
+					   "wget: Conncted pkt Q %p len %x\n",
 					   pkt_q[i].pkt, pkt_q[i].len);
 				if (err) {
 					wget_loop_state = NETLOOP_FAIL;
@@ -436,6 +384,10 @@ static void wget_handler(uchar *pkt, u16 dport,
 	case WGET_TRANSFERRED:
 		printf("Packets received %d, Transfer Successful\n", packets);
 		net_set_state(wget_loop_state);
+		efi_set_bootdev("Net", "", image_url,
+				map_sysmem(image_load_addr, 0),
+				net_boot_file_size);
+		env_set_hex("filesize", net_boot_file_size);
 		break;
 	}
 }
@@ -496,15 +448,6 @@ void wget_start(void)
 	}
 	debug_cond(DEBUG_WGET,
 		   "\nwget:Load address: 0x%lx\nLoading: *\b", image_load_addr);
-
-	if (IS_ENABLED(CONFIG_LMB)) {
-		if (wget_init_load_size()) {
-			printf("\nwget error: ");
-			printf("trying to overwrite reserved memory...\n");
-			net_set_state(NETLOOP_FAIL);
-			return;
-		}
-	}
 
 	net_set_timeout_handler(wget_timeout, wget_timeout_handler);
 	tcp_set_tcp_handler(wget_handler);

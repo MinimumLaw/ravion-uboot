@@ -68,6 +68,11 @@
 	bootph-all;
 };
 
+&osc_32k {
+	bootph-pre-ram;
+	bootph-all;
+};
+
 #ifdef CONFIG_FSL_CAAM
 &sec_jr0 {
 	bootph-pre-ram;
@@ -193,6 +198,7 @@
 
 			binman_imx_fit: fit {
 				description = "Configuration to load ATF before U-Boot";
+				filename = "u-boot.itb";
 #ifndef CONFIG_IMX_HAB
 				fit,external-offset = <CONFIG_FIT_EXTERNAL_OFFSET>;
 #endif

@@ -49,7 +49,7 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 #define	MAX_ENV_SIZE	(1 << 20)	/* 1 MiB */
 
-#ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_XPL_BUILD
 /*
  * Command interface: print one or all environment variables
  *
@@ -182,9 +182,9 @@ DONE:
 	return 0;
 }
 #endif
-#endif /* CONFIG_SPL_BUILD */
+#endif /* CONFIG_XPL_BUILD */
 
-#ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_XPL_BUILD
 static int do_env_set(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[])
 {
@@ -198,7 +198,7 @@ static int do_env_set(struct cmd_tbl *cmdtp, int flag, int argc,
  * Prompt for environment variable
  */
 #if defined(CONFIG_CMD_ASKENV)
-int do_env_ask(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_env_ask(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	char message[CONFIG_SYS_CBSIZE];
 	int i, len, pos, size;
@@ -312,8 +312,8 @@ static int print_active_callback(struct env_entry *entry)
 /*
  * Print the callbacks available and what they are bound to
  */
-int do_env_callback(struct cmd_tbl *cmdtp, int flag, int argc,
-		    char *const argv[])
+static int do_env_callback(struct cmd_tbl *cmdtp, int flag, int argc,
+			   char *const argv[])
 {
 	struct env_clbk_tbl *clbkp;
 	int i;
@@ -381,7 +381,7 @@ static int print_active_flags(struct env_entry *entry)
 /*
  * Print the flags available and what variables have flags
  */
-int do_env_flags(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+static int do_env_flags(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	/* Print the available variable types */
 	printf("Available variable type flags (position %d):\n",
@@ -503,9 +503,9 @@ static int do_env_select(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 #endif
 
-#endif /* CONFIG_SPL_BUILD */
+#endif /* CONFIG_XPL_BUILD */
 
-#ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_XPL_BUILD
 static int do_env_default(struct cmd_tbl *cmdtp, int flag,
 			  int argc, char *const argv[])
 {
@@ -1289,4 +1289,4 @@ U_BOOT_CMD_COMPLETE(
 	var_complete
 );
 #endif
-#endif /* CONFIG_SPL_BUILD */
+#endif /* CONFIG_XPL_BUILD */

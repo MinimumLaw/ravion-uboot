@@ -14,6 +14,7 @@ Board-specific doc
    anbernic/index
    apple/index
    armltd/index
+   aspeed/index
    asus/index
    atmel/index
    beacon/index
@@ -22,7 +23,9 @@ Board-specific doc
    bsh/index
    cloos/index
    congatec/index
+   coolpi/index
    coreboot/index
+   emcraft/index
    emulation/index
    gateworks/index
    google/index
@@ -41,6 +44,7 @@ Board-specific doc
    phytec/index
    purism/index
    qualcomm/index
+   qnap/index
    renesas/index
    rockchip/index
    samsung/index

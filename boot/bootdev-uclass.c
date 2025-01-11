@@ -434,6 +434,9 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 	struct uclass *uc;
 	enum uclass_id id;
 
+	if (!CONFIG_IS_ENABLED(BLK))
+		return -ENOSYS;
+
 	ret = label_to_uclass(label, &seq, &method_flags);
 	if (ret < 0)
 		return log_msg_ret("uc", ret);
@@ -632,7 +635,7 @@ int bootdev_next_label(struct bootflow_iter *iter, struct udevice **devp,
 
 int bootdev_next_prio(struct bootflow_iter *iter, struct udevice **devp)
 {
-	struct udevice *dev = *devp, *last_dev = NULL;
+	struct udevice *dev = *devp;
 	bool found;
 	int ret;
 
@@ -640,6 +643,7 @@ int bootdev_next_prio(struct bootflow_iter *iter, struct udevice **devp)
 	*devp = NULL;
 	log_debug("next prio %d: dev=%p/%s\n", iter->cur_prio, dev,
 		  dev ? dev->name : "none");
+	found = false;
 	do {
 		/*
 		 * Don't probe devices here since they may not be of the
@@ -682,23 +686,13 @@ int bootdev_next_prio(struct bootflow_iter *iter, struct udevice **devp)
 			}
 		} else {
 			ret = device_probe(dev);
-			if (!ret)
-				last_dev = dev;
-			if (ret) {
-				log_warning("Device '%s' failed to probe\n",
+			if (ret)
+				log_debug("Device '%s' failed to probe\n",
 					  dev->name);
-				if (last_dev == dev) {
-					/*
-					 * We have already tried this device
-					 * and it failed to probe. Give up.
-					 */
-					return log_msg_ret("probe", ret);
-				}
-				last_dev = dev;
-				dev = NULL;
-			}
+			else
+				found = true;
 		}
-	} while (!dev);
+	} while (!found);
 
 	*devp = dev;
 
