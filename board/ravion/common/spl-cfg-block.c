@@ -56,6 +56,7 @@ const char * const ravion_modules[] = {
 	 [3] = "Ravion-v2 iMX6 DualLite 512Mb IT",
 	 [4] = "RHOS iMX8MQ 4Gb IT",
 	 [5] = "RHOS RK3568J 4Gb IT",
+	 [5] = "RHOS RK3568J 8Gb IT",
 };
 
 #ifdef CONFIG_RAVION_CFG_BLOCK_IS_IN_MMC

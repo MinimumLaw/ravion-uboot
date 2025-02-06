@@ -71,8 +71,8 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 	return 0;
 }
 #endif /* CONFIG_OF_LIBFDT */
-#if 0
-int show_board_info(void)
+
+int checkboard(void)
 {
 	/* check config block present and valid */
 	if (read_rav_cfg_block()) {
@@ -92,14 +92,14 @@ int show_board_info(void)
 	eth_env_set_enetaddr("ethaddr", (u8 *)&rav_eth_addr);
 
 	/* Show board label */
-	printf("Model: %s %s, Serial# %s\n",
+	printf("Module:%s %s, Serial# %s\n",
 	       ravion_modules[rav_hw_tag.prodid],
 	       rav_board_rev_str,
 	       rav_serial_str);
 
 	return 0;
 }
-#endif
+
 #else /* CONFIG_RAVION_CFG_BLOCK */
 
 #if defined(CONFIG_OF_LIBFDT) || defined(CONFIG_SPL_OF_LIBFDT)
@@ -108,11 +108,11 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 	return 0;
 }
 #endif /* CONFIG_OF_LIBFDT */
-#if 0
-int show_board_info(void)
+
+int checkboard(void)
 {
 	printf("ERROR: Bootloader not report board info!\n");
 	return -1;
 }
-#endif
+
 #endif /* CONFIG_RAVION_CFG_BLOCK */

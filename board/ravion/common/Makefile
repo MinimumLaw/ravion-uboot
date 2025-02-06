@@ -1,6 +1,8 @@
 # Copyright (c) 2016 Toradex, Inc.
 # SPDX-License-Identifier:	GPL-2.0+
 
+#ccflags-y += -DDEBUG
+
 ifeq ($(CONFIG_IMX8MQ),y)
 # IMX8MQ modules use common nxp/freescale code
 obj-y += ../../freescale/common/

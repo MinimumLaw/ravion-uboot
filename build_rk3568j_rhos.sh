@@ -11,7 +11,7 @@
 #
 ##############################################################################
 export BL31=../rkbin/bin/rk35/rk3568_bl31_v1.44.elf
-# export TEE=../rkbin/tee.elf
+export TEE=../rkbin/tee.elf
 export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3568_ddr_1560MHz_v1.21.bin
 
 if [ -z $CROSS_COMPILE ]; then
