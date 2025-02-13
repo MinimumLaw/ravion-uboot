@@ -3,9 +3,11 @@
 #include <malloc.h>
 #include <errno.h>
 #include <asm/global_data.h>
+#include <asm/arch-rockchip/bootrom.h>
 #include <asm/io.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <net-common.h>
 #include <mmc.h>
 #include <spl.h>
 #include <linux/bitops.h>
@@ -18,7 +20,6 @@
 /*
  * U-Boot hooks
  */
-#warning FixMe: This start ONLY if boot from ethernet, but must start allways!
 int board_phy_config(struct phy_device *phydev)
 {
 	int reg, ret = 0;
@@ -39,13 +40,43 @@ int board_phy_config(struct phy_device *phydev)
 	return ret;
 }
 
-int rk_board_late_init(void)
+#ifdef CONFIG_RESET_PHY_R
+void reset_phy(void)
 {
-#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-	env_set("board_name", "RHOS");
-	env_set("board_rev",  "RK3568J");
+	struct udevice *eth_dev;
+
+	eth_dev = eth_get_dev_by_name("eth0");
+	if (!eth_dev) {
+		printf("ETH device not found!");
+		return;
+	}
+#warning No wait for link required!
+	eth_start_udev(eth_dev); /* We want call board_phy_config() now */
+
+	printf("PHY reset at startup callback\n");
+}
 #endif
 
+
+int rk_board_late_init(void)
+{
+
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+	switch (readl(BROM_BOOTSOURCE_ID_ADDR)){
+	case BROM_BOOTSOURCE_EMMC: /* normal production boot */
+		env_set("board_name", "RHOS");
+		env_set("board_rev",  "RK3568J");
+		break;
+	case BROM_BOOTSOURCE_USB:  /* module flashing by USB */
+		printf("USB boot detected. Start in fastboot mode.\n");
+		env_set("bootcmd", "fastboot usb 0");
+		break;
+	case BROM_BOOTSOURCE_SD:  /* module flashing by USB */
+		printf("Factory boot mode - install bootloader\n");
+		env_set("bootcmd", "run boot0_install");
+		break;
+	};
+#endif
 	return 0;
 }
 
