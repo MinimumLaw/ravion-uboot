@@ -47,13 +47,11 @@ void reset_phy(void)
 
 	eth_dev = eth_get_dev_by_name("eth0");
 	if (!eth_dev) {
-		printf("ETH device not found!");
+		printf("eth0 device not found!");
 		return;
 	}
 #warning No wait for link required!
 	eth_start_udev(eth_dev); /* We want call board_phy_config() now */
-
-	printf("PHY reset at startup callback\n");
 }
 #endif
 

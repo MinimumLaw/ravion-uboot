@@ -19,6 +19,7 @@
 #undef USE_ONLY_VP0
 
 #include "rk3568-rhos.dtsi"
+#include "rk3568-rhos-kitsbimx8-u-boot.dtsi"
 
 / {
 	model = "RHOS CPU module with RK3568J CPU on KitSBiMX8 development board";

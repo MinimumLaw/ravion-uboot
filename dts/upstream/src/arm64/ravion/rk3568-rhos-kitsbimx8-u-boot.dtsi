@@ -16,9 +16,9 @@
 		filename-prefixes = "/";
 		bootdev-order = "usb0", "nvme0", "mmc0", "mmc1";
 
-		script {
-			/* /booot.scr or /boot.scr.uimg */
-			compatible = "u-boot,script";
+		efi-bootmgr {
+			/* EFI BootOrfer variable */
+			compatible = "u-boot,efi-bootmgr";
 		};
 
 		extlinux {
@@ -26,14 +26,9 @@
 			compatible = "u-boot,extlinux";
 		};
 
-		efi {
-			/* EFI BootOrfer variable */
-			compatible = "u-boot,efi";
-		};
-
-		efi-bootmgr {
-			/* EFI BootOrfer variable */
-			compatible = "u-boot,efi-bootmgr";
+		script {
+			/* /booot.scr or /boot.scr.uimg */
+			compatible = "u-boot,script";
 		};
 	};
 };
@@ -72,12 +67,6 @@
 
 	nvme-bootdev {
 		compatible = "u-boot,bootdev-nvme";
-	};
-};
-
-&gmac1 {
-	eth-bootdev {
-		compatible = "u-boot,bootdev-eth";
 	};
 };
 
