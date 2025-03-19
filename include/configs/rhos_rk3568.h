@@ -8,6 +8,8 @@
 
 #define ROCKCHIP_DEVICE_SETTINGS
 
+#define BOOT_TARGETS "usb0 nvme0 mmc1 mmc0"
+
 #include "rk3568_common.h"
 
 #endif

@@ -14,11 +14,11 @@
 		compatible = "u-boot,boot-std";
 
 		filename-prefixes = "/";
-		bootdev-order = "usb0", "nvme0", "mmc0", "mmc1";
+		bootdev-order = "usb0", "nvme0", "mmc1", "mmc0";
 
-		efi-bootmgr {
-			/* EFI BootOrfer variable */
-			compatible = "u-boot,efi-bootmgr";
+		script {
+			/* /booot.scr or /boot.scr.uimg */
+			compatible = "u-boot,script";
 		};
 
 		extlinux {
@@ -26,36 +26,15 @@
 			compatible = "u-boot,extlinux";
 		};
 
-		script {
-			/* /booot.scr or /boot.scr.uimg */
-			compatible = "u-boot,script";
+		efi-bootmgr {
+			/* EFI BootOrfer variable */
+			compatible = "u-boot,efi-bootmgr";
 		};
-	};
-};
-
-&usb_host0_xhci {
-	usb-bootdev {
-		compatible = "u-boot,bootdev-usb";
-	};
-};
-
-&usb_host0_xhci {
-	usb-bootdev {
-		compatible = "u-boot,bootdev-usb";
-	};
-};
-
-&sdmmc0 {
-	mmc-bootdev {
-		compatible = "u-boot,bootdev-mmc";
 	};
 };
 
 &sdhci {
 	mmc-hs400-enhanced-strobe;
-	mmc-bootdev {
-		compatible = "u-boot,bootdev-mmc";
-	};
 };
 
 &pcie2x1 {
@@ -64,10 +43,6 @@
 
 &pcie3x2 {
 	reset-gpios = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
-
-	nvme-bootdev {
-		compatible = "u-boot,bootdev-nvme";
-	};
 };
 
 &uart2 {
