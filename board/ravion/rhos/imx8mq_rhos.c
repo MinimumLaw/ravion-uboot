@@ -26,6 +26,8 @@
 #include <power/pfuze100_pmic.h>
 #include "../../freescale/common/pfuze.h"
 
+#include "../common/rav-cfg-block.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)

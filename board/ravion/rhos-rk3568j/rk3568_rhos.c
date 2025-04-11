@@ -12,6 +12,8 @@
 #include <spl.h>
 #include <linux/bitops.h>
 
+#include "../common/rav-cfg-block.h"
+
 #ifdef CONFIG_SPL_BUILD
 /*
  * SPL hooks
