@@ -1273,6 +1273,10 @@ static int fecmxc_probe(struct udevice *dev)
 
 		priv->clk_rate = clk_get_rate(&priv->ipg_clk);
 	} else if (CONFIG_IS_ENABLED(CLK_CCF)) {
+#if 1 /* all clocks enabled by platform init */
+#warning FixMe: Need to rewrite this part correctrly!
+		priv->clk_rate = 50000000L;
+#else
 		ret = clk_get_by_name(dev, "ipg", &priv->ipg_clk);
 		if (ret < 0) {
 			debug("Can't get FEC ipg clk: %d\n", ret);
@@ -1318,6 +1322,7 @@ static int fecmxc_probe(struct udevice *dev)
 		}
 
 		priv->clk_rate = clk_get_rate(&priv->ipg_clk);
+#endif
 	}
 
 	ret = fec_alloc_descs(priv);

@@ -1,0 +1,32 @@
+if TARGET_RHOS_RK3568
+
+config SYS_BOARD
+	default "rhos-rk3568j"
+
+config SYS_VENDOR
+	default "ravion"
+
+config SYS_CONFIG_NAME
+	default "rhos_rk3568"
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+
+config RAVION_CFG_BLOCK
+	default y
+
+config RAVION_HAVE_MMC
+	default y
+
+config RAVION_CFG_BLOCK_DEV
+	default "0"
+
+config RAVION_CFG_BLOCK_PART
+	default "1"
+
+# Ravion config block in eMMC, at the end of 1st "boot sector"
+config RAVION_CFG_BLOCK_OFFSET
+	default "-512"
+
+source "board/ravion/common/Kconfig"
+endif

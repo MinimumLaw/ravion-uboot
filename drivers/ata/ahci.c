@@ -47,7 +47,7 @@ static int ata_io_flush(struct ahci_uc_priv *uc_priv, u8 port);
 
 /* Maximum timeouts for each event */
 #define WAIT_MS_SPINUP	20000
-#define WAIT_MS_DATAIO	10000
+#define WAIT_MS_DATAIO	100
 #define WAIT_MS_FLUSH	5000
 #define WAIT_MS_LINKUP	200
 

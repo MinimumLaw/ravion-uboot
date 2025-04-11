@@ -55,6 +55,12 @@ config TARGET_RADXA_ZERO_3_RK3566
 	help
 	  Radxa ZERO 3W/3E single board computers with a RK3566 SoC.
 
+config TARGET_RHOS_RK3568
+	bool "RK3568 based Rhos module by Radioavionica Corp"
+	select BOARD_LATE_INIT
+	help
+	  RK3568 RHOS is a SoDimm200 SOM based on Rockchp RK3568J.
+
 config TARGET_ORANGEPI_3B_RK3566
 	bool "Xunlong Orange Pi 3B"
 	help
@@ -77,6 +83,7 @@ config ROCKCHIP_COMMON_STACK_ADDR
 config TEXT_BASE
 	default 0x00a00000
 
+source "board/ravion/rhos-rk3568j/Kconfig"
 source "board/rockchip/evb_rk3568/Kconfig"
 source "board/anbernic/rgxx3_rk3566/Kconfig"
 source "board/hardkernel/odroid_m1/Kconfig"

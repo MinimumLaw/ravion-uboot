@@ -262,6 +262,8 @@
 #include <linux/bitmap.h>
 #include <g_dnl.h>
 
+#include <watchdog.h>
+
 /*------------------------------------------------------------------------*/
 
 #define FSG_DRIVER_DESC	"Mass Storage Function"
