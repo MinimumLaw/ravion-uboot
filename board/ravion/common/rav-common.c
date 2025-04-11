@@ -72,13 +72,12 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 }
 #endif /* CONFIG_OF_LIBFDT */
 
-int checkboard(void)
+void read_config_block(void)
 {
 	/* check config block present and valid */
 	if (read_rav_cfg_block()) {
 		printf( "No config block found!\n"
 			"Module personalisation required!\n");
-		return 0; /* Return 0 - no block personalisation process */
 	}
 
 	/* board serial-number */
@@ -96,10 +95,7 @@ int checkboard(void)
 	       ravion_modules[rav_hw_tag.prodid],
 	       rav_board_rev_str,
 	       rav_serial_str);
-
-	return 0;
 }
-
 #else /* CONFIG_RAVION_CFG_BLOCK */
 
 #if defined(CONFIG_OF_LIBFDT) || defined(CONFIG_SPL_OF_LIBFDT)
@@ -109,10 +105,6 @@ int ft_common_board_setup(void *blob, struct bd_info *bd)
 }
 #endif /* CONFIG_OF_LIBFDT */
 
-int checkboard(void)
-{
-	printf("ERROR: Bootloader not report board info!\n");
-	return -1;
-}
+void read_config_block(void) { }
 
 #endif /* CONFIG_RAVION_CFG_BLOCK */

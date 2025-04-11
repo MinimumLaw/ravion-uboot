@@ -99,6 +99,8 @@ int board_mmc_get_env_dev(int devno)
 
 int board_late_init(void)
 {
+	read_config_block();
+
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	env_set("board_name", "RHOS");
 	env_set("board_rev", "iMX8MQ");

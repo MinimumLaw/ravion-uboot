@@ -89,6 +89,8 @@ int board_init(void)
 
 int board_late_init(void)
 {
+	read_config_block();
+
 	/* restore critical boot env */
 	env_set("bootdelay","-2");
 	env_set("boot_syslinux_conf","extlinux/extlinux.conf");

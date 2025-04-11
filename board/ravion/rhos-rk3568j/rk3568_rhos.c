@@ -58,6 +58,7 @@ void reset_phy(void)
 
 int rk_board_late_init(void)
 {
+	read_config_block();
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	switch (readl(BROM_BOOTSOURCE_ID_ADDR)){
