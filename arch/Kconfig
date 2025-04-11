@@ -37,6 +37,14 @@ config 32BIT
 
 config 64BIT
 	bool
+	help
+	  Indicates that U-Boot proper will be built for a 64 bit
+	  architecture.
+
+config SPL_64BIT
+	bool
+	help
+	  Indicates that SPL will be built for a 64 bit architecture.
 
 config SYS_CACHELINE_SIZE
 	int
@@ -44,7 +52,8 @@ config SYS_CACHELINE_SIZE
 	default 64 if SYS_CACHE_SHIFT_6
 	default 32 if SYS_CACHE_SHIFT_5
 	default 16 if SYS_CACHE_SHIFT_4
-	# Fall-back for MIPS
+	# Fall-back for MIPS and RISC-V
+	default 64 if RISCV
 	default 32 if MIPS
 
 config LINKER_LIST_ALIGN
@@ -172,13 +181,13 @@ config SANDBOX
 	select DM_GPIO
 	select DM_I2C
 	select DM_KEYBOARD
-	select DM_MMC
 	select DM_SERIAL
 	select DM_SPI
 	select DM_SPI_FLASH
 	select GZIP_COMPRESSED
 	select IO_TRACE
 	select LZO
+	select MMC
 	select MTD
 	select OF_BOARD_SETUP
 	select PCI_ENDPOINT

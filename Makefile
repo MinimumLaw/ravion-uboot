@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 VERSION = 2025
-PATCHLEVEL = 01
+PATCHLEVEL = 04
 SUBLEVEL =
 EXTRAVERSION =
 NAME =
@@ -829,7 +829,7 @@ KBUILD_HOSTCFLAGS += $(if $(CONFIG_TOOLS_DEBUG),-g)
 UBOOTINCLUDE    := \
 	-Iinclude \
 	$(if $(KBUILD_SRC), -I$(srctree)/include) \
-	$(if $(CONFIG_MBEDTLS_LIB), \
+	$(if $(CONFIG_$(XPL_)MBEDTLS_LIB), \
 		"-DMBEDTLS_CONFIG_FILE=\"mbedtls_def_config.h\"" \
 		-I$(srctree)/lib/mbedtls \
 		-I$(srctree)/lib/mbedtls/port \
@@ -1149,13 +1149,6 @@ ifeq ($(CONFIG_OF_EMBED)$(CONFIG_EFI_APP),y)
 	@echo >&2 "See doc/develop/devicetree/control.rst for more info."
 	@echo >&2 "===================================================="
 endif
-ifneq ($(CONFIG_SPL_FIT_GENERATOR),)
-	@echo >&2 "===================== WARNING ======================"
-	@echo >&2 "This board uses CONFIG_SPL_FIT_GENERATOR. Please migrate"
-	@echo >&2 "to binman instead, to avoid the proliferation of"
-	@echo >&2 "arch-specific scripts with no tests."
-	@echo >&2 "===================================================="
-endif
 	$(call deprecated,CONFIG_WDT,DM watchdog,v2019.10,\
 		$(CONFIG_WATCHDOG)$(CONFIG_HW_WATCHDOG))
 	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C_LEGACY))
@@ -1293,6 +1286,15 @@ u-boot.hex u-boot.srec: u-boot FORCE
 
 OBJCOPYFLAGS_u-boot-elf.srec := $(OBJCOPYFLAGS_u-boot.srec)
 
+ifeq ($(CONFIG_POSITION_INDEPENDENT)$(CONFIG_RCAR_GEN3),yy)
+# The flash_writer tool and previous recovery tools
+# require the SREC load address to be 0x5000_0000 .
+# The PIE U-Boot build sets the address to 0x0, so
+# override the address back to make u-boot-elf.srec
+# compatible with the recovery tools.
+OBJCOPYFLAGS_u-boot-elf.srec += --change-addresses=0x50000000
+endif
+
 u-boot-elf.srec: u-boot.elf FORCE
 	$(call if_changed,objcopy)
 
@@ -1392,12 +1394,21 @@ endif
 default_dt := $(if $(DEVICE_TREE),$(DEVICE_TREE),$(CONFIG_DEFAULT_DEVICE_TREE))
 endif
 
+binman_dtb := $(shell echo $(CONFIG_BINMAN_DTB))
+ifeq ($(strip $(binman_dtb)),)
+ifeq ($(CONFIG_OF_EMBED),y)
+binman_dtb = ./dts/dt.dtb
+else
+binman_dtb = ./u-boot.dtb
+endif
+endif
+
 quiet_cmd_binman = BINMAN  $@
 cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
 		$(foreach f,$(BINMAN_TOOLPATHS),--toolpath $(f)) \
                 --toolpath $(objtree)/tools \
 		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
-		build -u -d u-boot.dtb -O . -m \
+		build -u -d $(binman_dtb) -O . -m \
 		--allow-missing --fake-ext-blobs \
 		$(if $(BINMAN_ALLOW_MISSING),--ignore-missing) \
 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
@@ -1426,17 +1437,6 @@ OBJCOPYFLAGS_u-boot.ldr.srec := -I binary -O srec
 
 u-boot.ldr.hex u-boot.ldr.srec: u-boot.ldr FORCE
 	$(call if_changed,objcopy)
-
-# Boards with more complex image requirements can provide an .its source file
-# or a generator script
-# NOTE: Please do not use this. We are migrating away from Makefile rules to use
-# binman instead.
-ifneq ($(CONFIG_USE_SPL_FIT_GENERATOR),)
-U_BOOT_ITS := u-boot.its
-$(U_BOOT_ITS): $(U_BOOT_ITS_DEPS) FORCE
-	$(srctree)/$(CONFIG_SPL_FIT_GENERATOR) \
-	$(patsubst %,$(dt_dir)/%.dtb,$(subst ",,$(CONFIG_OF_LIST))) > $@
-endif
 
 ifdef CONFIG_SPL_LOAD_FIT
 MKIMAGEFLAGS_u-boot.img = -f auto -A $(ARCH) -T firmware -C none -O u-boot \
@@ -1788,6 +1788,7 @@ endif
 ifeq ($(LTO_ENABLE),y)
 quiet_cmd_u-boot__ ?= LTO     $@
       cmd_u-boot__ ?=								\
+		touch $(u-boot-main) ;						\
 		$(CC) -nostdlib -nostartfiles					\
 		$(LTO_FINAL_LDFLAGS) $(c_flags)					\
 		$(KBUILD_LDFLAGS:%=-Wl,%) $(LDFLAGS_u-boot:%=-Wl,%) -o $@	\
@@ -1801,7 +1802,9 @@ quiet_cmd_u-boot__ ?= LTO     $@
 		$(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
 else
 quiet_cmd_u-boot__ ?= LD      $@
-      cmd_u-boot__ ?= $(LD) $(KBUILD_LDFLAGS) $(LDFLAGS_u-boot) -o $@		\
+      cmd_u-boot__ ?=								\
+		touch $(u-boot-main) ;						\
+		$(LD) $(KBUILD_LDFLAGS) $(LDFLAGS_u-boot) -o $@			\
 		-T u-boot.lds $(u-boot-init)					\
 		--whole-archive							\
 			$(u-boot-main)						\
@@ -2227,7 +2230,7 @@ CLEAN_FILES += include/autoconf.mk* include/bmp_logo.h include/bmp_logo_data.h \
 	       itb.fit.fit itb.fit.itb itb.map spl.map mkimage-out.rom.mkimage \
 	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
 	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
-	       Test* capsule.*.efi-capsule capsule*.map
+	       Test* capsule*.*.efi-capsule capsule*.map
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \

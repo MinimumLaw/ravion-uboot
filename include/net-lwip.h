@@ -10,21 +10,13 @@ enum proto_t {
 	TFTPGET
 };
 
+void net_lwip_set_current(void);
 struct netif *net_lwip_new_netif(struct udevice *udev);
 struct netif *net_lwip_new_netif_noip(struct udevice *udev);
 void net_lwip_remove_netif(struct netif *netif);
 struct netif *net_lwip_get_netif(void);
 int net_lwip_rx(struct udevice *udev, struct netif *netif);
 
-/**
- * wget_with_dns() - runs dns host IP address resulution before wget
- *
- * @dst_addr:	destination address to download the file
- * @uri:	uri string of target file of wget
- * Return:	downloaded file size, negative if failed
- */
-
-int wget_with_dns(ulong dst_addr, char *uri);
 /**
  * wget_validate_uri() - varidate the uri
  *

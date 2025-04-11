@@ -12,7 +12,7 @@
 
 /* Declare a new bloblist test */
 #define BLOBLIST_TEST(_name, _flags) \
-		UNIT_TEST(_name, _flags, bloblist_test)
+		UNIT_TEST(_name, _flags, bloblist)
 
 enum {
 	TEST_TAG		= BLOBLISTT_U_BOOT_SPL_HANDOFF,
@@ -98,10 +98,12 @@ static int bloblist_test_blob(struct unit_test_state *uts)
 	struct bloblist_hdr *hdr;
 	struct bloblist_rec *rec, *rec2;
 	char *data;
+	int size = 0;
 
 	/* At the start there should be no records */
 	hdr = clear_bloblist();
 	ut_assertnull(bloblist_find(TEST_TAG, TEST_BLOBLIST_SIZE));
+	ut_assertnull(bloblist_get_blob(TEST_TAG, &size));
 	ut_assertok(bloblist_new(TEST_ADDR, TEST_BLOBLIST_SIZE, 0, 0));
 	ut_asserteq(sizeof(struct bloblist_hdr), bloblist_get_size());
 	ut_asserteq(TEST_BLOBLIST_SIZE, bloblist_get_total_size());
@@ -114,6 +116,8 @@ static int bloblist_test_blob(struct unit_test_state *uts)
 	ut_asserteq_addr(rec + 1, data);
 	data = bloblist_find(TEST_TAG, TEST_SIZE);
 	ut_asserteq_addr(rec + 1, data);
+	ut_asserteq_addr(bloblist_get_blob(TEST_TAG, &size), data);
+	ut_asserteq(size, TEST_SIZE);
 
 	/* Check the data is zeroed */
 	ut_assertok(check_zero(data, TEST_SIZE));
@@ -602,13 +606,3 @@ static int bloblist_test_blob_maxsize(struct unit_test_state *uts)
 	return 0;
 }
 BLOBLIST_TEST(bloblist_test_blob_maxsize, UFT_BLOBLIST);
-
-int do_ut_bloblist(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
-{
-	struct unit_test *tests = UNIT_TEST_SUITE_START(bloblist_test);
-	const int n_ents = UNIT_TEST_SUITE_COUNT(bloblist_test);
-
-	return cmd_ut_category("bloblist", "bloblist_test_",
-			       tests, n_ents, argc, argv);
-}

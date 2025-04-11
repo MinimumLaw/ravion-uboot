@@ -35,13 +35,16 @@ obj-$(CONFIG_CIRCBUF) += circbuf.o
 endif
 
 obj-y += crc8.o
-obj-y += crc16.o
-obj-y += crc16-ccitt.o
 obj-$(CONFIG_ERRNO_STR) += errno_str.o
 obj-$(CONFIG_FIT) += fdtdec_common.o
 obj-$(CONFIG_TEST_FDTDEC) += fdtdec_test.o
 obj-$(CONFIG_GZIP_COMPRESSED) += gzip.o
+
+# With QEMU the SMBIOS tables come from there, not from U-Boot
+ifndef CONFIG_QFW_SMBIOS
 obj-$(CONFIG_GENERATE_SMBIOS_TABLE) += smbios.o
+endif
+
 obj-$(CONFIG_SMBIOS_PARSER) += smbios-parser.o
 obj-$(CONFIG_IMAGE_SPARSE) += image-sparse.o
 obj-y += initcall.o
@@ -66,6 +69,7 @@ endif
 
 obj-$(CONFIG_$(PHASE_)CRC8) += crc8.o
 obj-$(CONFIG_$(PHASE_)CRC16) += crc16.o
+obj-$(CONFIG_$(PHASE_)CRC16) += crc16-ccitt.o
 
 obj-y += crypto/
 
@@ -75,20 +79,21 @@ obj-$(CONFIG_$(XPL_)RSA) += rsa/
 obj-$(CONFIG_HASH) += hash-checksum.o
 obj-$(CONFIG_BLAKE2) += blake2/blake2b.o
 
-obj-$(CONFIG_$(XPL_)MD5_LEGACY) += md5.o
-obj-$(CONFIG_$(XPL_)SHA1_LEGACY) += sha1.o
-obj-$(CONFIG_$(XPL_)SHA256_LEGACY) += sha256.o
-obj-$(CONFIG_$(XPL_)SHA512_LEGACY) += sha512.o
+obj-$(CONFIG_$(PHASE_)MD5_LEGACY) += md5.o
+obj-$(CONFIG_$(PHASE_)SHA1_LEGACY) += sha1.o
+obj-$(CONFIG_$(PHASE_)SHA256) += sha256_common.o
+obj-$(CONFIG_$(PHASE_)SHA256_LEGACY) += sha256.o
+obj-$(CONFIG_$(PHASE_)SHA512_LEGACY) += sha512.o
 
 obj-$(CONFIG_CRYPT_PW) += crypt/
 obj-$(CONFIG_$(XPL_)ASN1_DECODER_LEGACY) += asn1_decoder.o
 
-obj-$(CONFIG_$(XPL_)ZLIB) += zlib/
-obj-$(CONFIG_$(XPL_)ZSTD) += zstd/
-obj-$(CONFIG_$(XPL_)GZIP) += gunzip.o
-obj-$(CONFIG_$(XPL_)LZO) += lzo/
-obj-$(CONFIG_$(XPL_)LZMA) += lzma/
-obj-$(CONFIG_$(XPL_)LZ4) += lz4_wrapper.o
+obj-$(CONFIG_$(PHASE_)ZLIB) += zlib/
+obj-$(CONFIG_$(PHASE_)ZSTD) += zstd/
+obj-$(CONFIG_$(PHASE_)GZIP) += gunzip.o
+obj-$(CONFIG_$(PHASE_)LZO) += lzo/
+obj-$(CONFIG_$(PHASE_)LZMA) += lzma/
+obj-$(CONFIG_$(PHASE_)LZ4) += lz4_wrapper.o
 
 obj-$(CONFIG_$(XPL_)LIB_RATIONAL) += rational.o
 

@@ -25,6 +25,7 @@ import re
 from _pytest.runner import runtestprotocol
 import subprocess
 import sys
+import time
 from u_boot_spawn import BootFail, Timeout, Unexpected, handle_exception
 
 # Globals: The HTML log file, and the connection to the U-Boot console.
@@ -32,6 +33,9 @@ log = None
 console = None
 
 TEST_PY_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Regex for test-function symbols
+RE_UT_TEST_LIST = re.compile(r'[^a-zA-Z0-9_]_u_boot_list_2_ut_(.*)_2_(.*)\s*$')
 
 def mkdir_p(path):
     """Create a directory path.
@@ -88,6 +92,9 @@ def pytest_addoption(parser):
     parser.addoption('--role', help='U-Boot board role (for Labgrid-sjg)')
     parser.addoption('--use-running-system', default=False, action='store_true',
         help="Assume that U-Boot is ready and don't wait for a prompt")
+    parser.addoption('--timing', default=False, action='store_true',
+                     help='Show info on test timing')
+
 
 def run_build(config, source_dir, build_dir, board_type, log):
     """run_build: Build U-Boot
@@ -158,10 +165,15 @@ def get_details(config):
             env['U_BOOT_BUILD_DIR'] = build_dir
         if build_dir_extra:
             env['U_BOOT_BUILD_DIR_EXTRA'] = build_dir_extra
-        proc = subprocess.run(cmd, capture_output=True, encoding='utf-8',
+
+	# Make sure the script sees that it is being run from pytest
+        env['U_BOOT_SOURCE_DIR'] = source_dir
+
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, encoding='utf-8',
                               env=env)
         if proc.returncode:
-            raise ValueError(proc.stderr)
+            raise ValueError(f"Error {proc.returncode} running {cmd}: '{proc.stderr} '{proc.stdout}'")
         # For debugging
         # print('conftest: lab:', proc.stdout)
         vals = {}
@@ -314,6 +326,7 @@ def pytest_configure(config):
     ubconfig.use_running_system = config.getoption('use_running_system')
     ubconfig.dtb = build_dir + '/arch/sandbox/dts/test.dtb'
     ubconfig.connection_ok = True
+    ubconfig.timing = config.getoption('timing')
 
     env_vars = (
         'board_type',
@@ -336,7 +349,7 @@ def pytest_configure(config):
         import u_boot_console_exec_attach
         console = u_boot_console_exec_attach.ConsoleExecAttach(log, ubconfig)
 
-re_ut_test_list = re.compile(r'[^a-zA-Z0-9_]_u_boot_list_2_ut_(.*)_test_2_(.*)\s*$')
+
 def generate_ut_subtest(metafunc, fixture_name, sym_path):
     """Provide parametrization for a ut_subtest fixture.
 
@@ -363,7 +376,7 @@ def generate_ut_subtest(metafunc, fixture_name, sym_path):
 
     vals = []
     for l in lines:
-        m = re_ut_test_list.search(l)
+        m = RE_UT_TEST_LIST.search(l)
         if not m:
             continue
         suite, name = m.groups()
@@ -508,6 +521,12 @@ tests_skipped = []
 tests_warning = []
 tests_passed = []
 
+# Duration of each test:
+#    key (string): test name
+#    value (float): duration in ms
+test_durations = {}
+
+
 def pytest_itemcollected(item):
     """pytest hook: Called once for each test found during collection.
 
@@ -522,6 +541,73 @@ def pytest_itemcollected(item):
     """
 
     tests_not_run.append(item.name)
+
+
+def show_timings():
+    """Write timings for each test, along with a histogram"""
+
+    def get_time_delta(msecs):
+        """Convert milliseconds into a user-friendly string"""
+        if msecs >= 1000:
+            return f'{msecs / 1000:.1f}s'
+        else:
+            return f'{msecs:.0f}ms'
+
+    def show_bar(key, msecs, value):
+        """Show a single bar (line) of the histogram
+
+        Args:
+            key (str): Key to write on the left
+            value (int): Value to display, i.e. the relative length of the bar
+        """
+        if value:
+            bar_length = int((value / max_count) * max_bar_length)
+            print(f"{key:>8} : {get_time_delta(msecs):>7}  |{'#' * bar_length} {value}", file=buf)
+
+    # Create the buckets we will use, each has a count and a total time
+    bucket = {}
+    for power in range(5):
+        for i in [1, 2, 3, 4, 5, 7.5]:
+            bucket[i * 10 ** power] = {'count': 0, 'msecs': 0.0}
+    max_dur = max(bucket.keys())
+
+    # Collect counts for each bucket; if outside the range, add to too_long
+    # Also show a sorted list of test timings from longest to shortest
+    too_long = 0
+    too_long_msecs = 0.0
+    max_count = 0
+    with log.section('Timing Report', 'timing_report'):
+        for name, dur in sorted(test_durations.items(), key=lambda kv: kv[1],
+                                reverse=True):
+            log.info(f'{get_time_delta(dur):>8}  {name}')
+            greater = [k for k in bucket.keys() if dur <= k]
+            if greater:
+                buck = bucket[min(greater)]
+                buck['count'] += 1
+                max_count = max(max_count, buck['count'])
+                buck['msecs'] += dur
+            else:
+                too_long += 1
+                too_long_msecs += dur
+
+    # Set the maximum length of a histogram bar, in characters
+    max_bar_length = 40
+
+    # Show a a summary with histogram
+    buf = io.StringIO()
+    with log.section('Timing Summary', 'timing_summary'):
+        print('Duration :   Total  | Number of tests', file=buf)
+        print(f'{"=" * 8} : {"=" * 7}  |{"=" * max_bar_length}', file=buf)
+        for dur, buck in bucket.items():
+            if buck['count']:
+                label = get_time_delta(dur)
+                show_bar(f'<{label}', buck['msecs'], buck['count'])
+        if too_long:
+            show_bar(f'>{get_time_delta(max_dur)}', too_long_msecs, too_long)
+        log.info(buf.getvalue())
+    if ubconfig.timing:
+        print(buf.getvalue(), end='')
+
 
 def cleanup():
     """Clean up all global state.
@@ -572,6 +658,7 @@ def cleanup():
                 for test in tests_not_run:
                     anchor = anchors.get(test, None)
                     log.status_fail('... ' + test, anchor)
+        show_timings()
         log.close()
 atexit.register(cleanup)
 
@@ -705,7 +792,9 @@ def pytest_runtest_protocol(item, nextitem):
     log.get_and_reset_warning()
     ihook = item.ihook
     ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
+    start = time.monotonic()
     reports = runtestprotocol(item, nextitem=nextitem)
+    duration = round((time.monotonic() - start) * 1000, 1)
     ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     was_warning = log.get_and_reset_warning()
 
@@ -718,6 +807,7 @@ def pytest_runtest_protocol(item, nextitem):
         start_test_section(item)
 
     failure_cleanup = False
+    record_duration = True
     if not was_warning:
         test_list = tests_passed
         msg = 'OK'
@@ -748,6 +838,11 @@ def pytest_runtest_protocol(item, nextitem):
             test_list = tests_skipped
             msg = 'SKIPPED:\n' + str(report.longrepr)
             msg_log = log.status_skipped
+            record_duration = False
+
+    msg += f' {duration} ms'
+    if record_duration:
+        test_durations[item.name] = duration
 
     if failure_cleanup:
         console.drain_console()

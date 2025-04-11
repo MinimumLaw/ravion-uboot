@@ -648,13 +648,6 @@ __weak int arch_setup_bdinfo(void)
 
 int setup_bdinfo(void)
 {
-	struct bd_info *bd = gd->bd;
-
-	if (IS_ENABLED(CONFIG_SYS_HAS_SRAM)) {
-		bd->bi_sramstart = CONFIG_SYS_SRAM_BASE; /* start of SRAM */
-		bd->bi_sramsize = CONFIG_SYS_SRAM_SIZE;  /* size  of SRAM */
-	}
-
 	return arch_setup_bdinfo();
 }
 
@@ -822,21 +815,26 @@ static int initf_bootstage(void)
 
 static int initf_dm(void)
 {
-#if defined(CONFIG_DM) && CONFIG_IS_ENABLED(SYS_MALLOC_F)
 	int ret;
+
+	if (!CONFIG_IS_ENABLED(SYS_MALLOC_F))
+		return 0;
 
 	bootstage_start(BOOTSTAGE_ID_ACCUM_DM_F, "dm_f");
 	ret = dm_init_and_scan(true);
-	bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_F);
 	if (ret)
 		return ret;
+
+	ret = dm_autoprobe();
+	if (ret)
+		return ret;
+	bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_F);
 
 	if (IS_ENABLED(CONFIG_TIMER_EARLY)) {
 		ret = dm_timer_init();
 		if (ret)
 			return ret;
 	}
-#endif
 
 	return 0;
 }

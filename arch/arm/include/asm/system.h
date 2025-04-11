@@ -171,7 +171,7 @@ static inline unsigned int current_el(void)
 	return 3 & (el >> 2);
 }
 
-static inline unsigned int get_sctlr(void)
+static inline unsigned long get_sctlr(void)
 {
 	unsigned int el;
 	unsigned long val;
@@ -237,6 +237,22 @@ int __asm_invalidate_l3_dcache(void);
 int __asm_flush_l3_dcache(void);
 int __asm_invalidate_l3_icache(void);
 void __asm_switch_ttbr(u64 new_ttbr);
+
+/*
+ * armv8_switch_to_el2_prep() - prepare for switch from EL3 to EL2 for ARMv8
+ *
+ * @args:        For loading 64-bit OS, fdt address.
+ *               For loading 32-bit OS, zero.
+ * @mach_nr:     For loading 64-bit OS, zero.
+ *               For loading 32-bit OS, machine nr
+ * @fdt_addr:    For loading 64-bit OS, zero.
+ *               For loading 32-bit OS, fdt address.
+ * @arg4:	 Input argument.
+ * @entry_point: kernel entry point
+ * @es_flag:     execution state flag, ES_TO_AARCH64 or ES_TO_AARCH32
+ */
+void armv8_switch_to_el2_prep(u64 args, u64 mach_nr, u64 fdt_addr,
+			      u64 arg4, u64 entry_point, u64 es_flag);
 
 /*
  * armv8_switch_to_el2() - switch from EL3 to EL2 for ARMv8

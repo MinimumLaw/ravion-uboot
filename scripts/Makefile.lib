@@ -513,8 +513,8 @@ $(obj)/%_efi.S: $(obj)/%.efi
 	$(call cmd,S_efi)
 
 quiet_cmd_efi_objcopy = OBJCOPY $@
-cmd_efi_objcopy = $(OBJCOPY) -j .header -j .text -j .sdata -j .data -j \
-		.dynamic -j .dynsym  -j .rel* -j .rela* -j .reloc \
+cmd_efi_objcopy = $(OBJCOPY) -j .header -j .text -j .sdata -j .data \
+		-j .dynamic -j .dynstr  -j .dynsym -j .rel* -j .reloc \
 		$(if $(EFI_TARGET),$(EFI_TARGET),-O binary) $^ $@
 
 $(obj)/%.efi: $(obj)/%_efi.so
@@ -523,10 +523,10 @@ $(obj)/%.efi: $(obj)/%_efi.so
 KBUILD_EFILDFLAGS = -nostdlib -zexecstack -znocombreloc -znorelro
 KBUILD_EFILDFLAGS += $(call ld-option,--no-warn-rwx-segments)
 quiet_cmd_efi_ld = LD      $@
-cmd_efi_ld = $(LD) $(KBUILD_EFILDFLAGS) -T $(EFI_LDS_PATH) \
+cmd_efi_ld = $(LD) $(KBUILD_EFILDFLAGS) -L $(srctree) -T $(EFI_LDS_PATH) \
 		-shared -Bsymbolic -s $^ -o $@
 
-EFI_LDS_PATH = $(srctree)/arch/$(ARCH)/lib/$(EFI_LDS)
+EFI_LDS_PATH = arch/$(ARCH)/lib/$(EFI_LDS)
 
 $(obj)/efi_crt0.o: $(srctree)/arch/$(ARCH)/lib/$(EFI_CRT0:.o=.S) FORCE
 	$(call if_changed_dep,as_o_S)

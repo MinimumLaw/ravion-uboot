@@ -40,6 +40,7 @@ Shell commands
    cmd/bootm
    cmd/bootmenu
    cmd/bootmeth
+   cmd/bootstd
    cmd/bootz
    cmd/button
    cmd/cat
@@ -92,6 +93,7 @@ Shell commands
    cmd/msr
    cmd/mtest
    cmd/mtrr
+   cmd/optee
    cmd/panic
    cmd/part
    cmd/pause

@@ -6,6 +6,7 @@ Board-specific doc
 .. toctree::
    :maxdepth: 2
 
+   acer/index
    actions/index
    advantech/index
    andestech/index
@@ -21,6 +22,7 @@ Board-specific doc
    beagle/index
    broadcom/index
    bsh/index
+   canaan/index
    cloos/index
    congatec/index
    coolpi/index
@@ -55,6 +57,7 @@ Board-specific doc
    sipeed/index
    socionext/index
    sophgo/index
+   spacemit/index
    st/index
    starfive/index
    ste/index

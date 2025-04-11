@@ -17,7 +17,7 @@ def test_upl_handoff(u_boot_console):
     proper and runs a test to check that the parameters are correct.
 
     The entire FIT is loaded into memory in SPL (in upl_load_from_image()) so
-    that it can be inpected in upl_test_info_norun
+    that it can be inspected in upl_test_info_norun
     """
     cons = u_boot_console
     ram = os.path.join(cons.config.build_dir, 'ram.bin')
@@ -35,4 +35,4 @@ def test_upl_handoff(u_boot_console):
 
     # Check the FIT offsets look correct
     output = cons.run_command('ut upl -f upl_test_info_norun')
-    assert 'Failures: 0' in output
+    assert 'failures: 0' in output

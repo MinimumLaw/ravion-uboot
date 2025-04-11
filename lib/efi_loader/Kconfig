@@ -2,25 +2,27 @@ menu "UEFI Support"
 
 config EFI_LOADER
 	bool "Support running UEFI applications"
-	depends on OF_LIBFDT && ( \
+	depends on ( \
 		ARM && (SYS_CPU = arm1136 || \
 			SYS_CPU = arm1176 || \
 			SYS_CPU = armv7   || \
 			SYS_CPU = armv8)  || \
 		X86 || RISCV || SANDBOX)
+	# We have not fully removed the requirement for some block device
+	depends on BLK
 	# We need EFI_STUB_64BIT to be set on x86_64 with EFI_STUB
 	depends on !EFI_STUB || !X86_64 || EFI_STUB_64BIT
 	# We need EFI_STUB_32BIT to be set on x86_32 with EFI_STUB
 	depends on !EFI_STUB || !X86 || X86_64 || EFI_STUB_32BIT
 	depends on !EFI_APP
 	default y if !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
-	select BLK
 	select CHARSET
 	# We need to send DM events, dynamically, in the EFI block driver
 	select DM_EVENT
 	select EVENT_DYNAMIC
 	select LIB_UUID
 	select LMB
+	select OF_LIBFDT
 	imply PARTITION_UUIDS
 	select REGEX
 	imply FAT
@@ -385,7 +387,7 @@ config EFI_DT_FIXUP
 
 config EFI_LOADER_HII
 	bool "HII protocols"
-	default y
+	default y if !HAS_BOARD_SIZE_LIMIT
 	help
 	  The Human Interface Infrastructure is a complicated framework that
 	  allows UEFI applications to draw fancy menus and hook strings using
@@ -405,7 +407,7 @@ if EFI_UNICODE_COLLATION_PROTOCOL2
 
 config EFI_UNICODE_CAPITALIZATION
 	bool "Support Unicode capitalization"
-	default y
+	default y if !HAS_BOARD_SIZE_LIMIT
 	help
 	  Select this option to enable correct handling of the capitalization of
 	  Unicode codepoints in the range 0x0000-0xffff. If this option is not
@@ -435,15 +437,6 @@ config EFI_TCG2_PROTOCOL
 	help
 	  Provide a EFI_TCG2_PROTOCOL implementation using the TPM hardware
 	  of the platform.
-
-config EFI_TCG2_PROTOCOL_EVENTLOG_SIZE
-	int "EFI_TCG2_PROTOCOL EventLog size"
-	depends on EFI_TCG2_PROTOCOL
-	default 65536
-	help
-		Define the size of the EventLog for EFI_TCG2_PROTOCOL. Note that
-		this is going to be allocated twice. One for the eventlog it self
-		and one for the configuration table that is required from the spec
 
 config EFI_TCG2_PROTOCOL_MEASURE_DTB
 	bool "Measure DTB with EFI_TCG2_PROTOCOL"
@@ -475,6 +468,23 @@ config EFI_RISCV_BOOT_PROTOCOL
 	  to the next boot stage. It should be enabled as it is meant to
 	  replace the transfer via the device-tree. The latter is not
 	  possible on systems using ACPI.
+
+config EFI_IP4_CONFIG2_PROTOCOL
+	bool "EFI_IP4_CONFIG2_PROTOCOL support"
+	default y if ARCH_QEMU || SANDBOX
+	depends on NET || NET_LWIP
+	help
+	  Provides an implementation of the EFI_IP4_CONFIG2_PROTOCOL, this
+	  protocol can be used to set and get the current ip address and
+	  other network information.
+
+config EFI_HTTP_PROTOCOL
+	bool "EFI_HTTP_PROTOCOL support"
+	default y if ARCH_QEMU || SANDBOX
+	depends on WGET
+	help
+	  Provides an EFI HTTP driver implementing the EFI_HTTP_PROTOCOL. and
+	  EFI_HTTP_SERVICE_BINDING_PROTOCOL.
 
 endmenu
 

@@ -45,6 +45,15 @@ config BINMAN_FDT
 	  locate entries in the firmware image. See binman.h for the available
 	  functionality.
 
+config BINMAN_DTB
+	string "binman DTB description"
+	depends on BINMAN
+	help
+	  This enables option to point to different DTB file with binman node which
+	  is outside of DTB used by the firmware. Use this option if information
+	  about generated images shouldn't be the part of target binary. Or on system
+	  with limited storage.
+
 config CC_OPTIMIZE_LIBS_FOR_SPEED
 	bool "Optimize libraries for speed"
 	help
@@ -505,6 +514,18 @@ config VPL_TPM
 	  for the low-level TPM interface, but only one TPM is supported at
 	  a time by the TPM library.
 
+config TPM_PCR_ALLOCATE
+	bool "Re-configurate TPM algorithms in run-time (PCR allocate)"
+	depends on TPM_V2 && (MEASURED_BOOT || EFI_TCG2_PROTOCOL)
+	help
+	  This enables a detection for the dismatches of algorithms among TPM
+	  device, eventlog from previous boot stage and U-Boot support.
+	  A PCR allocate command will be sent to reconfigurate the TPM device
+	  in run-time to make sure algorithms in TPM device, eventlog and
+	  U-Boot are aligned with each other.
+	  A system reboot will be proceeded after then to activate the new
+	  algorithms.
+
 endmenu
 
 menu "Android Verified Boot"
@@ -719,6 +740,34 @@ config SPL_CRC8
 	  checksum with feedback to produce an 8-bit result. The code is small
 	  and it does not require a lookup table (unlike CRC32).
 
+config TPL_CRC8
+	bool "Support CRC8 in TPL"
+	depends on TPL
+	help
+	  Enables CRC8 support in TPL. This is not normally required. CRC8 is
+	  a simple and fast checksumming algorithm which does a bytewise
+	  checksum with feedback to produce an 8-bit result. The code is small
+	  and it does not require a lookup table (unlike CRC32).
+
+config VPL_CRC8
+	bool "Support CRC8 in VPL"
+	depends on VPL
+	help
+	  Enables CRC8 support in VPL. This is not normally required. CRC8 is
+	  a simple and fast checksumming algorithm which does a bytewise
+	  checksum with feedback to produce an 8-bit result. The code is small
+	  and it does not require a lookup table (unlike CRC32).
+
+config CRC16
+	bool "Support CRC16"
+	default y
+	help
+	  Enables CRC16 support. This is normally required. Two algorithms are
+	  provided:
+
+	    - CCITT, with a polynomical x^16 + x^12 + x^5 + 1
+	    - standard, with polynomial x^16 + x^15 + x^2 + 1 (0x8005)
+
 config SPL_CRC16
 	bool "Support CRC16 in SPL"
 	depends on SPL
@@ -832,11 +881,35 @@ config SPL_LZ4
 	  fast compression and decompression speed. It belongs to the LZ77
 	  family of byte-oriented compression schemes.
 
+config TPL_LZ4
+	bool "Enable LZ4 decompression support in TPL"
+	depends on TPL
+	help
+	  This enables support for the LZ4 decompression algorithm in TPL. LZ4
+	  is a lossless data compression algorithm that is focused on
+	  fast compression and decompression speed. It belongs to the LZ77
+	  family of byte-oriented compression schemes.
+
+config VPL_LZ4
+	bool "Enable LZ4 decompression support in VPL"
+	depends on VPL
+	help
+	  This enables support for the LZ4 decompression algorithm in VPL. LZ4
+	  is a lossless data compression algorithm that is focused on
+	  fast compression and decompression speed. It belongs to the LZ77
+	  family of byte-oriented compression schemes.
+
 config SPL_LZMA
 	bool "Enable LZMA decompression support for SPL build"
 	depends on SPL
 	help
 	  This enables support for LZMA compression algorithm for SPL boot.
+
+config TPL_LZMA
+	bool "Enable LZMA decompression support for TPL build"
+	depends on TPL
+	help
+	  This enables support for LZMA compression algorithm for TPL boot.
 
 config VPL_LZMA
 	bool "Enable LZMA decompression support for VPL build"
@@ -856,10 +929,21 @@ config SPL_GZIP
 	help
 	  This enables support for the GZIP compression algorithm for SPL boot.
 
+config TPL_GZIP
+	bool "Enable gzip decompression support for SPL build"
+	select TPL_ZLIB
+	help
+	  This enables support for the GZIP compression algorithm for TPL
+
 config SPL_ZLIB
 	bool
 	help
 	  This enables compression lib for SPL boot.
+
+config TPL_ZLIB
+	bool
+	help
+	  This enables compression lib for TPL
 
 config SPL_ZSTD
 	bool "Enable Zstandard decompression support in SPL"
@@ -1005,6 +1089,7 @@ menu "System tables"
 config BLOBLIST_TABLES
 	bool "Put tables in a bloblist"
 	depends on BLOBLIST
+	default y if X86
 	default y if (ARM && EFI_LOADER && GENERATE_ACPI_TABLE)
 	default n
 	help
@@ -1028,6 +1113,12 @@ config GENERATE_SMBIOS_TABLE
 
 	  See also SYSINFO_SMBIOS which allows SMBIOS values to be provided in
 	  the devicetree.
+
+config GENERATE_SMBIOS_TABLE_VERBOSE
+	bool "Generate a verbose SMBIOS (System Management BIOS) table"
+	depends on GENERATE_SMBIOS_TABLE
+	help
+	  Provide verbose SMBIOS information.
 
 endmenu
 

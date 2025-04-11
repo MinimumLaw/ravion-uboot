@@ -364,33 +364,46 @@ static int fit_image_read_key_iv_data(const char *keydir, const char *key_iv_nam
 	return ret;
 }
 
-static int get_random_data(void *data, int size)
+/**
+ * get_random_data() - fill buffer with random data
+ *
+ * There is no common cryptographically safe function in Linux and BSD.
+ * Hence directly access the /dev/urandom PRNG.
+ *
+ * @data:	buffer to fill
+ * @size:	buffer size
+ */
+static int get_random_data(void *data, size_t size)
 {
-	unsigned char *tmp = data;
-	struct timespec date;
-	int i, ret;
+	int fd;
+	int ret;
 
-	if (!tmp) {
-		fprintf(stderr, "%s: pointer data is NULL\n", __func__);
-		ret = -1;
-		goto out;
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0) {
+		perror("Failed to open /dev/urandom");
+		return -1;
 	}
 
-	ret = clock_gettime(CLOCK_MONOTONIC, &date);
-	if (ret) {
-		fprintf(stderr, "%s: clock_gettime has failed (%s)\n", __func__,
-			strerror(errno));
-		goto out;
+	while (size) {
+		ssize_t count;
+
+		count = read(fd, data, size);
+		if (count < 0) {
+			if (errno == EINTR) {
+				continue;
+			} else {
+				perror("Failed to read from /dev/urandom");
+				ret = -1;
+				goto out;
+			}
+		}
+		data += count;
+		size -= count;
 	}
+	ret = 0;
+out:
+	close(fd);
 
-	srandom(date.tv_nsec);
-
-	for (i = 0; i < size; i++) {
-		*tmp = random() & 0xff;
-		tmp++;
-	}
-
- out:
 	return ret;
 }
 
@@ -535,7 +548,7 @@ fit_image_process_cipher(const char *keydir, void *keydest, void *fit,
 	 * size values
 	 * And, if needed, write the iv in the FIT file
 	 */
-	if (keydest) {
+	if (keydest || (!keydest && !info.ivname)) {
 		ret = info.cipher->add_cipher_data(&info, keydest, fit, node_noffset);
 		if (ret) {
 			fprintf(stderr,
@@ -574,7 +587,7 @@ int fit_image_cipher_data(const char *keydir, void *keydest,
 	}
 
 	/* Get image data and data length */
-	if (fit_image_get_data(fit, image_noffset, &data, &size)) {
+	if (fit_image_get_emb_data(fit, image_noffset, &data, &size)) {
 		fprintf(stderr, "Can't get image data/size\n");
 		return -1;
 	}
@@ -654,7 +667,7 @@ int fit_image_add_verification_data(const char *keydir, const char *keyfile,
 	int noffset;
 
 	/* Get image data and data length */
-	if (fit_image_get_data(fit, image_noffset, &data, &size)) {
+	if (fit_image_get_emb_data(fit, image_noffset, &data, &size)) {
 		fprintf(stderr, "Can't get image data/size\n");
 		return -1;
 	}

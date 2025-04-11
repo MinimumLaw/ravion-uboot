@@ -120,12 +120,20 @@ static const struct {
 		EFI_BLOCK_IO_PROTOCOL_GUID,
 	},
 	{
+		"Disk IO",
+		EFI_DISK_IO_PROTOCOL_GUID,
+	},
+	{
 		"Simple File System",
 		EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID,
 	},
 	{
 		"Loaded Image",
 		EFI_LOADED_IMAGE_PROTOCOL_GUID,
+	},
+	{
+		"Loaded Image Device Path",
+		EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID,
 	},
 	{
 		"Graphics Output",
@@ -140,8 +148,16 @@ static const struct {
 		EFI_HII_DATABASE_PROTOCOL_GUID,
 	},
 	{
+		"HII Config Access",
+		EFI_HII_CONFIG_ACCESS_PROTOCOL_GUID,
+	},
+	{
 		"HII Config Routing",
 		EFI_HII_CONFIG_ROUTING_PROTOCOL_GUID,
+	},
+	{
+		"Load File",
+		EFI_LOAD_FILE_PROTOCOL_GUID,
 	},
 	{
 		"Load File2",
@@ -175,6 +191,20 @@ static const struct {
 		"Firmware Management",
 		EFI_FIRMWARE_MANAGEMENT_PROTOCOL_GUID
 	},
+#if IS_ENABLED(CONFIG_EFI_HTTP_PROTOCOL)
+	{
+		"HTTP",
+		EFI_HTTP_PROTOCOL_GUID,
+	},
+	{
+		"HTTP Service Binding",
+		EFI_HTTP_SERVICE_BINDING_PROTOCOL_GUID,
+	},
+	{
+		"IPv4 Config2",
+		EFI_IP4_CONFIG2_PROTOCOL_GUID,
+	},
+#endif
 	/* Configuration table GUIDs */
 	{
 		"ACPI table",

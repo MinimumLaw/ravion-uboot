@@ -5,6 +5,8 @@
  * Copyright (c) 2016 Alexander Graf
  */
 
+#define LOG_CATEGORY LOGC_EFI
+
 #include <bootm.h>
 #include <div64.h>
 #include <dm/device.h>
@@ -13,6 +15,7 @@
 #include <irq_func.h>
 #include <log.h>
 #include <malloc.h>
+#include <net-common.h>
 #include <pe.h>
 #include <time.h>
 #include <u-boot/crc.h>
@@ -2233,6 +2236,8 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 		bootm_disable_interrupts();
 		if (IS_ENABLED(CONFIG_USB_DEVICE))
 			udc_disconnect();
+		if (IS_ENABLED(CONFIG_DM_ETH))
+			eth_halt();
 		board_quiesce_devices();
 		dm_remove_devices_active();
 	}
@@ -3256,11 +3261,10 @@ efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 		 * To get ready to call EFI_EXIT below we have to execute the
 		 * missed out steps of EFI_CALL.
 		 */
-		assert(__efi_entry_check());
-		EFI_PRINT("%lu returned by started image\n",
-			  (unsigned long)((uintptr_t)exit_status &
-			  ~EFI_ERROR_MASK));
+		EFI_RETURN(exit_status);
+
 		current_image = parent_image;
+
 		return EFI_EXIT(exit_status);
 	}
 
@@ -3495,10 +3499,9 @@ static efi_status_t EFIAPI efi_exit(efi_handle_t image_handle,
 	if (IS_ENABLED(CONFIG_EFI_TCG2_PROTOCOL)) {
 		if (image_obj->image_type == IMAGE_SUBSYSTEM_EFI_APPLICATION) {
 			ret = efi_tcg2_measure_efi_app_exit();
-			if (ret != EFI_SUCCESS) {
-				log_warning("tcg2 measurement fails(0x%lx)\n",
-					    ret);
-			}
+			if (ret != EFI_SUCCESS)
+				log_debug("tcg2 measurement fails (0x%lx)\n",
+					  ret);
 		}
 	}
 
@@ -3733,7 +3736,7 @@ out:
  *
  * Return: status code
  */
-static efi_status_t EFIAPI efi_reinstall_protocol_interface(
+efi_status_t EFIAPI efi_reinstall_protocol_interface(
 			efi_handle_t handle, const efi_guid_t *protocol,
 			void *old_interface, void *new_interface)
 {

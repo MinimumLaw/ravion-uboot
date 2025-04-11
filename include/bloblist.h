@@ -250,6 +250,24 @@ static inline void *bloblist_check_magic(ulong addr)
 	return ptr;
 }
 
+#if CONFIG_IS_ENABLED(BLOBLIST)
+/**
+ * bloblist_get_blob() - Find a blob and get the size of it
+ *
+ * Searches the bloblist and returns the blob with the matching tag
+ *
+ * @tag:	Tag to search for (enum bloblist_tag_t)
+ * @sizep:	Size of the blob found
+ * Return: pointer to bloblist if found, or NULL if not found
+ */
+void *bloblist_get_blob(uint tag, int *sizep);
+#else
+static inline void *bloblist_get_blob(uint tag, int *sizep)
+{
+	return NULL;
+}
+#endif
+
 /**
  * bloblist_find() - Find a blob
  *
@@ -357,6 +375,7 @@ int bloblist_new(ulong addr, uint size, uint flags, uint align_log2);
  */
 int bloblist_check(ulong addr, uint size);
 
+#if CONFIG_IS_ENABLED(BLOBLIST)
 /**
  * bloblist_finish() - Set up the bloblist for the next U-Boot part
  *
@@ -366,6 +385,12 @@ int bloblist_check(ulong addr, uint size);
  * Return: 0
  */
 int bloblist_finish(void);
+#else
+static inline int bloblist_finish(void)
+{
+	return 0;
+}
+#endif /* BLOBLIST */
 
 /**
  * bloblist_get_stats() - Get information about the bloblist
