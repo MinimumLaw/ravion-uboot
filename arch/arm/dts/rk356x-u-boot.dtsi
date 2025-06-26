@@ -166,6 +166,10 @@
 	clock-frequency = <24000000>;
 };
 
+&vop {
+	bootph-some-ram;
+};
+
 &uart2m0_xfer {
 	bootph-all;
 };
