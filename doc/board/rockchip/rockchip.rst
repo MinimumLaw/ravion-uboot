@@ -66,6 +66,7 @@ List of mainline supported Rockchip boards:
      - FriendlyElec NanoPi R2C Plus (nanopi-r2c-plus-rk3328)
      - FriendlyElec NanoPi R2S (nanopi-r2s-rk3328)
      - FriendlyElec NanoPi R2S Plus (nanopi-r2s-plus-rk3328)
+     - Generic RK3328 (generic-rk3328)
      - Pine64 Rock64 (rock64-rk3328)
      - Radxa ROCK Pi E (rock-pi-e-rk3328)
      - Xunlong Orange Pi R1 Plus (orangepi-r1-plus-rk3328)
@@ -83,6 +84,7 @@ List of mainline supported Rockchip boards:
      - FriendlyElec NanoPi M4 (nanopi-m4-rk3399)
      - FriendlyElec NanoPi M4B (nanopi-m4b-rk3399)
      - FriendlyARM NanoPi NEO4 (nanopi-neo4-rk3399)
+     - Generic RK3399 (generic-rk3399)
      - Google Bob (chromebook_bob)
      - Google Kevin (chromebook_kevin)
      - Khadas Edge (khadas-edge-rk3399)
@@ -97,10 +99,15 @@ List of mainline supported Rockchip boards:
      - Rockchip Evb-RK3399 (evb_rk3399)
      - Theobroma Systems RK3399-Q7 SoM - Puma (puma_rk3399)
 
+* rk3528
+     - Generic RK3528 (generic-rk3528)
+     - Radxa E20C (radxa-e20c-rk3528)
+
 * rk3566
      - Anbernic RGxx3 (anbernic-rgxx3-rk3566)
      - FriendlyElec NanoPi R3S (nanopi-r3s-rk3566)
      - Hardkernel ODROID-M1S (odroid-m1s-rk3566)
+     - LCKFB TaishanPi (lckfb-tspi-rk3566)
      - Pine64 PineTab2 (pinetab2-rk3566)
      - Pine64 Quartz64-A Board (quartz64-a-rk3566)
      - Pine64 Quartz64-B Board (quartz64-b-rk3566)
@@ -126,6 +133,9 @@ List of mainline supported Rockchip boards:
      - Radxa ROCK 3A (rock-3a-rk3568)
      - Radxa ROCK 3B (rock-3b-rk3568)
 
+* rk3576
+     - Firefly ROC-RK3576-PC (roc-pc-rk3576)
+
 * rk3588
      - ArmSoM Sige7 (sige7-rk3588)
      - Rockchip EVB (evb-rk3588)
@@ -149,6 +159,7 @@ List of mainline supported Rockchip boards:
      - Theobroma Systems SOM-RK3588-Q7 - Tiger (tiger-rk3588)
      - Turing Machines RK1 (turing-rk1-rk3588)
      - Xunlong Orange Pi 5 (orangepi-5-rk3588s)
+     - Xunlong Orange Pi 5 Max (orangepi-5-max-rk3588)
      - Xunlong Orange Pi 5 Plus (orangepi-5-plus-rk3588)
      - Yanyi Tech CoolPi 4 Model B (coolpi-4b-rk3588s)
      - Yanyi Tech CoolPi CM5 EVB (coolpi-cm5-evb-rk3588)
@@ -258,6 +269,15 @@ To build rk3399 boards:
         make evb-rk3399_defconfig
         make CROSS_COMPILE=aarch64-linux-gnu-
 
+To build rk3528 boards:
+
+.. code-block:: bash
+
+        export BL31=../rkbin/bin/rk35/rk3528_bl31_v1.18.elf
+        export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3528_ddr_1056MHz_v1.10.bin
+        make generic-rk3528_defconfig
+        make CROSS_COMPILE=aarch64-linux-gnu-
+
 To build rk3568 boards:
 
 .. code-block:: bash
@@ -266,6 +286,15 @@ To build rk3568 boards:
         [or]export BL31=../rkbin/bin/rk35/rk3568_bl31_v1.34.elf
         export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3568_ddr_1560MHz_v1.13.bin
         make evb-rk3568_defconfig
+        make CROSS_COMPILE=aarch64-linux-gnu-
+
+To build rk3576 boards:
+
+.. code-block:: bash
+
+        export BL31=../rkbin/bin/rk35/rk3576_bl31_v1.04.elf
+        export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3576_ddr_lp4_2112MHz_lp5_2736MHz_v1.03.bin
+        make roc-pc-rk3576_defconfig
         make CROSS_COMPILE=aarch64-linux-gnu-
 
 To build rk3588 boards:

@@ -144,7 +144,7 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	int ret, size = 0, shut_cpu = 0;
 
 	/* Release all the exclusive devices held by SPL before starting ATF */
-	ti_sci->ops.dev_ops.release_exclusive_devices(ti_sci);
+	ti_sci->ops.dev_ops.release_exclusive_devices();
 
 	ret = rproc_init();
 	if (ret)
@@ -251,6 +251,31 @@ void disable_linefill_optimization(void)
 	asm("mrc p15, 0, %0, c1, c0, 1" : "=r" (actlr));
 	actlr |= (1 << 13); /* Set DLFO bit  */
 	asm("mcr p15, 0, %0, c1, c0, 1" : : "r" (actlr));
+}
+
+int remove_fwl_region(struct fwl_data *fwl)
+{
+	struct ti_sci_handle *sci = get_ti_sci_handle();
+	struct ti_sci_fwl_ops *ops = &sci->ops.fwl_ops;
+	struct ti_sci_msg_fwl_region region;
+	int ret;
+
+	region.fwl_id = fwl->fwl_id;
+	region.region = fwl->regions;
+	region.n_permission_regs = 3;
+
+	ops->get_fwl_region(sci, &region);
+
+	/* zero out the enable field of the firewall */
+	region.control = region.control & ~0xF;
+
+	pr_debug("Disabling firewall id: %d region: %d\n",
+		 region.fwl_id, region.region);
+
+	ret = ops->set_fwl_region(sci, &region);
+	if (ret)
+		pr_err("Could not disable firewall\n");
+	return ret;
 }
 
 static void remove_fwl_regions(struct fwl_data fwl_data, size_t num_regions,

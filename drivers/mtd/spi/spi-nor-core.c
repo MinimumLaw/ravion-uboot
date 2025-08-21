@@ -655,7 +655,7 @@ static struct spi_nor *mtd_to_spi_nor(struct mtd_info *mtd)
 	return mtd->priv;
 }
 
-#ifndef CONFIG_SPI_FLASH_BAR
+#if !CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 static u8 spi_nor_convert_opcode(u8 opcode, const u8 table[][2], size_t size)
 {
 	size_t i;
@@ -739,7 +739,7 @@ static void spi_nor_set_4byte_opcodes(struct spi_nor *nor,
 	nor->program_opcode = spi_nor_convert_3to4_program(nor->program_opcode);
 	nor->erase_opcode = spi_nor_convert_3to4_erase(nor->erase_opcode);
 }
-#endif /* !CONFIG_SPI_FLASH_BAR */
+#endif /* !CONFIG_IS_ENABLED(SPI_FLASH_BAR) */
 
 /* Enable/disable 4-byte addressing mode. */
 static int set_4byte(struct spi_nor *nor, const struct flash_info *info,
@@ -930,7 +930,7 @@ static int spi_nor_erase_chip_wait_till_ready(struct spi_nor *nor, unsigned long
 	return spi_nor_wait_till_ready_with_timeout(nor, timeout);
 }
 
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 /*
  * This "clean_bar" is necessary in a situation when one was accessing
  * spi flash memory > 16 MiB by using Bank Address Register's BA24 bit.
@@ -944,6 +944,7 @@ static int spi_nor_erase_chip_wait_till_ready(struct spi_nor *nor, unsigned long
 static int clean_bar(struct spi_nor *nor)
 {
 	u8 cmd, bank_sel = 0;
+	int ret;
 
 	if (nor->bank_curr == 0)
 		return 0;
@@ -951,7 +952,11 @@ static int clean_bar(struct spi_nor *nor)
 	nor->bank_curr = 0;
 	write_enable(nor);
 
-	return nor->write_reg(nor, cmd, &bank_sel, 1);
+	ret = nor->write_reg(nor, cmd, &bank_sel, 1);
+	if (ret)
+		return ret;
+
+	return write_disable(nor);
 }
 
 static int write_bar(struct spi_nor *nor, u32 offset)
@@ -1141,7 +1146,7 @@ static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
 					nor->spi->flags &= ~SPI_XFER_U_PAGE;
 			}
 		}
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 		ret = write_bar(nor, offset);
 		if (ret < 0)
 			goto erase_err;
@@ -1175,7 +1180,7 @@ static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
 
 	addr_known = false;
 erase_err:
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 	err = clean_bar(nor);
 	if (!ret)
 		ret = err;
@@ -1269,6 +1274,10 @@ static int write_sr_and_check(struct spi_nor *nor, u8 status_new, u8 mask)
 		return ret;
 
 	ret = spi_nor_wait_till_ready(nor);
+	if (ret)
+		return ret;
+
+	ret = write_disable(nor);
 	if (ret)
 		return ret;
 
@@ -1630,7 +1639,7 @@ static int spi_nor_read(struct mtd_info *mtd, loff_t from, size_t len,
 				offset /= 2;
 		}
 
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 		ret = write_bar(nor, offset);
 		if (ret < 0)
 			return log_ret(ret);
@@ -1667,7 +1676,7 @@ static int spi_nor_read(struct mtd_info *mtd, loff_t from, size_t len,
 	ret = 0;
 
 read_err:
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 	ret = clean_bar(nor);
 #endif
 	return ret;
@@ -1809,13 +1818,18 @@ static int sst26_lock_ctl(struct spi_nor *nor, loff_t ofs, uint64_t len, enum lo
 	if (ctl == SST26_CTL_CHECK)
 		return 0;
 
+	/* Write latch enable before write operation */
+	ret = write_enable(nor);
+	if (ret)
+		return ret;
+
 	ret = nor->write_reg(nor, SPINOR_OP_WRITE_BPR, bpr_buff, bpr_size);
 	if (ret < 0) {
 		dev_err(nor->dev, "fail to write block-protection register\n");
 		return ret;
 	}
 
-	return 0;
+	return write_disable(nor);
 }
 
 static int sst26_unlock(struct spi_nor *nor, loff_t ofs, uint64_t len)
@@ -2016,7 +2030,7 @@ static int spi_nor_write(struct mtd_info *mtd, loff_t to, size_t len,
 			}
 		}
 
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 		ret = write_bar(nor, offset);
 		if (ret < 0)
 			return ret;
@@ -2090,7 +2104,7 @@ static int spi_nor_write(struct mtd_info *mtd, loff_t to, size_t len,
 	}
 
 write_err:
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 	ret = clean_bar(nor);
 #endif
 	return ret;
@@ -2217,7 +2231,7 @@ static int write_sr_cr(struct spi_nor *nor, u8 *sr_cr)
 		return ret;
 	}
 
-	return 0;
+	return write_disable(nor);
 }
 
 /**
@@ -3592,6 +3606,19 @@ static int spi_nor_select_erase(struct spi_nor *nor,
 			mtd->erasesize = info->sector_size;
 	}
 
+	if ((JEDEC_MFR(info) == SNOR_MFR_SST) && info->flags & SECT_4K) {
+		nor->erase_opcode = SPINOR_OP_BE_4K;
+		/*
+		 * In parallel-memories the erase operation is
+		 * performed on both the flashes simultaneously
+		 * so, double the erasesize.
+		 */
+		if (nor->flags & SNOR_F_HAS_PARALLEL)
+			mtd->erasesize = 4096 * 2;
+		else
+			mtd->erasesize = 4096;
+	}
+
 	return 0;
 }
 
@@ -3791,7 +3818,7 @@ static int s25_s28_setup(struct spi_nor *nor, const struct flash_info *info,
 	int ret;
 	u8 cr;
 
-#ifdef CONFIG_SPI_FLASH_BAR
+#if CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 	return -ENOTSUPP; /* Bank Address Register is not supported */
 #endif
 	/*
@@ -4123,6 +4150,12 @@ static void mt35xu512aba_post_sfdp_fixup(struct spi_nor *nor,
 	params->rdsr_addr_nbytes = 0;
 
 	/*
+	 * SCCR Map 22nd DWORD does not indicate DTR Octal Mode Enable
+	 * for MT35XU512ABA but is actually supported by device.
+	 */
+	nor->flags |= SNOR_F_IO_MODE_EN_VOLATILE;
+
+	/*
 	 * The BFPT quad enable field is set to a reserved value so the quad
 	 * enable function is ignored by spi_nor_parse_bfpt(). Make sure we
 	 * disable it.
@@ -4286,6 +4319,9 @@ static int spi_nor_init(struct spi_nor *nor)
 				write_disable(nor);
 			}
 		}
+		err = write_disable(nor);
+		if (err)
+			return err;
 	}
 
 	if (nor->quad_enable) {
@@ -4577,7 +4613,7 @@ int spi_nor_scan(struct spi_nor *nor)
 	if (nor->flags & (SNOR_F_HAS_PARALLEL | SNOR_F_HAS_STACKED))
 		shift = 1;
 	if (nor->addr_width == 3 && (mtd->size >> shift) > SZ_16M) {
-#ifndef CONFIG_SPI_FLASH_BAR
+#if !CONFIG_IS_ENABLED(SPI_FLASH_BAR)
 		/* enable 4-byte addressing if the device exceeds 16MiB */
 		nor->addr_width = 4;
 		if (JEDEC_MFR(info) == SNOR_MFR_SPANSION ||

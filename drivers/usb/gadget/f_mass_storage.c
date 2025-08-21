@@ -286,7 +286,6 @@ static const char fsg_string_interface[] = "Mass Storage";
 #define kthread_create(...)	__builtin_return_address(0)
 #define wait_for_completion(...) do {} while (0)
 
-struct kref {int x; };
 struct completion {int x; };
 
 struct fsg_dev;
@@ -347,8 +346,6 @@ struct fsg_common {
 	/* Vendor (8 chars), product (16 chars), release (4
 	 * hexadecimal digits) and NUL byte */
 	char inquiry_string[8 + 16 + 4 + 1];
-
-	struct kref		ref;
 };
 
 struct fsg_config {
@@ -2438,7 +2435,7 @@ int fsg_main_thread(void *common_)
 	return 0;
 }
 
-static void fsg_common_release(struct kref *ref);
+static void fsg_common_release(struct fsg_common *common);
 
 static struct fsg_common *fsg_common_init(struct fsg_common *common,
 					  struct usb_composite_dev *cdev)
@@ -2550,16 +2547,12 @@ error_luns:
 	common->nluns = i + 1;
 error_release:
 	common->state = FSG_STATE_TERMINATED;	/* The thread is dead */
-	/* Call fsg_common_release() directly, ref might be not
-	 * initialised */
-	fsg_common_release(&common->ref);
+	fsg_common_release(common);
 	return ERR_PTR(rc);
 }
 
-static void fsg_common_release(struct kref *ref)
+static void fsg_common_release(struct fsg_common *common)
 {
-	struct fsg_common *common = container_of(ref, struct fsg_common, ref);
-
 	/* If the thread isn't already dead, tell it to exit now */
 	if (common->state != FSG_STATE_TERMINATED) {
 		raise_exception(common, FSG_STATE_EXIT);
@@ -2573,8 +2566,6 @@ static void fsg_common_release(struct kref *ref)
 		/* In error recovery common->nluns may be zero. */
 		for (; i; --i, ++lun)
 			fsg_lun_close(lun);
-
-		kfree(common->luns);
 	}
 
 	{
@@ -2650,6 +2641,7 @@ static void fsg_unbind(struct usb_configuration *c, struct usb_function *f)
 		raise_exception(fsg->common, FSG_STATE_CONFIG_CHANGE);
 	}
 
+	fsg_common_release(fsg->common);
 	free(fsg->function.descriptors);
 	free(fsg->function.hs_descriptors);
 	kfree(fsg);
@@ -2753,6 +2745,8 @@ int fsg_add(struct usb_configuration *c)
 	struct fsg_common *fsg_common;
 
 	fsg_common = fsg_common_init(NULL, c->cdev);
+	if (IS_ERR(fsg_common))
+		return PTR_ERR(fsg_common);
 
 	fsg_common->vendor_name = 0;
 	fsg_common->product_name = 0;

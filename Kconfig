@@ -27,6 +27,17 @@ config DEPRECATED
 	  code that relies on deprecated features that will be removed and
 	  the conversion deadline has passed.
 
+config WERROR
+	bool "Compile U-Boot with warnings as errors"
+	help
+	  A U-Boot build should not cause any compiler warnings, and this
+	  enables the '-Werror' flag to enforce that rule.
+
+	  However, if you have a new (or very old) compiler or linker with odd
+	  and unusual warnings, or you have some architecture with problems,
+	  you may need to disable this config option in order to
+	  successfully build U-Boot.
+
 config LOCALVERSION
 	string "Local version - append to U-Boot release"
 	help
@@ -443,6 +454,12 @@ config TOOLS_DEBUG
 	  it is possible to set breakpoints on particular lines, single-step
 	  debug through the source code, etc.
 
+config SKIP_RELOCATE
+	bool "Skips relocation of U-Boot to end of RAM"
+	help
+	  Skips relocation of U-Boot allowing for systems that have extremely
+	  limited RAM to run U-Boot.
+
 endif # EXPERT
 
 config PHYS_64BIT
@@ -737,7 +754,7 @@ source "dts/Kconfig"
 
 source "env/Kconfig"
 
-menu Networking
+menu "Networking"
 
 choice
 	prompt "Networking stack"

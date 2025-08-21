@@ -36,7 +36,7 @@ struct acpi_ctx;
  * RSDP (Root System Description Pointer)
  * Note: ACPI 1.0 didn't have length, xsdt_address, and ext_checksum
  */
-struct acpi_rsdp {
+struct __packed acpi_rsdp {
 	char signature[8];	/* RSDP signature */
 	u8 checksum;		/* Checksum of the first 20 bytes */
 	char oem_id[6];		/* OEM ID */
@@ -1273,6 +1273,13 @@ ulong write_acpi_tables(ulong start);
  * Return: pointer to table header, or NULL if not found
  */
 struct acpi_table_header *acpi_find_table(const char *sig);
+
+/**
+ * acpi_update_checksum() - update ACPI table checksum
+ *
+ * @header - header of an ACPI table
+ */
+void acpi_update_checksum(struct acpi_table_header *header);
 
 #endif /* !__ACPI__*/
 

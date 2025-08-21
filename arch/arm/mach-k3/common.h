@@ -10,6 +10,9 @@
 #include <asm/hardware.h>
 #include <mach/security.h>
 
+/* keep ram_top in the 32-bit address space */
+#define CFG_MAX_MEM_MAPPED		0x100000000
+
 #define K3_FIREWALL_BACKGROUND_BIT (8)
 
 struct fwl_data {
@@ -35,6 +38,7 @@ enum k3_device_type {
 void setup_k3_mpu_regions(void);
 int early_console_init(void);
 void disable_linefill_optimization(void);
+int remove_fwl_region(struct fwl_data *fwl);
 void remove_fwl_configs(struct fwl_data *fwl_data, size_t fwl_data_size);
 int load_firmware(char *name_fw, char *name_loadaddr, u32 *loadaddr);
 void k3_sysfw_print_ver(void);

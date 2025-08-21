@@ -48,7 +48,7 @@ struct efi_capsule_update_info update_info = {
  * Note: Currently, eMMC hardware partitions are not differentiated; Updates
  * are always applied to the first boot partition.
  */
-void configure_capsule_updates(void)
+static void configure_capsule_updates(void)
 {
 	static char dfu_string[128] = { 0 };
 	const char *dfu_raw = "tiboot3.bin raw 0x0 0x400 mmcpart 1;"
@@ -79,14 +79,6 @@ void configure_capsule_updates(void)
 	};
 
 	update_info.dfu_string = dfu_string;
-}
-#endif
-
-#if IS_ENABLED(CONFIG_SET_DFU_ALT_INFO)
-void set_dfu_alt_info(char *interface, char *devstr)
-{
-	if (IS_ENABLED(CONFIG_EFI_HAVE_CAPSULE_SUPPORT))
-		env_set("dfu_alt_info", update_info.dfu_string);
 }
 #endif
 

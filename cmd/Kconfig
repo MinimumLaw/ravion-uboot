@@ -5,7 +5,7 @@ menuconfig CMDLINE
 	  Enable U-Boot's command-line functions. This provides a means
 	  to enter commands into U-Boot for a wide variety of purposes. It
 	  also allows scripts (containing commands) to be executed.
-	  Various commands and command categorys can be indivdually enabled.
+	  Various commands and command categories can be individually enabled.
 	  Depending on the number of commands enabled, this can add
 	  substantially to the size of U-Boot.
 
@@ -153,6 +153,7 @@ config CMD_CONFIG
 	bool "config"
 	default SANDBOX
 	select BUILD_BIN2C
+	select GZIP
 	help
 	  Print ".config" contents.
 
@@ -185,6 +186,7 @@ config CMD_UFETCH
 config CMD_FWU_METADATA
 	bool "fwu metadata read"
 	depends on FWU_MULTI_BANK_UPDATE
+	imply HEXDUMP if FWU_MDATA_V2
 	help
 	  Command to read the metadata and dump it's contents
 
@@ -1236,6 +1238,14 @@ config CMD_FUSE
 	  which control the behaviour of the device. The command uses the
 	  fuse_...() API.
 
+config CMD_FUSE_WRITEBUFF
+	bool "Support for the fuse writebuff"
+	depends on CMD_FUSE
+	help
+	  This allows programming fuses, which control the behaviour of
+	  the device, using a structured buffer in memory. The command
+	  uses the fuse_writebuff() API.
+
 config CMD_GPIO
 	bool "gpio"
 	help
@@ -1602,6 +1612,7 @@ config CMD_READ
 config CMD_REMOTEPROC
 	bool "remoteproc"
 	depends on REMOTEPROC
+	default y if ARCH_K3
 	help
 	  Support for Remote Processor control
 
@@ -2059,7 +2070,7 @@ config CMD_SNTP
 
 config CMD_LINK_LOCAL
 	bool "linklocal"
-	select LIB_RAND
+	depends on (LIB_RAND || LIB_HW_RAND)
 	help
 	  Acquire a network IP address using the link-local protocol
 
@@ -2167,6 +2178,28 @@ config WGET_HTTPS
 	select PKCS7_MESSAGE_PARSER
 	help
 	  Enable TLS over http for wget.
+
+config WGET_CACERT
+	bool "wget cacert"
+	depends on CMD_WGET
+	depends on WGET_HTTPS
+	help
+	  Adds the "cacert" sub-command to wget to provide root certificates
+	  to the HTTPS engine. Must be in DER format.
+
+config WGET_BUILTIN_CACERT
+	bool "Built-in CA certificates"
+	depends on WGET_HTTPS
+	select BUILD_BIN2C
+
+config WGET_BUILTIN_CACERT_PATH
+	string "Path to root certificates"
+	depends on WGET_BUILTIN_CACERT
+	default "cacert.crt"
+	help
+	  Set this to the path to a DER-encoded X509 file containing
+	  Certification Authority certificates, a.k.a. root certificates, for
+	  the purpose of authenticating HTTPS connections.
 
 config CMD_PXE
 	bool "pxe"
@@ -3048,5 +3081,22 @@ config CMD_MESON
 	default y
 	help
 	  Enable useful commands for the Meson Soc family developed by Amlogic Inc.
+
+config CMD_SPAWN
+	bool "spawn and wait commands"
+	depends on UTHREAD
+	help
+	  spawn runs a command in the background and sets the job_id environment
+	  variable. wait is used to suspend the shell execution until one or more
+	  jobs are complete.
+
+config CMD_SPAWN_NUM_JOBS
+	int "Maximum number of simultaneous jobs for spawn"
+	default 16
+	help
+	  Job identifiers are in the range 1..CMD_SPAWN_NUM_JOBS. In other words
+	  there can be no more that CMD_SPAWN_NUM_JOBS running simultaneously.
+	  When a jobs exits, its identifier is available to be re-used by the next
+	  spawn command.
 
 endif

@@ -23,10 +23,13 @@ extern char __kprobes_text_start[], __kprobes_text_end[];
 extern char __entry_text_start[], __entry_text_end[];
 extern char __initdata_begin[], __initdata_end[];
 extern char __start_rodata[], __end_rodata[];
+extern char __start_data[], __end_data[];
 extern char __efi_helloworld_begin[];
 extern char __efi_helloworld_end[];
 extern char __efi_var_file_begin[];
 extern char __efi_var_file_end[];
+extern char __efi_capsule_sig_begin[];
+extern char __efi_capsule_sig_end[];
 
 /* Private data used by of-platdata devices/uclasses */
 extern char __priv_data_start[], __priv_data_end[];
@@ -63,6 +66,7 @@ static inline int arch_is_kernel_data(unsigned long addr)
 
 /* Start of U-Boot text region */
 extern char __text_start[];
+extern char __text_end[];
 
 /* This marks the text region which must be relocated */
 extern char __image_copy_start[], __image_copy_end[];

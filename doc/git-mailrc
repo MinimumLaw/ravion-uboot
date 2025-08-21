@@ -42,7 +42,7 @@ alias mbrugger       Matthias Brugger <mbrugger@suse.com>
 alias monstr         Michal Simek <monstr@monstr.eu>
 alias prom           Minkyu Kang <mk7.kang@samsung.com>
 alias ptomsich       Philipp Tomsich <philipp.tomsich@theobroma-systems.com>
-alias sbabic         Stefano Babic <sbabic@denx.de>
+alias sbabic         Stefano Babic <sbabic@nabladev.com>
 alias simongoldschmidt Simon Goldschmidt <simon.k.r.goldschmidt@gmail.com>
 alias sjg            Simon Glass <sjg@chromium.org>
 alias smcnutt        Scott McNutt <smcnutt@psyent.com>
@@ -74,7 +74,7 @@ alias samsung        uboot, prom
 alias snapdragon     uboot, mateusz
 alias socfpga        uboot, marex, dinh, simongoldschmidt, tienfong
 alias sunxi          uboot, jagan, apritzel
-alias tegra          uboot, sjg, Tom Warren <twarren@nvidia.com>, Stephen Warren <swarren@nvidia.com>
+alias tegra          uboot, sjg, Tom Warren <twarren@nvidia.com>
 alias tegra2         tegra
 alias ti             uboot, trini
 alias uniphier       uboot, masahiro

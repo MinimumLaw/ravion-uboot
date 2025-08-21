@@ -34,6 +34,7 @@
 
 #include <bootm.h>
 #include <image.h>
+#include <u-boot/zlib.h>
 
 #define MAX_CMDLINE_SIZE	SZ_4K
 
@@ -545,7 +546,8 @@ static int bootm_find_other(ulong img_addr, const char *conf_ramdisk,
 	     images.os.type == IH_TYPE_KERNEL_NOLOAD ||
 	     images.os.type == IH_TYPE_MULTI) &&
 	    (images.os.os == IH_OS_LINUX || images.os.os == IH_OS_VXWORKS ||
-	     images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE)) {
+	     images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE ||
+	     images.os.os == IH_OS_ELF)) {
 		return bootm_find_images(img_addr, conf_ramdisk, conf_fdt, 0,
 					 0);
 	}
@@ -577,7 +579,8 @@ static int handle_decomp_error(int comp_type, size_t uncomp_size,
 	if (ret == -ENOSYS)
 		return BOOTM_ERR_UNIMPLEMENTED;
 
-	if (uncomp_size >= buf_size)
+	if ((comp_type == IH_COMP_GZIP && ret == Z_BUF_ERROR) ||
+	    uncomp_size >= buf_size)
 		printf("Image too large: increase CONFIG_SYS_BOOTM_LEN\n");
 	else
 		printf("%s: uncompress error %d\n", name, ret);
@@ -1166,8 +1169,7 @@ void bootm_init(struct bootm_info *bmi)
 {
 	memset(bmi, '\0', sizeof(struct bootm_info));
 	bmi->boot_progress = true;
-	if (IS_ENABLED(CONFIG_CMD_BOOTM))
-		bmi->images = &images;
+	bmi->images = &images;
 }
 
 /**

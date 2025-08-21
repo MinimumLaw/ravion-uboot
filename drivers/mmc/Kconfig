@@ -292,6 +292,15 @@ config MMC_DW_ROCKCHIP
 	  SD 3.0, SDIO 3.0 and MMC 4.5 and supports common eMMC chips as well
 	  as removeable SD and micro-SD cards.
 
+config MMC_SDHCI_ADI
+	bool "ADI SD/MMC controller support"
+	depends on ARCH_SC5XX
+	depends on DM_MMC && OF_CONTROL
+	depends on MMC_SDHCI && MMC_SDHCI_ADMA
+	help
+	  This enables support for the SD/MMC controller included in some Analog
+	  Devices SC5XX Socs.
+
 config MMC_DW_SOCFPGA
 	bool "SOCFPGA specific extensions for Synopsys DW Memory Card Interface"
 	depends on ARCH_SOCFPGA
@@ -519,6 +528,7 @@ config SPL_MMC_SDHCI_ADMA
 
 config MMC_SDHCI_ADMA_FORCE_32BIT
 	bool "Force 32 bit mode for ADMA on 64 bit platforms"
+	depends on MMC_SDHCI_ADMA_HELPERS
 	help
 	  This forces SDHCI ADMA to be built for 32 bit descriptors, even
 	  on a 64 bit platform where they would otherwise be assumed to
@@ -528,6 +538,7 @@ config MMC_SDHCI_ADMA_FORCE_32BIT
 
 config MMC_SDHCI_ADMA_64BIT
 	bool "Use SHDCI ADMA with 64 bit descriptors"
+	depends on MMC_SDHCI_ADMA_HELPERS
 	depends on !MMC_SDHCI_ADMA_FORCE_32BIT
 	default y if DMA_ADDR_T_64BIT
 	help
@@ -860,7 +871,7 @@ config FTSDC010_SDIO
 
 config MMC_MTK
 	bool "MediaTek SD/MMC Card Interface support"
-	depends on ARCH_MEDIATEK || ARCH_MTMIPS
+	depends on ARCH_MEDIATEK || ARCH_MTMIPS || ARCH_AIROHA
 	depends on OF_CONTROL
 	help
 	  This selects the MediaTek(R) Secure digital and Multimedia card Interface.
@@ -918,6 +929,12 @@ config SYS_FSL_ESDHC_DEFAULT_BUS_WIDTH
 config ESDHC_DETECT_QUIRK
 	bool "QIXIS-based eSDHC quirk detection"
 	depends on FSL_ESDHC && FSL_QIXIS
+
+config ESDHCI_QUIRK_BROKEN_TIMEOUT_VALUE
+	bool
+	depends on FSL_ESDHC || FSL_ESDHC_IMX
+	def_bool y if ARCH_T1024 || ARCH_T1040 || ARCH_T1042 || ARCH_T2080 \
+		|| FSL_ESDHC_IMX
 
 config FSL_ESDHC_IMX
 	bool "Freescale/NXP i.MX eSDHC controller support"
