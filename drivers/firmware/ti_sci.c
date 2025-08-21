@@ -696,20 +696,25 @@ static int ti_sci_cmd_put_device(const struct ti_sci_handle *handle, u32 id)
 				       MSG_DEVICE_SW_STATE_AUTO_OFF);
 }
 
-static
-int ti_sci_cmd_release_exclusive_devices(const struct ti_sci_handle *handle)
+static int ti_sci_cmd_release_exclusive_devices(void)
 {
 	struct ti_sci_exclusive_dev *dev, *tmp;
 	struct ti_sci_info *info;
 	int i, cnt;
 
-	info = handle_to_ti_sci_info(handle);
-
-	list_for_each_entry_safe(dev, tmp, &info->dev_list, list) {
-		cnt = dev->count;
-		debug("%s: id = %d, cnt = %d\n", __func__, dev->id, cnt);
-		for (i = 0; i < cnt; i++)
-			ti_sci_cmd_put_device(handle, dev->id);
+	/*
+	 * Scan all ti_sci_list registrations, since with FIT images, we could
+	 * have started with one device tree registration and switched over
+	 * to a final version. This prevents exclusive devices identified
+	 * during the first probe to be left orphan.
+	 */
+	list_for_each_entry(info, &ti_sci_list, list) {
+		list_for_each_entry_safe(dev, tmp, &info->dev_list, list) {
+			cnt = dev->count;
+			debug("%s: id = %d, cnt = %d\n", __func__, dev->id, cnt);
+			for (i = 0; i < cnt; i++)
+				ti_sci_cmd_put_device(&info->handle, dev->id);
+		}
 	}
 
 	return 0;
@@ -2840,10 +2845,10 @@ static int ti_sci_probe(struct udevice *dev)
 	info->dev = dev;
 	info->seq = 0xA;
 
+	INIT_LIST_HEAD(&info->dev_list);
+
 	list_add_tail(&info->list, &ti_sci_list);
 	ti_sci_setup_ops(info);
-
-	INIT_LIST_HEAD(&info->dev_list);
 
 	if (IS_ENABLED(CONFIG_SYSRESET_TI_SCI)) {
 		ret = device_bind_driver(dev, "ti-sci-sysreset", "sysreset", NULL);
@@ -2883,6 +2888,8 @@ static __maybe_unused int ti_sci_dm_probe(struct udevice *dev)
 
 	info->dev = dev;
 	info->seq = 0xA;
+
+	INIT_LIST_HEAD(&info->dev_list);
 
 	list_add_tail(&info->list, &ti_sci_list);
 

@@ -86,7 +86,10 @@ dtb-$(CONFIG_ARCH_TEGRA) += \
 	tegra20-asus-tf101.dtb \
 	tegra20-asus-tf101g.dtb \
 	tegra20-harmony.dtb \
+	tegra20-lg-star.dtb \
 	tegra20-medcom-wide.dtb \
+	tegra20-motorola-daytona.dtb \
+	tegra20-motorola-olympus.dtb \
 	tegra20-paz00.dtb \
 	tegra20-plutux.dtb \
 	tegra20-seaboard.dtb \
@@ -113,14 +116,18 @@ dtb-$(CONFIG_ARCH_TEGRA) += \
 	tegra30-lg-p880.dtb \
 	tegra30-lg-p895.dtb \
 	tegra30-microsoft-surface-rt.dtb \
+	tegra30-ouya.dtb \
 	tegra30-tec-ng.dtb \
 	tegra30-wexler-qc750.dtb \
+	tegra114-asus-tf701t.dtb \
 	tegra114-dalmore.dtb \
+	tegra114-nvidia-tegratab.dtb \
 	tegra124-apalis.dtb \
 	tegra124-jetson-tk1.dtb \
 	tegra124-nyan-big.dtb \
 	tegra124-cei-tk1-som.dtb \
 	tegra124-venice2.dtb \
+	tegra124-xiaomi-mocha.dtb \
 	tegra186-p2771-0000-000.dtb \
 	tegra186-p2771-0000-500.dtb \
 	tegra210-p2371-0000.dtb \
@@ -297,6 +304,13 @@ dtb-$(CONFIG_ARCH_ZYNQMP) += \
 	zynqmp-zc1751-xm017-dc3.dtb		\
 	zynqmp-zc1751-xm018-dc4.dtb		\
 	zynqmp-zc1751-xm019-dc5.dtb
+dtb-$(CONFIG_TARGET_ZYNQ_BR) += \
+	zynq-brcp1_2r.dtb			\
+	zynq-brcp1_1r.dtb			\
+	zynq-brcp1_1r_switch.dtb		\
+	zynq-brsmarc2.dtb			\
+	zynq-brcp150.dtb			\
+	zynq-brcp170.dtb
 
 zynqmp-p-a2197-00-revA-x-prc-01-revA-dtbs := zynqmp-p-a2197-00-revA.dtb zynqmp-p-a2197-00-revA-x-prc-01-revA.dtbo
 zynqmp-p-a2197-00-revA-x-prc-02-revA-dtbs := zynqmp-p-a2197-00-revA.dtb zynqmp-p-a2197-00-revA-x-prc-02-revA.dtbo
@@ -406,6 +420,7 @@ dtb-$(CONFIG_AM33XX) += \
 	am335x-evm.dtb \
 	am335x-evmsk.dtb \
 	am335x-bonegreen.dtb \
+	am335x-bonegreen-eco.dtb \
 	am335x-bonegreen-wireless.dtb \
 	am335x-icev2.dtb \
 	am335x-pocketbeagle.dtb \
@@ -516,17 +531,6 @@ dtb-$(CONFIG_TARGET_SL28) += fsl-ls1028a-kontron-sl28.dtb \
 dtb-$(CONFIG_TARGET_TEN64) += fsl-ls1088a-ten64.dtb
 
 dtb-$(CONFIG_TARGET_STEMMY) += ste-ux500-samsung-stemmy.dtb
-
-dtb-$(CONFIG_STM32F4) += stm32f429-disco.dtb \
-	stm32429i-eval.dtb \
-	stm32f469-disco.dtb
-
-dtb-$(CONFIG_STM32F7) += stm32f746-disco.dtb \
-	stm32f769-disco.dtb \
-	stm32746g-eval.dtb
-dtb-$(CONFIG_STM32H7) += stm32h743i-disco.dtb \
-	stm32h743i-eval.dtb \
-	stm32h750i-art-pi.dtb
 
 dtb-$(CONFIG_MACH_SUN4I) += \
 	sun4i-a10-inet-3f.dtb \
@@ -795,7 +799,6 @@ dtb-y += \
 	imx6q-icore-rqs.dtb \
 	imx6q-kp.dtb \
 	imx6q-logicpd.dtb \
-	imx6q-lxr.dtb \
 	imx6q-marsboard.dtb \
 	imx6q-mccmon6.dtb\
 	imx6q-nitrogen6x.dtb \
@@ -915,11 +918,9 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mq-librem5-r4.dtb
 
 dtb-$(CONFIG_ARCH_IMX9) += \
-	imx93-var-som-symphony.dtb \
-	imx93-phyboard-segin.dtb
+	imx93-var-som-symphony.dtb
 
-dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
-	imxrt1020-evk.dtb \
+dtb-$(CONFIG_ARCH_IMXRT) += imxrt1020-evk.dtb \
 	imxrt1170-evk.dtb \
 
 dtb-$(CONFIG_RZA1) += \
@@ -1076,36 +1077,17 @@ dtb-$(CONFIG_ASPEED_AST2600) += \
 	ast2600-sbp1.dtb \
 	ast2600-x4tf.dtb
 
-dtb-$(CONFIG_ARCH_STI) += stih410-b2260.dtb
-
-dtb-$(CONFIG_STM32MP13X) += \
-	stm32mp135f-dk.dtb
-
 dtb-$(CONFIG_STM32MP15X) += \
-	stm32mp157a-dk1.dtb \
-	stm32mp157a-dk1-scmi.dtb \
-	stm32mp157a-icore-stm32mp1-ctouch2.dtb \
-	stm32mp157a-icore-stm32mp1-edimm2.2.dtb \
-	stm32mp157a-microgea-stm32mp1-microdev2.0.dtb \
-	stm32mp157a-microgea-stm32mp1-microdev2.0-of7.dtb \
-	stm32mp157c-dk2.dtb \
-	stm32mp157c-dk2-scmi.dtb \
-	stm32mp157c-ed1.dtb \
-	stm32mp157c-ed1-scmi.dtb \
-	stm32mp157c-ev1.dtb \
-	stm32mp157c-ev1-scmi.dtb \
 	stm32mp157c-odyssey.dtb
-
-dtb-$(CONFIG_STM32MP25X) += \
-	stm32mp257f-ev1.dtb
 
 dtb-$(CONFIG_SOC_K3_AM654) += \
 	k3-am654-r5-base-board.dtb
 
 dtb-$(CONFIG_SOC_K3_J721E) += k3-j721e-r5-common-proc-board.dtb \
-			      k3-j7200-r5-common-proc-board.dtb \
 			      k3-j721e-r5-sk.dtb \
 			      k3-j721e-r5-beagleboneai64.dtb
+
+dtb-$(CONFIG_SOC_K3_J7200) += k3-j7200-r5-common-proc-board.dtb
 
 dtb-$(CONFIG_SOC_K3_J721S2) += k3-am68-sk-r5-base-board.dtb\
 			       k3-j721s2-r5-common-proc-board.dtb
@@ -1113,7 +1095,8 @@ dtb-$(CONFIG_SOC_K3_J721S2) += k3-am68-sk-r5-base-board.dtb\
 dtb-$(CONFIG_SOC_K3_J784S4) += k3-am69-r5-sk.dtb \
 			       k3-j784s4-r5-evm.dtb
 
-dtb-$(CONFIG_SOC_K3_J722S) += k3-j722s-r5-evm.dtb
+dtb-$(CONFIG_SOC_K3_J722S) += k3-j722s-r5-evm.dtb \
+			      k3-am67a-r5-beagley-ai.dtb
 
 dtb-$(CONFIG_SOC_K3_AM642) += k3-am642-r5-evm.dtb \
 			      k3-am642-r5-sk.dtb \

@@ -4,17 +4,17 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
 obj-y += mmc.o
-obj-$(CONFIG_$(XPL_)DM_MMC) += mmc-uclass.o
+obj-$(CONFIG_$(PHASE_)DM_MMC) += mmc-uclass.o
 
 ifdef CONFIG_$(PHASE_)DM_MMC
 obj-$(CONFIG_$(PHASE_)BOOTSTD) += mmc_bootdev.o
 endif
 
 obj-$(CONFIG_$(PHASE_)MMC_WRITE) += mmc_write.o
-obj-$(CONFIG_$(XPL_)MMC_PWRSEQ) += mmc-pwrseq.o
+obj-$(CONFIG_$(PHASE_)MMC_PWRSEQ) += mmc-pwrseq.o
 obj-$(CONFIG_MMC_SDHCI_ADMA_HELPERS) += sdhci-adma.o
 
-ifndef CONFIG_$(XPL_)BLK
+ifndef CONFIG_$(PHASE_)BLK
 obj-y += mmc_legacy.o
 endif
 
@@ -70,6 +70,7 @@ obj-$(CONFIG_MMC_SDHCI_MV)		+= mv_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_NPCM)            += npcm_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_PIC32)		+= pic32_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_ROCKCHIP)	+= rockchip_sdhci.o
+obj-$(CONFIG_MMC_SDHCI_ADI)		+= adi_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_S5P)		+= s5p_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_SNPS)		+= snps_sdhci.o
 obj-$(CONFIG_MMC_SDHCI_STI)		+= sti_sdhci.o

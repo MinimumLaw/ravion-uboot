@@ -7,46 +7,6 @@
 
 #ifdef CONFIG_TARGET_J7200_R5_EVM
 
-&bcfg_yaml {
-	config = "board-cfg_j7200.yaml";
-};
-
-&rcfg_yaml {
-	config = "rm-cfg_j7200.yaml";
-};
-
-&pcfg_yaml {
-	config = "pm-cfg_j7200.yaml";
-};
-
-&scfg_yaml {
-	config = "sec-cfg_j7200.yaml";
-};
-
-&bcfg_yaml_tifs {
-	config = "board-cfg_j7200.yaml";
-};
-
-&rcfg_yaml_tifs {
-	config = "rm-cfg_j7200.yaml";
-};
-
-&pcfg_yaml_tifs {
-	config = "pm-cfg_j7200.yaml";
-};
-
-&scfg_yaml_tifs {
-	config = "sec-cfg_j7200.yaml";
-};
-
-&rcfg_yaml_dm {
-	config = "rm-cfg_j7200.yaml";
-};
-
-&pcfg_yaml_dm {
-	config = "pm-cfg_j7200.yaml";
-};
-
 &binman {
 	tiboot3-j7200-hs-evm.bin {
 		filename = "tiboot3-j7200-hs-evm.bin";
@@ -277,13 +237,6 @@
 #define J7200_EVM_DTB "u-boot.dtb"
 
 &binman {
-	ti-dm {
-		filename = "ti-dm.bin";
-		blob-ext {
-			filename = "ti-dm/j7200/ipc_echo_testb_mcu1_0_release_strip.xer5f";
-			optional;
-		};
-	};
 	ti-spl {
 		insert-template = <&ti_spl_template>;
 
@@ -385,7 +338,8 @@
 						keyfile = "custMpk.pem";
 					};
 					dm: ti-dm {
-						filename = "ti-dm.bin";
+						filename = "ti-dm/j7200/ipc_echo_testb_mcu1_0_release_strip.xer5f";
+						optional;
 					};
 				};
 
@@ -470,7 +424,8 @@
 			images {
 				dm {
 					ti-dm {
-						filename = "ti-dm.bin";
+						filename = "ti-dm/j7200/ipc_echo_testb_mcu1_0_release_strip.xer5f";
+						optional;
 					};
 				};
 

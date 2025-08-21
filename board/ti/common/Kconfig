@@ -26,6 +26,7 @@ config TI_COMMON_CMD_OPTIONS
 	bool "Enable cmd options on TI platforms"
 	imply CMD_ASKENV
 	imply CMD_BOOTZ
+	imply CMD_CACHE
 	imply CRC32_VERIFY if ARCH_KEYSTONE
 	imply CMD_DFU if USB_GADGET_DOWNLOAD
 	imply CMD_DHCP
@@ -41,6 +42,8 @@ config TI_COMMON_CMD_OPTIONS
 	imply CMD_I2C
 	imply CMD_MII
 	imply CMD_MMC
+	imply CMD_MMC_REG
+	imply MMC_SPEED_MODE_SET
 	imply CMD_NFS
 	imply CMD_PART
 	imply CMD_PING

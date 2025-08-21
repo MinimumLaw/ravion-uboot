@@ -142,7 +142,21 @@
 		};
 	};
 };
-#endif
+
+#include "k3-binman-capsule-r5.dtsi"
+
+&capsule_tiboot3 {
+	efi-capsule {
+		/*
+		 * The GUID is generated dynamically by taking a namespace UUID and hashing
+		 * it with the board compatible and fw_image name:
+		 * mkeficapsule guidgen k3-am62a7-r5-phycore-som-2gb.dtb PHYCORE_AM62AX_TIBOOT3
+		 */
+		image-guid = "07CA7DD0-85FF-597E-A485-B2423D3AE6C1";
+	};
+};
+
+#endif /* CONFIG_TARGET_PHYCORE_AM62AX_R5 */
 
 #ifdef CONFIG_TARGET_PHYCORE_AM62AX_A53
 
@@ -150,14 +164,6 @@
 #define AM62A7_PHYBOARD_LYRA_DTB "u-boot.dtb"
 
 &binman {
-	ti-dm {
-		filename = "ti-dm.bin";
-		blob-ext {
-			filename = "ti-dm/am62axx/ipc_echo_testb_mcu1_0_release_strip.xer5f";
-			optional;
-		};
-	};
-
 	tifsstub-hs {
 		filename = "tifsstub.bin_hs";
 		ti-secure-rom {
@@ -262,7 +268,8 @@
 						keyfile = "custMpk.pem";
 					};
 					dm: ti-dm {
-						filename = "ti-dm.bin";
+						filename = "ti-dm/am62axx/ipc_echo_testb_mcu1_0_release_strip.xer5f";
+						optional;
 					};
 				};
 
@@ -306,6 +313,66 @@
 					description = "U-Boot for AM62Ax board";
 				};
 
+				som-no-rtc {
+					description = "k3-am6xx-phycore-disable-rtc";
+					type = "flat_dt";
+					compression = "none";
+					load = <0x8F000000>;
+					arch = "arm";
+					ti-secure {
+						content = <&am6xx_phycore_disable_rtc_dtbo>;
+						keyfile = "custMpk.pem";
+					};
+					am6xx_phycore_disable_rtc_dtbo: blob-ext {
+						filename = "dts/upstream/src/arm64/ti/k3-am6xx-phycore-disable-rtc.dtbo";
+					};
+				};
+
+				som-no-spi {
+					description = "k3-am6xx-phycore-disable-spi-nor";
+					type = "flat_dt";
+					compression = "none";
+					load = <0x8F001000>;
+					arch = "arm";
+					ti-secure {
+						content = <&am6xx_phycore_disable_spi_not_dtbo>;
+						keyfile = "custMpk.pem";
+					};
+					am6xx_phycore_disable_spi_not_dtbo: blob-ext {
+						filename = "dts/upstream/src/arm64/ti/k3-am6xx-phycore-disable-spi-nor.dtbo";
+					};
+				};
+
+				som-no-eth {
+					description = "k3-am6xx-phycore-disable-eth-phy";
+					type = "flat_dt";
+					compression = "none";
+					load = <0x8F002000>;
+					arch = "arm";
+					ti-secure {
+						content = <&am6xx_phycore_disable_eth_phy_dtbo>;
+						keyfile = "custMpk.pem";
+					};
+					am6xx_phycore_disable_eth_phy_dtbo: blob-ext {
+						filename = "dts/upstream/src/arm64/ti/k3-am6xx-phycore-disable-eth-phy.dtbo";
+					};
+				};
+
+				som-qspi {
+					description = "k3-am6xx-phycore-qspi-nor";
+					type = "flat_dt";
+					compression = "none";
+					load = <0x8F003000>;
+					arch = "arm";
+					ti-secure {
+						content = <&am6xx_phycore_disable_qspi_nor_dtbo>;
+						keyfile = "custMpk.pem";
+					};
+					am6xx_phycore_disable_qspi_nor_dtbo: blob-ext {
+						filename = "dts/upstream/src/arm64/ti/k3-am6xx-phycore-qspi-nor.dtbo";
+					};
+				};
+
 				fdt-0 {
 					description = "k3-am62a7-phyboard-lyra-rdk";
 					type = "flat_dt";
@@ -330,7 +397,11 @@
 				conf-0 {
 					description = "k3-am62a7-phyboard-lyra-rdk";
 					firmware = "uboot";
-					loadables = "uboot";
+					loadables = "uboot",
+						    "som-no-rtc",
+						    "som-no-spi",
+						    "som-no-eth",
+						    "som-qspi";
 					fdt = "fdt-0";
 				};
 			};
@@ -384,7 +455,8 @@
 				};
 				dm {
 					ti-dm {
-						filename = "ti-dm.bin";
+						filename = "ti-dm/am62axx/ipc_echo_testb_mcu1_0_release_strip.xer5f";
+						optional;
 					};
 				};
 
@@ -451,4 +523,29 @@
 		};
 	};
 };
-#endif
+
+#include "k3-binman-capsule.dtsi"
+
+&capsule_tispl {
+	efi-capsule {
+		/*
+		 * The GUID is generated dynamically by taking a namespace UUID and hashing
+		 * it with the board compatible and fw_image name:
+		 * mkeficapsule guidgen k3-am62a7-phyboard-lyra-rdk.dtb PHYCORE_AM62AX_SPL
+		 */
+		image-guid = "14F968A2-7C3A-50AD-9356-192F07AD2A9C";
+	};
+};
+
+&capsule_uboot {
+	efi-capsule {
+		/*
+		 * The GUID is generated dynamically by taking a namespace UUID and hashing
+		 * it with the board compatible and fw_image name:
+		 * mkeficapsule guidgen k3-am62a7-phyboard-lyra-rdk.dtb PHYCORE_AM62AX_UBOOT
+		 */
+		image-guid = "1F1148C5-2785-5E7C-9C58-C5B1EC0DC80C";
+	};
+};
+
+#endif /* CONFIG_TARGET_PHYCORE_AM62AX_A53 */

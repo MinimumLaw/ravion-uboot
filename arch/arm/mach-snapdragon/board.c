@@ -88,7 +88,29 @@ int dram_init_banksize(void)
 	return 0;
 }
 
-static void qcom_parse_memory(const void *fdt)
+/**
+ * The generic memory parsing code in U-Boot lacks a few things that we
+ * need on Qualcomm:
+ *
+ * 1. It sets gd->ram_size and gd->ram_base to represent a single memory block
+ * 2. setup_dest_addr() later relocates U-Boot to ram_base + ram_size, the end
+ *    of that first memory block.
+ *
+ * This results in all memory beyond U-Boot being unusable in Linux when booting
+ * with EFI.
+ *
+ * Since the ranges in the memory node may be out of order, the only way for us
+ * to correctly determine the relocation address for U-Boot is to parse all
+ * memory regions and find the highest valid address.
+ *
+ * We can't use fdtdec_setup_memory_banksize() since it stores the result in
+ * gd->bd, which is not yet allocated.
+ *
+ * @fdt: FDT blob to parse /memory node from
+ *
+ * Return: 0 on success or -ENODATA if /memory node is missing or incomplete
+ */
+static int qcom_parse_memory(const void *fdt)
 {
 	int offset;
 	const fdt64_t *memory;
@@ -97,16 +119,12 @@ static void qcom_parse_memory(const void *fdt)
 	int i, j, banks;
 
 	offset = fdt_path_offset(fdt, "/memory");
-	if (offset < 0) {
-		log_err("No memory node found in device tree!\n");
-		return;
-	}
+	if (offset < 0)
+		return -ENODATA;
 
 	memory = fdt_getprop(fdt, offset, "reg", &memsize);
-	if (!memory) {
-		log_err("No memory configuration was provided by the previous bootloader!\n");
-		return;
-	}
+	if (!memory)
+		return -ENODATA;
 
 	banks = min(memsize / (2 * sizeof(u64)), (ulong)CONFIG_NR_DRAM_BANKS);
 
@@ -119,7 +137,6 @@ static void qcom_parse_memory(const void *fdt)
 	for (i = 0, j = 0; i < banks * 2; i += 2, j++) {
 		prevbl_ddr_banks[j].start = get_unaligned_be64(&memory[i]);
 		prevbl_ddr_banks[j].size = get_unaligned_be64(&memory[i + 1]);
-		/* SM8650 boards sometimes have empty regions! */
 		if (!prevbl_ddr_banks[j].size) {
 			j--;
 			continue;
@@ -127,13 +144,16 @@ static void qcom_parse_memory(const void *fdt)
 		ram_end = max(ram_end, prevbl_ddr_banks[j].start + prevbl_ddr_banks[j].size);
 	}
 
+	if (!banks || !prevbl_ddr_banks[0].size)
+		return -ENODATA;
+
 	/* Sort our RAM banks -_- */
 	qsort(prevbl_ddr_banks, banks, sizeof(prevbl_ddr_banks[0]), ddr_bank_cmp);
 
 	gd->ram_base = prevbl_ddr_banks[0].start;
 	gd->ram_size = ram_end - gd->ram_base;
-	debug("ram_base = %#011lx, ram_size = %#011llx, ram_end = %#011llx\n",
-	      gd->ram_base, gd->ram_size, ram_end);
+
+	return 0;
 }
 
 static void show_psci_version(void)
@@ -142,9 +162,40 @@ static void show_psci_version(void)
 
 	arm_smccc_smc(ARM_PSCI_0_2_FN_PSCI_VERSION, 0, 0, 0, 0, 0, 0, 0, &res);
 
+	/* Some older SoCs like MSM8916 don't always support PSCI */
+	if ((int)res.a0 == PSCI_RET_NOT_SUPPORTED)
+		return;
+
 	debug("PSCI:  v%ld.%ld\n",
 	      PSCI_VERSION_MAJOR(res.a0),
 	      PSCI_VERSION_MINOR(res.a0));
+}
+
+/**
+ * Most MSM8916 devices in the wild shipped without PSCI support, but the
+ * upstream DTs pretend that PSCI exists. If that situation is detected here,
+ * the /psci node is deleted. This is done very early to ensure the PSCI
+ * firmware driver doesn't bind (which then binds a sysreset driver that won't
+ * work).
+ */
+static void qcom_psci_fixup(void *fdt)
+{
+	int offset, ret;
+	struct arm_smccc_res res;
+
+	arm_smccc_smc(ARM_PSCI_0_2_FN_PSCI_VERSION, 0, 0, 0, 0, 0, 0, 0, &res);
+
+	if ((int)res.a0 != PSCI_RET_NOT_SUPPORTED)
+		return;
+
+	offset = fdt_path_offset(fdt, "/psci");
+	if (offset < 0)
+		return;
+
+	debug("Found /psci DT node on device with no PSCI. Deleting.\n");
+	ret = fdt_del_node(fdt, offset);
+	if (ret)
+		log_err("Failed to delete /psci node: %d\n", ret);
 }
 
 /* We support booting U-Boot with an internal DT when running as a first-stage bootloader
@@ -153,13 +204,14 @@ static void show_psci_version(void)
  */
 int board_fdt_blob_setup(void **fdtp)
 {
-	struct fdt_header *fdt;
+	struct fdt_header *external_fdt, *internal_fdt;
 	bool internal_valid, external_valid;
-	int ret = 0;
+	int ret = -ENODATA;
 
-	fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
-	external_valid = fdt && !fdt_check_header(fdt);
-	internal_valid = !fdt_check_header(*fdtp);
+	internal_fdt = (struct fdt_header *)*fdtp;
+	external_fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
+	external_valid = external_fdt && !fdt_check_header(external_fdt);
+	internal_valid = !fdt_check_header(internal_fdt);
 
 	/*
 	 * There is no point returning an error here, U-Boot can't do anything useful in this situation.
@@ -167,29 +219,40 @@ int board_fdt_blob_setup(void **fdtp)
 	 */
 	if (!internal_valid && !external_valid)
 		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#llx)\n",
-		      (phys_addr_t)fdt);
+		      (phys_addr_t)external_fdt);
+
+	/* Prefer memory information from internal DT if it's present */
+	if (internal_valid)
+		ret = qcom_parse_memory(internal_fdt);
+
+	if (ret < 0 && external_valid) {
+		/* No internal FDT or it lacks a proper /memory node.
+		 * The previous bootloader handed us something, let's try that.
+		 */
+		if (internal_valid)
+			debug("No memory info in internal FDT, falling back to external\n");
+
+		ret = qcom_parse_memory(external_fdt);
+	}
+
+	if (ret < 0)
+		panic("No valid memory ranges found!\n");
+
+	debug("ram_base = %#011lx, ram_size = %#011llx\n",
+	      gd->ram_base, gd->ram_size);
 
 	if (internal_valid) {
 		debug("Using built in FDT\n");
 		ret = -EEXIST;
 	} else {
 		debug("Using external FDT\n");
-		/* So we can use it before returning */
-		*fdtp = fdt;
+		*fdtp = external_fdt;
+		ret = 0;
 	}
 
-	/*
-	 * Parse the /memory node while we're here,
-	 * this makes it easy to do other things early.
-	 */
-	qcom_parse_memory(*fdtp);
+	qcom_psci_fixup(*fdtp);
 
 	return ret;
-}
-
-void reset_cpu(void)
-{
-	psci_system_reset();
 }
 
 /*
@@ -243,7 +306,6 @@ void __weak qcom_board_init(void)
 int board_init(void)
 {
 	show_psci_version();
-	qcom_of_fixup_nodes();
 	qcom_board_init();
 	return 0;
 }
@@ -347,52 +409,39 @@ static void configure_env(void)
 		return;
 	}
 
-	/* The last compatible is always the SoC compatible */
-	ret = ofnode_read_string_index(root, "compatible", compat_count - 1, &last_compat);
-	if (ret < 0) {
-		log_warning("Can't read second compatible\n");
-		return;
-	}
-
-	/* Copy the second compat (e.g. "qcom,sdm845") into buf */
-	strlcpy(buf, last_compat, sizeof(buf) - 1);
-	tmp = buf;
-
-	/* strsep() is destructive, it replaces the comma with a \0 */
-	if (!strsep(&tmp, ",")) {
-		log_warning("second compatible '%s' has no ','\n", buf);
-		return;
-	}
-
-	/* tmp now points to just the "sdm845" part of the string */
-	env_set("soc", tmp);
-
-	/* Now figure out the "board" part from the first compatible */
-	memset(buf, 0, sizeof(buf));
 	strlcpy(buf, first_compat, sizeof(buf) - 1);
 	tmp = buf;
 
 	/* The Qualcomm reference boards (RBx, HDK, etc)  */
 	if (!strncmp("qcom", buf, strlen("qcom"))) {
+		char *soc;
+
 		/*
 		 * They all have the first compatible as "qcom,<soc>-<board>"
 		 * (e.g. "qcom,qrb5165-rb5"). We extract just the part after
 		 * the dash.
 		 */
-		if (!strsep(&tmp, "-")) {
+		if (!strsep(&tmp, ",")) {
+			log_warning("compatible '%s' has no ','\n", buf);
+			return;
+		}
+		soc = strsep(&tmp, "-");
+		if (!soc) {
 			log_warning("compatible '%s' has no '-'\n", buf);
 			return;
 		}
-		/* tmp is now "rb5" */
+
+		env_set("soc", soc);
 		env_set("board", tmp);
 	} else {
 		if (!strsep(&tmp, ",")) {
 			log_warning("compatible '%s' has no ','\n", buf);
 			return;
 		}
-		/* for thundercomm we just want the bit after the comma (e.g. "db845c"),
-		 * for all other boards we replace the comma with a '-' and take both
-		 * (e.g. "oneplus-enchilada")
+		/*
+		 * For thundercomm we just want the bit after the comma
+		 * (e.g. "db845c"), for all other boards we replace the comma
+		 * with a '-' and take both (e.g. "oneplus-enchilada")
 		 */
 		if (!strncmp("thundercomm", buf, strlen("thundercomm"))) {
 			env_set("board", tmp);
@@ -400,6 +449,28 @@ static void configure_env(void)
 			*(tmp - 1) = '-';
 			env_set("board", buf);
 		}
+
+		/* The last compatible is always the SoC compatible */
+		ret = ofnode_read_string_index(root, "compatible",
+					       compat_count - 1, &last_compat);
+		if (ret < 0) {
+			log_warning("Can't read second compatible\n");
+			return;
+		}
+
+		/* Copy the last compat (e.g. "qcom,sdm845") into buf */
+		memset(buf, 0, sizeof(buf));
+		strlcpy(buf, last_compat, sizeof(buf) - 1);
+		tmp = buf;
+
+		/* strsep() is destructive, it replaces the comma with a \0 */
+		if (!strsep(&tmp, ",")) {
+			log_warning("second compatible '%s' has no ','\n", buf);
+			return;
+		}
+
+		/* tmp now points to just the "sdm845" part of the string */
+		env_set("soc", tmp);
 	}
 
 	/* Now build the full path name */

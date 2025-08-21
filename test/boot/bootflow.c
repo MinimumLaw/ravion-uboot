@@ -21,7 +21,6 @@
 #endif
 #include <dm/device-internal.h>
 #include <dm/lists.h>
-#include <test/suites.h>
 #include <test/ut.h>
 #include "bootstd_common.h"
 #include "../../boot/bootflow_internal.h"
@@ -298,8 +297,9 @@ static int bootflow_iter(struct unit_test_state *uts)
 
 	/* The first device is mmc2.bootdev which has no media */
 	ut_asserteq(-EPROTONOSUPPORT,
-		    bootflow_scan_first(NULL, NULL, &iter,
-					BOOTFLOWIF_ALL | BOOTFLOWIF_SKIP_GLOBAL, &bflow));
+		    bootflow_scan_first(NULL, NULL, &iter, BOOTFLOWIF_ALL |
+					BOOTFLOWIF_SKIP_GLOBAL |
+					BOOTFLOWIF_ONLY_BOOTABLE, &bflow));
 	ut_asserteq(2, iter.num_methods);
 	ut_asserteq(0, iter.cur_method);
 	ut_asserteq(0, iter.part);
@@ -1290,7 +1290,7 @@ static int bootflow_efi(struct unit_test_state *uts)
 
 	ut_assertok(run_command("bootflow scan", 0));
 	ut_assert_skip_to_line(
-		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
+		"Bus usb@1: 5 USB Device(s) found");
 
 	ut_assertok(run_command("bootflow list", 0));
 

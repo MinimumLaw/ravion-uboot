@@ -427,8 +427,8 @@ config BOOT_DEFAULTS
 
 menuconfig BOOTSTD
 	bool "Standard boot"
-	default y
-	depends on DM && OF_CONTROL && BLK
+	default y if BLK
+	depends on DM && OF_CONTROL
 	help
 	  U-Boot supports a standard way of locating something to boot,
 	  typically an Operating System such as Linux, provided by a distro such
@@ -1170,7 +1170,7 @@ config BOOTSTAGE_REPORT
 config BOOTSTAGE_RECORD_COUNT
 	int "Number of boot stage records to store"
 	depends on BOOTSTAGE
-	default 30
+	default 50
 	help
 	  This is the size of the bootstage record list and is the maximum
 	  number of bootstage records that can be recorded.
@@ -1434,14 +1434,6 @@ config NAND_BOOT
 	help
 	  Enabling this will make a U-Boot binary that is capable of being
 	  booted via NAND flash. This is not a must, some SoCs need this,
-	  some not.
-
-config ONENAND_BOOT
-	bool "Support for booting from ONENAND"
-	imply MTD_RAW_NAND
-	help
-	  Enabling this will make a U-Boot binary that is capable of being
-	  booted via ONENAND. This is not a must, some SoCs need this,
 	  some not.
 
 config QSPI_BOOT
@@ -1711,6 +1703,13 @@ config RESET_TO_RETRY
 	help
 	  After the countdown timed out, the board will be reset to restart
 	  again.
+
+config RETRY_BOOTCMD
+	bool "Run bootcmd on retry"
+	depends on BOOT_RETRY && HUSH_PARSER && !RESET_TO_RETRY
+	help
+	  If this option is enabled, the "bootcmd" will be run after the
+	  countdown times out.
 
 endmenu
 

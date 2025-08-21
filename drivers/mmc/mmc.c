@@ -1663,6 +1663,10 @@ static int mmc_execute_tuning(struct mmc *mmc, uint opcode)
 }
 #endif
 
+static void mmc_send_init_stream(struct mmc *mmc)
+{
+}
+
 static int mmc_set_ios(struct mmc *mmc)
 {
 	int ret = 0;
@@ -2550,7 +2554,7 @@ static int mmc_startup(struct mmc *mmc)
 
 	/*
 	 * For MMC cards, set the Relative Address.
-	 * For SD cards, get the Relatvie Address.
+	 * For SD cards, get the Relative Address.
 	 * This also puts the cards into Standby State
 	 */
 	if (!mmc_host_is_spi(mmc)) { /* cmd not supported in spi */
@@ -2929,6 +2933,8 @@ int mmc_get_op_cond(struct mmc *mmc, bool quiet)
 retry:
 	mmc_set_initial_state(mmc);
 
+	mmc_send_init_stream(mmc);
+
 	/* Reset the Card */
 	err = mmc_go_idle(mmc);
 
@@ -3040,9 +3046,9 @@ static int mmc_complete_init(struct mmc *mmc)
 	return err;
 }
 
-static void __maybe_unused mmc_cyclic_cd_poll(struct cyclic_info *c)
+static void mmc_cyclic_cd_poll(struct cyclic_info *c)
 {
-	struct mmc *m = CONFIG_IS_ENABLED(CYCLIC, (container_of(c, struct mmc, cyclic)), (NULL));
+	struct mmc *m = container_of(c, struct mmc, cyclic);
 
 	if (!m->has_init)
 		return;
@@ -3073,15 +3079,15 @@ int mmc_init(struct mmc *mmc)
 
 	if (!err)
 		err = mmc_complete_init(mmc);
-	if (err)
+	if (err) {
 		pr_info("%s: %d, time %lu\n", __func__, err, get_timer(start));
+		return err;
+	}
 
 	if (CONFIG_IS_ENABLED(CYCLIC, (!mmc->cyclic.func), (NULL))) {
 		/* Register cyclic function for card detect polling */
-		CONFIG_IS_ENABLED(CYCLIC, (cyclic_register(&mmc->cyclic,
-							   mmc_cyclic_cd_poll,
-							   100 * 1000,
-							   mmc->cfg->name)));
+		cyclic_register(&mmc->cyclic, mmc_cyclic_cd_poll, 100 * 1000,
+				mmc->cfg->name);
 	}
 
 	return err;
@@ -3092,7 +3098,7 @@ int mmc_deinit(struct mmc *mmc)
 	u32 caps_filtered;
 
 	if (CONFIG_IS_ENABLED(CYCLIC, (mmc->cyclic.func), (NULL)))
-		CONFIG_IS_ENABLED(CYCLIC, (cyclic_unregister(&mmc->cyclic)));
+		cyclic_unregister(&mmc->cyclic);
 
 	if (!CONFIG_IS_ENABLED(MMC_UHS_SUPPORT) &&
 	    !CONFIG_IS_ENABLED(MMC_HS200_SUPPORT) &&

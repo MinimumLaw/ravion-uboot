@@ -17,6 +17,9 @@ config TEGRA_UARTA_GPU
 config TEGRA_UARTA_SDIO1
 	bool
 
+config TEGRA_UARTA_SDB_SDD
+	bool
+
 choice
 	prompt "Tegra20 board select"
 	optional
@@ -27,6 +30,10 @@ config TARGET_HARMONY
 
 config TARGET_MEDCOM_WIDE
 	bool "Avionic Design Medcom-Wide board"
+	select BOARD_LATE_INIT
+
+config TARGET_MOT
+	bool "Motorola Tegra20 board"
 	select BOARD_LATE_INIT
 
 config TARGET_PAZ00
@@ -46,6 +53,10 @@ config TARGET_SEABOARD
 	select BOARD_LATE_INIT
 	select TEGRA_LP0
 	select TEGRA_PMU
+
+config TARGET_STAR
+	bool "LG Tegra20 Star board"
+	select BOARD_LATE_INIT
 
 config TARGET_TEC
 	bool "Avionic Design Tamonten Evaluation Carrier"
@@ -76,10 +87,12 @@ config SYS_SOC
 
 source "board/nvidia/harmony/Kconfig"
 source "board/avionic-design/medcom-wide/Kconfig"
+source "board/motorola/mot/Kconfig"
 source "board/compal/paz00/Kconfig"
 source "board/acer/picasso/Kconfig"
 source "board/avionic-design/plutux/Kconfig"
 source "board/nvidia/seaboard/Kconfig"
+source "board/lg/star/Kconfig"
 source "board/avionic-design/tec/Kconfig"
 source "board/asus/transformer-t20/Kconfig"
 source "board/compulab/trimslice/Kconfig"

@@ -9,6 +9,7 @@
 
 #include <command.h>
 #include <efi.h>
+#include <efi_device_path.h>
 #include <efi_loader.h>
 #include <exports.h>
 #include <log.h>
@@ -37,6 +38,9 @@ static efi_status_t bootefi_run_prepare(const char *load_options_path,
 				     loaded_image_infop);
 	if (ret != EFI_SUCCESS)
 		return ret;
+
+	(*image_objp)->auth_status = EFI_IMAGE_AUTH_PASSED;
+	(*image_objp)->entry = efi_selftest;
 
 	/* Transfer environment variable as load options */
 	return efi_env_set_load_options((efi_handle_t)*image_objp,
@@ -106,8 +110,8 @@ static int do_efi_selftest(void)
 		return CMD_RET_FAILURE;
 
 	/* Execute the test */
-	ret = EFI_CALL(efi_selftest(&image_obj->header, &systab));
-	free(loaded_image_info->load_options);
+	ret = do_bootefi_exec(&image_obj->header,
+			      loaded_image_info->load_options);
 	efi_free_pool(test_device_path);
 	efi_free_pool(test_image_path);
 	if (ret != EFI_SUCCESS)
@@ -211,7 +215,7 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 	}
 
-	ret = efi_binary_run(image_buf, size, fdt);
+	ret = efi_binary_run(image_buf, size, fdt, NULL, 0);
 
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;

@@ -100,7 +100,7 @@ class Toolchain:
         else:
             self.priority = priority
         if test:
-            result = command.run_pipe([cmd], capture=True, env=env,
+            result = command.run_one(*cmd, capture=True, env=env,
                                      raise_on_error=False)
             self.ok = result.return_code == 0
             if verbose:
@@ -217,7 +217,7 @@ class Toolchain:
         elif self.cross:
             env[b'CROSS_COMPILE'] = tools.to_bytes(wrapper + self.cross)
 
-            # Detect a Python virtualenv and avoid defeating it
+            # Detect a Python sandbox and avoid defeating it
             if sys.prefix != sys.base_prefix:
                 paths = env[b'PATH'].split(b':')
                 new_paths = []
@@ -531,7 +531,7 @@ class Toolchains:
         if arch == 'aarch64':
             arch = 'arm64'
         base = 'https://www.kernel.org/pub/tools/crosstool/files/bin'
-        versions = ['13.2.0', '12.2.0']
+        versions = ['14.2.0', '13.2.0']
         links = []
         for version in versions:
             url = '%s/%s/%s/' % (base, arch, version)

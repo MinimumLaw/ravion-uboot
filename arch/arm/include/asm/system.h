@@ -303,7 +303,25 @@ void flush_l3_cache(void);
  * @emerg: Also map the region in the emergency table
  */
 void mmu_map_region(phys_addr_t start, u64 size, bool emerg);
+
+/**
+ * mmu_change_region_attr() - change a mapped region attributes
+ *
+ * @start: Start address of the region
+ * @size:  Size of the region
+ * @aatrs: New attributes
+ */
 void mmu_change_region_attr(phys_addr_t start, size_t size, u64 attrs);
+
+/**
+ * mmu_change_region_attr_nobreak() - change a mapped region attributes without doing
+ *                                    break-before-make
+ *
+ * @start: Start address of the region
+ * @size:  Size of the region
+ * @aatrs: New attributes
+ */
+void mmu_change_region_attr_nobreak(phys_addr_t addr, size_t size, u64 attrs);
 
 /*
  * smc_call() - issue a secure monitor call
@@ -410,11 +428,21 @@ void switch_to_hypervisor_ret(void);
 #define wfi()
 #endif
 
+#if !defined(__thumb2__)
+/*
+ * We will need to switch to ARM mode (.arm) for some instructions such as
+ * mrc p15 etc.
+ */
+#define asm_arm_or_thumb2(insn) asm volatile(".arm\n\t" insn)
+#else
+#define asm_arm_or_thumb2(insn) asm volatile(insn)
+#endif
+
 static inline unsigned long read_mpidr(void)
 {
 	unsigned long val;
 
-	asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r" (val));
+	asm_arm_or_thumb2("mrc p15, 0, %0, c0, c0, 5" : "=r" (val));
 
 	return val;
 }
@@ -443,11 +471,13 @@ static inline unsigned int get_cr(void)
 	unsigned int val;
 
 	if (is_hyp())
-		asm volatile("mrc p15, 4, %0, c1, c0, 0	@ get CR" : "=r" (val)
+		asm_arm_or_thumb2("mrc p15, 4, %0, c1, c0, 0	@ get CR"
+								  : "=r" (val)
 								  :
 								  : "cc");
 	else
-		asm volatile("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val)
+		asm_arm_or_thumb2("mrc p15, 0, %0, c1, c0, 0	@ get CR"
+								  : "=r" (val)
 								  :
 								  : "cc");
 	return val;
@@ -456,11 +486,11 @@ static inline unsigned int get_cr(void)
 static inline void set_cr(unsigned int val)
 {
 	if (is_hyp())
-		asm volatile("mcr p15, 4, %0, c1, c0, 0	@ set CR" :
+		asm_arm_or_thumb2("mcr p15, 4, %0, c1, c0, 0	@ set CR" :
 								  : "r" (val)
 								  : "cc");
 	else
-		asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" :
+		asm_arm_or_thumb2("mcr p15, 0, %0, c1, c0, 0	@ set CR" :
 								  : "r" (val)
 								  : "cc");
 	isb();

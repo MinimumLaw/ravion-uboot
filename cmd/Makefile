@@ -155,7 +155,6 @@ obj-$(CONFIG_CMD_QFW) += qfw.o
 obj-$(CONFIG_CMD_READ) += read.o
 obj-$(CONFIG_CMD_WRITE) += read.o
 obj-$(CONFIG_CMD_REGINFO) += reginfo.o
-obj-$(CONFIG_CMD_REISER) += reiser.o
 obj-$(CONFIG_CMD_REMOTEPROC) += remoteproc.o
 obj-$(CONFIG_CMD_RNG) += rng.o
 obj-$(CONFIG_CMD_KASLRSEED) += kaslrseed.o
@@ -240,6 +239,8 @@ obj-$(CONFIG_CMD_SCP03) += scp03.o
 
 obj-$(CONFIG_HUSH_SELECTABLE) += cli.o
 
+obj-$(CONFIG_CMD_SPAWN) += spawn.o
+
 obj-$(CONFIG_ARM) += arm/
 obj-$(CONFIG_RISCV) += riscv/
 obj-$(CONFIG_SANDBOX) += sandbox/
@@ -256,7 +257,7 @@ obj-$(CONFIG_ARCH_K3) += ti/
 obj-$(CONFIG_ARCH_OMAP2PLUS) += ti/
 endif # !CONFIG_XPL_BUILD
 
-obj-$(CONFIG_$(XPL_)CMD_TLV_EEPROM) += tlv_eeprom.o
+obj-$(CONFIG_$(PHASE_)CMD_TLV_EEPROM) += tlv_eeprom.o
 
 obj-$(CONFIG_CMD_BCM_EXT_UTILS) += broadcom/
 

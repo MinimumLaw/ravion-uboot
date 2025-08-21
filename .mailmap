@@ -35,9 +35,11 @@ Bhupesh Sharma <bhupesh.linux@gmail.com> <bhupesh.sharma@linaro.org>
 Bin Meng <bmeng.cn@gmail.com> <bin.meng@windriver.com>
 Boris Brezillon <bbrezillon@kernel.org> <boris.brezillon@bootlin.com>
 Boris Brezillon <bbrezillon@kernel.org> <boris.brezillon@free-electrons.com>
+Casey Connolly <casey.connolly@linaro.org> <caleb.connolly@linaro.org>
 Christian Kohn <chris.kohn@amd.com> <christian.kohn@xilinx.com>
 Christopher Obbard <christopher.obbard@linaro.org> <chris.obbard@collabora.com>
 Dirk Behme <dirk.behme@googlemail.com>
+<duje@dujemihanovic.xyz> <duje.mihanovic@skole.hr>
 Durga Challa <durga.challa@amd.com> <vnsl.durga.challa@xilinx.com>
 Eugen Hristev <eugen.hristev@linaro.org> <eugen.hristev@microchip.com>
 Eugen Hristev <eugen.hristev@linaro.org> <eugen.hristev@collabora.com>
@@ -95,7 +97,8 @@ This contributor prefers not to receive mails <noreply@example.com> <pali.rohar@
 Padmarao Begari <padmarao.begari@amd.com> <padmarao.begari@microchip.com>
 Patrice Chotard <patrice.chotard@foss.st.com> <patrice.chotard@st.com>
 Patrick Delaunay <patrick.delaunay@foss.st.com> <patrick.delaunay@st.com>
-Paul Burton <paul.burton@mips.com> <paul.burton@imgtec.com>
+Paul Burton <paulburton@kernel.org> <paul.burton@imgtec.com>
+Paul Burton <paulburton@kernel.org> <paul.burton@mips.com>
 Philipp Tomsich <philipp.tomsich@vrull.eu> <philipp.tomsich@theobroma-systems.com>
 Piyush Mehta <piyush.mehta@amd.com> <piyush.mehta@xilinx.com>
 Prabhakar Kushwaha <prabhakar@freescale.com>
@@ -123,8 +126,10 @@ Siva Durga Prasad Paladugu <siva.durga.prasad.paladugu@amd.com> <sivadur@xilinx.
 Srinivas Goud <srinivas.goud@amd.com> <srinivas.goud@xilinx.com>
 Srinivas Neeli <srinivas.neeli@amd.com> <srinivas.neeli@xilinx.com>
 Stefan Roese <sr@denx.de> <stroese>
-Stefano Babic <sbabic@denx.de>
+Stefano Babic <sbabic@nabladev.com>
 Stefano Stabellini <stefano.stabellini@amd.com> <stefano.stabellini@xilinx.com>
+No generic patch CC mail please <noreply@example.com> <swarren@wwwdotorg.org>
+No generic patch CC mail please <noreply@example.com> <swarren@nvidia.com>
 Sumit Garg <sumit.garg@kernel.org> <sumit.garg@linaro.org>
 Tom Rini <trini@konsulko.com> <trini@ti.com>
 Tomas Thoresen <tomas.thoresen@amd.com> <tomast@xilinx.com>

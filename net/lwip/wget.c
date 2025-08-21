@@ -6,8 +6,10 @@
 #include <display_options.h>
 #include <efi_loader.h>
 #include <image.h>
+#include <linux/kconfig.h>
 #include <lwip/apps/http_client.h>
 #include "lwip/altcp_tls.h"
+#include <lwip/errno.h>
 #include <lwip/timeouts.h>
 #include <rng.h>
 #include <mapmem.h>
@@ -201,11 +203,58 @@ static int parse_legacy_arg(char *arg, char *nurl, size_t rem)
 	return 0;
 }
 
+/**
+ * store_block() - copy received data
+ *
+ * This function is called by the receive callback to copy a block of data
+ * into its final location (ctx->daddr). Before doing so, it checks if the copy
+ * is allowed.
+ *
+ * @ctx: the context for the current transfer
+ * @src: the data received from the TCP stack
+ * @len: the length of the data
+ */
+static int store_block(struct wget_ctx *ctx, void *src, u16_t len)
+{
+	ulong store_addr = ctx->daddr;
+	uchar *ptr;
+
+	/* Avoid overflow */
+	if (wget_info->buffer_size && wget_info->buffer_size < ctx->size + len)
+		return -1;
+
+	if (CONFIG_IS_ENABLED(LMB) && wget_info->set_bootdev) {
+		if (store_addr + len < store_addr ||
+		    lmb_read_check(store_addr, len)) {
+			if (!wget_info->silent) {
+				printf("\nwget error: ");
+				printf("trying to overwrite reserved memory\n");
+			}
+			return -1;
+		}
+	}
+
+	ptr = map_sysmem(store_addr, len);
+	memcpy(ptr, src, len);
+	unmap_sysmem(ptr);
+
+	ctx->daddr += len;
+	ctx->size += len;
+	if (ctx->size - ctx->prevsize > PROGRESS_PRINT_STEP_BYTES) {
+		if (!wget_info->silent)
+			printf("#");
+		ctx->prevsize = ctx->size;
+	}
+
+	return 0;
+}
+
 static err_t httpc_recv_cb(void *arg, struct altcp_pcb *pcb, struct pbuf *pbuf,
 			   err_t err)
 {
 	struct wget_ctx *ctx = arg;
 	struct pbuf *buf;
+	err_t ret;
 
 	if (!pbuf)
 		return ERR_BUF;
@@ -214,18 +263,17 @@ static err_t httpc_recv_cb(void *arg, struct altcp_pcb *pcb, struct pbuf *pbuf,
 		ctx->start_time = get_timer(0);
 
 	for (buf = pbuf; buf; buf = buf->next) {
-		memcpy((void *)ctx->daddr, buf->payload, buf->len);
-		ctx->daddr += buf->len;
-		ctx->size += buf->len;
-		if (ctx->size - ctx->prevsize > PROGRESS_PRINT_STEP_BYTES) {
-			printf("#");
-			ctx->prevsize = ctx->size;
+		if (store_block(ctx, buf->payload, buf->len) < 0) {
+			altcp_abort(pcb);
+			ret = ERR_BUF;
+			goto out;
 		}
 	}
-
 	altcp_recved(pcb, pbuf->tot_len);
+	ret = ERR_OK;
+out:
 	pbuf_free(pbuf);
-	return ERR_OK;
+	return ret;
 }
 
 static void httpc_result_cb(void *arg, httpc_result_t httpc_result,
@@ -255,11 +303,15 @@ static void httpc_result_cb(void *arg, httpc_result_t httpc_result,
 	elapsed = get_timer(ctx->start_time);
 	if (!elapsed)
 		elapsed = 1;
-	if (rx_content_len > PROGRESS_PRINT_STEP_BYTES)
-		printf("\n");
-	printf("%u bytes transferred in %lu ms (", rx_content_len, elapsed);
-	print_size(rx_content_len / elapsed * 1000, "/s)\n");
-	printf("Bytes transferred = %lu (%lx hex)\n", ctx->size, ctx->size);
+	if (!wget_info->silent) {
+		if (rx_content_len > PROGRESS_PRINT_STEP_BYTES)
+			printf("\n");
+		printf("%u bytes transferred in %lu ms (", rx_content_len,
+		       elapsed);
+		print_size(rx_content_len / elapsed * 1000, "/s)\n");
+		printf("Bytes transferred = %lu (%lx hex)\n", ctx->size,
+		       ctx->size);
+	}
 	if (wget_info->set_bootdev)
 		efi_set_bootdev("Http", ctx->server_name, ctx->path, map_sysmem(ctx->saved_daddr, 0),
 				rx_content_len);
@@ -285,13 +337,102 @@ static err_t httpc_headers_done_cb(httpc_state_t *connection, void *arg, struct 
 	return ERR_OK;
 }
 
-static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
+#if CONFIG_IS_ENABLED(WGET_HTTPS)
+enum auth_mode {
+	AUTH_NONE,
+	AUTH_OPTIONAL,
+	AUTH_REQUIRED,
+};
+
+static char *cacert;
+static size_t cacert_size;
+static enum auth_mode cacert_auth_mode = AUTH_OPTIONAL;
+#endif
+
+#if CONFIG_IS_ENABLED(WGET_CACERT)
+static int set_auth(enum auth_mode auth)
 {
-#if defined CONFIG_WGET_HTTPS
+	cacert_auth_mode = auth;
+
+	return CMD_RET_SUCCESS;
+}
+#endif
+
+#if CONFIG_IS_ENABLED(WGET_BUILTIN_CACERT)
+extern const char builtin_cacert[];
+extern const size_t builtin_cacert_size;
+static bool cacert_initialized;
+#endif
+
+#if CONFIG_IS_ENABLED(WGET_CACERT) || CONFIG_IS_ENABLED(WGET_BUILTIN_CACERT)
+static int _set_cacert(const void *addr, size_t sz)
+{
+	mbedtls_x509_crt crt;
+	void *p;
+	int ret;
+
+	if (cacert)
+		free(cacert);
+
+	if (!addr) {
+		cacert = NULL;
+		cacert_size = 0;
+		return CMD_RET_SUCCESS;
+	}
+
+	p = malloc(sz);
+	if (!p)
+		return CMD_RET_FAILURE;
+	cacert = p;
+	cacert_size = sz;
+
+	memcpy(cacert, (void *)addr, sz);
+
+	mbedtls_x509_crt_init(&crt);
+	ret = mbedtls_x509_crt_parse(&crt, cacert, cacert_size);
+	if (ret) {
+		if (!wget_info->silent)
+			printf("Could not parse certificates (%d)\n", ret);
+		free(cacert);
+		cacert = NULL;
+		cacert_size = 0;
+		return CMD_RET_FAILURE;
+	}
+
+#if CONFIG_IS_ENABLED(WGET_BUILTIN_CACERT)
+	cacert_initialized = true;
+#endif
+	return CMD_RET_SUCCESS;
+}
+
+#if CONFIG_IS_ENABLED(WGET_BUILTIN_CACERT)
+static int set_cacert_builtin(void)
+{
+	return _set_cacert(builtin_cacert, builtin_cacert_size);
+}
+#endif
+
+#if CONFIG_IS_ENABLED(WGET_CACERT)
+static int set_cacert(char * const saddr, char * const ssz)
+{
+	ulong addr, sz;
+
+	addr = hextoul(saddr, NULL);
+	sz = hextoul(ssz, NULL);
+
+	return _set_cacert((void *)addr, sz);
+}
+#endif
+#endif  /* CONFIG_WGET_CACERT || CONFIG_WGET_BUILTIN_CACERT */
+
+int wget_do_request(ulong dst_addr, char *uri)
+{
+#if CONFIG_IS_ENABLED(WGET_HTTPS)
 	altcp_allocator_t tls_allocator;
 #endif
 	httpc_connection_t conn;
 	httpc_state_t *state;
+	struct udevice *udev;
 	struct netif *netif;
 	struct wget_ctx ctx;
 	char *path;
@@ -307,16 +448,59 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	if (parse_url(uri, ctx.server_name, &ctx.port, &path, &is_https))
 		return CMD_RET_USAGE;
 
+	if (net_lwip_eth_start() < 0)
+		return CMD_RET_FAILURE;
+
+	if (!wget_info)
+		wget_info = &default_wget_info;
+
+	udev = eth_get_dev();
+
 	netif = net_lwip_new_netif(udev);
 	if (!netif)
 		return -1;
 
 	memset(&conn, 0, sizeof(conn));
-#if defined CONFIG_WGET_HTTPS
+#if CONFIG_IS_ENABLED(WGET_HTTPS)
 	if (is_https) {
+		char *ca;
+		size_t ca_sz;
+
+#if CONFIG_IS_ENABLED(WGET_BUILTIN_CACERT)
+		if (!cacert_initialized)
+			set_cacert_builtin();
+#endif
+		ca = cacert;
+		ca_sz = cacert_size;
+
+		if (cacert_auth_mode == AUTH_REQUIRED) {
+			if (!ca || !ca_sz) {
+				if (!wget_info->silent)
+					printf("Error: cacert authentication "
+					       "mode is 'required' but no CA "
+					       "certificates given\n");
+				return CMD_RET_FAILURE;
+		       }
+		} else if (cacert_auth_mode == AUTH_NONE) {
+			ca = NULL;
+			ca_sz = 0;
+		} else if (cacert_auth_mode == AUTH_OPTIONAL) {
+			/*
+			 * Nothing to do, this is the default behavior of
+			 * altcp_tls to check server certificates against CA
+			 * certificates when the latter are provided and proceed
+			 * with no verification if not.
+			 */
+		}
+
+		if (!ca && !wget_info->silent) {
+			printf("WARNING: no CA certificates, ");
+			printf("HTTPS connections not authenticated\n");
+		}
 		tls_allocator.alloc = &altcp_tls_alloc;
 		tls_allocator.arg =
-			altcp_tls_create_config_client(NULL, 0, ctx.server_name);
+			altcp_tls_create_config_client(ca, ca_sz,
+						       ctx.server_name);
 
 		if (!tls_allocator.arg) {
 			log_err("error: Cannot create a TLS connection\n");
@@ -337,6 +521,8 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 		return CMD_RET_FAILURE;
 	}
 
+	errno = 0;
+
 	while (!ctx.done) {
 		net_lwip_rx(udev, netif);
 		sys_check_timeouts();
@@ -349,17 +535,10 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	if (ctx.done == SUCCESS)
 		return 0;
 
+	if (errno == EPERM && !wget_info->silent)
+		printf("Certificate verification failed\n");
+
 	return -1;
-}
-
-int wget_do_request(ulong dst_addr, char *uri)
-{
-	net_lwip_set_current();
-
-	if (!wget_info)
-		wget_info = &default_wget_info;
-
-	return wget_loop(eth_get_dev(), dst_addr, uri);
 }
 
 int do_wget(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
@@ -368,6 +547,24 @@ int do_wget(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 	char *url;
 	ulong dst_addr;
 	char nurl[1024];
+
+#if CONFIG_IS_ENABLED(WGET_CACERT)
+	if (argc == 4 && !strncmp(argv[1], "cacert", strlen("cacert")))
+		return set_cacert(argv[2], argv[3]);
+	if (argc == 3 && !strncmp(argv[1], "cacert", strlen("cacert"))) {
+#if CONFIG_IS_ENABLED(WGET_BUILTIN_CACERT)
+		if (!strncmp(argv[2], "builtin", strlen("builtin")))
+			return set_cacert_builtin();
+#endif
+		if (!strncmp(argv[2], "none", strlen("none")))
+			return set_auth(AUTH_NONE);
+		if (!strncmp(argv[2], "optional", strlen("optional")))
+			return set_auth(AUTH_OPTIONAL);
+		if (!strncmp(argv[2], "required", strlen("required")))
+			return set_auth(AUTH_REQUIRED);
+		return CMD_RET_USAGE;
+	}
+#endif
 
 	if (argc < 2 || argc > 3)
 		return CMD_RET_USAGE;

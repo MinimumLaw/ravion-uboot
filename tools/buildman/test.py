@@ -836,6 +836,7 @@ class TestBuild(unittest.TestCase):
         tmpdir = self.base_dir
 
         with (patch('time.time', side_effect=self.get_time),
+              patch('time.perf_counter', side_effect=self.get_time),
               patch('time.monotonic', side_effect=self.get_time),
               patch('time.sleep', side_effect=self.inc_time),
               patch('os.kill', side_effect=self.kill)):
@@ -986,7 +987,7 @@ class TestBuild(unittest.TestCase):
         diff = self.call_make_environment(tchn, full_path=True)[0]
         self.assertEqual({b'LC_ALL': b'C'}, diff)
 
-        # Test that virtualenv is handled correctly
+        # Test that Python sandbox is handled correctly
         tchn.override_toolchain = False
         sys.prefix = '/some/venv'
         env = dict(os.environb)
