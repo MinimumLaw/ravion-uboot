@@ -30,7 +30,7 @@ config COUNTER_FREQUENCY
 			ROCKCHIP_RK3288 || ROCKCHIP_RK322X || ROCKCHIP_RK3036
 	default 25000000 if ARCH_LX2160A || ARCH_LX2162A || ARCH_LS1088A
 	default 100000000 if ARCH_ZYNQMP
-	default 200000000 if ARCH_SOCFPGA && ARM64 && TARGET_SOCFPGA_AGILEX5
+	default 200000000 if TARGET_SOCFPGA_AGILEX5 || TARGET_SOCFPGA_AGILEX7M
 	default 0
 	help
 	  For platforms with ARMv8-A and ARMv7-A which features a system
@@ -107,6 +107,18 @@ config LNX_KRNL_IMG_TEXT_OFFSET_BASE
 	help
 	  The value subtracted from CONFIG_TEXT_BASE to calculate the
 	  TEXT_OFFSET value written to the Linux kernel image header.
+
+config KVM_VIRT_INS
+	bool "Emit virtualizable instructions"
+	help
+	  Instructions in the ARM ISA that have multiple output registers,
+	  can't be used if the instruction leads to an exception to the hypervisor.
+	  These instructions cannot be emulated by KVM because they do not produce
+	  syndrome information data that KVM can use to infer the destination
+	  register, the faulting address, whether it was a load or store,
+	  if it's a 32 or 64 bit general-purpose register amongst other things.
+	  Use this to produce virtualizable instructions if you plan to run U-Boot
+	  with KVM.
 
 config NVIC
 	bool
@@ -810,6 +822,7 @@ config ARCH_KEYSTONE
 	imply CMD_SAVES
 	imply DM_I2C
 	imply FIT
+	imply OF_BOARD_SETUP_EXTENDED
 	imply SOC_TI
 	imply TI_KEYSTONE_SERDES
 
@@ -820,7 +833,12 @@ config ARCH_K3
 	select FIT
 	select REGEX
 	select FIT_SIGNATURE if ARM64
+	select DMA_ADDR_T_64BIT
+	select LTO
 	imply TI_SECURE_DEVICE
+	imply DM_RNG if ARM64
+	imply TEE if ARM64
+	imply OPTEE if ARM64
 
 config ARCH_OMAP2PLUS
 	bool "TI OMAP2+"
@@ -892,6 +910,7 @@ config ARCH_IMX8
 
 config ARCH_IMX8M
 	bool "NXP i.MX8M platform"
+	select ARCH_MISC_INIT if FSL_CAAM
 	select ARM64
 	select GPIO_EXTRA_HEADER
 	select MACH_IMX
@@ -941,6 +960,7 @@ config ARCH_IMXRT
 
 config ARCH_MX23
 	bool "NXP i.MX23 family"
+	select ARCH_MISC_INIT
 	select CPU_ARM926EJS
 	select GPIO_EXTRA_HEADER
 	select MACH_IMX
@@ -948,16 +968,11 @@ config ARCH_MX23
 
 config ARCH_MX28
 	bool "NXP i.MX28 family"
+	select ARCH_MISC_INIT
 	select CPU_ARM926EJS
 	select GPIO_EXTRA_HEADER
 	select MACH_IMX
 	select SUPPORT_SPL
-
-config ARCH_MX31
-	bool "NXP i.MX31 family"
-	select CPU_ARM1136
-	select GPIO_EXTRA_HEADER
-	select MACH_IMX
 
 config ARCH_MX7ULP
 	bool "NXP MX7ULP"
@@ -1067,7 +1082,7 @@ config ARCH_OWL
 	select CLK
 	select CLK_OWL
 	select OF_CONTROL
-	select SYS_RELOC_GD_ENV_ADDR
+	select ENV_RELOC_GD_ENV_ADDR
 	imply CMD_DM
 
 config ARCH_QEMU
@@ -1095,6 +1110,7 @@ config ARCH_QEMU
 
 config ARCH_RENESAS
 	bool "Renesas ARM SoCs"
+	select ARCH_MISC_INIT if DISPLAY_CPUINFO && !(RZA1 || RZN1)
 	select DM
 	select DM_SERIAL
 	select GPIO_EXTRA_HEADER
@@ -1104,7 +1120,6 @@ config ARCH_RENESAS
 	imply FAT_WRITE
 	imply OF_UPSTREAM
 	imply SYS_THUMB_BUILD
-	imply ARCH_MISC_INIT if DISPLAY_CPUINFO
 
 config ARCH_SNAPDRAGON
 	bool "Qualcomm Snapdragon SoCs"
@@ -1125,6 +1140,7 @@ config ARCH_SNAPDRAGON
 	select LINUX_KERNEL_IMAGE_HEADER if !ENABLE_ARM_SOC_BOOT0_HOOK
 	select SYSRESET
 	select SYSRESET_PSCI
+	select ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR
 	imply OF_UPSTREAM
 	imply CMD_DM
 	imply DM_USB_GADGET
@@ -1158,8 +1174,9 @@ config ARCH_SOCFPGA
 	select SYSRESET
 	select SYSRESET_SOCFPGA if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
 	select SYSRESET_SOCFPGA_SOC64 if !TARGET_SOCFPGA_AGILEX5 && \
-	  TARGET_SOCFPGA_SOC64
+           TARGET_SOCFPGA_SOC64
 	select SYSRESET_PSCI if TARGET_SOCFPGA_AGILEX5
+	select USE_BOOTFILE if SPL_ATF && TARGET_SOCFPGA_SOC64
 	imply CMD_DM
 	imply CMD_MTDPARTS
 	imply CRC32_VERIFY
@@ -1207,7 +1224,7 @@ config ARCH_SUNXI
 	select USB_STORAGE if DISTRO_DEFAULTS && USB_HOST
 	select SPL_USE_TINY_PRINTF if SPL
 	select USE_PREBOOT
-	select SYS_RELOC_GD_ENV_ADDR
+	select ENV_RELOC_GD_ENV_ADDR
 	imply BOARD_LATE_INIT
 	imply CMD_DM
 	imply CMD_GPT
@@ -1532,7 +1549,6 @@ config TARGET_LX2160AQDS
 config TARGET_LX2162AQDS
 	bool "Support lx2162aqds"
 	select ARCH_LX2162A
-	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
 	select ARCH_SUPPORT_TFABOOT
@@ -1945,7 +1961,6 @@ config TARGET_SL28
 config TARGET_TEN64
 	bool "Support ten64"
 	select ARCH_LS1088A
-	select ARCH_MISC_INIT
 	select ARM64
 	select ARMV8_MULTIENTRY
 	select ARCH_SUPPORT_TFABOOT
@@ -1989,7 +2004,6 @@ config ARCH_SYNQUACER
 	bool "Socionext SynQuacer SoCs"
 	select ARM64
 	select DM
-	select GIC_V3
 	select PSCI_RESET
 	select SYSRESET
 	select SYSRESET_PSCI
@@ -2302,8 +2316,6 @@ source "arch/arm/mach-octeontx/Kconfig"
 source "arch/arm/mach-octeontx2/Kconfig"
 
 source "arch/arm/cpu/armv7/ls102xa/Kconfig"
-
-source "arch/arm/mach-imx/mx3/Kconfig"
 
 source "arch/arm/mach-imx/mx5/Kconfig"
 

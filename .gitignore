@@ -56,11 +56,12 @@ fit-dtb.blob*
 /*.log
 
 #
-# git files that we don't want to ignore even it they are dot-files
+# We don't want to ignore the following even if they are dot-files
 #
+!.get_maintainer.*
+!.gitattributes
 !.gitignore
 !.mailmap
-!.get_maintainer.*
 
 #
 # Generated files
@@ -75,6 +76,7 @@ fit-dtb.blob*
 /keep-syms-lto.*
 /*imx8mimage*
 /*imx8mcst*
+/*rcar4-sa0*
 /drivers/video/u_boot_logo.S
 /test/overlay/test-fdt-overlay.dtbo.S
 /test/overlay/test-fdt-overlay-stacked.dtbo.S

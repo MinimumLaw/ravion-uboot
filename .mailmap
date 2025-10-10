@@ -48,6 +48,11 @@ Greg Malysa <malysagreg@gmail.com> <greg.malysa@timesys.com>
 Harini Katakam <harini.katakam@amd.com> <harini.katakam@xilinx.com>
 Harsha <harsha.harsha@amd.com> <harsha.harsha@xilinx.com>
 Heiko Stuebner <heiko.stuebner@cherry.de> <heiko.stuebner@theobroma-systems.com>
+Heiko Schocher <hs@nabladev.com> <hs@denx.de>
+Heiko Schocher <hs@nabladev.com> <hs@pollux.denx.de>
+Heiko Schocher <hs@nabladev.com> <heiko.schocher@invitel.hu>
+Heiko Schocher <hs@nabladev.com> <[hs@denx.de]>
+Heiko Schocher <hs@nabladev.com> <hs@pollux.(none)>
 Heinrich Schuchardt <xypron.glpk@gmx.de> <heinrich.schuchardt@canonical.com>
 Heinrich Schuchardt <xypron.glpk@gmx.de> xypron.glpk@gmx.de <xypron.glpk@gmx.de>
 Ibai Erkiaga <ibai.erkiaga-elorza@amd.com> <ibai.erkiaga-elorza@xilinx.com>
@@ -125,7 +130,7 @@ Siva Durga Prasad Paladugu <siva.durga.prasad.paladugu@amd.com> <siva.durga.pala
 Siva Durga Prasad Paladugu <siva.durga.prasad.paladugu@amd.com> <sivadur@xilinx.com>
 Srinivas Goud <srinivas.goud@amd.com> <srinivas.goud@xilinx.com>
 Srinivas Neeli <srinivas.neeli@amd.com> <srinivas.neeli@xilinx.com>
-Stefan Roese <sr@denx.de> <stroese>
+Stefan Roese <stefan.roese@mailbox.org> <stroese>
 Stefano Babic <sbabic@nabladev.com>
 Stefano Stabellini <stefano.stabellini@amd.com> <stefano.stabellini@xilinx.com>
 No generic patch CC mail please <noreply@example.com> <swarren@wwwdotorg.org>

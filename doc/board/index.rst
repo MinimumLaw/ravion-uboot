@@ -38,6 +38,7 @@ Board-specific doc
    kontron/index
    lenovo/index
    lg/index
+   liebherr/index
    mediatek/index
    microchip/index
    microsoft/index
@@ -46,6 +47,7 @@ Board-specific doc
    nxp/index
    openpiton/index
    ouya/index
+   pegatron/index
    phytec/index
    purism/index
    qualcomm/index

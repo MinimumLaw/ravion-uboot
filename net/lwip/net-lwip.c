@@ -3,18 +3,24 @@
 /* Copyright (C) 2024 Linaro Ltd. */
 
 #include <command.h>
+#include <env.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <hexdump.h>
+#include <linux/compiler_attributes.h>
+#include <linux/kernel.h>
 #include <lwip/ip4_addr.h>
+#include <lwip/dns.h>
 #include <lwip/err.h>
 #include <lwip/netif.h>
 #include <lwip/pbuf.h>
 #include <lwip/etharp.h>
 #include <lwip/init.h>
 #include <lwip/prot/etharp.h>
+#include <lwip/timeouts.h>
 #include <net.h>
 #include <timer.h>
+#include <u-boot/schedule.h>
 
 /* xx:xx:xx:xx:xx:xx\0 */
 #define MAC_ADDR_STRLEN 18
@@ -22,10 +28,11 @@
 #if defined(CONFIG_API) || defined(CONFIG_EFI_LOADER)
 void (*push_packet)(void *, int len) = 0;
 #endif
-static int net_try_count;
+int net_try_count;
 static int net_restarted;
 int net_restart_wrap;
-static uchar net_pkt_buf[(PKTBUFSRX) * PKTSIZE_ALIGN + PKTALIGN];
+static uchar net_pkt_buf[(PKTBUFSRX) * PKTSIZE_ALIGN + PKTALIGN]
+	__aligned(PKTALIGN);
 uchar *net_rx_packets[PKTBUFSRX];
 uchar *net_rx_packet;
 const u8 net_bcast_ethaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -138,6 +145,40 @@ static int get_udev_ipv4_info(struct udevice *dev, ip4_addr_t *ip,
 }
 
 /*
+ * Initialize DNS via env
+ */
+int net_lwip_dns_init(void)
+{
+#if CONFIG_IS_ENABLED(DNS)
+	bool has_server = false;
+	ip_addr_t ns;
+	char *nsenv;
+
+	nsenv = env_get("dnsip");
+	if (nsenv && ipaddr_aton(nsenv, &ns)) {
+		dns_setserver(0, &ns);
+		has_server = true;
+	}
+
+	nsenv = env_get("dnsip2");
+	if (nsenv && ipaddr_aton(nsenv, &ns)) {
+		dns_setserver(1, &ns);
+		has_server = true;
+	}
+
+	if (!has_server) {
+		log_err("No valid name server (dnsip/dnsip2)\n");
+		return -EINVAL;
+	}
+
+	return 0;
+#else
+	log_err("DNS disabled\n");
+	return -EINVAL;
+#endif
+}
+
+/*
  * Initialize the network stack if needed and start the current device if valid
  */
 int net_lwip_eth_start(void)
@@ -145,16 +186,12 @@ int net_lwip_eth_start(void)
 	int ret;
 
 	net_init();
-	if (eth_is_on_demand_init()) {
+	eth_halt();
+	eth_set_current();
+	ret = eth_init();
+	if (ret < 0) {
 		eth_halt();
-		eth_set_current();
-		ret = eth_init();
-		if (ret < 0) {
-			eth_halt();
-			return ret;
-		}
-	} else {
-		eth_init_state_only();
+		return ret;
 	}
 
 	return 0;
@@ -246,7 +283,6 @@ int net_init(void)
 
 	if (!init_done) {
 		eth_init_rings();
-		eth_init();
 		lwip_init();
 		init_done = true;
 	}
@@ -284,6 +320,11 @@ int net_lwip_rx(struct udevice *udev, struct netif *netif)
 	int len;
 	int i;
 
+	/* lwIP timers */
+	sys_check_timeouts();
+	/* Other tasks and actions */
+	schedule();
+
 	if (!eth_is_active(udev))
 		return -EINVAL;
 
@@ -313,6 +354,44 @@ int net_lwip_rx(struct udevice *udev, struct netif *netif)
 		len = 0;
 
 	return len;
+}
+
+/**
+ * net_lwip_dns_resolve() - find IP address from name or IP
+ *
+ * @name_or_ip: host name or IP address
+ * @ip: output IP address
+ *
+ * Return value: 0 on success, -1 on failure.
+ */
+int net_lwip_dns_resolve(char *name_or_ip, ip_addr_t *ip)
+{
+#if defined(CONFIG_DNS)
+	char *var = "_dnsres";
+	char *argv[] = { "dns", name_or_ip, var, NULL };
+	int argc = ARRAY_SIZE(argv) - 1;
+#endif
+
+	if (ipaddr_aton(name_or_ip, ip))
+		return 0;
+
+#if defined(CONFIG_DNS)
+	if (do_dns(NULL, 0, argc, argv) != CMD_RET_SUCCESS)
+		return -1;
+
+	name_or_ip = env_get(var);
+	if (!name_or_ip)
+		return -1;
+
+	if (!ipaddr_aton(name_or_ip, ip))
+		return -1;
+
+	env_set(var, NULL);
+
+	return 0;
+#else
+	return -1;
+#endif
 }
 
 void net_process_received_packet(uchar *in_packet, int len)

@@ -936,6 +936,14 @@
 		};
 	};
 
+	i3c0 {
+		compatible = "sandbox,i3c";
+	};
+
+	i3c1 {
+		compatible = "sandbox,i3c";
+	};
+
 	bootcount@0 {
 		compatible = "u-boot,bootcount-rtc";
 		rtc = <&rtc_1>;
@@ -2149,6 +2157,10 @@
 				remote-endpoint = <&graph2_link>;
 			};
 		};
+	};
+
+	aes-engine {
+		compatible = "software-aes-engine";
 	};
 };
 

@@ -25,7 +25,6 @@ typedef enum {			/* typedef fpga_type */
 	fpga_min_type,		/* range check value */
 	fpga_xilinx,		/* Xilinx Family) */
 	fpga_altera,		/* unimplemented */
-	fpga_lattice,		/* Lattice family */
 	fpga_undefined		/* invalid range check value */
 } fpga_type;			/* end, typedef fpga_type */
 
@@ -79,7 +78,7 @@ int fpga_loadbitstream(int devnum, char *fpgadata, size_t size,
 int fpga_dump(int devnum, const void *buf, size_t bsize);
 int fpga_info(int devnum);
 const fpga_desc *fpga_validate(int devnum, const void *buf,
-			       size_t bsize, char *fn);
+			       size_t bsize);
 int fpga_compatible2flag(int devnum, const char *compatible);
 
 #endif	/* _FPGA_H_ */

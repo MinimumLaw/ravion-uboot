@@ -6,19 +6,13 @@
 #ifndef __IMX93_EVK_H
 #define __IMX93_EVK_H
 
-#include <linux/sizes.h>
-#include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>
 
 #define CFG_SYS_UBOOT_BASE	\
 	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
-#ifdef CONFIG_XPL_BUILD
-#define CFG_MALLOC_F_ADDR		0x204D0000
-#endif
-
-#ifdef CONFIG_SYS_MMC_ENV_DEV
-#define IMX93_EVK_MMC_ENV_DEV CONFIG_SYS_MMC_ENV_DEV
+#ifdef CONFIG_ENV_MMC_DEVICE_INDEX
+#define IMX93_EVK_MMC_ENV_DEV CONFIG_ENV_MMC_DEVICE_INDEX
 #else
 #define IMX93_EVK_MMC_ENV_DEV 0
 #endif

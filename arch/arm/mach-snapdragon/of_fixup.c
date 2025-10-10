@@ -13,7 +13,7 @@
  * boot Linux with the original FDT.
  *
  * Copyright (c) 2024 Linaro Ltd.
- *   Author: Caleb Connolly <caleb.connolly@linaro.org>
+ *   Author: Casey Connolly <casey.connolly@linaro.org>
  */
 
 #define pr_fmt(fmt) "of_fixup: " fmt
@@ -97,19 +97,6 @@ static int fixup_qcom_dwc3(struct device_node *root, struct device_node *glue_np
 	if (ret) {
 		log_err("Failed to set 'maximum-speed' property: %d\n", ret);
 		return ret;
-	}
-
-	/*
-	 * The RB1/2 boards only have a single USB controller and it's muxed between the type-C port
-	 * and a USB hub. Since we can't do OTG in U-Boot properly we prefer to put it into host mode.
-	 */
-	if (of_device_is_compatible(root, "qcom,qrb4210-rb2", NULL, NULL) ||
-	    of_device_is_compatible(root, "qcom,qrb2210-rb1", NULL, NULL)) {
-		ret = of_write_prop(dwc3, "dr_mode", sizeof("host"), "host");
-		if (ret) {
-			log_err("Failed to set 'dr_mode' property: %d\n", ret);
-			return ret;
-		}
 	}
 
 	return 0;

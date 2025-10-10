@@ -20,6 +20,7 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/printk.h>
+#include <linux/sizes.h>
 #include <power/regulator.h>
 #include <malloc.h>
 #include <memalign.h>
@@ -2364,8 +2365,10 @@ static int mmc_startup_v4(struct mmc *mmc)
 		return -ENOMEM;
 	memcpy(mmc->ext_csd, ext_csd, MMC_MAX_BLOCK_LEN);
 #endif
-	if (ext_csd[EXT_CSD_REV] >= ARRAY_SIZE(mmc_versions))
-		return -EINVAL;
+	if (ext_csd[EXT_CSD_REV] >= ARRAY_SIZE(mmc_versions)) {
+		err = -EINVAL;
+		goto error;
+	}
 
 	mmc->version = mmc_versions[ext_csd[EXT_CSD_REV]];
 
@@ -3277,8 +3280,8 @@ int mmc_set_bkops_enable(struct mmc *mmc, bool autobkops, bool enable)
 
 __weak int mmc_get_env_dev(void)
 {
-#ifdef CONFIG_SYS_MMC_ENV_DEV
-	return CONFIG_SYS_MMC_ENV_DEV;
+#ifdef CONFIG_ENV_MMC_DEVICE_INDEX
+	return CONFIG_ENV_MMC_DEVICE_INDEX;
 #else
 	return 0;
 #endif

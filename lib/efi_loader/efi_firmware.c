@@ -12,6 +12,7 @@
 #include <dfu.h>
 #include <efi_loader.h>
 #include <efi_variable.h>
+#include <env.h>
 #include <fwu.h>
 #include <image.h>
 #include <signatures.h>
@@ -331,6 +332,8 @@ static efi_status_t efi_fill_image_desc_array(
 
 		return EFI_BUFFER_TOO_SMALL;
 	}
+	if (!image_info)
+		return EFI_INVALID_PARAMETER;
 	*image_info_size = total_size;
 
 	ret = efi_gen_capsule_guids();

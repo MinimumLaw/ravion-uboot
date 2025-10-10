@@ -27,8 +27,22 @@ config DEPRECATED
 	  code that relies on deprecated features that will be removed and
 	  the conversion deadline has passed.
 
+config COMPILE_TEST
+	bool "Compile also drivers which will not load"
+	help
+	  Some drivers can be compiled on a different platform than they are
+	  intended to be run on. Despite they cannot be loaded there (or even
+	  when they load they cannot be used due to missing HW support),
+	  developers still, opposing to distributors, might want to build such
+	  drivers to compile-test them.
+
+	  If you are a developer and want to build everything available, say Y
+	  here. If you are a user/distributor, say N here to exclude useless
+	  drivers to be distributed.
+
 config WERROR
 	bool "Compile U-Boot with warnings as errors"
+	default COMPILE_TEST
 	help
 	  A U-Boot build should not cause any compiler warnings, and this
 	  enables the '-Werror' flag to enforce that rule.
@@ -309,7 +323,7 @@ config SYS_MALLOC_F_LEN
 config SYS_MALLOC_LEN
 	hex "Define memory for Dynamic allocation"
 	default 0x4000000 if SANDBOX
-	default 0x2000000 if ARCH_ROCKCHIP || ARCH_OMAP2PLUS || ARCH_MESON
+	default 0x2000000 if ARCH_ROCKCHIP || ARCH_OMAP2PLUS || ARCH_MESON || ARCH_K3
 	default 0x200000 if ARCH_BMIPS || X86
 	default 0x4020000 if SUNXI_MINIMUM_DRAM_MB >= 256
 	default 0x220000 if SUNXI_MINIMUM_DRAM_MB >= 64
@@ -523,6 +537,7 @@ config BUILD_TARGET
 
 config HAS_BOARD_SIZE_LIMIT
 	bool "Define a maximum size for the U-Boot image"
+	depends on !COMPILE_TEST
 	default y if RCAR_32 || RCAR_64
 	help
 	  In some cases, we need to enforce a hard limit on how big the U-Boot
@@ -537,10 +552,11 @@ config BOARD_SIZE_LIMIT
 	  Maximum size of the U-Boot image. When defined, the build system
 	  checks that the actual size does not exceed it.  This does not
 	  include SPL nor TPL, on platforms that use that functionality, they
-	  have a separate option to restict size.
+	  have separate options to restrict size.
 
 config SYS_CUSTOM_LDSCRIPT
 	bool "Use a custom location for the U-Boot linker script"
+	depends on !COMPILE_TEST
 	help
 	  Normally when linking U-Boot we will look in the board directory,
 	  the CPU directory and finally the "cpu" directory of the architecture

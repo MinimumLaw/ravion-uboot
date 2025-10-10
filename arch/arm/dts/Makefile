@@ -92,6 +92,8 @@ dtb-$(CONFIG_ARCH_TEGRA) += \
 	tegra20-motorola-olympus.dtb \
 	tegra20-paz00.dtb \
 	tegra20-plutux.dtb \
+	tegra20-samsung-bose.dtb \
+	tegra20-samsung-n1.dtb \
 	tegra20-seaboard.dtb \
 	tegra20-tec.dtb \
 	tegra20-trimslice.dtb \
@@ -117,10 +119,13 @@ dtb-$(CONFIG_ARCH_TEGRA) += \
 	tegra30-lg-p895.dtb \
 	tegra30-microsoft-surface-rt.dtb \
 	tegra30-ouya.dtb \
+	tegra30-pegatron-chagall.dtb \
 	tegra30-tec-ng.dtb \
 	tegra30-wexler-qc750.dtb \
 	tegra114-asus-tf701t.dtb \
 	tegra114-dalmore.dtb \
+	tegra114-microsoft-surface-2-0b.dtb \
+	tegra114-microsoft-surface-2-13.dtb \
 	tegra114-nvidia-tegratab.dtb \
 	tegra124-apalis.dtb \
 	tegra124-jetson-tk1.dtb \
@@ -445,7 +450,6 @@ dtb-$(CONFIG_AM43XX) += am437x-gp-evm.dtb am437x-sk-evm.dtb	\
 dtb-$(CONFIG_TARGET_THUNDERX_88XX) += thunderx-88xx.dtb
 
 dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
-	socfpga_agilex_socdk.dtb			\
 	socfpga_agilex5_socdk.dtb			\
 	socfpga_arria5_secu1.dtb			\
 	socfpga_arria5_socdk.dtb			\
@@ -646,11 +650,6 @@ dtb-$(CONFIG_MACH_SUN8I_R40) += \
 	sun8i-r40-oka40i-c.dtb \
 	sun8i-t3-cqa3t-bv3.dtb \
 	sun8i-v40-bananapi-m2-berry.dtb
-dtb-$(CONFIG_MACH_SUN8I_V3S) += \
-	sun8i-s3-elimo-initium.dtb \
-	sun8i-s3-pinecube.dtb \
-	sun8i-v3-sl631-imx179.dtb \
-	sun8i-v3s-licheepi-zero.dtb
 dtb-$(CONFIG_MACH_SUN8I_R528) += \
 	sun8i-t113s-mangopi-mq-r-t113.dtb
 dtb-$(CONFIG_MACH_SUN50I_H5) += \
@@ -760,7 +759,6 @@ dtb-y += \
 	imx6dl-riotboard.dtb \
 	imx6dl-sabreauto.dtb \
 	imx6dl-sabresd.dtb \
-	imx6dl-sielaff.dtb \
 	imx6dl-wandboard-revd1.dtb
 
 endif
@@ -918,12 +916,14 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mq-librem5-r4.dtb
 
 dtb-$(CONFIG_ARCH_IMX9) += \
+	imx93-11x11-frdm.dtb \
 	imx93-var-som-symphony.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1020-evk.dtb \
 	imxrt1170-evk.dtb \
 
 dtb-$(CONFIG_RZA1) += \
+	r7s72100-genmai.dtb \
 	r7s72100-gr-peach.dtb
 
 dtb-$(CONFIG_TARGET_AT91SAM9261EK) += at91sam9261ek.dtb
@@ -1111,7 +1111,9 @@ dtb-$(CONFIG_SOC_K3_AM62A7) += \
 	k3-am62a7-r5-sk.dtb \
 	k3-am62a7-r5-phycore-som-2gb.dtb
 
-dtb-$(CONFIG_SOC_K3_AM62P5) += k3-am62p5-r5-sk.dtb
+dtb-$(CONFIG_SOC_K3_AM62P5) += k3-am62p5-r5-sk.dtb \
+			       k3-am62p5-verdin-r5.dtb \
+			       k3-am62p5-verdin-wifi-dev.dtb
 
 dtb-$(CONFIG_ARCH_MEDIATEK) += \
 	mt7622-rfb.dtb \
