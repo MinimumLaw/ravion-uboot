@@ -106,16 +106,16 @@ static void mctl_sys_init(u32 clk_rate)
 	clrbits_le32(ccm + CCU_H6_DRAM_GATE_RESET, BIT(GATE_SHIFT));
 	udelay(5);
 	clrbits_le32(ccm + CCU_H6_DRAM_GATE_RESET, BIT(RESET_SHIFT));
-	clrbits_le32(ccm + CCU_H6_PLL5_CFG, CCM_PLL5_CTRL_EN);
+	clrbits_le32(ccm + CCU_H6_PLL5_CFG, CCM_PLL_CTRL_EN);
 	clrbits_le32(ccm + CCU_H6_DRAM_CLK_CFG, DRAM_MOD_RESET);
 
 	udelay(5);
 
 	/* Set PLL5 rate to doubled DRAM clock rate */
-	writel(CCM_PLL5_CTRL_EN | CCM_PLL5_LOCK_EN | CCM_PLL5_OUT_EN |
+	writel(CCM_PLL_CTRL_EN | CCM_PLL_LOCK_EN | CCM_PLL_OUT_EN |
 	       CCM_PLL5_CTRL_N(clk_rate * 2 / 24), ccm + CCU_H6_PLL5_CFG);
 	mctl_await_completion(ccm + CCU_H6_PLL5_CFG,
-			      CCM_PLL5_LOCK, CCM_PLL5_LOCK);
+			      CCM_PLL_LOCK, CCM_PLL_LOCK);
 
 	/* Configure DRAM mod clock */
 	writel(DRAM_CLK_SRC_PLL5, ccm + CCU_H6_DRAM_CLK_CFG);
@@ -1078,18 +1078,18 @@ static bool mctl_phy_init(const struct dram_para *para,
 		mctl_await_completion(&mctl_ctl->mrctrl0, BIT(31), 0);
 		break;
 	case SUNXI_DRAM_TYPE_LPDDR3:
-		writel(mr0, &mctl_ctl->mrctrl1);
+		/* MR0 is read-only */
+		/* MR1: nWR=14, BL8 */
+		writel(0x183, &mctl_ctl->mrctrl1);
 		writel(0x800000f0, &mctl_ctl->mrctrl0);
 		mctl_await_completion(&mctl_ctl->mrctrl0, BIT(31), 0);
 
-		writel(4, &mctl_ctl->mrctrl1);
+		/* MR2: no WR leveling, WL set A, use nWR>9, nRL=14/nWL=8 */
+		writel(0x21c, &mctl_ctl->mrctrl1);
 		writel(0x800000f0, &mctl_ctl->mrctrl0);
 		mctl_await_completion(&mctl_ctl->mrctrl0, BIT(31), 0);
 
-		writel(mr2, &mctl_ctl->mrctrl1);
-		writel(0x800000f0, &mctl_ctl->mrctrl0);
-		mctl_await_completion(&mctl_ctl->mrctrl0, BIT(31), 0);
-
+		/* MR3: 34.3 Ohm pull-up/pull-down resistor */
 		writel(0x301, &mctl_ctl->mrctrl1);
 		writel(0x800000f0, &mctl_ctl->mrctrl0);
 		mctl_await_completion(&mctl_ctl->mrctrl0, BIT(31), 0);

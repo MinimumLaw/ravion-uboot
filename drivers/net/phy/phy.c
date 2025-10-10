@@ -9,6 +9,7 @@
  */
 #include <console.h>
 #include <dm.h>
+#include <env.h>
 #include <log.h>
 #include <malloc.h>
 #include <net.h>
@@ -242,7 +243,9 @@ int genphy_update_link(struct phy_device *phydev)
 
 	if ((phydev->autoneg == AUTONEG_ENABLE) &&
 	    !(mii_reg & BMSR_ANEGCOMPLETE)) {
-		int i = 0;
+		u32 i = 0;
+		u32 aneg_timeout = env_get_ulong("phy_aneg_timeout", 10,
+						 CONFIG_PHY_ANEG_TIMEOUT);
 
 		printf("%s Waiting for PHY auto negotiation to complete",
 		       phydev->dev->name);
@@ -250,7 +253,7 @@ int genphy_update_link(struct phy_device *phydev)
 			/*
 			 * Timeout reached ?
 			 */
-			if (i > (CONFIG_PHY_ANEG_TIMEOUT / 50)) {
+			if (i > (aneg_timeout / 50)) {
 				printf(" TIMEOUT !\n");
 				phydev->link = 0;
 				return -ETIMEDOUT;
@@ -839,8 +842,6 @@ struct phy_device *phy_find_by_mask(struct mii_dev *bus, uint phy_mask)
 static void phy_connect_dev(struct phy_device *phydev, struct udevice *dev,
 			    phy_interface_t interface)
 {
-	/* Soft Reset the PHY */
-	phy_reset(phydev);
 	if (phydev->dev && phydev->dev != dev) {
 		printf("%s:%d is connected to %s.  Reconnecting to %s\n",
 		       phydev->bus->name, phydev->addr,

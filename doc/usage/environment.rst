@@ -99,9 +99,6 @@ For this particular issue you can use ``DEFAULT_DEVICE_TREE`` instead::
 
 There is no general way to remove quotes.
 
-If CONFIG_ENV_SOURCE_FILE is empty and the default filename is not present, then
-the old-style C environment is used instead. See below.
-
 Old-style C environment
 -----------------------
 
@@ -114,6 +111,9 @@ Board maintainers are encouraged to migrate to the text-based environment as it
 is easier to maintain. The distro-board script still requires the old-style
 environments, so use :doc:`/develop/bootstd/index` instead.
 
+If both the text-based environment file and the old-style C environment are
+defined, the variables from the old-style C environment will override those set
+in the text-based environment file.
 
 List of environment variables
 -----------------------------
@@ -334,6 +334,15 @@ netretry
     are tried once without success.
     Useful on scripts which control the retry operation
     themselves.
+
+phy_aneg_timeout
+    If set, the specified value will override CONFIG_PHY_ANEG_TIMEOUT.
+    This variable has the same base and unit as CONFIG_PHY_ANEG_TIMEOUT
+    which is "decimal" and "millisecond" respectively. The default value
+    of CONFIG_PHY_ANEG_TIMEOUT may be sufficient for most use-cases, but
+    certain link-partners may require a larger timeout due to the Ethernet
+    PHY they use. Alternatively, the timeout can be reduced as well if the
+    use-case demands it.
 
 rng_seed_size
     Size of random value added to device-tree node /chosen/rng-seed.
@@ -562,8 +571,8 @@ only effect after the next boot (yes, that's just like Windows).
 External environment file
 -------------------------
 
-The `CONFIG_USE_DEFAULT_ENV_FILE` option provides a way to bypass the
-environment generation in U-Boot. If enabled, then `CONFIG_DEFAULT_ENV_FILE`
+The `CONFIG_ENV_USE_DEFAULT_ENV_TEXT_FILE` option provides a way to bypass the
+environment generation in U-Boot. If enabled, then `CONFIG_ENV_DEFAULT_ENV_TEXT_FILE`
 provides the name of a file which is converted into the environment,
 completely bypassing the standard environment variables in `env_default.h`.
 

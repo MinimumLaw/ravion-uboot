@@ -78,9 +78,7 @@ enum forced_boot_mode {
 #define STM32_RCC_BASE			0x50000000
 #define STM32_PWR_BASE			0x50001000
 #define STM32_SYSCFG_BASE		0x50020000
-#ifdef CONFIG_STM32MP15X
 #define STM32_DBGMCU_BASE		0x50081000
-#endif
 #define STM32_FMC2_BASE			0x58002000
 #define STM32_IWDG2_BASE		0x5A002000
 #define STM32_DDRCTRL_BASE		0x5A003000
@@ -109,6 +107,11 @@ enum forced_boot_mode {
 #define STM32_SDMMC1_BASE		0x58005000
 #define STM32_SDMMC2_BASE		0x58007000
 #define STM32_SDMMC3_BASE		0x48004000
+
+#ifdef CONFIG_STM32MP13X
+#define STM32_SYSRAM_BASE		0x2FFE0000
+#define STM32_SYSRAM_SIZE		SZ_128K
+#endif
 
 #ifdef CONFIG_STM32MP15X
 #define STM32_SYSRAM_BASE		0x2FFC0000
@@ -153,6 +156,8 @@ enum forced_boot_mode {
 #endif
 
 #ifdef CONFIG_STM32MP13X
+#define TAMP_BACKUP_MAGIC_NUMBER	TAMP_BACKUP_REGISTER(4)
+#define TAMP_BACKUP_BRANCH_ADDRESS	TAMP_BACKUP_REGISTER(5)
 #define TAMP_BOOTCOUNT			TAMP_BACKUP_REGISTER(31)
 #define TAMP_BOOT_CONTEXT		TAMP_BACKUP_REGISTER(30)
 #endif
@@ -160,7 +165,7 @@ enum forced_boot_mode {
 #endif /* __ASSEMBLY__ */
 #endif /* CONFIG_STM32MP15X || CONFIG_STM32MP13X */
 
-#ifdef CONFIG_STM32MP25X
+#if defined(CONFIG_STM32MP23X) || defined(CONFIG_STM32MP25X)
 #define STM32_USART2_BASE		0x400E0000
 #define STM32_USART3_BASE		0x400F0000
 #define STM32_UART4_BASE		0x40100000
@@ -185,7 +190,7 @@ enum forced_boot_mode {
 
 /* TAMP registers zone 3 RIF 1 (RW) at 96*/
 #define TAMP_BOOT_CONTEXT		TAMP_BACKUP_REGISTER(96)
-#endif /* STM32MP25X */
+#endif /* defined(CONFIG_STM32MP23X) || defined(CONFIG_STM32MP25X) */
 
 /* offset used for BSEC driver: misc_read and misc_write */
 #define STM32_BSEC_SHADOW_OFFSET	0x0
@@ -209,14 +214,14 @@ enum forced_boot_mode {
 #define BSEC_OTP_MAC	57
 #define BSEC_OTP_BOARD	60
 #endif
-#ifdef CONFIG_STM32MP25X
+#if defined(CONFIG_STM32MP23X) || defined(CONFIG_STM32MP25X)
 #define BSEC_OTP_SERIAL	5
 #define BSEC_OTP_RPN	9
 #define BSEC_OTP_REVID	102
 #define BSEC_OTP_PKG	122
 #define BSEC_OTP_BOARD	246
 #define BSEC_OTP_MAC	247
-#endif
+#endif /* defined(CONFIG_STM32MP23X) || defined(CONFIG_STM32MP25X) */
 
 #ifndef __ASSEMBLY__
 #include <asm/types.h>

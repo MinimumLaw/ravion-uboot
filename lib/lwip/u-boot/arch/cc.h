@@ -43,4 +43,24 @@
 #define BYTE_ORDER BIG_ENDIAN
 #endif
 
+#define SNTP_STARTUP_DELAY 0
+void sntp_set_system_time(uint32_t sec);
+#define SNTP_SET_SYSTEM_TIME(sec) sntp_set_system_time(sec)
+
+static inline const char *sntp_format_time(time_t t)
+{
+	static char buf[29]; /* "(time_t)" + 20 digits max + \0 */
+
+	snprintf(buf, sizeof(buf), "(time_t)%llu", t);
+	return buf;
+}
+
+#define sntp_format_time sntp_format_time
+
+#ifdef CONFIG_LWIP_ICMP_SHOW_UNREACH
+struct pbuf;
+void net_lwip_icmp_dest_unreach(int code, struct pbuf *p);
+
+#define ICMP_DEST_UNREACH_CB(_c, _p) net_lwip_icmp_dest_unreach(_c, _p)
+#endif
 #endif /* LWIP_ARCH_CC_H */

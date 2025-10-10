@@ -379,15 +379,6 @@ The following options need to be configured:
 		CONFIG_SH_ETHER
 		Support for Renesas on-chip Ethernet controller
 
-			CFG_SH_ETHER_USE_PORT
-			Define the number of ports to be used
-
-			CFG_SH_ETHER_PHY_ADDR
-			Define the ETH PHY's address
-
-			CFG_SH_ETHER_CACHE_WRITEBACK
-			If this option is set, the driver enables cache flush.
-
 - TPM Support:
 		CONFIG_TPM
 		Support TPM devices.
@@ -950,15 +941,6 @@ The following options need to be configured:
 		the environment like the "source" command or the
 		boot command first.
 
-		CONFIG_DELAY_ENVIRONMENT
-
-		Normally the environment is loaded when the board is
-		initialised so that it is available to U-Boot. This inhibits
-		that so that the environment is not available until
-		explicitly loaded later by U-Boot code. With CONFIG_OF_CONTROL
-		this is instead controlled by the value of
-		/config/load-environment.
-
 - Automatic software updates via TFTP server
 		CONFIG_UPDATE_TFTP
 		CONFIG_UPDATE_TFTP_CNT_MAX
@@ -1411,10 +1393,6 @@ Low Level (hardware related) configuration options:
 		that will end up in one of the 'xPL' builds, i.e. SPL, TPL or
 		VPL. Code that needs phase-specific behaviour can check this,
 		or (where possible) use xpl_phase() instead.
-
-		Note that CONFIG_XPL_BUILD *is* always defined when either
-		of CONFIG_TPL_BUILD / CONFIG_VPL_BUILD is defined. This can be
-		counter-intuitive and should perhaps be changed.
 
 - CONFIG_TPL_BUILD
 		Set when the currently running compilation is for an artifact

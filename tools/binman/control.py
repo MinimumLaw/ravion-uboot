@@ -8,12 +8,11 @@
 from collections import OrderedDict
 import glob
 try:
-    import importlib.resources
+    import importlib.resources as importlib_resources
 except ImportError:  # pragma: no cover
     # for Python 3.6
     import importlib_resources
 import os
-import pkg_resources
 import re
 
 import sys
@@ -96,8 +95,8 @@ def _ReadMissingBlobHelp():
             msg = ''
         return tag, msg
 
-    my_data = pkg_resources.resource_string(__name__, 'missing-blob-help')
-    re_tag = re.compile('^([-a-z0-9]+):$')
+    my_data = importlib_resources.files(__package__).joinpath('missing-blob-help').read_bytes()
+    re_tag = re.compile(r"^([-\.a-z0-9]+):$")
     result = {}
     tag = None
     msg = ''
@@ -151,8 +150,9 @@ def GetEntryModules(include_testing=True):
     Returns:
         Set of paths to entry class filenames
     """
-    glob_list = pkg_resources.resource_listdir(__name__, 'etype')
-    glob_list = [fname for fname in glob_list if fname.endswith('.py')]
+    entries = importlib_resources.files(__package__).joinpath('etype')
+    glob_list = [entry.name for entry in entries.iterdir()
+                 if entry.name.endswith('.py') and entry.is_file()]
     return set([os.path.splitext(os.path.basename(item))[0]
                 for item in glob_list
                 if include_testing or '_testing' not in item])
@@ -530,6 +530,57 @@ def _RemoveTemplates(parent):
     for node in del_nodes:
         node.Delete()
 
+def propagate_prop(node, prop):
+    """Propagate the provided property to all the parent nodes up the hierarchy
+
+    Args:
+        node (fdt.Node): Node and all its parent nodes up to the root to
+            propagate the property.
+        prop (str): Boolean property to propagate
+
+    Return:
+        True if any change was made, else False
+    """
+    changed = False
+    while node:
+        if prop not in node.props:
+            node.AddEmptyProp(prop, 0)
+            changed = True
+        node = node.parent
+    return changed
+
+def scan_and_prop_bootph(node):
+    """Propagate bootph properties from children to parents
+
+    The bootph schema indicates that bootph properties in children should be
+    implied in their parents, all the way up the hierarchy. This is expensive
+    to implement in U-Boot before relocation at runtime, so this function
+    explicitly propagates these bootph properties upwards during build time.
+
+    This is used to set the bootph-all, bootph-some-ram property in the parent
+    node if the respective property is found in any of the parent's subnodes.
+    The other bootph-* properties are associated with the SPL stage and hence
+    handled by fdtgrep.c.
+
+    Args:
+        node (fdt.Node): Node to scan for bootph-all and bootph-some-ram
+            property
+
+    Return:
+        True if any change was made, else False
+
+    """
+    bootph_prop = {'bootph-all', 'bootph-some-ram'}
+
+    changed = False
+    for prop in bootph_prop:
+        if prop in node.props:
+            changed |= propagate_prop(node.parent, prop)
+
+    for subnode in node.subnodes:
+        changed |= scan_and_prop_bootph(subnode)
+    return changed
+
 def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded, indir):
     """Prepare the images to be processed and select the device tree
 
@@ -589,6 +640,9 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded, ind
         fname = tools.get_output_filename('u-boot.dtb.tmpl2')
         tools.write_file(fname, dtb.GetContents())
 
+    if scan_and_prop_bootph(dtb.GetRoot()):
+        dtb.Sync(True)
+
     images = _ReadImageDesc(node, use_expanded)
 
     if select_images:
@@ -645,20 +699,39 @@ def CheckForProblems(image):
         _ShowHelpForMissingBlobs(tout.ERROR, missing_list)
 
     faked_list = []
+    faked_optional_list = []
+    faked_required_list = []
     image.CheckFakedBlobs(faked_list)
-    if faked_list:
+    for e in faked_list:
+        if e.optional:
+            faked_optional_list.append(e)
+        else:
+            faked_required_list.append(e)
+    if faked_required_list:
         tout.warning(
             "Image '%s' has faked external blobs and is non-functional: %s\n" %
             (image.name, ' '.join([os.path.basename(e.GetDefaultFilename())
-                                   for e in faked_list])))
+                                   for e in faked_required_list])))
 
     optional_list = []
+    # For optional blobs, we should inform the user when the blob is not present. This will come as
+    # a warning since it may not be immediately apparent that something is missing otherwise.
+    # E.g. user thinks they supplied a blob, but there is no info of the contrary if they made an
+    # error.
+    # Faked optional blobs are not relevant for final images (as they are dropped anyway) so we
+    # will omit the message with default verbosity.
     image.CheckOptional(optional_list)
     if optional_list:
         tout.warning(
             "Image '%s' is missing optional external blobs but is still functional: %s\n" %
             (image.name, ' '.join([e.name for e in optional_list])))
         _ShowHelpForMissingBlobs(tout.WARNING, optional_list)
+
+    if faked_optional_list:
+        tout.info(
+            "Image '%s' has faked optional external blobs but is still functional: %s\n" %
+            (image.name, ' '.join([os.path.basename(e.GetDefaultFilename())
+                                   for e in faked_optional_list])))
 
     missing_bintool_list = []
     image.check_missing_bintools(missing_bintool_list)
@@ -667,7 +740,7 @@ def CheckForProblems(image):
             "Image '%s' has missing bintools and is non-functional: %s\n" %
             (image.name, ' '.join([os.path.basename(bintool.name)
                                    for bintool in missing_bintool_list])))
-    return any([missing_list, faked_list, missing_bintool_list])
+    return any([missing_list, faked_required_list, missing_bintool_list])
 
 def ProcessImage(image, update_fdt, write_map, get_contents=True,
                  allow_resize=True, allow_missing=False,
@@ -697,7 +770,6 @@ def ProcessImage(image, update_fdt, write_map, get_contents=True,
         image.SetAllowMissing(allow_missing)
         image.SetAllowFakeBlob(allow_fake_blobs)
         image.GetEntryContents()
-        image.drop_absent()
     image.GetEntryOffsets()
 
     # We need to pack the entries to figure out where everything
@@ -736,11 +808,11 @@ def ProcessImage(image, update_fdt, write_map, get_contents=True,
         image.Raise('Entries changed size after packing (tried %s passes)' %
                     passes)
 
+    has_problems = CheckForProblems(image)
+
     image.BuildImage()
     if write_map:
         image.WriteMap()
-
-    has_problems = CheckForProblems(image)
 
     image.WriteAlternates()
 
@@ -759,7 +831,7 @@ def Binman(args):
     global state
 
     if args.full_help:
-        with importlib.resources.path('binman', 'README.rst') as readme:
+        with importlib_resources.path('binman', 'README.rst') as readme:
             tools.print_full_help(str(readme))
         return 0
 
@@ -777,7 +849,7 @@ def Binman(args):
 
     if args.cmd in ['ls', 'extract', 'replace', 'tool', 'sign']:
         try:
-            tout.init(args.verbosity)
+            tout.init(args.verbosity + 1)
             if args.cmd == 'replace':
                 tools.prepare_output_dir(args.outdir, args.preserve)
             else:
@@ -835,9 +907,9 @@ def Binman(args):
         args.indir.append(board_pathname)
 
     try:
-        tout.init(args.verbosity)
+        tout.init(args.verbosity + 1)
         elf.debug = args.debug
-        cbfs_util.VERBOSE = args.verbosity > 2
+        cbfs_util.VERBOSE = args.verbosity > tout.NOTICE
         state.use_fake_dtb = args.fake_dtb
 
         # Normally we replace the 'u-boot' etype with 'u-boot-expanded', etc.

@@ -21,7 +21,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 reset_flag(void)
+u32 reset_flag(u32 flag)
 {
 	/* Check rstmgr.stat for warm reset status */
 	u32 status = readl(SOCFPGA_RSTMGR_ADDRESS);
@@ -51,7 +51,7 @@ void board_init_f(ulong dummy)
 	if (ret)
 		hang();
 
-	socfpga_get_sys_mgr_addr("sysmgr@10d12000");
+	socfpga_get_sys_mgr_addr();
 	socfpga_get_managers_addr();
 
 	sysmgr_pinmux_init();
@@ -93,6 +93,12 @@ void board_init_f(ulong dummy)
 	ret = uclass_get_device_by_name(UCLASS_NOP, "socfpga-firewall-config", &dev);
 	if (ret) {
 		printf("HPS firewall settings init failed: %d\n", ret);
+		hang();
+	}
+
+	ret = uclass_get_device(UCLASS_POWER_DOMAIN, 0, &dev);
+	if (ret) {
+		debug("PSS SRAM power-off failed: %d\n", ret);
 		hang();
 	}
 

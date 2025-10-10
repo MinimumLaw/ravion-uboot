@@ -14,9 +14,7 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/ele_api.h>
 #include <asm/sections.h>
-#include <hang.h>
 #include <init.h>
-#include <log.h>
 #include <power/pmic.h>
 #include <power/pca9450.h>
 #include <spl.h>
@@ -25,11 +23,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/*
- * Will be part of drivers/power/regulator/pca9450.c
- * when pca9451a support is added.
- */
-#define PCA9450_REG_PWRCTRL_TOFF_DEB    BIT(5)
 #define EEPROM_ADDR            0x50
 
 /*
@@ -59,8 +52,7 @@ void spl_dram_init(void)
 	int ret;
 	enum phytec_imx93_ddr_eeprom_code ddr_opt = PHYTEC_IMX93_DDR_INVALID;
 
-	/* NOTE: In SPL lpi2c3 is mapped to bus 0 */
-	ret = phytec_eeprom_data_setup(NULL, 0, EEPROM_ADDR);
+	ret = phytec_eeprom_data_setup(NULL, 2, EEPROM_ADDR);
 	if (ret && !IS_ENABLED(CONFIG_PHYCORE_IMX93_RAM_TYPE_FIX))
 		goto out;
 
@@ -101,7 +93,7 @@ int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
-	unsigned int val = 0;
+	unsigned int val = 0, buck_val;
 
 	ret = pmic_get("pmic@25", &dev);
 	if (ret == -ENODEV) {
@@ -123,24 +115,23 @@ int power_init_board(void)
 		return ret;
 	val = ret;
 
-	if (IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE)) {
-		/* 0.8v for Low drive mode */
-		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x0c);
-			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x0c);
-		} else {
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x10);
-			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x10);
-		}
+	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
+		buck_val = 0x0c; /* 0.8v for Low drive mode */
+		printf("PMIC: Low Drive Voltage Mode\n");
+	} else if (is_voltage_mode(VOLT_NOMINAL_DRIVE)) {
+		buck_val = 0x10; /* 0.85v for Nominal drive mode */
+		printf("PMIC: Nominal Voltage Mode\n");
 	} else {
-		/* 0.9v for Over drive mode */
-		if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
-			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x14);
-		} else {
-			pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
-			pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
-		}
+		buck_val = 0x14; /* 0.9v for Over drive mode */
+		printf("PMIC: Over Drive Voltage Mode\n");
+	}
+
+	if (val & PCA9450_REG_PWRCTRL_TOFF_DEB) {
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, buck_val);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, buck_val);
+	} else {
+		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, buck_val + 0x4);
+		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, buck_val + 0x4);
 	}
 
 	/* set standby voltage to 0.65v */
@@ -182,7 +173,7 @@ void board_init_f(ulong dummy)
 
 	power_init_board();
 
-	if (!IS_ENABLED(CONFIG_IMX9_LOW_DRIVE_MODE))
+	if (!is_voltage_mode(VOLT_LOW_DRIVE))
 		set_arm_core_max_clk();
 
 	/* Init power of mix */

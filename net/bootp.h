@@ -1,8 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *	Copied from LiMon - BOOTP.
  *
  *	Copyright 1994, 1995, 2000 Neil Russell.
- *	(See License)
  *	Copyright 2000 Paolo Scaffardi
  */
 
@@ -89,6 +89,8 @@ typedef enum { INIT,
 #define DHCP_ACK      5
 #define DHCP_NAK      6
 #define DHCP_RELEASE  7
+
+#define DHCP_OPTION_PXE_CONFIG_FILE	209	/* "ConfigFile" option according to rfc5071 */
 
 /**********************************************************************/
 

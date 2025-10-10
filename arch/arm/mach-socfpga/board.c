@@ -7,6 +7,7 @@
 
 #include <config.h>
 #include <errno.h>
+#include <env.h>
 #include <fdtdec.h>
 #include <log.h>
 #include <init.h>
@@ -133,7 +134,7 @@ u8 socfpga_get_board_id(void)
 
 	if (jtag_usercode == DEFAULT_JTAG_USERCODE) {
 		debug("JTAG Usercode is not set. Default Board ID to 0\n");
-	} else if (jtag_usercode >= 0 && jtag_usercode <= 255) {
+	} else if (jtag_usercode <= 255) {
 		board_id = jtag_usercode;
 		debug("Valid JTAG Usercode. Set Board ID to %u\n", board_id);
 	} else {

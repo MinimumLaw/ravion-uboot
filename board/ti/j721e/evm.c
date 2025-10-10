@@ -8,6 +8,7 @@
  */
 
 #include <efi_loader.h>
+#include <env.h>
 #include <generic-phy.h>
 #include <image.h>
 #include <net.h>
@@ -64,11 +65,6 @@ struct efi_capsule_update_info update_info = {
 	.num_images = ARRAY_SIZE(fw_images),
 	.images = fw_images,
 };
-
-int board_init(void)
-{
-	return 0;
-}
 
 phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
 {

@@ -1,8 +1,7 @@
-#include<configs/am65x_evm_r5_defconfig>
+#include <configs/am65x_evm_r5_defconfig>
 
 CONFIG_ARM=y
 CONFIG_ARCH_K3=y
-CONFIG_SYS_MALLOC_LEN=0x2000000
 CONFIG_SYS_MALLOC_F_LEN=0x57000
 CONFIG_SPL_GPIO=y
 CONFIG_SPL_LIBCOMMON_SUPPORT=y
