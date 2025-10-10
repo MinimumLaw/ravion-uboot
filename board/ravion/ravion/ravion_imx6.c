@@ -23,6 +23,7 @@
 #include <asm/mach-imx/video.h>
 #include <asm/io.h>
 #include <dm/platdata.h>
+#include <env.h>
 #include <init.h>
 #include <input.h>
 #include <imx_thermal.h>

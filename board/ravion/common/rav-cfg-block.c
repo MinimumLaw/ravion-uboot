@@ -14,6 +14,7 @@
 #define is_cpu_type(cpu) (0)
 #endif
 #include <cli.h>
+#include <env.h>
 #include <console.h>
 #include <malloc.h>
 #include <mmc.h>

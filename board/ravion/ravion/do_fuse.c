@@ -10,6 +10,7 @@
 #ifndef CONFIG_SPL_BUILD
 #include <command.h>
 #include <console.h>
+#include <string.h>
 #include <fuse.h>
 
 static int mfgr_fuse(void)
