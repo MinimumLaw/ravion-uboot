@@ -4,6 +4,13 @@
  */
 
 /dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+#include <dt-bindings/soc/rockchip,vop2.h>
+#include <dt-bindings/clock/rk3568-cru.h>
 
 /* For SPI_CAN comment and move XP71 from 1-2 to 2-3 position */
 #define	SPI_FLASH
@@ -18,16 +25,12 @@
 /* define for both display connect to VP0 */
 #undef USE_ONLY_VP0
 
-#include "rk3568-rhos.dtsi"
-#include "rk3568-rhos-kitsbimx8-u-boot.dtsi"
-
 / {
 	model = "RHOS CPU module with RK3568J CPU on KitSBiMX8 development board";
 	compatible = "ravion,rk3568-rhos", "rockchip,rk3568";
 
 	aliases {
 		rtc0 = &rtc0;
-		rtc1 = &rk809;
 	};
 
 	/* from 2 - 0,1 on CPU module */
@@ -305,6 +308,8 @@
 /* SPI interface
  **************/
 &spi1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&spi1m1_cs0 &spi1m1_pins>;
 	status = "okay";
@@ -314,6 +319,8 @@
 		compatible = "spansion,s25fl256s1"; /* "jedec,spi-nor"; */
 		reg = <0>;
 		spi-max-frequency = <20000000>; /* 40MHz ABSOLUTE MAXIMUM */
+		#address-cells = <2>;
+		#size-cells = <1>;
 	};
 #else /* !defined SPI_FLASH, XP71 2-3 */
 	mcp2518@0 {
@@ -369,6 +376,8 @@
 &uart4 {	status = "okay"; };	/* Geberic UART1 */
 
 &i2c1 { /* can be diabled on XP68 jumpers removed def [1-2],[3-4] */
+	#address-cells = <1>;
+	#size-cells = <0>;
 	status = "okay";
 
 	eeprom@50 {
@@ -409,6 +418,8 @@
 };
 
 &i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
 	status = "okay";
 
 	rtc0: ds1342@68 {
@@ -464,6 +475,9 @@
 };
 
 &i2c3 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
 	i2c-mux@71 {
 		compatible = "nxp,pca9846";
 		reset-gpios = <&gpio3 RK_PD0 GPIO_ACTIVE_LOW>;	/* soDimm163 - XP32 2-3 */
