@@ -10,9 +10,9 @@
 # 3. Write u-boot-rockcip.bin with offset 64 (0x40) to SD/eMMC
 #
 ##############################################################################
-export BL31=../rkbin/bin/rk35/rk3568_bl31_v1.44.elf
+export BL31=../rkbin/bin/rk35/rk3568_bl31_v1.45.elf
 export TEE=../rkbin/tee.elf
-export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3568_ddr_1560MHz_v1.21.bin
+export ROCKCHIP_TPL=../rkbin/bin/rk35/rk3568_ddr_1560MHz_v1.23.bin
 
 if [ -z $CROSS_COMPILE ]; then
 	export CROSS_COMPILE=aarch64-linux-gnu-
