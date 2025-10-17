@@ -14,11 +14,11 @@
 		compatible = "u-boot,boot-std";
 
 		filename-prefixes = "/";
-		bootdev-order = "usb0", "nvme0", "mmc1", "mmc0";
+		bootdev-order = "usb0", "mmc1", "nvme0", "mmc0";
 
-		script {
-			/* /booot.scr or /boot.scr.uimg */
-			compatible = "u-boot,script";
+		efi-bootmgr {
+			/* EFI BootOrder variable */
+			compatible = "u-boot,efi-bootmgr";
 		};
 
 		extlinux {
@@ -26,14 +26,19 @@
 			compatible = "u-boot,extlinux";
 		};
 
-		efi-bootmgr {
-			/* EFI BootOrfer variable */
-			compatible = "u-boot,efi-bootmgr";
+		script {
+			/* /booot.scr or /boot.scr.uimg */
+			compatible = "u-boot,script";
 		};
 	};
 };
 
+/* We need this for UBoot only */
+&usb2phy0_host 	{	status = "okay";	};
+&usb2phy1_otg	{	status = "okay";	};
+
 &sdhci {
+	bootph-all;
 	mmc-hs400-enhanced-strobe;
 };
 

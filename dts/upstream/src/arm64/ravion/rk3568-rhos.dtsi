@@ -46,6 +46,30 @@
 		regulator-max-microvolt = <3300000>;
 	};
 
+	PEN_OTG: regulator-usb-otg-power {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>; /* soDimm013 */
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb0_ctrl_pins>;
+		regulator-name = "otg_pwr";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&P3V3>;
+	};
+
+	PEN_HOST: regulator-usb-host-power {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio2 RK_PC6 GPIO_ACTIVE_HIGH>; /* soDimm014 */
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb1_ctrl_pins>;
+		regulator-name = "host_pwr";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&P3V3>;
+	};
+
 	PSDCARD: sdcard-vmmc-regulatror {
 		pinctrl-names = "default";
 		pinctrl-0 = <&psdcard_pins>;
@@ -77,13 +101,17 @@
 		clock-frequency = <100000000>;
 	};
 
-	gpio-leds {
-		compatible = "gpio-leds";
+	/*
+	 * HDMI connector
+	 */
+	hdmi-con {
+		compatible = "hdmi-connector";
+		type = "a";
 
-		sys_rst {
-			label = "sys::RESET";
-			gpios = <&gpio3 RK_PA3 GPIO_ACTIVE_LOW>;	/* soDimm165 */
-			default-state = "off";
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
 		};
 	};
 };
@@ -129,17 +157,21 @@
 	extcon = <&usb2phy0>;
 	status = "okay";
 };
-&usb2phy0      { status = "okay"; };
-&usb2phy0_host { status = "okay"; };
-&usb2phy0_otg  { status = "okay"; };
+&usb2phy0 { status = "okay"; };
+&usb2phy0_otg {
+	phy-supply = <&PEN_OTG>;
+	status = "okay";
+};
 
 &usb_host1_xhci {
 	extcon = <&usb2phy1>;
 	status = "okay";
 };
-&usb2phy1      { status = "okay"; };
-&usb2phy1_host { status = "okay"; };
-&usb2phy1_otg  { status = "okay"; };
+&usb2phy1 { status = "okay"; };
+&usb2phy1_host {
+	phy-supply = <&PEN_HOST>;
+	status = "okay";
+};
 
 /*
  * PCI-e interfaces
@@ -165,7 +197,7 @@
 &i2c0 { /* PMIC, CPU voltage */
 	status = "okay";
 
-	pcie_clkgen: glkgen@68 { /* DD8 - not have driver this time */
+	pcie_clkgen: clkgen@68 { /* DD8 - not have driver this time */
 		compatible = "9FGV0641AKLF";
 		reg = <0x68>;
 	};
@@ -557,17 +589,29 @@
 	};
 };
 
-&dsi1_in {
-	mipi1_in_vp: endpoint {
-		remote-endpoint = <&vp_out_mipi1>;
-	};
-};
-
 &hdmi {
 	avdd-0v9-supply = <&vdda0v9_image>;
 	avdd-1v8-supply = <&vcca1v8_image>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmitx_scl &hdmitx_sda>;
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
+};
+
+/*
+ * MIPI DSI interface
+ */
+&dsi_dphy1 { status = "okay"; };
+&dsi1 { status = "okay"; };
+&dsi1_in {
+	mipi1_in_vp: endpoint {
+		remote-endpoint = <&vp_out_mipi1>;
+	};
 };
 
 &i2s2_2ch {
@@ -579,12 +623,6 @@
 	rockchip,trcm-sync-tx-only;	/* use only sclktx/lrcktx for both tx & rx */
 	status = "okay";
 };
-
-/*
- * MIPI DSI interface
- */
-&dsi_dphy1 { status = "okay"; };
-&dsi1 { status = "okay"; };
 
 /*
  * MIPI CSI interface
@@ -646,11 +684,17 @@
 
 	pcie {
 		pcie3_clkreq_soc: pcie3-clkreq-soc {
-			rockchip,pins = <4 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>;
+			rockchip,pins =
+				<4 RK_PC2 4 &pcfg_pull_up>,		/* AF4  - CLKREQn */
+				<4 RK_PC4 4 &pcfg_pull_up>,		/* AF4  - PERSTn */
+				<4 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>;	/* GPIO - CLKREQn_SOC */
 		};
 
 		pcie2_clkreq_soc: pcie2-clkreq-soc {
-			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
+			rockchip,pins =
+				<1 RK_PB0 4 &pcfg_pull_up>,		/* AF4  - CLKREQn */
+				<1 RK_PB2 4 &pcfg_pull_up>,		/* AF4  - PERSTn */
+				<1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;	/* GPIO - CLKREQn_SOC */
 		};
 	};
 
@@ -661,16 +705,16 @@
 	};
 
 	usb2_ctrl {
-		usb2_0_ctrl_pins {
+		usb0_ctrl_pins: usb2-0-ctrl-pins {
 			rockchip,pins = /* VCCIO4 domain */
-/* 013 */			<2 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_PEN0 */
+/* 013 */			<2 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_PEN0 */
 /* 015 */			<2 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>;	/* USB2_OC0 */
 		};
 
-		usb2_1_ctrl_pins {
+		usb1_ctrl_pins: usb2-1-ctrl-pins {
 			rockchip,pins = /* VCCIO4 domain */
 /* 006 */			<2 RK_PA7 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_ID1 */
-/* 014 */			<2 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_PEN1 */
+/* 014 */			<2 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>,	/* USB2_PEN1 */
 /* 016 */			<2 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>;	/* USB2_OC1 */
 		};
 	};
