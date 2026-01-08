@@ -33,6 +33,24 @@ config TIMESTAMP
 	  loaded that does not, the message 'Wrong FIT format: no timestamp'
 	  is shown.
 
+config LIB_BOOTI
+	bool
+
+config LIB_BOOTM
+	bool
+
+config LIB_BOOTZ
+	bool
+
+config SPL_LIB_BOOTI
+	bool
+
+config SPL_LIB_BOOTM
+	bool
+
+config SPL_LIB_BOOTZ
+	bool
+
 config BUTTON_CMD
 	bool "Support for running a command if a button is held during boot"
 	depends on CMDLINE
@@ -193,18 +211,18 @@ config SPL_FIT_PRINT
 	  Support printing the content of the fitImage in a verbose manner in SPL.
 
 config SPL_FIT_FULL_CHECK
-	bool "Do a full check of the FIT before using it"
+	bool "Do a full check of the FIT within SPL before using it"
 	depends on SPL_FIT
 	help
-	  Enable this do a full check of the FIT to make sure it is valid. This
-	  helps to protect against carefully crafted FITs which take advantage
-	  of bugs or omissions in the code. This includes a bad structure,
-	  multiple root nodes and the like.
+	  Enable this do a full check of the FIT within SPL to make sure it is
+	  valid. This helps to protect against carefully crafted FITs which take
+	  advantage of bugs or omissions in the code. This includes a bad
+	  structure, multiple root nodes and the like.
 
 config SPL_FIT_SIGNATURE
 	bool "Enable signature verification of FIT firmware within SPL"
 	depends on SPL_DM
-	depends on SPL_LOAD_FIT || SPL_LOAD_FIT_FULL
+	depends on SPL_LOAD_FIT
 	select FIT_SIGNATURE
 	select SPL_FIT
 	select SPL_CRYPTO
@@ -257,6 +275,9 @@ config SPL_LOAD_FIT_ADDRESS
 	hex "load address of fit image"
 	depends on SPL_LOAD_FIT
 	default 0x44000000 if ARCH_IMX8M
+	default 0x60080000 if ARCH_ROCKCHIP && SPL_TEXT_BASE = 0x60000000
+	default 0x40200000 if ARCH_ROCKCHIP && SPL_TEXT_BASE = 0x40000000
+	default 0x00200000 if ARCH_ROCKCHIP && SPL_TEXT_BASE = 0x00000000
 	default 0x0
 	help
 	  Specify the load address of the fit image that will be loaded
@@ -282,7 +303,7 @@ config SPL_LOAD_FIT_APPLY_OVERLAY_BUF_SZ
 
 config SPL_LOAD_FIT_FULL
 	bool "Enable SPL loading U-Boot as a FIT (full fitImage features)"
-	select SPL_FIT
+	depends on SPL_LOAD_FIT
 	help
 	  Normally with the SPL framework a legacy image is generated as part
 	  of the build. This contains U-Boot along with information as to
@@ -1053,10 +1074,10 @@ if MEASURED_BOOT
 endif # MEASURED_BOOT
 
 config SYS_BOOTM_LEN
-	hex "Maximum size of a decompresed OS image"
+	hex "Maximum size of a decompressed OS image"
 	depends on CMD_BOOTM || CMD_BOOTI || CMD_BOOTZ || \
 		LEGACY_IMAGE_FORMAT || SPL_LEGACY_IMAGE_FORMAT
-	default 0x4000000 if PPC || ARM64 || RISCV
+	default 0x8000000 if PPC || ARM64 || RISCV
 	default 0x1000000 if X86 || ARCH_MX6 || ARCH_MX7
 	default 0x800000
 	help
@@ -1093,6 +1114,7 @@ config SYS_RAMBOOT
 
 config RAMBOOT_PBL
 	bool "Freescale PBL(pre-boot loader) image format support"
+	depends on ARCH_LS1021A || PPC
 	select SYS_RAMBOOT if PPC
 	help
 	  Some SoCs use PBL to load RCW and/or pre-initialization instructions.
@@ -1162,6 +1184,7 @@ config DISTRO_DEFAULTS
 	select CMD_SYSBOOT
 	select HUSH_PARSER
 	select SYS_LONGHELP
+	select LEGACY_IMAGE_FORMAT
 	help
 	  Note: These scripts have been replaced by Standard Boot. Do not use
 	  them on new boards. See 'Migrating from distro_boot' at
@@ -1778,7 +1801,7 @@ menu "Image support"
 config IMAGE_PRE_LOAD
 	bool "Image pre-load support"
 	help
-	  Enable an image pre-load stage in the SPL.
+	  Enable an image pre-load stage.
 	  This pre-load stage allows to do some manipulation
 	  or check (for example signature check) on an image
 	  before launching it.
@@ -1810,7 +1833,7 @@ config IMAGE_PRE_LOAD_SIG
 	  u-boot.
 
 config SPL_IMAGE_PRE_LOAD_SIG
-	bool "Image pre-load signature support witin SPL"
+	bool "Image pre-load signature support within SPL"
 	depends on SPL_IMAGE_PRE_LOAD && IMAGE_PRE_LOAD_SIG
 	select SPL_FIT_SIGNATURE
 	select SPL_RSA
@@ -1851,6 +1874,7 @@ config OF_BOARD_SETUP
 
 config OF_BOARD_SETUP_EXTENDED
 	bool "Set up latest board-specific details in device tree before boot"
+	depends on !COMPILE_TEST
 	imply OF_BOARD_SETUP
 	help
 	  This causes U-Boot to call ft_board_setup_ex() before booting into
@@ -1861,6 +1885,7 @@ config OF_BOARD_SETUP_EXTENDED
 
 config OF_SYSTEM_SETUP
 	bool "Set up system-specific details in device tree before boot"
+	depends on !COMPILE_TEST
 	help
 	  This causes U-Boot to call ft_system_setup() before booting into
 	  the Operating System. This function can set up various
@@ -1904,6 +1929,10 @@ config ARCH_FIXUP_FDT_MEMORY
 endmenu
 
 endif # OF_LIBFDT
+
+config SUPPORT_EXTENSION_SCAN
+	select OF_LIBFDT_OVERLAY
+        bool
 
 config USE_BOOTARGS
 	bool "Enable boot arguments"

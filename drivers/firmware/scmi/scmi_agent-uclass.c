@@ -35,6 +35,7 @@ static const struct error_code scmi_linux_errmap[] = {
 	{ .scmi = SCMI_GENERIC_ERROR, .errno = -EIO, },
 	{ .scmi = SCMI_HARDWARE_ERROR, .errno = -EREMOTEIO, },
 	{ .scmi = SCMI_PROTOCOL_ERROR, .errno = -EPROTO, },
+	{ .scmi = SCMI_IN_USE, .errno = -EADDRINUSE, },
 };
 
 /**
@@ -85,21 +86,41 @@ struct udevice *scmi_get_protocol(struct udevice *dev,
 	case SCMI_PROTOCOL_ID_BASE:
 		proto = priv->base_dev;
 		break;
+#if IS_ENABLED(CONFIG_SCMI_POWER_DOMAIN)
 	case SCMI_PROTOCOL_ID_POWER_DOMAIN:
 		proto = priv->pwdom_dev;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_CLK_SCMI)
 	case SCMI_PROTOCOL_ID_CLOCK:
 		proto = priv->clock_dev;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_RESET_SCMI)
 	case SCMI_PROTOCOL_ID_RESET_DOMAIN:
 		proto = priv->resetdom_dev;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_DM_REGULATOR_SCMI)
 	case SCMI_PROTOCOL_ID_VOLTAGE_DOMAIN:
 		proto = priv->voltagedom_dev;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_PINCTRL_IMX_SCMI)
 	case SCMI_PROTOCOL_ID_PINCTRL:
 		proto = priv->pinctrl_dev;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_SCMI_ID_VENDOR_80)
+	case SCMI_PROTOCOL_ID_VENDOR_80:
+		proto = priv->vendor_dev_80;
+		break;
+#endif
+#if IS_ENABLED(CONFIG_SCMI_ID_VENDOR_82)
+	case SCMI_PROTOCOL_ID_VENDOR_82:
+		proto = priv->vendor_dev_82;
+		break;
+#endif
 	default:
 		dev_err(dev, "Protocol not supported\n");
 		proto = NULL;
@@ -138,21 +159,41 @@ static int scmi_add_protocol(struct udevice *dev,
 	case SCMI_PROTOCOL_ID_BASE:
 		priv->base_dev = proto;
 		break;
+#if IS_ENABLED(CONFIG_SCMI_POWER_DOMAIN)
 	case SCMI_PROTOCOL_ID_POWER_DOMAIN:
 		priv->pwdom_dev = proto;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_CLK_SCMI)
 	case SCMI_PROTOCOL_ID_CLOCK:
 		priv->clock_dev = proto;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_RESET_SCMI)
 	case SCMI_PROTOCOL_ID_RESET_DOMAIN:
 		priv->resetdom_dev = proto;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_DM_REGULATOR_SCMI)
 	case SCMI_PROTOCOL_ID_VOLTAGE_DOMAIN:
 		priv->voltagedom_dev = proto;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_PINCTRL_IMX_SCMI)
 	case SCMI_PROTOCOL_ID_PINCTRL:
 		priv->pinctrl_dev = proto;
 		break;
+#endif
+#if IS_ENABLED(CONFIG_SCMI_ID_VENDOR_80)
+	case SCMI_PROTOCOL_ID_VENDOR_80:
+		priv->vendor_dev_80 = proto;
+		break;
+#endif
+#if IS_ENABLED(CONFIG_SCMI_ID_VENDOR_82)
+	case SCMI_PROTOCOL_ID_VENDOR_82:
+		priv->vendor_dev_82 = proto;
+		break;
+#endif
 	default:
 		dev_err(dev, "Protocol not supported\n");
 		return -EPROTO;

@@ -113,6 +113,8 @@ static const char *get_imx_type_str(u32 imxtype)
 		return "91(01)";/* iMX91 9x9 Specific feature */
 	case MXC_CPU_IMX95:
 		return "95";
+	case MXC_CPU_IMX94:
+		return "94";
 	default:
 		return "??";
 	}
@@ -190,7 +192,7 @@ static int cpu_imx_get_temp(struct cpu_imx_plat *plat)
 		return 0xdeadbeef;
 	}
 
-	return cpu_tmp;
+	return cpu_tmp / 1000;
 }
 #else
 static int cpu_imx_get_temp(struct cpu_imx_plat *plat)

@@ -83,6 +83,15 @@ config GATEWORKS_SC
 	  boards to provide a boot watchdog, power control, temperature monitor,
 	  voltage ADCs, and EEPROM.
 
+config QCOM_GENI
+	bool "Qualcomm Generic Interface (GENI) driver"
+	depends on MISC
+	select PARTITION_TYPE_GUID
+	help
+	  Enable support for Qualcomm GENI and it's peripherals. GENI is responseible
+	  for providing a common interface for various peripherals like UART, I2C, SPI,
+	  etc.
+
 config ROCKCHIP_EFUSE
         bool "Rockchip e-fuse support"
 	depends on MISC
@@ -440,6 +449,7 @@ config STM32MP_FUSE
 config K3_FUSE
 	bool "Enable TI K3 fuse wrapper providing the fuse API"
 	depends on MISC && CMD_FUSE && CMD_FUSE_WRITEBUFF
+	depends on ARCH_K3
 	help
 	  If you say Y here, you will get support for the fuse API (OTP)
 	  for TI K3 architecture.

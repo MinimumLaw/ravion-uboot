@@ -26,7 +26,7 @@ config CONSOLE_RECORD_INIT_F
 config CONSOLE_RECORD_OUT_SIZE
 	hex "Output buffer size"
 	depends on CONSOLE_RECORD
-	default 0x400 if CONSOLE_RECORD
+	default 0x6000
 	help
 	  Set the size of the console recording output buffer. When this fills
 	  up, no more data will be recorded until some is removed. The buffer
@@ -280,6 +280,7 @@ config SYS_CONSOLE_IS_IN_ENV
 
 config SYS_CONSOLE_OVERWRITE_ROUTINE
 	bool "Allow board control over console overwriting"
+	depends on !COMPILE_TEST
 	help
 	  If this is enabled, and the board-specific function
 	  overwrite_console() returns 1, the stdin, stderr and stdout are
@@ -714,6 +715,7 @@ config ARCH_MISC_INIT
 
 config BOARD_EARLY_INIT_F
 	bool "Call board-specific init before relocation"
+	depends on !COMPILE_TEST
 	help
 	  Some boards need to perform initialisation as soon as possible
 	  after boot. With this option, U-Boot calls board_early_init_f()
@@ -723,6 +725,7 @@ config BOARD_EARLY_INIT_F
 
 config BOARD_EARLY_INIT_R
 	bool "Call board-specific init after relocation"
+	depends on !COMPILE_TEST
 	help
 	  Some boards need to perform initialisation as directly after
 	  relocation. With this option, U-Boot calls board_early_init_r()
@@ -730,6 +733,7 @@ config BOARD_EARLY_INIT_R
 
 config BOARD_INIT
 	bool "Call board-specific init board_init() during init-calls"
+	depends on !COMPILE_TEST
 	default y if ARM || RISCV || SANDBOX
 	help
 	  Some boards need an board_init() function called during the initcall
@@ -737,6 +741,7 @@ config BOARD_INIT
 
 config BOARD_POSTCLK_INIT
 	bool "Call board_postclk_init"
+	depends on !COMPILE_TEST
 	help
 	  Some boards need this to initialize select items, after clocks /
 	  timebase and before env / serial.
@@ -780,6 +785,7 @@ config LAST_STAGE_INIT
 
 config MISC_INIT_R
 	bool "Execute Misc Init"
+	depends on !COMPILE_TEST
 	default y if ARCH_KEYSTONE || ARCH_SUNXI || MPC85xx
 	default y if ARCH_OMAP2PLUS && !AM33XX
 	help
@@ -833,8 +839,16 @@ config PCI_INIT_R
 	  case of DM PCI-based Ethernet devices, which will not be detected
 	  without having the enumeration performed earlier.
 
+config SYS_EARLY_PCI_INIT
+	bool "Enumerate PCI buses early during init"
+	depends on PCI
+	help
+	  Do early PCI configuration before the eMMC gets initialised,
+	  because PCI resources are crucial for eMMC access on some boards.
+
 config RESET_PHY_R
 	bool "Reset ethernet PHY during init"
+	depends on !COMPILE_TEST
 	help
 	  Implement reset_phy() in board code if required to reset the ethernet
 	  PHY.
@@ -924,6 +938,7 @@ config STACKPROTECTOR
 
 config MMU_PGPROT
 	bool "Enable RO, RW and RX mappings"
+	depends on !SANDBOX
 	help
 	  U-Boot maps all pages as RWX. If selected pages will
 	  be marked as RO(.rodata), RX(.text), RW(.data) right after
@@ -945,6 +960,7 @@ config TPL_STACKPROTECTOR
 
 config BOARD_RNG_SEED
 	bool "Provide /chosen/rng-seed property to the linux kernel"
+	depends on !COMPILE_TEST
 	help
 	  Selecting this option requires the board to define a
 	  board_rng_seed() function, which should return a buffer
@@ -1121,8 +1137,8 @@ config BLOBLIST_SIZE
 
 config BLOBLIST_SIZE_RELOC
 	hex "Size of bloblist after relocation"
-	default BLOBLIST_SIZE if BLOBLIST_FIXED || BLOBLIST_ALLOC
-	default 0x20000 if (ARM && EFI_LOADER && GENERATE_ACPI_TABLE)
+	default BLOBLIST_SIZE if BLOBLIST_FIXED
+	default 0x20000
 	help
 	  Sets the size of the bloblist in bytes after relocation. Since U-Boot
 	  has a lot more memory available then, it is possible to use a larger
@@ -1248,4 +1264,13 @@ config VPL_IMAGE_SIGN_INFO
 endif
 
 config IO_TRACE
-	bool
+	bool "Intercept and checksum all I/O accesses"
+	depends on ARM || SANDBOX
+	default y if SANDBOX
+	help
+	  When enabled, U-Boot intercepts all I/O accesses and can checksum
+	  them or write a list of them out to memory. See the 'iotrace' command
+	  for details. This is useful for testing device drivers since it can
+	  confirm that the driver behaves the same way before and after a code
+	  change. To add support for your architecture, add '#include
+	  <iotrace.h>' to the bottom of arch/<arch>/include/asm/io.h and test.

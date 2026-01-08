@@ -71,6 +71,14 @@ config DYNAMIC_CRC_TABLE
 	  Enable this option to calculate entries for CRC tables at runtime.
 	  This can be helpful when reducing the size of the build image
 
+config FW_LOADER
+	bool "Enable firmware loader using environment script"
+	depends on CMDLINE
+	depends on ENV_SUPPORT
+	help
+	  Enable this option to make firmware loading using user-provided
+	  U-Boot environment script functionality accessible to U-Boot code.
+
 config HAVE_ARCH_IOMAP
 	bool
 	help
@@ -1244,6 +1252,7 @@ config SPL_LMB
 config LMB_ARCH_MEM_MAP
 	bool "Add an architecture specific memory map"
 	depends on LMB
+	depends on !COMPILE_TEST
 	default y if FSL_LAYERSCAPE || X86
 	help
 	  Some architectures have special or unique aspects which need

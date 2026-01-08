@@ -74,15 +74,7 @@ int board_fit_config_name_match(const char *name)
 #ifdef CONFIG_TI_I2C_BOARD_DETECT
 int do_board_detect(void)
 {
-	int ret;
-
-	ret = ti_i2c_eeprom_am6_get_base(CONFIG_EEPROM_BUS_ADDRESS,
-					 CONFIG_EEPROM_CHIP_ADDRESS);
-	if (ret)
-		pr_err("Reading on-board EEPROM at 0x%02x failed %d\n",
-		       CONFIG_EEPROM_CHIP_ADDRESS, ret);
-
-	return ret;
+	return do_board_detect_am6();
 }
 
 int checkboard(void)
