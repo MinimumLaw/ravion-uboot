@@ -17,7 +17,9 @@
 #include <fs.h>
 #include <malloc.h>
 #include <mapmem.h>
+#include <part.h>
 #include <string.h>
+#include <linux/stringify.h>
 #include <asm/cache.h>
 
 /* Length of env var "BOOT_*_LEFT" */
@@ -97,6 +99,7 @@ static int distro_rauc_scan_parts(struct bootflow *bflow)
 	struct distro_rauc_priv *priv;
 	char *boot_order;
 	const char **boot_order_list;
+	bool slot_found = false;
 	int ret;
 	int i;
 
@@ -118,17 +121,20 @@ static int distro_rauc_scan_parts(struct bootflow *bflow)
 		if (desc) {
 			ret = fs_set_blk_dev_with_part(desc, slot->boot_part);
 			if (ret)
-				return log_msg_ret("part", ret);
+				continue;
 			fs_close();
-			ret = fs_set_blk_dev_with_part(desc, slot->root_part);
+			ret = part_get_info(desc, slot->root_part, NULL);
 			if (ret)
-				return log_msg_ret("part", ret);
-			fs_close();
+				continue;
+			slot_found = true;
 		}
 	}
 	str_free_list(boot_order_list);
 
-	return 0;
+	if (slot_found)
+		return 0;
+
+	return -1;
 }
 
 static int distro_rauc_read_bootflow(struct udevice *dev, struct bootflow *bflow)
@@ -304,7 +310,7 @@ static int find_active_slot(char **slot_name, ulong *slot_tries)
 	if (!slot_found) {
 		if (IS_ENABLED(CONFIG_BOOTMETH_RAUC_RESET_ALL_ZERO_TRIES)) {
 			log_warning("WARNING: No valid slot found\n");
-			log_info("INFO: Resetting boot order and all slot tries\n");
+			log_info("INFO: Resetting all slot tries to " __stringify(CONFIG_BOOTMETH_RAUC_DEFAULT_TRIES) "\n");
 			boot_order_list = str_to_list(CONFIG_BOOTMETH_RAUC_BOOT_ORDER);
 			for (i = 0; boot_order_list[i]; i++) {
 				sprintf(boot_left, "BOOT_%s_LEFT", boot_order_list[i]);

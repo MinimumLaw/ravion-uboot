@@ -35,21 +35,26 @@ can be installed via the command
    pip install -r requirements.txt
 
 In order to execute certain tests on their supported platforms other tools
-will be required. The following is an incomplete list:
+will be required. The following packages may be needed:
 
-* gdisk
-* dfu-util
-* dtc
-* openssl
-* e2fsprogs
-* util-linux
+* cgpt
 * coreutils
+* device-tree-compiler
+* dfu-util
 * dosfstools
+* e2fsprogs
 * efitools
+* fdisk
+* gdisk
+* libgnutls28-dev / gnutls-devel
 * mount
 * mtools
+* openssl
 * sbsigntool
+* swig
 * udisks2
+* util-linux
+* vboot-kernel-utils / vboot-utils
 
 Please use the appropriate commands for your distribution to match these tools
 up with the package that provides them.
@@ -63,7 +68,7 @@ The test script supports either:
   Further details are described later.
 
 The usage of the command ``sudo`` is not allowed in tests. Using elevated
-priviledges can lead to security concerns. Furthermore not all users may have
+privileges can lead to security concerns. Furthermore not all users may have
 administrator rights. Therefore the command ``sudo`` must not be used in tests.
 To create disk images we have helper functions located in
 ``test/py/tests/fs_helper.py`` which shall be used in any tests that require
@@ -310,14 +315,16 @@ Environment variables
 
 The following environment variables are set when running hook scripts:
 
-- ``UBOOT_BOARD_TYPE`` the board type being tested.
-- ``UBOOT_BOARD_IDENTITY`` the board identity being tested, or ``na`` if none
+- ``U_BOOT_BOARD_TYPE`` the board type being tested.
+- ``U_BOOT_BOARD_TYPE_EXTRA`` the 2nd board type being tested, if applicable.
+- ``U_BOOT_BOARD_IDENTITY`` the board identity being tested, or ``na`` if none
   was specified.
-- ``UBOOT_SOURCE_DIR`` the U-Boot source directory.
-- ``UBOOT_TEST_PY_DIR`` the full path to ``test/py/`` in the source directory.
-- ``UBOOT_BUILD_DIR`` the U-Boot build directory.
-- ``UBOOT_RESULT_DIR`` the test result directory.
-- ``UBOOT_PERSISTENT_DATA_DIR`` the test persistent data directory.
+- ``U_BOOT_SOURCE_DIR`` the U-Boot source directory.
+- ``U_BOOT_TEST_PY_DIR`` the full path to ``test/py/`` in the source directory.
+- ``U_BOOT_BUILD_DIR`` the U-Boot build directory.
+- ``U_BOOT_BUILD_DIR_EXTRA`` the 2nd U-Boot build directory, if applicable.
+- ``U_BOOT_RESULT_DIR`` the test result directory.
+- ``U_BOOT_PERSISTENT_DATA_DIR`` the test persistent data directory.
 
 u-boot-test-console
 '''''''''''''''''''
@@ -387,7 +394,7 @@ to flash, pulsing the board's reset signal is likely all this script needs to
 do. However, in some scenarios, this script may perform other actions. For
 example, it may call out to some SoC- or board-specific vendor utility in order
 to download the U-Boot binary directly into RAM and execute it. This would
-avoid the need for ``u-boot-test-flash1`` to actually write U-Boot to flash,
+avoid the need for ``u-boot-test-flash`` to actually write U-Boot to flash,
 thus saving wear on the flash chip(s).
 
 u-boot-test-release
@@ -539,7 +546,7 @@ either of ``CONFIG_NET`` or ``CONFIG_NET_LWIP`` is set:
 
 .. code-block:: python
 
-    @pytest.mark.buildconfigspec('net', 'net lwip')
+    @pytest.mark.buildconfigspec('net', 'net_lwip')
 
 The ``notbuildconfigspec()`` annotation can be used to require a configuration
 option not to be set. The following annotation requires ``CONFIG_RISCV=n``:

@@ -68,10 +68,10 @@ config INIT_SP_RELATIVE
 	  SYS_INIT_SP_BSS_OFFSET.
 
 config SYS_INIT_SP_BSS_OFFSET
-	int "Early stack offset from the .bss base address"
+	hex "Early stack offset from the .bss base address"
 	depends on ARM64
 	depends on INIT_SP_RELATIVE
-	default 524288
+	default 0x80000
 	help
 	  This option's value is the offset added to &_bss_start in order to
 	  calculate the stack pointer. This offset should be large enough so
@@ -445,7 +445,7 @@ config ARCH_CPU_INIT
 
 config SYS_ARCH_TIMER
 	bool "ARM Generic Timer support"
-	depends on CPU_V7A || ARM64
+	depends on CPU_V7A || CPU_V7M || ARM64
 	default y if ARM64
 	help
 	  The ARM Generic Timer (aka arch-timer) provides an architected
@@ -883,6 +883,7 @@ config ARCH_MMP
 	select OF_CONTROL
 	select SAVE_PREV_BL_FDT_ADDR
 	select SAVE_PREV_BL_INITRAMFS_START_ADDR
+	imply OF_UPSTREAM
 
 config ARCH_LPC32XX
 	bool "NXP LPC32xx platform"
@@ -897,6 +898,7 @@ config ARCH_LPC32XX
 
 config ARCH_IMX8
 	bool "NXP i.MX8 platform"
+	select ARCH_MISC_INIT if FSL_CAAM
 	select ARM64
 	select SYS_FSL_HAS_SEC
 	select SYS_FSL_SEC_COMPAT_4
@@ -1418,6 +1420,8 @@ config ARCH_VEXPRESS64
 	select MTD_NOR_FLASH if MTD
 	select FLASH_CFI_DRIVER if MTD
 	select ENV_IS_IN_FLASH if MTD
+	select SYSRESET
+	select SYSRESET_PSCI if ARM_PSCI_FW
 	imply DISTRO_DEFAULTS
 
 config TARGET_CORSTONE1000
@@ -2069,30 +2073,30 @@ config ARCH_ROCKCHIP
 	bool "Support Rockchip SoCs"
 	select BINMAN if SPL_OPTEE || SPL
 	select DM
-	select DM_GPIO
-	select DM_I2C
-	select DM_PWM
-	select DM_REGULATOR
-	select DM_SERIAL
-	select DM_SPI
-	select DM_SPI_FLASH
 	select DM_USB_GADGET if USB_DWC3_GADGET
 	select ENABLE_ARM_SOC_BOOT0_HOOK
 	select OF_CONTROL
-	select MMC
-	select MTD
-	select SPI
 	select SPL_DM if SPL
-	select SPL_DM_SPI if SPL
-	select SPL_DM_SPI_FLASH if SPL
 	select SYS_MALLOC_F
 	select SYS_THUMB_BUILD if !ARM64
 	imply ADC
+	imply BOOTSTD_DEFAULTS
 	imply CMD_DM
 	imply DEBUG_UART_BOARD_INIT
-	imply BOOTSTD_DEFAULTS
+	imply DM_GPIO
+	imply DM_I2C
+	imply DM_PWM
+	imply DM_REGULATOR
+	imply DM_SERIAL
+	imply DM_SPI
+	imply DM_SPI_FLASH
 	imply FAT_WRITE
+	imply MMC
+	imply MTD
 	imply SARADC_ROCKCHIP
+	imply SPI
+	imply SPL_DM_SPI if SPL
+	imply SPL_DM_SPI_FLASH if SPL
 	imply SPL_SYSRESET
 	imply SPL_SYS_MALLOC_SIMPLE
 	imply SYS_NS16550

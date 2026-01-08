@@ -358,7 +358,7 @@ static int clk_set_default_rates(struct udevice *dev,
 
 		ret = clk_set_rate(c, rates[index]);
 
-		if (ret < 0) {
+		if (IS_ERR_VALUE(ret)) {
 			dev_warn(dev,
 				 "failed to set rate on clock index %d (%ld) (error = %d)\n",
 				 index, clk.id, ret);
@@ -594,12 +594,13 @@ ulong clk_set_rate(struct clk *clk, ulong rate)
 	if (!clk_valid(clk))
 		return 0;
 	ops = clk_dev_ops(clk->dev);
+	clk_get_priv(clk, &clkp);
 
 	/* Try to find parents which can set rate */
 	while (!ops->set_rate) {
 		struct clk *parent;
 
-		if (!(clk->flags & CLK_SET_RATE_PARENT))
+		if (!(clkp->flags & CLK_SET_RATE_PARENT))
 			return -ENOSYS;
 
 		parent = clk_get_parent(clk);
@@ -608,10 +609,9 @@ ulong clk_set_rate(struct clk *clk, ulong rate)
 
 		clk = parent;
 		ops = clk_dev_ops(clk->dev);
+		clk_get_priv(clk, &clkp);
 	}
 
-	/* get private clock struct used for cache */
-	clk_get_priv(clk, &clkp);
 	/* Clean up cached rates for us and all child clocks */
 	clk_clean_rate_cache(clkp);
 
