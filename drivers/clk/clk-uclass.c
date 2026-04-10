@@ -122,7 +122,8 @@ static int clk_get_by_indexed_prop(struct udevice *dev, const char *prop_name,
 	int ret;
 	struct ofnode_phandle_args args;
 
-	debug("%s(dev=%p, index=%d, clk=%p)\n", __func__, dev, index, clk);
+	debug("%s(dev=%s, index=%d, clk=%p)\n", __func__, dev_read_name(dev),
+	      index, clk);
 
 	assert(clk);
 	clk->dev = NULL;
@@ -183,8 +184,8 @@ int clk_get_bulk(struct udevice *dev, struct clk_bulk *bulk)
 bulk_get_err:
 	err = clk_release_all(bulk->clks, bulk->count);
 	if (err)
-		debug("%s: could not release all clocks for %p\n",
-		      __func__, dev);
+		debug("%s: could not release all clocks for %s\n",
+		      __func__, dev_read_name(dev));
 
 	return ret;
 }
@@ -217,8 +218,8 @@ static int clk_set_default_parents(struct udevice *dev,
 	num_parents = dev_count_phandle_with_args(dev, "assigned-clock-parents",
 						  "#clock-cells", 0);
 	if (num_parents < 0) {
-		debug("%s: could not read assigned-clock-parents for %p\n",
-		      __func__, dev);
+		debug("%s: could not read assigned-clock-parents for %s\n",
+		      __func__, dev_read_name(dev));
 		return 0;
 	}
 
@@ -338,7 +339,7 @@ static int clk_set_default_rates(struct udevice *dev,
 				continue;
 			}
 
-			return ret;
+			goto fail;
 		}
 
 		/* This is clk provider device trying to program itself
@@ -410,7 +411,7 @@ int clk_get_by_name_nodev(ofnode node, const char *name, struct clk *clk)
 {
 	int index = 0;
 
-	debug("%s(node=%p, name=%s, clk=%p)\n", __func__,
+	debug("%s(node=%s, name=%s, clk=%p)\n", __func__,
 		ofnode_get_name(node), name, clk);
 	clk->dev = NULL;
 
@@ -467,7 +468,7 @@ int clk_request(struct udevice *dev, struct clk *clk)
 {
 	const struct clk_ops *ops;
 
-	debug("%s(dev=%p, clk=%p)\n", __func__, dev, clk);
+	debug("%s(dev=%s, clk=%p)\n", __func__, dev_read_name(dev), clk);
 	if (!clk)
 		return 0;
 	ops = clk_dev_ops(dev);
@@ -631,10 +632,12 @@ int clk_set_parent(struct clk *clk, struct clk *parent)
 	if (!ops->set_parent)
 		return -ENOSYS;
 
-	ret = clk_enable(parent);
-	if (ret && ret != -ENOSYS) {
-		printf("Cannot enable parent %s\n", parent->dev->name);
-		return ret;
+	if (clk->enable_count) {
+		ret = clk_enable(parent);
+		if (ret && ret != -ENOSYS) {
+			printf("Cannot enable parent %s\n", parent->dev->name);
+			return ret;
+		}
 	}
 
 	ret = ops->set_parent(clk, parent);
@@ -660,7 +663,7 @@ int clk_enable(struct clk *clk)
 	struct clk *clkp = NULL;
 	int ret;
 
-	debug("%s(clk=%p name=%s)\n", __func__, clk, clk->dev->name);
+	debug("%s(clk=%p name=%s)\n", __func__, clk, clk ? clk->dev->name : "NULL");
 	if (!clk_valid(clk))
 		return 0;
 	ops = clk_dev_ops(clk->dev);
@@ -721,7 +724,7 @@ int clk_disable(struct clk *clk)
 	struct clk *clkp = NULL;
 	int ret;
 
-	debug("%s(clk=%p name=%s)\n", __func__, clk, clk->dev->name);
+	debug("%s(clk=%p name=%s)\n", __func__, clk, clk ? clk->dev->name : "NULL");
 	if (!clk_valid(clk))
 		return 0;
 	ops = clk_dev_ops(clk->dev);

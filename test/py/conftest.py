@@ -28,9 +28,10 @@ import sys
 from spawn import BootFail, Timeout, Unexpected, handle_exception
 import time
 
-# Globals: The HTML log file, and the top-level fixture
+# Globals: The HTML log file, the top-level fixture and the config container
 log = None
 ubman_fix = None
+ubconfig = None
 
 TEST_PY_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -101,7 +102,7 @@ def run_build(config, source_dir, build_dir, board_type, log):
 
     Args:
         config: The pytest configuration.
-        soruce_dir (str): Directory containing source code
+        source_dir (str): Directory containing source code
         build_dir (str): Directory to build in
         board_type (str): board_type parameter (e.g. 'sandbox')
         log (Logfile): Log file to use
@@ -613,7 +614,7 @@ def show_timings():
         if too_long:
             show_bar(f'>{get_time_delta(max_dur)}', too_long_msecs, too_long)
         log.info(buf.getvalue())
-    if ubconfig.timing:
+    if ubconfig and ubconfig.timing:
         print(buf.getvalue(), end='')
 
 

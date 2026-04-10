@@ -35,6 +35,7 @@ config DM_SPI
 
 config SPI_MEM
 	bool "SPI memory extension"
+	select DEVRES
 	help
 	  Enable this option if you want to enable the SPI memory extension.
 	  This extension is meant to simplify interaction with SPI memories
@@ -61,7 +62,7 @@ config ADI_SPI3
 
 config AIROHA_SNFI_SPI
 	bool "Airoha SPI memory controller driver"
-	depends on SPI_MEM
+	depends on SPI_MEM && ARCH_AIROHA
 	help
 	  Enable the Airoha SPI memory controller driver. This driver is
 	  originally based on the Airoha SNFI IP core. It can only be
@@ -343,6 +344,7 @@ config MT7621_SPI
 config MTK_SNOR
 	bool "Mediatek SPI-NOR controller driver"
 	depends on SPI_MEM
+	select DEVRES
 	help
 	  Enable the Mediatek SPINOR controller driver. This driver has
           better read/write performance with NOR.
@@ -676,6 +678,14 @@ config SH_QSPI
 	help
 	  Enable the Renesas Quad SPI controller driver. This driver can be
 	  used on Renesas SoCs.
+
+config SPL_DESIGNWARE_SPI
+	bool "Designware SPI driver in SPL"
+	depends on SPL_DM_SPI
+	default y if DESIGNWARE_SPI
+	help
+	  Enable the Designware SPI driver during SPL.
+	  See the help of DESIGNWARE_SPI for details.
 
 config MXC_SPI
 	bool "MXC SPI Driver"

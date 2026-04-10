@@ -22,6 +22,7 @@
 			.state = s,			\
 			.cmds = name.cmd,		\
 			.num_cmds = 0,			\
+			.wait_for_compl = true		\
 		},					\
 		.cmd = { { 0 } },			\
 		.dev = device,				\
@@ -59,15 +60,15 @@ static int __rpmh_write(const struct udevice *dev, enum rpmh_state state,
 	struct rpmh_ctrlr *ctrlr = get_rpmh_ctrlr(dev);
 
 	if (state != RPMH_ACTIVE_ONLY_STATE) {
-		log_err("only ACTIVE_ONLY state supported\n");
-		return -EINVAL;
+		log_debug("WARN: Only ACTIVE_ONLY state supported\n");
+		return 0;
 	}
 
 	return rpmh_rsc_send_data(ctrlr_to_drv(ctrlr), &rpm_msg->msg);
 }
 
 static int __fill_rpmh_msg(struct rpmh_request *req, enum rpmh_state state,
-			   const struct tcs_cmd *cmd, u32 n)
+			   const struct tcs_cmd *cmd, u32 n, bool is_read)
 {
 	if (!cmd || !n || n > MAX_RPMH_PAYLOAD)
 		return -EINVAL;
@@ -77,10 +78,43 @@ static int __fill_rpmh_msg(struct rpmh_request *req, enum rpmh_state state,
 	req->msg.state = state;
 	req->msg.cmds = req->cmd;
 	req->msg.num_cmds = n;
+	req->msg.is_read = is_read;
 
 	debug("rpmh_msg: %d, %d cmds [first %#x/%#x]\n", state, n, cmd->addr, cmd->data);
 
 	return 0;
+}
+
+/**
+ * rpmh_read: Read a resource value
+ *
+ * @dev: The device making the request
+ * @cmd: The payload having address of resource to read
+ *
+ * Reads the value for the resource address given in tcs_cmd->addr
+ * and returns the tcs_cmd->data filled with same.
+ *
+ * May sleep. Do not call from atomic contexts.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int rpmh_read(const struct udevice *dev, enum rpmh_state state, struct tcs_cmd *cmd)
+{
+	DEFINE_RPMH_MSG_ONSTACK(dev, state, rpm_msg);
+	int ret;
+
+	ret = __fill_rpmh_msg(&rpm_msg, state, cmd, 1, true);
+	if (ret)
+		return ret;
+
+	ret = __rpmh_write(dev, state, &rpm_msg);
+	if (ret)
+		return ret;
+
+	/* Read back the response into the cmd data structure */
+	cmd->data = rpm_msg.cmd[0].data;
+
+	return (ret > 0) ? 0 : ret;
 }
 
 /**
@@ -99,7 +133,7 @@ int rpmh_write(const struct udevice *dev, enum rpmh_state state,
 	DEFINE_RPMH_MSG_ONSTACK(dev, state, rpm_msg);
 	int ret;
 
-	ret = __fill_rpmh_msg(&rpm_msg, state, cmd, n);
+	ret = __fill_rpmh_msg(&rpm_msg, state, cmd, n, false);
 	if (ret)
 		return ret;
 

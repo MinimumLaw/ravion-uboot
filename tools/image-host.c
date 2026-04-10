@@ -650,7 +650,7 @@ int fit_image_cipher_data(const char *keydir, void *keydest,
  *     |- algo = "sha1"
  *     |- value = sha1(data)
  *
- * For signature details, please see doc/uImage.FIT/signature.txt
+ * For signature details, please see doc/usage/fit/signature.rst
  *
  * @keydir	Directory containing *.key and *.crt files (or NULL)
  * @keydest	FDT Blob to write public keys into (NULL if none)
@@ -696,7 +696,7 @@ int fit_image_add_verification_data(const char *keydir, const char *keyfile,
 			     strlen(FIT_HASH_NODENAME))) {
 			ret = fit_image_process_hash(fit, image_name, noffset,
 						data, size);
-		} else if (IMAGE_ENABLE_SIGN && (keydir || keyfile) &&
+		} else if (IMAGE_ENABLE_SIGN && (keydir || keyfile || engine_id) &&
 			   !strncmp(node_name, FIT_SIG_NODENAME,
 				strlen(FIT_SIG_NODENAME))) {
 			ret = fit_image_process_sig(keydir, keyfile, keydest,
@@ -733,6 +733,7 @@ static void strlist_free(struct strlist *list)
 static int strlist_add(struct strlist *list, const char *str)
 {
 	char *dup;
+	char  **tmp = NULL;
 
 	if (!list || !str)
 		return -1;
@@ -741,13 +742,13 @@ static int strlist_add(struct strlist *list, const char *str)
 	if(!dup)
 		return -1;
 
-	list->strings = realloc(list->strings,
-				(list->count + 1) * sizeof(char *));
-	if (!list->strings) {
+	tmp = realloc(list->strings, (list->count + 1) * sizeof(char *));
+	if (!tmp) {
 		free(dup);
 		return -1;
 	}
 
+	list->strings = tmp;
 	list->strings[list->count++] = dup;
 
 	return 0;
@@ -1366,7 +1367,7 @@ int fit_add_verification_data(const char *keydir, const char *keyfile,
 	}
 
 	/* If there are no keys, we can't sign configurations */
-	if (!IMAGE_ENABLE_SIGN || !(keydir || keyfile))
+	if (!IMAGE_ENABLE_SIGN || !(keydir || keyfile || engine_id))
 		return 0;
 
 	/* Find configurations parent node offset */

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
  */
 
 #include <clk.h>
 #include <dm.h>
-#include <ufs.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <zynqmp_firmware.h>
@@ -305,7 +304,7 @@ static int ufs_versal2_init(struct ufs_hba *hba)
 
 	priv->phy_mode = UFSHCD_DWC_PHY_MODE_ROM;
 
-	ret = clk_get_by_name(hba->dev, "core_clk", &clk);
+	ret = clk_get_by_name(hba->dev, "core", &clk);
 	if (ret) {
 		dev_err(hba->dev, "failed to get core_clk clock\n");
 		return ret;
@@ -319,12 +318,12 @@ static int ufs_versal2_init(struct ufs_hba *hba)
 	}
 	priv->host_clk = core_clk_rate;
 
-	priv->rstc = devm_reset_control_get(hba->dev, "ufshc-rst");
+	priv->rstc = devm_reset_control_get(hba->dev, "host");
 	if (IS_ERR(priv->rstc)) {
 		dev_err(hba->dev, "failed to get reset ctl: ufshc-rst\n");
 		return PTR_ERR(priv->rstc);
 	}
-	priv->rstphy = devm_reset_control_get(hba->dev, "ufsphy-rst");
+	priv->rstphy = devm_reset_control_get(hba->dev, "phy");
 	if (IS_ERR(priv->rstphy)) {
 		dev_err(hba->dev, "failed to get reset ctl: ufsphy-rst\n");
 		return PTR_ERR(priv->rstphy);

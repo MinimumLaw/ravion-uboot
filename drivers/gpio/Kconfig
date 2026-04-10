@@ -19,6 +19,7 @@ if GPIO
 config DM_GPIO
 	bool "Enable Driver Model for GPIO drivers"
 	depends on DM
+	select DEVRES
 	help
 	  Enable driver model for GPIO access. The standard GPIO
 	  interface (gpio_get_value(), etc.) is then implemented by
@@ -97,6 +98,22 @@ config SPL_DM_GPIO_LOOKUP_LABEL
 	  different gpios on different hardware versions
 	  for the same functionality in board code.
 
+config DM_GPIO_LOOKUP_LINE_NAME
+	def_bool y
+	depends on OF_CONTROL && OF_LIBFDT
+	help
+	  This option enables specifying a GPIO by referring to its
+	  name as defined by the "gpio-line-names" property in the
+	  gpio controller's devicetree node.
+
+config SPL_DM_GPIO_LOOKUP_LINE_NAME
+	def_bool y
+	depends on SPL_OF_CONTROL && SPL_OF_LIBFDT
+	help
+	  This option enables specifying a GPIO by referring to its
+	  name as defined by the "gpio-line-names" property in the
+	  gpio controller's devicetree node.
+
 config ADI_GPIO
 	bool "ADI GPIO driver"
 	depends on DM_GPIO && ARCH_SC5XX
@@ -135,6 +152,7 @@ config CORTINA_GPIO
 config DWAPB_GPIO
 	bool "DWAPB GPIO driver"
 	depends on DM && DM_GPIO
+	select DEVRES
 	help
 	  Support for the Designware APB GPIO driver.
 
@@ -237,6 +255,7 @@ config IMX_RGPIO2P
 
 config IPROC_GPIO
 	bool "Broadcom iProc GPIO driver(without pinconf)"
+	select DEVRES
 	help
 	  The Broadcom iProc based SoCs- Cygnus, NS2, NS3, NSP and Stingray,
 	  use the same GPIO Controller IP hence this driver could be used

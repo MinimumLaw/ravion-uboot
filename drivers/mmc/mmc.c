@@ -889,7 +889,7 @@ static int __mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value,
 		return ret;
 
 	/*
-	 * In cases when neiter allowed to poll by using CMD13 nor we are
+	 * In cases when neither allowed to poll by using CMD13 nor we are
 	 * capable of polling by using mmc_wait_dat0, then rely on waiting the
 	 * stated timeout to be sufficient.
 	 */
@@ -1382,6 +1382,7 @@ static int sd_get_capabilities(struct mmc *mmc)
 	ALLOC_CACHE_ALIGN_BUFFER(__be32, switch_status, 16);
 	struct mmc_data data;
 	int timeout;
+	uint retries = 3;
 
 	mmc->card_caps = MMC_MODE_1BIT | MMC_CAP(MMC_LEGACY);
 
@@ -1389,25 +1390,26 @@ static int sd_get_capabilities(struct mmc *mmc)
 		return 0;
 
 	/* Read the SCR to find out if this card supports higher speeds */
-	cmd.cmdidx = MMC_CMD_APP_CMD;
-	cmd.resp_type = MMC_RSP_R1;
-	cmd.cmdarg = mmc->rca << 16;
+	do {
+		cmd.cmdidx = MMC_CMD_APP_CMD;
+		cmd.resp_type = MMC_RSP_R1;
+		cmd.cmdarg = mmc->rca << 16;
 
-	err = mmc_send_cmd(mmc, &cmd, NULL);
+		err = mmc_send_cmd(mmc, &cmd, NULL);
+		if (err)
+			continue;
 
-	if (err)
-		return err;
+		cmd.cmdidx = SD_CMD_APP_SEND_SCR;
+		cmd.resp_type = MMC_RSP_R1;
+		cmd.cmdarg = 0;
 
-	cmd.cmdidx = SD_CMD_APP_SEND_SCR;
-	cmd.resp_type = MMC_RSP_R1;
-	cmd.cmdarg = 0;
+		data.dest = (char *)scr;
+		data.blocksize = 8;
+		data.blocks = 1;
+		data.flags = MMC_DATA_READ;
 
-	data.dest = (char *)scr;
-	data.blocksize = 8;
-	data.blocks = 1;
-	data.flags = MMC_DATA_READ;
-
-	err = mmc_send_cmd_retry(mmc, &cmd, &data, 3);
+		err = mmc_send_cmd(mmc, &cmd, &data);
+	} while (err && retries--);
 
 	if (err)
 		return err;
@@ -1661,7 +1663,7 @@ static inline int bus_width(uint cap)
 		return 4;
 	if (cap == MMC_MODE_1BIT)
 		return 1;
-	pr_warn("invalid bus witdh capability 0x%x\n", cap);
+	pr_warn("invalid bus width capability 0x%x\n", cap);
 	return 0;
 }
 
@@ -2198,7 +2200,7 @@ static int mmc_select_mode_and_width(struct mmc *mmc, uint card_caps)
 		return 0;
 
 	if (!mmc->ext_csd) {
-		pr_debug("No ext_csd found!\n"); /* this should enver happen */
+		pr_debug("No ext_csd found!\n"); /* this should never happen */
 		return -ENOTSUPP;
 	}
 
@@ -2933,11 +2935,18 @@ static int mmc_power_cycle(struct mmc *mmc)
 		return ret;
 
 	/*
-	 * SD spec recommends at least 1ms of delay. Let's wait for 2ms
-	 * to be on the safer side.
+	 * SD spec recommends at least 1ms of 'power on' delay.
+	 * Let's wait for 2ms to be on the safer side.
 	 */
 	udelay(2000);
-	return mmc_power_on(mmc);
+	ret = mmc_power_on(mmc);
+
+	/*
+	 * SD spec recommends at least 1ms of 'stable supply voltage' delay.
+	 * Let's wait for 2ms to be on the safer side.
+	 */
+	udelay(2000);
+	return ret;
 }
 
 int mmc_get_op_cond(struct mmc *mmc, bool quiet)

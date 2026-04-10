@@ -18,6 +18,9 @@
 #define MT7981_CLK_PDN 0x250
 #define MT7981_CLK_PDN_EN_WRITE BIT(31)
 
+#define FIXED_CLK0(_id, _rate)					\
+	FIXED_CLK(_id, CLK_XTAL, CLK_PARENT_XTAL, _rate)
+
 #define PLL_FACTOR(_id, _name, _parent, _mult, _div)                           \
 	FACTOR(_id, _parent, _mult, _div, CLK_PARENT_APMIXED)
 
@@ -29,19 +32,19 @@
 
 /* FIXED PLLS */
 static const struct mtk_fixed_clk fixed_pll_clks[] = {
-	FIXED_CLK(CLK_APMIXED_ARMPLL, CLK_XTAL, 1300000000),
-	FIXED_CLK(CLK_APMIXED_NET2PLL, CLK_XTAL, 800000000),
-	FIXED_CLK(CLK_APMIXED_MMPLL, CLK_XTAL, 720000000),
-	FIXED_CLK(CLK_APMIXED_SGMPLL, CLK_XTAL, 325000000),
-	FIXED_CLK(CLK_APMIXED_WEDMCUPLL, CLK_XTAL, 208000000),
-	FIXED_CLK(CLK_APMIXED_NET1PLL, CLK_XTAL, 2500000000),
-	FIXED_CLK(CLK_APMIXED_MPLL, CLK_XTAL, 416000000),
-	FIXED_CLK(CLK_APMIXED_APLL2, CLK_XTAL, 196608000),
+	FIXED_CLK0(CLK_APMIXED_ARMPLL, 1300000000),
+	FIXED_CLK0(CLK_APMIXED_NET2PLL, 800000000),
+	FIXED_CLK0(CLK_APMIXED_MMPLL, 720000000),
+	FIXED_CLK0(CLK_APMIXED_SGMPLL, 325000000),
+	FIXED_CLK0(CLK_APMIXED_WEDMCUPLL, 208000000),
+	FIXED_CLK0(CLK_APMIXED_NET1PLL, 2500000000),
+	FIXED_CLK0(CLK_APMIXED_MPLL, 416000000),
+	FIXED_CLK0(CLK_APMIXED_APLL2, 196608000),
 };
 
 /* TOPCKGEN FIXED CLK */
 static const struct mtk_fixed_clk top_fixed_clks[] = {
-	FIXED_CLK(CLK_TOP_CB_CKSQ_40M, CLK_XTAL, 40000000),
+	FIXED_CLK0(CLK_TOP_CB_CKSQ_40M, 40000000),
 };
 
 /* TOPCKGEN FIXED DIV */
@@ -513,6 +516,7 @@ static const struct mtk_clk_tree mt7981_fixed_pll_clk_tree = {
 	.fdivs_offs = CLK_APMIXED_NR_CLK,
 	.xtal_rate = 40 * MHZ,
 	.fclks = fixed_pll_clks,
+	.num_fclks = ARRAY_SIZE(fixed_pll_clks),
 };
 
 static const struct mtk_clk_tree mt7981_topckgen_clk_tree = {
@@ -521,7 +525,10 @@ static const struct mtk_clk_tree mt7981_topckgen_clk_tree = {
 	.fclks = top_fixed_clks,
 	.fdivs = top_fixed_divs,
 	.muxes = top_muxes,
-	.flags = CLK_BYPASS_XTAL | CLK_TOPCKGEN,
+	.num_fclks = ARRAY_SIZE(top_fixed_clks),
+	.num_fdivs = ARRAY_SIZE(top_fixed_divs),
+	.num_muxes = ARRAY_SIZE(top_muxes),
+	.flags = CLK_BYPASS_XTAL | CLK_PARENT_TOPCKGEN,
 };
 
 static const struct mtk_clk_tree mt7981_infracfg_clk_tree = {
@@ -531,7 +538,10 @@ static const struct mtk_clk_tree mt7981_infracfg_clk_tree = {
 	.fdivs = infra_fixed_divs,
 	.muxes = infra_muxes,
 	.gates = infracfg_gates,
-	.flags = CLK_INFRASYS,
+	.num_fdivs = ARRAY_SIZE(infra_fixed_divs),
+	.num_muxes = ARRAY_SIZE(infra_muxes),
+	.num_gates = ARRAY_SIZE(infracfg_gates),
+	.flags = CLK_PARENT_INFRASYS,
 };
 
 static const struct udevice_id mt7981_fixed_pll_compat[] = {
@@ -624,7 +634,7 @@ static const struct mtk_gate sgmii0_cgs[] = {
 static int mt7981_sgmii0sys_probe(struct udevice *dev)
 {
 	return mtk_common_clk_gate_init(dev, &mt7981_topckgen_clk_tree,
-					sgmii0_cgs);
+					sgmii0_cgs, ARRAY_SIZE(sgmii0_cgs), 0);
 }
 
 static const struct udevice_id mt7981_sgmii0sys_compat[] = {
@@ -651,7 +661,7 @@ static const struct mtk_gate sgmii1_cgs[] = {
 static int mt7981_sgmii1sys_probe(struct udevice *dev)
 {
 	return mtk_common_clk_gate_init(dev, &mt7981_topckgen_clk_tree,
-					sgmii1_cgs);
+					sgmii1_cgs, ARRAY_SIZE(sgmii1_cgs), 0);
 }
 
 static const struct udevice_id mt7981_sgmii1sys_compat[] = {
@@ -692,7 +702,7 @@ static const struct mtk_gate eth_cgs[] = {
 static int mt7981_ethsys_probe(struct udevice *dev)
 {
 	return mtk_common_clk_gate_init(dev, &mt7981_topckgen_clk_tree,
-					eth_cgs);
+					eth_cgs, ARRAY_SIZE(eth_cgs), 0);
 }
 
 static int mt7981_ethsys_bind(struct udevice *dev)
