@@ -186,6 +186,7 @@ F:	drivers/video/meson/
 F:	drivers/watchdog/meson_gxbb_wdt.c
 F:	include/configs/meson64.h
 F:	include/configs/meson64_android.h
+F:	tools/amlimage*
 F:	doc/board/amlogic/
 N:	meson
 
@@ -314,8 +315,8 @@ F:	arch/arm/include/asm/arch-imx*/
 F:	arch/arm/include/asm/arch-mx*/
 F:	arch/arm/include/asm/arch-vf610/
 F:	arch/arm/include/asm/mach-imx/
-F:	board/freescale/*mx*/
-F:	board/freescale/common/
+F:	board/nxp/*mx*/
+F:	board/nxp/common/
 F:	common/spl/spl_imx_container.c
 F:	doc/board/nxp/
 F:	doc/imx/
@@ -415,6 +416,7 @@ M:	Chunfeng Yun <chunfeng.yun@mediatek.com>
 M:	Igor Belwon <igor.belwon@mentallysanemainliners.org>
 R:	GSS_MTK_Uboot_upstream <GSS_MTK_Uboot_upstream@mediatek.com>
 S:	Maintained
+F:	arch/arm/dts/mt*
 F:	arch/arm/mach-mediatek/
 F:	arch/arm/include/asm/arch-mediatek/
 F:	board/mediatek/
@@ -624,19 +626,17 @@ S:	Supported
 F:	arch/arm/dts/am335x-sancloud*
 
 ARM SC5XX
-M:	Nathan Barrett-Morrison <nathan.morrison@timesys.com>
 M:	Greg Malysa <malysagreg@gmail.com>
-M:	Ian Roberts <ian.roberts@timesys.com>
 M:	Vasileios Bimpikas <vasileios.bimpikas@analog.com>
-M:	Utsav Agarwal <utsav.agarwal@analog.com>
 M:	Arturs Artamonovs <arturs.artamonovs@analog.com>
-L:	adsp-linux@analog.com
+L:	linux@analog.com
 S:	Supported
-T:	git https://github.com/analogdevicesinc/lnxdsp-u-boot
+T:	git https://github.com/analogdevicesinc/u-boot
 F:	arch/arm/dts/sc5*
 F:	arch/arm/include/asm/arch-adi/
 F:	arch/arm/mach-sc5xx/
 F:	board/adi/
+F:	configs/sc5*
 F:	doc/device-tree-bindings/arm/adi/adi,sc5xx.yaml
 F:	doc/device-tree-bindings/clock/adi,sc5xx-clocks.yaml
 F:	doc/device-tree-bindings/pinctrl/adi,adsp-pinctrl.yaml
@@ -656,6 +656,7 @@ F:	drivers/timer/adi_sc5xx_timer.c
 F:	drivers/usb/musb-new/sc5xx.c
 F:	drivers/watchdog/adi_wdt.c
 F:	include/configs/sc5*
+F:	include/dt-bindings/clock/adi-sc5xx-clock.h
 F:	include/dt-bindings/pinctrl/adi-adsp.h
 F:	include/env/adi/
 
@@ -747,7 +748,6 @@ N:	stm
 N:	stm32
 
 ARM SUNXI
-M:	Jagan Teki <jagan@amarulasolutions.com>
 M:	Andre Przywara <andre.przywara@arm.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-sunxi.git
@@ -1044,15 +1044,6 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-clk.git
 F:	drivers/clk/
 F:	drivers/clk/imx/
 
-COLDFIRE
-M:	Huan Wang <alison.wang@nxp.com>
-M:	Angelo Dureghello <angelo@kernel-space.org>
-S:	Maintained
-T:	git https://source.denx.de/u-boot/custodians/u-boot-coldfire.git
-F:	arch/m68k/
-F:	doc/arch/m68k.rst
-F:	drivers/watchdog/mcf_wdt.c
-
 CPU
 M:	Simon Glass <sjg@chromium.org>
 M:	Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
@@ -1152,8 +1143,7 @@ F:	tools/file2include.c
 F:	tools/mkeficapsule.c
 
 ENVIRONMENT
-M:	Joe Hershberger <joe.hershberger@ni.com>
-S:	Maintained
+S:	Orphaned
 F:	env/
 F:	include/env/
 F:	include/env*
@@ -1246,7 +1236,7 @@ F:	drivers/watchdog/sp805_wdt.c
 F:	drivers/watchdog/sbsa_gwdt.c
 
 FWU Multi Bank Update
-M:	Sughosh Ganu <sughosh.ganu@linaro.org>
+M:	Sughosh Ganu <sughosh.ganu@arm.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-efi.git
 F:	lib/fwu_updates/*
@@ -1258,6 +1248,29 @@ M:	Tim Harvey <tharvey@gateworks.com>
 S:	Maintained
 F:	drivers/misc/gsc.c
 F:	include/gsc.h
+
+GOLDFISH SERIAL DRIVER
+M:	Kuan-Wei Chiu <visitorckw@gmail.com>
+S:	Maintained
+F:	drivers/serial/serial_goldfish.c
+F:	include/goldfish_tty.h
+
+GOLDFISH TIMER DRIVER
+M:	Kuan-Wei Chiu <visitorckw@gmail.com>
+S:	Maintained
+F:	drivers/timer/goldfish_timer.c
+F:	include/goldfish_timer.h
+
+INTERCONNECT:
+M:	Neil Armstrong <neil.armstrong@linaro.org>
+S:	Maintained
+T:	git https://source.denx.de/u-boot/u-boot.git
+F:	arch/sandbox/include/asm/interconnect.h
+F:	doc/api/interconnect.rst
+F:	drivers/interconnect/
+F:	include/interconnect-uclass.h
+F:	include/interconnect.h
+F:	test/dm/interconnect.c
 
 I2C
 M:	Heiko Schocher <hs@nabladev.com>
@@ -1282,12 +1295,6 @@ F:	doc/README.kwbimage
 F:	doc/kwboot.1
 F:	tools/kwb*
 
-LED
-M:	Ivan Vozvakhov <i.vozvakhov@vk.team>
-S:	Supported
-F:	doc/device-tree-bindings/leds/leds-pwm.txt
-F:	drivers/led/led_pwm.c
-
 LOGGING
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
@@ -1299,6 +1306,21 @@ F:	include/log.h
 F:	lib/getopt.c
 F:	test/log/
 F:	test/py/tests/test_log.py
+
+M680X0 ARCHITECTURE
+M:	Kuan-Wei Chiu <visitorckw@gmail.com>
+S:	Maintained
+F:	arch/m68k/cpu/m680x0/
+F:	arch/m68k/include/asm/bootinfo.h
+
+M68K
+M:	Angelo Dureghello <angelo@kernel-space.org>
+M:	Kuan-Wei Chiu <visitorckw@gmail.com>
+S:	Maintained
+T:	git https://source.denx.de/u-boot/custodians/u-boot-coldfire.git
+F:	arch/m68k/
+F:	doc/arch/m68k.rst
+F:	drivers/watchdog/mcf_wdt.c
 
 MALI DISPLAY PROCESSORS
 M:	Liviu Dudau <liviu.dudau@foss.arm.com>
@@ -1429,9 +1451,7 @@ F:	drivers/mmc/
 N:	mmc
 
 NETWORK
-M:	Joe Hershberger <joe.hershberger@ni.com>
-M:	Ramon Fried <rfried.dev@gmail.com>
-M:	Jerome Forissier <jerome@forissier.org>
+M:	Jerome Forissier <jerome.forissier@arm.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-net.git
 F:	drivers/net/
@@ -1439,7 +1459,7 @@ F:	include/net.h
 F:	net/
 
 NETWORK (LWIP)
-M:	Jerome Forissier <jerome@forissier.org>
+M:	Jerome Forissier <jerome.forissier@arm.com>
 S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-net.git
 F:	cmd/lwip/
@@ -1516,8 +1536,7 @@ F:	drivers/pci/pcie_dw_imx.c
 F:	drivers/phy/phy-imx8m-pcie.c
 
 PCI Endpoint
-M:	Ramon Fried <rfried.dev@gmail.com>
-S:	Maintained
+S:	Orphaned
 F:	drivers/pci_endpoint/
 F:  include/pci_ep.h
 
@@ -1574,6 +1593,17 @@ S:	Maintained
 T:	git https://source.denx.de/u-boot/custodians/u-boot-mpc85xx.git
 F:	arch/powerpc/cpu/mpc85xx/
 
+PWM LED
+S:	Orphan
+F:	doc/device-tree-bindings/leds/leds-pwm.txt
+F:	drivers/led/led_pwm.c
+
+QEMU VIRTUAL SYSTEM CONTROLLER
+M:	Kuan-Wei Chiu <visitorckw@gmail.com>
+S:	Maintained
+F:	drivers/sysreset/sysreset_qemu_virt_ctrl.c
+F:	include/qemu_virt_ctrl.h
+
 RAW NAND
 M:	Dario Binacchi <dario.binacchi@amarulasolutions.com>
 M:	Michael Trimarchi <michael@amarulasolutions.com>
@@ -1614,7 +1644,7 @@ F:	drivers/pinctrl/pinctrl-th1520.c
 F:	drivers/ram/thead/th1520_ddr.c
 
 RNG
-M:	Sughosh Ganu <sughosh.ganu@linaro.org>
+M:	Sughosh Ganu <sughosh.ganu@arm.com>
 R:	Heinrich Schuchardt <xypron.glpk@gmx.de>
 S:	Maintained
 F:	cmd/rng.c
@@ -1686,14 +1716,29 @@ F:	include/slre.h
 F:	lib/slre.c
 F:	test/lib/slre.c
 
+SM3
+M:	Heiko Schocher <hs@nabladev.com>
+S:	Maintained
+F:	cmd/sm3sum.c
+F:	include/u-boot/sm3.h
+F:	lib/sm3.c
+
+SMBIOS
+M:	Raymond Mao <raymondmaoca@gmail.com>
+S:	Maintained
+F:	arch/arm/dts/smbios_generic.dtsi
+F:	cmd/smbios.c
+F:	drivers/sysinfo/smbios.c
+F:	include/smbios*
+F:	lib/smbios.c
+
 SMCCC TRNG
 M:	Etienne Carriere <etienne.carriere@linaro.org>
 S:	Maintained
 F:	drivers/rng/smccc_trng.c
 
 SPI
-M:	Jagan Teki <jagan@amarulasolutions.com>
-S:	Maintained
+S:	Orphaned
 T:	git https://source.denx.de/u-boot/custodians/u-boot-spi.git
 F:	drivers/spi/
 F:	include/spi*
@@ -1707,9 +1752,8 @@ T:	git https://source.denx.de/u-boot/custodians/u-boot-nand-flash.git
 F:	drivers/mtd/nand/spi/
 
 SPI-NOR
-M:	Jagan Teki <jagan@amarulasolutions.com>
 M:	Vignesh R <vigneshr@ti.com>
-R:	Tudor Ambarus <tudor.ambarus@linaro.org>
+R:	Takahiro Kuwano <takahiro.kuwano@infineon.com>
 S:	Maintained
 F:	drivers/mtd/spi/
 F:	include/spi_flash.h
@@ -1884,7 +1928,7 @@ F:	drivers/usb/host/xhci*
 F:	include/usb/xhci.h
 
 UTHREAD
-M:	Jerome Forissier <jerome@forissier.org>
+M:	Jerome Forissier <jerome.forissier@arm.com>
 S:	Maintained
 F:	cmd/spawn.c
 F:	include/uthread.h

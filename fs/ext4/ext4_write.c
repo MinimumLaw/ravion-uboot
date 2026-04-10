@@ -108,7 +108,13 @@ int ext4fs_get_bgdtable(void)
 {
 	int status;
 	struct ext_filesystem *fs = get_fs();
-	int gdsize_total = ROUND(fs->no_blkgrp * fs->gdsize, fs->blksz);
+	size_t alloc;
+	size_t gdsize_total;
+
+	if (__builtin_mul_overflow(fs->no_blkgrp, fs->gdsize, &alloc))
+		return -1;
+
+	gdsize_total = ROUND(alloc, fs->blksz);
 	fs->no_blk_pergdt = gdsize_total / fs->blksz;
 
 	/* allocate memory for gdtable */
@@ -205,7 +211,7 @@ static void delete_double_indirect_block(struct ext2_inode *inode)
 		di_buffer = zalloc(fs->blksz);
 		if (!di_buffer) {
 			printf("No memory\n");
-			return;
+			goto fail;
 		}
 		dib_start_addr = di_buffer;
 		blknr = le32_to_cpu(inode->b.blocks.double_indir_block);
@@ -304,7 +310,7 @@ static void delete_triple_indirect_block(struct ext2_inode *inode)
 		tigp_buffer = zalloc(fs->blksz);
 		if (!tigp_buffer) {
 			printf("No memory\n");
-			return;
+			goto fail;
 		}
 		tib_start_addr = tigp_buffer;
 		blknr = le32_to_cpu(inode->b.blocks.triple_indir_block);

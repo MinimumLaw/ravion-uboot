@@ -670,13 +670,6 @@ config ARCH_MVEBU
 	select SPI
 	imply CMD_DM
 
-config ARCH_ORION5X
-	bool "Marvell Orion"
-	select CPU_ARM926EJS
-	select GPIO_EXTRA_HEADER
-	select SPL_SEPARATE_BSS if SPL
-	select TIMER
-
 config ARCH_BCM283X
 	bool "Broadcom BCM283X family"
 	select CPU
@@ -835,6 +828,8 @@ config ARCH_K3
 	select FIT_SIGNATURE if ARM64
 	select DMA_ADDR_T_64BIT
 	select LTO
+	select SPL_LOAD_FIT if SPL
+	select SPL_USE_TINY_PRINTF_POINTER_SUPPORT if SPL_USE_TINY_PRINTF && DFU && CPU_V7R
 	imply TI_SECURE_DEVICE
 	imply DM_RNG if ARM64
 	imply TEE if ARM64
@@ -864,7 +859,6 @@ config ARCH_MESON
 config ARCH_MEDIATEK
 	bool "MediaTek SoCs"
 	select DM
-	select GPIO_EXTRA_HEADER
 	select OF_CONTROL
 	select SPL_DM if SPL
 	select SPL_LIBCOMMON_SUPPORT if SPL
@@ -1143,6 +1137,7 @@ config ARCH_SNAPDRAGON
 	select SYSRESET
 	select SYSRESET_PSCI
 	select ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR
+	select MMU_PGPROT
 	imply OF_UPSTREAM
 	imply CMD_DM
 	imply DM_USB_GADGET
@@ -2345,8 +2340,6 @@ source "arch/arm/mach-omap2/Kconfig"
 
 source "arch/arm/cpu/armv8/fsl-layerscape/Kconfig"
 
-source "arch/arm/mach-orion5x/Kconfig"
-
 source "arch/arm/mach-owl/Kconfig"
 
 source "arch/arm/mach-renesas/Kconfig"
@@ -2422,23 +2415,23 @@ source "board/cavium/thunderx/Kconfig"
 source "board/eets/pdu001/Kconfig"
 source "board/emulation/qemu-arm/Kconfig"
 source "board/emulation/qemu-sbsa/Kconfig"
-source "board/freescale/ls2080aqds/Kconfig"
-source "board/freescale/ls2080ardb/Kconfig"
-source "board/freescale/ls1088a/Kconfig"
-source "board/freescale/ls1028a/Kconfig"
-source "board/freescale/ls1021aqds/Kconfig"
-source "board/freescale/ls1043aqds/Kconfig"
-source "board/freescale/ls1021atwr/Kconfig"
-source "board/freescale/ls1021atsn/Kconfig"
-source "board/freescale/ls1021aiot/Kconfig"
-source "board/freescale/ls1046aqds/Kconfig"
-source "board/freescale/ls1043ardb/Kconfig"
-source "board/freescale/ls1046ardb/Kconfig"
-source "board/freescale/ls1046afrwy/Kconfig"
-source "board/freescale/ls1012aqds/Kconfig"
-source "board/freescale/ls1012ardb/Kconfig"
-source "board/freescale/ls1012afrdm/Kconfig"
-source "board/freescale/lx2160a/Kconfig"
+source "board/nxp/ls2080aqds/Kconfig"
+source "board/nxp/ls2080ardb/Kconfig"
+source "board/nxp/ls1088a/Kconfig"
+source "board/nxp/ls1028a/Kconfig"
+source "board/nxp/ls1021aqds/Kconfig"
+source "board/nxp/ls1043aqds/Kconfig"
+source "board/nxp/ls1021atwr/Kconfig"
+source "board/nxp/ls1021atsn/Kconfig"
+source "board/nxp/ls1021aiot/Kconfig"
+source "board/nxp/ls1046aqds/Kconfig"
+source "board/nxp/ls1043ardb/Kconfig"
+source "board/nxp/ls1046ardb/Kconfig"
+source "board/nxp/ls1046afrwy/Kconfig"
+source "board/nxp/ls1012aqds/Kconfig"
+source "board/nxp/ls1012ardb/Kconfig"
+source "board/nxp/ls1012afrdm/Kconfig"
+source "board/nxp/lx2160a/Kconfig"
 source "board/grinn/chiliboard/Kconfig"
 source "board/hisilicon/hikey/Kconfig"
 source "board/hisilicon/hikey960/Kconfig"

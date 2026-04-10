@@ -32,11 +32,6 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-	__u_boot_list : {
-		KEEP(*(SORT(__u_boot_list*)));
-	}
-
-	. = ALIGN(4);
 	.binman_sym_table : {
 		__binman_sym_start = .;
 		KEEP(*(SORT(.binman_sym*)));
@@ -44,20 +39,16 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-
-	__image_copy_end = .;
-
-	.rel.dyn : {
-		__rel_dyn_start = .;
-		*(.rel*)
-		__rel_dyn_end = .;
+	__u_boot_list : {
+		KEEP(*(SORT(__u_boot_list*)));
+		. = ALIGN(8);
 	}
 
-	. = ALIGN(8);
+	__image_copy_end = .;
 	_image_binary_end = .;
 	_end = .;
 
-	.bss __rel_dyn_start (OVERLAY) : {
+	.bss _image_binary_end (OVERLAY) : {
 		__bss_start = .;
 		*(.bss*)
 		 . = ALIGN(8);
@@ -79,6 +70,9 @@ SECTIONS
 ASSERT(__image_copy_end - __image_copy_start <= (IMAGE_MAX_SIZE), \
 	"SPL image too big");
 #endif
+
+ASSERT(_image_binary_end % 8 == 0, \
+       "_image_binary_end must be 8-byte aligned for device tree");
 
 #if defined(CONFIG_SPL_BSS_MAX_SIZE)
 ASSERT(__bss_end - __bss_start <= (CONFIG_SPL_BSS_MAX_SIZE), \

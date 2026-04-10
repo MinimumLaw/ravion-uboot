@@ -85,6 +85,9 @@ static const struct mtk_gate apmixed_cgs[] = {
 };
 
 /* topckgen */
+#define FIXED_CLK0(_id, _rate)					\
+	FIXED_CLK(_id, CLK_XTAL, CLK_PARENT_XTAL, _rate)
+
 #define FACTOR0(_id, _parent, _mult, _div)			\
 	FACTOR(_id, _parent, _mult, _div, CLK_PARENT_APMIXED)
 
@@ -95,16 +98,16 @@ static const struct mtk_gate apmixed_cgs[] = {
 	FACTOR(_id, _parent, _mult, _div, 0)
 
 static const struct mtk_fixed_clk top_fixed_clks[] = {
-	FIXED_CLK(CLK_TOP_TO_U2_PHY, CLK_XTAL, 31250000),
-	FIXED_CLK(CLK_TOP_TO_U2_PHY_1P, CLK_XTAL, 31250000),
-	FIXED_CLK(CLK_TOP_PCIE0_PIPE_EN, CLK_XTAL, 125000000),
-	FIXED_CLK(CLK_TOP_PCIE1_PIPE_EN, CLK_XTAL, 125000000),
-	FIXED_CLK(CLK_TOP_SSUSB_TX250M, CLK_XTAL, 250000000),
-	FIXED_CLK(CLK_TOP_SSUSB_EQ_RX250M, CLK_XTAL, 250000000),
-	FIXED_CLK(CLK_TOP_SSUSB_CDR_REF, CLK_XTAL, 33333333),
-	FIXED_CLK(CLK_TOP_SSUSB_CDR_FB, CLK_XTAL, 50000000),
-	FIXED_CLK(CLK_TOP_SATA_ASIC, CLK_XTAL, 50000000),
-	FIXED_CLK(CLK_TOP_SATA_RBC, CLK_XTAL, 50000000),
+	FIXED_CLK0(CLK_TOP_TO_U2_PHY, 31250000),
+	FIXED_CLK0(CLK_TOP_TO_U2_PHY_1P, 31250000),
+	FIXED_CLK0(CLK_TOP_PCIE0_PIPE_EN, 125000000),
+	FIXED_CLK0(CLK_TOP_PCIE1_PIPE_EN, 125000000),
+	FIXED_CLK0(CLK_TOP_SSUSB_TX250M, 250000000),
+	FIXED_CLK0(CLK_TOP_SSUSB_EQ_RX250M, 250000000),
+	FIXED_CLK0(CLK_TOP_SSUSB_CDR_REF, 33333333),
+	FIXED_CLK0(CLK_TOP_SSUSB_CDR_FB, 50000000),
+	FIXED_CLK0(CLK_TOP_SATA_ASIC, 50000000),
+	FIXED_CLK0(CLK_TOP_SATA_RBC, 50000000),
 };
 
 static const struct mtk_fixed_factor top_fixed_divs[] = {
@@ -604,6 +607,8 @@ static const struct mtk_clk_tree mt7622_apmixed_clk_tree = {
 	.plls = apmixed_plls,
 	.gates_offs = CLK_APMIXED_MAIN_CORE_EN,
 	.gates = apmixed_cgs,
+	.num_plls = ARRAY_SIZE(apmixed_plls),
+	.num_gates = ARRAY_SIZE(apmixed_cgs),
 };
 
 static const struct mtk_clk_tree mt7622_infra_clk_tree = {
@@ -612,6 +617,8 @@ static const struct mtk_clk_tree mt7622_infra_clk_tree = {
 	.gates_offs = CLK_INFRA_DBGCLK_PD,
 	.muxes = infra_muxes,
 	.gates = infra_cgs,
+	.num_muxes = ARRAY_SIZE(infra_muxes),
+	.num_gates = ARRAY_SIZE(infra_cgs),
 };
 
 static const struct mtk_clk_tree mt7622_peri_clk_tree = {
@@ -620,6 +627,8 @@ static const struct mtk_clk_tree mt7622_peri_clk_tree = {
 	.gates_offs = CLK_PERI_THERM_PD,
 	.muxes = peri_muxes,
 	.gates = peri_cgs,
+	.num_muxes = ARRAY_SIZE(peri_muxes),
+	.num_gates = ARRAY_SIZE(peri_cgs),
 };
 
 static const struct mtk_clk_tree mt7622_clk_tree = {
@@ -629,6 +638,9 @@ static const struct mtk_clk_tree mt7622_clk_tree = {
 	.fclks = top_fixed_clks,
 	.fdivs = top_fixed_divs,
 	.muxes = top_muxes,
+	.num_fclks = ARRAY_SIZE(top_fixed_clks),
+	.num_fdivs = ARRAY_SIZE(top_fixed_divs),
+	.num_muxes = ARRAY_SIZE(top_muxes),
 };
 
 static int mt7622_mcucfg_probe(struct udevice *dev)
@@ -683,7 +695,8 @@ static int mt7622_pericfg_probe(struct udevice *dev)
 
 static int mt7622_pciesys_probe(struct udevice *dev)
 {
-	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, pcie_cgs);
+	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, pcie_cgs,
+					ARRAY_SIZE(pcie_cgs), 0);
 }
 
 static int mt7622_pciesys_bind(struct udevice *dev)
@@ -701,7 +714,8 @@ static int mt7622_pciesys_bind(struct udevice *dev)
 
 static int mt7622_ethsys_probe(struct udevice *dev)
 {
-	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, eth_cgs);
+	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, eth_cgs,
+					ARRAY_SIZE(eth_cgs), 0);
 }
 
 static int mt7622_ethsys_bind(struct udevice *dev)
@@ -719,12 +733,14 @@ static int mt7622_ethsys_bind(struct udevice *dev)
 
 static int mt7622_sgmiisys_probe(struct udevice *dev)
 {
-	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, sgmii_cgs);
+	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, sgmii_cgs,
+					ARRAY_SIZE(sgmii_cgs), 0);
 }
 
 static int mt7622_ssusbsys_probe(struct udevice *dev)
 {
-	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, ssusb_cgs);
+	return mtk_common_clk_gate_init(dev, &mt7622_clk_tree, ssusb_cgs,
+					ARRAY_SIZE(ssusb_cgs), 0);
 }
 
 static const struct udevice_id mt7622_apmixed_compat[] = {
@@ -805,8 +821,8 @@ U_BOOT_DRIVER(mtk_clk_infracfg) = {
 	.id = UCLASS_CLK,
 	.of_match = mt7622_infracfg_compat,
 	.probe = mt7622_infracfg_probe,
-	.priv_auto	= sizeof(struct mtk_cg_priv),
-	.ops = &mtk_clk_gate_ops,
+	.priv_auto	= sizeof(struct mtk_clk_priv),
+	.ops = &mtk_clk_infrasys_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
 
@@ -815,8 +831,8 @@ U_BOOT_DRIVER(mtk_clk_pericfg) = {
 	.id = UCLASS_CLK,
 	.of_match = mt7622_pericfg_compat,
 	.probe = mt7622_pericfg_probe,
-	.priv_auto	= sizeof(struct mtk_cg_priv),
-	.ops = &mtk_clk_gate_ops,
+	.priv_auto = sizeof(struct mtk_clk_priv),
+	.ops = &mtk_clk_infrasys_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
 

@@ -8,7 +8,6 @@ imagesize==1.4.1
 Jinja2==3.1.4
 MarkupSafe==3.0.2
 packaging==24.1
-pip==24.2
 Pygments==2.18.0
 requests==2.32.4
 six==1.16.0
@@ -24,4 +23,4 @@ sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
-urllib3==2.6.0
+urllib3==2.6.3

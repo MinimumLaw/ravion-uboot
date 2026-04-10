@@ -125,7 +125,9 @@ config AIROHA_ETH
 	bool "Airoha Ethernet QDMA Driver"
 	depends on ARCH_AIROHA
 	select PHYLIB
+	select DEVRES
 	select DM_RESET
+	select MDIO_MT7531_MMIO
 	help
 	  This Driver support Airoha Ethernet QDMA Driver
 	  Say Y to enable support for the Airoha Ethernet QDMA.
@@ -358,6 +360,7 @@ config ETH_SANDBOX_RAW
 
 config ETH_DESIGNWARE
 	bool "Synopsys Designware Ethernet MAC"
+	select DEVRES
 	select PHYLIB
 	imply ETH_DESIGNWARE_SOCFPGA if ARCH_SOCFPGA
 	help
@@ -420,7 +423,7 @@ config FEC_MXC_MDIO_BASE
 
 config FEC_MXC
 	bool "FEC Ethernet controller"
-	depends on MX28 || MX5 || MX6 || MX7 || IMX8 || IMX8M || IMX8ULP || IMX93 || VF610
+	depends on MX28 || MX5 || MX6 || MX7 || IMX8 || IMX8M || IMX8ULP || IMX91 || IMX93 || VF610
 	help
 	  This driver supports the 10/100 Fast Ethernet controller for
 	  NXP i.MX processors.
@@ -536,7 +539,7 @@ config MV88E6XXX
 
 config MVGBE
 	bool "Marvell Orion5x/Kirkwood network interface support"
-	depends on ARCH_KIRKWOOD || ARCH_ORION5X
+	depends on ARCH_KIRKWOOD
 	select PHYLIB
 	help
 	  This driver supports the network interface units in the
@@ -554,6 +557,7 @@ config MVNETA
 config MVPP2
 	bool "Marvell Armada 375/7K/8K network interface support"
 	depends on ARMADA_375 || ARMADA_8K
+	select DEVRES
 	select PHYLIB
 	select MVMDIO
 	select DM_MDIO
@@ -1064,6 +1068,14 @@ config ASPEED_MDIO
 	help
 	  This driver supports the MDIO bus of Aspeed AST2600 SOC.  The driver
 	  currently supports Clause 22.
+
+config MDIO_MSCC_MIIM
+	bool "Microsemi MIIM interface support"
+	depends on DM_MDIO
+	select REGMAP
+	help
+		This driver supports MDIO interface found in Microsemi and Microchip
+		network switches.
 
 config MDIO_MUX_MMIOREG
 	bool "MDIO MUX accessed as a MMIO register access"

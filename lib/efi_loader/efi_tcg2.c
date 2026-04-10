@@ -430,6 +430,9 @@ static efi_status_t tcg2_hash_pe_image(void *efi, u64 efi_size,
 		case TPM2_ALG_SHA512:
 			hash_calculate("sha512", regs->reg, regs->num, hash);
 			break;
+		case TPM2_ALG_SM3_256:
+			hash_calculate("sm3_256", regs->reg, regs->num, hash);
+			break;
 		default:
 			continue;
 		}
@@ -1210,8 +1213,10 @@ tcg2_measure_gpt_data(struct udevice *dev,
 		goto out2;
 	}
 
-	ret = block_io->read_blocks(block_io, block_io->media->media_id, 1,
-				    block_io->media->block_size, gpt_h);
+	ret = EFI_CALL(block_io->read_blocks(block_io,
+					     block_io->media->media_id, 1,
+					     block_io->media->block_size,
+					     gpt_h));
 	if (ret != EFI_SUCCESS)
 		goto out2;
 
@@ -1224,9 +1229,10 @@ tcg2_measure_gpt_data(struct udevice *dev,
 		goto out2;
 	}
 
-	ret = block_io->read_blocks(block_io, block_io->media->media_id,
-				    gpt_h->partition_entry_lba,
-				    total_gpt_entry_size, entry);
+	ret = EFI_CALL(block_io->read_blocks(block_io,
+					     block_io->media->media_id,
+					     gpt_h->partition_entry_lba,
+					     total_gpt_entry_size, entry));
 	if (ret != EFI_SUCCESS)
 		goto out2;
 

@@ -133,20 +133,13 @@ config DM_REGULATOR_PFUZE100
 
 config REGULATOR_PWM
 	bool "Enable driver for PWM regulators"
-	depends on DM_REGULATOR
+	depends on DM_REGULATOR && DM_PWM
 	---help---
 	Enable support for the PWM regulator functions which voltage are
 	controlled by PWM duty ratio. Some of Rockchip board using this kind
 	of regulator. The driver implements get/set api for the various BUCKS.
 	This driver is controlled by a device tree node
 	which includes voltage limits.
-
-config SPL_REGULATOR_PWM
-	bool "Enable Driver for PWM regulators in SPL"
-	depends on SPL_DM_REGULATOR && SPL && SPL_DM_PWM
-	help
-	  This config enables implementation of driver-model regulator uclass
-	  features for PWM regulators in SPL.
 
 config DM_REGULATOR_MAX8907
 	bool "Enable Driver Model for REGULATOR MAX8907"
@@ -235,6 +228,7 @@ config DM_REGULATOR_GPIO
 config DM_REGULATOR_QCOM_RPMH
 	bool "Enable driver model for Qualcomm RPMh regulator"
 	depends on DM_REGULATOR && QCOM_RPMH
+	select DEVRES
 	---help---
 	  Enable support for the Qualcomm RPMh regulator. The driver
 	  implements get/set api for a limited set of regulators used
@@ -242,14 +236,14 @@ config DM_REGULATOR_QCOM_RPMH
 
 config DM_REGULATOR_QCOM_USB_VBUS
 	bool "Enable driver model for Qualcomm USB vbus regulator"
-	depends on DM_REGULATOR
+	depends on DM_REGULATOR && DM_PMIC
 	---help---
 	  Enable support for the Qualcomm USB Vbus regulator. The driver
 	  implements get/set api for the regulator to be used by u-boot.
 
 config SPL_DM_REGULATOR_GPIO
 	bool "Enable Driver Model for GPIO REGULATOR in SPL"
-	depends on DM_REGULATOR_GPIO && SPL_GPIO
+	depends on DM_REGULATOR_GPIO && SPL_DM_GPIO
 	select SPL_DM_REGULATOR_COMMON
 	---help---
 	This config enables implementation of driver-model regulator uclass

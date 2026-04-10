@@ -11,6 +11,11 @@
 #include <asm/io.h>
 #include <asm-generic/gpio.h>
 #include <linux/bitops.h>
+#include <linux/err.h>
+#include <log.h>
+#include <regmap.h>
+#include <syscon.h>
+#include <dt-bindings/pinctrl/mt65xx.h>
 
 #include "pinctrl-mtk-common.h"
 
@@ -364,11 +369,13 @@ int mtk_pinconf_bias_set_v1(struct udevice *dev, u32 pin, bool disable,
 	/* set pupd_r1_r0 if pullen_pullsel succeeded */
 	err = mtk_pinconf_bias_set_pullen_pullsel(dev, pin, disable, pullup,
 						  val);
-	if (!err)
-		return mtk_pinconf_bias_set_pupd_r1_r0(dev, pin, disable,
-						       pullup, val);
+	if (err)
+		return err;
 
-	return err;
+	/* Not all pins have PUPD/R1/R0 registers, so ignore any error here. */
+	mtk_pinconf_bias_set_pupd_r1_r0(dev, pin, disable, pullup, val);
+
+	return 0;
 }
 
 int mtk_pinconf_bias_set_pu_pd(struct udevice *dev, u32 pin, bool disable,
@@ -651,6 +658,16 @@ static int mtk_pinconf_group_set(struct udevice *dev,
 }
 #endif
 
+static int mtk_pinctrl_pinmux_property_set(struct udevice *dev, u32 pinmux_group)
+{
+	u32 pin = MTK_GET_PIN_NO(pinmux_group);
+	u32 func = MTK_GET_PIN_FUNC(pinmux_group);
+	int ret;
+
+	ret = mtk_hw_set_value(dev, pin, PINCTRL_PIN_REG_MODE, func);
+	return ret ? ret : pin;
+}
+
 const struct pinctrl_ops mtk_pinctrl_ops = {
 	.get_pins_count = mtk_get_pins_count,
 	.get_pin_name = mtk_get_pin_name,
@@ -668,6 +685,7 @@ const struct pinctrl_ops mtk_pinctrl_ops = {
 	.pinconf_group_set = mtk_pinconf_group_set,
 #endif
 	.set_state = pinctrl_generic_set_state,
+	.pinmux_property_set = mtk_pinctrl_pinmux_property_set,
 };
 
 #if CONFIG_IS_ENABLED(DM_GPIO) || \
@@ -809,8 +827,31 @@ int mtk_pinctrl_common_probe(struct udevice *dev,
 	fdt_addr_t addr;
 	u32 base_calc = soc->base_calc;
 	u32 nbase_names = soc->nbase_names;
+	int num_regmaps;
 
 	priv->soc = soc;
+
+	/*
+	 * Some controllers have 1 or 2 syscon nodes where the actual pinctl
+	 * registers reside. In this case, dev is an interrupt controller which
+	 * isn't supported at this time. The optional 2nd syscon node is also
+	 * for the interrupt controller, so we only use the 1st one currently.
+	 */
+	num_regmaps = dev_count_phandle_with_args(dev, "mediatek,pctl-regmap", NULL, 0);
+
+	if (num_regmaps > 0) {
+		struct regmap *regmap;
+
+		regmap = syscon_regmap_lookup_by_phandle(dev, "mediatek,pctl-regmap");
+		if (IS_ERR(regmap))
+			return log_msg_ret("regmap: ", PTR_ERR(regmap));
+
+		priv->base[0] = regmap_get_range(regmap, 0);
+		if (!priv->base[0])
+			return log_msg_ret("range: ", -EINVAL);
+
+		return 0;
+	}
 
 	if (!base_calc)
 		nbase_names = 1;

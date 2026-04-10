@@ -27,9 +27,10 @@ config TARGET_IMX8ULP_EVK
 	select IMX8ULP
 	select SUPPORT_SPL
 	select IMX8ULP_DRAM
+	imply OF_UPSTREAM
 
 endchoice
 
-source "board/freescale/imx8ulp_evk/Kconfig"
+source "board/nxp/imx8ulp_evk/Kconfig"
 
 endif

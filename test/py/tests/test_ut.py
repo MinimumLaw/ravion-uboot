@@ -11,6 +11,7 @@ import collections
 import gzip
 import os
 import os.path
+import re
 import pytest
 
 import utils
@@ -521,6 +522,12 @@ def test_ut_dm_init(ubman):
     with open(fn, 'wb') as fh:
         fh.write(data)
 
+    mmc_dev = 9
+    fn = os.path.join(ubman.config.source_dir, f'mmc{mmc_dev}.img')
+    data = b'\x00' * (32 * 1024 * 1024)
+    with open(fn, 'wb') as fh:
+        fh.write(data)
+
 
 def setup_efi_image(ubman):
     """Create a 20MB disk image with an EFI app on it"""
@@ -589,3 +596,9 @@ def test_ut(ubman, ut_subtest):
     else:
         output = ubman.run_command('ut ' + ut_subtest)
     assert output.endswith('failures: 0')
+    lastline = output.splitlines()[-1]
+    if "skipped: 0," not in lastline:
+        match = re.search(r'skipped:\s*(\d+),', lastline)
+        if match:
+            count = match.group(1)
+            pytest.skip(f'Test {ut_subtest} has {count} skipped sub-test(s).')

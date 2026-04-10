@@ -8,10 +8,12 @@
 #include <bootstage.h>
 #include <command.h>
 #include <display_options.h>
+#include <env.h>
 #include <lmb.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <asm/global_data.h>
+#include <linux/sizes.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -23,9 +25,9 @@ static void print_region(const char *name, ulong base, ulong size, ulong *uptop)
 {
 	ulong end = base + size;
 
-	printf("%-12s %8lx %8lx %8lx", name, base, size, end);
+	printf("%-12s %13lx %13lx %13lx", name, base, size, end);
 	if (*uptop)
-		printf(" %8lx", *uptop - end);
+		printf(" %13lx", *uptop - end);
 	putc('\n');
 	*uptop = base;
 }
@@ -64,9 +66,9 @@ static int do_meminfo(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	arch_dump_mem_attrs();
 
-	printf("\n%-12s %8s %8s %8s %8s\n", "Region", "Base", "Size", "End",
+	printf("\n%-12s %13s %13s %13s %13s\n", "Region", "Base", "Size", "End",
 	       "Gap");
-	printf("------------------------------------------------\n");
+	printf("--------------------------------------------------------------------\n");
 	upto = 0;
 	if (IS_ENABLED(CONFIG_VIDEO))
 		print_region("video", gd_video_bottom(),
@@ -98,8 +100,31 @@ static int do_meminfo(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+#ifdef CONFIG_CMD_MEMSIZE
+static int do_mem_size(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
+{
+	u64 memsize = gd->ram_size / SZ_1M;
+
+	if (argc > 1)
+		return env_set_ulong(argv[1], memsize);
+	else
+		printf("%lld MiB\n", memsize);
+
+	return 0;
+}
+#endif /* CONFIG_CMD_MEMSIZE */
+
 U_BOOT_CMD(
 	meminfo,	1,	1,	do_meminfo,
 	"display memory information",
 	""
 );
+
+#ifdef CONFIG_CMD_MEMSIZE
+U_BOOT_CMD(
+	memsize,	2,	1,	do_mem_size,
+	"get detected ram size in MiB, optional set env variable with value",
+	"[envvar]"
+);
+#endif /* CONFIG_CMD_MEMSIZE */

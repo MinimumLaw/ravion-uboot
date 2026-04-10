@@ -8,6 +8,8 @@ Emulation
 
    acpi
    blkdev
+   network
+   video
    qemu-arm
    qemu-mips
    qemu-ppce500
@@ -15,6 +17,7 @@ Emulation
    qemu-sbsa
    qemu-x86
    qemu-xtensa
+   qemu-m68k
 
 Also see
 
