@@ -78,6 +78,9 @@ struct clk *imx_clk_pll14xx(const char *name, const char *parent_name,
 			    void __iomem *base,
 			    const struct imx_pll14xx_clk *pll_clk);
 
+struct clk *imx_clk_frac_pll(const char *name, const char *parent_name,
+			     void __iomem *base);
+
 struct clk *clk_register_gate2(struct udevice *dev, const char *name,
 		const char *parent_name, unsigned long flags,
 		void __iomem *reg, u8 bit_idx, u8 cgr_val,
@@ -93,6 +96,15 @@ static inline struct clk *imx_clk_gate2(struct udevice *dev, const char *name,
 {
 	return clk_register_gate2(dev, name, parent, CLK_SET_RATE_PARENT, reg,
 			shift, 0x3, 0, NULL);
+}
+
+static inline struct clk *
+imx_clk_gate2_flags(struct udevice *dev, const char *name, const char *parent,
+		    void __iomem *reg, u8 shift, unsigned long flags)
+{
+	return clk_register_gate2(dev, name, parent,
+				  flags | CLK_SET_RATE_PARENT, reg, shift, 0x3,
+				  0, NULL);
 }
 
 static inline struct clk *imx_clk_gate2_shared(struct udevice *dev, const char *name,

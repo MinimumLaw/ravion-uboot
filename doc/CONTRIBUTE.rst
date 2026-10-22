@@ -1,8 +1,8 @@
 .. SPDX-License-Identifier: GPL-2.0+
 .. sectionauthor:: Peter Robinson <pbrobinson@gmail.com>
 
-Overview
---------
+Contributing
+============
 
 This document is a high level contributors overview setting overall expectations,
 so people can get started quickly, the rest of the documentation goes into the
@@ -22,7 +22,7 @@ Repository
 The official U-Boot repository is located at https://source.denx.de/u-boot/u-boot
 
 Further more detailed documentation can be found at the following link:
-https://docs.u-boot.org/en/latest/index.html
+https://docs.u-boot-project.org/en/latest/index.html
 
 Contributions
 -------------
