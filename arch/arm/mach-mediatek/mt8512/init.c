@@ -29,18 +29,10 @@ int dram_init(void)
 	return fdtdec_setup_mem_size_base();
 }
 
-phys_size_t  get_effective_memsize(void)
+phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
 {
 	/* limit stack below tee reserve memory */
-	return gd->ram_size - 6 * SZ_1M;
-}
-
-int dram_init_banksize(void)
-{
-	gd->bd->bi_dram[0].start = gd->ram_base;
-	gd->bd->bi_dram[0].size = get_effective_memsize();
-
-	return 0;
+	return gd->ram_base + gd->ram_size - 6 * SZ_1M;
 }
 
 void reset_cpu(void)
@@ -59,24 +51,3 @@ int print_cpuinfo(void)
 	debug("CPU:   MediaTek MT8512\n");
 	return 0;
 }
-
-static struct mm_region mt8512_mem_map[] = {
-	{
-		/* DDR */
-		.virt = 0x40000000UL,
-		.phys = 0x40000000UL,
-		.size = 0x40000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_OUTER_SHARE,
-	}, {
-		.virt = 0x00000000UL,
-		.phys = 0x00000000UL,
-		.size = 0x40000000UL,
-		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
-			 PTE_BLOCK_NON_SHARE |
-			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
-	}, {
-		0,
-	}
-};
-
-struct mm_region *mem_map = mt8512_mem_map;

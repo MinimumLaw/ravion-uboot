@@ -305,6 +305,7 @@ static efi_status_t EFIAPI efi_disk_flush_blocks(struct efi_block_io *this)
 }
 
 static const struct efi_block_io block_io_disk_template = {
+	.revision = EFI_BLOCK_IO_PROTOCOL_REVISION3,
 	.reset = &efi_disk_reset,
 	.read_blocks = &efi_disk_read_blocks,
 	.write_blocks = &efi_disk_write_blocks,
@@ -475,9 +476,12 @@ static efi_status_t efi_disk_add_dev(
 #if CONFIG_IS_ENABLED(DOS_PARTITION)
 		case PART_TYPE_DOS:
 			info->type = PARTITION_TYPE_MBR;
-
-			/* TODO: implement support for MBR partition types */
-			log_debug("EFI_PARTITION_INFO_PROTOCOL doesn't support MBR\n");
+			ret = part_get_mbr(desc, part, &info->info.mbr);
+			if (ret) {
+				log_debug("get MBR for part %d failed %ld\n",
+					  part, ret);
+				goto error;
+			}
 			break;
 #endif
 		default:

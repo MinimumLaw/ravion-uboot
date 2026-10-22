@@ -9,9 +9,11 @@
  */
 
 #include <dm.h>
+#include <dm/device-internal.h>
 #include <dm/devres.h>
 #include <dm/lists.h>
 #include <mapmem.h>
+#include <miiphy.h>
 #include <net.h>
 #include <regmap.h>
 #include <reset.h>
@@ -19,12 +21,15 @@
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
+#include <linux/ethtool.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/time.h>
 #include <asm/arch/scu-regmap.h>
 
-#define AIROHA_MAX_NUM_GDM_PORTS	1
+#include "airoha/pcs-airoha.h"
+
+#define AIROHA_MAX_NUM_GDM_PORTS	4
 #define AIROHA_MAX_NUM_QDMA		1
 #define AIROHA_MAX_NUM_RSTS		3
 #define AIROHA_MAX_NUM_XSI_RSTS		4
@@ -37,6 +42,8 @@
 #define IRQ_QUEUE_LEN			1
 #define TX_DSCP_NUM			16
 #define RX_DSCP_NUM			PKTBUFSRX
+
+#define AIROHA_GDM_PORT_STRING_LEN	sizeof("airoha-gdmX")
 
 /* SCU */
 #define SCU_SHARE_FEMEM_SEL		0x958
@@ -246,6 +253,21 @@
 #define QDMA_ETH_RXMSG_CRSN_MASK	GENMASK(20, 16)
 #define QDMA_ETH_RXMSG_PPE_ENTRY_MASK	GENMASK(15, 0)
 
+enum {
+	FE_PSE_PORT_CDM1,
+	FE_PSE_PORT_GDM1,
+	FE_PSE_PORT_GDM2,
+	FE_PSE_PORT_GDM3,
+	FE_PSE_PORT_PPE1,
+	FE_PSE_PORT_CDM2,
+	FE_PSE_PORT_CDM3,
+	FE_PSE_PORT_CDM4,
+	FE_PSE_PORT_PPE2,
+	FE_PSE_PORT_GDM4,
+	FE_PSE_PORT_CDM5,
+	FE_PSE_PORT_DROP = 0xf,
+};
+
 struct airoha_qdma_desc {
 	__le32 rsv;
 	__le32 ctrl;
@@ -301,20 +323,30 @@ struct airoha_qdma {
 struct airoha_gdm_port {
 	struct airoha_qdma *qdma;
 	int id;
+
+	struct udevice *pcs_dev;
+	phy_interface_t mode;
+	bool neg_mode;
+
+	struct phy_device *phydev;
 };
 
 struct airoha_eth {
 	void __iomem *fe_regs;
 	void __iomem *switch_regs;
+	struct udevice *switch_mdio_dev;
 
 	struct reset_ctl_bulk rsts;
 	struct reset_ctl_bulk xsi_rsts;
 
+	struct airoha_eth_soc_data *soc;
+
 	struct airoha_qdma qdma[AIROHA_MAX_NUM_QDMA];
-	struct airoha_gdm_port *ports[AIROHA_MAX_NUM_GDM_PORTS];
+	char gdm_port_str[AIROHA_MAX_NUM_GDM_PORTS + 1][AIROHA_GDM_PORT_STRING_LEN];
 };
 
 struct airoha_eth_soc_data {
+	u32 version;
 	int num_xsi_rsts;
 	const char * const *xsi_rsts_names;
 	const char *switch_compatible;
@@ -397,22 +429,33 @@ static inline void dma_unmap_unaligned(dma_addr_t addr, size_t len,
 	dma_unmap_single(start, end - start, dir);
 }
 
-static void airoha_fe_maccr_init(struct airoha_eth *eth)
+static int airoha_get_fe_port(struct airoha_gdm_port *port)
 {
-	int p;
+	struct airoha_qdma *qdma = port->qdma;
+	struct airoha_eth *eth = qdma->eth;
 
-	for (p = 1; p <= ARRAY_SIZE(eth->ports); p++) {
-		/*
-		 * Disable any kind of CRC drop or offload.
-		 * Enable padding of short TX packets to 60 bytes.
-		 */
-		airoha_fe_wr(eth, REG_GDM_FWD_CFG(p), GDM_PAD_EN);
+	switch (eth->soc->version) {
+	case 0x7523:
+		/* FIXME: GDM1 is the only supported port */
+		return FE_PSE_PORT_GDM1;
+	case 0x7581:
+	default:
+		return port->id == 4 ? FE_PSE_PORT_GDM4 : port->id;
 	}
 }
 
-static int airoha_fe_init(struct airoha_eth *eth)
+static void airoha_fe_maccr_init(struct airoha_gdm_port *port)
 {
-	airoha_fe_maccr_init(eth);
+	/*
+	 * Disable any kind of CRC drop or offload.
+	 * Enable padding of short TX packets to 60 bytes.
+	 */
+	airoha_fe_wr(port->qdma->eth, REG_GDM_FWD_CFG(port->id), GDM_PAD_EN);
+}
+
+static int airoha_fe_init(struct airoha_gdm_port *port)
+{
+	airoha_fe_maccr_init(port);
 
 	return 0;
 }
@@ -662,6 +705,36 @@ static int airoha_qdma_init(struct udevice *dev,
 	return airoha_qdma_hw_init(qdma);
 }
 
+#if defined(CONFIG_PCS_AIROHA)
+static int airoha_pcs_init(struct udevice *dev)
+{
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	struct udevice *pcs_dev;
+	const char *managed;
+	int ret;
+
+	ret = uclass_get_device_by_phandle(UCLASS_MISC, dev, "pcs",
+					   &pcs_dev);
+	if (ret || !pcs_dev)
+		return ret;
+
+	port->pcs_dev = pcs_dev;
+	port->mode = dev_read_phy_mode(dev);
+	managed = dev_read_string(dev, "managed");
+	port->neg_mode = !strncmp(managed, "in-band-status",
+				  sizeof("in-band-status"));
+
+	airoha_pcs_pre_config(pcs_dev, port->mode);
+
+	ret = airoha_pcs_post_config(pcs_dev, port->mode);
+	if (ret)
+		return ret;
+
+	return airoha_pcs_config(pcs_dev, port->neg_mode,
+				 port->mode, NULL, true);
+}
+#endif
+
 static int airoha_hw_init(struct udevice *dev,
 			  struct airoha_eth *eth)
 {
@@ -682,11 +755,11 @@ static int airoha_hw_init(struct udevice *dev,
 	if (ret)
 		return ret;
 
-	mdelay(20);
-
-	ret = airoha_fe_init(eth);
+	ret = reset_deassert_bulk(&eth->xsi_rsts);
 	if (ret)
 		return ret;
+
+	mdelay(20);
 
 	for (i = 0; i < ARRAY_SIZE(eth->qdma); i++) {
 		ret = airoha_qdma_init(dev, eth, &eth->qdma[i]);
@@ -739,11 +812,79 @@ static int airoha_switch_init(struct udevice *dev, struct airoha_eth *eth)
 	return 0;
 }
 
+static int airoha_alloc_gdm_port(struct udevice *dev, ofnode node)
+{
+	struct airoha_eth *eth = dev_get_priv(dev);
+	struct udevice *gdm_dev;
+	struct driver *gdm_drv;
+	char *str;
+	int ret;
+	u32 id;
+
+	gdm_drv = lists_driver_lookup_name("airoha-eth-port");
+	if (!gdm_drv)
+		return -ENOENT;
+
+	ret = ofnode_read_u32(node, "reg", &id);
+	if (ret)
+		return ret;
+
+	if (id > AIROHA_MAX_NUM_GDM_PORTS)
+		return -EINVAL;
+
+#if !defined(CONFIG_PCS_AIROHA)
+	if (id != 1)
+		return -ENOTSUPP;
+#endif
+
+	str = eth->gdm_port_str[id];
+	snprintf(str, AIROHA_GDM_PORT_STRING_LEN,
+		 "airoha-gdm%d", id);
+
+	return device_bind_with_driver_data(dev, gdm_drv, str,
+					    (ulong)eth, node, &gdm_dev);
+}
+
+static struct udevice *airoha_switch_mdio_init(struct udevice *dev)
+{
+	struct airoha_eth_soc_data *data = (void *)dev_get_driver_data(dev);
+	ofnode switch_node, mdio_node;
+	struct udevice *mdio_dev;
+	int ret;
+
+	if (!CONFIG_IS_ENABLED(MDIO_MT7531_MMIO))
+		return NULL;
+
+	switch_node = ofnode_by_compatible(ofnode_null(),
+					   data->switch_compatible);
+	if (!ofnode_valid(switch_node)) {
+		debug("Warning: missing airoha switch node\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	mdio_node = ofnode_find_subnode(switch_node, "mdio");
+	if (!ofnode_valid(mdio_node)) {
+		debug("Warning: missing airoha switch mdio subnode\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	ret = device_bind_driver_to_node(dev, "mt7531-mdio-mmio", "mt7531-mdio",
+					 mdio_node, &mdio_dev);
+	if (ret) {
+		debug("Warning: failed to bind airoha switch mdio\n");
+		return ERR_PTR(ret);
+	}
+
+	return mdio_dev;
+}
+
 static int airoha_eth_probe(struct udevice *dev)
 {
 	struct airoha_eth_soc_data *data = (void *)dev_get_driver_data(dev);
 	struct airoha_eth *eth = dev_get_priv(dev);
 	struct regmap *scu_regmap;
+	struct udevice *mdio_dev;
+	ofnode node;
 	int i, ret;
 
 	scu_regmap = airoha_get_scu_regmap();
@@ -755,6 +896,8 @@ static int airoha_eth_probe(struct udevice *dev)
 	 * reporting all 0xdeadbeef (poor cow :( )
 	 */
 	regmap_write(scu_regmap, SCU_SHARE_FEMEM_SEL, 0x0);
+
+	eth->soc = data;
 
 	eth->fe_regs = dev_remap_addr_name(dev, "fe");
 	if (!eth->fe_regs)
@@ -795,13 +938,78 @@ static int airoha_eth_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-	return airoha_switch_init(dev, eth);
+	ret = airoha_switch_init(dev, eth);
+	if (ret)
+		return ret;
+
+	/* Airoha switch mdio PHYs maybe used by several GDM devices */
+	mdio_dev = airoha_switch_mdio_init(dev);
+	if (!IS_ERR_OR_NULL(mdio_dev))
+		eth->switch_mdio_dev = mdio_dev;
+
+	ofnode_for_each_subnode(node, dev_ofnode(dev)) {
+		if (!ofnode_device_is_compatible(node, "airoha,eth-mac"))
+			continue;
+
+		if (!ofnode_is_enabled(node))
+			continue;
+
+		ret = airoha_alloc_gdm_port(dev, node);
+		if (ret && ret != -ENOTSUPP)
+			return ret;
+	}
+
+	return 0;
+}
+
+static int airoha_eth_port_of_to_plat(struct udevice *dev)
+{
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+
+	return dev_read_u32(dev, "reg", &port->id);
+}
+
+static int airoha_eth_port_probe(struct udevice *dev)
+{
+	struct airoha_eth *eth = (void *)dev_get_driver_data(dev);
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	int ret;
+
+	port->qdma = &eth->qdma[0];
+
+	ret = airoha_fe_init(port);
+	if (ret)
+		return ret;
+
+	if (port->id > 1) {
+#if defined(CONFIG_PCS_AIROHA)
+		ret = airoha_pcs_init(dev);
+		if (ret)
+			return ret;
+
+		port->phydev = dm_eth_phy_connect(dev);
+#else
+		return -EINVAL;
+#endif
+	} else {
+		/*
+		 * GDM1 device connected to airoha switch. Probe airoha switch
+		 * mdio to be able set/query states of corresponding LAN ports.
+		 */
+		ret = device_probe(eth->switch_mdio_dev);
+		if (ret) {
+			debug("Warning: failed to probe airoha switch mdio\n");
+			eth->switch_mdio_dev = NULL;
+		}
+	}
+
+	return 0;
 }
 
 static int airoha_eth_init(struct udevice *dev)
 {
-	struct airoha_eth *eth = dev_get_priv(dev);
-	struct airoha_qdma *qdma = &eth->qdma[0];
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	struct airoha_qdma *qdma = port->qdma;
 	struct airoha_queue *q;
 	int qid;
 
@@ -814,13 +1022,65 @@ static int airoha_eth_init(struct udevice *dev)
 			GLOBAL_CFG_TX_DMA_EN_MASK |
 			GLOBAL_CFG_RX_DMA_EN_MASK);
 
+#if defined(CONFIG_PCS_AIROHA)
+	if (port->id > 1) {
+		struct phy_device *phydev = port->phydev;
+		int speed, duplex;
+		int ret;
+
+		if (phydev) {
+			ret = phy_config(phydev);
+			if (ret)
+				return ret;
+
+			ret = phy_startup(phydev);
+			if (ret)
+				return ret;
+
+			speed = phydev->speed;
+			duplex = phydev->duplex;
+		} else {
+			duplex = DUPLEX_FULL;
+
+			/* Hardcode speed for linkup */
+			switch (port->mode) {
+			case PHY_INTERFACE_MODE_USXGMII:
+			case PHY_INTERFACE_MODE_10GBASER:
+				speed = SPEED_10000;
+				break;
+			case PHY_INTERFACE_MODE_2500BASEX:
+				speed = SPEED_2500;
+				break;
+			case PHY_INTERFACE_MODE_SGMII:
+			case PHY_INTERFACE_MODE_1000BASEX:
+				speed = SPEED_1000;
+				break;
+			default:
+				return -EINVAL;
+			}
+		}
+
+		airoha_pcs_link_up(port->pcs_dev, port->neg_mode, port->mode,
+				   speed, duplex);
+	}
+#endif
+
 	return 0;
 }
 
 static void airoha_eth_stop(struct udevice *dev)
 {
-	struct airoha_eth *eth = dev_get_priv(dev);
-	struct airoha_qdma *qdma = &eth->qdma[0];
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	struct airoha_qdma *qdma = port->qdma;
+
+#if defined(CONFIG_PCS_AIROHA)
+	if (port->id > 1) {
+		if (port->phydev)
+			phy_shutdown(port->phydev);
+
+		airoha_pcs_link_down(port->pcs_dev);
+	}
+#endif
 
 	airoha_qdma_clear(qdma, REG_QDMA_GLOBAL_CFG,
 			  GLOBAL_CFG_TX_DMA_EN_MASK |
@@ -829,8 +1089,8 @@ static void airoha_eth_stop(struct udevice *dev)
 
 static int airoha_eth_send(struct udevice *dev, void *packet, int length)
 {
-	struct airoha_eth *eth = dev_get_priv(dev);
-	struct airoha_qdma *qdma = &eth->qdma[0];
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	struct airoha_qdma *qdma = port->qdma;
 	struct airoha_qdma_desc *desc;
 	struct airoha_queue *q;
 	dma_addr_t dma_addr;
@@ -852,7 +1112,7 @@ static int airoha_eth_send(struct udevice *dev, void *packet, int length)
 	desc = &q->desc[q->head];
 	index = (q->head + 1) % q->ndesc;
 
-	fport = 1;
+	fport = airoha_get_fe_port(port);
 
 	msg0 = 0;
 	msg1 = FIELD_PREP(QDMA_ETH_TXMSG_FPORT_MASK, fport) |
@@ -894,8 +1154,8 @@ static int airoha_eth_send(struct udevice *dev, void *packet, int length)
 
 static int airoha_eth_recv(struct udevice *dev, int flags, uchar **packetp)
 {
-	struct airoha_eth *eth = dev_get_priv(dev);
-	struct airoha_qdma *qdma = &eth->qdma[0];
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	struct airoha_qdma *qdma = port->qdma;
 	struct airoha_qdma_desc *desc;
 	struct airoha_queue *q;
 	u16 length;
@@ -922,8 +1182,8 @@ static int airoha_eth_recv(struct udevice *dev, int flags, uchar **packetp)
 
 static int arht_eth_free_pkt(struct udevice *dev, uchar *packet, int length)
 {
-	struct airoha_eth *eth = dev_get_priv(dev);
-	struct airoha_qdma *qdma = &eth->qdma[0];
+	struct airoha_gdm_port *port = dev_get_priv(dev);
+	struct airoha_qdma *qdma = port->qdma;
 	struct airoha_queue *q;
 	int qid;
 
@@ -964,8 +1224,9 @@ static int arht_eth_free_pkt(struct udevice *dev, uchar *packet, int length)
 
 static int arht_eth_write_hwaddr(struct udevice *dev)
 {
+	struct airoha_gdm_port *port = dev_get_priv(dev);
 	struct eth_pdata *pdata = dev_get_plat(dev);
-	struct airoha_eth *eth = dev_get_priv(dev);
+	struct airoha_qdma *qdma = port->qdma;
 	unsigned char *mac = pdata->enetaddr;
 	u32 macaddr_lsb, macaddr_msb;
 
@@ -977,50 +1238,32 @@ static int arht_eth_write_hwaddr(struct udevice *dev)
 		      FIELD_PREP(SMACCR1_MAC0, mac[0]);
 
 	/* Set MAC for Switch */
-	airoha_switch_wr(eth, SWITCH_SMACCR0, macaddr_lsb);
-	airoha_switch_wr(eth, SWITCH_SMACCR1, macaddr_msb);
+	airoha_switch_wr(qdma->eth, SWITCH_SMACCR0, macaddr_lsb);
+	airoha_switch_wr(qdma->eth, SWITCH_SMACCR1, macaddr_msb);
 
 	return 0;
 }
 
 static int airoha_eth_bind(struct udevice *dev)
 {
-	struct airoha_eth_soc_data *data = (void *)dev_get_driver_data(dev);
-	ofnode switch_node, mdio_node;
-	struct udevice *mdio_dev;
-	int ret = 0;
-
-	if (!CONFIG_IS_ENABLED(MDIO_MT7531_MMIO))
-		return 0;
-
-	switch_node = ofnode_by_compatible(ofnode_null(),
-					   data->switch_compatible);
-	if (!ofnode_valid(switch_node)) {
-		debug("Warning: missing switch node\n");
-		return 0;
-	}
-
-	mdio_node = ofnode_find_subnode(switch_node, "mdio");
-	if (!ofnode_valid(mdio_node)) {
-		debug("Warning: missing mdio node\n");
-		return 0;
-	}
-
-	ret = device_bind_driver_to_node(dev, "mt7531-mdio-mmio", "mdio",
-					 mdio_node, &mdio_dev);
-	if (ret)
-		debug("Warning: failed to bind mdio controller\n");
+	/*
+	 * Force Probe as we set the Main ETH driver as misc
+	 * to register multiple eth port for each GDM
+	 */
+	dev_or_flags(dev, DM_FLAG_PROBE_AFTER_BIND);
 
 	return 0;
 }
 
 static const struct airoha_eth_soc_data en7523_data = {
+	.version = 0x7523,
 	.xsi_rsts_names = en7523_xsi_rsts_names,
 	.num_xsi_rsts = ARRAY_SIZE(en7523_xsi_rsts_names),
 	.switch_compatible = "airoha,en7523-switch",
 };
 
 static const struct airoha_eth_soc_data en7581_data = {
+	.version = 0x7581,
 	.xsi_rsts_names = en7581_xsi_rsts_names,
 	.num_xsi_rsts = ARRAY_SIZE(en7581_xsi_rsts_names),
 	.switch_compatible = "airoha,en7581-switch",
@@ -1045,13 +1288,21 @@ static const struct eth_ops airoha_eth_ops = {
 	.write_hwaddr = arht_eth_write_hwaddr,
 };
 
+U_BOOT_DRIVER(airoha_eth_port) = {
+	.name = "airoha-eth-port",
+	.id = UCLASS_ETH,
+	.of_to_plat = airoha_eth_port_of_to_plat,
+	.probe = airoha_eth_port_probe,
+	.ops = &airoha_eth_ops,
+	.priv_auto = sizeof(struct airoha_gdm_port),
+	.plat_auto = sizeof(struct eth_pdata),
+};
+
 U_BOOT_DRIVER(airoha_eth) = {
 	.name = "airoha-eth",
-	.id = UCLASS_ETH,
+	.id = UCLASS_MISC,
 	.of_match = airoha_eth_ids,
 	.probe = airoha_eth_probe,
 	.bind = airoha_eth_bind,
-	.ops = &airoha_eth_ops,
 	.priv_auto = sizeof(struct airoha_eth),
-	.plat_auto = sizeof(struct eth_pdata),
 };
